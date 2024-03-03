@@ -1,5 +1,6 @@
-/data/cbs_format/*
 /data/clean/*
+/data/raw/*
+/data/cbs_format/*
 
 # History files
 .Rhistory
