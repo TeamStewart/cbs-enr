@@ -1,0 +1,133 @@
+---
+title: "North Carolina"
+---
+
+```{r}
+#| output: false
+
+rm(list=ls())
+gc()
+
+library(tidyverse)
+library(gt)
+library(xml2)
+library(data.table)
+library(targets)
+
+# data <- tar_read(nc_clean)
+
+```
+
+# Main Results
+
+Download results file here.
+
+```{r}
+
+targets::tar_read(tbl_all_NC_primary)
+
+```
+
+```{r}
+#| cache: true
+#| eval: false
+
+timestamp2020 <- read_xml("https://s3.amazonaws.com/dl.ncsbe.gov?delimiter=/&prefix=ENRS/2020_03_03/") |>
+    as_list() |>
+    pluck("ListBucketResult", function(x) x[names(x) == "Contents"]) |>
+    map(
+      ~ tibble(
+        Key = pluck(.x, "Key", 1),
+        LastModified = pluck(.x, "LastModified", 1)
+      )
+    ) |>
+    list_rbind() |>
+    filter(Key == "ENRS/2020_03_03/results_pct_20200303.zip") |>
+    pull(LastModified) |>
+    ymd_hms(tz = "America/New_York") |>
+    str_replace_all("-|:| ", "_")
+
+data <- fread(cmd = "curl -L http://dl.ncsbe.gov/ENRS/2020_03_03/results_pct_20200303.zip | funzip",
+              sep = "\t",
+              select = c("County", "Precinct", "Contest Name", "Choice", "Choice Party", "Election Day", "One Stop",
+                         "Absentee by Mail", "Provisional", "Total Votes", "Real Precinct"))
+
+data[, .(count = sum(`Total Votes`)), by = c("Contest Name", "Choice Party", "Choice")] |> 
+  as_tibble() |> 
+  rename_with(.fn = janitor::make_clean_names) |> 
+  mutate(contest_name = str_remove(contest_name, " \\(.*?$") |> str_to_title(),
+         choice_party = case_match(
+           choice_party,
+           "LIB" ~ "Libertarian",
+           "DEM" ~ "Democrat",
+           "REP" ~ "Republican",
+           "CST" ~ "Constitution",
+           "GRE" ~ "Green",
+           .default = "No Party")) |> 
+  arrange(contest_name, choice_party, desc(count)) |> 
+  mutate(percent = count/sum(count), .by = c(contest_name, choice_party)) |> 
+  gt() |> 
+  tab_header(title = "2020 Primary Results in North Carolina", 
+             subtitle = str_c("Last updated: ", ymd_hms(timestamp2020, tz = "America/New_York"))) |> 
+  opt_interactive(
+    use_filters = TRUE,
+    use_resizers = TRUE,
+    use_compact_mode = TRUE,
+    use_text_wrapping = TRUE,
+    use_page_size_select = TRUE
+  ) |>
+  cols_label(
+    contest_name = "Contest",
+    choice_party = "Party",
+    choice = "Candidate",
+    count = "Count", 
+    percent = "Vote %") |> 
+  fmt_number(columns = count, decimals = 0, drop_trailing_zeros = TRUE) |> 
+  fmt_percent(columns = percent) |>
+  tab_style(
+    style = cell_text(
+      v_align = "middle",
+      align = "center"
+    ), 
+    locations = cells_body(
+      columns = contest_name:choice
+    )) |> 
+  data_color(
+    columns = percent,
+    target_columns = everything(),
+    rows = choice_party == "Democrat",
+    palette = c("white", "#9FDDF3","#59CBF5", "#00BAFF", "#3791FF")
+  ) |> 
+  data_color(
+    columns = percent,
+    target_columns = everything(),
+    rows = choice_party == "Republican",
+    palette = c("white", "#E8ADA4", "#F59181", "#FF715A", "#F6573E")
+  ) |> 
+  data_color(
+    columns = percent,
+    target_columns = everything(),
+    rows = choice_party == "Libertarian",
+    palette = c("white", "#d8d5ad", "#d0cc9c", "#c8c38a", "#c0ba79", "#b8b168", "#b0a856", "#a19a4c")
+  ) |> 
+  data_color(
+    columns = percent,
+    target_columns = everything(),
+    rows = choice_party == "Constitution",
+    palette = c("white", "#d8d5ad", "#d0cc9c", "#c8c38a", "#c0ba79", "#b8b168", "#b0a856", "#a19a4c")
+  ) |> 
+  data_color(
+    columns = percent,
+    target_columns = everything(),
+    rows = choice_party == "Green",
+    palette = c("white", "#e7f6ee", "#d0eede", "#b9e5ce", "#a2ddbd", "#8bd4ad", "#73cc9d", "#5cc38c", "#45bb7c", "#2eb26c", "#17aa5c")
+  ) |> 
+  tab_style(
+    style = list(
+      cell_text(align = "center", v_align = "middle")
+    ),
+    locations = cells_body()
+  ) |> 
+  cols_align(align = "center")
+
+```

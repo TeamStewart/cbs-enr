@@ -1,0 +1,6 @@
+---
+title: "2024 Election Results"
+
+---
+
+This is a test website for the 2024 Election Results. Use the links on the top to switch between states. 
