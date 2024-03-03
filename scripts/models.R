@@ -104,9 +104,9 @@ analysis_county <- analysis_county |>
 # MODELS
 # ====================================
 ## Election day turnout - region FE
-eday_eday_lagged_region <- feols(precinct_pct_party_election_day ~ precinct_pct_party_election_day_lag | region, data = analysis_precinct, weights = ~precinct_total_party_reg)
-eday_party_demo_region <- feols(precinct_pct_party_election_day ~ precinct_pct_party_black + precinct_pct_party_white | region, data = analysis_precinct,weights = ~precinct_total_party_reg)
-eday_demo_region <- feols(precinct_pct_party_election_day ~ precinct_pct_black + precinct_pct_white | region, data = analysis_precinct, weights = ~precinct_total_party_reg)
+eday_eday_lagged_region <- feols(precinct_pct_party_election_day ~ precinct_pct_party_election_day_lag | cbs_region, data = analysis_precinct, weights = ~precinct_total_party_reg)
+eday_party_demo_region <- feols(precinct_pct_party_election_day ~ precinct_pct_party_black + precinct_pct_party_white | cbs_region, data = analysis_precinct,weights = ~precinct_total_party_reg)
+eday_demo_region <- feols(precinct_pct_party_election_day ~ precinct_pct_black + precinct_pct_white | cbs_region, data = analysis_precinct, weights = ~precinct_total_party_reg)
 
 ## Election day turnout - county FE
 eday_eday_lagged_county <- feols(precinct_pct_party_election_day ~ precinct_pct_party_election_day_lag | jurisdiction, data = analysis_precinct, weights = ~precinct_total_party_reg)
@@ -123,59 +123,70 @@ early_early_lagged <- feols(county_pct_party_early ~ county_pct_party_early_lag,
 early_party_demo <- feols(county_pct_party_early ~ county_pct_party_black + county_pct_party_white, data = analysis_county,weights = ~county_total_party_reg)
 early_demo <- feols(county_pct_party_early ~ county_pct_black + county_pct_white, data = analysis_county,weights = ~county_total_party_reg)
 
-produce_estimates <- function(model, analysis_table){
-  
+# ============================
+# Produce estimates
+# ============================
+produce_estimates <- function(model = NULL, county_model = NULL, region_model = NULL, analysis_table){
+  # if we have both a county FE and region FE model, create preds that combine info from both
+  if(is_null(county_model) & is_null(region_model)){
+    preds_counties <- analysis_table |> 
+      # get jurisdictions that are not entirely NA
+      filter(!all(is.na(precinct_pct_party_election_day)), .by = jurisdiction) |> 
+      # calculate predictions using marginaleffects
+      predictions(county_model, newdata = _) |> 
+      select(jurisdiction, party, precinct_id, precinct_total_party_reg, estimate) |> 
+      # calculate vote at the precinct level by multiplying the coefficient (percent estimate) by the total
+      # party registration at the precinct level. If that precinct is missing data, use the county-level
+      # average coefficient
+      mutate(precinct_vote = case_when(
+        is.na(estimate) ~ precinct_total_party_reg*mean(estimate, na.rm = TRUE),
+        .default = estimate*precinct_total_party_reg
+      ), .by = jurisdiction) |> 
+      # sum to the county level
+      summarise(county_vote = sum(precinct_vote), .by = jurisdiction) |> 
+      as_tibble()
+    
+    # predictions for remaining counties, based on their region averages
+    preds_regions <- analysis_table |> 
+      # filter to only the counties we didn't use above
+      filter(!(jurisdiction %in% pull(preds_counties, jurisdiction))) |> 
+      # predict using marginal effects again, still at the precinct level
+      predictions(region_model, newdata = _) |> 
+      select(cbs_region, jurisdiction, party, precinct_id, precinct_total_party_reg, estimate) |> 
+      # calculate vote totals like above, but do it in two stages. First, try to make use of 
+      # some county-level averages, where available. If not, then use the region-level average
+      mutate(
+        .by = jurisdiction,
+        precinct_vote = case_when(
+          is.na(estimate) ~ precinct_total_party_reg*mean(estimate, na.rm = TRUE),
+          .default = estimate*precinct_total_party_reg)
+      ) |>
+      mutate(
+        .by = cbs_region,
+        precinct_vote = case_when(
+          is.na(precinct_vote) ~ precinct_total_party_reg*mean(estimate, na.rm = TRUE),
+          .default = precinct_vote
+        )
+      ) |> 
+      # sum everything to the county-level
+      summarise(county_vote = sum(precinct_vote), .by = jurisdiction) |> 
+      as_tibble()
+    
+    # combine the two levels of estimates and sum to a grand total
+    return(bind_rows(preds_counties, preds_regions))
+  } else{
+    preds <- analysis_table |>
+      # get jurisdictions that are not entirely NA
+      filter(!all(is.na(county_pct_party_election_day)), .by = jurisdiction) |> 
+      # calculate predictions using marginaleffects
+      predictions(county_model, newdata = _) |> 
+      select(jurisdiction, cbs_region, party, county_total_party_reg, estimate) |> 
+      # calculate vote at county level by multiplying the coefficient (percent estimate) by total
+      # party registration at the county level. If that county is missing data, use the region-level
+      # average coefficient
+      mutate(county_vote = case_when(
+        is.na(estimate) ~ county_total_party_reg*mean(estimate, na.rm = TRUE),
+        .default = estimate*county_total_party_reg
+      ), .by = cbs_region)
+  }
 }
-
-# ============================
-# Prediction Testing
-# ============================
-
-# predictions for counties that have some data
-preds_counties <- analysis_precinct |> 
-  # get jurisdictions that are not entirely NA
-  filter(!all(is.na(precinct_pct_party_election_day)), .by = jurisdiction) |> 
-  # calculate predictions using marginaleffects
-  predictions(eday_eday_lagged_county, newdata = _) |> 
-  select(jurisdiction, party, precinct_id, precinct_total_party_reg, estimate) |> 
-  # calculate vote at the precinct level by multiplying the coefficient (percent estimate) by the total
-  # party registration at the precinct level. If that precinct is missing data, use the county-level
-  # average coefficient
-  mutate(precinct_vote = case_when(
-    is.na(estimate) ~ precinct_total_party_reg*mean(estimate, na.rm = TRUE),
-    .default = estimate*precinct_total_party_reg
-  ), .by = jurisdiction) |> 
-  # sum to the county level
-  summarise(county_vote = sum(precinct_vote), .by = jurisdiction) |> 
-  as_tibble()
-
-# predictions for remaining counties, based on their region averages
-preds_regions <- analysis_precinct |> 
-  # filter to only the counties we didn't use above
-  filter(!(jurisdiction %in% pull(preds_counties, jurisdiction))) |> 
-  # predict using marginal effects again, still at the precinct level
-  predictions(eday_eday_lagged_region, newdata = _) |> 
-  select(region, jurisdiction, party, precinct_id, precinct_total_party_reg, estimate) |> 
-  # calculate vote totals like above, but do it in two stages. First, try to make use of 
-  # some county-level averages, where available. If not, then use the region-level average
-  mutate(
-    .by = jurisdiction,
-    precinct_vote = case_when(
-      is.na(estimate) ~ precinct_total_party_reg*mean(estimate, na.rm = TRUE),
-      .default = estimate*precinct_total_party_reg)
-  ) |>
-  mutate(
-    .by = region,
-    precinct_vote = case_when(
-      is.na(precinct_vote) ~ precinct_total_party_reg*mean(estimate, na.rm = TRUE),
-      .default = precinct_vote
-    )
-  ) |> 
-  # sum everything to the county-level
-  summarise(county_vote = sum(precinct_vote), .by = jurisdiction) |> 
-  as_tibble()
-
-# combine the two levels of estimates and sum to a grand total
-bind_rows(preds_counties, preds_regions) |> 
-  pull(county_vote) |> 
-  sum()
