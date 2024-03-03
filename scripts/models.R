@@ -14,7 +14,6 @@ time <- "2024_02_01_15_11_28" |> ymd_hms()
 
 precinct_xwalk <- read_csv(sprintf("data/input/%s/precinct_party_xwalk.csv",state)) |> filter(.data$party == .env$party)
 county_xwalk <- read_csv(sprintf("data/input/%s/county_party_xwalk.csv",state)) |> filter(.data$party == .env$party)
-regions <- read_csv(sprintf("data/input/%s/regions.csv", state), col_names = c("jurisdiction", "region"), skip = 1)
 
 # Clean up results df
 results <- read_csv(sprintf("data/clean/%s/primary_latest.csv", state)) |> 
@@ -36,13 +35,12 @@ analysis_precinct <- results |>
             .by = c(state, race_id, race_name, party, jurisdiction, precinct_id, virtual_precinct, vote_mode)) |>
   pivot_wider(names_from = "vote_mode", values_from = "precinct_total", values_fn = sum, names_prefix = "mode_total_") |> 
   left_join(precinct_xwalk) |>
-  left_join(regions) |>
   rowwise() |>
   mutate(
     precinct_total_turnout = sum(c_across(starts_with("mode_total")), na.rm = TRUE),
     precinct_pct_party_election_day = mode_total_election_day / precinct_total_reg,
     precinct_reported = precinct_total_turnout > 0) |>
-  select(state, race_id, race_name, party, region, jurisdiction, precinct_id, virtual_precinct, precinct_reported,
+  select(state, race_id, race_name, party, cbs_region, jurisdiction, precinct_id, virtual_precinct, precinct_reported,
          precinct_pct_party_election_day, precinct_pct_party_election_day_lag,
          precinct_total_party_reg, precinct_total_reg, precinct_pct_party_black,
          precinct_pct_party_white, precinct_pct_party_nonwhite, precinct_pct_black,
@@ -55,7 +53,6 @@ analysis_county <- results |>
             .by = c(state, race_id, race_name, party, jurisdiction, vote_mode)) |>
   pivot_wider(names_from = "vote_mode", values_from = "county_total", values_fn = sum, names_prefix = "mode_total_") |> 
   left_join(county_xwalk) |>
-  left_join(regions) |>
   rowwise() |>
   mutate(
     county_total_party_turnout = sum(c_across(starts_with("mode_total")), na.rm = TRUE),
@@ -63,7 +60,7 @@ analysis_county <- results |>
     county_pct_party_absentee = mode_total_absentee / county_total_reg,
     county_pct_party_early = mode_total_early_voting / county_total_reg,
     county_pct_party_turnout = county_total_party_turnout / county_total_party_reg) |>
-  select(state, race_id, race_name, party, region, jurisdiction, 
+  select(state, race_id, race_name, party, cbs_region, jurisdiction, 
          county_pct_party_election_day, county_pct_party_election_day_lag,
          county_pct_party_absentee, county_pct_party_absentee_lag,
          county_pct_party_early, county_pct_party_early_lag,
