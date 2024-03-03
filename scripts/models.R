@@ -1,0 +1,184 @@
+rm(list=ls())
+gc()
+
+library(tidyverse)
+library(fixest)
+library(marginaleffects)
+
+# Parameters
+state <- "NC"
+type <- "primary"
+party <- "Republican"
+office <- "President"
+time <- "2024_02_01_15_11_28" |> ymd_hms()
+
+precinct_xwalk <- read_csv(sprintf("data/input/%s/precinct_party_xwalk.csv",state)) |> filter(.data$party == .env$party)
+county_xwalk <- read_csv(sprintf("data/input/%s/county_party_xwalk.csv",state)) |> filter(.data$party == .env$party)
+regions <- read_csv(sprintf("data/input/%s/regions.csv", state), col_names = c("jurisdiction", "region"), skip = 1)
+
+# Clean up results df
+results <- read_csv(sprintf("data/clean/%s/primary_latest.csv", state)) |> 
+  filter(str_detect(race_name, office) & str_detect(race_name, party)) |> 
+  mutate(
+    vote_mode = case_when(
+      vote_mode == "Election Day" ~ "election_day",
+      vote_mode == "Provisional" ~ "provisional",
+      vote_mode == "Absentee/Mail" ~ "absentee",
+      vote_mode == "Early Voting" ~ "early_voting",
+      vote_mode == "Other" ~ 'other'
+    )
+  ) |>
+  rename(party = candidate_party)
+
+# make analysis tables
+analysis_precinct <- results |>
+  summarise(precinct_total = sum(precinct_total, na.rm = T),
+            .by = c(state, race_id, race_name, party, jurisdiction, precinct_id, virtual_precinct, vote_mode)) |>
+  pivot_wider(names_from = "vote_mode", values_from = "precinct_total", values_fn = sum, names_prefix = "mode_total_") |> 
+  left_join(precinct_xwalk) |>
+  left_join(regions) |>
+  rowwise() |>
+  mutate(
+    precinct_total_turnout = sum(c_across(starts_with("mode_total")), na.rm = TRUE),
+    precinct_pct_party_election_day = mode_total_election_day / precinct_total_reg,
+    precinct_reported = precinct_total_turnout > 0) |>
+  select(state, race_id, race_name, party, region, jurisdiction, precinct_id, virtual_precinct, precinct_reported,
+         precinct_pct_party_election_day, precinct_pct_party_election_day_lag,
+         precinct_total_party_reg, precinct_total_reg, precinct_pct_party_black,
+         precinct_pct_party_white, precinct_pct_party_nonwhite, precinct_pct_black,
+         precinct_pct_white, precinct_pct_nonwhite) |>
+  filter(!virtual_precinct) |> 
+  ungroup()
+
+analysis_county <- results |>
+  summarise(county_total = sum(precinct_total, na.rm = T),
+            .by = c(state, race_id, race_name, party, jurisdiction, vote_mode)) |>
+  pivot_wider(names_from = "vote_mode", values_from = "county_total", values_fn = sum, names_prefix = "mode_total_") |> 
+  left_join(county_xwalk) |>
+  left_join(regions) |>
+  rowwise() |>
+  mutate(
+    county_total_party_turnout = sum(c_across(starts_with("mode_total")), na.rm = TRUE),
+    county_pct_party_election_day = mode_total_election_day / county_total_reg,
+    county_pct_party_absentee = mode_total_absentee / county_total_reg,
+    county_pct_party_early = mode_total_early_voting / county_total_reg,
+    county_pct_party_turnout = county_total_party_turnout / county_total_party_reg) |>
+  select(state, race_id, race_name, party, region, jurisdiction, 
+         county_pct_party_election_day, county_pct_party_election_day_lag,
+         county_pct_party_absentee, county_pct_party_absentee_lag,
+         county_pct_party_early, county_pct_party_early_lag,
+         county_pct_party_turnout, county_pct_party_turnout_lag,
+         county_total_party_reg, county_total_reg, county_pct_party_black,
+         county_pct_party_white, county_pct_party_nonwhite, county_pct_black,
+         county_pct_white, county_pct_nonwhite) |> 
+  ungroup()
+
+# ====================================
+# START OF FAKE DATA CREATION
+# ====================================
+analysis_precinct <- analysis_precinct |> 
+  mutate(precinct_pct_party_election_day = case_when(
+    # randomly set some counties to missing
+    str_detect(jurisdiction, "M") ~ NA_real_,
+    # randomly set some precincts to missing
+    str_detect(precinct_id, "M") ~ NA_real_,
+    # normalize the election day results to be somewhat near the lagged versions
+    .default = precinct_pct_party_election_day_lag + runif(n=n())/5
+  ))
+
+analysis_county <- analysis_county |> 
+  mutate(county_pct_party_absentee = case_when(
+    # randomly set some counties to missing
+    str_detect(jurisdiction, "M") ~ NA_real_,
+    # normalize the election day results to be somewhat near the lagged versions
+    .default = county_pct_party_absentee_lag + runif(n=n())/5
+  ),
+  county_pct_party_early = case_when(
+    # randomly set some counties to missing
+    str_detect(jurisdiction, "M") ~ NA_real_,
+    # normalize the election day results to be somewhat near the lagged versions
+    .default = county_pct_party_early_lag + runif(n=n())/5
+  ))
+# ====================================
+# END OF FAKE DATA
+# ====================================
+
+# ====================================
+# MODELS
+# ====================================
+## Election day turnout - region FE
+eday_eday_lagged_region <- feols(precinct_pct_party_election_day ~ precinct_pct_party_election_day_lag | region, data = analysis_precinct, weights = ~precinct_total_party_reg)
+eday_party_demo_region <- feols(precinct_pct_party_election_day ~ precinct_pct_party_black + precinct_pct_party_white | region, data = analysis_precinct,weights = ~precinct_total_party_reg)
+eday_demo_region <- feols(precinct_pct_party_election_day ~ precinct_pct_black + precinct_pct_white | region, data = analysis_precinct, weights = ~precinct_total_party_reg)
+
+## Election day turnout - county FE
+eday_eday_lagged_county <- feols(precinct_pct_party_election_day ~ precinct_pct_party_election_day_lag | jurisdiction, data = analysis_precinct, weights = ~precinct_total_party_reg)
+eday_party_demo_county <- feols(precinct_pct_party_election_day ~ precinct_pct_party_black + precinct_pct_party_white | jurisdiction, data = analysis_precinct,weights = ~precinct_total_party_reg)
+eday_demo_county <- feols(precinct_pct_party_election_day ~ precinct_pct_black + precinct_pct_white | jurisdiction, data = analysis_precinct, weights = ~precinct_total_party_reg)
+
+## Absentee
+absentee_absentee_lagged <- feols(county_pct_party_absentee ~ county_pct_party_absentee_lag, data = analysis_county, weights = ~county_total_party_reg)
+absentee_party_demo <- feols(county_pct_party_absentee ~ county_pct_party_black + county_pct_party_white, data = analysis_county,weights = ~county_total_party_reg)
+absentee_demo <- feols(county_pct_party_absentee ~ county_pct_black + county_pct_white, data = analysis_county,weights = ~county_total_party_reg)
+
+## Early
+early_early_lagged <- feols(county_pct_party_early ~ county_pct_party_early_lag, data = analysis_county, weights = ~county_total_party_reg)
+early_party_demo <- feols(county_pct_party_early ~ county_pct_party_black + county_pct_party_white, data = analysis_county,weights = ~county_total_party_reg)
+early_demo <- feols(county_pct_party_early ~ county_pct_black + county_pct_white, data = analysis_county,weights = ~county_total_party_reg)
+
+produce_estimates <- function(model, analysis_table){
+  
+}
+
+# ============================
+# Prediction Testing
+# ============================
+
+# predictions for counties that have some data
+preds_counties <- analysis_precinct |> 
+  # get jurisdictions that are not entirely NA
+  filter(!all(is.na(precinct_pct_party_election_day)), .by = jurisdiction) |> 
+  # calculate predictions using marginaleffects
+  predictions(eday_eday_lagged_county, newdata = _) |> 
+  select(jurisdiction, party, precinct_id, precinct_total_party_reg, estimate) |> 
+  # calculate vote at the precinct level by multiplying the coefficient (percent estimate) by the total
+  # party registration at the precinct level. If that precinct is missing data, use the county-level
+  # average coefficient
+  mutate(precinct_vote = case_when(
+    is.na(estimate) ~ precinct_total_party_reg*mean(estimate, na.rm = TRUE),
+    .default = estimate*precinct_total_party_reg
+  ), .by = jurisdiction) |> 
+  # sum to the county level
+  summarise(county_vote = sum(precinct_vote), .by = jurisdiction) |> 
+  as_tibble()
+
+# predictions for remaining counties, based on their region averages
+preds_regions <- analysis_precinct |> 
+  # filter to only the counties we didn't use above
+  filter(!(jurisdiction %in% pull(preds_counties, jurisdiction))) |> 
+  # predict using marginal effects again, still at the precinct level
+  predictions(eday_eday_lagged_region, newdata = _) |> 
+  select(region, jurisdiction, party, precinct_id, precinct_total_party_reg, estimate) |> 
+  # calculate vote totals like above, but do it in two stages. First, try to make use of 
+  # some county-level averages, where available. If not, then use the region-level average
+  mutate(
+    .by = jurisdiction,
+    precinct_vote = case_when(
+      is.na(estimate) ~ precinct_total_party_reg*mean(estimate, na.rm = TRUE),
+      .default = estimate*precinct_total_party_reg)
+  ) |>
+  mutate(
+    .by = region,
+    precinct_vote = case_when(
+      is.na(precinct_vote) ~ precinct_total_party_reg*mean(estimate, na.rm = TRUE),
+      .default = precinct_vote
+    )
+  ) |> 
+  # sum everything to the county-level
+  summarise(county_vote = sum(precinct_vote), .by = jurisdiction) |> 
+  as_tibble()
+
+# combine the two levels of estimates and sum to a grand total
+bind_rows(preds_counties, preds_regions) |> 
+  pull(county_vote) |> 
+  sum()
