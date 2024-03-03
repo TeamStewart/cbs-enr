@@ -11,13 +11,16 @@ library(tidyverse)
 library(data.table)
 
 ## Read in files
+## CBS Regions
+regions <- read_csv("data/input/NC/regions.csv", col_names = c("jurisdiction", "region"), skip = 1)
+
 # Voter registration snaphshots
 vreg <- fread(
   cmd = "curl -L https://s3.amazonaws.com/dl.ncsbe.gov/data/ncvoter_Statewide.zip | funzip", 
   select = c(
     'ncid','voter_status_desc','race_code','ethnic_code','party_cd','age_at_year_end',
     'county_desc', 'precinct_abbrv'
-    )) |>
+  )) |>
   mutate(
     # recode race
     race = case_when(
@@ -85,8 +88,8 @@ vreg_by_party_lag <- vreg_lag |>
 vreg_total_lag <- vreg_lag |>
   group_by(county_desc, precinct_abbrv) |>
   summarise(precinct_total_reg_lag = sum(total_voters))
-  
-  
+
+
 # Use voter turnout file: more encompassing n for all races
 precinct_turnout <- fread(cmd = "curl -L http://dl.ncsbe.gov/ENRS/2020_03_03/history_stats_20200303.zip | funzip") |>
   group_by(county_desc, precinct_abbrv, voted_party_cd, voting_method) |>
@@ -113,14 +116,14 @@ precinct_turnout <- fread(cmd = "curl -L http://dl.ncsbe.gov/ENRS/2020_03_03/his
       TRUE ~ "Other"
     )
   )
-  
+
 precinct_xwalk <- vreg_by_party |>
   left_join(precinct_turnout) |>
   left_join(vreg_total) |>
   left_join(vreg_by_party_lag) |>
   left_join(vreg_total_lag) |>
   filter(party %in% c('Democrat','Republican'))
-  
+
 
 # Now calculate percentages
 ## precinct is for election-day statistics
@@ -139,7 +142,8 @@ precinct_party_xwalk <- precinct_xwalk |>
     # our eday turnout = lagged eday vote total / lagged total registered voters
     precinct_pct_party_election_day_lag = mode_total_lag_election_day / precinct_total_party_reg_lag
   ) |>
-  select(jurisdiction = county_desc, precinct_id = precinct_abbrv, party, precinct_total_reg, precinct_total_party_reg,
+  left_join(regions, by = c("county_desc" = "jurisdiction")) |>
+  select(jurisdiction = county_desc, cbs_region = region, precinct_id = precinct_abbrv, party, precinct_total_reg, precinct_total_party_reg,
          precinct_pct_black, precinct_pct_party_black, precinct_pct_white, precinct_pct_party_white, precinct_pct_nonwhite, precinct_pct_party_nonwhite,
          precinct_avg_age,precinct_avg_party_age, precinct_pct_una, precinct_pct_party_election_day_lag) |>
   ungroup()
@@ -176,11 +180,12 @@ county_party_xwalk <- precinct_xwalk |>
   ) |>
   left_join(county_vreg_race) |>
   left_join(county_vreg_age) |>
-  select(jurisdiction = county_desc, party, county_total_reg, county_total_party_reg,
+  left_join(regions, by = c("county_desc" = "jurisdiction")) |>
+  select(jurisdiction = county_desc, cbs_region = region, party, county_total_reg, county_total_party_reg,
          county_pct_black, county_pct_party_black, county_pct_white, county_pct_party_white, county_pct_nonwhite, county_pct_party_nonwhite,
          county_avg_age,county_avg_party_age, county_pct_una, 
          county_pct_party_election_day_lag, county_pct_party_absentee_lag, county_pct_party_early_lag, county_pct_party_turnout_lag) |>
   ungroup()
 
-write_csv(precinct_party_xwalk, file = "data/input/nc/precinct_party_xwalk.csv")
-write_csv(county_party_xwalk, file = "data/input/nc/county_party_xwalk.csv")
+write_csv(precinct_party_xwalk, file = "data/input/NC/precinct_party_xwalk.csv")
+write_csv(county_party_xwalk, file = "data/input/NC/county_party_xwalk.csv")
