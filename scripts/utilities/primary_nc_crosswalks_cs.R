@@ -11,6 +11,9 @@ library(tidyverse)
 library(data.table)
 
 ## Read in files
+## CBS Regions
+regions <- read_csv("data/input/NC/regions.csv", col_names = c("jurisdiction", "region"), skip = 1)
+
 # Voter registration snaphshots
 vreg <- fread(
   cmd = "curl -L https://s3.amazonaws.com/dl.ncsbe.gov/data/ncvoter_Statewide.zip | funzip", 
@@ -142,7 +145,8 @@ precinct_party_xwalk <- precinct_xwalk |>
     # our eday turnout = lagged eday vote total / lagged total registered voters
     precinct_pct_party_election_day_lag = mode_total_lag_election_day / precinct_total_party_reg_lag
   ) |>
-  select(county_id, county_desc, precinct_abbrv, precinct_desc, vtd_abbrv, vtd_desc, party, precinct_total_reg, precinct_total_party_reg,
+  left_join(regions, by = c("county_desc" = "jurisdiction")) |>
+  select(county_id, county_desc, cbs_region = region, precinct_abbrv, precinct_desc, vtd_abbrv, vtd_desc, party, precinct_total_reg, precinct_total_party_reg,
          precinct_pct_black, precinct_pct_party_black, precinct_pct_white, precinct_pct_party_white, precinct_pct_nonwhite, precinct_pct_party_nonwhite,
          precinct_avg_age,precinct_avg_party_age, precinct_pct_una, precinct_pct_party_election_day_lag) |>
   ungroup()
@@ -179,13 +183,14 @@ county_party_xwalk <- precinct_xwalk |>
   ) |>
   left_join(county_vreg_race) |>
   left_join(county_vreg_age) |>
-  select(county_id, county_desc, party, county_total_reg, county_total_party_reg,
+  left_join(regions, by = c("county_desc" = "jurisdiction")) |>
+  select(county_id, county_desc, cbs_region = region, party, county_total_reg, county_total_party_reg,
          county_pct_black, county_pct_party_black, county_pct_white, county_pct_party_white, county_pct_nonwhite, county_pct_party_nonwhite,
          county_avg_age,county_avg_party_age, county_pct_una, 
          county_pct_party_election_day_lag, county_pct_party_absentee_lag, county_pct_party_early_lag, county_pct_party_turnout_lag) |>
   ungroup()
 
 # Write csv with vf names for charles
-write_csv(precinct_party_xwalk, file = "data/input/nc/precinct_party_xwalk_cs.csv")
-write_csv(county_party_xwalk, file = "data/input/nc/county_party_xwalk_cs.csv")
+write_csv(precinct_party_xwalk, file = "data/input/NC/precinct_party_xwalk_cs.csv")
+write_csv(county_party_xwalk, file = "data/input/NC/county_party_xwalk_cs.csv")
 
