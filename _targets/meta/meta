@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|3e2be63d28773d41|||||||||||||||
+.Random.seed|object|af4a15ae57c02cb3|||||||||||||||
 cbs_NC_ALL_primary|stem|6d89639447f53027|524cc46e3c882873|177af73ff696a8ed|-470314479||t19785.9244064855s|6ecad65e5876bb44|47698|qs|local|vector|||48.316||
 cbs_TX_BEXAR_primary|stem|6dd71d12008128c1|7435327d9e2de65e|d5fa619ff571ddde|-2059598560||t19785.9238434703s|de1c6d017cb4e8a8|38|qs|local|vector|||0.029||
 clean_nc|function|0fefd98e2a2a924d|||||||||||||||
@@ -16,7 +16,7 @@ file_TX_BEXAR_primary|stem|3b402ac4da5db69c|cfef4927913124ff|1956ce223113f4f2|10
 general_table|function|a0ac33dba7710eb8|||||||||||||||
 get_timestamp|function|29a43dda74f0fd16|||||||||||||||
 link_NC_ALL_primary|stem|8ec7a7d12c0ff464|310b1fee88b86b0a|ef46db3751d8e999|1993870433|https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip|t19784.7940709719s||0|url|local|vector|||0||
-link_TX_BEXAR_primary|stem|c5d48943c11be815|6913bda81adb58d6|ef46db3751d8e999|-82700294|https://elections.bexar.org/DocumentCenter/View/38047/March-1-2022-Precinct-by-Precinct-Report-CSV|t19786.6091561228s||0|url|local|vector|||0.145||
+link_TX_BEXAR_primary|stem|295e9254b9538d02|6913bda81adb58d6|ef46db3751d8e999|-82700294|https://elections.bexar.org/DocumentCenter/View/38047/March-1-2022-Precinct-by-Precinct-Report-CSV|t19786.6143048326s||0|url|local|vector|||0.155||
 make_plots|function|925e43c8ed9f4764|||||||||||||||
 models_NC_ALL_primary|stem|ac6d1a5c43a7d754|5971d4086721122c|49fb519235814ef3|-105069344||t19786.6010073449s|9fa22936a48c6396|205538|qs|local|vector|||8.752||
 models_TX_BEXAR_primary|stem|6dd71d12008128c1|74ce8ec064fd5d4c|a5bb1ee5e468e822|1682918788||t19786.6009022256s|de1c6d017cb4e8a8|38|qs|local|vector|||0.001||
@@ -51,4 +51,4 @@ values_tbl|object|e00f26dc29bd1249|||||||||||||||
 values_time|object|a0d66e6214118ae7|||||||||||||||
 web_index|stem||1c6f95369459c3d1|ef46db3751d8e999|1341562904|index.html*index.qmd|t19780.8928358997s||0|file|local|vector|||||_paths_ missing files index.html
 web_nc|stem||b9fcd47a3d07e4b1|bf94d0b3d488a2a3|1510801000|website/nc.html*website/nc.qmd|t19780.8947260582s||0|file|local|vector|||0.417||System command quarto failed
-website|stem|af0c9ba1d54dabf3|5b59fa68b246b88b|4b61e772dd58b826|-385122080|docs*index.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19786.609809659s|e920f4b7ffbcb73e|19329839|file|local|vector|||9.19||
+website|stem|fddc10797d6661a9|5b59fa68b246b88b|4b61e772dd58b826|-385122080|docs*index.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19786.6144168407s|24fb3615c1d286ff|19329872|file|local|vector|||9.108||
