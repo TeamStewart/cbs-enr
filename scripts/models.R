@@ -19,7 +19,8 @@ execute_model <- function(data, state, party, office, time){
         vote_mode == "Early Voting" ~ "early_voting",
         vote_mode == "Other" ~ 'other'
       )
-    )
+    ) |>
+    filter(candidate_party == .env$party & str_detect(race_name, office))
   
   # make analysis tables
   analysis_precinct <- results |>
@@ -33,6 +34,8 @@ execute_model <- function(data, state, party, office, time){
       precinct_pct_party_election_day = mode_total_election_day / precinct_total_reg,
       precinct_reported = precinct_total_turnout > 0) |>
     select(cbs_region, jurisdiction, precinct_id, virtual_precinct, precinct_reported,
+           precinct_total_turnout, precinct_total_election_day = mode_total_election_day, 
+           precinct_total_early = mode_total_early_voting, precinct_total_absentee = mode_total_absentee,
            precinct_pct_party_election_day, precinct_pct_party_election_day_lag,
            precinct_total_party_reg, precinct_total_reg, precinct_pct_party_black,
            precinct_pct_party_white, precinct_pct_party_nonwhite, precinct_pct_black,
@@ -66,7 +69,13 @@ execute_model <- function(data, state, party, office, time){
   county_output <- analysis_precinct |> group_by(cbs_region, jurisdiction) |>
     summarise(
       precincts_reported = sum(precinct_reported, na.rm = T),
-      precinct_pct_reported = precincts_reported / n_distinct(precinct_id)) |> ungroup() |>
+      precinct_pct_reported = precincts_reported / n_distinct(precinct_id),
+      county_total_turnout = sum(precinct_total_turnout, na.rm = T),
+      county_total_early = sum(precinct_total_early, na.rm = T),
+      county_total_absentee = sum(precinct_total_absentee, na.rm = T),
+      county_total_election_day = sum(precinct_total_election_day, na.rm = T)
+      # current counts of election day, absentee, early votes
+      ) |> ungroup() |>
     mutate(timestamp = timestamp)
   
   # ====================================
@@ -246,17 +255,44 @@ make_plots <- function(estimates_cumulative_file_path){
   
   plotting_vars <- colnames(cumulative_file)[str_detect(colnames(cumulative_file),"estimate")]
   
+  # retrieve current statewide totals of vote types, use case_when to assign to "current"
+  
   for(variable in plotting_vars){
     message(sprintf("plotting: %s", variable))
+    
+    # Prep for adding an hline for current total of vote category
+    if(variable %in% c('estimate_eday_eday_lagged', 'estimate_eday_party_demo', 'estimate_eday_demo')){
+      current_total <- sum(cumulative_file$county_total_election_day[cumulative_file$timestamp == max(cumulative_file$timestamp)])
+      current_estimate <- sum(cumulative_file[[variable]][cumulative_file$timestamp == max(cumulative_file$timestamp)])
+      current_label <- 'Election Day'
+      current_color <- 'darkgreen'
+    } else if(variable %in% c('estimate_absentee_absentee_lagged', 'estimate_absentee_party_demo', 'estimate_absentee_demo')){
+      current_total <- sum(cumulative_file$county_total_absentee[cumulative_file$timestamp == max(cumulative_file$timestamp)])
+      current_estimate <- sum(cumulative_file[[variable]][cumulative_file$timestamp == max(cumulative_file$timestamp)])
+      current_label <- 'Absentee'
+      current_color <- 'purple'
+    } else if(variable %in% c('estimate_early_early_lagged', 'estimate_early_party_demo', 'estimate_early_demo')){
+      current_total <- sum(cumulative_file$county_total_early[cumulative_file$timestamp == max(cumulative_file$timestamp)])
+      current_estimate <- sum(cumulative_file[[variable]][cumulative_file$timestamp == max(cumulative_file$timestamp)])
+      current_label <- 'Early'
+      current_color <- 'orange'
+    }
+    
     jpeg(filename = sprintf("model_summaries/%s_%s_%s_cumlative.jpeg",state,office,variable),width = 6, height = 4, units = 'in', res = 600)
-    print(cumulative_file |> group_by(timestamp) |>
-      summarise(total = sum(!!sym(variable), na.rm = T)) |>
-      ungroup() |>
-      ggplot(aes(x = timestamp, y = total)) +
-      geom_point() +
-      geom_line() +
-      theme_bw(base_family = "StyreneB-Regular") +
-      labs(y = 'Estimated Vote', x = "Report Time", title = variable))
+    print(
+      cumulative_file |> group_by(timestamp) |>
+        summarise(total = sum(!!sym(variable), na.rm = T)) |>
+        ungroup() |>
+        ggplot(aes(x = timestamp, y = total)) +
+        geom_point() +
+        geom_line() +
+        geom_hline(aes(yintercept = current_total, linetype = 'dotted'), color = current_color) +
+        theme_bw(base_family = "StyreneB-Regular") +
+        theme(plot.subtitle = element_text(color = current_color), legend.position = "none") +
+        labs(y = 'Estimated Vote', x = "Report Time", 
+             title = variable, subtitle = sprintf("Current %s Total: %i. %s Estimate: %i", current_label, current_total, current_label, round(current_estimate,0)),
+             caption = "Horizontal line indicates current reported total. Points indicate model estimate at given time.")
+      )
     dev.off()
   }
 }
