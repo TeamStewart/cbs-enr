@@ -131,3 +131,18 @@ data[, .(count = sum(`Total Votes`)), by = c("Contest Name", "Choice Party", "Ch
   cols_align(align = "center")
 
 ```
+
+# Model Plots
+
+```{r}
+#| output: asis
+
+img_files <- fs::dir_ls("model_summaries/", glob="*.jpeg")
+
+for (i in img_files){
+  cat("## ", str_remove_all(i, "NC\\_|model_summaries/|\\_cumlative\\.jpeg"), "\n\n", sep = "")
+  cat("![](../",i,")\n\n", sep = "")
+}
+
+```
+
