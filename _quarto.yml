@@ -27,3 +27,4 @@ format:
     echo: false
     message: false
     warning: false
+    cache: false

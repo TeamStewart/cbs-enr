@@ -124,7 +124,7 @@ general_table <- function(data, state, county, type, timestamp) {
     cols_align(align = "center")
 }
 
-download_file <- function(url, local_path){
+download_file <- function(url, local_path, time){
   
   download.file(url, destfile = local_path)
   
