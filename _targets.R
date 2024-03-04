@@ -20,8 +20,8 @@ tar_option_set(
                "marginaleffects","rlang"),
   memory = "transient",
   format = "qs",
-  garbage_collection = TRUE
-  #,error = "null"
+  garbage_collection = TRUE,
+  error = "null"
 )
 
 tar_config_set(
@@ -57,5 +57,5 @@ list(
     names = c(state, county, type)
   ),
   # finally, build the website
-  tar_quarto(website)
+  tar_quarto(website,cue = tar_cue(mode = 'always'))
 )

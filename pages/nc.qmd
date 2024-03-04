@@ -20,7 +20,7 @@ library(targets)
 
 # Main Results
 
-Download results file here.
+Last updated: `r lubridate::ymd_hms(targets::tar_read(time_NC_ALL_primary))`
 
 ```{r}
 
