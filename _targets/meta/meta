@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|74ae7d5bcdd541b1|||||||||||||||
+.Random.seed|object|3e2be63d28773d41|||||||||||||||
 cbs_NC_ALL_primary|stem|6d89639447f53027|524cc46e3c882873|177af73ff696a8ed|-470314479||t19785.9244064855s|6ecad65e5876bb44|47698|qs|local|vector|||48.316||
 cbs_TX_BEXAR_primary|stem|6dd71d12008128c1|7435327d9e2de65e|d5fa619ff571ddde|-2059598560||t19785.9238434703s|de1c6d017cb4e8a8|38|qs|local|vector|||0.029||
 clean_nc|function|0fefd98e2a2a924d|||||||||||||||
@@ -10,12 +10,16 @@ download_file|function|a06f644b6d8fbe10|||||||||||||||
 download_urls|object|f582ea2ce585503f|||||||||||||||
 downloads|stem||bb43f46ccc40adfa|15ab2c3ac6b93508|2030425047||t19782.6407305725s||0|file|local|vector|||0.101|downloaded length 0  reported length 0. cannot open URL httpsresults.enr.clarityelections.comGAFulton113728295245reportsdetailxml.zip HTTP status was 403 Forbidden|cannot open URL httpsresults.enr.clarityelections.comGAFulton113728295245reportsdetailxml.zip
 downloads_url|stem|a2f44efec2dc6d3b|3f2d3fd4ef21e9b0|ef46db3751d8e999|1737535127|https://results.enr.clarityelections.com/GA/Fulton/113728/295245/reports/detailxml.zip*https://results.enr.clarityelections.com/GA/DeKalb/113712/294104/reports/detailxml.zip*https://results.enr.clarityelections.com/GA/Cobb/113701/293769/reports/detailxml.zip*http://dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip|t19782.6412877079s||0|url|local|vector|||0.024||
+execute_model|function|c2d813f1c158a8f7|||||||||||||||
 file_NC_ALL_primary|stem|15c8276642380275|fade7ce6c1f5ab55|1956ce223113f4f2|1276302190|data/raw/nc_primary.zip|t19784.7940671334s|cc4e3b2fe0845108|3180897|file|local|vector|||2.514||
 file_TX_BEXAR_primary|stem|3b402ac4da5db69c|cfef4927913124ff|1956ce223113f4f2|1074556057|data/raw/tx_bexar_primary_22.csv|t19782.8949736327s|f38abba0cd5e595e|33059617|file|local|vector|||4.27||
 general_table|function|a0ac33dba7710eb8|||||||||||||||
 get_timestamp|function|29a43dda74f0fd16|||||||||||||||
 link_NC_ALL_primary|stem|8ec7a7d12c0ff464|310b1fee88b86b0a|ef46db3751d8e999|1993870433|https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip|t19784.7940709719s||0|url|local|vector|||0||
-link_TX_BEXAR_primary|stem|f45bf520b50c8e73|6913bda81adb58d6|ef46db3751d8e999|-82700294|https://elections.bexar.org/DocumentCenter/View/38047/March-1-2022-Precinct-by-Precinct-Report-CSV|t19785.9238361859s||0|url|local|vector|||0.124||
+link_TX_BEXAR_primary|stem|c5d48943c11be815|6913bda81adb58d6|ef46db3751d8e999|-82700294|https://elections.bexar.org/DocumentCenter/View/38047/March-1-2022-Precinct-by-Precinct-Report-CSV|t19786.6091561228s||0|url|local|vector|||0.145||
+make_plots|function|925e43c8ed9f4764|||||||||||||||
+models_NC_ALL_primary|stem|ac6d1a5c43a7d754|5971d4086721122c|49fb519235814ef3|-105069344||t19786.6010073449s|9fa22936a48c6396|205538|qs|local|vector|||8.752||
+models_TX_BEXAR_primary|stem|6dd71d12008128c1|74ce8ec064fd5d4c|a5bb1ee5e468e822|1682918788||t19786.6009022256s|de1c6d017cb4e8a8|38|qs|local|vector|||0.001||
 nc|pattern|7931a2d8aebe8b16|e46f5aae5c933405||-1056935304||||0|url|local|vector||nc_0aa13609|0||
 nc_0aa13609|branch|f7a563f2f630ac18|e46f5aae5c933405|ef46db3751d8e999|-1550475816|https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/absentee_20240305.zip|t19780.711828457s||0|url|local|vector|nc||0||
 nc_clean|stem|7a65e41576ac315b|aa3c846203c47b77|3e1778fcd4e6dcd8|-851081912||t19781.7959482045s|44a08368a86000b2|371719|qs|local|vector|||2.114||
@@ -26,6 +30,8 @@ nc_raw|stem|15c8276642380275|5fb8ba7f37e98ffe|181b5cf29401b2ef|-502808543|data/r
 nc_raw_url|stem|8ec7a7d12c0ff464|fe083c12c6abd8b9|ef46db3751d8e999|-460463670|http://dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip|t19780.8725664885s||0|url|local|vector|||0.24||
 process_data|function|6f0d1b0ba4767582|||||||||||||||
 process_nc|stem|7a65e41576ac315b|99029ee0ca4037b4|cee21b8246d4cdc2|-1769199928||t19780.7214232093s|44a08368a86000b2|371719|qs|local|vector|||1.566||
+produce_estimates|function|5c44c1cde7d276f8|||||||||||||||
+run_models|function|b419ddd673126967|||||||||||||||
 scrape_ga|function|64c482262c1d6291|||||||||||||||
 scrape_nc|function|0bde5f44f38a3630|||||||||||||||
 scrape_tx|function|a97ee126fbed4f45|||||||||||||||
@@ -45,4 +51,4 @@ values_tbl|object|e00f26dc29bd1249|||||||||||||||
 values_time|object|a0d66e6214118ae7|||||||||||||||
 web_index|stem||1c6f95369459c3d1|ef46db3751d8e999|1341562904|index.html*index.qmd|t19780.8928358997s||0|file|local|vector|||||_paths_ missing files index.html
 web_nc|stem||b9fcd47a3d07e4b1|bf94d0b3d488a2a3|1510801000|website/nc.html*website/nc.qmd|t19780.8947260582s||0|file|local|vector|||0.417||System command quarto failed
-website|stem|7d708fa5638e78a1|b6f492e51aad25b0|4b61e772dd58b826|-385122080|docs*index.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml|t19784.8860560463s|9404cb26ab2b912f|4742|file|local|vector|||9.731||
+website|stem|af0c9ba1d54dabf3|5b59fa68b246b88b|4b61e772dd58b826|-385122080|docs*index.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19786.609809659s|e920f4b7ffbcb73e|19329839|file|local|vector|||9.19||
