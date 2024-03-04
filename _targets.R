@@ -10,9 +10,10 @@ library(tarchetypes)
 suppressMessages(library(tidyverse))
 
 source("scripts/functions.R")
-source("scripts/models.R")
+# source("scripts/models.R")
 
-options(timeout = max(300, getOption("timeout")))
+options(timeout = max(300, getOption("timeout")),
+        readr.show_col_types = FALSE)
 
 tar_option_set(
   packages = c("data.table", "tidyverse", "gt", "xml2", "aws.s3", "jsonlite", "fixest", "googledrive",
@@ -53,6 +54,7 @@ list(
     tar_target(clean, process_data(state, county, type, time, path = raw_path, success = file)),
     tar_target(tbl_all, general_table(clean, state, county, type, time)),
     tar_target(cbs, convert_cbs(clean, state, county, type, time, upload=TRUE)),
+    tar_target(models, run_models(clean, state, time)),
     names = c(state, county, type)
   ),
   # finally, build the website

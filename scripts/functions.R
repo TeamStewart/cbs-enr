@@ -1,4 +1,5 @@
 source("scripts/scrapers.R")
+source("scripts/models.R")
 
 process_data <- function(state, county, type, timestamp, path = NULL, success = NULL) {
   
@@ -225,5 +226,23 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   }
 
   return(formatted)
+  
+}
+
+run_models <- function(data, st, timestamp){
+  
+  if (st == "TX"){
+    return(NULL)
+  }
+  
+  data |> 
+    filter(str_detect(race_name, "^Governor|President"), candidate_party %in% c("Democrat", "Republican")) |> 
+    nest(.by = c(state, race_name, candidate_party)) |> 
+    rename(
+      party = candidate_party,
+      office = race_name
+    ) |> 
+    mutate(time = timestamp) |> 
+    pwalk(execute_model)
   
 }
