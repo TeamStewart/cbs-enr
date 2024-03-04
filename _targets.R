@@ -21,6 +21,7 @@ tar_option_set(
   memory = "transient",
   format = "qs",
   garbage_collection = TRUE
+  #,error = "null"
 )
 
 tar_config_set(
@@ -30,15 +31,13 @@ tar_config_set(
 
 # generate the lookup table with important information for each state
 values <- tibble(
-  state = c("NC", "TX"),
-  county = c("ALL", "BEXAR"),
+  state = c("NC"),
+  county = c("ALL"),
   type = "primary",
   raw_url = c(
-    "https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip", 
-    "https://elections.bexar.org/DocumentCenter/View/38047/March-1-2022-Precinct-by-Precinct-Report-CSV"),
+    "https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip"),
   raw_path = c(
-    "data/raw/nc_primary.zip",
-    "data/raw/tx_bexar_primary_22.csv"
+    "data/raw/nc_primary.zip"
   )
 )
 

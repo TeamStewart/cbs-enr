@@ -24,7 +24,7 @@ Download results file here.
 
 ```{r}
 
-targets::tar_read(tbl_all_NC_primary)
+targets::tar_read(tbl_all_NC_ALL_primary)
 
 ```
 

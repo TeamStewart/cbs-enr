@@ -11,7 +11,7 @@ website:
     pinned: true
     left: 
       - pages/nc.qmd
-      - pages/tx.qmd
+      # - pages/tx.qmd
       
 date: last-modified
 date-format: "MMMM D YYYY, hh:mm:ss a z"

@@ -21,7 +21,7 @@ process_data <- function(state, county, type, timestamp, path = NULL, success = 
 get_timestamp <- function(state, county, type) {
   nc_timestamp <- function() {
     read_xml("https://s3.amazonaws.com/dl.ncsbe.gov?delimiter=/&prefix=ENRS/2024_03_05/") |>
-      as_list() |>
+      xml2::as_list() |>
       pluck("ListBucketResult", function(x) x[names(x) == "Contents"]) |>
       map(
         ~ tibble(
@@ -39,7 +39,7 @@ get_timestamp <- function(state, county, type) {
   if (state == "NC" & type == "primary"){
     return(nc_timestamp())
   } else if (state == "TX"){
-    return(nc_timestamp())
+    return(NULL)
   }
 }
 
@@ -155,6 +155,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   formatted <- data |> 
     filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
+    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican")) |>
     filter(candidate_party %in% c("Democrat", "Republican")) |> 
     mutate(
       jCde = case_when(
@@ -197,13 +198,14 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
     nest(key = c(eDate, st, eType, jType, jCde, ofc, cnty, pcnt, pcntUUID)) |> 
     mutate(key2 = key) |> 
     unnest(cols = key2) |> 
-    mutate(key = map(key, unbox)) |>
+    mutate(key = map(key, jsonlite::unbox)) |>
     select(eDate, jType, real_precinct, key, pcntName, candidates, jCde, ts, st, ofc, eType, pcntUUID, cnty)
   
-  write_json(formatted, sprintf("data/cbs_format/%s/%s_%s_latest.json", state, county, type))
+  jsonlite::write_json(formatted, sprintf("data/cbs_format/%s/%s_%s_latest.json", state, county, type))
   
   data |> 
     filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
+    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican")) |>
     filter(candidate_party %in% c("Democrat", "Republican")) |> 
     write_csv(sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type))
   
@@ -220,8 +222,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
     
     drive_put(media = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
               path = "https://drive.google.com/drive/folders/1mRGSpxHzfgF6pkXqOUPHvDmyG7QQUywM",
-              name = "nc_results.csv") |> 
-      drive_share_anyone()
+              name = "nc_results.csv")
     
   }
 

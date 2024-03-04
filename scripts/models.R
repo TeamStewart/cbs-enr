@@ -19,8 +19,7 @@ execute_model <- function(data, state, party, office, time){
         vote_mode == "Early Voting" ~ "early_voting",
         vote_mode == "Other" ~ 'other'
       )
-    ) |>
-    filter(candidate_party == .env$party & str_detect(race_name, office))
+    )
   
   # make analysis tables
   analysis_precinct <- results |>
@@ -74,6 +73,7 @@ execute_model <- function(data, state, party, office, time){
       county_total_early = sum(precinct_total_early, na.rm = T),
       county_total_absentee = sum(precinct_total_absentee, na.rm = T),
       county_total_election_day = sum(precinct_total_election_day, na.rm = T)
+      #county_total_election_day = 1000
       # current counts of election day, absentee, early votes
       ) |> ungroup() |>
     mutate(timestamp = timestamp)
@@ -277,6 +277,7 @@ make_plots <- function(estimates_cumulative_file_path){
       current_label <- 'Early'
       current_color <- 'orange'
     }
+    
     
     jpeg(filename = sprintf("model_summaries/%s_%s_%s_cumlative.jpeg",state,office,variable),width = 6, height = 4, units = 'in', res = 600)
     print(

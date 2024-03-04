@@ -6,7 +6,7 @@ title: "Texas"
 
 ```{r}
 
-targets::tar_read(tbl_all_TX_BEXAR_primary)
+#targets::tar_read(tbl_all_TX_BEXAR_primary)
 
 ```
 
