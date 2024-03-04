@@ -10,11 +10,13 @@ library(tarchetypes)
 suppressMessages(library(tidyverse))
 
 source("scripts/functions.R")
+source("scripts/models.R")
 
 options(timeout = max(300, getOption("timeout")))
 
 tar_option_set(
-  packages = c("data.table", "tidyverse", "gt", "xml2", "aws.s3", "jsonlite", "fixest", "googledrive"),
+  packages = c("data.table", "tidyverse", "gt", "xml2", "aws.s3", "jsonlite", "fixest", "googledrive",
+               "marginaleffects","rlang"),
   memory = "transient",
   format = "qs",
   garbage_collection = TRUE
