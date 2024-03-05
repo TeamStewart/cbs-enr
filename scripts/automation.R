@@ -21,11 +21,12 @@ while (TRUE) {
   execute_script()
 
   # push and commit to git
-  # to get this to work, (1) run config(user.name='<git user>', user.email="<git user email")
-  # (2) run git config --global http.followRedirects true
+  # to get this to work, (1) https://docs.ropensci.org/git2r/reference/cred_token.html
+  # (2) https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+  # (3) run git config --global http.followRedirects true
   git2r::add(path = "*")
   git2r::commit(message = "latest change")
-  git2r::push()
+  git2r::push(credentials = git2r::cred_token())
   
   Sys.sleep(900)  # Sleep for 15 minutes (900 seconds)
 }
