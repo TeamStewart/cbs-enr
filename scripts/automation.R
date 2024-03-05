@@ -21,8 +21,11 @@ while (TRUE) {
   execute_script()
 
   # push and commit to git
+  # to get this to work, (1) run config(user.name='<git user>', user.email="<git user email")
+  # (2) run git config --global http.followRedirects true
   git2r::add(path = "*")
   git2r::commit(message = "latest change")
+  git2r::push()
   
   Sys.sleep(900)  # Sleep for 15 minutes (900 seconds)
 }
