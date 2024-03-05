@@ -19,11 +19,12 @@ execute_model <- function(data, state, party, office, time){
         vote_mode == "Early Voting" ~ "early_voting",
         vote_mode == "Other" ~ 'other'
       )
-    )
+    ) |>
+    mutate(precinct_total = ifelse(precinct_total == 0, NA, precinct_total))
   
   # make analysis tables
   analysis_precinct <- results |>
-    summarise(precinct_total = sum(precinct_total, na.rm = T),
+    summarise(precinct_total = sum(precinct_total),
               .by = c(jurisdiction, precinct_id, virtual_precinct, vote_mode)) |>
     pivot_wider(names_from = "vote_mode", values_from = "precinct_total", values_fn = sum, names_prefix = "mode_total_") |> 
     left_join(precinct_xwalk) |>
@@ -43,13 +44,13 @@ execute_model <- function(data, state, party, office, time){
     ungroup()
   
   analysis_county <- results |>
-    summarise(county_total = sum(precinct_total, na.rm = T),
+    summarise(county_total = sum(precinct_total),
               .by = c(jurisdiction, vote_mode)) |>
     pivot_wider(names_from = "vote_mode", values_from = "county_total", values_fn = sum, names_prefix = "mode_total_") |> 
     left_join(county_xwalk) |>
     rowwise() |>
     mutate(
-      county_total_party_turnout = sum(c_across(starts_with("mode_total")), na.rm = TRUE),
+      county_total_party_turnout = sum(c_across(starts_with("mode_total"))),
       county_pct_party_election_day = mode_total_election_day / county_total_reg,
       county_pct_party_absentee = mode_total_absentee / county_total_reg,
       county_pct_party_early = mode_total_early_voting / county_total_reg,
@@ -73,40 +74,8 @@ execute_model <- function(data, state, party, office, time){
       county_total_early = sum(precinct_total_early, na.rm = T),
       county_total_absentee = sum(precinct_total_absentee, na.rm = T),
       county_total_election_day = sum(precinct_total_election_day, na.rm = T)
-      #county_total_election_day = 1000
-      # current counts of election day, absentee, early votes
       ) |> ungroup() |>
     mutate(timestamp = timestamp)
-  
-  # ====================================
-  # START OF FAKE DATA CREATION
-  # ====================================
-  analysis_precinct <- analysis_precinct |>
-    mutate(precinct_pct_party_election_day = case_when(
-      # randomly set some counties to missing
-      str_detect(jurisdiction, "M") ~ NA_real_,
-      # randomly set some precincts to missing
-      str_detect(precinct_id, "M") ~ NA_real_,
-      # normalize the election day results to be somewhat near the lagged versions
-      .default = precinct_pct_party_election_day_lag + runif(n=n())/5
-    ))
-
-  analysis_county <- analysis_county |>
-    mutate(county_pct_party_absentee = case_when(
-      # randomly set some counties to missing
-      str_detect(jurisdiction, "M") ~ NA_real_,
-      # normalize the election day results to be somewhat near the lagged versions
-      .default = county_pct_party_absentee_lag + runif(n=n())/5
-    ),
-    county_pct_party_early = case_when(
-      # randomly set some counties to missing
-      str_detect(jurisdiction, "M") ~ NA_real_,
-      # normalize the election day results to be somewhat near the lagged versions
-      .default = county_pct_party_early_lag + runif(n=n())/5
-    ))
-  # ====================================
-  # END OF FAKE DATA
-  # ====================================
   
   # Execute models
   ## Election day turnout - region FE
