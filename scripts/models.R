@@ -64,8 +64,13 @@ execute_model <- function(data, state, party, office, time){
            county_pct_white, county_pct_nonwhite) |> 
     ungroup()
   
+  ### FIX
+  county_output <- analysis_precinct |> group_by(jurisdiction) |> 
+    mutate(cbs_region = if_else(is.na(cbs_region), first(na.omit(cbs_region)), cbs_region)) %>%
+    ungroup()
+  
   # Prepare for output tables
-  county_output <- analysis_precinct |> group_by(cbs_region, jurisdiction) |>
+  county_output <- county_output |> group_by(cbs_region, jurisdiction) |>
     summarise(
       precincts_reported = sum(precinct_reported, na.rm = T),
       precinct_pct_reported = precincts_reported / n_distinct(precinct_id),
