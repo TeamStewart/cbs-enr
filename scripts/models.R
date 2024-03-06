@@ -114,7 +114,7 @@ execute_model <- function(data, state, party, office, time){
   
   estimate_early_early_lagged <- produce_estimates(model = early_early_lagged, analysis_table = analysis_county)
   estimate_early_party_demo <- produce_estimates(model = early_party_demo, analysis_table = analysis_county)
-  estimate_early_demo <- estimate_early_early_lagged <- produce_estimates(model = early_demo, analysis_table = analysis_county)
+  estimate_early_demo <- produce_estimates(model = early_demo, analysis_table = analysis_county)
   
   output <- county_output |>
     left_join(estimate_eday_eday_lagged |> rename(estimate_eday_eday_lagged = county_vote), by = "jurisdiction") |>
