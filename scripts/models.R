@@ -31,7 +31,7 @@ execute_model <- function(data, state, party, office, time){
     rowwise() |>
     mutate(
       precinct_total_turnout = sum(c_across(starts_with("mode_total")), na.rm = TRUE),
-      precinct_pct_party_election_day = mode_total_election_day / precinct_total_reg,
+      precinct_pct_party_election_day = mode_total_election_day / precinct_total_party_reg,
       precinct_reported = precinct_total_turnout > 0) |>
     select(cbs_region, jurisdiction, precinct_id, virtual_precinct, precinct_reported,
            precinct_total_turnout, precinct_total_election_day = mode_total_election_day, 
@@ -50,9 +50,9 @@ execute_model <- function(data, state, party, office, time){
     rowwise() |>
     mutate(
       county_total_party_turnout = sum(c_across(starts_with("mode_total"))),
-      county_pct_party_election_day = mode_total_election_day / county_total_reg,
-      county_pct_party_absentee = mode_total_absentee / county_total_reg,
-      county_pct_party_early = mode_total_early_voting / county_total_reg,
+      county_pct_party_election_day = mode_total_election_day / county_total_party_reg,
+      county_pct_party_absentee = mode_total_absentee / county_total_party_reg,
+      county_pct_party_early = mode_total_early_voting / county_total_party_reg,
       county_pct_party_turnout = county_total_party_turnout / county_total_party_reg) |>
     select(cbs_region, jurisdiction, 
            county_pct_party_election_day, county_pct_party_election_day_lag,
