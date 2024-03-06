@@ -231,12 +231,12 @@ make_plots <- function(estimates_cumulative_file_path){
     # Prep for adding an hline for current total of vote category
     if(variable %in% c('estimate_eday_eday_lagged', 'estimate_eday_party_demo', 'estimate_eday_demo')){
       current_total <- sum(cumulative_file$county_total_election_day[cumulative_file$timestamp == max(cumulative_file$timestamp)])
-      current_estimate <- sum(cumulative_file[[variable]][cumulative_file$timestamp == max(cumulative_file$timestamp)])
+      current_estimate <- sum(cumulative_file[[variable]][cumulative_file$timestamp == max(cumulative_file$timestamp)], na.rm=T)
       current_label <- 'Election Day'
       current_color <- 'darkgreen'
     } else if(variable %in% c('estimate_absentee_absentee_lagged', 'estimate_absentee_party_demo', 'estimate_absentee_demo')){
       current_total <- sum(cumulative_file$county_total_absentee[cumulative_file$timestamp == max(cumulative_file$timestamp)])
-      current_estimate <- sum(cumulative_file[[variable]][cumulative_file$timestamp == max(cumulative_file$timestamp)])
+      current_estimate <- sum(cumulative_file[[variable]][cumulative_file$timestamp == max(cumulative_file$timestamp)], na.rm=T)
       current_label <- 'Absentee'
       current_color <- 'purple'
     } else if(variable %in% c('estimate_early_early_lagged', 'estimate_early_party_demo', 'estimate_early_demo')){
