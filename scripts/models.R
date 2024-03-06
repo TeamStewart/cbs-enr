@@ -90,8 +90,8 @@ execute_model <- function(data, state, party, office, time){
   
   ## Election day turnout - county FE
   eday_eday_lagged_county <- feols(precinct_pct_party_election_day ~ precinct_pct_party_election_day_lag | jurisdiction, data = analysis_precinct|> filter(!virtual_precinct), weights = ~precinct_total_party_reg)
-  eday_party_demo_county <- feols(precinct_pct_party_election_day ~ precinct_pct_party_black + precinct_pct_party_white | jurisdiction|> filter(!virtual_precinct), data = analysis_precinct,weights = ~precinct_total_party_reg)
-  eday_demo_county <- feols(precinct_pct_party_election_day ~ precinct_pct_black + precinct_pct_white | jurisdiction, data = analysis_precinct|> filter(!virtual_precinct), weights = ~precinct_total_party_reg)
+  eday_party_demo_county <- feols(precinct_pct_party_election_day ~ precinct_pct_party_black + precinct_pct_party_white | jurisdiction, data = analysis_precinct |> filter(!virtual_precinct),weights = ~precinct_total_party_reg)
+  eday_demo_county <- feols(precinct_pct_party_election_day ~ precinct_pct_black + precinct_pct_white | jurisdiction, data = analysis_precinct |> filter(!virtual_precinct), weights = ~precinct_total_party_reg)
   
   ## Absentee
   absentee_absentee_lagged <- feols(county_pct_party_absentee ~ county_pct_party_absentee_lag, data = analysis_county, weights = ~county_total_party_reg)
