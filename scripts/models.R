@@ -169,7 +169,8 @@ produce_estimates <- function(model = NULL, county_fe_model = NULL, region_fe_mo
       ), .by = jurisdiction) |> 
       # sum to the county level
       summarise(county_vote = sum(precinct_vote), .by = jurisdiction) |> 
-      as_tibble()
+      as_tibble() |>
+      filter(!is.na(county_vote))
     
     # predictions for remaining counties, based on their region averages
     preds_regions <- analysis_table |> 
