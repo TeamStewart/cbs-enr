@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|d4447a4564bbfa7d|||||||||||||||
+.Random.seed|object|03df79331ad2cbf1|||||||||||||||
 cbs_NC_ALL_primary|stem|1d6bc2e6b83c93c7|524cc46e3c882873|1c22f48bbc1f10af|-470314479||t19788.1817978443s|b62ecb1ae4a5cd08|317878|qs|local|vector|||22.437||
 clean_NC_ALL_primary|stem|0050dedc576aedf8|08126506255da4b1|6717e2125a260e8a|-1977966922||t19788.1813779947s|d07dd8e099883a1c|1501502|qs|local|vector|||2.5||
 convert_cbs|function|9d4f3e3200cff513|||||||||||||||
@@ -10,7 +10,7 @@ general_table|function|a0ac33dba7710eb8|||||||||||||||
 get_timestamp|function|66e032364af9aca6|||||||||||||||
 link_NC_ALL_primary|stem|655b64b5d3c19ff5|310b1fee88b86b0a|ef46db3751d8e999|1993870433|https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip|t19788.181339522s||0|url|local|vector|||0||
 make_plots|function|a609efb72d326be7|||||||||||||||
-models_NC_ALL_primary|stem|b569ae764f806bf3|5971d4086721122c|80f2d27da5ffd929|-105069344||t19788.1815329844s|b7dc2e383fb3e717|290148|qs|local|vector|||11.954||
+models_NC_ALL_primary|stem|b569ae764f806bf3|5971d4086721122c|80f2d27da5ffd929|-105069344||t19788.1858202197s|b7dc2e383fb3e717|290148|qs|local|vector|||12.545||
 process_data|function|6f0d1b0ba4767582|||||||||||||||
 produce_estimates|function|bfe6a04d73b57ece|||||||||||||||
 run_models|function|9e81a4466dd8adaf|||||||||||||||
@@ -18,6 +18,6 @@ scrape_ga|function|64c482262c1d6291|||||||||||||||
 scrape_nc|function|0bde5f44f38a3630|||||||||||||||
 scrape_tx|function|a97ee126fbed4f45|||||||||||||||
 tbl_all_NC_ALL_primary|stem|ca64d5c091995f85|665d5a2ab0ca5187|1060a83bfc60bf9b|-1694778160||t19788.1813901509s|cfa06eb0f972cc00|1573007|qs|local|vector|||0.383||
-time_NC_ALL_primary|stem|d0ba03fb68806399|a9759abaa70b0489|61ad66aa8d898b08|-549433972||t19788.1813348522s|00c37fc0166b3b11|58|qs|local|vector|||0.523||
+time_NC_ALL_primary|stem|d0ba03fb68806399|a9759abaa70b0489|61ad66aa8d898b08|-549433972||t19788.1856678745s|00c37fc0166b3b11|58|qs|local|vector|||0.561||
 values|object|ba667049282efbde|||||||||||||||
-website|stem|27ebff73ca0f237a|f287c1c213abdbbe|8875d03d32f24a7c|-385122080|docs*index.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19788.1820683555s|9a9b71467810834c|29343548|file|local|vector|||22.878||
+website|stem|965a792227733dec|f287c1c213abdbbe|8875d03d32f24a7c|-385122080|docs*index.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19788.1860915727s|6363c2244e35dc04|29413221|file|local|vector|||23.031||
