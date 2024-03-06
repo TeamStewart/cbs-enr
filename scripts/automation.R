@@ -10,7 +10,7 @@ library(tarchetypes)
 library(lubridate)
 
 # Function to execute the R script
-execute <- function() {
+execute_script <- function() {
   message(sprintf("%s: Running tar_make", format(Sys.time(), format="%Y-%m-%d %H:%M:%S")))
   # Use the system function to execute the R scrip
   tar_make()
