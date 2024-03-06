@@ -24,7 +24,7 @@ execute_model <- function(data, state, party, office, time){
   
   # make analysis tables
   analysis_precinct <- results |>
-    summarise(precinct_total = sum(precinct_total),
+    summarise(precinct_total = sum(precinct_total, na.rm = T),
               .by = c(jurisdiction, precinct_id, virtual_precinct, vote_mode)) |>
     pivot_wider(names_from = "vote_mode", values_from = "precinct_total", values_fn = sum, names_prefix = "mode_total_") |> 
     left_join(precinct_xwalk) |>
@@ -44,7 +44,7 @@ execute_model <- function(data, state, party, office, time){
     ungroup()
   
   analysis_county <- results |>
-    summarise(county_total = sum(precinct_total),
+    summarise(county_total = sum(precinct_total, na.rm = T),
               .by = c(jurisdiction, vote_mode)) |>
     pivot_wider(names_from = "vote_mode", values_from = "county_total", values_fn = sum, names_prefix = "mode_total_") |> 
     left_join(county_xwalk) |>
