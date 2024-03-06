@@ -40,7 +40,6 @@ execute_model <- function(data, state, party, office, time){
            precinct_total_party_reg, precinct_total_reg, precinct_pct_party_black,
            precinct_pct_party_white, precinct_pct_party_nonwhite, precinct_pct_black,
            precinct_pct_white, precinct_pct_nonwhite) |>
-    filter(!virtual_precinct) |> 
     ungroup()
   
   analysis_county <- results |>
