@@ -47,9 +47,9 @@ values <- tibble(
 list(
   tar_map(
     values,
-    tar_target(time, get_timestamp(state, county, type)),
+    tar_target(time, get_timestamp(state, county, type), cue = tar_cue(mode = 'always')),
     tar_target(link, command = raw_url, format = "url"),
-    tar_target(file, download_file(raw_url, raw_path, time), format = "file", cue = tar_cue(mode = 'always')),
+    tar_target(file, download_file(raw_url, raw_path, time), format = "file"),
     tar_target(clean, process_data(state, county, type, time, path = raw_path, success = file)),
     tar_target(tbl_all, general_table(clean, state, county, type, time)),
     tar_target(cbs, convert_cbs(clean, state, county, type, time, upload=TRUE)),
