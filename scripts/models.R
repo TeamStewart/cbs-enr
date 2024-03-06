@@ -3,7 +3,7 @@
 # used in `scripts/functions.R`
 # ============================
 execute_model <- function(data, state, party, office, time){
-  timestamp <- ymd_hms(time, tz = "America/New_York")
+  timestamp <- ymd_hms(now(), tz = "America/New_York")
   
   # Read in crosswalks
   precinct_xwalk <- read_csv(sprintf("data/input/%s/precinct_party_xwalk.csv",state)) |> filter(.data$party == .env$party)
