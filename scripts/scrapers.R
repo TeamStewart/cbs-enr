@@ -64,13 +64,40 @@ scrape_nc <- function(state, county, type, path, timestamp) {
 
 scrape_ga <- function(state, county, type, path = NULL){
   
-  request(path) |> 
-    req_headers("Accept" = "application/zip") |> 
-    req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-    req_perform(re, path = sprintf("data/raw/ga_%s.zip", county))
+  get_counties <- function(clarity_num){
+    
+    version <- request(sprintf("https://results.enr.clarityelections.com/GA/%s/current_ver.txt", clarity_num)) |> 
+      req_headers("Accept" = "application/txt") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_perform() |> 
+      resp_body_string() 
+    
+    request(sprintf("https://results.enr.clarityelections.com/GA/%s/%s/json/en/electionsettings.json", clarity_num, version)) |> 
+      req_headers("Accept" = "application/json") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_perform() |> 
+      resp_body_json() |>
+      pluck("settings", "electiondetails", "participatingcounties") |> 
+      as_tibble_col() |> 
+      unnest(cols = value) |> 
+      separate_wider_delim(cols = value, delim = "|", names = c("county", "sitenum", "version", "timestamp", "unknown")) |> 
+      mutate(url = sprintf("https://results.enr.clarityelections.com/GA/%s/%s/%s/reports/detailtxt.zip", county, sitenum, version)) |> 
+      select(county, version, timestamp, url)
+    
+  }
   
-  d <- unzip(sprintf("data/raw/ga_%s.zip", county)) |> 
-    xml2::read_xml()
+  get_clean <- function(county, url){
+    
+    request(url) |> 
+      req_headers("Accept" = "application/zip") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_perform(re, path = sprintf("data/raw/ga_%s.zip", county))
+    
+    d <- unzip(sprintf("data/raw/ga_%s.zip", county)) |> 
+      xml2::read_xml()
+  }
+  
+  
     
 }
 
