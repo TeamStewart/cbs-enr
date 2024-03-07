@@ -1,0 +1,13 @@
+---
+title: "Georgia"
+---
+
+# Georgia Primary Results
+
+```{r}
+
+targets::tar_read(tbl_all_GA_ALL_primary)
+
+```
+
+

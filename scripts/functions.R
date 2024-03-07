@@ -161,6 +161,8 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   if (state == "TX"){
     return(NULL)
+  } else if (state == "GA"){
+    return("NOT IMPLEMENTED")
   }
   
   lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv",

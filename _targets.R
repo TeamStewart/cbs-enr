@@ -10,7 +10,6 @@ library(tarchetypes)
 suppressMessages(library(tidyverse))
 
 source("scripts/functions.R")
-# source("scripts/models.R")
 
 options(timeout = max(300, getOption("timeout")),
         readr.show_col_types = FALSE)
@@ -47,14 +46,12 @@ list(
   tar_map(
     values,
     tar_target(time, get_timestamp(state, county, type), cue = tar_cue(mode = 'always')),
-    # tar_target(link, command = raw_url, format = "url"),
-    # tar_target(file, download_file(raw_url, raw_path, time), format = "file"),
     tar_target(clean, process_data(state, county, type, time, path = path)),
     tar_target(tbl_all, general_table(clean, state, county, type, time)),
-    tar_target(cbs, convert_cbs(clean, state, county, type, time, upload=TRUE)),
-    tar_target(models, run_models(clean, state, time), cue = tar_cue(mode='always')),
+    tar_target(cbs, convert_cbs(clean, state, county, type, time, upload=FALSE)),
+    tar_target(models, run_models(clean, state, time)),
     names = c(state, county, type)
   ),
   # finally, build the website
-  tar_quarto(website,cue = tar_cue(mode = 'always'))
+  tar_quarto(website, cue = tar_cue(mode = 'always'))
 )

@@ -1,10 +1,31 @@
 [
   {
+    "objectID": "pages/tx.html",
+    "href": "pages/tx.html",
+    "title": "Texas",
+    "section": "",
+    "text": "Bexar County General Results"
+  },
+  {
+    "objectID": "pages/ga.html",
+    "href": "pages/ga.html",
+    "title": "Georgia",
+    "section": "",
+    "text": "Georgia Primary Results\n\n\n\n\n\n2024 Primary Results in All, GA\nLast updated: 2022-06-06 16:56:47"
+  },
+  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "2024 Election Results",
     "section": "",
     "text": "This is a test website for the 2024 Election Results. Use the links on the top to switch between states."
+  },
+  {
+    "objectID": "pages/nc.html",
+    "href": "pages/nc.html",
+    "title": "North Carolina",
+    "section": "",
+    "text": "Last updated: 2024-03-06 01:13:03\n\n\n\n\n\n2024 Primary Results in All, NC\nLast updated: 2024-03-06 01:13:03"
   },
   {
     "objectID": "pages/nc.html#governor-democrat_estimate_absentee_absentee_lagged",

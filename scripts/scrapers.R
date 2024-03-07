@@ -114,7 +114,25 @@ scrape_ga <- function(path = NULL){
     lapply(fread) |> 
     rbindlist(use.names = TRUE) |> 
     as_tibble() |> 
-    mutate(state = "GA")
+    mutate(state = "GA",
+           virtual_precinct = FALSE) |> 
+    mutate(across(where(is.character), ~ na_if(.x, ""))) |> 
+    mutate(vote_mode = case_match(
+      vote_mode, 
+      "Election Day Votes" ~ "Election Day",
+      "Advanced Voting Votes" ~ "Early Voting",
+      "Absentee by Mail Votes" ~ "Absentee/Mail",
+      "Provisional Votes" ~ "Provisional",
+      .default = NA_character_
+    )) |> 
+    mutate(candidate_party = case_match(
+      candidate_party,
+      "REP" ~ "Republican",
+      "DEM" ~ "Democrat",
+      .default = candidate_party
+    )) |> 
+    select(state, race_id, race_name, candidate_name, candidate_party, 
+           jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
 
 }
 
