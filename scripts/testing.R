@@ -31,10 +31,23 @@ request(counties$url[1]) |>
   req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
   req_perform(path = sprintf("data/raw/ga_%s.zip", county))
 
+contests <- read_xml("data/raw/detail.xml") |> 
+  xml_find_all("//Contest") |> 
+  xml_attrs() |> 
+  transpose() |> 
+  enframe() |> 
+  mutate(col = c("key", "text", "voteFor", "isQuestion", "precinctsReporting", "precinctsReported")) |> 
+  select(-name) |> 
+  pivot_wider(names_from = col, values_from = value) |> 
+  unnest(cols = everything())
+
 d <- read_xml("data/raw/detail.xml") |> 
+  xml_find_first("//Contest") |> 
   as_list() |> 
-  pluck("ElectionResult", function(x) x[names(x) == "Contest"]) |> 
-  as_tibble_col()
+  as_tibble_col() 
+  mutate(attrs = map(value, ~ pluck(.x, "Precinct") |> attributes())) 
+  unnest(cols = attrs) |> 
+  slice_head(n=1)
 
 d |> 
   unnest_longer(value) |> 
@@ -80,3 +93,10 @@ d <- fread(path,
   mutate(virtual_precinct = FALSE) |> 
   filter(max(precinct_total) > 0, .by = c(race_name, candidate_name, candidate_party)) |> 
   select(state, jurisdiction, precinct_id, race_name, candidate_name, candidate_party, vote_mode, precinct_total, virtual_precinct)
+
+d <- read_csv("data/raw/detail.csv")
+
+source("scripts/functions.R")
+
+process_data("GA", "ALL", "primary", tar_read(time_GA_ALL_primary), path = "113667")
+
