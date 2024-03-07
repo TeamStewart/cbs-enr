@@ -1,14 +1,14 @@
 source("scripts/scrapers.R")
 source("scripts/models.R")
 
-process_data <- function(state, county, type, timestamp, path = NULL, success = NULL) {
+process_data <- function(state, county, type, timestamp, path = NULL) {
   
   if (state == "NC"){
     d <- scrape_nc(state, county, type, path, timestamp)
   } else if (state == "TX"){
     d <- scrape_tx(state, county, type, path, timestamp)
   } else if (state == "GA"){
-    d <- scrape_ga(state, county, type, path, timestamp)
+    d <- scrape_ga(path)
   }
   
   # save latest version
@@ -145,12 +145,14 @@ general_table <- function(data, state, county, type, timestamp) {
     cols_align(align = "center")
 }
 
-download_file <- function(url, local_path, time){
-  
-  download.file(url, destfile = local_path)
-  
-  return(local_path)
-  
+download_file <- function(state, url, local_path, time){
+  if (state == "NC"){
+    download.file(url, destfile = local_path)
+    
+    return(local_path)
+  } else {
+    return(local_path)
+  }
 }
 
 convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
@@ -253,7 +255,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
 
 run_models <- function(data, st, timestamp){
   
-  if (st == "TX"){
+  if (st == "TX" | st == "GA"){
     return(NULL)
   }
   

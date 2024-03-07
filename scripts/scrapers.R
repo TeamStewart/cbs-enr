@@ -1,7 +1,9 @@
 scrape_nc <- function(state, county, type, path, timestamp) {
   
+  download.file(path, destfile = "data/raw/nc_primary.zip")
+  
   # read the data
-  fread(cmd = sprintf("unzip -p %s", path)) |>
+  fread(cmd = "unzip -p data/raw/nc_primary.zip") |>
     mutate(
       timestamp = timestamp,
       state = "NC",
@@ -62,9 +64,9 @@ scrape_nc <- function(state, county, type, path, timestamp) {
   # return(data)
 }
 
-scrape_ga <- function(state, county, type, path = NULL){
+scrape_ga <- function(path = NULL){
   
-  get_counties <- function(clarity_num){
+  get_counties <- function(counties = tibble(), clarity_num){
     
     version <- request(sprintf("https://results.enr.clarityelections.com/GA/%s/current_ver.txt", clarity_num)) |> 
       req_headers("Accept" = "application/txt") |> 
@@ -81,24 +83,39 @@ scrape_ga <- function(state, county, type, path = NULL){
       as_tibble_col() |> 
       unnest(cols = value) |> 
       separate_wider_delim(cols = value, delim = "|", names = c("county", "sitenum", "version", "timestamp", "unknown")) |> 
-      mutate(url = sprintf("https://results.enr.clarityelections.com/GA/%s/%s/%s/reports/detailtxt.zip", county, sitenum, version)) |> 
+      mutate(county_url = sprintf("https://results.enr.clarityelections.com/GA/%s/%s/current_ver.txt", county, sitenum)) |> 
+      mutate(version = map_chr(county_url, ~ request(.x) |> 
+                             req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+                             req_perform() |> 
+                             resp_body_string()
+                           )) |> 
+      mutate(url = sprintf("https://results.enr.clarityelections.com/GA/%s/%s/%s/reports/detailxml.zip", county, sitenum, version)) |> 
       select(county, version, timestamp, url)
+      # drop counties that we already have the latest version for
+      # anti_join(counties, join_by(county, version))
     
   }
   
-  get_clean <- function(county, url){
-    
-    request(url) |> 
-      req_headers("Accept" = "application/zip") |> 
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-      req_perform(re, path = sprintf("data/raw/ga_%s.zip", county))
-    
-    d <- unzip(sprintf("data/raw/ga_%s.zip", county)) |> 
-      xml2::read_xml()
-  }
+  counties <- get_counties(clarity_num = path) |> 
+    mutate(local = str_c("data/raw/ga/", county, ".zip"))
   
+  map(counties$url, ~ request(.x) |> 
+        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
+        req_retry(max_tries = 5) |> 
+        req_perform(path = str_c("data/raw/ga/", str_extract(.x, "(GA/)(.*?)(/)", group = 2), ".zip"))
+      ) |> 
+    suppressMessages()
   
-    
+  reticulate::source_python("scripts/clarity_scraper.py")
+  
+  pull(counties, local) |> walk(get_data)
+  
+  list.files("data/raw/ga", pattern = "*.csv", full.names = TRUE) |> 
+    lapply(fread) |> 
+    rbindlist(use.names = TRUE) |> 
+    as_tibble() |> 
+    mutate(state = "GA")
+
 }
 
 scrape_tx <- function(state, county, type, path = NULL, timestamp){
