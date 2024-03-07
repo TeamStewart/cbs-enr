@@ -7,6 +7,8 @@ process_data <- function(state, county, type, timestamp, path = NULL, success = 
     d <- scrape_nc(state, county, type, path, timestamp)
   } else if (state == "TX"){
     d <- scrape_tx(state, county, type, path, timestamp)
+  } else if (state == "GA"){
+    d <- scrape_ga(state, county, type, path, timestamp)
   }
   
   # save latest version
@@ -36,10 +38,29 @@ get_timestamp <- function(state, county, type) {
       str_replace_all("-|:| ", "_")
   }
   
+  ga_timestamp <- function(){
+    
+    version <- request("https://results.enr.clarityelections.com/GA/113667/current_ver.txt") |> 
+      req_headers("Accept" = "application/txt") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_perform() |> 
+      resp_body_string()
+    
+    request(sprintf("https://results.enr.clarityelections.com/GA/113667/%s/json/en/electionsettings.json", version)) |> 
+      req_headers("Accept" = "application/json") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_perform() |> 
+      resp_body_json() |>
+      pluck("websiteupdatedat") |> 
+      dmy_hms(tz = "America/New_York")
+  }
+  
   if (state == "NC" & type == "primary"){
     return(nc_timestamp())
   } else if (state == "TX"){
     return(NULL)
+  } else if (state == "GA"){
+    return(ga_timestamp())
   }
 }
 
