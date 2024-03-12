@@ -178,8 +178,8 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
            provisionalVote = Provisional,
            cName = candidate_name) |> 
     # importantly, ensure that Aggregated is here
-    bind_rows(tibble(Aggregated = numeric())) |> 
-    mutate(cVote = edayVote + earlyInPersonVote + earlyByMailVote + provisionalVote + Aggregated,
+    # bind_rows(tibble(Aggregated = numeric())) |> 
+    mutate(cVote = edayVote + earlyInPersonVote + earlyByMailVote + provisionalVote,
            ts = ymd_hms(timestamp, tz = "America/New_York") |> force_tz(tzone = "UTC") |> sf()) |> 
     select(eDate, jType, real_precinct, st, eType, jCde, ofc, cnty, pcnt, pcntUUID, pcntName,
            cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote,
