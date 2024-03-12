@@ -114,12 +114,17 @@ scrape_ga <- function(path = NULL){
   counties <- get_counties(clarity_num = path) |> 
     mutate(local = str_c("data/raw/ga/", county, ".zip"))
   
-  map(counties$url, ~ request(.x) |> 
+  download_file <- function(url){
+    tryCatch(
+      request(url) |> 
         req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
         req_retry(max_tries = 5) |> 
-        req_perform(path = str_c("data/raw/ga/", str_extract(.x, "(GA/)(.*?)(/)", group = 2), ".zip"))
-      ) |> 
-    suppressMessages()
+        req_perform(path = str_c("data/raw/ga/", str_extract(url, "(GA/)(.*?)(/)", group = 2), ".zip")),
+      httr2_http_404 = function(cnd) NULL
+    )
+  }
+  
+  map(counties$url, download_file)
   
   source_python("scripts/clarity_scraper.py")
   
@@ -137,11 +142,14 @@ scrape_ga <- function(path = NULL){
       "Undervotes" ~ "Undervote",
       "Overvotes" ~ "Overvote",
       .default = candidate_name
-    )) |> 
+    ),
+    # remove incumbent indicator from Biden
+    candidate_name = str_remove_all(candidate_name, "\\(I\\)$") |> str_trim() |> str_squish()
+    ) |> 
     mutate(vote_mode = case_match(
       vote_mode, 
       "Election Day Votes" ~ "Election Day",
-      "Advanced Voting Votes" ~ "Early Voting",
+      "Advance Voting Votes" ~ "Early Voting",
       "Absentee by Mail Votes" ~ "Absentee/Mail",
       "Provisional Votes" ~ "Provisional",
       c("Undervotes", "Overvotes") ~ "Aggregated",
@@ -152,6 +160,13 @@ scrape_ga <- function(path = NULL){
       "REP" ~ "Republican",
       "DEM" ~ "Democrat",
       .default = candidate_party
+    )) |> 
+    mutate(race_name = case_match(
+      race_name,
+      "President of the US - Rep" ~ "President-Republican",
+      "President of the US - Dem" ~ "President-Democrat",
+      "President of the US/Presidente de los Estados Unidos - Rep" ~ "President-Republican", 
+      "President of the US/Presidente de los Estados Unidos - Dem" ~ "President-Democrat",
     )) |> 
     select(state, race_id, race_name, candidate_name, candidate_party, 
            jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)

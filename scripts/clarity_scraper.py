@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import zipfile
 
@@ -612,20 +613,27 @@ def _flatten_result(r):
     }
 
 def get_data(path):
+    try:
+        with zipfile.ZipFile(path, 'r') as zip_ref:
+            file_names = zip_ref.namelist()
+            # Assuming the file you want to parse is the first file in the archive
+            file_to_parse = file_names[0]
+            try:
+                zip_ref.extract(file_to_parse, '../data/raw/ga/')
+            except zipfile.BadZipFile as e:
+                print(f"Failed to extract zip file: {e} at {path}")
 
-    with zipfile.ZipFile(path, 'r') as zip_ref:
-        file_names = zip_ref.namelist()
-        # Assuming the file you want to parse is the first file in the archive
-        file_to_parse = file_names[0]
-        zip_ref.extract(file_to_parse, '../data/raw/ga/')
+            zip_ref.extract(file_to_parse, '../data/raw/ga/')
 
-    p = Parser()
-    p.parse(f'../data/raw/ga/{file_to_parse}')
+        p = Parser()
+        p.parse(f'../data/raw/ga/{file_to_parse}')
 
-    df = pd.DataFrame([_flatten_result(r) for r in p.results if r.jurisdiction is not None])
-    df['jurisdiction'] = p.region
+        df = pd.DataFrame([_flatten_result(r) for r in p.results if r.jurisdiction is not None])
+        df['jurisdiction'] = p.region
 
-    df.to_csv(path.replace(".zip", ".csv"), index=False)
+        df.to_csv(path.replace(".zip", ".csv"), index=False)
+    except Exception as e:
+        print(f"Failed to process zip file: {e} at {path}")
 
 # define main function that runs using argument from terminal
 # def main():
