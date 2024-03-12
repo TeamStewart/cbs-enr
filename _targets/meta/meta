@@ -1,7 +1,7 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|53b4b2e40482e641|||||||||||||||
-cbs_GA_ALL_primary|stem|5c36c536cb009fee|0495c68762c56ee4|5b68df83705dfcf9|120147270||t19794.9152289365s|0e48c9bb64e12e78|97817|qs|local|vector|||6.982||
-cbs_NC_ALL_primary|stem|9b6a5ce8e6ab2549|c9ae98c504028fb4|47249d541eb71bbb|-470314479||t19794.915355201s|43d8af10ab5e73f2|322540|qs|local|vector|||10.474||
+.Random.seed|object|e1229f78accbf755|||||||||||||||
+cbs_GA_ALL_primary|stem|5c36c536cb009fee|d23224eb63260962|5b68df83705dfcf9|120147270||t19794.924934411s|0e48c9bb64e12e78|97817|qs|local|vector|||15.913||
+cbs_NC_ALL_primary|stem|9b6a5ce8e6ab2549|524cc46e3c882873|47249d541eb71bbb|-470314479||t19794.9251788653s|43d8af10ab5e73f2|322540|qs|local|vector|||20.576||
 clean_GA_ALL_primary|stem|d5e71126591e7786|f24b66dde1dedeb4|d983c32b9fd2d0de|379986048||t19794.9113222903s|9f89a44b82fedffa|71551|qs|local|vector|||14.477||
 clean_NC_ALL_primary|stem|7ce03f56f8fdac8d|7ae9aaa6b0feee10|e1abc3965ba4b5c9|-1977966922||t19794.9028041882s|602781718036c962|1512187|qs|local|vector|||3.377||
 convert_cbs|function|a0129513b7e1c03b|||||||||||||||
@@ -22,7 +22,7 @@ scrape_nc|function|e1df0f8d7a82803b|||||||||||||||
 scrape_tx|function|a97ee126fbed4f45|||||||||||||||
 tbl_all_GA_ALL_primary|stem|97451efb8c643365|40ab588bec5c23fe|59e8c752ceb8f706|-610827490||t19794.911406817s|d520b3b528bca9c0|94334|qs|local|vector|||0.109||
 tbl_all_NC_ALL_primary|stem|7ba20eaace2a03c8|665d5a2ab0ca5187|2918d8e6a7f1ab27|-1694778160||t19794.9028193138s|647f2b8862d6b332|1584546|qs|local|vector|||0.366||
-time_GA_ALL_primary|stem|d92496deb43bcc09|51730d3b047e0a5c|b66096db723c3059|218392198||t19794.9232587254s|00c37fc0166b3b11|58|qs|local|vector|||0.736||
-time_NC_ALL_primary|stem|5505f0773b0318dd|a9759abaa70b0489|b66096db723c3059|-549433972||t19794.923265145s|00c37fc0166b3b11|58|qs|local|vector|||0.447||
+time_GA_ALL_primary|stem|d92496deb43bcc09|51730d3b047e0a5c|b66096db723c3059|218392198||t19794.9247350041s|00c37fc0166b3b11|58|qs|local|vector|||1.202||
+time_NC_ALL_primary|stem|5505f0773b0318dd|a9759abaa70b0489|b66096db723c3059|-549433972||t19794.9247480363s|00c37fc0166b3b11|58|qs|local|vector|||1.022||
 values|object|dd2130e8087b59d1|||||||||||||||
-website|stem|5cb5116b1ccb2fa7|d566fd872c12e114|4788dfe4d7ad9963|-385122080|docs*index.qmd*pages/ga.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19794.9235515768s|bf8a6f7bd687fc91|30280199|file|local|vector|||24.306||
+website|stem|54efe00aeaf07738|d566fd872c12e114|4788dfe4d7ad9963|-385122080|docs*index.qmd*pages/ga.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19794.9254725834s|bf8a6f7bd687fc91|30280199|file|local|vector|||24.961||
