@@ -147,7 +147,8 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   lookup_cands <- read_csv("data/input/cbs_lookups/primary_cands.csv", 
                            show_col_types = FALSE,
                            col_select = c(-candidate_lastname),
-                           col_types = cols(.default = col_character()))
+                           col_types = cols(.default = col_character())) |>
+    filter(.data$state == lookup_state_name(.env$state))
   
   formatted <- data |> 
     filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
@@ -238,4 +239,14 @@ run_models <- function(data, st, timestamp){
     mutate(time = timestamp) |> 
     pwalk(execute_model)
   
+}
+
+lookup_state_name <- function(abbreviation) {
+  # Find the index of the abbreviation in state.abb
+  index <- match(abbreviation, state.abb)
+  
+  # Use the index to retrieve the corresponding state name from state.name
+  state_name <- ifelse(!is.na(index), state.name[index], NA)
+  
+  return(state_name)
 }
