@@ -40,13 +40,13 @@ get_timestamp <- function(state, county, type) {
   
   ga_timestamp <- function(){
     
-    version <- request("https://results.enr.clarityelections.com/GA/113667/current_ver.txt") |> 
+    version <- request("https://results.enr.clarityelections.com/GA/120015/current_ver.txt") |> 
       req_headers("Accept" = "application/txt") |> 
       req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
       req_perform() |> 
       resp_body_string()
     
-    request(sprintf("https://results.enr.clarityelections.com/GA/113667/%s/json/en/electionsettings.json", version)) |> 
+    request(sprintf("https://results.enr.clarityelections.com/GA/120015/%s/json/en/electionsettings.json", version)) |> 
       req_headers("Accept" = "application/json") |> 
       req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
       req_perform() |> 
