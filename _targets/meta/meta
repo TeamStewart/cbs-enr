@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|a72de7e38561be95|||||||||||||||
+.Random.seed|object|d478314d6d11d8c0|||||||||||||||
 cbs_GA_ALL_primary|stem|fc34abd16504c99b|d23224eb63260962|348426de43685d85|120147270||t19794.979488903s|1f4b4e39ca000822|90951|qs|local|vector|||14.266||
 cbs_NC_ALL_primary|stem|1bf774a65783c4fc|524cc46e3c882873|3e2c2d6436fefa53|-470314479||t19794.9460966118s|b80e6937a135c74e|322584|qs|local|vector|||21.235||
 clean_GA_ALL_primary|stem|f6fb9d83bcb20e3b|f24b66dde1dedeb4|d56bce064bee8298|379986048||t19794.9793217886s|6037fad09bb3d596|76944|qs|local|vector|||12.201||
@@ -23,7 +23,7 @@ scrape_nc|function|e1df0f8d7a82803b|||||||||||||||
 scrape_tx|function|a97ee126fbed4f45|||||||||||||||
 tbl_all_GA_ALL_primary|stem|2bab6123baf9ff4a|40ab588bec5c23fe|feb8f3fff2c74f78|-610827490||t19794.9794926904s|7136ad889065d84b|101385|qs|local|vector|||0.115||
 tbl_all_NC_ALL_primary|stem|1b175420837ed775|665d5a2ab0ca5187|f0ad57efc9a19114|-1694778160||t19794.9458460313s|7aae2a3bb3ba8016|1584138|qs|local|vector|||0.347||
-time_GA_ALL_primary|stem|505d60299174cb55|51730d3b047e0a5c|a12d653149b0c53d|218392198||t19794.9791724322s|00c37fc0166b3b11|58|qs|local|vector|||0.713||
-time_NC_ALL_primary|stem|04d7d1aa14c5ba84|a9759abaa70b0489|a12d653149b0c53d|-549433972||t19794.9791782842s|00c37fc0166b3b11|58|qs|local|vector|||0.402||
+time_GA_ALL_primary|stem|505d60299174cb55|51730d3b047e0a5c|a12d653149b0c53d|218392198||t19794.9833650066s|00c37fc0166b3b11|58|qs|local|vector|||0.93||
+time_NC_ALL_primary|stem|04d7d1aa14c5ba84|a9759abaa70b0489|a12d653149b0c53d|-549433972||t19794.9833717136s|00c37fc0166b3b11|58|qs|local|vector|||0.403||
 values|object|dd2130e8087b59d1|||||||||||||||
-website|stem|d61b5da218e9987f|d566fd872c12e114|481aa5f87c8172a8|-385122080|docs*index.qmd*pages/ga.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19794.9797977655s|ab99fb6bcc5b024a|30281294|file|local|vector|||25.858||
+website|stem|f39b9b6344807962|d566fd872c12e114|481aa5f87c8172a8|-385122080|docs*index.qmd*pages/ga.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19794.983675335s|ab99fb6bcc5b024a|30281294|file|local|vector|||25.736||
