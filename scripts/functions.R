@@ -52,7 +52,8 @@ get_timestamp <- function(state, county, type) {
       req_perform() |> 
       resp_body_json() |>
       pluck("websiteupdatedat") |> 
-      dmy_hms(tz = "America/New_York")
+      dmy_hms(tz = "America/New_York") |>
+      str_replace_all("-|:| ", "_")
   }
   
   if (state == "NC" & type == "primary"){
@@ -196,7 +197,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   data |> 
     filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
-    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican")) |>
+    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican") |> str_trim() |> str_squish()) |>
     filter(candidate_party %in% c("Democrat", "Republican")) |> 
     write_csv(sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type))
   

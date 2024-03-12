@@ -167,6 +167,7 @@ scrape_ga <- function(path = NULL){
       "President of the US - Dem" ~ "President-Democrat",
       "President of the US/Presidente de los Estados Unidos - Rep" ~ "President-Republican", 
       "President of the US/Presidente de los Estados Unidos - Dem" ~ "President-Democrat",
+      .default = race_name
     )) |> 
     select(state, race_id, race_name, candidate_name, candidate_party, 
            jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
