@@ -11,6 +11,7 @@ website:
     pinned: true
     left: 
       - pages/nc.qmd
+      - pages/ga.qmd
       # - pages/tx.qmd
       
 date: ""

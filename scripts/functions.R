@@ -1,19 +1,21 @@
 source("scripts/scrapers.R")
 source("scripts/models.R")
 
-process_data <- function(state, county, type, timestamp, path = NULL, success = NULL) {
+process_data <- function(state, county, type, timestamp, path = NULL) {
   
   if (state == "NC"){
     d <- scrape_nc(state, county, type, path, timestamp)
   } else if (state == "TX"){
     d <- scrape_tx(state, county, type, path, timestamp)
+  } else if (state == "GA"){
+    d <- scrape_ga(path)
   }
   
   # save latest version
-  write_csv(d, sprintf("data/clean/%s/%s_%s_latest.csv", state, county, type))
+  write_csv(d, sprintf("data/clean/%s/%s_%s_%s_latest.csv", state, state, county, type))
 
   # save timestamped version
-  write_csv(d, sprintf("data/clean/%s/%s_%s_%s.csv", state, county, type, timestamp))
+  write_csv(d, sprintf("data/clean/%s/%s_%s_%s_%s.csv", state, state, county, type, timestamp))
   
   return(d)
 }
@@ -36,10 +38,30 @@ get_timestamp <- function(state, county, type) {
       str_replace_all("-|:| ", "_")
   }
   
+  ga_timestamp <- function(){
+    
+    version <- request("https://results.enr.clarityelections.com/GA/113667/current_ver.txt") |> 
+      req_headers("Accept" = "application/txt") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_perform() |> 
+      resp_body_string()
+    
+    request(sprintf("https://results.enr.clarityelections.com/GA/113667/%s/json/en/electionsettings.json", version)) |> 
+      req_headers("Accept" = "application/json") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_perform() |> 
+      resp_body_json() |>
+      pluck("websiteupdatedat") |> 
+      dmy_hms(tz = "America/New_York") |>
+      str_replace_all("-|:| ", "_")
+  }
+  
   if (state == "NC" & type == "primary"){
     return(nc_timestamp())
   } else if (state == "TX"){
     return(NULL)
+  } else if (state == "GA"){
+    return(ga_timestamp())
   }
 }
 
@@ -97,24 +119,6 @@ general_table <- function(data, state, county, type, timestamp) {
       rows = candidate_party == "Republican",
       palette = c("white", "#E8ADA4", "#F59181", "#FF715A", "#F6573E")
     ) |>
-    # data_color(
-    #   columns = count,
-    #   target_columns = everything(),
-    #   rows = !(candidate_party %in% c("Democrat", "Republican")),
-    #   palette = c("white", "#d8d5ad", "#d0cc9c", "#c8c38a", "#c0ba79", "#b8b168", "#b0a856", "#a19a4c")
-    # ) |>
-    # data_color(
-    #   columns = count,
-    #   target_columns = everything(),
-    #   rows = candidate_party == "Constitution",
-    #   palette = c("white", "#d8d5ad", "#d0cc9c", "#c8c38a", "#c0ba79", "#b8b168", "#b0a856", "#a19a4c")
-    # ) |>
-    # data_color(
-    #   columns = count,
-    #   target_columns = everything(),
-    #   rows = candidate_party == "Green",
-    #   palette = c("white", "#e7f6ee", "#d0eede", "#b9e5ce", "#a2ddbd", "#8bd4ad", "#73cc9d", "#5cc38c", "#45bb7c", "#2eb26c", "#17aa5c")
-    # ) |>
     tab_style(
       style = list(
         cell_text(align = "center", v_align = "middle")
@@ -124,20 +128,12 @@ general_table <- function(data, state, county, type, timestamp) {
     cols_align(align = "center")
 }
 
-download_file <- function(url, local_path, time){
-  
-  download.file(url, destfile = local_path)
-  
-  return(local_path)
-  
-}
-
 convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   sf <- suppressMessages(stamp("2022-11-09T11:26:47Z"))
   
   if (state == "TX"){
-    return(NULL)
+    return("NOT IMPLEMENTED")
   }
   
   lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv",
@@ -155,25 +151,19 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   formatted <- data |> 
     filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
-    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican")) |>
+    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican"),
+           jurisdiction = str_to_upper(jurisdiction)) |>
     filter(candidate_party %in% c("Democrat", "Republican")) |> 
     mutate(
       jCde = case_when(
         str_detect(race_name, "^US House") ~ str_extract(race_name, "\\d+") |> as.numeric() |> as.character(),
         .default = "0"
-      ),
-      # race_name = case_when(
-      #   str_detect(race_name, regex("^US House", ignore_case=TRUE)) ~ "House",
-      #   str_detect(race_name, regex("^Secretary of State", ignore_case=TRUE)) ~ "Secretary Of State",
-      #   str_detect(race_name, regex("^Attorney General", ignore_case=TRUE)) ~ "Attorney General",
-      #   str_detect(race_name, regex("^Lieutenant Governor", ignore_case=TRUE)) ~ "Lt Governor",
-      #   .default = race_name
-      # )
+      )
     ) |> 
     rename(
       office = race_name
     ) |> 
-    mutate(eDate = "2024-03-05",
+    mutate(eDate = "2024-03-12",
            real_precinct = ifelse(virtual_precinct, "N", "Y")) |> 
     left_join(lookup_geo, join_by(state == postalCode, jurisdiction == county_name)) |> 
     left_join(lookup_cands, join_by(office, jCde, candidate_party, candidate_name)) |> 
@@ -188,11 +178,13 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
            earlyByMailVote = `Absentee/Mail`,
            provisionalVote = Provisional,
            cName = candidate_name) |> 
+    # importantly, ensure that Aggregated is here
+    # bind_rows(tibble(Aggregated = numeric())) |> 
     mutate(cVote = edayVote + earlyInPersonVote + earlyByMailVote + provisionalVote,
            ts = ymd_hms(timestamp, tz = "America/New_York") |> force_tz(tzone = "UTC") |> sf()) |> 
-    select(eDate, jType, real_precinct, st, eType, jCde, ofc, cnty, pcnt, pcntUUID, pcntName, 
+    select(eDate, jType, real_precinct, st, eType, jCde, ofc, cnty, pcnt, pcntUUID, pcntName,
            cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote,
-           ts) |> 
+           ts) |>
     mutate(across(c(jCde, st, cnty, cId), as.numeric)) |> 
     nest(candidates = c(cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote)) |> 
     nest(key = c(eDate, st, eType, jType, jCde, ofc, cnty, pcnt, pcntUUID)) |> 
@@ -205,24 +197,24 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   data |> 
     filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
-    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican")) |>
+    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican") |> str_trim() |> str_squish()) |>
     filter(candidate_party %in% c("Democrat", "Republican")) |> 
     write_csv(sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type))
   
   if (upload){
     put_object(file = sprintf("data/cbs_format/%s/%s_%s_latest.json", state, county, type),
-               object = "Precincts/20240305-NC-P/nc_results.json",
+               object = sprintf("Precincts/20240312-GA-P/%s_results.json", str_to_lower(state)),
                bucket = "cbsn-elections-external-models",
                multipart = TRUE)
     
     put_object(file = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
-               object = "Precincts/20240305-NC-P/nc_results.csv",
+               object = sprintf("Precincts/20240312-GA-P/%s_results.csv", str_to_lower(state)),
                bucket = "cbsn-elections-external-models",
                multipart = TRUE)
     
     drive_put(media = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
-              path = "https://drive.google.com/drive/folders/1mRGSpxHzfgF6pkXqOUPHvDmyG7QQUywM",
-              name = "nc_results.csv")
+              path = "https://drive.google.com/drive/folders/1nyEtfAnhw-G8e1krk7D4LvOPeBdIY94n",
+              name = sprintf("%s_results.csv", str_to_lower(state)))
     
   }
 
@@ -232,7 +224,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
 
 run_models <- function(data, st, timestamp){
   
-  if (st == "TX"){
+  if (st == "TX" | st == "GA"){
     return(NULL)
   }
   

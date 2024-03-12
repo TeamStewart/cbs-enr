@@ -10,14 +10,13 @@ library(tarchetypes)
 suppressMessages(library(tidyverse))
 
 source("scripts/functions.R")
-# source("scripts/models.R")
 
 options(timeout = max(300, getOption("timeout")),
         readr.show_col_types = FALSE)
 
 tar_option_set(
   packages = c("data.table", "tidyverse", "gt", "xml2", "aws.s3", "jsonlite", "fixest", "googledrive",
-               "marginaleffects","rlang"),
+               "marginaleffects", "rlang", "reticulate", "rvest", "httr2"),
   memory = "transient",
   format = "qs",
   garbage_collection = TRUE,
@@ -31,14 +30,13 @@ tar_config_set(
 
 # generate the lookup table with important information for each state
 values <- tibble(
-  state = c("NC"),
-  county = c("ALL"),
+  state = c("NC", "GA"),
+  county = c("ALL", "ALL"),
   type = "primary",
-  raw_url = c(
-    "https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip"),
-  raw_path = c(
-    "data/raw/nc_primary.zip"
-  )
+  path = c(
+    "https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip",
+    "120015"
+    )
 )
 
 # ========================================
@@ -48,14 +46,12 @@ list(
   tar_map(
     values,
     tar_target(time, get_timestamp(state, county, type), cue = tar_cue(mode = 'always')),
-    tar_target(link, command = raw_url, format = "url"),
-    tar_target(file, download_file(raw_url, raw_path, time), format = "file"),
-    tar_target(clean, process_data(state, county, type, time, path = raw_path, success = file)),
+    tar_target(clean, process_data(state, county, type, time, path = path)),
     tar_target(tbl_all, general_table(clean, state, county, type, time)),
-    tar_target(cbs, convert_cbs(clean, state, county, type, time, upload=TRUE)),
-    tar_target(models, run_models(clean, state, time), cue = tar_cue(mode='always')),
+    tar_target(cbs, convert_cbs(clean, state, county, type, time, upload=FALSE)),
+    # tar_target(models, run_models(clean, state, time)),
     names = c(state, county, type)
   ),
   # finally, build the website
-  tar_quarto(website,cue = tar_cue(mode = 'always'))
+  tar_quarto(website, cue = tar_cue(mode = 'always'))
 )

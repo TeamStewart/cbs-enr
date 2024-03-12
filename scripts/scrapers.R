@@ -1,7 +1,9 @@
 scrape_nc <- function(state, county, type, path, timestamp) {
   
+  download.file(path, destfile = "data/raw/nc_primary.zip")
+  
   # read the data
-  fread(cmd = sprintf("unzip -p %s", path)) |>
+  fread(cmd = "unzip -p data/raw/nc_primary.zip") |>
     mutate(
       timestamp = timestamp,
       state = "NC",
@@ -62,16 +64,114 @@ scrape_nc <- function(state, county, type, path, timestamp) {
   # return(data)
 }
 
-scrape_ga <- function(state, county, type, path = NULL){
+scrape_ga <- function(path = NULL){
   
-  request(path) |> 
-    req_headers("Accept" = "application/zip") |> 
-    req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-    req_perform(re, path = sprintf("data/raw/ga_%s.zip", county))
-  
-  d <- unzip(sprintf("data/raw/ga_%s.zip", county)) |> 
-    xml2::read_xml()
+  get_counties <- function(clarity_num){
     
+    version <- request(sprintf("https://results.enr.clarityelections.com/GA/%s/current_ver.txt", clarity_num)) |> 
+      req_headers("Accept" = "application/txt") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_retry(max_tries = 5) |> 
+      req_perform() |> 
+      resp_body_string() 
+    
+    if (file.exists("data/input/GA/county_versions.csv")) {
+      counties <- read_csv("data/input/GA/county_versions.csv", col_types = "cccc", show_col_types = FALSE)
+    } else {
+      counties <- tibble(county = "", version = "")
+    }
+    
+    cntys <- request(sprintf("https://results.enr.clarityelections.com/GA/%s/%s/json/en/electionsettings.json", clarity_num, version)) |> 
+      req_headers("Accept" = "application/json") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_retry(max_tries = 5) |> 
+      req_perform() |> 
+      resp_body_json() |>
+      pluck("settings", "electiondetails", "participatingcounties") |> 
+      as_tibble_col() |> 
+      unnest(cols = value) |> 
+      separate_wider_delim(cols = value, delim = "|", names = c("county", "sitenum", "version", "timestamp", "unknown")) |> 
+      mutate(county_url = sprintf("https://results.enr.clarityelections.com/GA/%s/%s/current_ver.txt", county, sitenum)) |> 
+      mutate(version = map_chr(county_url, ~ request(.x) |> 
+                             req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+                             req_perform() |> 
+                             resp_body_string()
+                           )) |> 
+      mutate(url = sprintf("https://results.enr.clarityelections.com/GA/%s/%s/%s/reports/detailxml.zip", county, sitenum, version)) |> 
+      select(county, version, timestamp, url) |> 
+      # drop counties where we already have the latest version
+      anti_join(counties, join_by(county, version))
+    
+    # update the version file with the latest versions
+    counties |> 
+      anti_join(cntys, join_by(county, version)) |> 
+      write_csv("data/input/GA/county_versions.csv")
+    
+    return(cntys)
+    
+  }
+  
+  counties <- get_counties(clarity_num = path) |> 
+    mutate(local = str_c("data/raw/ga/", county, ".zip"))
+  
+  download_file <- function(url){
+    tryCatch(
+      request(url) |> 
+        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
+        req_retry(max_tries = 5) |> 
+        req_perform(path = str_c("data/raw/ga/", str_extract(url, "(GA/)(.*?)(/)", group = 2), ".zip")),
+      httr2_http_404 = function(cnd) NULL
+    )
+  }
+  
+  map(counties$url, download_file)
+  
+  source_python("scripts/clarity_scraper.py")
+  
+  pull(counties, local) |> walk(get_data)
+  
+  list.files("data/raw/ga", pattern = "*.csv", full.names = TRUE) |> 
+    lapply(fread) |> 
+    rbindlist(use.names = TRUE) |> 
+    as_tibble() |> 
+    mutate(state = "GA",
+           virtual_precinct = FALSE) |> 
+    mutate(across(where(is.character), ~ na_if(.x, ""))) |> 
+    mutate(candidate_name = case_match(
+      vote_mode,
+      "Undervotes" ~ "Undervote",
+      "Overvotes" ~ "Overvote",
+      .default = candidate_name
+    ),
+    # remove incumbent indicator from Biden
+    candidate_name = str_remove_all(candidate_name, "\\(I\\)$") |> str_trim() |> str_squish()
+    ) |> 
+    mutate(vote_mode = case_match(
+      vote_mode, 
+      "Election Day Votes" ~ "Election Day",
+      "Advance Voting Votes" ~ "Early Voting",
+      "Absentee by Mail Votes" ~ "Absentee/Mail",
+      "Provisional Votes" ~ "Provisional",
+      c("Undervotes", "Overvotes") ~ "Aggregated",
+      .default = NA_character_
+    )) |> 
+    mutate(candidate_party = case_match(
+      candidate_party,
+      "REP" ~ "Republican",
+      "DEM" ~ "Democrat",
+      .default = candidate_party
+    )) |> 
+    mutate(race_name = case_match(
+      race_name,
+      "President of the US - Rep" ~ "President-Republican",
+      "President of the US - Dem" ~ "President-Democrat",
+      "President of the US/Presidente de los Estados Unidos - Rep" ~ "President-Republican", 
+      "President of the US/Presidente de los Estados Unidos - Dem" ~ "President-Democrat",
+      .default = race_name
+    )) |> 
+    select(state, race_id, race_name, candidate_name, candidate_party, 
+           jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
+
 }
 
 scrape_tx <- function(state, county, type, path = NULL, timestamp){
