@@ -199,12 +199,12 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   if (upload){
     put_object(file = sprintf("data/cbs_format/%s/%s_%s_latest.json", state, county, type),
-               object = sprintf("Precincts/20240305-NC-P/%s_results.json", str_to_lower(state)),
+               object = sprintf("Precincts/20240312-GA-P/%s_results.json", str_to_lower(state)),
                bucket = "cbsn-elections-external-models",
                multipart = TRUE)
     
     put_object(file = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
-               object = sprintf("Precincts/20240305-NC-P/%s_results.csv", str_to_lower(state)),
+               object = sprintf("Precincts/20240312-GA-P/%s_results.csv", str_to_lower(state)),
                bucket = "cbsn-elections-external-models",
                multipart = TRUE)
     
