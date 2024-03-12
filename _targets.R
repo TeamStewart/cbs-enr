@@ -49,7 +49,7 @@ list(
     tar_target(clean, process_data(state, county, type, time, path = path)),
     tar_target(tbl_all, general_table(clean, state, county, type, time)),
     tar_target(cbs, convert_cbs(clean, state, county, type, time, upload=FALSE)),
-    tar_target(models, run_models(clean, state, time)),
+    # tar_target(models, run_models(clean, state, time)),
     names = c(state, county, type)
   ),
   # finally, build the website
