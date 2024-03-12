@@ -12,10 +12,10 @@ process_data <- function(state, county, type, timestamp, path = NULL) {
   }
   
   # save latest version
-  write_csv(d, sprintf("data/clean/%s/%s_%s_latest.csv", state, county, type))
+  write_csv(d, sprintf("data/clean/%s/%s_%s_%s_latest.csv", state, state, county, type))
 
   # save timestamped version
-  write_csv(d, sprintf("data/clean/%s/%s_%s_%s.csv", state, county, type, timestamp))
+  write_csv(d, sprintf("data/clean/%s/%s_%s_%s_%s.csv", state, state, county, type, timestamp))
   
   return(d)
 }
