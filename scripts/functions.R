@@ -118,24 +118,6 @@ general_table <- function(data, state, county, type, timestamp) {
       rows = candidate_party == "Republican",
       palette = c("white", "#E8ADA4", "#F59181", "#FF715A", "#F6573E")
     ) |>
-    # data_color(
-    #   columns = count,
-    #   target_columns = everything(),
-    #   rows = !(candidate_party %in% c("Democrat", "Republican")),
-    #   palette = c("white", "#d8d5ad", "#d0cc9c", "#c8c38a", "#c0ba79", "#b8b168", "#b0a856", "#a19a4c")
-    # ) |>
-    # data_color(
-    #   columns = count,
-    #   target_columns = everything(),
-    #   rows = candidate_party == "Constitution",
-    #   palette = c("white", "#d8d5ad", "#d0cc9c", "#c8c38a", "#c0ba79", "#b8b168", "#b0a856", "#a19a4c")
-    # ) |>
-    # data_color(
-    #   columns = count,
-    #   target_columns = everything(),
-    #   rows = candidate_party == "Green",
-    #   palette = c("white", "#e7f6ee", "#d0eede", "#b9e5ce", "#a2ddbd", "#8bd4ad", "#73cc9d", "#5cc38c", "#45bb7c", "#2eb26c", "#17aa5c")
-    # ) |>
     tab_style(
       style = list(
         cell_text(align = "center", v_align = "middle")
@@ -145,23 +127,11 @@ general_table <- function(data, state, county, type, timestamp) {
     cols_align(align = "center")
 }
 
-download_file <- function(state, url, local_path, time){
-  if (state == "NC"){
-    download.file(url, destfile = local_path)
-    
-    return(local_path)
-  } else {
-    return(local_path)
-  }
-}
-
 convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   sf <- suppressMessages(stamp("2022-11-09T11:26:47Z"))
   
   if (state == "TX"){
-    return(NULL)
-  } else if (state == "GA"){
     return("NOT IMPLEMENTED")
   }
   
@@ -186,14 +156,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
       jCde = case_when(
         str_detect(race_name, "^US House") ~ str_extract(race_name, "\\d+") |> as.numeric() |> as.character(),
         .default = "0"
-      ),
-      # race_name = case_when(
-      #   str_detect(race_name, regex("^US House", ignore_case=TRUE)) ~ "House",
-      #   str_detect(race_name, regex("^Secretary of State", ignore_case=TRUE)) ~ "Secretary Of State",
-      #   str_detect(race_name, regex("^Attorney General", ignore_case=TRUE)) ~ "Attorney General",
-      #   str_detect(race_name, regex("^Lieutenant Governor", ignore_case=TRUE)) ~ "Lt Governor",
-      #   .default = race_name
-      # )
+      )
     ) |> 
     rename(
       office = race_name
@@ -236,18 +199,18 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   if (upload){
     put_object(file = sprintf("data/cbs_format/%s/%s_%s_latest.json", state, county, type),
-               object = "Precincts/20240305-NC-P/nc_results.json",
+               object = sprintf("Precincts/20240305-NC-P/%s_results.json", str_to_lower(state)),
                bucket = "cbsn-elections-external-models",
                multipart = TRUE)
     
     put_object(file = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
-               object = "Precincts/20240305-NC-P/nc_results.csv",
+               object = sprintf("Precincts/20240305-NC-P/%s_results.csv", str_to_lower(state)),
                bucket = "cbsn-elections-external-models",
                multipart = TRUE)
     
     drive_put(media = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
-              path = "https://drive.google.com/drive/folders/1mRGSpxHzfgF6pkXqOUPHvDmyG7QQUywM",
-              name = "nc_results.csv")
+              path = "https://drive.google.com/drive/folders/1nyEtfAnhw-G8e1krk7D4LvOPeBdIY94n",
+              name = sprintf("%s_results.csv", str_to_lower(state)))
     
   }
 
