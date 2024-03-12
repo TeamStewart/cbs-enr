@@ -150,7 +150,8 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   formatted <- data |> 
     filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
-    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican")) |>
+    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican"),
+           jurisdiction = str_to_upper(jurisdiction)) |>
     filter(candidate_party %in% c("Democrat", "Republican")) |> 
     mutate(
       jCde = case_when(
@@ -161,7 +162,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
     rename(
       office = race_name
     ) |> 
-    mutate(eDate = "2024-03-05",
+    mutate(eDate = "2024-03-12",
            real_precinct = ifelse(virtual_precinct, "N", "Y")) |> 
     left_join(lookup_geo, join_by(state == postalCode, jurisdiction == county_name)) |> 
     left_join(lookup_cands, join_by(office, jCde, candidate_party, candidate_name)) |> 
@@ -176,11 +177,13 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
            earlyByMailVote = `Absentee/Mail`,
            provisionalVote = Provisional,
            cName = candidate_name) |> 
-    mutate(cVote = edayVote + earlyInPersonVote + earlyByMailVote + provisionalVote,
+    # importantly, ensure that Aggregated is here
+    bind_rows(tibble(Aggregated = numeric())) |> 
+    mutate(cVote = edayVote + earlyInPersonVote + earlyByMailVote + provisionalVote + Aggregated,
            ts = ymd_hms(timestamp, tz = "America/New_York") |> force_tz(tzone = "UTC") |> sf()) |> 
-    select(eDate, jType, real_precinct, st, eType, jCde, ofc, cnty, pcnt, pcntUUID, pcntName, 
+    select(eDate, jType, real_precinct, st, eType, jCde, ofc, cnty, pcnt, pcntUUID, pcntName,
            cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote,
-           ts) |> 
+           ts) |>
     mutate(across(c(jCde, st, cnty, cId), as.numeric)) |> 
     nest(candidates = c(cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote)) |> 
     nest(key = c(eDate, st, eType, jType, jCde, ofc, cnty, pcnt, pcntUUID)) |> 

@@ -66,17 +66,25 @@ scrape_nc <- function(state, county, type, path, timestamp) {
 
 scrape_ga <- function(path = NULL){
   
-  get_counties <- function(counties = tibble(), clarity_num){
+  get_counties <- function(clarity_num){
     
     version <- request(sprintf("https://results.enr.clarityelections.com/GA/%s/current_ver.txt", clarity_num)) |> 
       req_headers("Accept" = "application/txt") |> 
       req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_retry(max_tries = 5) |> 
       req_perform() |> 
       resp_body_string() 
     
-    request(sprintf("https://results.enr.clarityelections.com/GA/%s/%s/json/en/electionsettings.json", clarity_num, version)) |> 
+    if (file.exists("data/input/GA/county_versions.csv")) {
+      counties <- read_csv("data/input/GA/county_versions.csv", col_types = "cccc", show_col_types = FALSE)
+    } else {
+      counties <- tibble(county = "", version = "")
+    }
+    
+    cntys <- request(sprintf("https://results.enr.clarityelections.com/GA/%s/%s/json/en/electionsettings.json", clarity_num, version)) |> 
       req_headers("Accept" = "application/json") |> 
       req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_retry(max_tries = 5) |> 
       req_perform() |> 
       resp_body_json() |>
       pluck("settings", "electiondetails", "participatingcounties") |> 
@@ -90,9 +98,16 @@ scrape_ga <- function(path = NULL){
                              resp_body_string()
                            )) |> 
       mutate(url = sprintf("https://results.enr.clarityelections.com/GA/%s/%s/%s/reports/detailxml.zip", county, sitenum, version)) |> 
-      select(county, version, timestamp, url)
-      # drop counties that we already have the latest version for
-      # anti_join(counties, join_by(county, version))
+      select(county, version, timestamp, url) |> 
+      # drop counties where we already have the latest version
+      anti_join(counties, join_by(county, version))
+    
+    # update the version file with the latest versions
+    counties |> 
+      anti_join(cntys, join_by(county, version)) |> 
+      write_csv("data/input/GA/county_versions.csv")
+    
+    return(cntys)
     
   }
   
@@ -106,7 +121,7 @@ scrape_ga <- function(path = NULL){
       ) |> 
     suppressMessages()
   
-  reticulate::source_python("scripts/clarity_scraper.py")
+  source_python("scripts/clarity_scraper.py")
   
   pull(counties, local) |> walk(get_data)
   
@@ -117,12 +132,19 @@ scrape_ga <- function(path = NULL){
     mutate(state = "GA",
            virtual_precinct = FALSE) |> 
     mutate(across(where(is.character), ~ na_if(.x, ""))) |> 
+    mutate(candidate_name = case_match(
+      vote_mode,
+      "Undervotes" ~ "Undervote",
+      "Overvotes" ~ "Overvote",
+      .default = candidate_name
+    )) |> 
     mutate(vote_mode = case_match(
       vote_mode, 
       "Election Day Votes" ~ "Election Day",
       "Advanced Voting Votes" ~ "Early Voting",
       "Absentee by Mail Votes" ~ "Absentee/Mail",
       "Provisional Votes" ~ "Provisional",
+      c("Undervotes", "Overvotes") ~ "Aggregated",
       .default = NA_character_
     )) |> 
     mutate(candidate_party = case_match(
