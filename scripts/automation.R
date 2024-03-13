@@ -28,5 +28,5 @@ while (TRUE) {
   git2r::commit(message = "latest change")
   git2r::push(credentials = git2r::cred_token())
   
-  Sys.sleep(300)  # Sleep for 5 minutes (300 seconds)
+  Sys.sleep(600)  # Sleep for 10 minutes (600 seconds)
 }
