@@ -52,7 +52,7 @@ get_timestamp <- function(state, county, type) {
       req_perform() |> 
       resp_body_json() |>
       pluck("websiteupdatedat") |> 
-      dmy_hms(tz = "America/New_York") |>
+      mdy_hms(tz = "America/New_York") |>
       str_replace_all("-|:| ", "_")
   }
   
