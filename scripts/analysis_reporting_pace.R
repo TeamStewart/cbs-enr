@@ -251,7 +251,7 @@ dev.off()
 
 ### By party
 batches <- data.frame()
-for(file_path in ga_result_files){
+for(file_path in nc_result_files){
   batch <- read_csv(file_path) |> ungroup()
   
   batch_time <- str_extract(file_path, "[0-9]{4}_[0-9]{2}_[0-9]{2}_[0-9]{2}_[0-9]{2}_[0-9]{2}") |> ymd_hms(tz = "America/New_York") 
@@ -292,7 +292,7 @@ batches_clean <- batches |> ungroup() |>
     ),
     vote_mode = factor(vote_mode) |> fct_relevel("Total", "Election Day", "Early Voting", "Absentee/Mail")
   ) |>
-  filter(!(vote_mode %in% c("Provisional","Aggregated")) & !(timestamp %in% c('2024-03-13 09:42:36', '2024-03-12 18:08:01'))) |>
+  filter(!(vote_mode %in% c("Provisional","Aggregated")) & !(timestamp %in% c('2024-02-01 15:11:28', "2024-03-12 17:05:13", "2024-03-12 18:22:29", "2024-03-13 10:04:22"))) |>
   arrange(timestamp, vote_mode)
 
 total_dem <- batches_clean$total[batches_clean$vote_mode=='Total' & batches_clean$timestamp == max(batches_clean$timestamp) & batches_clean$race_name=='Democrat']
