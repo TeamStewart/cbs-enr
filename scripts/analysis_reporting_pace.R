@@ -26,7 +26,7 @@ for(file_path in ga_result_files){
   batch_summary <- batch |>
     mutate(timestamp = batch_time) |>
     filter(race_name %in% c('President-Republican', 'President-Democrat')) |>
-    group_by(timestamp, race_name, vote_mode) |>
+    group_by(timestamp, vote_mode) |>
     summarise(
       total = sum(precinct_total, na.rm = TRUE),
       .groups = 'drop' # Drop grouping for further manipulation
@@ -34,7 +34,7 @@ for(file_path in ga_result_files){
   
   # Creating a summary for each timestamp and race_name across all vote_modes
   total_summary <- batch_summary |>
-    group_by(timestamp, race_name) |>
+    group_by(timestamp) |>
     summarise(
       total = sum(total, na.rm = TRUE),
       .groups = 'drop' # Drop grouping since we don't need it anymore
@@ -43,43 +43,48 @@ for(file_path in ga_result_files){
   
   # Combining both summaries
   final_summary <- bind_rows(batch_summary, total_summary) |>
-    arrange(timestamp, race_name, desc(vote_mode)) # Optional: arrange the data as needed
+    arrange(timestamp, desc(vote_mode)) # Optional: arrange the data as needed
   
   batches <- rbind(batches, final_summary)
 }
 
 # relabel 
 batches_clean <- batches |> ungroup() |>
-  mutate(
-    race_name = case_match(
-      race_name,
-      "President-Democrat" ~ "Democrat",
-      "President-Republican" ~ "Republican"
-    ),
-    vote_mode = factor(vote_mode) |> fct_relevel("Total", "Election Day", "Early Voting", "Absentee/Mail")
-  ) |>
   filter(!(vote_mode %in% c("Provisional","Aggregated")) & !(timestamp %in% c('2024-03-13 09:42:36', '2024-03-12 18:08:01'))) |>
-  arrange(timestamp, vote_mode) |>
-  group_by(vote_mode, race_name) |>
-  mutate(cumulative_total = cumsum(total)) |>
-  ungroup()
+  arrange(timestamp, vote_mode)
+
+total <- batches_clean$total[batches_clean$vote_mode=='Total' & batches_clean$timestamp == max(batches_clean$timestamp)]
+eday <- batches_clean$total[batches_clean$vote_mode=="Election Day" & batches_clean$timestamp == max(batches_clean$timestamp)]
+early <- batches_clean$total[batches_clean$vote_mode=="Early Voting" & batches_clean$timestamp == max(batches_clean$timestamp)]
+mail <- batches_clean$total[batches_clean$vote_mode=="Absentee/Mail" & batches_clean$timestamp == max(batches_clean$timestamp)]
+
+maxes <- data.frame(
+  type = c('Total', "Election Day", "Early Voting", "Absentee/Mail"),
+  max = c(total, eday, early, mail)
+)
+
+batches_clean <- batches_clean |> 
+  left_join(maxes, by = c("vote_mode" = 'type')) |>
+  mutate(vote_mode = factor(vote_mode) |> fct_relevel("Total", "Election Day", "Early Voting", "Absentee/Mail")) |>
+  mutate(complete = ifelse(total > 0.99*max,T,F))
 
 # Build plot
-png("analysis/reporting_pace_ga_primary.png",width = 9,height = 5,units = 'in', res = 300)
+png("analysis/reporting_pace_ga_primary_all.png",width = 9,height = 5,units = 'in', res = 300)
 ggplot(batches_clean, aes(x = timestamp, y = total, color = vote_mode, group = vote_mode)) +
-  geom_point() +
+  geom_point(aes(shape = complete)) +
   geom_line() +
-  facet_wrap(~race_name) +
   theme_bw(base_family = "StyreneB-Regular") +
-  theme(legend.position = 'bottom',axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 7)) +
+  theme(legend.position = 'bottom',axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 7),plot.caption = element_text(size = 7)) +
   labs(x = 'Time Reported', y = "Reported Total",title = "Georgia Presidential Preference Primary (3/12/2024)",
-       subtitle = "Pace of Ballot Reporting", caption = "Graph Source: MIT Election Data and Science Lab",
-       color = "Type") +
+       subtitle = "Pace of Ballot Reporting", caption = "Data Source: Georgia Secretary of State\nGraph Source: MIT Election Data and Science Lab\n\nX indicates >99% reporting.",
+       color = "") +
   scale_y_continuous(labels = scales::comma) +
   scale_x_datetime(date_breaks = "30 mins", date_labels = "%d %b %H:%M") +
   scale_color_manual(
     values = c("Total" = 'black', "Election Day" = "#C0BA79", "Early Voting" = "#37C256", "Absentee/Mail" = "#F6573E")
-  )
+  ) +
+  scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 4)) +
+  guides(shape = F)
 dev.off()
 
 # North Carolina ----------------------------------------------------------
@@ -93,7 +98,7 @@ for(file_path in nc_result_files){
   batch_summary <- batch |>
     mutate(timestamp = batch_time) |>
     filter(race_name %in% c('President-Republican', 'President-Democrat')) |>
-    group_by(timestamp, race_name, vote_mode) |>
+    group_by(timestamp, vote_mode) |>
     summarise(
       total = sum(precinct_total, na.rm = TRUE),
       .groups = 'drop' # Drop grouping for further manipulation
@@ -101,7 +106,7 @@ for(file_path in nc_result_files){
   
   # Creating a summary for each timestamp and race_name across all vote_modes
   total_summary <- batch_summary |>
-    group_by(timestamp, race_name) |>
+    group_by(timestamp) |>
     summarise(
       total = sum(total, na.rm = TRUE),
       .groups = 'drop' # Drop grouping since we don't need it anymore
@@ -110,41 +115,46 @@ for(file_path in nc_result_files){
   
   # Combining both summaries
   final_summary <- bind_rows(batch_summary, total_summary) |>
-    arrange(timestamp, race_name, desc(vote_mode)) # Optional: arrange the data as needed
+    arrange(timestamp, desc(vote_mode)) # Optional: arrange the data as needed
   
   batches <- rbind(batches, final_summary)
 }
 
 # relabel 
 batches_clean <- batches |> ungroup() |>
-  mutate(
-    race_name = case_match(
-      race_name,
-      "President-Democrat" ~ "Democrat",
-      "President-Republican" ~ "Republican"
-    ),
-    vote_mode = factor(vote_mode) |> fct_relevel("Total", "Election Day", "Early Voting", "Absentee/Mail")
-  ) |>
   filter(!(vote_mode %in% c("Provisional","Aggregated")) & !(timestamp %in% c('2024-02-01 15:11:28', "2024-03-12 17:05:13", "2024-03-12 18:22:29", "2024-03-13 10:04:22"))) |>
-  arrange(timestamp, vote_mode) |>
-  group_by(vote_mode, race_name) |>
-  mutate(cumulative_total = cumsum(total)) |>
-  ungroup()
+  arrange(timestamp, vote_mode)
+
+total <- batches_clean$total[batches_clean$vote_mode=='Total' & batches_clean$timestamp == max(batches_clean$timestamp)]
+eday <- batches_clean$total[batches_clean$vote_mode=="Election Day" & batches_clean$timestamp == max(batches_clean$timestamp)]
+early <- batches_clean$total[batches_clean$vote_mode=="Early Voting" & batches_clean$timestamp == max(batches_clean$timestamp)]
+mail <- batches_clean$total[batches_clean$vote_mode=="Absentee/Mail" & batches_clean$timestamp == max(batches_clean$timestamp)]
+
+maxes <- data.frame(
+  type = c('Total', "Election Day", "Early Voting", "Absentee/Mail"),
+  max = c(total, eday, early, mail)
+)
+
+batches_clean <- batches_clean |> 
+  left_join(maxes, by = c("vote_mode" = 'type')) |>
+  mutate(vote_mode = factor(vote_mode) |> fct_relevel("Total", "Election Day", "Early Voting", "Absentee/Mail")) |>
+  mutate(complete = ifelse(total > 0.99*max,T,F))
 
 # Build plot
-png("analysis/reporting_pace_nc_primary.png",width = 9,height = 5,units = 'in', res = 300)
+png("analysis/reporting_pace_nc_primary_all.png",width = 9,height = 5,units = 'in', res = 300)
 ggplot(batches_clean, aes(x = timestamp, y = total, color = vote_mode, group = vote_mode)) +
-  geom_point() +
+  geom_point(aes(shape = complete)) +
   geom_line() +
-  facet_wrap(~race_name) +
   theme_bw(base_family = "StyreneB-Regular") +
-  theme(legend.position = 'bottom',axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 7)) +
-  labs(x = 'Time Reported', y = "Reported Total",title = "North Carolina Presidential Preference Primary (3/5/2024)",
-       subtitle = "Pace of Ballot Reporting", caption = "Graph Source: MIT Election Data and Science Lab",
-       color = "Type") +
+  theme(legend.position = 'bottom',axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 7),plot.caption = element_text(size = 7)) +
+  labs(x = 'Time Reported', y = "Reported Total",title = "North Carolina Presidential Preference Primary (3/12/2024)",
+       subtitle = "Pace of Ballot Reporting", caption = "Data Source: North Carolina State Board of Elections\nGraph Source: MIT Election Data and Science Lab\n\nX indicates >99% reporting.",
+       color = "") +
   scale_y_continuous(labels = scales::comma) +
   scale_x_datetime(date_breaks = "30 mins", date_labels = "%d %b %H:%M") +
   scale_color_manual(
     values = c("Total" = 'black', "Election Day" = "#C0BA79", "Early Voting" = "#37C256", "Absentee/Mail" = "#F6573E")
-  )
+  ) +
+  scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 4)) +
+  guides(shape = F)
 dev.off()
