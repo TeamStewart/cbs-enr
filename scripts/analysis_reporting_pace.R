@@ -147,7 +147,7 @@ ggplot(batches_clean, aes(x = timestamp, y = total, color = vote_mode, group = v
   geom_line() +
   theme_bw(base_family = "StyreneB-Regular") +
   theme(legend.position = 'bottom',axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 7),plot.caption = element_text(size = 7)) +
-  labs(x = 'Time Reported', y = "Reported Total",title = "North Carolina Presidential Preference Primary (3/12/2024)",
+  labs(x = 'Time Reported', y = "Reported Total",title = "North Carolina Presidential Preference Primary (3/5/2024)",
        subtitle = "Pace of Ballot Reporting", caption = "Data Source: North Carolina State Board of Elections\nGraph Source: MIT Election Data and Science Lab\n\nX indicates >99% reporting.",
        color = "") +
   scale_y_continuous(labels = scales::comma) +
