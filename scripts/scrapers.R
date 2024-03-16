@@ -232,3 +232,21 @@ scrape_tx <- function(state, county, type, path = NULL, timestamp){
   
 }
 
+scrape_fl <- function(state, county, type, path = NULL, timestamp){
+  if(county == 'ALL'){
+    read.table(path, header = TRUE, sep = "\t", quote = "") |>
+      mutate(
+        state = state,
+        race_id = NA,
+        PartyName = str_remove_all(PartyName, " Party$"),
+        RaceName = str_remove_all(RaceName, " of the United States$"),
+        race_name = str_c(RaceName, PartyName,sep = '-'),
+        candidate_name = str_c(CanNameFirst, CanNameMiddle, CanNameLast, sep = " "),
+        vote_mode = 'Total'
+      ) |>
+      select(
+        state, race_id, race_name, candidate_name,
+        candidate_party = PartyName, jurisdiction = CountyName, 
+        vote_mode, county_total = CanVotes)
+  }
+}

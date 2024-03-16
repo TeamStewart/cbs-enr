@@ -30,12 +30,16 @@ tar_config_set(
 
 # generate the lookup table with important information for each state
 values <- tibble(
-  state = c("NC", "GA"),
-  county = c("ALL", "ALL"),
+  state = c("NC", "GA","FL","FL","FL","AZ"),
+  county = c("ALL", "ALL","ALL","ORANGE","MIAMI-DADE","MARICOPA"),
   type = "primary",
   path = c(
+    # NC - ALL
     "https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip",
-    "120015"
+    # GA - ALL
+    "120015",
+    # FL - ALL
+    "https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt"
     )
 )
 
