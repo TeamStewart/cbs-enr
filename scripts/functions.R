@@ -9,6 +9,8 @@ process_data <- function(state, county, type, timestamp, path = NULL) {
     d <- scrape_tx(state, county, type, path, timestamp)
   } else if (state == "GA"){
     d <- scrape_ga(path)
+  } else if(state == 'FL'){
+    d <- scrape_fl(state, county, type, path, timestamp)
   }
   
   # save latest version
@@ -58,9 +60,14 @@ get_timestamp <- function(state, county, type) {
   
   fl_timestamp <- function(county){
     if(county == 'ORANGE'){
-      
+      now() |> str_replace_all("-|:| ", "_") |> str_sub(1,19)
     } else if(county == 'MIAMI-DADE'){
-      
+      read_html('https://enr.electionsfl.org/DAD/3525/Reports/') |>
+        html_element('#LastUpdated') |>
+        html_text2() |>
+        str_extract("\\d{2}/\\d{2}/\\d{4} \\d{1,2}:\\d{2}:\\d{2} [ap]m") |>
+        mdy_hms(tz = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
     } else{
       now() |> str_replace_all("-|:| ", "_") |> str_sub(1,19)
     }
@@ -146,7 +153,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   if (state == "TX"){
     return("NOT IMPLEMENTED")
-  } else if(state == 'FL' & county == "ALL"){
+  } else if(state == 'FL'){
     data |> 
       filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
       mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican") |> str_trim() |> str_squish()) |>

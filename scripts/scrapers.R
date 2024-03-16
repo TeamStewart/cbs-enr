@@ -248,5 +248,42 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
         state, race_id, race_name, candidate_name,
         candidate_party = PartyName, jurisdiction = CountyName, 
         vote_mode, county_total = CanVotes)
+  } else if(county == 'ORANGE'){
+    download.file(path, destfile = sprintf("data/raw/FL/fl_orange_%s.pdf", timestamp))
+    
+  } else if(county == 'MIAMI-DADE'){
+    read_csv(path) |>
+      mutate(
+        state = state,
+        race_id = NA,
+        race_name = case_match(
+          Contest,
+          "Republican President" ~ "President-Republican",
+          "Democrat President" ~ "President-Democrat",
+          TRUE ~ NA_character_,
+          .default = Contest
+        ),
+        candidate_party = case_match(
+          Party,
+          'REP' ~ "Republican",
+          'DEM' ~ "Democrat",
+          .default = race_name
+        ),
+        jurisdiction = "Miami-Dade",
+        precinct_id = str_remove(`Precinct Name`, "^PRECINCT "),
+        virtual_precinct = FALSE
+      ) |>
+      pivot_longer(cols = c("Mail Votes","Early Votes","Election Day Votes","Total Votes"),names_to = "vote_mode", values_to = "precinct_total") |>
+      mutate(
+        vote_mode = case_match(
+          vote_mode,
+          "Election Day Votes" ~ "Election Day",
+          "Early Votes" ~ "Early Voting",
+          "Mail Votes" ~ "Absentee/Mail",
+        )
+      ) |>
+      filter(!is.na(race_name) & vote_mode %in% c("Election Day","Early Voting","Absentee/Mail")) |>
+      select(state, race_id, race_name, candidate_name = `Candidate Issue`,
+             candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
   }
 }
