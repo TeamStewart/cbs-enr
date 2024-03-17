@@ -73,6 +73,18 @@ get_timestamp <- function(state, county, type) {
     }
   }
   
+  az_timestamp <- function(county){
+    if(county == 'MARICOPA'){
+      read_html('https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch') |>
+        html_element(':nth-child(8) small') |>
+        html_text2() |>
+        str_extract("\\d{2}/\\d{2}/\\d{4} \\d{1,2}:\\d{2}:\\d{2} [AP]M") |>
+        mdy_hms(tz = "America/Phoenix") |>
+        with_tz(tzone = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
+    }
+  }
+  
   if (state == "NC" & type == "primary"){
     return(nc_timestamp())
   } else if (state == "TX"){
@@ -81,6 +93,8 @@ get_timestamp <- function(state, county, type) {
     return(ga_timestamp())
   } else if(state == 'FL'){
     return(fl_timestamp(county))
+  } else if(state == 'AZ'){
+    return(az_timestamp(county))
   }
 }
 

@@ -249,7 +249,7 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
         candidate_party = PartyName, jurisdiction = CountyName, 
         vote_mode, county_total = CanVotes)
   } else if(county == 'ORANGE'){
-    download.file(path, destfile = sprintf("data/raw/FL/fl_orange_%s.pdf", timestamp))
+    download.file(path, destfile = sprintf("data/raw/FL/fl_orange_primary_%s.pdf", timestamp))
     
   } else if(county == 'MIAMI-DADE'){
     read_csv(path) |>
@@ -284,6 +284,21 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
       ) |>
       filter(!is.na(race_name) & vote_mode %in% c("Election Day","Early Voting","Absentee/Mail")) |>
       select(state, race_id, race_name, candidate_name = `Candidate Issue`,
+             candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
+  }
+}
+
+scrape_az <- function(state, county, type, path = NULL, timestamp){
+  if(county == 'MARICOPA'){
+    source_python("scripts/maricopa.py")
+    get_maricopa(path)
+
+    read.table("data/raw/AZ/ArizonaExportByPrecinct03162024FINAL.txt", header = TRUE, sep = "\t", quote = "") |>
+      # recode variables
+      #mutate(
+      #  
+      #) |>
+      select(state, race_id, race_name, candidate_name,
              candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
   }
 }

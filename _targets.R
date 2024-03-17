@@ -40,10 +40,11 @@ values <- tibble(
     "120015",
     # FL - ALL
     "https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt",
-    # FL - Orange
+    # FL - Orange NEED TO SWAP
     "https://www.ocfelections.com/sites/default/files/media/forms/Election%20Records%20and%20Turnout/election%20records/288-2024%20House%2035%20Special%20Election/288-official-election-results-details_1.pdf",
     # FL - Miami-Dade
-    "https://s3.amazonaws.com/results.voterfocus.com/enr/exports/reports/DAD/3525/CandidateResultsbyPrecinctandParty_2024-03-12T16:17:46_9079883e-9782-4740-a12e-ae25349fa0ed.csv"
+    "https://s3.amazonaws.com/results.voterfocus.com/enr/exports/reports/DAD/3525/CandidateResultsbyPrecinctandParty_2024-03-12T16:17:46_9079883e-9782-4740-a12e-ae25349fa0ed.csv",
+    # AZ - Maricopa NEED TO SWAP
     )
 )
 
