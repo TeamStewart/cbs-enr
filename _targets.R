@@ -16,7 +16,7 @@ options(timeout = max(300, getOption("timeout")),
 
 tar_option_set(
   packages = c("data.table", "tidyverse", "gt", "xml2", "aws.s3", "jsonlite", "fixest", "googledrive",
-               "marginaleffects", "rlang", "reticulate", "rvest", "httr2"),
+               "marginaleffects", "rlang", "reticulate", "rvest", "httr2", "tabulizer"),
   memory = "transient",
   format = "qs",
   garbage_collection = TRUE,
@@ -30,22 +30,34 @@ tar_config_set(
 
 # generate the lookup table with important information for each state
 values <- tibble(
-  state = c("NC", "GA","FL","FL","FL","AZ"),
-  county = c("ALL", "ALL","ALL","ORANGE","MIAMI-DADE","MARICOPA"),
+  state = c(
+    "NC" 
+    ,"GA"
+    ,"FL"
+    ,"FL"
+    ,"FL"
+    ,"AZ"),
+  county = c(
+    "ALL"
+    ,"ALL"
+    ,"ALL"
+    ,"ORANGE"
+    ,"MIAMI-DADE"
+    ,"MARICOPA"),
   type = "primary",
   path = c(
     # NC - ALL
-    "https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip",
+    "https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip"
     # GA - ALL
-    "120015",
+    ,"120015"
     # FL - ALL
-    "https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt",
+    ,"https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt"
     # FL - Orange NEED TO SWAP
-    "https://www.ocfelections.com/sites/default/files/media/forms/Election%20Records%20and%20Turnout/election%20records/216-2020%20PPPMUNICIPAL%20ELECTIONS/216-official-election-results-details_0.pdf",
+    ,"https://www.ocfelections.com/sites/default/files/media/forms/Election%20Records%20and%20Turnout/election%20records/216-2020%20PPPMUNICIPAL%20ELECTIONS/216-official-election-results-details_0.pdf"
     # FL - Miami-Dade
-    "https://s3.amazonaws.com/results.voterfocus.com/enr/exports/reports/DAD/3525/CandidateResultsbyPrecinctandParty_2024-03-12T16:17:46_9079883e-9782-4740-a12e-ae25349fa0ed.csv",
+    ,''
     # AZ
-    'https://elections.maricopa.gov/asset/jcr:031c3326-3b3d-45c8-8eec-0d1eed0a1b90/ArizonaExportByPrecinct_PPEZero_032024.txt'
+    ,''
     )
 )
 

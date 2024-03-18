@@ -311,6 +311,10 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
            jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
     
   } else if(county == 'MIAMI-DADE'){
+    path <- read_html('https://enr.electionsfl.org/DAD/3525/Reports/') |>
+      html_nodes(xpath = "//a[contains(text(), 'Candidate Results by Precinct and Party (CSV)')]") |>
+      html_attr('href')
+    
     read_csv(path) |>
       mutate(
         state = state,
@@ -319,7 +323,6 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
           Contest,
           "Republican President" ~ "President-Republican",
           "Democrat President" ~ "President-Democrat",
-          TRUE ~ NA_character_,
           .default = Contest
         ),
         candidate_party = case_match(
@@ -349,6 +352,13 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
 
 scrape_az <- function(state, county, type, path = NULL, timestamp){
   if(county == 'MARICOPA'){
+    # retrieve file link -- they might change it over the course of the night
+    path = read_html('https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch') |>
+      html_nodes(xpath = "//a[contains(text(), '2024 March Presidential Preference Election Results.txt')]") |>
+      html_attr('href')
+    
+    path = str_c('https://elections.maricopa.gov',path)
+    
     source_python("scripts/maricopa.py")
     get_maricopa(path)
     

@@ -11,6 +11,8 @@ process_data <- function(state, county, type, timestamp, path = NULL) {
     d <- scrape_ga(path)
   } else if(state == 'FL'){
     d <- scrape_fl(state, county, type, path, timestamp)
+  } else if(state == 'AZ'){
+    d <- scrape_az(state, county, type, path, timestamp)
   }
   
   # save latest version
@@ -105,60 +107,65 @@ general_table <- function(data, state, county, type, timestamp) {
   } else {
     locale <- str_to_upper(state)
   }
+ 
+  if(state == 'FL'){
+    return(NULL)
+  } else{
+    data |>
+      summarise(count = sum(precinct_total, na.rm = TRUE), .by = c(race_name, candidate_party, candidate_name)) |>
+      arrange(race_name, candidate_party, desc(count)) |>
+      mutate(percent = count / sum(count), .by = race_name) |>
+      gt() |> 
+      tab_header(
+        title = sprintf("2024 %s Results in %s", str_to_title(type), locale),
+        subtitle = str_c("Last updated: ", ymd_hms(timestamp, tz = "America/New_York"))
+      ) |>
+      opt_interactive(
+        use_filters = TRUE,
+        use_resizers = TRUE,
+        use_compact_mode = TRUE,
+        use_text_wrapping = TRUE,
+        use_page_size_select = TRUE
+      ) |>
+      cols_label(
+        race_name = "Contest",
+        candidate_party = "Party",
+        candidate_name = "Candidate",
+        count = "Count",
+        percent = "Vote %"
+      ) |> 
+      fmt_number(columns = count, decimals = 0, drop_trailing_zeros = TRUE) |> 
+      fmt_percent(columns = percent) |> 
+      tab_style(
+        style = cell_text(
+          v_align = "middle",
+          align = "center"
+        ),
+        locations = cells_body(
+          columns = race_name:candidate_name
+        )
+      ) |> 
+      data_color(
+        columns = count,
+        target_columns = everything(),
+        rows = candidate_party == "Democrat",
+        palette = c("white", "#9FDDF3","#59CBF5", "#00BAFF", "#3791FF")
+      ) |>
+      data_color(
+        columns = count,
+        target_columns = everything(),
+        rows = candidate_party == "Republican",
+        palette = c("white", "#E8ADA4", "#F59181", "#FF715A", "#F6573E")
+      ) |>
+      tab_style(
+        style = list(
+          cell_text(align = "center", v_align = "middle")
+        ),
+        locations = cells_body()
+      ) |>
+      cols_align(align = "center")
+  }
   
-  data |>
-    summarise(count = sum(precinct_total, na.rm = TRUE), .by = c(race_name, candidate_party, candidate_name)) |>
-    arrange(race_name, candidate_party, desc(count)) |>
-    mutate(percent = count / sum(count), .by = race_name) |>
-    gt() |> 
-    tab_header(
-      title = sprintf("2024 %s Results in %s", str_to_title(type), locale),
-      subtitle = str_c("Last updated: ", ymd_hms(timestamp, tz = "America/New_York"))
-    ) |>
-    opt_interactive(
-      use_filters = TRUE,
-      use_resizers = TRUE,
-      use_compact_mode = TRUE,
-      use_text_wrapping = TRUE,
-      use_page_size_select = TRUE
-    ) |>
-    cols_label(
-      race_name = "Contest",
-      candidate_party = "Party",
-      candidate_name = "Candidate",
-      count = "Count",
-      percent = "Vote %"
-    ) |> 
-    fmt_number(columns = count, decimals = 0, drop_trailing_zeros = TRUE) |> 
-    fmt_percent(columns = percent) |> 
-    tab_style(
-      style = cell_text(
-        v_align = "middle",
-        align = "center"
-      ),
-      locations = cells_body(
-        columns = race_name:candidate_name
-      )
-    ) |> 
-    data_color(
-      columns = count,
-      target_columns = everything(),
-      rows = candidate_party == "Democrat",
-      palette = c("white", "#9FDDF3","#59CBF5", "#00BAFF", "#3791FF")
-    ) |>
-    data_color(
-      columns = count,
-      target_columns = everything(),
-      rows = candidate_party == "Republican",
-      palette = c("white", "#E8ADA4", "#F59181", "#FF715A", "#F6573E")
-    ) |>
-    tab_style(
-      style = list(
-        cell_text(align = "center", v_align = "middle")
-      ),
-      locations = cells_body()
-    ) |>
-    cols_align(align = "center")
 }
 
 convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
@@ -176,7 +183,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
     if (upload){
       drive_put(media = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
                 path = "https://drive.google.com/drive/folders/1nyEtfAnhw-G8e1krk7D4LvOPeBdIY94n",
-                name = sprintf("%s_results.csv", str_to_lower(state)))
+                name = sprintf("%s_%s_results.csv", str_to_lower(state),str_to_lower(county)))
     }
   } else{
     lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv",
