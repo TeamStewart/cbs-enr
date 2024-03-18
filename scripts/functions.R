@@ -167,7 +167,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   if (state == "TX"){
     return("NOT IMPLEMENTED")
-  } else if(state == 'FL'){
+  } else if(state %in% c('FL','AZ')){
     data |> 
       filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
       mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican") |> str_trim() |> str_squish()) |>

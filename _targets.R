@@ -45,6 +45,7 @@ values <- tibble(
     # FL - Miami-Dade
     "https://s3.amazonaws.com/results.voterfocus.com/enr/exports/reports/DAD/3525/CandidateResultsbyPrecinctandParty_2024-03-12T16:17:46_9079883e-9782-4740-a12e-ae25349fa0ed.csv",
     # AZ - Maricopa NEED TO SWAP
+    'https://elections.maricopa.gov/asset/jcr:031c3326-3b3d-45c8-8eec-0d1eed0a1b90/ArizonaExportByPrecinct_PPEZero_032024.txt'
     )
 )
 

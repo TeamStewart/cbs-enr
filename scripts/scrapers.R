@@ -292,13 +292,58 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
   if(county == 'MARICOPA'){
     source_python("scripts/maricopa.py")
     get_maricopa(path)
+    
+    # Get file name of the most recently downloaded raw file
+    files <- list.files(path = "data/raw/AZ", full.names = TRUE)
+    
+    # Get file info and sort by modification time in descending order
+    most_recent_file <- files[order(file.info(files)$mtime, decreasing = TRUE)][1]
 
-    read.table("data/raw/AZ/ArizonaExportByPrecinct03162024FINAL.txt", header = TRUE, sep = "\t", quote = "") |>
+    read.table(most_recent_file, header = TRUE, sep = "\t", quote = "") |>
       # recode variables
-      #mutate(
-      #  
-      #) |>
-      select(state, race_id, race_name, candidate_name,
-             candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
+      mutate(
+        state = .env$state,
+        race_name = case_match(
+          ContestName,
+          "DEM CANDIDATES FOR PRESIDENT" ~ "President-Democrat",
+          "REP CANDIDATES FOR PRESIDENT" ~ "President-Republican",
+          .default = NA_character_
+        ),
+        candidate_name = case_match(
+          CandidateName,
+          "LOZADA, FRANKIE" ~ "Frank Lozada",
+          "CORNEJO, GABRIEL" ~ "Gabriel Cornejo",
+          "WILLIAMSON, MARIANNE" ~ "Marianne Williamson",
+          "PALMER, JASON MICHAEL" ~ "Jason Palmer",
+          "LYONS, STEPHEN" ~ "Stephen Lyons",
+          "BIDEN JR., JOSEPH R." ~ "Joe Biden",
+          "PHILLIPS, DEAN" ~ "Dean Phillips",
+          "CHRISTIE, CHRIS" ~ "Chris Christie",
+          "RAMASWAMY, VIVEK" ~ "Vivek Ramaswamy",
+          "CASTRO, JOHN ANTHONY" ~ "John Anthony Castro",
+          "STUCKENBERG, DAVID" ~ "David Stuckenberg",
+          "HUTCHINSON, ASA" ~ "Asa Hutchinson",
+          "HALEY, NIKKI" ~ "Nikki Haley",
+          "TRUMP, DONALD J." ~ "Donald Trump",
+          "BINKLEY, RYAN L." ~ "Ryan Binkley",
+          "DESANTIS, RON" ~ "Ron DeSantis",
+          .default = CandidateName
+        ),
+        candidate_party = case_match(
+          CandidateAffiliation,
+          "DEM" ~ "Democrat",
+          "REP" ~ "Republican",
+          .default = NA_character_
+        ),
+        jurisdiction = county,
+        virtual_precinct = FALSE,
+        Aggregated = Overvotes + Undervotes,
+        `Election Day` = Votes_ELECTION.DAY,
+        `Early Voting` = Votes_EARLY.VOTE,
+        Provisional = Votes_PROVISIONAL
+      ) |>
+      pivot_longer(cols = c("Aggregated","Election Day", "Early Voting", "Provisional"),names_to = "vote_mode", values_to = "precinct_total") |>
+      select(state, race_id = ContestId, race_name, candidate_name,
+             candidate_party, jurisdiction, precinct_id = PrecinctName, virtual_precinct,vote_mode, precinct_total)
   }
 }
