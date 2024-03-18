@@ -269,7 +269,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
 
 run_models <- function(data, st, timestamp){
   
-  if (st == "TX" | st == "GA"){
+  if (st %in% c("TX","GA","FL","AZ")){
     return(NULL)
   }
   

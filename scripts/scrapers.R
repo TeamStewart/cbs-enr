@@ -236,7 +236,7 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
   if(county == 'ALL'){
     read.table(path, header = TRUE, sep = "\t", quote = "") |>
       mutate(
-        state = state,
+        state = .env$state,
         race_id = NA,
         PartyName = str_remove_all(PartyName, " Party$"),
         RaceName = str_remove_all(RaceName, " of the United States$"),
@@ -249,7 +249,66 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
         candidate_party = PartyName, jurisdiction = CountyName, 
         vote_mode, county_total = CanVotes)
   } else if(county == 'ORANGE'){
-    download.file(path, destfile = sprintf("data/raw/FL/fl_orange_primary_%s.pdf", timestamp))
+    destination_location <- sprintf("data/raw/FL/fl_orange_primary_%s.pdf", timestamp)
+    # retrieve pdf of results
+    download.file(path, destfile = destination_location)
+    
+    selects <- "\\d{4}\\sPCT|Hutchinson|Christie|Haley|DeSantis|Binkley|Ramaswamy|Biden|Trump|Stuckenberg|Johnson|Scott|Williamson|Phillips"
+    # Function for extracting and formatting table
+    get_table <- function(path, p){
+      extract_tables(
+        path,
+        pages = p,
+        guess = FALSE
+      ) |> 
+        map(as_tibble) |> 
+        map(~ filter(.x, str_detect(V1, selects))) |> 
+        list_rbind() |> 
+        mutate(
+          precinct_id = str_extract(V1, "^\\d{4}(?=\\s+PCT)")
+        ) |> 
+        fill(precinct_id, .direction = "down") |> 
+        filter(!str_detect(V1, "^\\d{4}(?=\\s+PCT)")) |> 
+        mutate(across(everything(), ~ na_if(.x, ""))) |> 
+        mutate(V1 = str_remove(V1, " \\..*?$") |> str_squish()) |> 
+        bind_rows(
+          tibble(V7=character(), V8=character(), V9=character())
+        ) |> 
+        mutate(
+          `Election Day` = coalesce(V7, V8),
+          "Early Voting" = str_extract(V3, "(\\.\\d{2})(\\d+)", group = 2)
+        ) |> 
+        rename(
+          candidate_name = V1,
+          Provisional = V9,
+          "Absentee/Mail" = V6
+        ) |> 
+        select(-starts_with("V", ignore.case = FALSE)) |> 
+        pivot_longer(cols = c(Provisional, `Election Day`, 'Early Voting', 'Absentee/Mail'), 
+                     names_to = "vote_mode", values_to = "precinct_total") |> 
+        mutate(precinct_total = as.numeric(precinct_total),
+               precinct_total = replace_na(precinct_total, 0))
+      
+      
+    }
+    
+    tibble(path = destination_location,p = 1:(get_n_pages(path)-500)) |> 
+      mutate(tbl = map2(path, p, get_table)) |> 
+      select(tbl) |> 
+      unnest(cols = tbl) |>
+      mutate(
+        state = .env$state,
+        jurisdiction = .env$county,
+        race_id = NA,
+        candidate_party = case_when(
+          str_detect(candidate_name, "Biden|Williamson|Phillips") ~ "Democrat",
+          str_detect(candidate_name, "Hutchinson|Christie|Haley|DeSantis|Binkley|Ramaswamy|Trump|Stuckenberg|Johnson|Scott") ~ "Republican"
+        ),
+        race_name = str_c("President", candidate_party, sep = "-"),
+        virtual_precinct = FALSE
+      ) |>
+      select(state, race_id, race_name, candidate_name, candidate_party, 
+           jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
     
   } else if(county == 'MIAMI-DADE'){
     read_csv(path) |>
