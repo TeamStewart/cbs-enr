@@ -249,10 +249,6 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
         candidate_party = PartyName, jurisdiction = CountyName, 
         vote_mode, county_total = CanVotes)
   } else if(county == 'ORANGE'){
-    destination_location <- sprintf("data/raw/FL/fl_orange_primary_%s.pdf", timestamp)
-    # retrieve pdf of results
-    download.file(path, destfile = destination_location)
-    
     selects <- "\\d{4}\\sPCT|Hutchinson|Christie|Haley|DeSantis|Binkley|Ramaswamy|Biden|Trump|Stuckenberg|Johnson|Scott|Williamson|Phillips"
     # Function for extracting and formatting table
     get_table <- function(path, p){
@@ -292,7 +288,7 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
       
     }
     
-    tibble(path = destination_location,p = 1:(get_n_pages(path)-500)) |> 
+    tibble(path = "data/raw/FL/fl_orange_primary_latest.pdf",p = 1:(get_n_pages(path)-500)) |> 
       mutate(tbl = map2(path, p, get_table)) |> 
       select(tbl) |> 
       unnest(cols = tbl) |>
