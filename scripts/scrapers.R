@@ -295,6 +295,7 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
       html_attr('href')
     
     read_csv(path) |>
+      select(-c(`Total Votes`)) |>
       mutate(
         state = state,
         race_id = NA,
@@ -314,7 +315,7 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
         precinct_id = str_remove(`Precinct Name`, "^PRECINCT "),
         virtual_precinct = FALSE
       ) |>
-      pivot_longer(cols = c("Mail Votes","Early Votes","Election Day Votes","Total Votes"),names_to = "vote_mode", values_to = "precinct_total") |>
+      pivot_longer(cols = c("Mail Votes","Early Votes","Election Day Votes"),names_to = "vote_mode", values_to = "precinct_total") |>
       mutate(
         vote_mode = case_match(
           vote_mode,
