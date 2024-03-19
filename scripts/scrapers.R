@@ -272,9 +272,7 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
         ),
         jurisdiction = "Orange",
         precinct_id = str_remove(`Precinct Name`, "^PRECINCT "),
-        virtual_precinct = FALSE,
-        across(.cols = c("Mail Votes", "Early Votes", "Election Day Votes"), 
-               .fns = ~na_if(., "-"))
+        virtual_precinct = FALSE
       ) |>
       pivot_longer(cols = c("Mail Votes","Early Votes","Election Day Votes"),names_to = "vote_mode", values_to = "precinct_total") |>
       mutate(
