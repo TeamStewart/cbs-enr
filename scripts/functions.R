@@ -9,6 +9,10 @@ process_data <- function(state, county, type, timestamp, path = NULL) {
     d <- scrape_tx(state, county, type, path, timestamp)
   } else if (state == "GA"){
     d <- scrape_ga(path)
+  } else if(state == 'FL'){
+    d <- scrape_fl(state, county, type, path, timestamp)
+  } else if(state == 'AZ'){
+    d <- scrape_az(state, county, type, path, timestamp)
   }
   
   # save latest version
@@ -20,7 +24,7 @@ process_data <- function(state, county, type, timestamp, path = NULL) {
   return(d)
 }
 
-get_timestamp <- function(state, county, type) {
+get_timestamp <- function(state, county, type, path) {
   nc_timestamp <- function() {
     read_xml("https://s3.amazonaws.com/dl.ncsbe.gov?delimiter=/&prefix=ENRS/2024_03_05/") |>
       xml2::as_list() |>
@@ -56,12 +60,61 @@ get_timestamp <- function(state, county, type) {
       str_replace_all("-|:| ", "_")
   }
   
+  fl_timestamp <- function(county, path){
+    if(county == 'ORANGE'){
+      destination_location <- "data/raw/FL/fl_orange_primary_latest.pdf"
+      # retrieve pdf of results
+      download.file(path, destfile = destination_location)
+      download.file(
+        path, 
+        destfile = sprintf(
+          "data/raw/FL/fl_orange_primary_%s.pdf",
+          now() |> str_replace_all("-|:| ", "_") |> str_sub(1,19))
+      )
+      
+      extract_tables(destination_location, page = 1, guess = FALSE) |> 
+        pluck(1) |>
+        as_tibble() |> 
+        filter(str_detect(V1, "RUN DATE")) |> 
+        pull(V1) |> 
+        str_remove("RUN DATE:") |> 
+        mdy_hm(tz = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
+      
+    } else if(county == 'MIAMI-DADE'){
+      read_html('https://enr.electionsfl.org/DAD/3525/Reports/') |>
+        html_element('#LastUpdated') |>
+        html_text2() |>
+        str_extract("\\d{2}/\\d{2}/\\d{4} \\d{1,2}:\\d{2}:\\d{2} [ap]m") |>
+        mdy_hms(tz = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
+    } else{
+      now() |> str_replace_all("-|:| ", "_") |> str_sub(1,19)
+    }
+  }
+  
+  az_timestamp <- function(county){
+    if(county == 'MARICOPA'){
+      read_html('https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch') |>
+        html_element(':nth-child(8) small') |>
+        html_text2() |>
+        str_extract("\\d{2}/\\d{2}/\\d{4} \\d{1,2}:\\d{2}:\\d{2} [AP]M") |>
+        mdy_hms(tz = "America/Phoenix") |>
+        with_tz(tzone = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
+    }
+  }
+  
   if (state == "NC" & type == "primary"){
     return(nc_timestamp())
   } else if (state == "TX"){
     return(NULL)
   } else if (state == "GA"){
     return(ga_timestamp())
+  } else if(state == 'FL'){
+    return(fl_timestamp(county, path))
+  } else if(state == 'AZ'){
+    return(az_timestamp(county))
   }
 }
 
@@ -72,60 +125,65 @@ general_table <- function(data, state, county, type, timestamp) {
   } else {
     locale <- str_to_upper(state)
   }
+ 
+  if(state == 'FL'){
+    return(NULL)
+  } else{
+    data |>
+      summarise(count = sum(precinct_total, na.rm = TRUE), .by = c(race_name, candidate_party, candidate_name)) |>
+      arrange(race_name, candidate_party, desc(count)) |>
+      mutate(percent = count / sum(count), .by = race_name) |>
+      gt() |> 
+      tab_header(
+        title = sprintf("2024 %s Results in %s", str_to_title(type), locale),
+        subtitle = str_c("Last updated: ", ymd_hms(timestamp, tz = "America/New_York"))
+      ) |>
+      opt_interactive(
+        use_filters = TRUE,
+        use_resizers = TRUE,
+        use_compact_mode = TRUE,
+        use_text_wrapping = TRUE,
+        use_page_size_select = TRUE
+      ) |>
+      cols_label(
+        race_name = "Contest",
+        candidate_party = "Party",
+        candidate_name = "Candidate",
+        count = "Count",
+        percent = "Vote %"
+      ) |> 
+      fmt_number(columns = count, decimals = 0, drop_trailing_zeros = TRUE) |> 
+      fmt_percent(columns = percent) |> 
+      tab_style(
+        style = cell_text(
+          v_align = "middle",
+          align = "center"
+        ),
+        locations = cells_body(
+          columns = race_name:candidate_name
+        )
+      ) |> 
+      data_color(
+        columns = count,
+        target_columns = everything(),
+        rows = candidate_party == "Democrat",
+        palette = c("white", "#9FDDF3","#59CBF5", "#00BAFF", "#3791FF")
+      ) |>
+      data_color(
+        columns = count,
+        target_columns = everything(),
+        rows = candidate_party == "Republican",
+        palette = c("white", "#E8ADA4", "#F59181", "#FF715A", "#F6573E")
+      ) |>
+      tab_style(
+        style = list(
+          cell_text(align = "center", v_align = "middle")
+        ),
+        locations = cells_body()
+      ) |>
+      cols_align(align = "center")
+  }
   
-  data |>
-    summarise(count = sum(precinct_total, na.rm = TRUE), .by = c(race_name, candidate_party, candidate_name)) |>
-    arrange(race_name, candidate_party, desc(count)) |>
-    mutate(percent = count / sum(count), .by = race_name) |>
-    gt() |> 
-    tab_header(
-      title = sprintf("2024 %s Results in %s", str_to_title(type), locale),
-      subtitle = str_c("Last updated: ", ymd_hms(timestamp, tz = "America/New_York"))
-    ) |>
-    opt_interactive(
-      use_filters = TRUE,
-      use_resizers = TRUE,
-      use_compact_mode = TRUE,
-      use_text_wrapping = TRUE,
-      use_page_size_select = TRUE
-    ) |>
-    cols_label(
-      race_name = "Contest",
-      candidate_party = "Party",
-      candidate_name = "Candidate",
-      count = "Count",
-      percent = "Vote %"
-    ) |> 
-    fmt_number(columns = count, decimals = 0, drop_trailing_zeros = TRUE) |> 
-    fmt_percent(columns = percent) |> 
-    tab_style(
-      style = cell_text(
-        v_align = "middle",
-        align = "center"
-      ),
-      locations = cells_body(
-        columns = race_name:candidate_name
-      )
-    ) |> 
-    data_color(
-      columns = count,
-      target_columns = everything(),
-      rows = candidate_party == "Democrat",
-      palette = c("white", "#9FDDF3","#59CBF5", "#00BAFF", "#3791FF")
-    ) |>
-    data_color(
-      columns = count,
-      target_columns = everything(),
-      rows = candidate_party == "Republican",
-      palette = c("white", "#E8ADA4", "#F59181", "#FF715A", "#F6573E")
-    ) |>
-    tab_style(
-      style = list(
-        cell_text(align = "center", v_align = "middle")
-      ),
-      locations = cells_body()
-    ) |>
-    cols_align(align = "center")
 }
 
 convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
@@ -134,98 +192,109 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   if (state == "TX"){
     return("NOT IMPLEMENTED")
-  }
-  
-  lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv",
-                         skip = 1,
-                         show_col_types = FALSE,
-                         col_names = c("state_name", "postalCode", "st", "state_fips", "county_name", "cnty", "county_fips")) |> 
-    filter(postalCode == state) |> 
-    select(-state_fips) |> 
-    mutate(county_name = str_to_upper(county_name))
-  
-  lookup_cands <- read_csv("data/input/cbs_lookups/primary_cands.csv", 
+  } else if(state %in% c('FL','AZ')){
+    data |> 
+      filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
+      mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican") |> str_trim() |> str_squish()) |>
+      filter(candidate_party %in% c("Democrat", "Republican")) |> 
+      write_csv(sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type))
+    if (upload){
+      drive_put(media = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
+                path = "https://drive.google.com/drive/folders/1nyEtfAnhw-G8e1krk7D4LvOPeBdIY94n",
+                name = sprintf("%s_%s_results.csv", str_to_lower(state),str_to_lower(county)))
+    }
+  } else{
+    lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv",
+                           skip = 1,
                            show_col_types = FALSE,
-                           col_select = c(-candidate_lastname),
-                           col_types = cols(.default = col_character())) |>
-    filter(.data$state == lookup_state_name(.env$state))
-  
-  formatted <- data |> 
-    filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
-    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican"),
-           jurisdiction = str_to_upper(jurisdiction)) |>
-    filter(candidate_party %in% c("Democrat", "Republican")) |> 
-    mutate(
-      jCde = case_when(
-        str_detect(race_name, "^US House") ~ str_extract(race_name, "\\d+") |> as.numeric() |> as.character(),
-        .default = "0"
-      )
-    ) |> 
-    rename(
-      office = race_name
-    ) |> 
-    mutate(eDate = "2024-03-12",
-           real_precinct = ifelse(virtual_precinct, "N", "Y")) |> 
-    left_join(lookup_geo, join_by(state == postalCode, jurisdiction == county_name)) |> 
-    left_join(lookup_cands, join_by(office, jCde, candidate_party, candidate_name)) |> 
-    mutate(jType = ifelse(jCde == "0", "SW", "CD")) |> 
-    mutate(precinct_id = str_c(county_fips, precinct_id, sep = "_")) |> 
-    rename(pcntName = precinct_id) |> 
-    mutate(pcnt = pcntName,
-           pcntUUID = pcntName) |> 
-    pivot_wider(names_from = vote_mode, values_from = precinct_total) |> 
-    rename(edayVote = `Election Day`,
-           earlyInPersonVote = `Early Voting`,
-           earlyByMailVote = `Absentee/Mail`,
-           provisionalVote = Provisional,
-           cName = candidate_name) |> 
-    # importantly, ensure that Aggregated is here
-    # bind_rows(tibble(Aggregated = numeric())) |> 
-    mutate(cVote = edayVote + earlyInPersonVote + earlyByMailVote + provisionalVote,
-           ts = ymd_hms(timestamp, tz = "America/New_York") |> force_tz(tzone = "UTC") |> sf()) |> 
-    select(eDate, jType, real_precinct, st, eType, jCde, ofc, cnty, pcnt, pcntUUID, pcntName,
-           cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote,
-           ts) |>
-    mutate(across(c(jCde, st, cnty, cId), as.numeric)) |> 
-    nest(candidates = c(cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote)) |> 
-    nest(key = c(eDate, st, eType, jType, jCde, ofc, cnty, pcnt, pcntUUID)) |> 
-    mutate(key2 = key) |> 
-    unnest(cols = key2) |> 
-    mutate(key = map(key, jsonlite::unbox)) |>
-    select(eDate, jType, real_precinct, key, pcntName, candidates, jCde, ts, st, ofc, eType, pcntUUID, cnty)
-  
-  jsonlite::write_json(formatted, sprintf("data/cbs_format/%s/%s_%s_latest.json", state, county, type))
-  
-  data |> 
-    filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
-    mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican") |> str_trim() |> str_squish()) |>
-    filter(candidate_party %in% c("Democrat", "Republican")) |> 
-    write_csv(sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type))
-  
-  if (upload){
-    put_object(file = sprintf("data/cbs_format/%s/%s_%s_latest.json", state, county, type),
-               object = sprintf("Precincts/20240312-GA-P/%s_results.json", str_to_lower(state)),
-               bucket = "cbsn-elections-external-models",
-               multipart = TRUE)
+                           col_names = c("state_name", "postalCode", "st", "state_fips", "county_name", "cnty", "county_fips")) |> 
+      filter(postalCode == state) |> 
+      select(-state_fips) |> 
+      mutate(county_name = str_to_upper(county_name))
     
-    put_object(file = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
-               object = sprintf("Precincts/20240312-GA-P/%s_results.csv", str_to_lower(state)),
-               bucket = "cbsn-elections-external-models",
-               multipart = TRUE)
+    lookup_cands <- read_csv("data/input/cbs_lookups/primary_cands.csv", 
+                             show_col_types = FALSE,
+                             col_select = c(-candidate_lastname),
+                             col_types = cols(.default = col_character())) |>
+      filter(.data$state == lookup_state_name(.env$state))
     
-    drive_put(media = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
-              path = "https://drive.google.com/drive/folders/1nyEtfAnhw-G8e1krk7D4LvOPeBdIY94n",
-              name = sprintf("%s_results.csv", str_to_lower(state)))
+    formatted <- data |> 
+      filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
+      mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican"),
+             jurisdiction = str_to_upper(jurisdiction)) |>
+      filter(candidate_party %in% c("Democrat", "Republican")) |> 
+      mutate(
+        jCde = case_when(
+          str_detect(race_name, "^US House") ~ str_extract(race_name, "\\d+") |> as.numeric() |> as.character(),
+          .default = "0"
+        )
+      ) |> 
+      rename(
+        office = race_name
+      ) |> 
+      mutate(eDate = "2024-03-12",
+             real_precinct = ifelse(virtual_precinct, "N", "Y")) |> 
+      left_join(lookup_geo, join_by(state == postalCode, jurisdiction == county_name)) |> 
+      left_join(lookup_cands, join_by(office, jCde, candidate_party, candidate_name)) |> 
+      mutate(jType = ifelse(jCde == "0", "SW", "CD")) |> 
+      mutate(precinct_id = str_c(county_fips, precinct_id, sep = "_")) |> 
+      rename(pcntName = precinct_id) |> 
+      mutate(pcnt = pcntName,
+             pcntUUID = pcntName) |> 
+      pivot_wider(names_from = vote_mode, values_from = precinct_total) |> 
+      rename(edayVote = `Election Day`,
+             earlyInPersonVote = `Early Voting`,
+             earlyByMailVote = `Absentee/Mail`,
+             provisionalVote = Provisional,
+             cName = candidate_name) |> 
+      # importantly, ensure that Aggregated is here
+      # bind_rows(tibble(Aggregated = numeric())) |> 
+      mutate(cVote = edayVote + earlyInPersonVote + earlyByMailVote + provisionalVote,
+             ts = ymd_hms(timestamp, tz = "America/New_York") |> force_tz(tzone = "UTC") |> sf()) |> 
+      select(eDate, jType, real_precinct, st, eType, jCde, ofc, cnty, pcnt, pcntUUID, pcntName,
+             cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote,
+             ts) |>
+      mutate(across(c(jCde, st, cnty, cId), as.numeric)) |> 
+      nest(candidates = c(cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote)) |> 
+      nest(key = c(eDate, st, eType, jType, jCde, ofc, cnty, pcnt, pcntUUID)) |> 
+      mutate(key2 = key) |> 
+      unnest(cols = key2) |> 
+      mutate(key = map(key, jsonlite::unbox)) |>
+      select(eDate, jType, real_precinct, key, pcntName, candidates, jCde, ts, st, ofc, eType, pcntUUID, cnty)
     
+    jsonlite::write_json(formatted, sprintf("data/cbs_format/%s/%s_%s_latest.json", state, county, type))
+    
+    data |> 
+      filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
+      mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican") |> str_trim() |> str_squish()) |>
+      filter(candidate_party %in% c("Democrat", "Republican")) |> 
+      write_csv(sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type))
+    
+    if (upload){
+      put_object(file = sprintf("data/cbs_format/%s/%s_%s_latest.json", state, county, type),
+                 object = sprintf("Precincts/20240312-GA-P/%s_results.json", str_to_lower(state)),
+                 bucket = "cbsn-elections-external-models",
+                 multipart = TRUE)
+      
+      put_object(file = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
+                 object = sprintf("Precincts/20240312-GA-P/%s_results.csv", str_to_lower(state)),
+                 bucket = "cbsn-elections-external-models",
+                 multipart = TRUE)
+      
+      drive_put(media = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
+                path = "https://drive.google.com/drive/folders/1nyEtfAnhw-G8e1krk7D4LvOPeBdIY94n",
+                name = sprintf("%s_results.csv", str_to_lower(state)))
+      
+    }
+    
+    return(formatted)
   }
-
-  return(formatted)
   
 }
 
 run_models <- function(data, st, timestamp){
   
-  if (st == "TX" | st == "GA"){
+  if (st %in% c("TX","GA","FL","AZ")){
     return(NULL)
   }
   

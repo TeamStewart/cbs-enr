@@ -16,7 +16,7 @@ options(timeout = max(300, getOption("timeout")),
 
 tar_option_set(
   packages = c("data.table", "tidyverse", "gt", "xml2", "aws.s3", "jsonlite", "fixest", "googledrive",
-               "marginaleffects", "rlang", "reticulate", "rvest", "httr2"),
+               "marginaleffects", "rlang", "reticulate", "rvest", "httr2", "tabulizer"),
   memory = "transient",
   format = "qs",
   garbage_collection = TRUE,
@@ -30,12 +30,36 @@ tar_config_set(
 
 # generate the lookup table with important information for each state
 values <- tibble(
-  state = c("NC", "GA"),
-  county = c("ALL", "ALL"),
+  state = c(
+    "NC" 
+    ,"GA"
+    ,"FL"
+    #,"FL"
+    ,"FL"
+    ,"AZ"
+    ),
+  county = c(
+    "ALL"
+    ,"ALL"
+    ,"ALL"
+    #,"ORANGE"
+    ,"MIAMI-DADE"
+    ,"MARICOPA"
+    ),
   type = "primary",
   path = c(
-    "https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip",
-    "120015"
+    # NC - ALL
+    "https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip"
+    # GA - ALL
+    ,"120015"
+    # FL - ALL
+    ,"https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt"
+    # FL - Orange NEED TO SWAP
+    #,"https://www.ocfelections.com/sites/default/files/media/forms/Election%20Records%20and%20Turnout/election%20records/216-2020%20PPPMUNICIPAL%20ELECTIONS/216-official-election-results-details_0.pdf"
+    # FL - Miami-Dade
+    ,''
+    # AZ
+    ,''
     )
 )
 
@@ -45,7 +69,7 @@ values <- tibble(
 list(
   tar_map(
     values,
-    tar_target(time, get_timestamp(state, county, type), cue = tar_cue(mode = 'always')),
+    tar_target(time, get_timestamp(state, county, type, path), cue = tar_cue(mode = 'always')),
     tar_target(clean, process_data(state, county, type, time, path = path)),
     tar_target(tbl_all, general_table(clean, state, county, type, time)),
     tar_target(cbs, convert_cbs(clean, state, county, type, time, upload=TRUE)),

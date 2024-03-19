@@ -232,3 +232,183 @@ scrape_tx <- function(state, county, type, path = NULL, timestamp){
   
 }
 
+scrape_fl <- function(state, county, type, path = NULL, timestamp){
+  if(county == 'ALL'){
+    read.table(path, header = TRUE, sep = "\t", quote = "") |>
+      mutate(
+        state = .env$state,
+        race_id = NA,
+        PartyName = str_remove_all(PartyName, " Party$"),
+        RaceName = str_remove_all(RaceName, " of the United States$"),
+        race_name = str_c(RaceName, PartyName,sep = '-'),
+        candidate_name = str_c(CanNameFirst, CanNameMiddle, CanNameLast, sep = " "),
+        vote_mode = 'Total'
+      ) |>
+      select(
+        state, race_id, race_name, candidate_name,
+        candidate_party = PartyName, jurisdiction = CountyName, 
+        vote_mode, county_total = CanVotes)
+  } else if(county == 'ORANGE'){
+    selects <- "\\d{4}\\sPCT|Hutchinson|Christie|Haley|DeSantis|Binkley|Ramaswamy|Biden|Trump|Stuckenberg|Johnson|Scott|Williamson|Phillips"
+    # Function for extracting and formatting table
+    get_table <- function(path, p){
+      extract_tables(
+        path,
+        pages = p,
+        guess = FALSE
+      ) |> 
+        map(as_tibble) |> 
+        map(~ filter(.x, str_detect(V1, selects))) |> 
+        list_rbind() |> 
+        mutate(
+          precinct_id = str_extract(V1, "^\\d{4}(?=\\s+PCT)")
+        ) |> 
+        fill(precinct_id, .direction = "down") |> 
+        filter(!str_detect(V1, "^\\d{4}(?=\\s+PCT)")) |> 
+        mutate(across(everything(), ~ na_if(.x, ""))) |> 
+        mutate(V1 = str_remove(V1, " \\..*?$") |> str_squish()) |> 
+        bind_rows(
+          tibble(V7=character(), V8=character(), V9=character())
+        ) |> 
+        mutate(
+          `Election Day` = coalesce(V7, V8),
+          "Early Voting" = str_extract(V3, "(\\.\\d{2})(\\d+)", group = 2)
+        ) |> 
+        rename(
+          candidate_name = V1,
+          Provisional = V9,
+          "Absentee/Mail" = V6
+        ) |> 
+        select(-starts_with("V", ignore.case = FALSE)) |> 
+        pivot_longer(cols = c(Provisional, `Election Day`, 'Early Voting', 'Absentee/Mail'), 
+                     names_to = "vote_mode", values_to = "precinct_total") |> 
+        mutate(precinct_total = as.numeric(precinct_total),
+               precinct_total = replace_na(precinct_total, 0))
+      
+      
+    }
+    
+    tibble(path = "data/raw/FL/fl_orange_primary_latest.pdf",p = 1:(get_n_pages(path)-500)) |> 
+      mutate(tbl = map2(path, p, get_table)) |> 
+      select(tbl) |> 
+      unnest(cols = tbl) |>
+      mutate(
+        state = .env$state,
+        jurisdiction = .env$county,
+        race_id = NA,
+        candidate_party = case_when(
+          str_detect(candidate_name, "Biden|Williamson|Phillips") ~ "Democrat",
+          str_detect(candidate_name, "Hutchinson|Christie|Haley|DeSantis|Binkley|Ramaswamy|Trump|Stuckenberg|Johnson|Scott") ~ "Republican"
+        ),
+        race_name = str_c("President", candidate_party, sep = "-"),
+        virtual_precinct = FALSE
+      ) |>
+      select(state, race_id, race_name, candidate_name, candidate_party, 
+           jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
+    
+  } else if(county == 'MIAMI-DADE'){
+    path <- read_html('https://enr.electionsfl.org/DAD/3525/Reports/') |>
+      html_nodes(xpath = "//a[contains(text(), 'Candidate Results by Precinct and Party (CSV)')]") |>
+      html_attr('href')
+    
+    read_csv(path) |>
+      mutate(
+        state = state,
+        race_id = NA,
+        race_name = case_match(
+          Contest,
+          "Republican President" ~ "President-Republican",
+          "Democrat President" ~ "President-Democrat",
+          .default = Contest
+        ),
+        candidate_party = case_match(
+          Party,
+          'REP' ~ "Republican",
+          'DEM' ~ "Democrat",
+          .default = race_name
+        ),
+        jurisdiction = "Miami-Dade",
+        precinct_id = str_remove(`Precinct Name`, "^PRECINCT "),
+        virtual_precinct = FALSE
+      ) |>
+      pivot_longer(cols = c("Mail Votes","Early Votes","Election Day Votes","Total Votes"),names_to = "vote_mode", values_to = "precinct_total") |>
+      mutate(
+        vote_mode = case_match(
+          vote_mode,
+          "Election Day Votes" ~ "Election Day",
+          "Early Votes" ~ "Early Voting",
+          "Mail Votes" ~ "Absentee/Mail",
+        )
+      ) |>
+      filter(!is.na(race_name) & vote_mode %in% c("Election Day","Early Voting","Absentee/Mail")) |>
+      select(state, race_id, race_name, candidate_name = `Candidate Issue`,
+             candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
+  }
+}
+
+scrape_az <- function(state, county, type, path = NULL, timestamp){
+  if(county == 'MARICOPA'){
+    # retrieve file link -- they might change it over the course of the night
+    path = read_html('https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch') |>
+      html_nodes(xpath = "//a[contains(text(), '2024 March Presidential Preference Election Results.txt')]") |>
+      html_attr('href')
+    
+    path = str_c('https://elections.maricopa.gov',path)
+    
+    source_python("scripts/maricopa.py")
+    get_maricopa(path)
+    
+    # Get file name of the most recently downloaded raw file
+    files <- list.files(path = "data/raw/AZ", full.names = TRUE)
+    
+    # Get file info and sort by modification time in descending order
+    most_recent_file <- files[order(file.info(files)$mtime, decreasing = TRUE)][1]
+
+    read.table(most_recent_file, header = TRUE, sep = "\t", quote = "") |>
+      # recode variables
+      mutate(
+        state = .env$state,
+        race_name = case_match(
+          ContestName,
+          "DEM CANDIDATES FOR PRESIDENT" ~ "President-Democrat",
+          "REP CANDIDATES FOR PRESIDENT" ~ "President-Republican",
+          .default = NA_character_
+        ),
+        candidate_name = case_match(
+          CandidateName,
+          "LOZADA, FRANKIE" ~ "Frank Lozada",
+          "CORNEJO, GABRIEL" ~ "Gabriel Cornejo",
+          "WILLIAMSON, MARIANNE" ~ "Marianne Williamson",
+          "PALMER, JASON MICHAEL" ~ "Jason Palmer",
+          "LYONS, STEPHEN" ~ "Stephen Lyons",
+          "BIDEN JR., JOSEPH R." ~ "Joe Biden",
+          "PHILLIPS, DEAN" ~ "Dean Phillips",
+          "CHRISTIE, CHRIS" ~ "Chris Christie",
+          "RAMASWAMY, VIVEK" ~ "Vivek Ramaswamy",
+          "CASTRO, JOHN ANTHONY" ~ "John Anthony Castro",
+          "STUCKENBERG, DAVID" ~ "David Stuckenberg",
+          "HUTCHINSON, ASA" ~ "Asa Hutchinson",
+          "HALEY, NIKKI" ~ "Nikki Haley",
+          "TRUMP, DONALD J." ~ "Donald Trump",
+          "BINKLEY, RYAN L." ~ "Ryan Binkley",
+          "DESANTIS, RON" ~ "Ron DeSantis",
+          .default = CandidateName
+        ),
+        candidate_party = case_match(
+          CandidateAffiliation,
+          "DEM" ~ "Democrat",
+          "REP" ~ "Republican",
+          .default = NA_character_
+        ),
+        jurisdiction = county,
+        virtual_precinct = FALSE,
+        Aggregated = Overvotes + Undervotes,
+        `Election Day` = Votes_ELECTION.DAY,
+        `Early Voting` = Votes_EARLY.VOTE,
+        Provisional = Votes_PROVISIONAL
+      ) |>
+      pivot_longer(cols = c("Aggregated","Election Day", "Early Voting", "Provisional"),names_to = "vote_mode", values_to = "precinct_total") |>
+      select(state, race_id = ContestId, race_name, candidate_name,
+             candidate_party, jurisdiction, precinct_id = PrecinctName, virtual_precinct,vote_mode, precinct_total)
+  }
+}
