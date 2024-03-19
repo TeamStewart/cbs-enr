@@ -54,7 +54,7 @@ values <- tibble(
     ,"120015"
     # FL - ALL
     ,"https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt"
-    # FL - Orange NEED TO SWAP
+    # FL - Orange
     ,""
     # FL - Miami-Dade
     ,''
