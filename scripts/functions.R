@@ -62,23 +62,11 @@ get_timestamp <- function(state, county, type, path) {
   
   fl_timestamp <- function(county, path){
     if(county == 'ORANGE'){
-      destination_location <- "data/raw/FL/fl_orange_primary_latest.pdf"
-      # retrieve pdf of results
-      download.file(path, destfile = destination_location)
-      download.file(
-        path, 
-        destfile = sprintf(
-          "data/raw/FL/fl_orange_primary_%s.pdf",
-          now() |> str_replace_all("-|:| ", "_") |> str_sub(1,19))
-      )
-      
-      extract_tables(destination_location, page = 1, guess = FALSE) |> 
-        pluck(1) |>
-        as_tibble() |> 
-        filter(str_detect(V1, "RUN DATE")) |> 
-        pull(V1) |> 
-        str_remove("RUN DATE:") |> 
-        mdy_hm(tz = "America/New_York") |>
+      read_html('https://enr.electionsfl.org/ORA/3549/Reports/') |>
+        html_element('#LastUpdated') |>
+        html_text2() |>
+        str_extract("\\d{2}/\\d{2}/\\d{4} \\d{1,2}:\\d{2}:\\d{2} [ap]m") |>
+        mdy_hms(tz = "America/New_York") |>
         str_replace_all("-|:| ", "_")
       
     } else if(county == 'MIAMI-DADE'){
