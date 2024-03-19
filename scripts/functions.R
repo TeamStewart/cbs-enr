@@ -65,6 +65,12 @@ get_timestamp <- function(state, county, type, path) {
       destination_location <- "data/raw/FL/fl_orange_primary_latest.pdf"
       # retrieve pdf of results
       download.file(path, destfile = destination_location)
+      download.file(
+        path, 
+        destfile = sprintf(
+          "data/raw/FL/fl_orange_primary_%s.pdf",
+          now() |> str_replace_all("-|:| ", "_") |> str_sub(1,19))
+      )
       
       extract_tables(destination_location, page = 1, guess = FALSE) |> 
         pluck(1) |>

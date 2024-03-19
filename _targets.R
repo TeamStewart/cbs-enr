@@ -34,16 +34,18 @@ values <- tibble(
     "NC" 
     ,"GA"
     ,"FL"
+    #,"FL"
     ,"FL"
-    ,"FL"
-    ,"AZ"),
+    ,"AZ"
+    ),
   county = c(
     "ALL"
     ,"ALL"
     ,"ALL"
-    ,"ORANGE"
+    #,"ORANGE"
     ,"MIAMI-DADE"
-    ,"MARICOPA"),
+    ,"MARICOPA"
+    ),
   type = "primary",
   path = c(
     # NC - ALL
@@ -53,7 +55,7 @@ values <- tibble(
     # FL - ALL
     ,"https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt"
     # FL - Orange NEED TO SWAP
-    ,"https://www.ocfelections.com/sites/default/files/media/forms/Election%20Records%20and%20Turnout/election%20records/216-2020%20PPPMUNICIPAL%20ELECTIONS/216-official-election-results-details_0.pdf"
+    #,"https://www.ocfelections.com/sites/default/files/media/forms/Election%20Records%20and%20Turnout/election%20records/216-2020%20PPPMUNICIPAL%20ELECTIONS/216-official-election-results-details_0.pdf"
     # FL - Miami-Dade
     ,''
     # AZ
