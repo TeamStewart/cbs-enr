@@ -33,7 +33,7 @@ values <- tibble(
   state = c(
     "NC" 
     ,"GA"
-    ,"FL"
+    #,"FL"
     ,"FL"
     ,"FL"
     ,"AZ"
@@ -41,7 +41,7 @@ values <- tibble(
   county = c(
     "ALL"
     ,"ALL"
-    ,"ALL"
+    #,"ALL"
     ,"ORANGE"
     ,"MIAMI-DADE"
     ,"MARICOPA"
@@ -53,7 +53,7 @@ values <- tibble(
     # GA - ALL
     ,"120015"
     # FL - ALL
-    ,"https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt"
+    #,"https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt"
     # FL - Orange
     ,""
     # FL - Miami-Dade

@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|e933af490191d914|||||||||||||||
+.Random.seed|object|03112727fd485956|||||||||||||||
 cbs_AZ_MARICOPA_primary|stem|e1255e491faebebe|7a690146ee874d00|7748a957322e891b|-684002644||t19802.1297718619s|44d10748a2284dd7|1778|qs|local|vector|||2.088||
 cbs_FL_ALL_primary|stem|bbf6c35942e7628a|ea642b8f07053727|c4fd904d0056b111|-952962783||t19802.151977528s|d302fe258f16dd01|1889|qs|local|vector|||2.466||
 cbs_FL_MIAMI.DADE_primary|stem|3ed96b4a153faafc|7b5ae830b2f9b447|3316b8416457b67f|183127925||t19802.1073288737s|3d68fe5034a3d1b5|1900|qs|local|vector|||2.443||
@@ -37,11 +37,11 @@ tbl_all_FL_MIAMI.DADE_primary|stem|6dd71d12008128c1|3d56ae36a5221d9d|a9213ea02a4
 tbl_all_FL_ORANGE_primary|stem|6dd71d12008128c1|fdf0257b6e1be29d|de6dbb1424d1203c|1882858083||t19802.0331370426s|de1c6d017cb4e8a8|38|qs|local|vector|||0.013||
 tbl_all_GA_ALL_primary|stem|a61619fb54df3d76|40ab588bec5c23fe|f63abd21680dc40f|-610827490||t19801.9596373075s|4c09e5a3fb110110|136867|qs|local|vector|||0.164||
 tbl_all_NC_ALL_primary|stem|31918bb3aa830680|665d5a2ab0ca5187|4a7f273b9e0d85f0|-1694778160||t19800.8921548258s|ca27e189826f81d8|1599294|qs|local|vector|||0.367||
-time_AZ_MARICOPA_primary|stem|684d73fa268a70a4|cc2b89f785b873a3|3753bc18f2142c5a|521328079||t19802.1519412408s|00c37fc0166b3b11|58|qs|local|vector|||0.45||
+time_AZ_MARICOPA_primary|stem|684d73fa268a70a4|cc2b89f785b873a3|3753bc18f2142c5a|521328079||t19802.1565997284s|00c37fc0166b3b11|58|qs|local|vector|||1.402||
 time_FL_ALL_primary|stem|0ca20ebaf1a6461f|618af79c7745ab9d|3753bc18f2142c5a|-1274788950||t19802.1519304679s|00c37fc0166b3b11|58|qs|local|vector|||0.001||
-time_FL_MIAMI.DADE_primary|stem|a02ee6336476fd21|48c2af95fdb08e69|3753bc18f2142c5a|-1339028903||t19802.1519200193s|00c37fc0166b3b11|58|qs|local|vector|||1.432||
-time_FL_ORANGE_primary|stem|3b62f0e43fda8ad2|12f1510a548580d8|3753bc18f2142c5a|-1067712629||t19802.1519234951s|00c37fc0166b3b11|58|qs|local|vector|||0.197||
-time_GA_ALL_primary|stem|0b012dfcba9a6f79|8f123cf5519c8651|3753bc18f2142c5a|218392198||t19802.1519347001s|00c37fc0166b3b11|58|qs|local|vector|||0.274||
-time_NC_ALL_primary|stem|9a92f00bea6d2506|ede0d9eb35a3b187|3753bc18f2142c5a|-549433972||t19802.1519292944s|00c37fc0166b3b11|58|qs|local|vector|||0.39||
-values|object|6920e25b0d216532|||||||||||||||
-website|stem|eaa2afe9d4462e69|d566fd872c12e114|d2cc13638db99866|-385122080|docs*index.qmd*pages/ga.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19802.1522622549s|e74cb1666ff19ded|30317101|file|local|vector|||24.138||
+time_FL_MIAMI.DADE_primary|stem|a02ee6336476fd21|48c2af95fdb08e69|3753bc18f2142c5a|-1339028903||t19802.1566035638s|00c37fc0166b3b11|58|qs|local|vector|||0.222||
+time_FL_ORANGE_primary|stem|3b62f0e43fda8ad2|12f1510a548580d8|3753bc18f2142c5a|-1067712629||t19802.1566093475s|00c37fc0166b3b11|58|qs|local|vector|||0.089||
+time_GA_ALL_primary|stem|0b012dfcba9a6f79|8f123cf5519c8651|3753bc18f2142c5a|218392198||t19802.1566072161s|00c37fc0166b3b11|58|qs|local|vector|||0.194||
+time_NC_ALL_primary|stem|9a92f00bea6d2506|ede0d9eb35a3b187|3753bc18f2142c5a|-549433972||t19802.1566151467s|00c37fc0166b3b11|58|qs|local|vector|||0.403||
+values|object|713e12e6698fad2d|||||||||||||||
+website|stem|b6bf610ce1dea91d|d566fd872c12e114|d2cc13638db99866|-385122080|docs*index.qmd*pages/ga.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19802.1569037588s|e74cb1666ff19ded|30317101|file|local|vector|||24.483||
