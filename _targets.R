@@ -20,7 +20,8 @@ tar_option_set(
   memory = "transient",
   format = "qs",
   garbage_collection = TRUE,
-  error = "null"
+  error = "null",
+  controller = crew::crew_controller_local(workers = 3)
 )
 
 tar_config_set(
