@@ -13,6 +13,8 @@ process_data <- function(state, county, type, timestamp, path = NULL) {
     d <- scrape_fl(state, county, type, path, timestamp)
   } else if(state == 'AZ'){
     d <- scrape_az(state, county, type, path, timestamp)
+  } else if(state == 'WI'){
+    d <- scrape_wi(state, county, type, path, timestamp)
   }
   
   # save latest version
@@ -93,6 +95,18 @@ get_timestamp <- function(state, county, type, path) {
     }
   }
   
+  wi_timestamp <- function(county){
+    if(county == 'MILWAUKEE'){
+      read_html('https://county.milwaukee.gov/EN/County-Clerk/Off-Nav/Election-Results/4-2-24SpringPresidentialPreferenceUnofficialResults') |>
+        html_element('#reportTimeLocal') |>
+        html_text() |>
+        str_replace_all(c("Apr."="April", "p.m."="pm")) |> # Remove 'UTC' part for parsing
+        mdy_hm() |>
+        with_tz(tzone = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
+    }
+  }
+  
   if (state == "NC" & type == "primary"){
     return(nc_timestamp())
   } else if (state == "TX"){
@@ -103,6 +117,8 @@ get_timestamp <- function(state, county, type, path) {
     return(fl_timestamp(county, path))
   } else if(state == 'AZ'){
     return(az_timestamp(county))
+  } else if (state == 'WI'){
+    return(wi_timestamp(county))
   }
 }
 
@@ -114,7 +130,7 @@ general_table <- function(data, state, county, type, timestamp) {
     locale <- str_to_upper(state)
   }
  
-  if(state == 'FL'){
+  if(state %in% c('FL','WI')){
     return(NULL)
   } else{
     data |>
@@ -180,7 +196,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   if (state == "TX"){
     return("NOT IMPLEMENTED")
-  } else if(state %in% c('FL','AZ')){
+  } else if(state %in% c('FL','AZ','WI')){
     data |> 
       filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
       mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican") |> str_trim() |> str_squish()) |>
@@ -282,7 +298,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
 
 run_models <- function(data, st, timestamp){
   
-  if (st %in% c("TX","GA","FL","AZ")){
+  if (st %in% c("TX","GA","FL","AZ", "WI")){
     return(NULL)
   }
   
