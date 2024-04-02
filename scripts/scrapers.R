@@ -394,3 +394,56 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
              candidate_party, jurisdiction, precinct_id = PrecinctName, virtual_precinct,vote_mode, precinct_total)
   }
 }
+
+scrape_wi <- function(state, county, type, path = NULL, timestamp){
+  if(county == 'MILWAUKEE'){
+    precinct_text = read_html(path) |>
+      html_elements('.precinctTable td') |> html_text()
+    
+    # save raw text
+    writeLines(precinct_text, sprintf("data/raw/%s/%s_%s_raw_%s.txt",state, state, county, timestamp))
+    
+    dem_results <- matrix(precinct_text[4241:7420],ncol = 6,byrow = T) |>
+      as.data.frame() |>
+      select(-1) |>
+      slice(-1)
+    colnames(dem_results) <- c("Ward","Joe Biden", "Dean Phillips", "No Preference","Write-in")
+    dem_results <- dem_results |>
+      pivot_longer(cols = c("Joe Biden", "Dean Phillips", "No Preference","Write-in"),names_to = "candidate_name", values_to = "precinct_total") |>
+      mutate(
+        state = .env$state,
+        jurisdiction = .env$county,
+        race_id = NA,
+        race_name = "President-Democrat",
+        candidate_party = "Democrat",
+        precinct_id = Ward,
+        virtual_precinct = FALSE,
+        vote_mode = "Total"
+      ) |> 
+      select(state, race_id, race_name, candidate_name,
+             candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
+    
+    
+    rep_results <- matrix(precinct_text[7421:12190],ncol = 9,byrow = T) |>
+      as.data.frame() |>
+      select(-1) |>
+      slice(-1)
+    colnames(rep_results) <- c("Ward",'Chris Christie','Vivek Ramaswamy', 'Ron DeSantis', 'Nikki Haley','Donald Trump', "No Preference","Write-in")
+    rep_results <- rep_results |>
+      pivot_longer(cols = c('Chris Christie','Vivek Ramaswamy', 'Ron DeSantis', 'Nikki Haley','Donald Trump', "No Preference","Write-in"), names_to = "candidate_name", values_to = "precinct_total") |>
+      mutate(
+        state = .env$state,
+        jurisdiction = .env$county,
+        race_id = NA,
+        race_name = "President-Republican",
+        candidate_party = "Republican",
+        precinct_id = Ward,
+        virtual_precinct = FALSE,
+        vote_mode = "Total"
+      ) |> 
+      select(state, race_id, race_name, candidate_name,
+             candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
+    
+    rbind(dem_results, rep_results) 
+  }
+}

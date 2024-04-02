@@ -38,6 +38,7 @@ values <- tibble(
     ,"FL"
     ,"FL"
     ,"AZ"
+    ,"WI"
     ),
   county = c(
     "ALL"
@@ -46,6 +47,7 @@ values <- tibble(
     ,"ORANGE"
     ,"MIAMI-DADE"
     ,"MARICOPA"
+    ,"MILWAUKEE"
     ),
   type = "primary",
   path = c(
@@ -61,6 +63,8 @@ values <- tibble(
     ,''
     # AZ
     ,''
+    # WI - Milwaukee
+    ,'https://county.milwaukee.gov/EN/County-Clerk/Off-Nav/Election-Results/4-2-24SpringPresidentialPreferenceUnofficialResults'
     )
 )
 
