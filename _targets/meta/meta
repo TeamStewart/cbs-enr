@@ -1,19 +1,19 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|cb0472815cf63def|||||||||||||||
-cbs_AZ_MARICOPA_primary|stem|error|7a690146ee874d00|f46ff025bce58a5b|-684002644||t19816.1618512006s|de1c6d017cb4e8a8|38|qs|local|vector|||0.009||no applicable method for filter applied to an object of class NULL
-cbs_FL_ALL_primary|stem|a15206bdb6270424|ea642b8f07053727|d89162b394ec0ec0|-952962783||t19816.1618769875s|5ae3a95bcad297bf|1888|qs|local|vector|||3.135||
+.Random.seed|object|7fa7229e80e2936a|||||||||||||||
+cbs_AZ_MARICOPA_primary|stem|6c8de9cd3616ef57|7a690146ee874d00|78375d7d02eceb5e|-684002644||t19816.1692345066s|092cd48ae161cd06|1892|qs|local|vector|||2.057||
+cbs_FL_ALL_primary|stem|a37e36736e3d179d|ea642b8f07053727|a6a258aaf410e0f2|-952962783||t19816.1691101804s|5431e541c5b86bfa|1890|qs|local|vector|||2.227||
 cbs_FL_MIAMI.DADE_primary|stem|354deee96ea90b32|7b5ae830b2f9b447|88d39f02cca09e16|183127925||t19815.9351102118s|9567d7304968c361|1901|qs|local|vector|||2.555||
 cbs_FL_ORANGE_primary|stem|b91440ed6cf4172f|c2615e9e24c35559|908c4e2076013f96|-562597143||t19815.9351920345s|29ec4ae64d05ca3d|1891|qs|local|vector|||2.005||
 cbs_GA_ALL_primary|stem|4c22b16ea1f0f648|d23224eb63260962|145ccbb0b7fafbbe|120147270||t19815.956841652s|a31020cac86dc79f|172556|qs|local|vector|||9.789||
 cbs_NC_ALL_primary|stem|dcfd8918c8cfc4c6|524cc46e3c882873|36ca1fd75cbb5c22|-470314479||t19815.935400474s|5fd8f962bf05ef01|330165|qs|local|vector|||17.792||
-cbs_WI_MILWAUKEE_primary|stem|d610dc1488f0e770|bea5ef887d0ddd39|c42508b6e1300d7c|-1048129020||t19816.1327861767s|9d743867e68f10d5|1897|qs|local|vector|||2.274||
-clean_AZ_MARICOPA_primary|stem|error|c1638b139f379cc4|065fdf0c30464b60|754825180||t19816.1618498285s|de1c6d017cb4e8a8|38|qs|local|vector|||0.369||HTTP error 404.
-clean_FL_ALL_primary|stem|c9495901177c7110|fc4cb2cb634e63cd|85481474b5e8c6b5|1705377467||t19816.1618387232s|7d5a3422ae9b898b|3372|qs|local|vector|||0.372||
+cbs_WI_MILWAUKEE_primary|stem|83464635fc693419|bea5ef887d0ddd39|fc2f55b2217916b4|-1048129020||t19816.1693838534s|dfb0c2e140f2de24|1895|qs|local|vector|||1.941||
+clean_AZ_MARICOPA_primary|stem|c472904d1f15dbe2|c1638b139f379cc4|e87075a576964664|754825180||t19816.1692090313s|59a9e9d472283c5f|10768|qs|local|vector|||7.746||
+clean_FL_ALL_primary|stem|c9495901177c7110|fc4cb2cb634e63cd|b896f2ad8be0388b|1705377467||t19816.1689337662s|7d5a3422ae9b898b|3372|qs|local|vector|||0.288||
 clean_FL_MIAMI.DADE_primary|stem|d3acfa46b7a7bb00|99c0a31066e30c76|fd1fd58cc998fe22|169614533||t19815.9350721466s|89e99003506968ea|5309|qs|local|vector|||0.604||
 clean_FL_ORANGE_primary|stem|5d63964c6e2962c9|466edba76abfa69d|bcf28e87565480b6|152942234||t19815.9350792704s|619d0f1cfdb101f0|5461|qs|local|vector|||0.792||
 clean_GA_ALL_primary|stem|caa062cec8f3548d|f24b66dde1dedeb4|02d612c1765699c6|379986048||t19815.956648822s|90ecdececd823ad3|110831|qs|local|vector|||9.825||
 clean_NC_ALL_primary|stem|348eb284a34b008e|7ae9aaa6b0feee10|657229622dc77c1a|-1977966922||t19815.9351310606s|8c330967de57c8e1|1526840|qs|local|vector|||3.399||
-clean_WI_MILWAUKEE_primary|stem|f656c103481bd564|3d881b7c6e26a616|8d587a50c6108745|531496050||t19816.1327584338s|9c2a25ea8ecba8fc|9603|qs|local|vector|||6.646||
+clean_WI_MILWAUKEE_primary|stem|7eec4b530cddee70|3d881b7c6e26a616|2619f47ee0147895|531496050||t19816.1693599834s|3ef33639043fc5d3|9853|qs|local|vector|||21.481||
 convert_cbs|function|5a830643a81325d6|||||||||||||||
 download_file|function|cf7a2572eeae1c3d|||||||||||||||
 execute_model|function|c6fd57d2ad877d01|||||||||||||||
@@ -34,19 +34,19 @@ scrape_ga|function|1328ac90f0a42b3a|||||||||||||||
 scrape_nc|function|e1df0f8d7a82803b|||||||||||||||
 scrape_tx|function|a97ee126fbed4f45|||||||||||||||
 scrape_wi|function|782f12f47a620103|||||||||||||||
-tbl_all_AZ_MARICOPA_primary|stem|error|7dff79306271fd2d|d5a7a10e0f6793f0|-1706079010||t19816.1618511667s|de1c6d017cb4e8a8|38|qs|local|vector|||0.005||no applicable method for summarise applied to an object of class NULL
-tbl_all_FL_ALL_primary|stem|6dd71d12008128c1|c8623b3a2076f511|13d282b953563355|-71810028||t19816.1618408133s|de1c6d017cb4e8a8|38|qs|local|vector|||0.002||
+tbl_all_AZ_MARICOPA_primary|stem|b3d94ad4db00bc1d|7dff79306271fd2d|cf7c2b7b0609a352|-1706079010||t19816.1692118027s|18c55f87d5ecd5ca|27838|qs|local|vector|||0.083||
+tbl_all_FL_ALL_primary|stem|6dd71d12008128c1|c8623b3a2076f511|a9304f1a60eca35d|-71810028||t19816.1691101577s|de1c6d017cb4e8a8|38|qs|local|vector|||0.003||
 tbl_all_FL_MIAMI.DADE_primary|stem|6dd71d12008128c1|3d56ae36a5221d9d|1873d47bf27a97bc|1548706719||t19815.9351939261s|de1c6d017cb4e8a8|38|qs|local|vector|||0||
 tbl_all_FL_ORANGE_primary|stem|6dd71d12008128c1|fdf0257b6e1be29d|2da7c8e44ceff223|1882858083||t19815.9350807527s|de1c6d017cb4e8a8|38|qs|local|vector|||0||
 tbl_all_GA_ALL_primary|stem|d2ba2313487fe456|40ab588bec5c23fe|4eb717ea8d9ce108|-610827490||t19815.9566572132s|3a4e247ec278fd56|135148|qs|local|vector|||0.087||
 tbl_all_NC_ALL_primary|stem|56ba0c53896fe1a6|665d5a2ab0ca5187|4b73eeed00bab44b|-1694778160||t19815.9351670835s|7d1c9cd3379c3f77|1595734|qs|local|vector|||0.326||
-tbl_all_WI_MILWAUKEE_primary|stem|6dd71d12008128c1|c3b0a0ab0d2a3e91|4e3c10e1374b49e3|125825381||t19816.1327600421s|de1c6d017cb4e8a8|38|qs|local|vector|||0.001||
-time_AZ_MARICOPA_primary|stem|error|cc2b89f785b873a3|deb636a986f62ab8|521328079||t19816.1618444982s|de1c6d017cb4e8a8|38|qs|local|vector|||0.33||HTTP error 404.
-time_FL_ALL_primary|stem|a8253eafad5d69e7|618af79c7745ab9d|deb636a986f62ab8|-1274788950||t19816.1616438283s|00c37fc0166b3b11|58|qs|local|vector|||0.001||
-time_FL_MIAMI.DADE_primary|stem|be9ab909ed7c2002|48c2af95fdb08e69|deb636a986f62ab8|-1339028903||t19816.1616422879s|00c37fc0166b3b11|58|qs|local|vector|||1.518||
-time_FL_ORANGE_primary|stem|b615f32bdcc46613|12f1510a548580d8|deb636a986f62ab8|-1067712629||t19816.1616423059s|00c37fc0166b3b11|58|qs|local|vector|||1.352||
-time_GA_ALL_primary|stem|ebd4b7e76fb9c3db|8f123cf5519c8651|deb636a986f62ab8|218392198||t19816.1616460813s|00c37fc0166b3b11|58|qs|local|vector|||0.195||
-time_NC_ALL_primary|stem|55d39f0fe4f599aa|ede0d9eb35a3b187|deb636a986f62ab8|-549433972||t19816.1616422493s|00c37fc0166b3b11|58|qs|local|vector|||1.147||
-time_WI_MILWAUKEE_primary|stem|b681e4561c1cf10f|b9170f740048726d|deb636a986f62ab8|-1723077323||t19816.161838632s|00c37fc0166b3b11|58|qs|local|vector|||4.31||
+tbl_all_WI_MILWAUKEE_primary|stem|6dd71d12008128c1|c3b0a0ab0d2a3e91|7b83c309711e665b|125825381||t19816.1693613387s|de1c6d017cb4e8a8|38|qs|local|vector|||0||
+time_AZ_MARICOPA_primary|stem|5f24073a37cb3fd6|cc2b89f785b873a3|deb636a986f62ab8|521328079||t19816.1691177381s|00c37fc0166b3b11|58|qs|local|vector|||0.547||
+time_FL_ALL_primary|stem|5e7b8f20e1bb0dc8|618af79c7745ab9d|deb636a986f62ab8|-1274788950||t19816.1689293993s|00c37fc0166b3b11|58|qs|local|vector|||0.001||
+time_FL_MIAMI.DADE_primary|stem|be9ab909ed7c2002|48c2af95fdb08e69|deb636a986f62ab8|-1339028903||t19816.1689286363s|00c37fc0166b3b11|58|qs|local|vector|||1.11||
+time_FL_ORANGE_primary|stem|b615f32bdcc46613|12f1510a548580d8|deb636a986f62ab8|-1067712629||t19816.1689282162s|00c37fc0166b3b11|58|qs|local|vector|||0.901||
+time_GA_ALL_primary|stem|ebd4b7e76fb9c3db|8f123cf5519c8651|deb636a986f62ab8|218392198||t19816.1689404063s|00c37fc0166b3b11|58|qs|local|vector|||0.339||
+time_NC_ALL_primary|stem|55d39f0fe4f599aa|ede0d9eb35a3b187|deb636a986f62ab8|-549433972||t19816.1689322198s|00c37fc0166b3b11|58|qs|local|vector|||1.058||
+time_WI_MILWAUKEE_primary|stem|43a30b7512dae16a|b9170f740048726d|deb636a986f62ab8|-1723077323||t19816.1691100926s|00c37fc0166b3b11|58|qs|local|vector|||4.604||
 values|object|51f50e9b79a97e23|||||||||||||||
-website|stem|218666cdff9b8e30|dacbcfa252a6ea37|d5fc3d9e309f7d95|-385122080|docs*index.qmd*pages/ga.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19816.1618377838s|d0b75f577bcc184f|30317069|file|local|vector|||15.651||
+website|stem|1545dfd325e37475|dacbcfa252a6ea37|d5fc3d9e309f7d95|-385122080|docs*index.qmd*pages/ga.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19816.1691094104s|d0b75f577bcc184f|30317069|file|local|vector|||14.249||
