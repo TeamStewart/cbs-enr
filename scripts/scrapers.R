@@ -447,3 +447,78 @@ scrape_wi <- function(state, county, type, path = NULL, timestamp){
     rbind(dem_results, rep_results) 
   }
 }
+
+scrape_pa <- function(state, county, type, path = NULL, timestamp){
+  
+  if (county == "ALLEGHENY"){
+    
+    # get the latest version number of the file
+    version = request(sprintf("https://results.enr.clarityelections.com/PA/Allegheny/%s/current_ver.txt", path)) |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_perform() |> 
+      resp_body_string()
+    
+    # build the url
+    url = sprintf("https://results.enr.clarityelections.com/PA/Allegheny/%s/%s/reports/detailxml.zip", path, version)
+    
+    # try to download the file
+    tryCatch(
+      request(url) |> 
+        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
+        req_retry(max_tries = 5) |> 
+        req_perform(path = "data/raw/pa/allegheny.zip"),
+      httr2_http_404 = function(cnd) NULL
+    )
+    
+    source_python("scripts/clarity_scraper.py")
+    get_data("data/raw/pa/allegheny.zip")
+    
+    read_csv("data/raw/pa/allegheny.csv") |> 
+      mutate(
+        state = "PA",
+        virtual_precinct = FALSE
+        ) |> 
+      mutate(across(where(is.character), ~ na_if(.x, ""))) |> 
+      mutate(candidate_name = case_match(
+        vote_mode,
+        "Undervotes" ~ "Undervote",
+        "Overvotes" ~ "Overvote",
+        .default = candidate_name
+      ),
+      # remove incumbent indicator from Biden
+      candidate_name = str_remove_all(candidate_name, "\\(I\\)$") |> str_trim() |> str_squish()
+      ) |> 
+      mutate(vote_mode = case_match(
+        vote_mode, 
+        "Election Day Votes" ~ "Election Day",
+        "Advance Voting Votes" ~ "Early Voting",
+        "Absentee by Mail Votes" ~ "Absentee/Mail",
+        "Provisional Votes" ~ "Provisional",
+        c("Undervotes", "Overvotes") ~ "Aggregated",
+        .default = NA_character_
+      )) |> 
+      mutate(candidate_party = case_match(
+        candidate_party,
+        "REP" ~ "Republican",
+        "DEM" ~ "Democrat",
+        .default = candidate_party
+      )) |> 
+      mutate(race_name = case_match(
+        race_name,
+        "President of the US - Rep" ~ "President-Republican",
+        "President of the US - Dem" ~ "President-Democrat",
+        "President of the US/Presidente de los Estados Unidos - Rep" ~ "President-Republican", 
+        "President of the US/Presidente de los Estados Unidos - Dem" ~ "President-Democrat",
+        .default = race_name
+      )) |> 
+      select(state, race_id, race_name, candidate_name, candidate_party, 
+             jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
+    
+    
+  } else if (county == "PHILADELPHIA"){
+    
+    #TODO Implement Philadelphia Scraper
+    return(NULL)
+    
+  }
+}

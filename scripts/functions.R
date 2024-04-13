@@ -15,6 +15,8 @@ process_data <- function(state, county, type, timestamp, path = NULL) {
     d <- scrape_az(state, county, type, path, timestamp)
   } else if(state == 'WI'){
     d <- scrape_wi(state, county, type, path, timestamp)
+  } else if (state == "PA"){
+    d <- scrape_pa(state, county, type, path, timestamp)
   }
   
   # save latest version
@@ -107,6 +109,32 @@ get_timestamp <- function(state, county, type, path) {
     }
   }
   
+  pa_timestamp <- function(county, path){
+    
+    if (county == "ALLEGHENY"){
+      version <- request(sprintf("https://results.enr.clarityelections.com/PA/Allegheny/%s/current_ver.txt", path)) |> 
+        req_headers("Accept" = "application/txt") |> 
+        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+        req_perform() |> 
+        resp_body_string()
+      
+      request(sprintf("https://results.enr.clarityelections.com/PA/Allegheny/%s/%s/json/en/electionsettings.json", path, version)) |> 
+        req_headers("Accept" = "application/json") |> 
+        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+        req_perform() |> 
+        resp_body_json() |>
+        pluck("websiteupdatedat") |> 
+        mdy_hms(tz = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
+    } else if (county == "PHILADELPHIA"){
+      
+      #TODO Implement Philadelphia, PA Timestamp
+      return(NULL)
+      
+    }
+    
+  }
+  
   if (state == "NC" & type == "primary"){
     return(nc_timestamp())
   } else if (state == "TX"){
@@ -119,6 +147,8 @@ get_timestamp <- function(state, county, type, path) {
     return(az_timestamp(county))
   } else if (state == 'WI'){
     return(wi_timestamp(county))
+  } else if (state == "PA"){
+    return(pa_timestamp(county, path))
   }
 }
 
