@@ -337,8 +337,8 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
     
     path = str_c('https://elections.maricopa.gov',path)
     
-    source_python("scripts/maricopa.py")
-    get_maricopa(path)
+    source_python("scripts/dynamic_download.py")
+    get_file(path, county, state)
     
     # Get file name of the most recently downloaded raw file
     files <- list.files(path = "data/raw/AZ", full.names = TRUE)
@@ -516,9 +516,53 @@ scrape_pa <- function(state, county, type, path = NULL, timestamp){
     
     
   } else if (county == "PHILADELPHIA"){
+    # dynamically retrive file via python script
+    source_python("scripts/dynamic_download.py")
+    get_file(path, county, state)
     
-    #TODO Implement Philadelphia Scraper
-    return(NULL)
+    # Get file name of the most recently downloaded raw file
+    files <- list.files(path = "data/raw/PA", full.names = TRUE, pattern = "^Philadelphia")
+    
+    # Get file info and sort by modification time in descending order
+    most_recent_file <- files[order(file.info(files)$mtime, decreasing = TRUE)][1]
+    
+    read_csv(most_recent_file) |>
+      filter(RaceName %in% c("=\"PRESIDENT OF THE UNITED STATES DEM Democratic (VOTE FOR 1)\"", "=\"PRESIDENT OF THE UNITED STATES REP Republican (VOTE FOR 1)\"") & !str_detect(PrecinctName,"Congressional")) |>
+      mutate(
+        RaceName = case_match(
+          RaceName,
+          "=\"PRESIDENT OF THE UNITED STATES DEM Democratic (VOTE FOR 1)\"" ~ "President-Democrat",
+          "=\"PRESIDENT OF THE UNITED STATES REP Republican (VOTE FOR 1)\"" ~ "President-Republican",
+          .default = NA_character_),
+        PartyCode = case_match(
+          PartyCode,
+          "=\"DEM\"" ~ "Democrat",
+          "=\"REP\"" ~ "Republican",
+          .default = NA_character_),
+        CandidateName = case_match(
+          CandidateName,
+          "=\"JOSEPH R BIDEN JR DEM\"" ~ "Joseph R. Biden",
+          "=\"DEAN PHILLIPS DEM\"" ~ "Dean Phillips",
+          "=\"Write-in\"" ~ "Write-in",
+          "=\"NIKKI R HALEY REP\"" ~ "Nikki Haley",
+          "=\"DONALD J TRUMP REP\"" ~ "Donald J. Trump",
+          .default = NA_character_),
+        PrecinctName = str_replace_all(PrecinctName, "\"|=", ""),
+        CandidateVotes = str_replace_all(CandidateVotes, "\"|=", ""),
+        state = .env$state,
+        jurisdiction = .env$county,
+        race_id = NA,
+        virtual_precinct = FALSE,
+        vote_mode = 'Total'
+        ) |>
+      rename(
+        race_name = RaceName,
+        candidate_name = CandidateName,
+        candidate_party = PartyCode,
+        precinct_id = PrecinctName,
+        precinct_total = CandidateVotes
+        ) |>
+      select(state, race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
     
   }
 }
