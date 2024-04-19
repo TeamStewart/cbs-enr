@@ -127,12 +127,12 @@ get_timestamp <- function(state, county, type, path) {
         mdy_hms(tz = "America/New_York") |>
         str_replace_all("-|:| ", "_")
     } else if (county == "PHILADELPHIA"){
-      
-      #TODO Implement Philadelphia, PA Timestamp
-      return(NULL)
-      
+      read_html('https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?') |>
+        html_element('.turnout-last-updated-time') |>
+        html_text() |>
+        mdy_hms(tz = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
     }
-    
   }
   
   if (state == "NC" & type == "primary"){
@@ -160,7 +160,7 @@ general_table <- function(data, state, county, type, timestamp) {
     locale <- str_to_upper(state)
   }
  
-  if(state %in% c('FL','WI')){
+  if(state %in% c('FL','WI','PA')){
     return(NULL)
   } else{
     data |>
@@ -226,7 +226,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
   
   if (state == "TX"){
     return("NOT IMPLEMENTED")
-  } else if(state %in% c('FL','AZ','WI')){
+  } else if(state %in% c('FL','AZ','WI','PA')){
     data |> 
       filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
       mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican") |> str_trim() |> str_squish()) |>
@@ -328,7 +328,7 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
 
 run_models <- function(data, st, timestamp){
   
-  if (st %in% c("TX","GA","FL","AZ", "WI")){
+  if (st %in% c("TX","GA","FL","AZ", "WI", "PA")){
     return(NULL)
   }
   

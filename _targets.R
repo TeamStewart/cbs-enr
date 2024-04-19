@@ -43,6 +43,7 @@ values <- tibble(
     "FL",
     "AZ",
     "WI",
+    "PA",
     "PA"
   ),
   county = c(
@@ -53,7 +54,8 @@ values <- tibble(
     "MIAMI-DADE",
     "MARICOPA",
     "MILWAUKEE",
-    "ALLEGHENY"
+    "ALLEGHENY",
+    "PHILADELPHIA"
   ),
   type = "primary",
   path = c(
@@ -70,8 +72,11 @@ values <- tibble(
     # AZ
     , ""
     # WI - Milwaukee
-    , "https://county.milwaukee.gov/EN/County-Clerk/Off-Nav/Election-Results/4-2-24SpringPresidentialPreferenceUnofficialResults",
-    "106267"
+    , "https://county.milwaukee.gov/EN/County-Clerk/Off-Nav/Election-Results/4-2-24SpringPresidentialPreferenceUnofficialResults"
+    # PA - Allegheny
+    ,"106267"
+    # PA - Philadelphia
+    ,"https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?"
   )
 )
 
