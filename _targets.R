@@ -74,7 +74,7 @@ values <- tibble(
     # WI - Milwaukee
     , "https://county.milwaukee.gov/EN/County-Clerk/Off-Nav/Election-Results/4-2-24SpringPresidentialPreferenceUnofficialResults"
     # PA - Allegheny
-    ,"106267"
+    ,"120751"
     # PA - Philadelphia
     ,"https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?"
   )

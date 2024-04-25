@@ -55,12 +55,15 @@ def get_file(path, county, state):
     driver.get(path)
     
     # Wait for some time to ensure the file gets downloaded. Adjust the sleep time as necessary.
-    time.sleep(5)
+    time.sleep(10)
     
     # In Philadelphia County, PA, dynamically click download link
     if state == "PA" and county == "PHILADELPHIA":
         download_button = driver.find_element(By.ID, "MainContent_LinkButton1")
         download_button.click()
+        
+        # wait more time for crdownload to unpack
+        time.sleep(20)
         
         renamed_file = rename_file_with_timestamp(download_directory)
         
