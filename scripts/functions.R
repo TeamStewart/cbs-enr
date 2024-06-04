@@ -3,27 +3,22 @@ source("scripts/models.R")
 
 process_data <- function(state, county, type, timestamp, path = NULL) {
   
-  if (state == "NC"){
-    d <- scrape_nc(state, county, type, path, timestamp)
-  } else if (state == "TX"){
-    d <- scrape_tx(state, county, type, path, timestamp)
-  } else if (state == "GA"){
-    d <- scrape_ga(path)
-  } else if(state == 'FL'){
-    d <- scrape_fl(state, county, type, path, timestamp)
-  } else if(state == 'AZ'){
-    d <- scrape_az(state, county, type, path, timestamp)
-  } else if(state == 'WI'){
-    d <- scrape_wi(state, county, type, path, timestamp)
-  } else if (state == "PA"){
-    d <- scrape_pa(state, county, type, path, timestamp)
-  }
+  d <- switch(
+    state,
+    "AZ" = scrape_az(state, county, type, path, timestamp),
+    "GA" = scrape_ga(state, county, type, path, timestamp),
+    "FL" = scrape_fl(state, county, type, path, timestamp),
+    "NC" = scrape_nc(state, county, type, path, timestamp),
+    "PA" = scrape_pa(state, county, type, path, timestamp),
+    "TX" = scrape_tx(state, county, type, path, timestamp),
+    "WI" = scrape_wi(state, county, type, path, timestamp)
+    )
   
   # save latest version
-  write_csv(d, sprintf("data/clean/%s/%s_%s_%s_latest.csv", state, state, county, type))
+  write_csv(d, glue("data/clean/{state}/{state}_{county}_{type}_latest.csv"))
 
   # save timestamped version
-  write_csv(d, sprintf("data/clean/%s/%s_%s_%s_%s.csv", state, state, county, type, timestamp))
+  write_csv(d, glue("data/clean/{state}/{state}_{county}_{type}_{timestamp}.csv"))
   
   return(d)
 }
@@ -49,25 +44,16 @@ get_timestamp <- function(state, county, type, path) {
     
   }
   
-  nc_timestamp <- function() {
-    read_xml("https://s3.amazonaws.com/dl.ncsbe.gov?delimiter=/&prefix=ENRS/2024_03_05/") |>
-      xml2::as_list() |>
-      pluck("ListBucketResult", function(x) x[names(x) == "Contents"]) |>
-      map(
-        ~ tibble(
-          Key = pluck(.x, "Key", 1),
-          LastModified = pluck(.x, "LastModified", 1)
-        )
-      ) |>
-      list_rbind() |>
-      filter(Key == "ENRS/2024_03_05/results_pct_20240305.zip") |>
-      pull(LastModified) |>
-      ymd_hms(tz = "America/New_York") |>
-      str_replace_all("-|:| ", "_")
-  }
-  
-  ga_timestamp <- function(){
-    clarity_timestamp()
+  az_timestamp <- function(){
+    if(county == 'MARICOPA'){
+      read_html('https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch') |>
+        html_element(':nth-child(8) small') |>
+        html_text2() |>
+        str_extract("\\d{2}/\\d{2}/\\d{4} \\d{1,2}:\\d{2}:\\d{2} [AP]M") |>
+        mdy_hms(tz = "America/Phoenix") |>
+        with_tz(tzone = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
+    }
   }
   
   fl_timestamp <- function(){
@@ -91,28 +77,21 @@ get_timestamp <- function(state, county, type, path) {
     }
   }
   
-  az_timestamp <- function(){
-    if(county == 'MARICOPA'){
-      read_html('https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch') |>
-        html_element(':nth-child(8) small') |>
-        html_text2() |>
-        str_extract("\\d{2}/\\d{2}/\\d{4} \\d{1,2}:\\d{2}:\\d{2} [AP]M") |>
-        mdy_hms(tz = "America/Phoenix") |>
-        with_tz(tzone = "America/New_York") |>
-        str_replace_all("-|:| ", "_")
-    }
-  }
-  
-  wi_timestamp <- function(){
-    if(county == 'MILWAUKEE'){
-      read_html('https://county.milwaukee.gov/EN/County-Clerk/Off-Nav/Election-Results/4-2-24SpringPresidentialPreferenceUnofficialResults') |>
-        html_element('#reportTimeLocal') |>
-        html_text() |>
-        str_replace_all(c("Apr."="April", "p.m."="pm")) |> # Remove 'UTC' part for parsing
-        mdy_hm() |>
-        with_tz(tzone = "America/New_York") |>
-        str_replace_all("-|:| ", "_")
-    }
+  nc_timestamp <- function(){
+    read_xml("https://s3.amazonaws.com/dl.ncsbe.gov?delimiter=/&prefix=ENRS/2024_03_05/") |>
+      xml2::as_list() |>
+      pluck("ListBucketResult", function(x) x[names(x) == "Contents"]) |>
+      map(
+        ~ tibble(
+          Key = pluck(.x, "Key", 1),
+          LastModified = pluck(.x, "LastModified", 1)
+        )
+      ) |>
+      list_rbind() |>
+      filter(Key == "ENRS/2024_03_05/results_pct_20240305.zip") |>
+      pull(LastModified) |>
+      ymd_hms(tz = "America/New_York") |>
+      str_replace_all("-|:| ", "_")
   }
   
   pa_timestamp <- function(){
@@ -140,21 +119,28 @@ get_timestamp <- function(state, county, type, path) {
     }
   }
   
-  if (state == "NC" & type == "primary"){
-    return(nc_timestamp())
-  } else if (state == "TX"){
-    return(tx_timestamp())
-  } else if (state == "GA"){
-    return(ga_timestamp())
-  } else if(state == 'FL'){
-    return(fl_timestamp())
-  } else if(state == 'AZ'){
-    return(az_timestamp())
-  } else if (state == 'WI'){
-    return(wi_timestamp())
-  } else if (state == "PA"){
-    return(pa_timestamp())
+  wi_timestamp <- function(){
+    if(county == 'MILWAUKEE'){
+      read_html('https://county.milwaukee.gov/EN/County-Clerk/Off-Nav/Election-Results/4-2-24SpringPresidentialPreferenceUnofficialResults') |>
+        html_element('#reportTimeLocal') |>
+        html_text() |>
+        str_replace_all(c("Apr."="April", "p.m."="pm")) |> # Remove 'UTC' part for parsing
+        mdy_hm() |>
+        with_tz(tzone = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
+    }
   }
+  
+  switch(
+    state,
+    "AZ" = az_timestamp(),
+    "GA" = clarity_timestamp(),
+    "FL" = fl_timestamp(),
+    "NC" = nc_timestamp(),
+    "PA" = pa_timestamp(),
+    "TX" = tx_timestamp(),
+    "WI" = wi_timestamp(),
+  )
 }
 
 general_table <- function(data, state, county, type, timestamp) {
@@ -174,7 +160,7 @@ general_table <- function(data, state, county, type, timestamp) {
       mutate(percent = count / sum(count), .by = race_name) |>
       gt() |> 
       tab_header(
-        title = sprintf("2024 %s Results in %s", str_to_title(type), locale),
+        title = glue("2024 {str_to_title(type)} Results in {locale}"),
         subtitle = str_c("Last updated: ", ymd_hms(timestamp, tz = "America/New_York"))
       ) |>
       opt_interactive(
@@ -236,11 +222,11 @@ convert_cbs <- function(data, state, county, type, timestamp, upload=FALSE){
       filter(str_detect(race_name, regex("^Governor|President", ignore_case=TRUE))) |> 
       mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican") |> str_trim() |> str_squish()) |>
       filter(candidate_party %in% c("Democrat", "Republican")) |> 
-      write_csv(sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type))
+      write_csv(glue("data/cbs_format/{state}/{county}_{type}_latest.csv"))
     if (upload){
-      drive_put(media = sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type),
+      drive_put(media = glue("data/cbs_format/{state}/{county}_{type}_latest.csv"),
                 path = "https://drive.google.com/drive/folders/1nyEtfAnhw-G8e1krk7D4LvOPeBdIY94n",
-                name = sprintf("%s_%s_results.csv", str_to_lower(state),str_to_lower(county)))
+                name = glue("{str_to_lower(state)}_{str_to_lower(county)}_results.csv"))
     }
   } else{
     lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv",
