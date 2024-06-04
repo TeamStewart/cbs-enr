@@ -5,6 +5,9 @@
 # ========================================
 ## SETUP
 # ========================================
+rm(list=ls())
+gc()
+
 library(targets)
 library(tarchetypes)
 suppressMessages(library(tidyverse))
@@ -19,7 +22,7 @@ options(
 tar_option_set(
   packages = c(
     "data.table", "tidyverse", "gt", "xml2", "aws.s3", "jsonlite", "fixest", "googledrive",
-    "marginaleffects", "rlang", "reticulate", "rvest", "httr2", "tabulizer"
+    "marginaleffects", "rlang", "reticulate", "rvest", "httr2", "glue", "fs"
   ),
   memory = "transient",
   format = "qs",
@@ -34,60 +37,16 @@ tar_config_set(
 )
 
 # generate the lookup table with important information for each state
-values <- tibble(
-  state = c(
-    "NC",
-    "GA",
-    "FL",
-    "FL",
-    "FL",
-    "AZ",
-    "WI",
-    "PA",
-    "PA"
-  ),
-  county = c(
-    "ALL",
-    "ALL",
-    "ALL",
-    "ORANGE",
-    "MIAMI-DADE",
-    "MARICOPA",
-    "MILWAUKEE",
-    "ALLEGHENY",
-    "PHILADELPHIA"
-  ),
-  type = "primary",
-  path = c(
-    # NC - ALL
-    "https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip"
-    # GA - ALL
-    , "120015"
-    # FL - ALL
-    , "https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt"
-    # FL - Orange
-    , ""
-    # FL - Miami-Dade
-    , ""
-    # AZ
-    , ""
-    # WI - Milwaukee
-    , "https://county.milwaukee.gov/EN/County-Clerk/Off-Nav/Election-Results/4-2-24SpringPresidentialPreferenceUnofficialResults"
-    # PA - Allegheny
-    ,"120751"
-    # PA - Philadelphia
-    ,"https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?"
-  )
-)
+metadata = read_csv("metadata.csv")
 
 # ========================================
 ## PIPELINE
 # ========================================
 list(
   tar_map(
-    values,
+    metadata,
     tar_target(time, get_timestamp(state, county, type, path), cue = tar_cue(mode = "always")),
-    tar_target(clean, process_data(state, county, type, time, path = path)),
+    tar_target(clean, process_data(state, county, type, time, path = path), error = "continue"),
     tar_target(tbl_all, general_table(clean, state, county, type, time)),
     tar_target(cbs, convert_cbs(clean, state, county, type, time, upload = FALSE)),
     # tar_target(models, run_models(clean, state, time)),

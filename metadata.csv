@@ -1,0 +1,13 @@
+﻿state,county,type,path
+NC,ALL,primary,https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip
+GA,ALL,primary,120015
+FL,ALL,primary,https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt
+FL,ORANGE,primary,
+FL,MIAMI-DADE,primary,
+AZ,MARICOPA,primary,
+WI,MILWAUKEE,primary,https://county.milwaukee.gov/EN/County-Clerk/Off-Nav/Election-Results/4-2-24SpringPresidentialPreferenceUnofficialResults
+PA,ALLEGHENY,primary,120751
+PA,PHILADELPHIA,primary,https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?
+TX,EL PASO,primary,120338
+TX,BEXAR,primary,
+TX,HIDALGO,primary,120182
