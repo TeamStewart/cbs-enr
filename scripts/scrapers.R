@@ -218,16 +218,89 @@ scrape_tx <- function(state, county, type, path = NULL, timestamp){
       filter(max(precinct_total) > 0, .by = c(race_name, candidate_name, candidate_party)) |> 
       select(state, jurisdiction, precinct_id, race_name, candidate_name, candidate_party, vote_mode, precinct_total, virtual_precinct)
     
-  } else if (county == "HIDALGO"){
+  } 
+  else if (county == "HIDALGO"){
     
-    d <- NULL
+    d = get_clarity(state, county, path) |> 
+      read_csv() |> 
+      mutate(
+        state = state,
+        virtual_precinct = FALSE,
+        candidate_name = case_match(
+          vote_mode,
+          "Undervotes" ~ "Undervote",
+          "Overvotes" ~ "Overvote",
+          .default = candidate_name
+        ),
+        vote_mode = case_match(
+          vote_mode,
+          "Election" ~ "Election Day",
+          "Early" ~ "Early Voting",
+          "Absentee" ~ "Absentee/Mail",
+          c("Undervotes", "Overvotes") ~ "Aggregated",
+          .default = vote_mode
+        ),
+        candidate_party = case_match(
+          candidate_party,
+          "REP" ~ "Republican",
+          "DEM" ~ "Democrat",
+          .default = NA_character_
+        ),
+        race_name = case_match(
+          race_name,
+          "(R) President" ~ "President-Republican",
+          "(D) President" ~ "President-Democrat",
+          "(R) US Senator" ~ "US Senate-Republican",
+          "(D) US Senator" ~ "US Senate-Democrat",
+          "(D) US Rep 16" ~ "US House-16-Democrat",
+          "(D) US Rep 23" ~ "US House-23-Democrat",
+          "(R) US Rep 16" ~ "US House-16-Republican",
+          "(R) US Rep 23" ~ "US House-23-Republican",
+          .default = race_name
+        )
+      ) |> 
+      select(state, race_id, race_name, candidate_name, candidate_party, 
+        jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
     
-  } else if (county == "EL PASO"){
+  } 
+  else if (county == "EL PASO"){
     
-    d <- NULL
+    d = get_clarity(state, county, path) |> 
+      read_csv() |> 
+      filter(vote_mode != "regVotersCounty") |> 
+      mutate(
+        state = "TX",
+        virtual_precinct = FALSE,
+        vote_mode = case_match(
+          vote_mode,
+          "Absentee By Mail" ~ "Absentee/Mail",
+          .default = vote_mode
+        ),
+        candidate_party = case_when(
+          str_detect(candidate_name, fixed("(R)")) ~ "Republican",
+          str_detect(candidate_name, fixed("(D)")) ~ "Democrat",
+          .default = NA_character_
+        ),
+        race_name = case_match(
+          race_name,
+          "(R) President" ~ "President-Republican",
+          "(D) President" ~ "President-Democrat",
+          "(R) US Senator" ~ "US Senate-Republican",
+          "(D) US Senator" ~ "US Senate-Democrat",
+          "(D) US Rep 16" ~ "US House-16-Democrat",
+          "(D) US Rep 23" ~ "US House-23-Democrat",
+          "(R) US Rep 16" ~ "US House-16-Republican",
+          "(R) US Rep 23" ~ "US House-23-Republican",
+          .default = race_name
+        )
+      ) |> 
+      select(state, race_id, race_name, candidate_name, candidate_party, 
+        jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
     
   }
-  
+  else {
+    stop("Invalid county given to Texas scraper")
+  }
   return(d)
   
 }
@@ -451,29 +524,8 @@ scrape_wi <- function(state, county, type, path = NULL, timestamp){
 scrape_pa <- function(state, county, type, path = NULL, timestamp){
   
   if (county == "ALLEGHENY"){
-    
-    # get the latest version number of the file
-    version = request(sprintf("https://results.enr.clarityelections.com/PA/Allegheny/%s/current_ver.txt", path)) |> 
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-      req_perform() |> 
-      resp_body_string()
-    
-    # build the url
-    url = sprintf("https://results.enr.clarityelections.com/PA/Allegheny/%s/%s/reports/detailxml.zip", path, version)
-    
-    # try to download the file
-    tryCatch(
-      request(url) |> 
-        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
-        req_retry(max_tries = 5) |> 
-        req_perform(path = "data/raw/pa/allegheny.zip"),
-      httr2_http_404 = function(cnd) NULL
-    )
-    
-    source_python("scripts/clarity_scraper.py")
-    get_data("data/raw/pa/allegheny.zip")
-    
-    read_csv("data/raw/pa/allegheny.csv") |> 
+    get_clarity(state, county, path) |> 
+      read_csv() |> 
       mutate(
         state = "PA",
         virtual_precinct = FALSE
@@ -565,4 +617,37 @@ scrape_pa <- function(state, county, type, path = NULL, timestamp){
       select(state, race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
     
   }
+}
+
+get_clarity <- function(state, county, path){
+  
+  county = str_to_title(county) |> str_replace_all(" ", "_")
+  download_path = glue("data/raw/{state}/{county}.zip")
+  
+  dir_create(glue("data/raw/{state}"))
+  
+  # get the latest version number of the file
+  version = request(glue("https://results.enr.clarityelections.com/{state}/{county}/{path}/current_ver.txt")) |> 
+    req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+    req_perform() |> 
+    resp_body_string()
+  
+  # build the url
+  url = glue("https://results.enr.clarityelections.com/{state}/{county}/{path}/{version}/reports/detailxml.zip")
+  
+  # try to download the file
+  tryCatch(
+    request(url) |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
+      req_retry(max_tries = 5) |> 
+      req_perform(path = download_path),
+    httr2_http_404 = function(cnd) NULL
+  )
+  
+  # run clarity scraper
+  source_python("scripts/clarity_scraper.py")
+  get_data(download_path)
+  
+  download_path |> str_replace("zip$", "csv")
+  
 }

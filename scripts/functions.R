@@ -29,6 +29,26 @@ process_data <- function(state, county, type, timestamp, path = NULL) {
 }
 
 get_timestamp <- function(state, county, type, path) {
+  clarity_timestamp <- function(){
+    county_tmp = str_to_title(county) |> str_replace_all(" ", "_")
+    
+    version <- request(glue("https://results.enr.clarityelections.com/{state}/{county_tmp}/{path}/current_ver.txt")) |> 
+      req_headers("Accept" = "application/txt") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_perform() |> 
+      resp_body_string()
+    
+    request(glue("https://results.enr.clarityelections.com/{state}/{county_tmp}/{path}/{version}/json/en/electionsettings.json")) |> 
+      req_headers("Accept" = "application/json") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_perform() |> 
+      resp_body_json() |>
+      pluck("websiteupdatedat") |> 
+      mdy_hms(tz = "America/New_York") |>
+      str_replace_all("-|:| ", "_")
+    
+  }
+  
   nc_timestamp <- function() {
     read_xml("https://s3.amazonaws.com/dl.ncsbe.gov?delimiter=/&prefix=ENRS/2024_03_05/") |>
       xml2::as_list() |>
@@ -47,24 +67,10 @@ get_timestamp <- function(state, county, type, path) {
   }
   
   ga_timestamp <- function(){
-    
-    version <- request("https://results.enr.clarityelections.com/GA/120015/current_ver.txt") |> 
-      req_headers("Accept" = "application/txt") |> 
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-      req_perform() |> 
-      resp_body_string()
-    
-    request(sprintf("https://results.enr.clarityelections.com/GA/120015/%s/json/en/electionsettings.json", version)) |> 
-      req_headers("Accept" = "application/json") |> 
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-      req_perform() |> 
-      resp_body_json() |>
-      pluck("websiteupdatedat") |> 
-      mdy_hms(tz = "America/New_York") |>
-      str_replace_all("-|:| ", "_")
+    clarity_timestamp()
   }
   
-  fl_timestamp <- function(county, path){
+  fl_timestamp <- function(){
     if(county == 'ORANGE'){
       read_html('https://enr.electionsfl.org/ORA/3549/Reports/') |>
         html_element('#LastUpdated') |>
@@ -85,7 +91,7 @@ get_timestamp <- function(state, county, type, path) {
     }
   }
   
-  az_timestamp <- function(county){
+  az_timestamp <- function(){
     if(county == 'MARICOPA'){
       read_html('https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch') |>
         html_element(':nth-child(8) small') |>
@@ -97,7 +103,7 @@ get_timestamp <- function(state, county, type, path) {
     }
   }
   
-  wi_timestamp <- function(county){
+  wi_timestamp <- function(){
     if(county == 'MILWAUKEE'){
       read_html('https://county.milwaukee.gov/EN/County-Clerk/Off-Nav/Election-Results/4-2-24SpringPresidentialPreferenceUnofficialResults') |>
         html_element('#reportTimeLocal') |>
@@ -109,23 +115,10 @@ get_timestamp <- function(state, county, type, path) {
     }
   }
   
-  pa_timestamp <- function(county, path){
+  pa_timestamp <- function(){
     
     if (county == "ALLEGHENY"){
-      version <- request(sprintf("https://results.enr.clarityelections.com/PA/Allegheny/%s/current_ver.txt", path)) |> 
-        req_headers("Accept" = "application/txt") |> 
-        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-        req_perform() |> 
-        resp_body_string()
-      
-      request(sprintf("https://results.enr.clarityelections.com/PA/Allegheny/%s/%s/json/en/electionsettings.json", path, version)) |> 
-        req_headers("Accept" = "application/json") |> 
-        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-        req_perform() |> 
-        resp_body_json() |>
-        pluck("websiteupdatedat") |> 
-        mdy_hms(tz = "America/New_York") |>
-        str_replace_all("-|:| ", "_")
+      clarity_timestamp()
     } else if (county == "PHILADELPHIA"){
       read_html('https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?') |>
         html_element('.turnout-last-updated-time') |>
@@ -135,20 +128,32 @@ get_timestamp <- function(state, county, type, path) {
     }
   }
   
+  tx_timestamp <- function(){
+    
+    if (county == "BEXAR"){
+      NULL
+    }
+    else if (county %in% c("EL PASO", "HIDALGO")){
+      clarity_timestamp()
+    } else {
+      stop("Invalid county entered for Texas timestamp function")
+    }
+  }
+  
   if (state == "NC" & type == "primary"){
     return(nc_timestamp())
   } else if (state == "TX"){
-    return(NULL)
+    return(tx_timestamp())
   } else if (state == "GA"){
     return(ga_timestamp())
   } else if(state == 'FL'){
-    return(fl_timestamp(county, path))
+    return(fl_timestamp())
   } else if(state == 'AZ'){
-    return(az_timestamp(county))
+    return(az_timestamp())
   } else if (state == 'WI'){
-    return(wi_timestamp(county))
+    return(wi_timestamp())
   } else if (state == "PA"){
-    return(pa_timestamp(county, path))
+    return(pa_timestamp())
   }
 }
 
