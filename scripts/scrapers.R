@@ -179,23 +179,9 @@ scrape_ga <- function(state, county, type, path = NULL, timestamp){
 
 ## Florida
 scrape_fl <- function(state, county, type, path = NULL, timestamp){
-  if(county == 'ALL'){
-    read.table(path, header = TRUE, sep = "\t", quote = "") |>
-      mutate(
-        state = .env$state,
-        race_id = NA,
-        PartyName = str_remove_all(PartyName, " Party$"),
-        RaceName = str_remove_all(RaceName, " of the United States$"),
-        race_name = str_c(RaceName, PartyName,sep = '-'),
-        candidate_name = str_c(CanNameFirst, CanNameMiddle, CanNameLast, sep = " "),
-        vote_mode = 'Total'
-      ) |>
-      select(
-        state, race_id, race_name, candidate_name,
-        candidate_party = PartyName, jurisdiction = CountyName, 
-        vote_mode, county_total = CanVotes)
-  } else if(county == 'ORANGE'){
-    path <- read_html('https://enr.electionsfl.org/ORA/3549/Reports/') |>
+  if(county == 'MARTIN'){
+  } else{
+    path <- read_html(path) |>
       html_nodes(xpath = "//a[contains(text(), 'Candidate Results by Precinct and Party (CSV)')]") |>
       html_attr('href')
     
@@ -233,44 +219,6 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
       select(state, race_id, race_name, candidate_name = `Candidate Issue`,
              candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
     
-  } else if(county == 'MIAMI-DADE'){
-    path <- read_html('https://enr.electionsfl.org/DAD/3525/Reports/') |>
-      html_nodes(xpath = "//a[contains(text(), 'Candidate Results by Precinct and Party (CSV)')]") |>
-      html_attr('href')
-    
-    read_csv(path) |>
-      select(-c(`Total Votes`)) |>
-      mutate(
-        state = state,
-        race_id = NA,
-        race_name = case_match(
-          Contest,
-          "Republican President" ~ "President-Republican",
-          "Democrat President" ~ "President-Democrat",
-          .default = Contest
-        ),
-        candidate_party = case_match(
-          Party,
-          'REP' ~ "Republican",
-          'DEM' ~ "Democrat",
-          .default = race_name
-        ),
-        jurisdiction = "Miami-Dade",
-        precinct_id = str_remove(`Precinct Name`, "^PRECINCT "),
-        virtual_precinct = FALSE
-      ) |>
-      pivot_longer(cols = c("Mail Votes","Early Votes","Election Day Votes"),names_to = "vote_mode", values_to = "precinct_total") |>
-      mutate(
-        vote_mode = case_match(
-          vote_mode,
-          "Election Day Votes" ~ "Election Day",
-          "Early Votes" ~ "Early Voting",
-          "Mail Votes" ~ "Absentee/Mail",
-        )
-      ) |>
-      filter(!is.na(race_name) & vote_mode %in% c("Election Day","Early Voting","Absentee/Mail")) |>
-      select(state, race_id, race_name, candidate_name = `Candidate Issue`,
-             candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
   }
 }
 
