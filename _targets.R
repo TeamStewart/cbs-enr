@@ -22,7 +22,7 @@ options(
 tar_option_set(
   packages = c(
     "data.table", "tidyverse", "gt", "xml2", "aws.s3", "jsonlite", "fixest", "googledrive",
-    "marginaleffects", "rlang", "reticulate", "rvest", "httr2", "glue", "fs"
+    "marginaleffects", "rlang", "reticulate", "rvest", "httr2", "glue", "fs", "polite"
   ),
   memory = "transient",
   format = "qs",

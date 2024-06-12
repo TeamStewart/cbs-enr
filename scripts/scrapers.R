@@ -178,97 +178,133 @@ scrape_ga <- function(state, county, type, path = NULL, timestamp){
 }
 
 ## Florida
-scrape_fl <- function(state, county, type, path = NULL, timestamp){
-  if(county == 'MARTIN'){
-    get_clarity(state, county, path) |> 
-      read_csv() |> 
+scrape_fl <- function(state, county, type, path = NULL, timestamp) {
+  process_clarity <- function(state, county, path) {
+    get_clarity(state, county, path) |>
+      read_csv() |>
       mutate(
         state = state,
-        virtual_precinct = FALSE
-      ) |> 
-      mutate(across(where(is.character), ~ na_if(.x, ""))) |> 
-      mutate(candidate_name = case_match(
-        vote_mode,
-        "Undervotes" ~ "Undervote",
-        "Overvotes" ~ "Overvote",
-        .default = candidate_name
-      ),
-      # remove incumbent indicator from Biden
-      candidate_name = str_remove_all(candidate_name, "\\(I\\)$") |> str_trim() |> str_squish()
-      ) |> 
-      mutate(vote_mode = case_match(
-        vote_mode, 
-        "Election Day Votes" ~ "Election Day",
-        "Early Vote" ~ "Early Voting",
-        "Vote by Mail" ~ "Absentee/Mail",
-        c("Undervotes", "Overvotes") ~ "Aggregated",
-        .default = NA_character_
-      )) |> 
-      mutate(candidate_party = case_match(
-        candidate_party,
-        "REP" ~ "Republican",
-        "DEM" ~ "Democrat",
-        .default = candidate_party
-      )) |> 
-      mutate(race_name = case_when(
-        race_name == "President" & candidate_party == 'Republican' ~ "President-Republican",
-        race_name == "President" & candidate_party == 'Democrat' ~ "President-Democrat",
-        TRUE ~ race_name
-      )) |> 
+        virtual_precinct = FALSE,
+        candidate_name = case_match(
+          vote_mode,
+          "Undervotes" ~ "Undervote",
+          "Overvotes" ~ "Overvote",
+          .default = candidate_name
+        ),
+        candidate_name = str_remove_all(candidate_name, "\\(I\\)$") |> str_trim() |> str_squish(),
+        vote_mode = case_match(
+          vote_mode,
+          "Election Day Votes" ~ "Election Day",
+          "Early Vote" ~ "Early Voting",
+          "Vote by Mail" ~ "Absentee/Mail",
+          c("Undervotes", "Overvotes") ~ "Aggregated",
+          .default = NA_character_
+        ),
+        candidate_party = case_match(
+          candidate_party,
+          "REP" ~ "Republican",
+          "DEM" ~ "Democrat",
+          .default = candidate_party
+        ),
+        race_name = case_when(
+          race_name == "President" & candidate_party == 'Republican' ~ "President-Republican",
+          race_name == "President" & candidate_party == 'Democrat' ~ "President-Democrat",
+          TRUE ~ race_name
+        )
+      ) |>
       select(state, race_id, race_name, candidate_name, candidate_party, 
              jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
-  } else{
+  }
+  
+  process_other <- function(state, county, path, timestamp) {
     csv_path <- read_html(path) |>
-      html_node(xpath = '//a[contains(@href, "CandidateResultsbyPrecinctandParty_") and contains(@href, ".csv")]') %>% 
+      html_node(xpath = '//a[contains(@href, "CandidateResultsbyPrecinctandParty_") and contains(@href, ".csv")]') |>
       html_attr("href")
     
-    read_csv(csv_path) |>
-      select(-any_of("Total Votes")) |>
+    input <- read_csv(csv_path) |> write_csv(glue("data/raw/{state}/{county}_{timestamp}.csv"))
+    
+    common_mutate <- input |>
       mutate(
         state = state,
         race_id = NA,
-        race_name = case_when(
-          Contest == "Republican President" ~ "President-Republican",
-          Contest == "Democrat President" ~ "President-Democrat",
-          Contest == "UNITED STATES PRESIDENT (REP)" ~ "President-Republican",
-          Contest == "UNITED STATES PRESIDENT (DEM)" ~ "President-Democrat",
-          Contest == "President" & Party == "REP" ~ "President-Republican",
-          Contest == "President" & Party == "DEM" ~ "President-Democrat",
-          TRUE ~ Contest
-        ),
         candidate_party = case_match(
           Party,
           'REP' ~ "Republican",
           'DEM' ~ "Democrat",
-          .default = race_name
+          .default = Party
+        ),
+        `Candidate Issue` = case_match(
+          `Candidate Issue`,
+          "Undervotes" ~ "Undervote",
+          "Overvotes" ~ "Overvote",
+          "UnderVotes" ~ "Undervote",
+          "OverVotes" ~ "Overvote",
+          .default = `Candidate Issue`
         ),
         jurisdiction = county,
         precinct_id = str_remove(`Precinct Name`, "^PRECINCT "),
         virtual_precinct = FALSE
-      ) |>
-      pivot_longer(cols = c("Mail Votes","Early Votes","Election Day Votes"),names_to = "vote_mode", values_to = "precinct_total") |>
-      mutate(
-        vote_mode = case_match(
-          vote_mode,
-          "Election Day Votes" ~ "Election Day",
-          "Early Votes" ~ "Early Voting",
-          "Mail Votes" ~ "Absentee/Mail",
-        )
-      ) |>
-      filter(!is.na(race_name) & vote_mode %in% c("Election Day","Early Voting","Absentee/Mail")) |>
-      select(state, race_id, race_name, candidate_name = `Candidate Issue`,
-             candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
+      )
     
+    if ("Mail Votes" %in% colnames(input)) {
+      common_mutate |>
+        select(-any_of("Total Votes")) |>
+        mutate(
+          race_name = case_when(
+            Contest %in% c("Republican President", "REP President", "UNITED STATES PRESIDENT (REP)", "President (REP)") ~ "President-Republican",
+            Contest %in% c("Democrat President", "DEM President", "UNITED STATES PRESIDENT (DEM)", "President (DEM)") ~ "President-Democrat",
+            Contest == "President" & Party == "REP" ~ "President-Republican",
+            Contest == "President" & Party == "DEM" ~ "President-Democrat"
+          )
+        ) |>
+        pivot_longer(cols = c("Mail Votes", "Early Votes", "Election Day Votes"), names_to = "vote_mode", values_to = "precinct_total") |>
+        mutate(
+          vote_mode = case_match(
+            vote_mode,
+            "Election Day Votes" ~ "Election Day",
+            "Early Votes" ~ "Early Voting",
+            "Mail Votes" ~ "Absentee/Mail"
+          ),
+          precinct_total = ifelse(precinct_total == "-", NA, precinct_total) |> as.numeric()
+        ) |>
+        filter(!is.na(race_name) & vote_mode %in% c("Election Day", "Early Voting", "Absentee/Mail")) |>
+        select(state, race_id, race_name, candidate_name = `Candidate Issue`,
+               candidate_party, jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
+    } else {
+      common_mutate |>
+        mutate(
+          race_name = case_when(
+            Contest %in% c("Republican President", "REP President", "UNITED STATES PRESIDENT (REP)", "President (REP)") ~ "President-Republican",
+            Contest %in% c("Democrat President", "DEM President", "UNITED STATES PRESIDENT (DEM)", "President (DEM)") ~ "President-Democrat",
+            Contest == "President" & Party == "REP" ~ "President-Republican",
+            Contest == "President" & Party == "DEM" ~ "President-Democrat"
+          ),
+          vote_mode = 'Total',
+          precinct_total = `Total Votes`
+        ) |>
+        filter(!is.na(race_name)) |>
+        select(state, race_id, race_name, candidate_name = `Candidate Issue`,
+               candidate_party, jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
+    }
+  }
+  
+  if (county %in% c('MARTIN', 'PINELLAS')) {
+    process_clarity(state, county, path)
+  } else {
+    process_other(state, county, path, timestamp)
   }
 }
+
 
 ## North Carolina
 scrape_nc <- function(state, county, type, path = NULL, timestamp) {
   
-  download.file(path, destfile = "data/raw/NC/nc_primary.zip")
+  raw_file_path = glue('data/raw/NC/nc_primary_{timestamp}.zip')
+  
+  download.file(path, destfile = raw_file_path)
   
   # read the data
-  fread(cmd = "unzip -p data/raw/NC/nc_primary.zip") |>
+  fread(cmd = glue("unzip -p {raw_file_path}")) |>
     mutate(
       timestamp = timestamp,
       state = "NC",
