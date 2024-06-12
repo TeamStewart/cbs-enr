@@ -223,7 +223,7 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
       html_attr('href')
     
     read_csv(path) |>
-      select(-c(`Total Votes`)) |>
+      select(-any_of("Total Votes")) |>
       mutate(
         state = state,
         race_id = NA,
@@ -240,7 +240,7 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
           'DEM' ~ "Democrat",
           .default = race_name
         ),
-        jurisdiction = "Orange",
+        jurisdiction = county,
         precinct_id = str_remove(`Precinct Name`, "^PRECINCT "),
         virtual_precinct = FALSE
       ) |>

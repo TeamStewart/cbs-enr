@@ -1,56 +1,314 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|4f667e8b2bf87769|||||||||||||||
-cbs_AZ_MARICOPA_primary|stem|6dd71d12008128c1|c3644c0e0e09fbe5|1381735fe9c06ed6|-684002644||t19836.9458665297s|de1c6d017cb4e8a8|38|qs|local|vector|||0.033||
-cbs_FL_ALL_primary|stem|6dd71d12008128c1|b6dfcef3ecab5368|a4be987aec900979|-952962783||t19837.6021046693s|de1c6d017cb4e8a8|38|qs|local|vector|||0.022||
-cbs_FL_MIAMI.DADE_primary|stem|6dd71d12008128c1|addc21af06eb6981|be1ffe64e411d6ea|183127925||t19836.9459820368s|de1c6d017cb4e8a8|38|qs|local|vector|||0.032||
-cbs_FL_ORANGE_primary|stem|6dd71d12008128c1|4e13b7a1767dc6a3|00a7fcbe37666611|-562597143||t19836.9458688286s|de1c6d017cb4e8a8|38|qs|local|vector|||0.031||
-cbs_GA_ALL_primary|stem|4c22b16ea1f0f648|0495c68762c56ee4|328c598962da6b1c|120147270||t19836.9460251491s|a31020cac86dc79f|172556|qs|local|vector|||3.261||
-cbs_NC_ALL_primary|stem|dcfd8918c8cfc4c6|c9ae98c504028fb4|ae3569437b0d8339|-470314479||t19836.9459721619s|5fd8f962bf05ef01|330165|qs|local|vector|||7.242||
-cbs_PA_ALLEGHENY_primary|stem|6dd71d12008128c1|e0df2eb6a8d48b60|25cafc55bb5f204b|97060661||t19837.1491951186s|de1c6d017cb4e8a8|38|qs|local|vector|||0.116||
-cbs_PA_PHILADELPHIA_primary|stem|6dd71d12008128c1|262922ccddad325a|6cf54f54f15f0c6b|873692340||t19837.6029112217s|de1c6d017cb4e8a8|38|qs|local|vector|||0.027||
-cbs_WI_MILWAUKEE_primary|stem|6dd71d12008128c1|fb9aa79f672d971e|819f4a5324df20e5|-1048129020||t19836.9459981779s|de1c6d017cb4e8a8|38|qs|local|vector|||0.027||
-clean_AZ_MARICOPA_primary|stem|c472904d1f15dbe2|c1638b139f379cc4|d4461762a5154c49|754825180||t19836.9458634905s|59a9e9d472283c5f|10768|qs|local|vector|||12.306||
-clean_FL_ALL_primary|stem|c9495901177c7110|fc4cb2cb634e63cd|130572a4ecb37410|1705377467||t19837.6021032115s|7d5a3422ae9b898b|3372|qs|local|vector|||0.968||
-clean_FL_MIAMI.DADE_primary|stem|d3acfa46b7a7bb00|99c0a31066e30c76|16baeaf270bf0697|169614533||t19836.9455229579s|89e99003506968ea|5309|qs|local|vector|||0.486||
-clean_FL_ORANGE_primary|stem|5d63964c6e2962c9|466edba76abfa69d|5fb6485624d6fb50|152942234||t19836.9454251786s|619d0f1cfdb101f0|5461|qs|local|vector|||0.4||
-clean_GA_ALL_primary|stem|caa062cec8f3548d|f24b66dde1dedeb4|783e85988c5c7b34|379986048||t19836.9456597054s|90ecdececd823ad3|110831|qs|local|vector|||20.272||
-clean_NC_ALL_primary|stem|348eb284a34b008e|7ae9aaa6b0feee10|e80a613372adca77|-1977966922||t19836.945476342s|8c330967de57c8e1|1526840|qs|local|vector|||2.656||
-clean_PA_ALLEGHENY_primary|stem|06ed168e492aaea5|7de467e39a15fa0c|6984949dafa1bfbe|1024054606||t19837.1491847572s|f89e9d02b3264f8d|183849|qs|local|vector|||3.033||
-clean_PA_PHILADELPHIA_primary|stem|2f6f7100b53d3e2a|320ec8015c78fbc0|cc2a627c4b2d036d|2091779477||t19837.6029089562s|a9f5f2b63a416c18|6795|qs|local|vector|||69.212|One or more parsing issues, call problems on your data frame for details,e.g.  dat  vroom...  problemsdat|
-clean_WI_MILWAUKEE_primary|stem|64dfac2bf483229c|3d881b7c6e26a616|bbb8081fc9d6c911|531496050||t19836.9459937727s|03868861233cafe2|9852|qs|local|vector|||6.383||
-convert_cbs|function|dda457a21746ec59|||||||||||||||
-execute_model|function|c6fd57d2ad877d01|||||||||||||||
-general_table|function|e2b1b487bd4ff2ab|||||||||||||||
-get_timestamp|function|ba4d96c7241801cd|||||||||||||||
-lookup_state_name|function|50c902ad6fb22212|||||||||||||||
-make_plots|function|a609efb72d326be7|||||||||||||||
-process_data|function|6c78c85604d680f2|||||||||||||||
-produce_estimates|function|bfe6a04d73b57ece|||||||||||||||
-run_models|function|272e0721ef2ee9a8|||||||||||||||
-scrape_az|function|f2f44ba1267efd14|||||||||||||||
-scrape_fl|function|07adc8b5fb43c458|||||||||||||||
-scrape_ga|function|1328ac90f0a42b3a|||||||||||||||
-scrape_nc|function|e1df0f8d7a82803b|||||||||||||||
-scrape_pa|function|7dae4fcae1cde263|||||||||||||||
-scrape_tx|function|a97ee126fbed4f45|||||||||||||||
-scrape_wi|function|782f12f47a620103|||||||||||||||
-tbl_all_AZ_MARICOPA_primary|stem|b3d94ad4db00bc1d|7dff79306271fd2d|377a97678ffa9c4b|-1706079010||t19836.9458668891s|18c55f87d5ecd5ca|27838|qs|local|vector|||0.046||
-tbl_all_FL_ALL_primary|stem|6dd71d12008128c1|c8623b3a2076f511|fa974f71f07461aa|-71810028||t19837.6021057265s|de1c6d017cb4e8a8|38|qs|local|vector|||0.002||
-tbl_all_FL_MIAMI.DADE_primary|stem|6dd71d12008128c1|3d56ae36a5221d9d|7362736b16b184cb|1548706719||t19836.9459801879s|de1c6d017cb4e8a8|38|qs|local|vector|||0.001||
-tbl_all_FL_ORANGE_primary|stem|6dd71d12008128c1|fdf0257b6e1be29d|c34bdd864e65e2fa|1882858083||t19836.9454343234s|de1c6d017cb4e8a8|38|qs|local|vector|||0.002||
-tbl_all_GA_ALL_primary|stem|d2ba2313487fe456|40ab588bec5c23fe|690bc3d698afb022|-610827490||t19836.9456684996s|3a4e247ec278fd56|135148|qs|local|vector|||0.061||
-tbl_all_NC_ALL_primary|stem|56ba0c53896fe1a6|665d5a2ab0ca5187|41f4652e43cd4a3d|-1694778160||t19836.9455227128s|7d1c9cd3379c3f77|1595734|qs|local|vector|||0.214||
-tbl_all_PA_ALLEGHENY_primary|stem|6dd71d12008128c1|e16e721d98bc93df|dd413ee88853b698|-382938147||t19837.1491942843s|de1c6d017cb4e8a8|38|qs|local|vector|||0.001||
-tbl_all_PA_PHILADELPHIA_primary|stem|6dd71d12008128c1|adef5ec9af169d0a|20c9565e41bac1e9|12979784||t19837.6029112913s|de1c6d017cb4e8a8|38|qs|local|vector|||0||
-tbl_all_WI_MILWAUKEE_primary|stem|6dd71d12008128c1|c3b0a0ab0d2a3e91|bf7e72c7bdc12641|125825381||t19836.9459956858s|de1c6d017cb4e8a8|38|qs|local|vector|||0.001||
-time_AZ_MARICOPA_primary|stem|5f24073a37cb3fd6|cc2b89f785b873a3|564ca136cb4d9d71|521328079||t19837.6021013022s|00c37fc0166b3b11|58|qs|local|vector|||0.8||
-time_FL_ALL_primary|stem|77fd3697a467c570|618af79c7745ab9d|564ca136cb4d9d71|-1274788950||t19837.6020894335s|00c37fc0166b3b11|58|qs|local|vector|||0.002||
-time_FL_MIAMI.DADE_primary|stem|be9ab909ed7c2002|48c2af95fdb08e69|564ca136cb4d9d71|-1339028903||t19837.6020952538s|00c37fc0166b3b11|58|qs|local|vector|||0.264||
-time_FL_ORANGE_primary|stem|61f806348223a6ff|12f1510a548580d8|564ca136cb4d9d71|-1067712629||t19837.6018995437s|00c37fc0166b3b11|58|qs|local|vector|||1.29||
-time_GA_ALL_primary|stem|ebd4b7e76fb9c3db|8f123cf5519c8651|564ca136cb4d9d71|218392198||t19837.601900138s|00c37fc0166b3b11|58|qs|local|vector|||1.089||
-time_NC_ALL_primary|stem|55d39f0fe4f599aa|ede0d9eb35a3b187|564ca136cb4d9d71|-549433972||t19837.6018996125s|00c37fc0166b3b11|58|qs|local|vector|||1.165||
-time_PA_ALLEGHENY_primary|stem|cf9cb63fa1f2e778|4034d7d1980fa937|564ca136cb4d9d71|-1816858900||t19837.6020893424s|00c37fc0166b3b11|58|qs|local|vector|||0.078||
-time_PA_PHILADELPHIA_primary|stem|79b539dacd859fd3|6eb484c1a01364a8|564ca136cb4d9d71|464439340||t19837.6021065377s|00c37fc0166b3b11|58|qs|local|vector|||0.817||
-time_WI_MILWAUKEE_primary|stem|795b4386c3f40233|b9170f740048726d|564ca136cb4d9d71|-1723077323||t19837.6021637556s|00c37fc0166b3b11|58|qs|local|vector|||5.27||
+.Random.seed|object|0634c0c942f7592c|||||||||||||||
+cbs_AZ_MARICOPA_primary|stem|error|9c7c4ab52eba4e6a|66f784680841097e|-684002644||t19886.5905827525s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_ALACHUA_primary|stem|error|a885fc5686c5202b|3184659f702db3af|1379025365||t19886.5905554728s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_ALL_primary|stem|error|94b87fd2d11aa9a4|5f8648187b7a9b43|-952962783||t19886.5905623263s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_BAKER_primary|stem|error|69dac8c8d19554a6|3b8999e827ddd9f8|-664438615||t19886.5904288819s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_BAY_primary|stem|error|dcca49cb98501b3d|82b1483bc696e24b|1908958350||t19886.5905664692s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_BRADFORD_primary|stem|error|5d0e771f274bb0e2|6569cda8961cbdab|-814580807||t19886.5905842647s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_BREVARD_primary|stem|error|452ed09df7aa2abb|d79011e1a88e74c8|80932590||t19886.5905567992s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_BROWARD_primary|stem|error|f0e7b9f2feeddbed|ab7743a6d554b473|-1224734632||t19886.5905679702s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_CALHOUN_primary|stem|error|564d028c785a5e09|97bd74c1e357d003|1703481609||t19886.590575935s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_CHARLOTTE_primary|stem|error|b836db347e327ed1|fa44e94862d9f4d4|1337670222||t19886.5905531438s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_CITRUS_primary|stem|error|1087f7bf50649022|fb06c72177cd3f0c|757038304||t19886.5905612967s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_CLAY_primary|stem|error|ff61d30b72ce9963|167f81855c8e4e60|654712815||t19886.590308612s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_COLLIER_primary|stem|error|91c51a5b1df24448|2a87d7653cddc3e9|217789858||t19886.5903829703s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_COLUMBIA_primary|stem|error|4f6e6e81dc8d88e6|9388521afebb39f6|-834631510||t19886.5905584702s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_DESOTO_primary|stem|error|06bd2a418e3867d5|39b712ee4628c248|2018457925||t19886.5905542497s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_DIXIE_primary|stem|error|22cc8232bc17010c|541ced0bc0c2ecfc|2111684696||t19886.590480637s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_DUVAL_primary|stem|error|7d82005feb92330f|cb00f34146052ba1|-1518682086||t19886.5903844168s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_ESCAMBIA_primary|stem|error|0c93d05d673c8da5|457d50547ea15735|2143936039||t19886.5905486521s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_FLAGLER_primary|stem|error|d6fe7dc96ba55435|9e7c1e8e1530b542|483398606||t19886.5903334714s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_FRANKLIN_primary|stem|error|ec88748b4bde91f9|7871c97300393232|-1873606024||t19886.5905288608s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_GADSDEN_primary|stem|error|29863b3e2b597e0a|776711a08df17c23|531572669||t19886.5904115544s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_GILCHRIST_primary|stem|error|c75475c6633498fe|99199f03105faffa|-1203906475||t19886.5905720034s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_GLADES_primary|stem|error|f0480993c11bd745|4838920e4e8eaaae|989260924||t19886.5905882513s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_GULF_primary|stem|error|a5a5dd1c3503afcf|e9f78effffd98ec3|114683487||t19886.5905745864s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_HAMILTON_primary|stem|error|38cf4ff0db2c0185|bbbe4c19d1c4bcff|1429551718||t19886.5904403629s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_HARDEE_primary|stem|error|ca6bfa5de091ab60|ff396def0892c62a|332254718||t19886.5905678201s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_HENDRY_primary|stem|error|683662e735fdf032|c524d756b4ae6320|-1645032591||t19886.5905813644s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_HERNANDO_primary|stem|error|5f6a296fac0fd90c|226421586bf9f169|-1682829103||t19886.5905595038s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_HIGHLANDS_primary|stem|error|d04a23a8de32072e|877249a9a9d679e4|-1242240405||t19886.5904260936s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_HILLSBOROUGH_primary|stem|error|0cee939a649b9b01|7710d61f031b240b|1462145580||t19886.5905772738s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_HOLMES_primary|stem|error|6b95eb0ad9b17755|3e116a5d5f79265a|339471722||t19886.5905606769s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_INDIAN.RIVER_primary|stem|error|82e8a75ddd560e62|c7de6e1f1ad4582f|1372510228||t19886.5905652981s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_JACKSON_primary|stem|error|29d79f310b5a1e93|009ceeafbbc368c1|-158057682||t19886.5905856456s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_JEFFERSON_primary|stem|error|d20c4bd4dc1eb33b|7fa4715441883dd0|1780115038||t19886.5903915706s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_LAFAYETTE_primary|stem|error|0cd2197ea4b7d9ca|b76bee7e5f7d99e0|-1294378168||t19886.5904048758s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_LAKE_primary|stem|error|4db4a7855aff6934|03fdb43ada3f38a2|-1409963483||t19886.5905508779s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_LEE_primary|stem|error|0f326a896d21d1b4|6a2419adbfb01c88|871082384||t19886.5905691788s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_LEON_primary|stem|error|10a39d1da0da1728|8931fa57e09549fb|-934237441||t19886.5903105535s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_LEVY_primary|stem|error|15ad95588682b919|e99983f41fa5fdc7|1994379874||t19886.5905598205s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_LIBERTY_primary|stem|error|dcfae19acabfb0e8|93abd7aef9944940|748727684||t19886.59046516s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_MADISON_primary|stem|error|a5ad0258fdc4d23b|639a33c0b1a70152|-735944524||t19886.5905676042s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_MANATEE_primary|stem|error|36c9d42eaa8bc5de|b46ce4cb658fc8eb|-1918350407||t19886.5904179593s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_MARION_primary|stem|error|2ddecd5c85a9dbce|72f29b5d68fbe05f|-536545575||t19886.590501506s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_MARTIN_primary|stem|error|c1f229120a5395d9|6042ab88a5f3013b|394248499||t19886.5905717064s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_MIAMI.DADE_primary|stem|error|cd178021d23ba9fc|e923cb89e88230df|183127925||t19886.590374807s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_MONROE_primary|stem|error|48a4303a2f3bb60b|d9593014e9caae9a|-1408953483||t19886.5905557769s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_NASSAU_primary|stem|error|fadbebd0e6a41b2d|80fef396affec6ea|-258771578||t19886.5903175353s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_OKEECHOBEE_primary|stem|error|93306a4899c6ecb5|457763207e2252d9|-172177928||t19886.5905854261s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_ORANGE_primary|stem|error|2675985778aecd6a|583e0d4000d8e429|-562597143||t19886.5905666321s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_PALM.BEACH_primary|stem|error|9cd529250b09488d|72fba55d4bb5ef22|-894782782||t19886.5903542206s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_PASCO_primary|stem|error|9879143b19a65124|a1694ecc4406d934|410345345||t19886.5905639677s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_PINELLAS_primary|stem|error|05d4139913b6cf0f|57340f52db9467e9|-105545973||t19886.5905609495s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_POLK_primary|stem|error|92efc0ada0960c0b|4ea8aca36231d01c|285716942||t19886.5904363558s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_PUTNAM_primary|stem|error|39cec25545abaf77|da16437f19f3dab2|-719707116||t19886.5905786511s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_SANTA.ROSA_primary|stem|error|5d9efc061f095752|5e816f2bc5d6f107|-766288545||t19886.5905718867s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_SARASOTA_primary|stem|error|9ce25e79e1a2b132|27a7802b4f44649d|286739360||t19886.5904874681s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_ST.JOHNS_primary|stem|error|a64dcb2506e84c05|12c0b33a483d6179|-598924616||t19886.5903415238s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_SUMTER_primary|stem|error|efa7f2530d27bf51|6a2593f95732ff53|-559940879||t19886.5903901381s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_SUWANNEE_primary|stem|error|68fd3736c630e63e|cd27efd4cf0f0c2d|-1195060206||t19886.5902936485s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_TAYLOR_primary|stem|error|5f6555a57f00cd25|90ccd09f2c66f19f|683433734||t19886.5905816711s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_UNION_primary|stem|error|83fca51920056854|7e837a9e97f828b9|880448466||t19886.5903534218s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_VOLUSIA_primary|stem|error|e09349e8554de7e8|e30407f47b3b3b26|729583060||t19886.5903599431s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_WAKULLA_primary|stem|error|d08093088cfc7e67|b2fdd0e7d4e66ac4|-261707592||t19886.5905828949s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_WALTON_primary|stem|error|da7ba5cd1ca7d8f0|c97ceafd16a5b147|368927158||t19886.5905733511s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_FL_WASHINGTON_primary|stem|error|7d85b2a81b1b5c43|bf270ee4c49a3e6c|120345341||t19886.5903439083s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_GA_ALL_primary|stem|error|d21ea955cd69c468|aa007286cfca6212|120147270||t19886.590549822s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_NC_ALL_primary|stem|error|1fc73144ec5a42c3|c00c48cfe86151b0|-470314479||t19886.5903091953s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_PA_ALLEGHENY_primary|stem|error|d28bf05ec7d0f89a|849ed12fb0ae0a67|97060661||t19886.5905773321s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_PA_PHILADELPHIA_primary|stem|error|5a63847db761eb34|ff7b15c6ad729079|873692340||t19886.5903454862s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_TX_BEXAR_primary|stem|error|3c9e1d1527cb2053|7a91a1e22060972a|-2059598560||t19886.590584072s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_TX_EL.PASO_primary|stem|error|ccad2f00df60c7a3|228470be4a22c526|-793370430||t19886.5905392465s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_TX_HIDALGO_primary|stem|error|0637026a5b12a89a|4aba3ac977c7cab4|-2023761737||t19886.590494558s||0|qs|local|vector|||||_store_ there is no package called qs
+cbs_WI_MILWAUKEE_primary|stem|error|0ce1b6e7bade9aba|eceb7bd0ee63c392|-1048129020||t19886.5905093903s||0|qs|local|vector|||||_store_ there is no package called qs
+clean_AZ_MARICOPA_primary|stem|c472904d1f15dbe2|30e1c252c0af61d8|0a996de77841f2c1|754825180||t19836.9458634905s||10768|qs|local|vector|||0.406||usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib  dlopenusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib, 0x000A tried usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib no such file, usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python no such file, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, LibraryFrameworksPython.frameworkVersions3.12Python no such file, SystemLibraryFrameworksPython.frameworkVersions3.12Python no such file, not in dyld cache
+clean_FL_ALACHUA_primary|stem||3bcbe2e58df05057|5118f75fdb77660b|-1826047159||t19886.5903004738s||0|qs|local|vector|||0.148||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_ALL_primary|stem|c9495901177c7110|ec71bb8e2bc35159|d0cfa18880162c06|1705377467||t19837.6021032115s||3372|qs|local|vector|||0.259||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_BAKER_primary|stem||1d1572da2b9f58a2|fd9875083a88f9c1|1357147304||t19886.590427895s||0|qs|local|vector|||0.172||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_BAY_primary|stem||ad564a6e7930fae9|d2e38dade5f49297|-1004096694||t19886.5903606613s||0|qs|local|vector|||0.163||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_BRADFORD_primary|stem||a6ed1ff396a7e591|465b6bf41430c62a|157842639||t19886.5905311217s||0|qs|local|vector|||0.188||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_BREVARD_primary|stem||f4df67055d201e17|1e041760e7efcd2f|-563116119||t19886.5903011517s||0|qs|local|vector|||0.168||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_BROWARD_primary|stem||c2f7129825a1c767|96ebed6b405a85a8|-1293992182||t19886.5903736108s||0|qs|local|vector|||0.193||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_CALHOUN_primary|stem||af8e23d85cd602ba|0f485085f6b8dcdc|2142501640||t19886.5904319961s||0|qs|local|vector|||0.156||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_CHARLOTTE_primary|stem||3110457acf91da71|e6d9efcc5e5c664c|-38309928||t19886.5902923604s||0|qs|local|vector|||0.192||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_CITRUS_primary|stem||543dd4196134522a|7743696c6904d1af|-1888569963||t19886.5903318218s||0|qs|local|vector|||0.129||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_CLAY_primary|stem||17c8a88b28340c87|878c90833c127d40|680912157||t19886.5903075232s||0|qs|local|vector|||0.086||HTTP error 404.
+clean_FL_COLLIER_primary|stem||9877124bb35566bc|797d5fe8c4b875aa|-114377598||t19886.5903819707s||0|qs|local|vector|||0.235||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_COLUMBIA_primary|stem||bf15c0ec8c506fd9|0ef1667e75d05085|1432540634||t19886.5903155313s||0|qs|local|vector|||0.215||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_DESOTO_primary|stem||41477826b0cfb137|e52c0389abf3a173|70517910||t19886.5903003118s||0|qs|local|vector|||0.113||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_DIXIE_primary|stem||bc1599bf2a85b1b6|8daf6b4e7d4d501b|-1351059132||t19886.5904793937s||0|qs|local|vector|||0.182||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_DUVAL_primary|stem||34ca38654ec17dd3|d8b3c65a8f8b0930|-857077677||t19886.5903833118s||0|qs|local|vector|||0.22||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_ESCAMBIA_primary|stem||0f6037cefda989f8|3d6cb29cc14133d5|-1753671294||t19886.5905473053s||0|qs|local|vector|||0.286||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_FLAGLER_primary|stem||f18a87c6c16bf77b|26c111be8fc2e6eb|-1712845879||t19886.5903321658s||0|qs|local|vector|||0.159||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_FRANKLIN_primary|stem||a7d4968c8808072c|3f7fcdeb68fbf7cf|-1223383608||t19886.5905276133s||0|qs|local|vector|||0.219||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_GADSDEN_primary|stem||8c25ca55e7132599|e492720afd2d8e7f|-438009191||t19886.5904105491s||0|qs|local|vector|||0.118||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_GILCHRIST_primary|stem||96a2fe9535b8e9cc|5ae7f870244070de|2054854095||t19886.5904034072s||0|qs|local|vector|||0.115||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_GLADES_primary|stem||0425fd85f209373e|3b528143e63712b1|-1729311091||t19886.5905550377s||0|qs|local|vector|||0.143||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_GULF_primary|stem||fff97f885d573675|f9946f5841ff9cf5|-442337008||t19886.5904197641s||0|qs|local|vector|||0.215||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_HAMILTON_primary|stem||516969dda13d40a8|5365d769a3442b3b|-329718108||t19886.590439171s||0|qs|local|vector|||0.124||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_HARDEE_primary|stem||a557cf3ec55f5db9|d19453b27aed437e|47168935||t19886.5903676763s||0|qs|local|vector|||0.109||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_HENDRY_primary|stem||138e257aedcf7141|2174b65dcee80be8|1880687232||t19886.5905074959s||0|qs|local|vector|||0.129||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_HERNANDO_primary|stem||bed7656c944fd34c|cfa2a1c3c94815a6|1003933935||t19886.5903167842s||0|qs|local|vector|||0.162||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_HIGHLANDS_primary|stem||b09306524198b470|c7d6541f56f50562|-470838149||t19886.5904248448s||0|qs|local|vector|||0.258||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_HILLSBOROUGH_primary|stem||ebe5890d51b83abd|c2e979acf2ab872e|1605743827||t19886.5904475763s||0|qs|local|vector|||0.127||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_HOLMES_primary|stem||7be2eb426aa34ba8|c3623eb29932d576|2075451348||t19886.590324271s||0|qs|local|vector|||0.11||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_INDIAN.RIVER_primary|stem||c624bcfc4718536b|9cd465f4bb762671|-21415456||t19886.5903545353s||0|qs|local|vector|||0.115||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_JACKSON_primary|stem||0723af4832aa84c1|ac72627f68335d06|-617748062||t19886.5905471774s||0|qs|local|vector|||0.339||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_JEFFERSON_primary|stem||7a532d5e00dcaf6a|147f9fa3d7b4177d|-453257669||t19886.5903904643s||0|qs|local|vector|||0.113||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_LAFAYETTE_primary|stem||f2fe170b53fb29ed|86fcd6b712ba3b15|2019816052||t19886.5904036273s||0|qs|local|vector|||0.131||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_LAKE_primary|stem||a3919adf3198deca|0911e766ce73fb7b|-545539107||t19886.5902923903s||0|qs|local|vector|||0.222||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_LEE_primary|stem||2c90a6c78b0a0731|5e7d2a0cca38b4c9|-1269356126||t19886.590376111s||0|qs|local|vector|||0.224||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_LEON_primary|stem||b57508e8f08cc737|f9c95646a8affbf8|114171282||t19886.590309345s||0|qs|local|vector|||0.221||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_LEVY_primary|stem||47410d5ed8afb62a|5820e4cd13fa095c|-829230050||t19886.5903242282s||0|qs|local|vector|||0.105||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_LIBERTY_primary|stem||8967d998f84649c6|29e823de42dd5bbd|-511763857||t19886.5904639881s||0|qs|local|vector|||0.149||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_MADISON_primary|stem||5f67fd7a9dc57c5e|19dee05b5e6086a5|-59735630||t19886.5903660191s||0|qs|local|vector|||0.115||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_MANATEE_primary|stem||52542074660d63cf|1527e4c5a653555a|1862503290||t19886.590416862s||0|qs|local|vector|||0.145||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_MARION_primary|stem||99145ccbdac3e2d0|2a750d795e93bb2a|-243709420||t19886.5905001453s||0|qs|local|vector|||0.133||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_MARTIN_primary|stem||5a58b1a20aeb5474|0272484e9d63d12a|-1885364187||t19886.5903953014s||0|qs|local|vector|||0.028||HTTP 404 Not Found.
+clean_FL_MIAMI.DADE_primary|stem|d3acfa46b7a7bb00|444a5a5f9c766b9e|5fc8954863faa315|169614533||t19836.9455229579s||5309|qs|local|vector|||0.145||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_MONROE_primary|stem||b5ef20737015862a|85d01bc693c5a9b9|-976790005||t19886.5905544985s||0|qs|local|vector|||0.104||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_NASSAU_primary|stem||3b0ae95ba5054b09|5e821b0be23590fc|1963972896||t19886.5903162795s||0|qs|local|vector|||0.22||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_OKEECHOBEE_primary|stem||60f815d5cf7dd0f1|7f5d4d2896973f54|1743251605||t19886.590538286s||0|qs|local|vector|||0.151||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_ORANGE_primary|stem|5d63964c6e2962c9|528fd135ee9326c3|00980af0b68165bb|152942234||t19836.9454251786s||5461|qs|local|vector|||0.27||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_PALM.BEACH_primary|stem||6c7b916301c61483|f4dbbe5fa083396f|-726084209||t19886.5903528871s||0|qs|local|vector|||0.261||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_PASCO_primary|stem||2a13789531c67e51|cde1be592cc28957|418210874||t19886.5903469841s||0|qs|local|vector|||0.125||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_PINELLAS_primary|stem||900e742451ec9396|bc4a2a81e45ef052|208728584||t19886.5903248855s||0|qs|local|vector|||0.062||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_POLK_primary|stem||a46445535ea39840|f6bf27442a44cfe5|1308086636||t19886.5904353593s||0|qs|local|vector|||0.151||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_PUTNAM_primary|stem||aa76565dcbe48784|4a0d50ba8af5e68d|-1301606248||t19886.5904718871s||0|qs|local|vector|||0.163||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_SANTA.ROSA_primary|stem||e1376abff39dc4b6|b2ff6ff6cd8bee18|-2107733934||t19886.5903955807s||0|qs|local|vector|||0.128||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_SARASOTA_primary|stem||6d2ce0134c1d5100|e10c7f3a22bd967a|1174895890||t19886.5904863231s||0|qs|local|vector|||0.177||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_ST.JOHNS_primary|stem||bee13b07c8a53f2d|ec7bbee1aaa0e603|-1011179102||t19886.5903402508s||0|qs|local|vector|||0.214||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_SUMTER_primary|stem||9e7943a22fa40394|b82a28542bcdabb5|-1183837995||t19886.5903891195s||0|qs|local|vector|||0.193||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_SUWANNEE_primary|stem||192e556b88103750|c04602361b83b5a4|978420152||t19886.5902870889s||0|qs|local|vector|||0.181||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_TAYLOR_primary|stem||49132e5553f6e658|b8f5eb518c082b1e|-34219978||t19886.5905154371s||0|qs|local|vector|||0.184||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_UNION_primary|stem||4b7c88f76910f122|d1f9af430d5690a0|-759121758||t19886.5903519972s||0|qs|local|vector|||0.176||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_VOLUSIA_primary|stem||4d1d090c4cd167cf|53a4c2f8bbc303a9|1667247355||t19886.5903589413s||0|qs|local|vector|||0.122||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_WAKULLA_primary|stem||f51506479a2bc4e9|e9edfc99c5d26cd0|-248118111||t19886.5905229559s||0|qs|local|vector|||0.193||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_WALTON_primary|stem||8cf94590b6fb4892|3aac4e0e246adae5|1004172949||t19886.5904122982s||0|qs|local|vector|||0.232||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_FL_WASHINGTON_primary|stem||cc4e82d263f02e7a|f3224f11c06d7c90|-1355775357||t19886.5903428907s||0|qs|local|vector|||0.106||Cant select columns that dont exist. Column Total Votes doesnt exist.
+clean_GA_ALL_primary|stem|caa062cec8f3548d|b78044a3f6ec330d|3da9e49a37a9f0d5|379986048||t19836.9456597054s||110831|qs|local|vector|||14.723||usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib  dlopenusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib, 0x000A tried usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib no such file, usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python no such file, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, LibraryFrameworksPython.frameworkVersions3.12Python no such file, SystemLibraryFrameworksPython.frameworkVersions3.12Python no such file, not in dyld cache
+clean_NC_ALL_primary|stem|348eb284a34b008e|9a1a69ca6b27ede9|a7ec7991af984064|-1977966922||t19836.945476342s||1526840|qs|local|vector|||0.051|URL httpss3.amazonaws.comdl.ncsbe.govENRS2024_03_05results_pct_20240305.zip cannot open destfile datarawNCnc_primary.zip, reason No such file or directory. download had nonzero exit status. File varfoldershz4hrrpn9x42s952zfr0808mwh0000gnTRtmpkfHdQPfile15d596f1a566c has size 0. Returning a NULL data.table.|ℹ In argument candidate_party  case_when....Caused by error in case_when Failed to evaluate the lefthand side of formula 1.Caused by error object Choice Party not found
+clean_PA_ALLEGHENY_primary|stem|06ed168e492aaea5|bc6e1c69d8b501bb|6dbd8fc838dfcf3e|1024054606||t19837.1491847572s||183849|qs|local|vector|||0.331||usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib  dlopenusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib, 0x000A tried usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib no such file, usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python no such file, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, LibraryFrameworksPython.frameworkVersions3.12Python no such file, SystemLibraryFrameworksPython.frameworkVersions3.12Python no such file, not in dyld cache
+clean_PA_PHILADELPHIA_primary|stem|2f6f7100b53d3e2a|344624b88b8f8528|1db78a42d50ac7d2|2091779477||t19837.6029089562s||6795|qs|local|vector|||0.183||usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib  dlopenusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib, 0x000A tried usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib no such file, usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python no such file, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, LibraryFrameworksPython.frameworkVersions3.12Python no such file, SystemLibraryFrameworksPython.frameworkVersions3.12Python no such file, not in dyld cache
+clean_TX_BEXAR_primary|stem||4e368762f3d02a3c|8b28bd0dc33e5c5d|1437085670||t19886.5905308621s||0|qs|local|vector|||0.003||missing value where TRUEFALSE needed
+clean_TX_EL.PASO_primary|stem||5e871106b1772396|8b1199e0fabd33bd|-91481859||t19886.5905380713s||0|qs|local|vector|||0.194||usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib  dlopenusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib, 0x000A tried usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib no such file, usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python no such file, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, LibraryFrameworksPython.frameworkVersions3.12Python no such file, SystemLibraryFrameworksPython.frameworkVersions3.12Python no such file, not in dyld cache
+clean_TX_HIDALGO_primary|stem||6b8dbf05da855f3b|7b4a60f60fd33ba6|-234764542||t19886.5904933134s||0|qs|local|vector|||0.249||usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib  dlopenusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib, 0x000A tried usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib no such file, usrlocaloptpython3.12FrameworksPython.frameworkVersions3.12libpython3.12config3.12darwinlibpython3.12.dylib macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, SystemVolumesPrebootCryptexesOSusrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python no such file, usrlocalCellarpython3.123.12.2_1FrameworksPython.frameworkVersions3.12Python macho file, but is an incompatible architecture have x86_64, need arm64e or arm64, LibraryFrameworksPython.frameworkVersions3.12Python no such file, SystemLibraryFrameworksPython.frameworkVersions3.12Python no such file, not in dyld cache
+clean_WI_MILWAUKEE_primary|stem|64dfac2bf483229c|c4997e1d870f3b04|6ff300f68deb7c26|531496050||t19836.9459937727s||9852|qs|local|vector|||5.874||invalid description argument
+convert_cbs|function|9284284e59df1b3c|||||||||||||||
+execute_model|function|b188f73f7ee8b7c1|||||||||||||||
+general_table|function|83fd6dc60a994388|||||||||||||||
+get_clarity|function|1493ece1fad8c218|||||||||||||||
+get_timestamp|function|9f8d5fecb944fe1a|||||||||||||||
+lookup_state_name|function|5cfd90ccc332e9da|||||||||||||||
+make_plots|function|4fa5611837475a01|||||||||||||||
+metadata|object|3666ee57117ab389|||||||||||||||
+process_data|function|f3e398e4b54626f2|||||||||||||||
+produce_estimates|function|4246751d3175e06f|||||||||||||||
+run_models|function|10e90dfd8c0ea22e|||||||||||||||
+scrape_az|function|5276eaaa6c3bae94|||||||||||||||
+scrape_fl|function|1fb32f7475b270d3|||||||||||||||
+scrape_ga|function|495f3bb52a0c4869|||||||||||||||
+scrape_nc|function|54b80e4b691089ac|||||||||||||||
+scrape_pa|function|75e478bf435355a4|||||||||||||||
+scrape_tx|function|f733a7bc712768fc|||||||||||||||
+scrape_wi|function|ed7bc1bbff171105|||||||||||||||
+tbl_all_AZ_MARICOPA_primary|stem|error|32d59d5e6ff04f70|52481a84a45e5106|-1706079010||t19886.5905210737s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_ALACHUA_primary|stem|error|1f21a5f1a63791a6|57fb20b0538b84f0|-394163769||t19886.5903017141s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_ALL_primary|stem|error|7f3245479626bb0a|20d8463786395399|-71810028||t19886.5903369738s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_BAKER_primary|stem|error|d06182e32773c35d|39f4dc8036b2b057|338979218||t19886.5905757751s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_BAY_primary|stem|error|c6b871fae7429475|4ac585c552e87204|-2131706274||t19886.5903618749s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_BRADFORD_primary|stem|error|bbae0842851cd7ab|92aaa95d47f89797|1372912364||t19886.5905323367s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_BREVARD_primary|stem|error|acf0fff75bc9ee44|fd5a13488081a118|343961505||t19886.5903024523s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_BROWARD_primary|stem|error|4729e32a282b315b|bd2092614db45fac|1152784139||t19886.5903747865s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_CALHOUN_primary|stem|error|7977bfd6679a1230|026c23fe49c8a02a|-1657703086||t19886.5904331186s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_CHARLOTTE_primary|stem|error|a02a8868fc3c27a7|0a760dddd36b5e03|-1045176380||t19886.5902937085s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_CITRUS_primary|stem|error|dbf68eeedfae7892|75d65da6f3de22a4|559456099||t19886.5903330888s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_CLAY_primary|stem|error|8438269f9de976cf|ba7ea783989f7ebd|-1464395366||t19886.5905570819s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_COLLIER_primary|stem|error|81a3b1bf84ebcedd|b60dca86270613aa|1207279167||t19886.5905693045s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_COLUMBIA_primary|stem|error|946e18b21ba48d3e|bbf1aa73bb0497c3|1652982779||t19886.5903165489s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_DESOTO_primary|stem|error|2a36a55e73ebbff6|9158b378c864e3fe|410076590||t19886.5903015261s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_DIXIE_primary|stem|error|e411e918feed0ed4|271943da9d4e4220|-556789451||t19886.5905787575s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_DUVAL_primary|stem|error|5313ea97cca56e17|03afaafa02d6f1e4|1402910354||t19886.5905703258s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_ESCAMBIA_primary|stem|error|922e5e2796cd3b1e|29dce55a36a22a1a|559429205||t19886.5905858054s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_FLAGLER_primary|stem|error|dc7bbd9a42cbf209|ead04f082eae56b2|-1076157266||t19886.5905621024s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_FRANKLIN_primary|stem|error|d298295eea21528e|baf4a144bb699e7a|-1162464008||t19886.5905830934s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_GADSDEN_primary|stem|error|0748a3f00738700e|be188bd8a681a931|-32842575||t19886.590573237s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_GILCHRIST_primary|stem|error|2f7eddd7bdc10aa2|306391f08b063236|-485602006||t19886.590404701s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_GLADES_primary|stem|error|da180bfdedfb1f62|22a89531b48f06c6|-256438819||t19886.5905564482s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_GULF_primary|stem|error|1ebe0b7229c2fe80|44224592445eade9|-1314503599||t19886.5904207854s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_HAMILTON_primary|stem|error|08bfaab462d1810e|a1fbc03b6b386aad|-714284860||t19886.5905771176s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_HARDEE_primary|stem|error|42f31cec77a5bffa|488130dfe5b7d031|919269028||t19886.5903687576s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_HENDRY_primary|stem|error|d7c212661e590486|d259b224b6b4fdb1|1813205354||t19886.5905086638s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_HERNANDO_primary|stem|error|04ff6e4b923d112b|a704ea6aa6190456|1722764314||t19886.5903180234s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_HIGHLANDS_primary|stem|error|ba0e5d2c30b7c903|e0470475adff349c|-946039221||t19886.5905746816s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_HILLSBOROUGH_primary|stem|error|0bab36232212b645|6f3d55a8023595b7|-392232926||t19886.5904487607s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_HOLMES_primary|stem|error|2584700a8676567d|f10f9ce923f5f3aa|-985030771||t19886.590325562s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_INDIAN.RIVER_primary|stem|error|0cbf764fd119b31e|798cac166c516c8c|-1392177487||t19886.5903557322s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_JACKSON_primary|stem|error|a4849648a165f72a|b4037ca0e8f03840|-1001990858||t19886.5905485677s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_JEFFERSON_primary|stem|error|9675f423daa94cf0|8c452434a0c11d71|-245550939||t19886.5905706374s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_LAFAYETTE_primary|stem|error|ba2b506377efa5e8|07b987627e1c1676|224935481||t19886.5905730734s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_LAKE_primary|stem|error|9f60d94128b0417f|650846aa5bf90d08|1482943769||t19886.5902937321s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_LEE_primary|stem|error|77d72d67259b17f8|270919752a21144d|-1104886208||t19886.5903771558s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_LEON_primary|stem|error|24512ee01f8e287c|95a82b7a983d0edc|462949849||t19886.5905581467s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_LEVY_primary|stem|error|12aa813dfbfae97b|7ff52b87d1f3dbcd|-530668652||t19886.5903254604s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_LIBERTY_primary|stem|error|a0725f12da791245|bd42c6ba092e2976|1338658438||t19886.5905784827s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_MADISON_primary|stem|error|fcb2ad4a3cf051aa|80037a6645add208|-521749243||t19886.5903672528s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_MANATEE_primary|stem|error|12f7c6d87cbede1d|cc9c88f6aa162175|-289269803||t19886.5905744033s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_MARION_primary|stem|error|6e2e2de9c9fe9244|f2a9304146499f4b|-1918923110||t19886.5905802323s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_MARTIN_primary|stem|error|59117143f84e1dfe|e9cd66ee11007189|-1547122897||t19886.5903964456s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_MIAMI.DADE_primary|stem|error|5cc0a55ed8263dd3|5ef347e96ded8e4f|1548706719||t19886.5905689538s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_MONROE_primary|stem|error|7d13f10408f484ac|76ff9fb65b4c5a1e|-1813362436||t19886.5905882374s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_NASSAU_primary|stem|error|0a761f3db397e732|4903caed6c86d4eb|1011033921||t19886.5905592308s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_OKEECHOBEE_primary|stem|error|12c95232d1606840|4bffb61572d722bc|-891770328||t19886.5905395118s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_ORANGE_primary|stem|error|76ac9e5ee3466051|4fa38fa71dcadd52|1882858083||t19886.5903658967s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_PALM.BEACH_primary|stem|error|f6e0639b1913905b|998164f554df64be|-454626667||t19886.5905650658s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_PASCO_primary|stem|error|99766909fe945679|19aa740bb6f7eda4|1598274855||t19886.5903480297s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_PINELLAS_primary|stem|error|9225ed3f338ccfff|0909f423849f89c2|2011202223||t19886.5903262826s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_POLK_primary|stem|error|2a100cab32e97a6a|a377841319f6f88c|1189537979||t19886.590576003s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_PUTNAM_primary|stem|error|f3f98a5d9ce4be67|791bd58d28993e2b|-1310120430||t19886.5904729727s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_SANTA.ROSA_primary|stem|error|6a060c52c8455314|ef68f58fe3784be5|-411996434||t19886.5903967514s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_SARASOTA_primary|stem|error|c548370f64a083cc|942f180aae90343b|-1357535820||t19886.5905799059s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_ST.JOHNS_primary|stem|error|4da4c06285966eaf|154be481c0f86e27|578958092||t19886.5905626344s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_SUMTER_primary|stem|error|08be7bbade82a030|e15f37fd9ed71258|-1099964719||t19886.5905705228s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_SUWANNEE_primary|stem|error|1ccaeb9f2ee2a66c|ce67415ebe7c0804|-263412854||t19886.5905518928s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_TAYLOR_primary|stem|error|16a257948213d7bd|fca383a3160b3385|1759135264||t19886.5905164571s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_UNION_primary|stem|error|9d04fa004f2454ac|bbe6290e36b616ab|1417619010||t19886.5905648271s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_VOLUSIA_primary|stem|error|094dd331458674f5|eb9008888c92030a|-835477957||t19886.5905662303s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_WAKULLA_primary|stem|error|b3637f303955a64d|1bf00406c43c6b9b|1387589800||t19886.5905239981s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_WALTON_primary|stem|error|b8ae74a01c92675c|3d6deaf80cedd921|1927529669||t19886.5904133254s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_FL_WASHINGTON_primary|stem|error|3da7e0b7770054e8|2d3e0a878efa40d6|-1640668807||t19886.5905634724s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_GA_ALL_primary|stem|error|d5944becfc3cfc8c|fbb78c830213f535|-610827490||t19886.5905867678s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_NC_ALL_primary|stem|error|089c5ccec8c2647e|7beba685070b5ddd|-1694778160||t19886.5905578365s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_PA_ALLEGHENY_primary|stem|error|235256482ec60dd7|094019bb1513e84d|-382938147||t19886.5904570442s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_PA_PHILADELPHIA_primary|stem|error|0ca9e50cd18cb643|377163b81722e87d|12979784||t19886.5905636847s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_TX_BEXAR_primary|stem|error|e972c157a42c95e9|be30d69cc6c2e082|1336386421||t19886.5905320397s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_TX_EL.PASO_primary|stem|error|d85fa509b5ff2cb1|97e91d8738cf84c7|483401318||t19886.5905844252s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_TX_HIDALGO_primary|stem|error|a7c5201c0cafdd48|02e37e076453fac5|-676756083||t19886.5905800689s||0|qs|local|vector|||||_store_ there is no package called qs
+tbl_all_WI_MILWAUKEE_primary|stem|error|f91170864a1fd253|afa13945a1ca1ec2|125825381||t19886.5905815033s||0|qs|local|vector|||||_store_ there is no package called qs
+time_AZ_MARICOPA_primary|stem|error|bea40685f48d8cba|900edfa55c629449|521328079||t19886.5905141711s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_ALACHUA_primary|stem|error|41f91fcf60f8fb1c|900edfa55c629449|1224329477||t19886.5902972663s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_ALL_primary|stem|error|0680ffd57b35dbfb|900edfa55c629449|-1274788950||t19886.590331749s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_BAKER_primary|stem|error|1b78962527900c02|900edfa55c629449|-2128959921||t19886.5904246951s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_BAY_primary|stem|error|5d38b31c06961b4e|900edfa55c629449|-32005561||t19886.5903578458s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_BRADFORD_primary|stem|error|33afa76fd8c5c19f|900edfa55c629449|-1920937605||t19886.5905277467s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_BREVARD_primary|stem|error|7715bef755ed0511|900edfa55c629449|1480887300||t19886.5902976735s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_BROWARD_primary|stem|error|bf4c9535c4af1bf7|900edfa55c629449|1628713497||t19886.590370347s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_CALHOUN_primary|stem|error|ecfc32767766bed8|900edfa55c629449|854349986||t19886.5904291213s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_CHARLOTTE_primary|stem|error|39ea8990357f22c9|900edfa55c629449|1619485994||t19886.5902835812s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_CITRUS_primary|stem|error|38a5d8690d732d4a|900edfa55c629449|-37551870||t19886.5903289987s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_CLAY_primary|stem|error|8a073124d16c5ba5|900edfa55c629449|-1343165210||t19886.590305178s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_COLLIER_primary|stem|error|3879fd72e772e2d0|900edfa55c629449|-1709347479||t19886.5903782792s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_COLUMBIA_primary|stem|error|09e930f61f265413|900edfa55c629449|-1372617011||t19886.5903120444s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_DESOTO_primary|stem|error|bedf91ef96ade317|900edfa55c629449|886247140||t19886.590297462s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_DIXIE_primary|stem|error|33d659175a5696ed|900edfa55c629449|-864021727||t19886.5904759544s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_DUVAL_primary|stem|error|88f4b8bee7791a40|900edfa55c629449|85877679||t19886.5903798305s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_ESCAMBIA_primary|stem|error|d7eb69deb182aef4|900edfa55c629449|-2135882363||t19886.5905429688s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_FLAGLER_primary|stem|error|8c77429b3f00df12|900edfa55c629449|-1074940838||t19886.5903289662s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_FRANKLIN_primary|stem|error|40a080bda15a6f52|900edfa55c629449|1819061647||t19886.5905238664s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_GADSDEN_primary|stem|error|7c8e0f45c0f601e7|900edfa55c629449|1490645337||t19886.590407906s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_GILCHRIST_primary|stem|error|9807c22e6f6da54e|900edfa55c629449|497940481||t19886.5904005129s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_GLADES_primary|stem|error|e688d379ced2337c|900edfa55c629449|1088848312||t19886.5905521246s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_GULF_primary|stem|error|600a0be7dddd0c87|900edfa55c629449|361030559||t19886.5904161802s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_HAMILTON_primary|stem|error|2d0e4b7bea0994bd|900edfa55c629449|2085692762||t19886.5904366699s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_HARDEE_primary|stem|error|d1a18de3c0e1b510|900edfa55c629449|-1871835465||t19886.5903652562s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_HENDRY_primary|stem|error|202c3f4449496574|900edfa55c629449|2119825323||t19886.5905047593s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_HERNANDO_primary|stem|error|976962234f5977f5|900edfa55c629449|702888536||t19886.5903139367s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_HIGHLANDS_primary|stem|error|4e09beaa36707cd2|900edfa55c629449|-671542103||t19886.5904207193s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_HILLSBOROUGH_primary|stem|error|0213dc2ba745d0cb|900edfa55c629449|1860952429||t19886.5904448282s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_HOLMES_primary|stem|error|1e19a6a1768efaad|900edfa55c629449|1939853069||t19886.5903214811s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_INDIAN.RIVER_primary|stem|error|6aa376cdfc0bfa75|900edfa55c629449|932123306||t19886.5903518513s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_JACKSON_primary|stem|error|fd1438681f8c7b64|900edfa55c629449|-1130436614||t19886.5905422005s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_JEFFERSON_primary|stem|error|d8df0ed7e1227988|900edfa55c629449|-1699958037||t19886.590388196s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_LAFAYETTE_primary|stem|error|e1041d16dd0451e3|900edfa55c629449|-471578548||t19886.5904006181s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_LAKE_primary|stem|error|5e2bc2e3dd3d2d64|900edfa55c629449|1734256227||t19886.5902838952s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_LEE_primary|stem|error|6ceb76570630928f|900edfa55c629449|241222179||t19886.5903725289s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_LEON_primary|stem|error|1f32ec1e8da0fda3|900edfa55c629449|1547415792||t19886.5903054112s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_LEVY_primary|stem|error|6376b50ef0f9026a|900edfa55c629449|972710439||t19886.59032152s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_LIBERTY_primary|stem|error|dad76f9e019da37e|900edfa55c629449|-130867663||t19886.5904610745s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_MADISON_primary|stem|error|de6b958e33b43e59|900edfa55c629449|317563478||t19886.5903636575s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_MANATEE_primary|stem|error|9deb55ac43b84e33|900edfa55c629449|659831389||t19886.5904141989s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_MARION_primary|stem|error|afd10ce0b511a569|900edfa55c629449|1727428060||t19886.5904974875s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_MARTIN_primary|stem|error|521fa673f2ef2f05|900edfa55c629449|-897790778||t19886.5903940309s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_MIAMI.DADE_primary|stem|error|be9df0003712c4d6|900edfa55c629449|-1339028903||t19886.590370918s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_MONROE_primary|stem|error|b5e253d4115b5de8|900edfa55c629449|1622374433||t19886.5905520328s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_NASSAU_primary|stem|error|88f23be7079565bb|900edfa55c629449|-1231318740||t19886.5903126293s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_OKEECHOBEE_primary|stem|error|10dffc3698791b12|900edfa55c629449|1395478315||t19886.5905352795s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_ORANGE_primary|stem|error|c20c751004592e4a|900edfa55c629449|-1067712629||t19886.5903605035s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_PALM.BEACH_primary|stem|error|9469ddcc6d8565a0|900edfa55c629449|1719854694||t19886.590348672s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_PASCO_primary|stem|error|b042c7cb50a04516|900edfa55c629449|-800779571||t19886.5903443044s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_PINELLAS_primary|stem|error|94903c4cb583d233|900edfa55c629449|276463853||t19886.5903229278s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_POLK_primary|stem|error|40b582893354fa87|900edfa55c629449|650314156||t19886.5904325192s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_PUTNAM_primary|stem|error|ac2dc4f48634be48|900edfa55c629449|1658396462||t19886.5904686954s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_SANTA.ROSA_primary|stem|error|e7953730f1002004|900edfa55c629449|-519270120||t19886.5903929273s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_SARASOTA_primary|stem|error|28a3e3fcada9b69a|900edfa55c629449|480152164||t19886.5904832973s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_ST.JOHNS_primary|stem|error|007aaed4e9dd7305|900edfa55c629449|2032001798||t19886.5903366738s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_SUMTER_primary|stem|error|d52eaa3004760b19|900edfa55c629449|56798740||t19886.5903859177s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_SUWANNEE_primary|stem|error|846fb178587fd6e8|900edfa55c629449|-1313781848||t19886.590283691s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_TAYLOR_primary|stem|error|6faf859cf3921b43|900edfa55c629449|1092994741||t19886.5905121591s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_UNION_primary|stem|error|9c27b4dd149b9cb5|900edfa55c629449|-1831643093||t19886.5903487876s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_VOLUSIA_primary|stem|error|8781655cb49d0c8c|900edfa55c629449|-417111435||t19886.5903565331s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_WAKULLA_primary|stem|error|9f5b5d9cb22338b0|900edfa55c629449|1187162019||t19886.5905196596s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_WALTON_primary|stem|error|b4fae7f738b3b8ce|900edfa55c629449|2133310876||t19886.5904083199s||0|qs|local|vector|||||_store_ there is no package called qs
+time_FL_WASHINGTON_primary|stem|error|5611bd5809666d1c|900edfa55c629449|-1003957049||t19886.5903404411s||0|qs|local|vector|||||_store_ there is no package called qs
+time_GA_ALL_primary|stem|error|88cc6f73820011f8|900edfa55c629449|218392198||t19886.5903767906s||0|qs|local|vector|||||_store_ there is no package called qs
+time_NC_ALL_primary|stem|error|dec206293c1c5e45|900edfa55c629449|-549433972||t19886.5903062232s||0|qs|local|vector|||||_store_ there is no package called qs
+time_PA_ALLEGHENY_primary|stem|error|b68e0ce3ec085c24|900edfa55c629449|-1816858900||t19886.5904511288s||0|qs|local|vector|||||_store_ there is no package called qs
+time_PA_PHILADELPHIA_primary|stem|error|f1a77deb38fc4fbe|900edfa55c629449|464439340||t19886.5903408928s||0|qs|local|vector|||||_store_ there is no package called qs
+time_TX_BEXAR_primary|stem|error|d7694e20f65fa05e|900edfa55c629449|-1206706291||t19886.5905298549s||0|qs|local|vector|||||_store_ there is no package called qs
+time_TX_EL.PASO_primary|stem|error|75b5106221ef1f40|900edfa55c629449|-1923336009||t19886.5905345696s||0|qs|local|vector|||||_store_ there is no package called qs
+time_TX_HIDALGO_primary|stem|error|997f22461368869e|900edfa55c629449|-789058176||t19886.5904893884s||0|qs|local|vector|||||_store_ there is no package called qs
+time_WI_MILWAUKEE_primary|stem|error|505651e42bf9dbe3|900edfa55c629449|-1723077323||t19886.5904389204s||0|qs|local|vector|||||_store_ there is no package called qs
 values|object|8f30dc771499a0a6|||||||||||||||
-website|stem|d1858f449df762fb|dacbcfa252a6ea37|d5fc3d9e309f7d95|-385122080|docs*index.qmd*pages/ga.qmd*pages/nc.qmd*pages/tx.qmd*_quarto.yml*.nojekyll|t19837.6020884818s|d0b75f577bcc184f|30317069|file|local|vector|||15.073||
+website|stem|error|84cd1a48d0553a16|433af1b8cdda2a61|-385122080||t0s|a10b0861f057ffab|0|file|local|vector|||0.003||could not load dependencies of target website. there is no package called qs
