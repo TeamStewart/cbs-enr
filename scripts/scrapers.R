@@ -219,7 +219,7 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
              jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
   } else{
     path <- read_html(path) |>
-      html_nodes(xpath = "//a[contains(text(), 'Candidate Results by Precinct and Party (CSV)')]") |>
+      html_elements("tr:nth-child(4) a") |>
       html_attr('href')
     
     read_csv(path) |>
@@ -230,6 +230,8 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
         race_name = case_when(
           Contest == "Republican President" ~ "President-Republican",
           Contest == "Democrat President" ~ "President-Democrat",
+          Contest == "UNITED STATES PRESIDENT (REP)" ~ "President-Republican",
+          Contest == "UNITED STATES PRESIDENT (DEM)" ~ "President-Democrat",
           Contest == "President" & Party == "REP" ~ "President-Republican",
           Contest == "President" & Party == "DEM" ~ "President-Democrat",
           TRUE ~ Contest
