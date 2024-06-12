@@ -180,6 +180,43 @@ scrape_ga <- function(state, county, type, path = NULL, timestamp){
 ## Florida
 scrape_fl <- function(state, county, type, path = NULL, timestamp){
   if(county == 'MARTIN'){
+    get_clarity(state, county, path) |> 
+      read_csv() |> 
+      mutate(
+        state = state,
+        virtual_precinct = FALSE
+      ) |> 
+      mutate(across(where(is.character), ~ na_if(.x, ""))) |> 
+      mutate(candidate_name = case_match(
+        vote_mode,
+        "Undervotes" ~ "Undervote",
+        "Overvotes" ~ "Overvote",
+        .default = candidate_name
+      ),
+      # remove incumbent indicator from Biden
+      candidate_name = str_remove_all(candidate_name, "\\(I\\)$") |> str_trim() |> str_squish()
+      ) |> 
+      mutate(vote_mode = case_match(
+        vote_mode, 
+        "Election Day Votes" ~ "Election Day",
+        "Early Vote" ~ "Early Voting",
+        "Vote by Mail" ~ "Absentee/Mail",
+        c("Undervotes", "Overvotes") ~ "Aggregated",
+        .default = NA_character_
+      )) |> 
+      mutate(candidate_party = case_match(
+        candidate_party,
+        "REP" ~ "Republican",
+        "DEM" ~ "Democrat",
+        .default = candidate_party
+      )) |> 
+      mutate(race_name = case_when(
+        race_name == "President" & candidate_party == 'Republican' ~ "President-Republican",
+        race_name == "President" & candidate_party == 'Democrat' ~ "President-Democrat",
+        TRUE ~ race_name
+      )) |> 
+      select(state, race_id, race_name, candidate_name, candidate_party, 
+             jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
   } else{
     path <- read_html(path) |>
       html_nodes(xpath = "//a[contains(text(), 'Candidate Results by Precinct and Party (CSV)')]") |>
@@ -190,11 +227,12 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
       mutate(
         state = state,
         race_id = NA,
-        race_name = case_match(
-          Contest,
-          "Republican President" ~ "President-Republican",
-          "Democrat President" ~ "President-Democrat",
-          .default = Contest
+        race_name = case_when(
+          Contest == "Republican President" ~ "President-Republican",
+          Contest == "Democrat President" ~ "President-Democrat",
+          Contest == "President" & Party == "REP" ~ "President-Republican",
+          Contest == "President" & Party == "DEM" ~ "President-Democrat",
+          TRUE ~ Contest
         ),
         candidate_party = case_match(
           Party,
