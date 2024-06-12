@@ -218,11 +218,11 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp){
       select(state, race_id, race_name, candidate_name, candidate_party, 
              jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
   } else{
-    path <- read_html(path) |>
-      html_elements("tr:nth-child(4) a") |>
-      html_attr('href')
+    csv_path <- read_html(path) |>
+      html_node(xpath = '//a[contains(@href, "CandidateResultsbyPrecinctandParty_") and contains(@href, ".csv")]') %>% 
+      html_attr("href")
     
-    read_csv(path) |>
+    read_csv(csv_path) |>
       select(-any_of("Total Votes")) |>
       mutate(
         state = state,
