@@ -2,8 +2,6 @@
 NC,ALL,primary,https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2024_03_05/results_pct_20240305.zip
 GA,ALL,primary,120015
 FL,ALL,primary,https://flelectionfiles.floridados.gov/enightfilespublic/20240319_ElecResultsFL.txt
-FL,ORANGE,primary,
-FL,MIAMI-DADE,primary,
 AZ,MARICOPA,primary,
 WI,MILWAUKEE,primary,https://county.milwaukee.gov/EN/County-Clerk/Off-Nav/Election-Results/4-2-24SpringPresidentialPreferenceUnofficialResults
 PA,ALLEGHENY,primary,120751
@@ -11,3 +9,67 @@ PA,PHILADELPHIA,primary,https://philadelphiaresults.azurewebsites.us/ResultsExpo
 TX,EL PASO,primary,120338
 TX,BEXAR,primary,
 TX,HIDALGO,primary,120182
+FL,ALACHUA,primary,https://enr.electionsfl.org/ALA/3500/Summary/
+FL,BAKER,primary,https://enr.electionsfl.org/BAK/Summary/3565/
+FL,BAY,primary,https://enr.electionsfl.org/BAY/3507/Summary/
+FL,BRADFORD,primary,https://enr.electionsfl.org/BRA/Summary/3545
+FL,BREVARD,primary,http://enr.electionsfl.org/BRE/3537/Summary/
+FL,BROWARD,primary,http://enr.electionsfl.org/BRO/3578/Summary/
+FL,CALHOUN,primary,http://enr.electionsfl.org/CAL/3523/Summary/
+FL,CHARLOTTE,primary,https://enr.electionsfl.org/CHA/Summary/3567/
+FL,CITRUS,primary,https://enr.electionsfl.org/CIT/3532/Summary/
+FL,CLAY,primary,http://enr.electionsfl.org/CLA/3499/summary/
+FL,COLLIER,primary,https://enr.electionsfl.org/CLL/3484/Summary/
+FL,COLUMBIA,primary,https://enr.electionsfl.org/CLM/3493/Summary/
+FL,DESOTO,primary,https://enr.electionsfl.org/DES/3558/Summary/
+FL,DIXIE,primary,https://enr.electionsfl.org/DIX/3488/Summary/
+FL,DUVAL,primary,https://enr.electionsfl.org/DUV/3491/Summary/
+FL,ESCAMBIA,primary,http://enr.electionsfl.org/ESC/3547/Summary/
+FL,FLAGLER,primary,http://enr.electionsfl.org/FLA/3528/Summary/
+FL,FRANKLIN,primary,https://enr.electionsfl.org/FRA/Summary/3495
+FL,GADSDEN,primary,https://enr.electionsfl.org/GAD/Summary/3566/
+FL,GILCHRIST,primary,https://enr.electionsfl.org/GIL/3573/Summary/
+FL,GLADES,primary,https://enr.electionsfl.org/GLA/Summary/3489/
+FL,GULF,primary,https://enr.electionsfl.org/GUL/3546/Summary/
+FL,HAMILTON,primary,https://enr.electionsfl.org/HAM/Summary/3494/
+FL,HARDEE,primary,https://enr.electionsfl.org/HAR/3561/Summary/
+FL,HENDRY,primary,https://enr.electionsfl.org/HEN/Summary/3554/
+FL,HERNANDO,primary,https://enr.electionsfl.org/HER/3562/Summary/
+FL,HIGHLANDS,primary,https://enr.electionsfl.org/HIG/3531/Summary/
+FL,HILLSBOROUGH,primary,https://enr.electionsfl.org/HIL/3508/Summary/
+FL,HOLMES,primary,https://enr.electionsfl.org/HOL/3548/Summary/
+FL,INDIAN RIVER,primary,https://enr.electionsfl.org/IND/3544/Summary/
+FL,JACKSON,primary,https://enr.electionsfl.org/JAC/Summary/3505/
+FL,JEFFERSON,primary,https://enr.electionsfl.org/JEF/Summary/3564/
+FL,LAFAYETTE,primary,https://enr.electionsfl.org/LAF/3552/Summary/
+FL,LAKE,primary,https://enr.electionsfl.org/LAK/3520/Summary
+FL,LEE,primary,https://enr.electionsfl.org/LEE/3556/Summary
+FL,LEON,primary,https://enr.electionsfl.org/LEO/3482/Summary/
+FL,LEVY,primary,https://enr.electionsfl.org/LEV/3530/Summary/
+FL,LIBERTY,primary,https://enr.electionsfl.org/LIB/Summary/3568
+FL,MADISON,primary,https://enr.electionsfl.org/MAD/Summary/3563/
+FL,MANATEE,primary,https://enr.electionsfl.org/MAN/3569/Summary/
+FL,MARION,primary,https://enr.electionsfl.org/MRN/Summary/3527/
+FL,MARTIN,primary,https://results.enr.clarityelections.com/FL/Martin/120187/
+FL,MIAMI-DADE,primary,https://enr.electionsfl.org/DAD/3525/Summary/
+FL,MONROE,primary,https://enr.electionsfl.org/MON/Summary/3519/
+FL,NASSAU,primary,https://enr.electionsfl.org/NAS/3511/Summary/
+FL,OKEECHOBEE,primary,https://enr.electionsfl.org/OKE/Summary/3504/
+FL,ORANGE,primary,https://enr.electionsfl.org/ORA/3549/Summary/
+FL,PALM BEACH,primary,https://enr.electionsfl.org/PAL/3526/Summary/
+FL,PASCO,primary,https://enr.electionsfl.org/PAS/3509/Summary/
+FL,PINELLAS,primary,https://enr.votepinellas.gov/FL/Pinellas/120014/
+FL,POLK,primary,https://enr.electionsfl.org/POL/3517/Summary/
+FL,PUTNAM,primary,https://enr.electionsfl.org/PUT/3524/Summary/
+FL,SANTA ROSA,primary,https://enr.electionsfl.org/SAN/3497/Summary/
+FL,SARASOTA,primary,https://enr.electionsfl.org/SAR/3555/Summary/
+FL,SEMINOLE,primary,https://voteseminole.gov/liveresults
+FL,ST JOHNS,primary,https://enr.electionsfl.org/STJ/3540/Summary/
+FL,SUMTER,primary,https://enr.electionsfl.org/SUM/3518/Summary/
+FL,SUWANNEE,primary,https://enr.electionsfl.org/SUW/Summary/3510/
+FL,TAYLOR,primary,https://enr.electionsfl.org/TAY/Summary/3550/
+FL,UNION,primary,https://enr.electionsfl.org/UNI/Summary/3512/
+FL,VOLUSIA,primary,https://enr.electionsfl.org/VOL/3536/Summary/
+FL,WAKULLA,primary,http://enr.electionsfl.org/WAK/3557/Summary/
+FL,WALTON,primary,http://enr.electionsfl.org/WAL/3529/Summary/
+FL,WASHINGTON,primary,https://enr.electionsfl.org/WAS/Summary/3541/
