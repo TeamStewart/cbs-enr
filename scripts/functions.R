@@ -57,7 +57,7 @@ get_timestamp <- function(state, county, type, path) {
   }
   
   fl_timestamp <- function(){
-    if(county == 'MARTIN'){
+    if(county %in% c('MARTIN', 'PINELLAS')){
       clarity_timestamp()
     } else{
       read_html(path) |>

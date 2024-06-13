@@ -2,7 +2,7 @@
 scrape_az <- function(state, county, type, path = NULL, timestamp){
   if(county == 'MARICOPA'){
     # retrieve file link -- they might change it over the course of the night
-    path = read_html('https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch') |>
+    path = read_html(path) |>
       html_nodes(xpath = "//a[contains(text(), '2024 March Presidential Preference Election Results.txt')]") |>
       html_attr('href')
     
@@ -280,7 +280,8 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp) {
             Contest == "President" & Party == "DEM" ~ "President-Democrat"
           ),
           vote_mode = 'Total',
-          precinct_total = `Total Votes`
+          precinct_total = `Total Votes`,
+          precinct_total = ifelse(precinct_total == "-", NA, precinct_total) |> as.numeric()
         ) |>
         filter(!is.na(race_name)) |>
         select(state, race_id, race_name, candidate_name = `Candidate Issue`,
