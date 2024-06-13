@@ -612,21 +612,21 @@ def _flatten_result(r):
         'candidate_party': r.choice.party if r.choice is not None else None
     }
 
-def get_data(path):
+def get_data(state,path):
     try:
         with zipfile.ZipFile(path, 'r') as zip_ref:
             file_names = zip_ref.namelist()
             # Assuming the file you want to parse is the first file in the archive
             file_to_parse = file_names[0]
             try:
-                zip_ref.extract(file_to_parse, '../data/raw/ga/')
+                zip_ref.extract(file_to_parse, '../data/raw/{state}/')
             except zipfile.BadZipFile as e:
                 print(f"Failed to extract zip file: {e} at {path}")
 
-            zip_ref.extract(file_to_parse, '../data/raw/ga/')
+            zip_ref.extract(file_to_parse, '../data/raw/{state}/')
 
         p = Parser()
-        p.parse(f'../data/raw/ga/{file_to_parse}')
+        p.parse(f'../data/raw/{state}/{file_to_parse}')
 
         df = pd.DataFrame([_flatten_result(r) for r in p.results if r.jurisdiction is not None])
         df['jurisdiction'] = p.region

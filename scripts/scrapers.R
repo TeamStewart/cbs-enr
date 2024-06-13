@@ -670,7 +670,7 @@ get_clarity <- function(state, county, path){
   
   # run clarity scraper
   source_python("scripts/clarity_scraper.py")
-  get_data(download_path)
+  get_data(state,download_path)
   
   download_path |> str_replace("zip$", "csv")
   
