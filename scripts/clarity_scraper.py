@@ -410,7 +410,7 @@ class Parser(object):
             key=contest_el.attrib['key'],
             text=contest_el.attrib['text'],
             party=party,
-            total_votes=int(contest_el.attrib['totalVotes']),
+            total_votes = None if contest_el.attrib['totalVotes'] == 'N/A' else int(contest_el.attrib['totalVotes'])
         )
 
         for vt_el in contest_el.xpath('./VoteType'):
@@ -612,21 +612,21 @@ def _flatten_result(r):
         'candidate_party': r.choice.party if r.choice is not None else None
     }
 
-def get_data(path):
+def get_data(state, path):
     try:
         with zipfile.ZipFile(path, 'r') as zip_ref:
             file_names = zip_ref.namelist()
             # Assuming the file you want to parse is the first file in the archive
             file_to_parse = file_names[0]
             try:
-                zip_ref.extract(file_to_parse, '../data/raw/ga/')
+                zip_ref.extract(file_to_parse, f'../data/raw/{state}/')
             except zipfile.BadZipFile as e:
                 print(f"Failed to extract zip file: {e} at {path}")
 
-            zip_ref.extract(file_to_parse, '../data/raw/ga/')
+            zip_ref.extract(file_to_parse, f'../data/raw/{state}/')
 
         p = Parser()
-        p.parse(f'../data/raw/ga/{file_to_parse}')
+        p.parse(f'../data/raw/{state}/{file_to_parse}')
 
         df = pd.DataFrame([_flatten_result(r) for r in p.results if r.jurisdiction is not None])
         df['jurisdiction'] = p.region
@@ -637,12 +637,13 @@ def get_data(path):
 
 # define main function that runs using argument from terminal
 # def main():
-#     if len(sys.argv) != 2:
-#         print("Usage: python clarity_scraper.py <path_to_zip_file>")
+#     if len(sys.argv) != 3:
+#         print("Usage: python clarity_scraper.py <state> <path_to_zip_file>")
 #         return
-#     zip_path = sys.argv[1]
+#     state = sys.argv[1]
+#     zip_path = sys.argv[2]
 
-#     get_data(zip_path)
+#     get_data(state, zip_path)
 
 # if __name__ == "__main__":
 #     main()

@@ -15,6 +15,7 @@ process_data <- function(state, county, type, timestamp, path = NULL) {
     )
   
   # save latest version
+  dir_create(glue("data/clean/{state}"))
   write_csv(d, glue("data/clean/{state}/{state}_{county}_{type}_latest.csv"))
 
   # save timestamped version
@@ -57,23 +58,15 @@ get_timestamp <- function(state, county, type, path) {
   }
   
   fl_timestamp <- function(){
-    if(county == 'ORANGE'){
-      read_html('https://enr.electionsfl.org/ORA/3549/Reports/') |>
-        html_element('#LastUpdated') |>
-        html_text2() |>
-        str_extract("\\d{2}/\\d{2}/\\d{4} \\d{1,2}:\\d{2}:\\d{2} [ap]m") |>
-        mdy_hms(tz = "America/New_York") |>
-        str_replace_all("-|:| ", "_")
-      
-    } else if(county == 'MIAMI-DADE'){
-      read_html('https://enr.electionsfl.org/DAD/3525/Reports/') |>
-        html_element('#LastUpdated') |>
-        html_text2() |>
-        str_extract("\\d{2}/\\d{2}/\\d{4} \\d{1,2}:\\d{2}:\\d{2} [ap]m") |>
-        mdy_hms(tz = "America/New_York") |>
-        str_replace_all("-|:| ", "_")
+    if(county %in% c('MARTIN', 'PINELLAS')){
+      clarity_timestamp()
     } else{
-      now() |> str_replace_all("-|:| ", "_") |> str_sub(1,19)
+      read_html(path) |>
+        html_element('#LastUpdated') |>
+        html_text2() |>
+        str_extract("\\d{2}/\\d{2}/\\d{4} \\d{1,2}:\\d{2}:\\d{2} [ap]m") |>
+        mdy_hms(tz = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
     }
   }
   
