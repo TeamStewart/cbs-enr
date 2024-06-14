@@ -15,6 +15,7 @@ process_data <- function(state, county, type, timestamp, path = NULL) {
     )
   
   # save latest version
+  dir_create(glue("data/clean/{state}"))
   write_csv(d, glue("data/clean/{state}/{state}_{county}_{type}_latest.csv"))
 
   # save timestamped version

@@ -115,7 +115,7 @@ scrape_ga <- function(state, county, type, path = NULL, timestamp){
   }
   
   counties <- get_counties(clarity_num = path) |> 
-    mutate(local = str_c("data/raw/ga/", county, ".zip"))
+    mutate(local = str_c("data/raw/GA/", county, ".zip"))
   
   download_file <- function(url){
     tryCatch(
@@ -131,9 +131,9 @@ scrape_ga <- function(state, county, type, path = NULL, timestamp){
   
   source_python("scripts/clarity_scraper.py")
   
-  pull(counties, local) |> walk(get_data)
+  pull(counties, local) |> walk(state, get_data)
   
-  list.files("data/raw/ga", pattern = "*.csv", full.names = TRUE) |> 
+  list.files("data/raw/GA", pattern = "*.csv", full.names = TRUE) |> 
     lapply(fread) |> 
     rbindlist(use.names = TRUE) |> 
     as_tibble() |> 
@@ -295,7 +295,6 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp) {
     process_other(state, county, path, timestamp)
   }
 }
-
 
 ## North Carolina
 scrape_nc <- function(state, county, type, path = NULL, timestamp) {
@@ -670,7 +669,7 @@ get_clarity <- function(state, county, path){
   
   # run clarity scraper
   source_python("scripts/clarity_scraper.py")
-  get_data(state,download_path)
+  get_data(state, download_path)
   
   download_path |> str_replace("zip$", "csv")
   
