@@ -3,7 +3,7 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
   if(county == 'MARICOPA'){
     # retrieve file link -- they might change it over the course of the night
     path = read_html(path) |>
-      html_nodes(xpath = "//a[contains(text(), '2024 March Presidential Preference Election Results.txt')]") |>
+      html_nodes(xpath = "//a[contains(text(), '2024 July Primary Election Results.txt')]") |>
       html_attr('href')
     
     path = str_c('https://elections.maricopa.gov',path)
@@ -23,35 +23,35 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
         state = .env$state,
         race_name = case_match(
           ContestName,
-          "DEM CANDIDATES FOR PRESIDENT" ~ "President-Democrat",
-          "REP CANDIDATES FOR PRESIDENT" ~ "President-Republican",
+          "DEM US Senate" ~ "US SENATE-Democrat", 
+          "DEM US Rep Dist CD-1" ~ "US HOUSE-01-Democrat",
+          "DEM US Rep Dist CD-2" ~ "US HOUSE-02-Democrat",
+          "DEM US Rep Dist CD-3" ~ "US HOUSE-03-Democrat",
+          "DEM US Rep Dist CD-4" ~ "US HOUSE-04-Democrat",
+          "DEM US Rep Dist CD-5" ~ "US HOUSE-05-Democrat",
+          "DEM US Rep Dist CD-7" ~ "US HOUSE-07-Democrat",
+          "DEM US Rep Dist CD-8" ~ "US HOUSE-08-Democrat",
+          "DEM US Rep Dist CD-9" ~ "US HOUSE-09-Democrat",
+          "DEM County Recorder" ~ "COUNTY RECORDER-Democrat",
+          "REP US Senate" ~ "US SENATE-Republican",
+          "REP US Rep Dist CD-1" ~ "US HOUSE-01-Republican",
+          "REP US Rep Dist CD-2" ~ "US HOUSE-02-Republican",
+          "REP US Rep Dist CD-3" ~ "US HOUSE-03-Republican",
+          "REP US Rep Dist CD-4" ~ "US HOUSE-04-Republican",
+          "REP US Rep Dist CD-5" ~ "US HOUSE-05-Republican",
+          "REP US Rep Dist CD-7" ~ "US HOUSE-07-Republican",
+          "REP US Rep Dist CD-8" ~ "US HOUSE-08-Republican",
+          "REP US Rep Dist CD-9" ~ "US HOUSE-09-Republican",
+          "REP County Recorder" ~ "COUNTY RECORDER-Republican",
           .default = NA_character_
         ),
-        candidate_name = case_match(
-          CandidateName,
-          "LOZADA, FRANKIE" ~ "Frank Lozada",
-          "CORNEJO, GABRIEL" ~ "Gabriel Cornejo",
-          "WILLIAMSON, MARIANNE" ~ "Marianne Williamson",
-          "PALMER, JASON MICHAEL" ~ "Jason Palmer",
-          "LYONS, STEPHEN" ~ "Stephen Lyons",
-          "BIDEN JR., JOSEPH R." ~ "Joe Biden",
-          "PHILLIPS, DEAN" ~ "Dean Phillips",
-          "CHRISTIE, CHRIS" ~ "Chris Christie",
-          "RAMASWAMY, VIVEK" ~ "Vivek Ramaswamy",
-          "CASTRO, JOHN ANTHONY" ~ "John Anthony Castro",
-          "STUCKENBERG, DAVID" ~ "David Stuckenberg",
-          "HUTCHINSON, ASA" ~ "Asa Hutchinson",
-          "HALEY, NIKKI" ~ "Nikki Haley",
-          "TRUMP, DONALD J." ~ "Donald Trump",
-          "BINKLEY, RYAN L." ~ "Ryan Binkley",
-          "DESANTIS, RON" ~ "Ron DeSantis",
-          .default = CandidateName
-        ),
-        candidate_party = case_match(
-          CandidateAffiliation,
-          "DEM" ~ "Democrat",
-          "REP" ~ "Republican",
-          .default = NA_character_
+        candidate_name = CandidateName |> str_trim() |> str_squish(),
+        candidate_party = case_when(
+          CandidateAffiliation == "DEM" ~ "Democrat",
+          CandidateAffiliation == "REP" ~ "Republican",
+          CandidateName %in% c("Write-in", "*NOT QUALIFIED*") & str_detect(race_name,"Democrat") ~ "Democrat",
+          CandidateName %in% c("Write-in", "*NOT QUALIFIED*") & str_detect(race_name,"Republican") ~ "Republican",
+          TRUE ~ NA_character_
         ),
         jurisdiction = county,
         virtual_precinct = FALSE,
@@ -60,6 +60,7 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
         `Early Voting` = Votes_EARLY.VOTE,
         Provisional = Votes_PROVISIONAL
       ) |>
+      filter(!is.na(race_name)) |>
       pivot_longer(cols = c("Aggregated","Election Day", "Early Voting", "Provisional"),names_to = "vote_mode", values_to = "precinct_total") |>
       select(state, race_id = ContestId, race_name, candidate_name,
         candidate_party, jurisdiction, precinct_id = PrecinctName, virtual_precinct,vote_mode, precinct_total)
