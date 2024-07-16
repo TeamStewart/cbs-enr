@@ -1,2 +1,2 @@
-﻿state,county,type,path
-AZ,MARICOPA,state_primary,https://elections.maricopa.gov/results-and-data/election-results.html
+﻿state,county,type,path,cbs_lookup,cbs_s3_path,google_drive_folder
+AZ,MARICOPA,state_primary,https://elections.maricopa.gov/results-and-data/election-results.html,2024-07-30 Primary Candidates.csv,Precincts/20240730-AZ-P,https://drive.google.com/drive/folders/1hJO_flEZApHNLlpb79xmSl_Y3VAvYrEf

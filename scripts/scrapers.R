@@ -2,11 +2,11 @@
 scrape_az <- function(state, county, type, path = NULL, timestamp){
   if(county == 'MARICOPA'){
     # retrieve file link -- they might change it over the course of the night
-    path = read_html(path) |>
+    path <- read_html(path) |>
       html_nodes(xpath = "//a[contains(text(), '2024 July Primary Election Results.txt')]") |>
       html_attr('href')
     
-    path = str_c('https://elections.maricopa.gov',path)
+    path <- str_c('https://elections.maricopa.gov',path)
     
     source_python("scripts/dynamic_download.py")
     get_file(path, county, state)
@@ -45,7 +45,57 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
           "REP County Recorder" ~ "COUNTY RECORDER-Republican",
           .default = NA_character_
         ),
-        candidate_name = CandidateName |> str_trim() |> str_squish(),
+        candidate_name = case_match(
+          CandidateName,
+          "CHERNY, ANDREI" ~ "Andrei Cherny",
+          "GALÁN-WOODS, MARLENE" ~ "Marlene Galán-Woods",
+          "HORNE, ANDREW" ~ "Andrew Horne",
+          "KROEMER, KURT" ~ "Kurt Kroemer",
+          "O'CALLAGHAN, CONOR" ~ "Conor O'Callaghan",
+          "SHAH, AMISH" ~ "Amish Shah",
+          "BACKIE, ROBERT" ~ "Robert Backie",
+          "GEORGE, KIM" ~ "Kim George",
+          "SCHWEIKERT, DAVID" ~ "David Schweikert",
+          "NEZ, JONATHAN" ~ "Jonathan Nez",
+          "CRANE, ELI" ~ "Eli Crane",
+          "SMITH, JACK" ~ "Jack Smith",
+          "ANSARI, YASSAMIN" ~ "Yassamin Ansari",
+          "TERÁN, RAQUEL" ~ "Raquel Terán",
+          "WOOTEN, DUANE M." ~ "Duane Wooten",
+          "MENDOZA, JESUS DAVID" ~ "Jesus Mendoza",
+          "Write-in" ~ "Write-ins",
+          "ZINK, JEFF" ~ "Jeff Zink",
+          "STANTON, GREG" ~ "Greg Stanton",
+          "COOPER, KELLY" ~ "Kelly Cooper",
+          "DAVISON, JEROME" ~ "Jerone Davison",
+          "GILES, DAVE" ~ "Dave Giles",
+          "JASSER, ZUHDI" ~ "Zuhdi Jasser",
+          "SCHAFFNER, KATRINA" ~ "Katrina Schaffner",
+          "BIGGS, ANDY" ~ "Andy Biggs",
+          "GRIJALVA, RAÚL M." ~ "Raúl Grijalva",
+          "BUTIEREZ SR., DANIEL FRANCIS" ~ "Daniel Butierez",
+          "WHITTEN, GREGORY" ~ "Greg Whitten",
+          "BRIODY, PATRICK \"PAT\"" ~ "Pat Briody",
+          "FRANKS, TRENT" ~ "Trent Franks",
+          "HAMADEH, ABRAHAM \"ABE\""~ "Abe Hamadeh",
+          "KERN, ANTHONY" ~ "Anthony Kern",
+          "MASTERS, BLAKE" ~ "Blake Masters",
+          "TOMA, BEN" ~ "Ben Toma",
+          "SMITH, QUACY" ~ "Quacy Smith",
+          "GOSAR, PAUL" ~ "Paul Gosar",
+          "GALLEGO, RUBEN" ~ "Ruben Gallego",
+          "LAKE, KARI" ~ "Kari Lake",
+          "LAMB, MARK" ~ "Mark Lamb",
+          "REYE, ELIZABETH JEAN" ~ "Elizabeth Reye",
+          "GALLEGOS, ISIAH" ~ "Isiah Gallegos",
+          "GLENN, NICHOLAS N." ~ "Nicholas Glenn",
+          "HEAP, JUSTIN" ~ "Justin Heap",
+          "HIATT, DON W" ~ "Don Hiatt",
+          "RICHER, STEPHEN" ~ "Stephen Richer",
+          "STRINGHAM, TIM" ~ "Tim Stringham",
+          "WILLIAMS, DUSTIN PAUL" ~ "Dustin Williams",
+          .default = CandidateName
+        ),
         candidate_party = case_when(
           CandidateAffiliation == "DEM" ~ "Democrat",
           CandidateAffiliation == "REP" ~ "Republican",
