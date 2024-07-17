@@ -3,7 +3,7 @@
 # install.packages("rJava")
 # remotes::install_github(c("ropensci/tabulizerjars", "ropensci/tabulizer"))
 
-library(tabulizer)
+# library(tabulizer)
 library(tidyverse)
 
 # locate_areas("data/raw/fl/216-official-election-results-details_0.pdf", pages = 2)
