@@ -48,7 +48,7 @@ list(
     tar_target(time, get_timestamp(state, county, type, path), cue = tar_cue(mode = "always")),
     tar_target(clean, process_data(state, county, type, time, path = path), error = "continue"),
     tar_target(tbl_all, general_table(clean, state, county, type, time)),
-    tar_target(cbs, convert_cbs(clean, state, county, type, time, cbs_lookup, cbs_s3_path, google_drive_folder, upload = T)),
+    tar_target(cbs, convert_cbs(clean, state, county, type, time, election_date, cbs_lookup, cbs_s3_path, google_drive_folder, upload = T)),
     # tar_target(models, run_models(clean, state, time)),
     names = c(state, county, type)
   )

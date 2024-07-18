@@ -204,7 +204,7 @@ general_table <- function(data, state, county, type, timestamp) {
   
 }
 
-convert_cbs <- function(data, state, county, type, timestamp, cbs_lookup = NULL, cbs_s3_path = NULL, google_drive_folder = NULL, upload=FALSE){
+convert_cbs <- function(data, state, county, type, timestamp, election_date = NULL, cbs_lookup = NULL, cbs_s3_path = NULL, google_drive_folder = NULL, upload=FALSE){
   
   sf <- suppressMessages(stamp("2022-11-09T11:26:47Z"))
   
@@ -242,14 +242,16 @@ convert_cbs <- function(data, state, county, type, timestamp, cbs_lookup = NULL,
     
     formatted <- data |> 
       filter(!str_detect(race_name, regex("COUNTY", ignore_case=TRUE))) |> 
-      mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican"),
-             jurisdiction = str_to_upper(jurisdiction)) |>
+      mutate(
+        race_name = str_remove_all(race_name, "-Democrat|-Republican"),
+        jurisdiction = str_to_upper(jurisdiction)) |>
       filter(candidate_party %in% c("Democrat", "Republican")) |> 
       mutate(
         jCde = case_when(
           str_detect(race_name, "^US HOUSE|^STATE HOUSE") ~ str_extract(race_name, "\\d+") |> as.numeric() |> as.character(),
           .default = "0"
         ),
+        # TODO: Add for Governor, President
         ofc = case_when(
           str_detect(race_name, "^US HOUSE") ~ "H",
           str_detect(race_name, "^US SENATE") ~ "S"),
@@ -260,10 +262,13 @@ convert_cbs <- function(data, state, county, type, timestamp, cbs_lookup = NULL,
       rename(
         office = race_name
       ) |> 
-      mutate(eDate = "2024-07-30",
+      # TODO: Find more dynamic way of dealing with election date
+      mutate(eDate = election_date,
              real_precinct = ifelse(virtual_precinct, "N", "Y")) |> 
       left_join(lookup_geo, join_by(state == postalCode, jurisdiction == county_name)) |> 
       left_join(lookup_cands, by = c("state_name"="state","office","jCde"="jurisdiction_code", "candidate_name"="full_name")) |> 
+      # This filter is added to deal with fact that some candidates don't appear in CBS xwalk
+      filter(!is.na(election_type)) |>
       mutate(jType = ifelse(jCde == "0", "SW", "CD")) |> 
       mutate(precinct_id = str_c(county_fips, precinct_id, sep = "_")) |> 
       rename(pcntName = precinct_id) |> 
@@ -277,7 +282,7 @@ convert_cbs <- function(data, state, county, type, timestamp, cbs_lookup = NULL,
              earlyByMailVote = `Absentee/Mail`,
              provisionalVote = Provisional,
              cName = candidate_name,
-             eType = election_type,
+             eType = election_type_code,
              cId = candidate_id) |> 
       # importantly, ensure that Aggregated is here
       # bind_rows(tibble(Aggregated = numeric())) |> 
@@ -288,9 +293,10 @@ convert_cbs <- function(data, state, county, type, timestamp, cbs_lookup = NULL,
              ts) |>
       mutate(across(c(jCde, st, cnty, cId), as.numeric)) |> 
       nest(candidates = c(cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote)) |> 
-      nest(key = c(eDate, st, eType, jType, jCde, ofc, cnty, pcnt, pcntUUID)) |> 
+      nest(key = c(eDate, st, eType, jType, jCde, ofc, cnty, pcnt, pcntUUID)) |>
       mutate(key2 = key) |> 
       unnest(cols = key2) |> 
+      mutate(key = map(key, jsonlite::unbox)) |>
       select(eDate, jType, real_precinct, key, pcntName, candidates, jCde, ts, st, ofc, eType, pcntUUID, cnty)
     
     jsonlite::write_json(formatted, glue("data/cbs_format/{state}/{county}_{type}_latest.json"))
