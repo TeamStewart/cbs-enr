@@ -1,14 +1,11 @@
 # Analysis of Georgia runoff, June 21, 2022
 
 # Set working directory and file paths
-dir <- "d"
-primary_data <- file.path(dir, "Dropbox (MIT)/2022 ElectionZone/ElectionNight/GA/data/ga_allraces.csv")
-runoff_data <- file.path(dir, "Dropbox (MIT)/2022 ElectionZone/ElectionNight/GA/data/ga_runoff_allraces.csv")
+primary_data <- "scripts/sample/ga_allraces.csv"
+runoff_data <- "scripts/sample/ga_runoff_allraces.csv"
 
 # Load necessary libraries
-library(dplyr)
-library(tidyr)
-library(stringr)
+library(tidyverse)
 
 # Map candidate names to last names
 candidates_df <- data.frame(
@@ -38,13 +35,14 @@ candidates_df <- data.frame(
 )
 
 # Save candidates dataframe to file (optional)
-write.csv(candidates_df, file.path(dir, "scratch/candidates_lastname.csv"), row.names = FALSE)
+write.csv(candidates_df, file = "scripts/sample/candidates_lastname.csv", row.names = FALSE)
 
 # Read in primary data
-primary_data_df <- read.csv(primary_data, stringsAsFactors = FALSE)
+primary_data_df <- read_csv(primary_data, locale = locale(encoding = "UTF-8"))
 
 # Preprocess primary data
 primary_data_df <- primary_data_df %>%
+  mutate(across(everything(), ~ iconv(., from = "UTF-8", to = "UTF-8", sub = ""))) %>%
   mutate(across(everything(), ~ toupper(trimws(.)))) %>%
   mutate(race = case_when(
     str_detect(race, "LIEUTENANT|LIUTENANT") & party == "DEM" ~ "LT_GOV",
@@ -81,13 +79,14 @@ primary_data_df <- primary_data_df %>%
 primary_data_df <- primary_data_df %>%
   mutate(votes_primary = as.numeric(votes)) %>%
   select(race, candidates, county, precinct, type, votes_primary)
-write.csv(primary_data_df, file.path(dir, "scratch/primary_votes.csv"), row.names = FALSE)
+write.csv(primary_data_df, file = "scripts/sample/primary_votes.csv", row.names = FALSE)
 
 # Read in runoff data
-runoff_data_df <- read.csv(runoff_data, stringsAsFactors = FALSE)
+runoff_data_df <- read_csv(runoff_data)
 
 # Preprocess runoff data
-runoff_data_df <- runoff_data_df %>%
+runoff_data_df <- runoff_data_df %>% 
+  mutate(across(everything(), ~ iconv(., from = "UTF-8", to = "UTF-8", sub = ""))) %>%
   mutate(across(everything(), ~ toupper(trimws(.)))) %>%
   mutate(race = case_when(
     str_detect(race, "LIEUTENANT") ~ "LT_GOV",
@@ -108,7 +107,7 @@ runoff_data_df <- runoff_data_df %>%
   filter(race %in% c("LT_GOV", "SOS", "INSUR", "LABOR", "CD1", "CD2", "CD6", "CD7", "CD10D", "CD10R")) %>%
   filter(precinct != "-1") %>%
   mutate(candidates = str_replace(candidates, "TABITHA JOHNSON- GREEN", "TABITHA JOHNSON-GREEN"),
-         candidates = str_replace(candidates, "VERNON JONES", "VERNON J. JONES") %>%
+         candidates = str_replace(candidates, "VERNON JONES", "VERNON J. JONES")) %>%
   mutate(precinct = case_when(
            county == "CHARLTON" & precinct == "WINKOUR" ~ "WINOKUR",
            county == "CHATHAM" & str_detect(precinct, "1-05C ") ~ "1-05C",
@@ -121,7 +120,7 @@ runoff_data_df <- runoff_data_df %>%
 runoff_data_df <- runoff_data_df %>%
   mutate(votes_runoff = as.numeric(votes)) %>%
   select(race, candidates, county, precinct, type, votes_runoff)
-write.csv(runoff_data_df, file.path(dir, "scratch/runoff_votes.csv"), row.names = FALSE)
+write.csv(runoff_data_df, file = "scripts/sample/runoff_votes.csv", row.names = FALSE)
 
 # Merge the primary dataset with the last names and produce vote shares
 primary_data_df <- primary_data_df %>%
@@ -135,7 +134,7 @@ primary_data_df <- primary_data_df %>%
   pivot_wider(names_from = lastname, values_from = ppct, names_prefix = "ppct_")
 
 # Save primary vote shares
-write.csv(primary_data_df, file.path(dir, "scratch/primary_pct.csv"), row.names = FALSE)
+write.csv(primary_data_df, file = "scripts/sample/primary_pct.csv", row.names = FALSE)
 
 # Merge the runoff dataset with the last names and produce vote shares
 runoff_data_df <- runoff_data_df %>%
@@ -150,14 +149,14 @@ runoff_data_df <- runoff_data_df %>%
   pivot_wider(names_from = lastname, values_from = rpct, names_prefix = "rpct_")
 
 # Save runoff vote shares
-write.csv(runoff_data_df, file.path(dir, "scratch/runoff_pct.csv"), row.names = FALSE)
+write.csv(runoff_data_df, file = "scripts/sample/runoff_pct.csv", row.names = FALSE)
 
 # Merge the two previous datasets
 final_df <- primary_data_df %>%
   left_join(runoff_data_df, by = c("race", "county", "precinct", "type"))
 
 # Save final merged dataset
-write.csv(final_df, file.path(dir, "scratch/final_merged.csv"), row.names = FALSE)
+write.csv(final_df, file = "scripts/sample/final_merged.csv", row.names = FALSE)
 
 # Regressions
 # Assuming 'ADVANCED VOTING' is a type in the dataset and runiform() for testing purpose

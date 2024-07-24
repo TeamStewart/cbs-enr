@@ -54,3 +54,8 @@ rsconnect/
 data/raw/nc_primary.zip
 scripts/sample/ga_allraces.csv
 scripts/sample/ga_runoff_allraces.csv
+scripts/sample/final_merged.csv
+scripts/sample/primary_pct.csv
+scripts/sample/primary_votes.csv
+scripts/sample/runoff_pct.csv
+scripts/sample/runoff_votes.csv
