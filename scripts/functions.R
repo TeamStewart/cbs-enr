@@ -329,22 +329,13 @@ convert_cbs <- function(data, state, county, type, timestamp, election_date = NU
   
 }
 
-run_models <- function(data, st, timestamp){
+run_models <- function(data, state, county, timestamp, modeling){
   
-  if (st %in% c("TX","GA","FL","AZ", "WI", "PA")){
+  if (modeling == FALSE){
     return(NULL)
-  }
+  } 
   
-  data |> 
-    filter(str_detect(race_name, "^Governor|President"), candidate_party %in% c("Democrat", "Republican")) |> 
-    nest(.by = c(state, race_name, candidate_party)) |> 
-    rename(
-      party = candidate_party,
-      office = race_name
-    ) |> 
-    mutate(time = timestamp) |> 
-    pwalk(execute_model)
-  
+  data |> nest(.by = c(race_name)) |> mutate(state = state, county = county, time = time) |> pwalk(execute_model)
 }
 
 lookup_state_name <- function(abbreviation) {

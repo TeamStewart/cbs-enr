@@ -97,24 +97,26 @@ candidate_totals <- clean_previous_results |>
 vote_shares <- bind_rows(clean_previous_results, candidate_totals) |>
   left_join(vote_totals, by = c("state", "jurisdiction", "race_name", "precinct_id", "vote_mode")) |>
   filter(vote_mode != 'Aggregated') |>
-  mutate(pct = precinct_total / grand_total) |>
+  mutate(pct = (precinct_total / grand_total) * 100) |>
   unite("race_candidate", race_name, candidate_lastname, sep = "_", remove = FALSE) |>
   pivot_wider(id_cols = c(state, jurisdiction, precinct_id, vote_mode), names_from = race_candidate, values_from = pct, names_glue = "{race_candidate}_pct") |>
   arrange(state, jurisdiction, precinct_id, vote_mode) |>
   clean_names()
 
-# Dataframe for predicting turnout
-turnout <- vote_totals |>
-  filter(vote_mode == 'Total Turnout') |>
-  summarise(total_turnout_2022 = max(grand_total, na.rm = TRUE), .by = c("state", "jurisdiction","precinct_id")) |>
-  clean_names()
+output <- vote_totals |> left_join(vote_shares, by = c("state","jurisdiction","precinct_id","vote_mode")) |>
+  rename(total_2022 = grand_total)
 
 # Append Kabir's precinct demos
-precinct_demos <- read_csv(precinct_demos) |> clean_names()
+precinct_demos <- read_csv(precinct_demos) |> clean_names() |>select(precinct_id = precinct, precinct_cbs, total_reg = n, total_reg_dem = dem, total_reg_rep = rep, p_male:p_race1_col)
+output <- output |> left_join(precinct_demos, by = c("precinct_id"))
 
-vote_shares <- left_join(vote_shares, precinct_demos, by = c("precinct_id"="precinct"))
-turnout <- left_join(turnout, precinct_demos, by = c("precinct_id"="precinct"))
+
+# Add Charles magafactor
+magafactor <- read_csv("data/input/AZ/magafactor.csv") |> select(precinct_id = precinctname, magafactor, magamean)
+output <- output |> left_join(magafactor, by = c("precinct_id"))
+
+output <- output |>
+  select(state, jurisdiction, precinct_id, precinct_cbs, race_name, vote_mode, total_2022, total_reg, total_reg_dem, total_reg_rep, p_male:magamean)
 
 # Save 
-write_csv(vote_shares, "data/input/AZ/AZ_MARICOPA_xwalk_vote_shares.csv")
-write_csv(turnout, "data/input/AZ/AZ_MARICOPA_xwalk_turnout.csv")
+write_csv(output, "data/input/AZ/AZ_MARICOPA_state_primary_xwalk.csv")
