@@ -99,6 +99,8 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
         candidate_party = case_when(
           CandidateAffiliation == "DEM" ~ "Democrat",
           CandidateAffiliation == "REP" ~ "Republican",
+          str_detect(race_name,"Democrat") ~ "Democrat",
+          str_detect(race_name,"Republican") ~ "Republican",
           CandidateName %in% c("Write-in", "*NOT QUALIFIED*") & str_detect(race_name,"Democrat") ~ "Democrat",
           CandidateName %in% c("Write-in", "*NOT QUALIFIED*") & str_detect(race_name,"Republican") ~ "Republican",
           TRUE ~ NA_character_
