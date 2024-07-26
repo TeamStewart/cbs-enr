@@ -100,6 +100,7 @@ execute_model <- function(data, state, jurisdiction, type, timestamp, target_off
         cvotes_current = sum(cvotes_current, na.rm = TRUE),
         turnout_current = sum(turnout_current, na.rm = TRUE),
         vote_share_current = cvotes_current / turnout_current,
+        turnout_modeled = round(sum(turnout_modeled, na.rm = TRUE),0),
         cvotes_modeled_gov_2022 = round(sum(cvotes_modeled_gov_2022, na.rm = TRUE),0),
         cvotes_modeled_sen_2022 = round(sum(cvotes_modeled_sen_2022, na.rm = TRUE),0),
         cvotes_modeled_magafactor = round(sum(cvotes_modeled_magafactor, na.rm = TRUE),0),
