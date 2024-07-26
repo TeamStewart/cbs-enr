@@ -97,7 +97,7 @@ candidate_totals <- clean_previous_results |>
 vote_shares <- bind_rows(clean_previous_results, candidate_totals) |>
   left_join(vote_totals, by = c("state", "jurisdiction", "race_name", "precinct_id", "vote_mode")) |>
   filter(vote_mode != 'Aggregated') |>
-  mutate(pct = (precinct_total / grand_total) * 100) |>
+  mutate(pct = (precinct_total / grand_total)) |>
   unite("race_candidate", race_name, candidate_lastname, sep = "_", remove = FALSE) |>
   pivot_wider(id_cols = c(state, jurisdiction, precinct_id, vote_mode), names_from = race_candidate, values_from = pct, names_glue = "{race_candidate}_pct") |>
   arrange(state, jurisdiction, precinct_id, vote_mode) |>
@@ -116,7 +116,8 @@ magafactor <- read_csv("data/input/AZ/magafactor.csv") |> select(precinct_id = p
 output <- output |> left_join(magafactor, by = c("precinct_id"))
 
 output <- output |>
-  select(state, jurisdiction, precinct_id, precinct_cbs, race_name, vote_mode, total_2022, total_reg, total_reg_dem, total_reg_rep, p_male:magamean)
+  filter(race_name == 'US SENATE-Republican') |>
+  select(state, jurisdiction, precinct_id, precinct_cbs, race_name, vote_mode, total_2022, total_reg, total_reg_dem, total_reg_rep, us_senate_republican_brnovich_pct:governor_republican_nq_pct,p_male:magamean)
 
 # Save 
 write_csv(output, "data/input/AZ/AZ_MARICOPA_state_primary_xwalk.csv")

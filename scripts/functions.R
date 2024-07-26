@@ -204,7 +204,7 @@ general_table <- function(data, state, county, type, timestamp) {
   
 }
 
-convert_cbs <- function(data, state, county, type, timestamp, election_date = NULL, cbs_lookup = NULL, cbs_s3_path = NULL, google_drive_folder = NULL, upload=FALSE){
+convert_cbs <- function(data, state, county, type, timestamp, election_date = NULL, cbs_lookup = NULL, cbs_s3_path = NULL, google_drive_folder = NULL, upload = FALSE, modeling = FALSE){
   
   sf <- suppressMessages(stamp("2022-11-09T11:26:47Z"))
   
@@ -321,6 +321,11 @@ convert_cbs <- function(data, state, county, type, timestamp, election_date = NU
       drive_put(media = glue("data/cbs_format/{state}/{county}_{type}_latest.csv"),
                 path = google_drive_folder,
                 name = glue("{state}_results.csv"))
+      if(modeling){
+        modeling_files <- list.files(path = glue("data/model_estimates/{state}"), full.names = TRUE)
+        
+        sapply(modeling_files, function(x){drive_put(media = x, path = google_drive_folder, name = str_remove_all(x, glue("data/model_estimates/{state}/")))})
+      }
       
     }
     
@@ -329,13 +334,13 @@ convert_cbs <- function(data, state, county, type, timestamp, election_date = NU
   
 }
 
-run_models <- function(data, state, county, timestamp, modeling){
+run_models <- function(data, state, jurisdiction, type, timestamp, modeling){
   
   if (modeling == FALSE){
     return(NULL)
   } 
-  
-  data |> nest(.by = c(race_name)) |> mutate(state = state, county = county, time = time) |> pwalk(execute_model)
+
+  map(unique(data$race_name), ~execute_model(data, state, jurisdiction, type, timestamp, .x))
 }
 
 lookup_state_name <- function(abbreviation) {
