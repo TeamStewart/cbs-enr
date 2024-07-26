@@ -75,7 +75,7 @@ execute_model <- function(data, state, jurisdiction, type, timestamp, target_off
       rename(cvotes_current = precinct_total) |>
       select(state, race_id, race_name, candidate_name, candidate_party, jurisdiction,
              precinct_id, precinct_cbs, vote_mode, cvotes_current, turnout_current, vote_share_current,
-             starts_with("cvotes_modeled"))
+             turnout_modeled, starts_with("cvotes_modeled"))
     
     ## Prepare summary output and save
     turnout_output <- turnout_estimate |>
