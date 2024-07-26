@@ -7,10 +7,10 @@ execute_model <- function(data, state, jurisdiction, type, timestamp, target_off
     timestamp_clean <- ymd_hms(timestamp,tz = "America/New_York")
     xwalk <- read_csv(glue("data/input/{state}/{state}_{jurisdiction}_{type}_xwalk.csv"))
     
-    ## For testing
-    data$precinct_total <- round(runif(nrow(data), 0, 400), 0)
-    # Set a random subset of precinct_total values to NA (10% of the rows)
-    data$precinct_total[sample(seq_len(nrow(data)), size = 0.7 * nrow(data))] <- 0
+    ### For testing
+    #data$precinct_total <- round(runif(nrow(data), 0, 400), 0)
+    ## Set a random subset of precinct_total values to NA (10% of the rows)
+    #data$precinct_total[sample(seq_len(nrow(data)), size = 0.7 * nrow(data))] <- 0
     
     # Clean data, produce current % values
     cur <- data |> filter(race_name == target_office) |> clean_current_results()
