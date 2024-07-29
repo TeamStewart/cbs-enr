@@ -321,7 +321,8 @@ convert_cbs <- function(data, state, county, type, timestamp, election_date = NU
       drive_put(media = glue("data/cbs_format/{state}/{county}_{type}_latest.csv"),
                 path = google_drive_folder,
                 name = glue("{state}_results.csv"))
-      if(modeling){
+      # if we are modeling and there are estimates to upload
+      if(modeling & length(list.files(path = glue("data/model_estimates/{state}"), full.names = TRUE)) > 0){
         modeling_files <- list.files(path = glue("data/model_estimates/{state}"), full.names = TRUE)
         
         sapply(modeling_files, function(x){drive_put(media = x, path = google_drive_folder, name = str_remove_all(x, glue("data/model_estimates/{state}/")))})
@@ -338,9 +339,10 @@ run_models <- function(data, state, jurisdiction, type, timestamp, modeling){
   
   if (modeling == FALSE){
     return(NULL)
-  } 
+  } else{
+    map(unique(data$race_name), ~execute_model(data, state, jurisdiction, type, timestamp, .x))
+  }
 
-  map(unique(data$race_name), ~execute_model(data, state, jurisdiction, type, timestamp, .x))
 }
 
 lookup_state_name <- function(abbreviation) {
