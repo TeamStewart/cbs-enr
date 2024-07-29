@@ -263,7 +263,7 @@ convert_cbs <- function(data, state, county, type, timestamp, election_date = NU
         office = race_name
       ) |> 
       # TODO: Find more dynamic way of dealing with election date
-      mutate(eDate = election_date,
+      mutate(eDate = as.character(election_date),
              real_precinct = ifelse(virtual_precinct, "N", "Y")) |> 
       left_join(lookup_geo, join_by(state == postalCode, jurisdiction == county_name)) |> 
       left_join(lookup_cands, by = c("state_name"="state","office","jCde"="jurisdiction_code", "candidate_name"="full_name")) |> 
