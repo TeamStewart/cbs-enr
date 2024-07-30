@@ -54,6 +54,10 @@ get_timestamp <- function(state, county, type, path) {
         mdy_hms(tz = "America/Phoenix") |>
         with_tz(tzone = "America/New_York") |>
         str_replace_all("-|:| ", "_")
+    } else if(county == 'PINAL'){
+      clarity_timestamp()
+    } else if(county == 'PIMA'){
+      Sys.time() |> str_extract("\\d{4}-\\d{2}-\\d{2} \\d{1,2}:\\d{2}:\\d{2}") |> str_replace_all("-|:| ", "_")
     }
   }
   
