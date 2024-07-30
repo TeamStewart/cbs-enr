@@ -117,7 +117,9 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
       select(state, race_id = ContestId, race_name, candidate_name,
         candidate_party, jurisdiction, precinct_id = PrecinctName, virtual_precinct,vote_mode, precinct_total)
   } else if(county == 'PIMA'){
-    
+    message('No results to clean')
+  } else if(county == 'PINAL'){
+    message('No results to clean')
   }
 }
 

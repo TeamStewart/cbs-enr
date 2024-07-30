@@ -12,6 +12,10 @@ csv_link <- read_html(path) |>
 
 data <- read_csv(csv_link, col_names = FALSE)
 
+# Write raw files
+write_csv(data, glue("data/raw/AZ/{state}_{county}_{type}_raw_{timestamp}.csv"))
+
+
 # TODO: Fix start row, col vals
 start_row <- 4
 start_column <- 15
