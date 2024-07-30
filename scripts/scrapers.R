@@ -699,10 +699,10 @@ scrape_wi <- function(state, county, type, path = NULL, timestamp){
   }
 }
 
-get_clarity <- function(state, county, path){
+get_clarity <- function(state, county, path, type, timestamp){
   
   county = str_to_title(county) |> str_replace_all(" ", "_")
-  download_path = glue("data/raw/{state}/{county}.zip")
+  download_path = glue("data/raw/{state}/{state}_{county}_{type}_raw_{timestamp}.zip")
   
   dir_create(glue("data/raw/{state}"))
   

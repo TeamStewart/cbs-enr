@@ -77,8 +77,8 @@ cleaned_data |> filter(precinct_id != 'COUNTY TOTALS') |>
       str_detect(candidate_name, regex("LAKE", ignore_case = T)) ~ "Kari Lake",
       str_detect(candidate_name, regex("LAMB", ignore_case = T)) ~ "Mark Lamb",
       str_detect(candidate_name, regex("REYE", ignore_case = T)) ~ "Elizabeth Reye",
-      candidate_name == "UNDER VOTES" ~ "Aggregated",
-      candidate_name == "OVER VOTES" ~ "Aggregated",
+      candidate_name == "UNDER VOTES" ~ "Undervote",
+      candidate_name == "OVER VOTES"~ "Overvote",
       TRUE ~ candidate_name
     ),
     candidate_party = case_match(
@@ -88,8 +88,8 @@ cleaned_data |> filter(precinct_id != 'COUNTY TOTALS') |>
       .default = NA_character_
     ),
     vote_mode = case_when(
-      candidate_name == "Aggregated" ~ "Aggregated",
-      candidate_name == "Aggregated" ~ "Aggregated",
+      candidate_name == "Undervote" ~ "Aggregated",
+      candidate_name == "Overvote" ~ "Aggregated",
       vote_mode == "POLLS" ~ "Election Day",
       vote_mode == "EARLY" ~ "Early Voting",
       vote_mode == "PROVISIONAL" ~ "Provisional"
