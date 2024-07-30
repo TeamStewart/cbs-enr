@@ -28,8 +28,8 @@ while (TRUE) {
   # (2) https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
   # (3) run git config --global http.followRedirects true
   git2r::add(path = "*")
-  git2r::commit(message = glue("latest change {run_time}"))
+  git2r::commit(message = glue("latest pull {run_time}"))
   git2r::push(credentials = git2r::cred_token())
   
-  Sys.sleep(900)  # Sleep for 15 minutes (600 seconds)
+  Sys.sleep(600)  # Sleep for 10 minutes (600 seconds)
 }
