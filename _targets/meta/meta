@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|8210951dac6e6c5d|||||||||||||||
+.Random.seed|object|9eba9f3ed6016f73|||||||||||||||
 cbs_AZ_MARICOPA_state_primary|stem|b0ebfb0a2a814130|9c22787ff811de76|59b7e4043f7085e1|244633959||t19935.1603263586s|0c1113c52601e7e9|103723|qs|local|vector|||21.189||
 cbs_AZ_PIMA_state_primary|stem|error|8c847579a5a70a77|084b6614ae980105|-30822305||t19935.1610570063s|28e76c0917097715|38|qs|local|vector|||0.002||could not load dependencies of target cbs_AZ_PIMA_state_primary. Expecting a single string value typecharacter extent0.
 cbs_AZ_PINAL_state_primary|stem|5af9cb9d990d3ff9|36b1ea4943a81983|f1ace8458fb7153d|-54239426||t19935.1599767229s|ceefd4cfdd72ebee|7012|qs|local|vector|||3.622||
@@ -13,7 +13,7 @@ general_table|function|05897bdae989aa74|||||||||||||||
 get_clarity|function|d7653956afb26fe9|||||||||||||||
 get_timestamp|function|55ca8044243515e5|||||||||||||||
 lookup_state_name|function|5cfd90ccc332e9da|||||||||||||||
-metadata|object|a83a6a6e2d0e1061|||||||||||||||
+metadata|object|20111f07f77e7caa|||||||||||||||
 models_AZ_MARICOPA_state_primary|stem|9f6e753f07f71da3|9169bc0bf9e95dc0|6e1bdaa0a9334f8f|578343366||t19935.1354375367s|6e1dcfc1aa582c14|1109|qs|local|vector|||0.688||
 models_AZ_PIMA_state_primary|stem|error|1b72601a99bebae9|49e78f95ecd884ef|1662924886||t19935.1610569889s|28e76c0917097715|38|qs|local|vector|||0.002||could not load dependencies of target models_AZ_PIMA_state_primary. Expecting a single string value typecharacter extent0.
 models_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|5146f1b28c728da8|d119e0c1aef4403d|-226714446||t19935.1352878995s|28e76c0917097715|38|qs|local|vector|||0||
@@ -32,6 +32,6 @@ scrape_wi|function|ed7bc1bbff171105|||||||||||||||
 tbl_all_AZ_MARICOPA_state_primary|stem|3b56b8ffa0e62a6f|1e01f8aa2f67f021|a2600b09f666a546|484672787||t19935.1354403067s|28e76c0917097715|38|qs|local|vector|||0||
 tbl_all_AZ_PIMA_state_primary|stem|error|395803ca05dcb03a|2fbf9236c569b0c8|-78079812||t19935.1610569318s|28e76c0917097715|38|qs|local|vector|||0.002||could not load dependencies of target tbl_all_AZ_PIMA_state_primary. Expecting a single string value typecharacter extent0.
 tbl_all_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|6a00e956fd08732a|679271dcf08286be|-1269058077||t19935.135286397s|28e76c0917097715|38|qs|local|vector|||0.004||
-time_AZ_MARICOPA_state_primary|stem|11434fcf47c157d1|75d4840a076abcde|b61b16080416b19b|-75692992||t19935.161055524s|86c36464e2e2a367|58|qs|local|vector|||1.24||
+time_AZ_MARICOPA_state_primary|stem|11434fcf47c157d1|75d4840a076abcde|b61b16080416b19b|-75692992||t19935.1639252966s|86c36464e2e2a367|58|qs|local|vector|||1.278||
 time_AZ_PIMA_state_primary|stem|576eb210f5b25c99|dde463e549cfa5ac|b61b16080416b19b|1271740441||t19935.1610476845s|86c36464e2e2a367|58|qs|local|vector|||0.822||
-time_AZ_PINAL_state_primary|stem|7b51904489de9376|e6ee645d9ec8578e|b61b16080416b19b|656480027||t19935.1610555514s|86c36464e2e2a367|58|qs|local|vector|||1.15||
+time_AZ_PINAL_state_primary|stem|7b51904489de9376|e6ee645d9ec8578e|b61b16080416b19b|656480027||t19935.1639251378s|86c36464e2e2a367|58|qs|local|vector|||1.021||
