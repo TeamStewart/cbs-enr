@@ -313,18 +313,18 @@ convert_cbs <- function(data, state, county, type, timestamp, election_date = NU
     
     if (upload){
       put_object(file = glue("data/cbs_format/{state}/{county}_{type}_latest.json"),
-                 object = glue("{cbs_s3_path}/{state}_results.json"),
+                 object = glue("{cbs_s3_path}/{state}_{county}_{type}_results.json"),
                  bucket = "cbsn-elections-external-models",
                  multipart = TRUE)
       
       put_object(file = glue("data/cbs_format/{state}/{county}_{type}_latest.csv"),
-                 object = glue("{cbs_s3_path}/{state}_results.csv"),
+                 object = glue("{cbs_s3_path}/{state}_{county}_{type}_results.csv"),
                  bucket = "cbsn-elections-external-models",
                  multipart = TRUE)
       
       drive_put(media = glue("data/cbs_format/{state}/{county}_{type}_latest.csv"),
                 path = google_drive_folder,
-                name = glue("{state}_results.csv"))
+                name = glue("{state}_{county}_{type}_latest_results.csv"))
       # if we are modeling and there are estimates to upload
       if(modeling & length(list.files(path = glue("data/model_estimates/{state}"), full.names = TRUE)) > 0){
         modeling_files <- list.files(path = glue("data/model_estimates/{state}"), full.names = TRUE)

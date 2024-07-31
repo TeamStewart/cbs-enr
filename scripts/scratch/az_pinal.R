@@ -9,14 +9,11 @@ source("scripts/functions.R")
 
 state = 'AZ'
 county = 'PINAL'
-path = '104398'
+path = '121811'
 type = 'state_primary'
 timestamp <- tar_read(time_AZ_MARICOPA_state_primary)
 
-file <- get_clarity(state, county, path, type, timestamp) |> read_csv() 
-
-
-get_clarity(state, county, path, type, timestamp) |> 
+file <- get_clarity(state, county, path, type, timestamp) |> 
   read_csv() |> 
   filter(vote_mode != 'regVotersCounty') |>
   mutate(
@@ -31,39 +28,29 @@ get_clarity(state, county, path, type, timestamp) |>
     "Overvotes" ~ "Overvote",
     .default = candidate_name
   ),
-  candidate_name = case_when(
-    str_detect(candidate_name, regex("Write-in", ignore_case = T)) ~ "Write-ins",
-    str_detect(candidate_name, regex("Cherny", ignore_case = T)) ~ "Andrei Cherny",
-    str_detect(candidate_name, regex("-Woods", ignore_case = T)) ~ "Marlene Galán-Woods",
-    str_detect(candidate_name, regex("Horne", ignore_case = T)) ~ "Andrew Horne",
-    str_detect(candidate_name, regex("Kroemer", ignore_case = T)) ~ "Kurt Kroemer",
-    str_detect(candidate_name, regex("Callaghan", ignore_case = T)) ~ "Conor O'Callaghan",
-    str_detect(candidate_name, regex("Shah", ignore_case = T)) ~ "Amish Shah",
-    str_detect(candidate_name, regex("Backie", ignore_case = T)) ~ "Robert Backie",
-    str_detect(candidate_name, regex("George, Kim", ignore_case = T)) ~ "Kim George",
-    str_detect(candidate_name, regex("Schweikert", ignore_case = T)) ~ "David Schweikert",
-    str_detect(candidate_name, regex("Ansari", ignore_case = T)) ~ "Yassamin Ansari",
-    str_detect(candidate_name, regex("Raquel", ignore_case = T)) ~ "Raquel Terán",
-    str_detect(candidate_name, regex("Wooten", ignore_case = T)) ~ "Duane Wooten",
-    str_detect(candidate_name, regex("Mendoza", ignore_case = T)) ~ "Jesus Mendoza",
-    str_detect(candidate_name, regex("Zink", ignore_case = T)) ~ "Jeff Zink",
-    str_detect(candidate_name, regex("Stanton", ignore_case = T)) ~ "Greg Stanton",
-    str_detect(candidate_name, regex("Cooper", ignore_case = T)) ~ "Kelly Cooper",
-    str_detect(candidate_name, regex("Davison", ignore_case = T)) ~ "Jerone Davison",
-    str_detect(candidate_name, regex("Giles", ignore_case = T)) ~ "Dave Giles",
-    str_detect(candidate_name, regex("Jasser", ignore_case = T)) ~ "Zuhdi Jasser",
-    str_detect(candidate_name, regex("GALLEGO", ignore_case = T)) ~ "Ruben Gallego",
-    str_detect(candidate_name, regex("LAKE", ignore_case = T)) ~ "Kari Lake",
-    str_detect(candidate_name, regex("LAMB", ignore_case = T)) ~ "Mark Lamb",
-    str_detect(candidate_name, regex("REYE", ignore_case = T)) ~ "Elizabeth Reye",
-    candidate_name == "UNDER VOTES" ~ "Undervote",
-    candidate_name == "OVER VOTES"~ "Overvote",
-    TRUE ~ candidate_name
+  candidate_name = case_match(
+    candidate_name,
+    "NEZ, JONATHAN" ~ "Jonathan Nez",
+    "CRANE, ELI" ~ "Eli Crane",
+    "SMITH, JACK" ~ "Jack Smith",
+    "SCHAFFNER, KATRINA" ~ "Katrina Schaffner",
+    "BIGGS, ANDY" ~ "Andy Biggs",
+    "ENGEL, KIRSTEN" ~ "Kirsten Engel",
+    "CISCOMANI, JUAN" ~ "Juan Ciscomani",
+    "WINN, KATHLEEN" ~ "Kathleen Winn",
+    "GRIJALVA, RAÚL M." ~ "Raúl Grijalva",
+    "BUTIEREZ SR., DANIEL FRANCIS" ~ "Daniel Butierez",
+    "GALLEGO, RUBEN" ~ "Ruben Gallego",
+    "LAKE, KARI" ~ "Kari Lake",
+    "LAMB, MARK" ~ "Mark Lamb",
+    "REYE, ELIZABETH JEAN" ~ "Elizabeth Reye",
+    "UNDER VOTES" ~ "Undervote",
+    "OVER VOTES"~ "Overvote",
+    .default = candidate_name
   )
   ) |> 
   mutate(vote_mode = case_match(
     vote_mode, 
-    # TODO: Fix mapping, they seem to alternate it
     "Election Day" ~ "Election Day",
     "Early Voting" ~ "Early Voting",
     "Provisional" ~ "Provisional",
@@ -77,18 +64,21 @@ get_clarity(state, county, path, type, timestamp) |>
     "DEM" ~ "Democrat",
     .default = candidate_party
   )) |> 
-  mutate(race_name = case_when(
+  mutate(race_name = case_match(
+    race_name,
     # TODO: Fix mapping
-    race_name == "U.S. Senator" & candidate_party == 'DEM' ~ "US SENATE-Democrat", 
-    race_name == "U.S. Senator" & candidate_party == 'REP' ~ "US SENATE-Republican",
-    race_name == "U.S. Representative in Congress DISTRICT 1" & candidate_party == 'DEM' ~ "US HOUSE-01-Democrat",
-    race_name == "U.S. Representative in Congress DISTRICT 1" & candidate_party == 'REP' ~ "US HOUSE-01-Republican",
-    race_name == "U.S. Representative in Congress DISTRICT 3" & candidate_party == 'DEM' ~ "US HOUSE-03-Democrat",
-    race_name == "U.S. Representative in Congress DISTRICT 3" & candidate_party == 'REP' ~ "US HOUSE-03-Republican",
-    race_name == "U.S. Representative in Congress DISTRICT 4" & candidate_party == 'DEM' ~ "US HOUSE-04-Democrat",
-    race_name == "U.S. Representative in Congress DISTRICT 4" & candidate_party == 'REP' ~ "US HOUSE-04-Republican"
+    "REP - U.S. Senator" ~ "US SENATE-Republican",
+    "DEM - U.S. Senator" ~ "US SENATE-Democrat",
+    "REP - U.S. Representative - CD2" ~ "US HOUSE-02-Republican",
+    "DEM - U.S. Representative - CD2" ~ "US HOUSE-02-Democrat",
+    "REP - U.S. Representative - CD5" ~ "US HOUSE-05-Republican",
+    "DEM - U.S. Representative - CD5" ~ "US HOUSE-05-Democrat",
+    "REP - U.S. Representative - CD6" ~ "US HOUSE-06-Republican",
+    "DEM - U.S. Representative - CD6" ~ "US HOUSE-06-Democrat",
+    "REP - U.S. Representative - CD7" ~ "US HOUSE-07-Republican",
+    "DEM - U.S. Representative - CD7" ~ "US HOUSE-07-Democrat",
     .default = NA_character_
   )) |> 
   filter(!is.na(race_name)) |>
-  select(state, race_id, race_name, candidate_name, candidate_party, 
-         jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
+  select(state, race_id, race_name, candidate_name,
+         candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)

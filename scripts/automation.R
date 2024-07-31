@@ -22,7 +22,7 @@ execute_script <- function() {
 while (TRUE) {
   execute_script()
 
-  run_time <- Sys.time() |> str_extract("\\d{4}-\\d{2}-\\d{2} \\d{1,2}:\\d{2}:\\d{2}") |> str_replace_all("-|:| ", "_")
+  run_time <- format(Sys.time(), format="%Y-%m-%d %H:%M:%S") |> str_replace_all("-|:| ", "_")
   # push and commit to git
   # to get this to work, (1) https://docs.ropensci.org/git2r/reference/cred_token.html
   # (2) https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
