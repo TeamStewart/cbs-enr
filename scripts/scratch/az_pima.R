@@ -13,31 +13,31 @@ csv_link <- (read_html(path) |>
 raw_csv <- read_csv(csv_link, col_names = FALSE)
 
 # Write raw files
-write_csv(raw_csv, glue("data/raw/AZ/{state}_{county}_{type}_raw_{timestamp}.csv"))
+write_csv(raw_csv, glue("raw_csv/raw/AZ/{state}_{county}_{type}_raw_{timestamp}.csv"))
 
 
 # TODO: Fix start row, col vals
 start_row <- 4
-start_column <- 15
+start_column <- 19
 
-# Extract metadata from the CSV
-vote_modes <- data[[1]][start_row:nrow(data)]
-precinct_ids <- data[[3]][start_row:nrow(data)]
-race_name <- as.character(data[1, start_column:ncol(data)])
-candidate_party <- as.character(data[2, start_column:ncol(data)])
-candidate_name <- as.character(data[3, start_column:ncol(data)])
+# Extract metaraw_csv from the CSV
+vote_modes <- raw_csv[[1]][start_row:nrow(raw_csv)]
+precinct_ids <- raw_csv[[3]][start_row:nrow(raw_csv)]
+race_name <- as.character(raw_csv[1, start_column:ncol(raw_csv)])
+candidate_party <- as.character(raw_csv[2, start_column:ncol(raw_csv)])
+candidate_name <- as.character(raw_csv[3, start_column:ncol(raw_csv)])
 # Generate unique race_id for each unique race_name
 unique_race_names <- unique(race_name)
 race_ids <- match(race_name, unique_race_names)
 
-# Create a new dataframe to hold the cleaned data
-cleaned_data <- data.frame(
-  state = .env$state,
+# Create a new raw_csvframe to hold the cleaned raw_csv
+cleaned_raw_csv <- data.frame(
+  state = state,
   race_id = rep(race_ids, each = length(precinct_ids)),
   race_name = rep(race_name, each = length(precinct_ids)),
   candidate_name = rep(candidate_name, each = length(precinct_ids)),
   candidate_party = rep(candidate_party, each = length(precinct_ids)),
-  jurisdiction = .env$count,
+  jurisdiction = county,
   precinct_id = rep(precinct_ids, times = length(race_name)),
   virtual_precinct = FALSE,
   vote_mode = rep(vote_modes, times = length(race_name)),
@@ -47,23 +47,23 @@ cleaned_data <- data.frame(
 
 # Process each column containing precinct totals
 cand_index <- 1
-for (col_index in start_column:ncol(data)) {
-  precinct_totals <- data[start_row:nrow(data), col_index] |> as_vector() |> as.integer()
-  cleaned_data$precinct_total[cleaned_data$candidate_name == candidate_name[cand_index]] <- precinct_totals
+for (col_index in start_column:ncol(raw_csv)) {
+  precinct_totals <- raw_csv[start_row:nrow(raw_csv), col_index] |> as_vector() |> as.integer()
+  cleaned_raw_csv$precinct_total[cleaned_raw_csv$candidate_name == candidate_name[cand_index]] <- precinct_totals
   cand_index <- cand_index + 1
 }
 
-cleaned_data |> filter(precinct_id != 'COUNTY TOTALS') |>
+cleaned_raw_csv |> filter(precinct_id != 'COUNTY TOTALS') |>
   mutate(
     precinct_total = as.integer(precinct_total),
     race_name = case_match(
       race_name,
-      "U.S. SENATOR - DEM" ~ "US SENATE-Democrat", 
+      "DEM U.S. Senator" ~ "US SENATE-Democrat", 
       "U.S. REPRESENTATIVE IN CONGRESS DIST. 6 - DEM" ~ "US HOUSE-06-Democrat",
       "U.S. REPRESENTATIVE IN CONGRESS DIST. 7 - DEM" ~ "US HOUSE-07-Democrat",
-      "U.S. SENATOR - REP" ~ "US SENATE-Republican",
-      "U.S. REPRESENTATIVE IN CONGRESS DIST. 6 - REP" ~ "US HOUSE-06-Republican",
-      "U.S. REPRESENTATIVE IN CONGRESS DIST. 7 - REP" ~ "US HOUSE-07-Republican",
+      "REP U.S. Senator" ~ "US SENATE-Republican",
+      "REP U.S. Representative in Congress District 6" ~ "US HOUSE-06-Republican",
+      "REP U.S. Representative in Congress District 7" ~ "US HOUSE-07-Republican",
       .default = NA_character_
     ),
     candidate_name = case_when(

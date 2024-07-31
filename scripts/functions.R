@@ -226,11 +226,7 @@ convert_cbs <- function(data, state, county, type, timestamp, election_date = NU
                 name = glue("{str_to_lower(state)}_{str_to_lower(county)}_results.csv"))
     }
   } else{
-    if(county == 'PIMA'){
-      message('skipping PIMA upload')
-      return(NULL)
-    } else{
-      lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv",
+    lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv",
                              skip = 1,
                              show_col_types = FALSE,
                              col_names = c("state_name", "postalCode", "st", "state_fips", "county_name", "cnty", "county_fips")) |> 
@@ -340,7 +336,6 @@ convert_cbs <- function(data, state, county, type, timestamp, election_date = NU
       return(formatted)
     }
     
-  }
   
 }
 
