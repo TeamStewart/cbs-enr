@@ -92,7 +92,7 @@ execute_model <- function(data, state, jurisdiction, type, timestamp, target_off
           turnout_modeled = round(turnout_modeled),
           timestamp = timestamp_clean)
       
-      if(sum(turnout_output$turnout_current, na.rm = T) != 0){
+      if(sum(turnout_output$turnout_current, na.rm = T) == 0){
         message('No votes reported. Not producing turnout model estimate summary.')
       } else if(file.exists(glue("data/model_estimates/{state}/{state}_{jurisdiction}_{type}_{target_office}_turnout.csv"))){
         existing <- read_csv(glue("data/model_estimates/{state}/{state}_{jurisdiction}_{type}_{target_office}_turnout.csv"))
@@ -115,7 +115,7 @@ execute_model <- function(data, state, jurisdiction, type, timestamp, target_off
         ) |>
         mutate(timestamp = timestamp_clean)
       
-      if(sum(cvotes$turnout_current, na.rm = T) != 0){
+      if(sum(cvotes$turnout_current, na.rm = T) == 0){
         message('No votes reported. Not producing vote share model estimate summary.')
       } else if(file.exists(glue("data/model_estimates/{state}/{state}_{jurisdiction}_{type}_{target_office}_cvotes.csv"))){
         existing <- read_csv(glue("data/model_estimates/{state}/{state}_{jurisdiction}_{type}_{target_office}_cvotes.csv"))

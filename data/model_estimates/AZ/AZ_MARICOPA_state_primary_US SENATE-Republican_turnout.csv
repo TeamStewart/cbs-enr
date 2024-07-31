@@ -1,0 +1,7 @@
+state,race_id,race_name,jurisdiction,vote_mode,turnout_current,turnout_modeled,timestamp
+AZ,90,US SENATE-Republican,MARICOPA,Aggregated,22092,23879,2024-07-31T03:03:00Z
+AZ,90,US SENATE-Republican,MARICOPA,Early Voting,307036,306611,2024-07-31T03:03:00Z
+AZ,90,US SENATE-Republican,MARICOPA,Election Day,0,0,2024-07-31T03:03:00Z
+AZ,90,US SENATE-Republican,MARICOPA,Provisional,0,0,2024-07-31T03:03:00Z
+AZ,90,US SENATE-Republican,MARICOPA,Total Turnout,329128,328395,2024-07-31T03:03:00Z
+AZ,90,US SENATE-Republican,MARICOPA,Total Vote Share,307036,306313,2024-07-31T03:03:00Z
