@@ -226,7 +226,20 @@ convert_cbs <- function(data, state, county, type, timestamp, election_date = NU
                 name = glue("{str_to_lower(state)}_{str_to_lower(county)}_results.csv"))
     }
   } else{
-    lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv",
+    if(county == 'PIMA'){
+      data |> 
+        filter(!str_detect(race_name, regex("COUNTY", ignore_case=TRUE))) |> 
+        mutate(race_name = str_remove_all(race_name, "-Democrat|-Republican") |> str_trim() |> str_squish()) |>
+        filter(candidate_party %in% c("Democrat", "Republican")) |> 
+        write_csv(sprintf("data/cbs_format/%s/%s_%s_latest.csv", state, county, type))
+      
+      drive_put(media = glue("data/cbs_format/{state}/{county}_{type}_latest.csv"),
+                path = google_drive_folder,
+                name = glue("{state}_{county}_{type}_latest_results.csv"))
+      
+      return(NULL)
+    } else{
+      lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv",
                              skip = 1,
                              show_col_types = FALSE,
                              col_names = c("state_name", "postalCode", "st", "state_fips", "county_name", "cnty", "county_fips")) |> 
@@ -336,6 +349,7 @@ convert_cbs <- function(data, state, county, type, timestamp, election_date = NU
       return(formatted)
     }
     
+  }
   
 }
 
