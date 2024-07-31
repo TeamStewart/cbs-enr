@@ -188,6 +188,16 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
       filter(!is.na(race_name)) |>
       select(state, race_id, race_name, candidate_name,
              candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
+  } else if(county == 'PIMA'){
+  csv_link <- (read_html(path) |>
+                 # TODO: Find node identifier
+                 html_nodes("ul:nth-child(2) li:nth-child(4) a") |>
+                 html_attr("href"))[1]
+  
+  raw_csv <- read_csv(csv_link, col_names = FALSE)
+  
+  # Write raw files
+  write_csv(raw_csv, glue("data/raw/AZ/{state}_{county}_{type}_raw_{timestamp}.csv"))
   }
 }
 
