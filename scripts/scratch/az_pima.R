@@ -1,19 +1,19 @@
 library(rvest)
 library(tidyverse)
 
-path = ""
+path = "https://www.pima.gov/2865/Election-Results"
 state = 'AZ'
 county = 'PIMA'
 
-csv_link <- read_html(path) |>
+csv_link <- (read_html(path) |>
   # TODO: Find node identifier
-  html_nodes("#widget5dd64550-3706-46bb-9270-db8ce1677574 li:nth-child(3) a") |>
-  html_attr("href")
+  html_nodes("ul:nth-child(2) li:nth-child(4) a") |>
+  html_attr("href"))[1]
 
-data <- read_csv(csv_link, col_names = FALSE)
+raw_csv <- read_csv(csv_link, col_names = FALSE)
 
 # Write raw files
-write_csv(data, glue("data/raw/AZ/{state}_{county}_{type}_raw_{timestamp}.csv"))
+write_csv(raw_csv, glue("data/raw/AZ/{state}_{county}_{type}_raw_{timestamp}.csv"))
 
 
 # TODO: Fix start row, col vals
