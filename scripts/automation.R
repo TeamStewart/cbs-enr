@@ -1,13 +1,15 @@
 ##################################################
-## Project: CBS ENR Super Tuesday 2024
+## Project: CBS ENR
 ## Script purpose: Automate tar_make()
 ## Date: March 2024
 ## Author:
 ##################################################
 
+library(tidyverse)
 library(targets)
 library(tarchetypes)
 library(lubridate)
+library(glue)
 
 # Function to execute the R script
 execute_script <- function() {
@@ -20,13 +22,14 @@ execute_script <- function() {
 while (TRUE) {
   execute_script()
 
+  run_time <- format(Sys.time(), format="%Y-%m-%d %H:%M:%S") |> str_replace_all("-|:| ", "_")
   # push and commit to git
   # to get this to work, (1) https://docs.ropensci.org/git2r/reference/cred_token.html
   # (2) https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
   # (3) run git config --global http.followRedirects true
   git2r::add(path = "*")
-  git2r::commit(message = "latest change")
+  git2r::commit(message = glue("latest pull {run_time}"))
   git2r::push(credentials = git2r::cred_token())
   
-  Sys.sleep(900)  # Sleep for 15 minutes (600 seconds)
+  Sys.sleep(3600)  # Sleep for 60 minutes (3600 seconds)
 }

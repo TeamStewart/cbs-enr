@@ -22,7 +22,7 @@ options(
 tar_option_set(
   packages = c(
     "data.table", "tidyverse", "gt", "xml2", "aws.s3", "jsonlite", "fixest", "googledrive",
-    "marginaleffects", "rlang", "reticulate", "rvest", "httr2", "glue", "fs", "polite"
+    "marginaleffects", "rlang", "reticulate", "rvest", "httr2", "glue", "fs", "polite","janitor"
   ),
   memory = "transient",
   format = "qs",
@@ -48,10 +48,8 @@ list(
     tar_target(time, get_timestamp(state, county, type, path), cue = tar_cue(mode = "always")),
     tar_target(clean, process_data(state, county, type, time, path = path), error = "continue"),
     tar_target(tbl_all, general_table(clean, state, county, type, time)),
-    tar_target(cbs, convert_cbs(clean, state, county, type, time, upload = FALSE)),
-    # tar_target(models, run_models(clean, state, time)),
+    tar_target(models, run_models(clean, state, county, type, time, modeling)),
+    tar_target(cbs, convert_cbs(clean, state, county, type, time, election_date, cbs_lookup, cbs_s3_path, google_drive_folder, upload = T, modeling)),
     names = c(state, county, type)
-  ),
-  # finally, build the website
-  tar_quarto(website, cue = tar_cue(mode = "always"))
+  )
 )
