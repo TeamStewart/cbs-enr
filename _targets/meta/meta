@@ -1,11 +1,11 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|dcde95ef0bc230d2|||||||||||||||
-cbs_AZ_MARICOPA_state_primary|stem|8f9bbea5b2e06ca8|9c22787ff811de76|42dd0a5dbb8b8b3d|244633959||t19935.3484455566s|821992a4aabcc9d8|119152|qs|local|vector|||21.62||
-cbs_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|8c847579a5a70a77|cee6ba294611cf34|-30822305||t19935.8898751616s|28e76c0917097715|38|qs|local|vector|||2.998||
-cbs_AZ_PINAL_state_primary|stem|416b38dce1e2d15c|36b1ea4943a81983|9a382acd65ec7786|-54239426||t19935.7852472337s|6de1202331f6b85b|8741|qs|local|vector|||5.05||
-clean_AZ_MARICOPA_state_primary|stem|27e6cf82cf134104|06413749f1eb6457|42bd69cdf428fdeb|-602577640||t19935.3481912964s|ace40727cc508659|127956|qs|local|vector|||14.617||
-clean_AZ_PIMA_state_primary|stem|4464d7326efeb02f|03c31a937faa3aab|b5a07464a1f6a035|1898533017||t19935.8898317295s|90e8d2c805a9344a|3812|qs|local|vector|||6.042||
-clean_AZ_PINAL_state_primary|stem|b1ea6bb74dce0fc6|2ebedc0395f818f3|84e846ac2d9e607e|-1088982941||t19935.78517752s|7d506e94b6826f91|4875|qs|local|vector|||2.45||
+.Random.seed|object|7a8bdeffe5f86671|||||||||||||||
+cbs_AZ_MARICOPA_state_primary|stem|f109000022285c1d|9c22787ff811de76|fd905e2f2888c8da|244633959||t19936.1297692615s|435aa7a066e20576|119205|qs|local|vector|||19.865||
+cbs_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|8c847579a5a70a77|67521b841bacbc52|-30822305||t19936.1294236294s|28e76c0917097715|38|qs|local|vector|||4.847||
+cbs_AZ_PINAL_state_primary|stem|7f1f560f6f533f8f|36b1ea4943a81983|efd61043b3ef6d6b|-54239426||t19936.129401489s|195848aa1a3dd8c6|9098|qs|local|vector|||6.299||
+clean_AZ_MARICOPA_state_primary|stem|2e4dc24011cc5bad|06413749f1eb6457|00695fd70883e91b|-602577640||t19936.1295352266s|df07b191598ff588|128416|qs|local|vector|||20.223||
+clean_AZ_PIMA_state_primary|stem|4464d7326efeb02f|03c31a937faa3aab|264019056556794a|1898533017||t19936.1293649693s|90e8d2c805a9344a|3812|qs|local|vector|||6.172||
+clean_AZ_PINAL_state_primary|stem|76cf7fb5beb742f3|2ebedc0395f818f3|7ff10bbefba1fe30|-1088982941||t19936.1293192727s|11ac1a70a47ef53a|5070|qs|local|vector|||1.655|cannot symlink LibraryDeveloperCommandLineToolsLibraryFrameworksPython3.frameworkVersions3.9libpython3.9config3.9darwin to varfoldershz4hrrpn9x42s952zfr0808mwh0000gnTrstudiofallbacklibrarypath460528266, reason File exists|
 clean_current_results|function|2d19e2c2296a4b7a|||||||||||||||
 convert_cbs|function|e5621f16108310f5|||||||||||||||
 execute_model|function|506462fa47c549c8|||||||||||||||
@@ -14,9 +14,9 @@ get_clarity|function|d7653956afb26fe9|||||||||||||||
 get_timestamp|function|55ca8044243515e5|||||||||||||||
 lookup_state_name|function|5cfd90ccc332e9da|||||||||||||||
 metadata|object|a83a6a6e2d0e1061|||||||||||||||
-models_AZ_MARICOPA_state_primary|stem|0b8416df7dd99b6a|9169bc0bf9e95dc0|f8b80f6ef035cfee|578343366||t19935.348205068s|2126d32766860ef6|2007|qs|local|vector|||0.761||
-models_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|1b72601a99bebae9|e80d8d419b4f7481|1662924886||t19935.8898408838s|28e76c0917097715|38|qs|local|vector|||0||
-models_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|5146f1b28c728da8|b659d9e5a39920d2|-226714446||t19935.7851874608s|28e76c0917097715|38|qs|local|vector|||0||
+models_AZ_MARICOPA_state_primary|stem|5e91477302b9fee3|9169bc0bf9e95dc0|62091ccab0d1f46f|578343366||t19936.129545404s|a1cdd3335278cb22|2297|qs|local|vector|||0.605||
+models_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|1b72601a99bebae9|d3accb5d4e745abd|1662924886||t19936.1293663773s|28e76c0917097715|38|qs|local|vector|||0||
+models_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|5146f1b28c728da8|c317f1cbd22836da|-226714446||t19936.1293273374s|28e76c0917097715|38|qs|local|vector|||0||
 process_data|function|00541f6bad10c5a7|||||||||||||||
 produce_predictions_turnout|function|7b807ca538e71329|||||||||||||||
 produce_predictions_vote_share|function|a8a65617132ea809|||||||||||||||
@@ -29,9 +29,9 @@ scrape_nc|function|04a2a86418fb3505|||||||||||||||
 scrape_pa|function|d92798655d5eb022|||||||||||||||
 scrape_tx|function|7161f671e6cc18cc|||||||||||||||
 scrape_wi|function|ed7bc1bbff171105|||||||||||||||
-tbl_all_AZ_MARICOPA_state_primary|stem|3b56b8ffa0e62a6f|1e01f8aa2f67f021|7f3c464889e587c7|484672787||t19935.3481971486s|28e76c0917097715|38|qs|local|vector|||0||
-tbl_all_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|395803ca05dcb03a|a06bf1ae356e669f|-78079812||t19935.8898408258s|28e76c0917097715|38|qs|local|vector|||0.001||
-tbl_all_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|6a00e956fd08732a|44fd5d71ab8b7358|-1269058077||t19935.7851871193s|28e76c0917097715|38|qs|local|vector|||0||
-time_AZ_MARICOPA_state_primary|stem|9e6f61ed6ca7ed55|75d4840a076abcde|b61b16080416b19b|-75692992||t19935.8897623815s|86c36464e2e2a367|58|qs|local|vector|||1.245||
-time_AZ_PIMA_state_primary|stem|d2029f83cd88d226|dde463e549cfa5ac|b61b16080416b19b|1271740441||t19935.8897605032s|86c36464e2e2a367|58|qs|local|vector|||0.849||
-time_AZ_PINAL_state_primary|stem|36c9bf456b4cf091|e6ee645d9ec8578e|b61b16080416b19b|656480027||t19935.8897699099s|86c36464e2e2a367|58|qs|local|vector|||1.397||
+tbl_all_AZ_MARICOPA_state_primary|stem|3b56b8ffa0e62a6f|1e01f8aa2f67f021|7f19fbe96025ad55|484672787||t19936.1295384121s|28e76c0917097715|38|qs|local|vector|||0||
+tbl_all_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|395803ca05dcb03a|81267d42440069f3|-78079812||t19936.1294029069s|28e76c0917097715|38|qs|local|vector|||0||
+tbl_all_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|6a00e956fd08732a|fa3870891eb005cf|-1269058077||t19936.1293262572s|28e76c0917097715|38|qs|local|vector|||0||
+time_AZ_MARICOPA_state_primary|stem|2eb929d658e5d3d2|75d4840a076abcde|b61b16080416b19b|-75692992||t19936.1292983811s|86c36464e2e2a367|58|qs|local|vector|||1.598||
+time_AZ_PIMA_state_primary|stem|595580664ffbdacc|dde463e549cfa5ac|b61b16080416b19b|1271740441||t19936.1292923031s|86c36464e2e2a367|58|qs|local|vector|||0.781||
+time_AZ_PINAL_state_primary|stem|876954a6a46f07a1|e6ee645d9ec8578e|b61b16080416b19b|656480027||t19936.1292988356s|86c36464e2e2a367|58|qs|local|vector|||1.186||
