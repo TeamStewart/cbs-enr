@@ -1,10 +1,10 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|28672d88e6919b7f|||||||||||||||
+.Random.seed|object|ff584b45353d399b|||||||||||||||
 cbs_AZ_MARICOPA_state_primary|stem|f109000022285c1d|9c22787ff811de76|fd905e2f2888c8da|244633959||t19936.1297692615s|435aa7a066e20576|119205|qs|local|vector|||19.865||
-cbs_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|8c847579a5a70a77|15ff9001bfef538e|-30822305||t19936.6157451823s|28e76c0917097715|38|qs|local|vector|||2.927||
+cbs_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|8c847579a5a70a77|08b0f4d4b277f2e3|-30822305||t19936.6433080395s|28e76c0917097715|38|qs|local|vector|||2.813||
 cbs_AZ_PINAL_state_primary|stem|7f1f560f6f533f8f|36b1ea4943a81983|efd61043b3ef6d6b|-54239426||t19936.129401489s|195848aa1a3dd8c6|9098|qs|local|vector|||6.299||
 clean_AZ_MARICOPA_state_primary|stem|2e4dc24011cc5bad|06413749f1eb6457|00695fd70883e91b|-602577640||t19936.1295352266s|df07b191598ff588|128416|qs|local|vector|||20.223||
-clean_AZ_PIMA_state_primary|stem|4464d7326efeb02f|03c31a937faa3aab|dd7ef40eef732392|1898533017||t19936.6157039735s|90e8d2c805a9344a|3812|qs|local|vector|||4.902||
+clean_AZ_PIMA_state_primary|stem|4464d7326efeb02f|03c31a937faa3aab|823439b8e59b2201|1898533017||t19936.6432667236s|90e8d2c805a9344a|3812|qs|local|vector|||4.987||
 clean_AZ_PINAL_state_primary|stem|76cf7fb5beb742f3|2ebedc0395f818f3|7ff10bbefba1fe30|-1088982941||t19936.1293192727s|11ac1a70a47ef53a|5070|qs|local|vector|||1.655|cannot symlink LibraryDeveloperCommandLineToolsLibraryFrameworksPython3.frameworkVersions3.9libpython3.9config3.9darwin to varfoldershz4hrrpn9x42s952zfr0808mwh0000gnTrstudiofallbacklibrarypath460528266, reason File exists|
 clean_current_results|function|2d19e2c2296a4b7a|||||||||||||||
 convert_cbs|function|e5621f16108310f5|||||||||||||||
@@ -15,7 +15,7 @@ get_timestamp|function|55ca8044243515e5|||||||||||||||
 lookup_state_name|function|5cfd90ccc332e9da|||||||||||||||
 metadata|object|a83a6a6e2d0e1061|||||||||||||||
 models_AZ_MARICOPA_state_primary|stem|5e91477302b9fee3|9169bc0bf9e95dc0|62091ccab0d1f46f|578343366||t19936.129545404s|a1cdd3335278cb22|2297|qs|local|vector|||0.605||
-models_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|1b72601a99bebae9|80f19b3fe63f8568|1662924886||t19936.6157110999s|28e76c0917097715|38|qs|local|vector|||0.001||
+models_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|1b72601a99bebae9|741892b708b52252|1662924886||t19936.6432753932s|28e76c0917097715|38|qs|local|vector|||0||
 models_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|5146f1b28c728da8|c317f1cbd22836da|-226714446||t19936.1293273374s|28e76c0917097715|38|qs|local|vector|||0||
 process_data|function|00541f6bad10c5a7|||||||||||||||
 produce_predictions_turnout|function|7b807ca538e71329|||||||||||||||
@@ -30,8 +30,8 @@ scrape_pa|function|d92798655d5eb022|||||||||||||||
 scrape_tx|function|7161f671e6cc18cc|||||||||||||||
 scrape_wi|function|ed7bc1bbff171105|||||||||||||||
 tbl_all_AZ_MARICOPA_state_primary|stem|3b56b8ffa0e62a6f|1e01f8aa2f67f021|7f19fbe96025ad55|484672787||t19936.1295384121s|28e76c0917097715|38|qs|local|vector|||0||
-tbl_all_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|395803ca05dcb03a|09a33e86ca4b7128|-78079812||t19936.6157112367s|28e76c0917097715|38|qs|local|vector|||0||
+tbl_all_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|395803ca05dcb03a|bf36165a23b4a176|-78079812||t19936.6432755347s|28e76c0917097715|38|qs|local|vector|||0.001||
 tbl_all_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|6a00e956fd08732a|fa3870891eb005cf|-1269058077||t19936.1293262572s|28e76c0917097715|38|qs|local|vector|||0||
-time_AZ_MARICOPA_state_primary|stem|2eb929d658e5d3d2|75d4840a076abcde|b61b16080416b19b|-75692992||t19936.6156515087s|86c36464e2e2a367|58|qs|local|vector|||1.563||
-time_AZ_PIMA_state_primary|stem|d08ff0f644eb5185|dde463e549cfa5ac|b61b16080416b19b|1271740441||t19936.615645939s|86c36464e2e2a367|58|qs|local|vector|||0.79||
-time_AZ_PINAL_state_primary|stem|876954a6a46f07a1|e6ee645d9ec8578e|b61b16080416b19b|656480027||t19936.6156535159s|86c36464e2e2a367|58|qs|local|vector|||1.283||
+time_AZ_MARICOPA_state_primary|stem|2eb929d658e5d3d2|75d4840a076abcde|b61b16080416b19b|-75692992||t19936.6432123231s|86c36464e2e2a367|58|qs|local|vector|||1.531||
+time_AZ_PIMA_state_primary|stem|9d3b028142edfbcd|dde463e549cfa5ac|b61b16080416b19b|1271740441||t19936.6432075333s|86c36464e2e2a367|58|qs|local|vector|||0.831||
+time_AZ_PINAL_state_primary|stem|876954a6a46f07a1|e6ee645d9ec8578e|b61b16080416b19b|656480027||t19936.6432145601s|86c36464e2e2a367|58|qs|local|vector|||1.298||
