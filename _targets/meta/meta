@@ -1,11 +1,11 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|ec4d54ccf37f03e0|||||||||||||||
-cbs_AZ_MARICOPA_state_primary|stem|6447093d81ece7ab|9c22787ff811de76|ef4793479f7b9b39|244633959||t19938.1340328387s|9edf7a70e1702c16|122896|qs|local|vector|||20.894||
-cbs_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|8c847579a5a70a77|8e22152333eebbab|-30822305||t19938.7766088361s|28e76c0917097715|38|qs|local|vector|||4.791||
-cbs_AZ_PINAL_state_primary|stem|1c5d3f36b2cdb201|36b1ea4943a81983|22000ec3347a8ead|-54239426||t19938.1336575407s|a4befc468b5cec1b|9129|qs|local|vector|||4.5||
-clean_AZ_MARICOPA_state_primary|stem|119fb6156b68c182|06413749f1eb6457|ede99bc4340d5808|-602577640||t19938.1337871408s|e387dee10da235d5|130354|qs|local|vector|||17.943|cannot symlink LibraryDeveloperCommandLineToolsLibraryFrameworksPython3.frameworkVersions3.9libpython3.9config3.9darwin to varfoldershz4hrrpn9x42s952zfr0808mwh0000gnTrstudiofallbacklibrarypath1951462253, reason File exists|
-clean_AZ_PIMA_state_primary|stem|d76319064f3ea77a|03c31a937faa3aab|5abca734da5b7e75|1898533017||t19938.7765461134s|e117b02304c640ea|3875|qs|local|vector|||5.538||
-clean_AZ_PINAL_state_primary|stem|5d11d04a6b2124d1|2ebedc0395f818f3|699a574697712866|-1088982941||t19938.1335959903s|8e1355cfbb77d406|5110|qs|local|vector|||1.375||
+.Random.seed|object|871b27d25eb6c9e7|||||||||||||||
+cbs_AZ_MARICOPA_state_primary|stem|error|9c22787ff811de76|de267e444d01d531|244633959||t19940.6912741916s|28e76c0917097715|38|qs|local|vector|||0.002||could not load dependencies of target cbs_AZ_MARICOPA_state_primary. Expecting a single string value typecharacter extent0.
+cbs_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|8c847579a5a70a77|4b20833876ab5bf8|-30822305||t19940.691264457s|28e76c0917097715|38|qs|local|vector|||2.285||
+cbs_AZ_PINAL_state_primary|stem|204636d9ec96b586|36b1ea4943a81983|7515615c41d2eb82|-54239426||t19940.6911948612s|e030c6f4173d9001|9699|qs|local|vector|||3.342||
+clean_AZ_MARICOPA_state_primary|stem|119fb6156b68c182|06413749f1eb6457|43293da8fb18e1f6|-602577640||t19938.1337871408s||130354|qs|local|vector|||12.579|cannot symlink LibraryDeveloperCommandLineToolsLibraryFrameworksPython3.frameworkVersions3.9libpython3.9config3.9darwin to varfoldershz4hrrpn9x42s952zfr0808mwh0000gnTrstudiofallbacklibrarypath1951462253, reason File exists|ℹ In argument race_name  case_match....Caused by error object ContestName not found
+clean_AZ_PIMA_state_primary|stem|d76319064f3ea77a|03c31a937faa3aab|80703f2b86e95861|1898533017||t19940.6912364817s|e117b02304c640ea|3875|qs|local|vector|||9.725||
+clean_AZ_PINAL_state_primary|stem|30d764073f03f729|2ebedc0395f818f3|bfd92bebecc57377|-1088982941||t19940.6911439731s|a40b99278f083d1d|5412|qs|local|vector|||1.408||
 clean_current_results|function|2d19e2c2296a4b7a|||||||||||||||
 convert_cbs|function|e5621f16108310f5|||||||||||||||
 execute_model|function|506462fa47c549c8|||||||||||||||
@@ -14,9 +14,9 @@ get_clarity|function|d7653956afb26fe9|||||||||||||||
 get_timestamp|function|55ca8044243515e5|||||||||||||||
 lookup_state_name|function|5cfd90ccc332e9da|||||||||||||||
 metadata|object|a83a6a6e2d0e1061|||||||||||||||
-models_AZ_MARICOPA_state_primary|stem|e986186d7f352916|9169bc0bf9e95dc0|986f57d0873dd211|578343366||t19938.1337957338s|8d3d6160160da296|3095|qs|local|vector|||0.44|prediction from rankdeficient fit attr, nonestim has doubtful cases|
-models_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|1b72601a99bebae9|2f725f0b1315884a|1662924886||t19938.7765531192s|28e76c0917097715|38|qs|local|vector|||0||
-models_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|5146f1b28c728da8|d4f5d88704d235dc|-226714446||t19938.1336042375s|28e76c0917097715|38|qs|local|vector|||0||
+models_AZ_MARICOPA_state_primary|stem|error|9169bc0bf9e95dc0|28f597ab353462f3|578343366||t19940.6912739138s|28e76c0917097715|38|qs|local|vector|||0.002||could not load dependencies of target models_AZ_MARICOPA_state_primary. Expecting a single string value typecharacter extent0.
+models_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|1b72601a99bebae9|31168f6f39bbba4e|1662924886||t19940.6912379492s|28e76c0917097715|38|qs|local|vector|||0||
+models_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|5146f1b28c728da8|a437d561e82abe79|-226714446||t19940.6911548232s|28e76c0917097715|38|qs|local|vector|||0||
 process_data|function|00541f6bad10c5a7|||||||||||||||
 produce_predictions_turnout|function|7b807ca538e71329|||||||||||||||
 produce_predictions_vote_share|function|a8a65617132ea809|||||||||||||||
@@ -29,9 +29,9 @@ scrape_nc|function|04a2a86418fb3505|||||||||||||||
 scrape_pa|function|d92798655d5eb022|||||||||||||||
 scrape_tx|function|7161f671e6cc18cc|||||||||||||||
 scrape_wi|function|ed7bc1bbff171105|||||||||||||||
-tbl_all_AZ_MARICOPA_state_primary|stem|3b56b8ffa0e62a6f|1e01f8aa2f67f021|70456cf20e1159a6|484672787||t19938.1337903802s|28e76c0917097715|38|qs|local|vector|||0.001||
-tbl_all_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|395803ca05dcb03a|9191a944e91ffb98|-78079812||t19938.776553291s|28e76c0917097715|38|qs|local|vector|||0.001||
-tbl_all_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|6a00e956fd08732a|7ee97d227a9ba0ba|-1269058077||t19938.1336031321s|28e76c0917097715|38|qs|local|vector|||0||
-time_AZ_MARICOPA_state_primary|stem|50a6405edc4e5adf|75d4840a076abcde|b61b16080416b19b|-75692992||t19938.7764864835s|86c36464e2e2a367|58|qs|local|vector|||1.529||
-time_AZ_PIMA_state_primary|stem|368dbb071c081bf5|dde463e549cfa5ac|b61b16080416b19b|1271740441||t19938.776480833s|86c36464e2e2a367|58|qs|local|vector|||0.81||
-time_AZ_PINAL_state_primary|stem|f0218a259aa83121|e6ee645d9ec8578e|b61b16080416b19b|656480027||t19938.7764916112s|86c36464e2e2a367|58|qs|local|vector|||1.513||
+tbl_all_AZ_MARICOPA_state_primary|stem|error|1e01f8aa2f67f021|2ab0f7e68a79c694|484672787||t19940.6912739776s|28e76c0917097715|38|qs|local|vector|||0.002||could not load dependencies of target tbl_all_AZ_MARICOPA_state_primary. Expecting a single string value typecharacter extent0.
+tbl_all_AZ_PIMA_state_primary|stem|3b56b8ffa0e62a6f|395803ca05dcb03a|c71de4479fb6790c|-78079812||t19940.6912390575s|28e76c0917097715|38|qs|local|vector|||0.001||
+tbl_all_AZ_PINAL_state_primary|stem|3b56b8ffa0e62a6f|6a00e956fd08732a|6da8829b0d4159f5|-1269058077||t19940.6911537424s|28e76c0917097715|38|qs|local|vector|||0.001||
+time_AZ_MARICOPA_state_primary|stem|2c1766712680c014|75d4840a076abcde|b61b16080416b19b|-75692992||t19940.6911258685s|86c36464e2e2a367|58|qs|local|vector|||1.346||
+time_AZ_PIMA_state_primary|stem|d06a6d288538c79b|dde463e549cfa5ac|b61b16080416b19b|1271740441||t19940.6911226839s|86c36464e2e2a367|58|qs|local|vector|||0.796||
+time_AZ_PINAL_state_primary|stem|90e511f59854f8cc|e6ee645d9ec8578e|b61b16080416b19b|656480027||t19940.6911264657s|86c36464e2e2a367|58|qs|local|vector|||0.95||
