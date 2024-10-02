@@ -1,0 +1,344 @@
+---
+title: "Vote Count Analysis"
+author: "Mason Reece"
+format:
+  html: 
+    page-layout: full
+code-fold: true
+embed-resources: true
+execute: 
+  warning: false
+  message: false
+  error: false
+  cache: true
+---
+
+## 2022 Vote Counts
+
+```{r}
+
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(gt)
+})
+
+hist_22 <- read_csv("~/Downloads/2022 County History.csv") |>
+  janitor::clean_names() |>
+  mutate(timestamp = mdy_hm(timestamp, tz = "US/Eastern")) |>
+  # remove newer timestamps since they're not useful to us and have some errors
+  # see Maricopa for an example
+  filter(month(timestamp) == 11) |> 
+  distinct(state, county, office, timestamp, candidate, total_vote, prec_in)
+
+top_races <- distinct(hist_22, state, office) |>
+  filter(office == "Governor") |>
+  bind_rows(
+    tibble(state = c("Delaware", "North Carolina"), office = c("Attorney General", "Senate"))
+  )
+
+democrats <- c(
+  "Hobbs", "Jones", "Lamont", "Jennings", "Crist", "Abrams", "Heidt", "DeJear",
+  "Moore", "Beasley", "Shapiro", "Hofmeister", "McKee", "Cunningham", "O'Rourke"
+)
+
+votes_byOffice <- inner_join(hist_22, top_races) |>
+  filter(max(timestamp) == timestamp, .by = c(state, county, office)) |>
+  distinct(state, county, office, total_vote) |>
+  summarize(votes_atEnd = sum(total_vote), .by = c(state, county, office)) |>
+  filter(votes_atEnd != 0)
+
+votes_byTimestamp <- inner_join(hist_22, top_races) |>
+  summarize(votes_atTimestamp = sum(total_vote), .by = c(state, county, timestamp, prec_in)) |>
+  filter(votes_atTimestamp != 0)
+
+votes_byCandidate <- inner_join(hist_22, top_races) |>
+  summarize(votes_forCand = sum(total_vote), .by = c(state, county, candidate))
+
+hist_22_merge <- inner_join(hist_22, top_races) |>
+  left_join(votes_byOffice, by = join_by(state, county, office)) |>
+  left_join(votes_byTimestamp, by = join_by(state, county, timestamp, prec_in)) |>
+  left_join(votes_byCandidate, by = join_by(state, county, candidate)) |>
+  mutate(
+    pct_atTimestamp = votes_atTimestamp / votes_atEnd,
+    pct_forCand_atTimestamp = total_vote / votes_atTimestamp,
+    pct_atTimestamp_bins = case_when(
+      pct_atTimestamp == 0 ~ NA,
+      pct_atTimestamp < 0.1 ~ "0-10%",
+      pct_atTimestamp < 0.2 ~ "10-20%",
+      pct_atTimestamp < 0.3 ~ "20-30%",
+      pct_atTimestamp < 0.4 ~ "30-40%",
+      pct_atTimestamp < 0.5 ~ "40-50%",
+      pct_atTimestamp < 0.6 ~ "50-60%",
+      pct_atTimestamp < 0.7 ~ "60-70%",
+      pct_atTimestamp < 0.8 ~ "70-80%",
+      pct_atTimestamp < 0.9 ~ "80-90%",
+      pct_atTimestamp < 0.92 ~ "90-92%",
+      pct_atTimestamp < 0.94 ~ "92-94%",
+      pct_atTimestamp < 0.96 ~ "94-96%",
+      pct_atTimestamp < 0.98 ~ "96-98%",
+      pct_atTimestamp < 1 ~ "98-99.9%",
+      pct_atTimestamp == 1 ~ "100%",
+      .default = NA
+    )
+  ) |>
+  drop_na(pct_atTimestamp_bins) |> 
+  filter(candidate %in% democrats)
+
+hist_22_table = hist_22_merge |> 
+  arrange(state, county, timestamp) |> 
+  slice_head(n = 1, by = c(state, county, office, candidate, pct_atTimestamp_bins)) |>
+  arrange(pct_atTimestamp_bins) |> 
+  pivot_wider(
+    id_cols = c(state, county, office, candidate),
+    names_from = pct_atTimestamp_bins,
+    values_from = pct_forCand_atTimestamp
+  ) |>
+  arrange(state, county, candidate) |> 
+  relocate("100%", .after = everything())
+
+write_csv(hist_22_merge, "~/Downloads/voteshift_2022_byCounty_raw.csv")
+write_csv(hist_22_table, "~/Downloads/voteshift_2022_byCounty_rawPercent.csv")
+
+hist_22_table |> 
+  mutate(across(`0-10%`:`98-99.9%`, ~ `100%` - .x)) |>
+  write_csv("~/Downloads/voteshift_2022_byCounty_relativePercent.csv")
+
+hist_22_table |> 
+  mutate(id = str_c(state, office, candidate, sep = " - ")) |> 
+  select(-state, -office, -candidate) |> 
+  group_by(id) |> 
+  gt(
+    rowname_col = "county"
+  ) |> 
+  sub_missing() |> 
+  fmt_percent(columns = -county, decimals = 1) |> 
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_row_groups()
+  ) |> 
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_body()
+  ) |> 
+  data_color(
+    columns = -county,
+    method = "numeric",
+    palette = "Blues",
+    na_color = "white"
+  )
+
+hist_22_table |> 
+  mutate(across(`0-10%`:`98-99.9%`, ~ `100%` - .x)) |>
+  mutate(id = str_c(state, office, candidate, sep = " - ")) |> 
+  select(-state, -office, -candidate) |> 
+  group_by(id) |> 
+  gt(
+    rowname_col = "county"
+  ) |> 
+  sub_missing() |> 
+  fmt_percent(columns = -county, decimals = 1) |> 
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_row_groups()
+  ) |> 
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_body()
+  ) |> 
+  data_color(
+    columns = -c(county, `100%`),
+    method = "numeric",
+    domain = c(-0.5, 0.5),
+    palette = "RdBu",
+    na_color = "white"
+  )
+
+```
+
+## 2020 Vote Counts
+
+```{r}
+
+hist_20 <- bind_rows(
+  read_csv("~/Downloads/2020 Pres County History/2020 Pres County History AZ-MO.csv"),
+  read_csv("~/Downloads/2020 Pres County History/2020 Pres County History MT-WY.csv")
+) |> 
+  janitor::clean_names() |>
+  mutate(timestamp = mdy_hm(timestamp, tz = "US/Eastern")) |>
+  # remove newer timestamps since they're not useful to us and have some errors
+  # see Maricopa for an example
+  filter(month(timestamp) == 11, office == "President") |> 
+  distinct(state, county, timestamp, candidate, total_vote, prec_in)
+
+votes_byOffice <- hist_20 |>
+  filter(max(timestamp) == timestamp, .by = c(state, county)) |>
+  distinct(state, county, total_vote) |>
+  summarize(votes_atEnd = sum(total_vote), .by = c(state, county)) |>
+  filter(votes_atEnd != 0)
+
+votes_byTimestamp <- hist_20 |>
+  summarize(votes_atTimestamp = sum(total_vote), .by = c(state, county, timestamp, prec_in)) |>
+  filter(votes_atTimestamp != 0)
+
+votes_byCandidate <- hist_20 |>
+  summarize(votes_forCand = sum(total_vote), .by = c(state, county, candidate))
+
+hist_20_merge <- hist_20 |>
+  left_join(votes_byOffice, by = join_by(state, county)) |>
+  left_join(votes_byTimestamp, by = join_by(state, county, timestamp, prec_in)) |>
+  left_join(votes_byCandidate, by = join_by(state, county, candidate)) |>
+  mutate(
+    pct_atTimestamp = votes_atTimestamp / votes_atEnd,
+    pct_forCand_atTimestamp = total_vote / votes_atTimestamp,
+    pct_atTimestamp_bins = case_when(
+      pct_atTimestamp == 0 ~ NA,
+      pct_atTimestamp < 0.1 ~ "0-10%",
+      pct_atTimestamp < 0.2 ~ "10-20%",
+      pct_atTimestamp < 0.3 ~ "20-30%",
+      pct_atTimestamp < 0.4 ~ "30-40%",
+      pct_atTimestamp < 0.5 ~ "40-50%",
+      pct_atTimestamp < 0.6 ~ "50-60%",
+      pct_atTimestamp < 0.7 ~ "60-70%",
+      pct_atTimestamp < 0.8 ~ "70-80%",
+      pct_atTimestamp < 0.9 ~ "80-90%",
+      pct_atTimestamp < 0.92 ~ "90-92%",
+      pct_atTimestamp < 0.94 ~ "92-94%",
+      pct_atTimestamp < 0.96 ~ "94-96%",
+      pct_atTimestamp < 0.98 ~ "96-98%",
+      pct_atTimestamp < 1 ~ "98-99.9%",
+      pct_atTimestamp == 1 ~ "100%",
+      .default = NA
+    )
+  ) |> 
+  drop_na(pct_atTimestamp_bins) |> 
+  filter(candidate == "Biden")
+
+hist_20_table = hist_20_merge |> 
+  arrange(state, county, timestamp) |> 
+  slice_head(n = 1, by = c(state, county, candidate, pct_atTimestamp_bins)) |>
+  arrange(pct_atTimestamp_bins) |> 
+  pivot_wider(
+    id_cols = c(state, county, candidate),
+    names_from = pct_atTimestamp_bins,
+    values_from = pct_forCand_atTimestamp
+  ) |>
+  arrange(state, county, candidate) |> 
+  relocate("100%", .after = everything())
+
+write_csv(hist_20_merge, "~/Downloads/voteshift_2020_byCounty_raw.csv")
+write_csv(hist_20_table, "~/Downloads/voteshift_2020_byCounty_rawPercent.csv")
+
+hist_20_table |> 
+  mutate(across(`0-10%`:`98-99.9%`, ~ `100%` - .x)) |>
+  write_csv("~/Downloads/voteshift_2020_byCounty_relativePercent.csv")
+
+hist_20_table |> 
+  mutate(id = str_c(state, candidate, sep = " - ")) |> 
+  select(-state, -candidate) |> 
+  group_by(id) |> 
+  gt(
+    rowname_col = "county"
+  ) |> 
+  sub_missing() |> 
+  fmt_percent(columns = -county, decimals = 1) |> 
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_row_groups()
+  ) |> 
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_body()
+  ) |> 
+  data_color(
+    columns = -county,
+    method = "numeric",
+    palette = "Blues",
+    na_color = "white"
+  )
+
+hist_20_table |> 
+  mutate(across(`0-10%`:`98-99.9%`, ~ `100%` - .x)) |>
+  mutate(id = str_c(state, candidate, sep = " - ")) |> 
+  select(-state, -candidate) |> 
+  group_by(id) |> 
+  gt(
+    rowname_col = "county"
+  ) |> 
+  sub_missing() |> 
+  fmt_percent(columns = -county, decimals = 1) |> 
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_row_groups()
+  ) |> 
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_body()
+  ) |> 
+  data_color(
+    columns = -c(county, `100%`),
+    method = "numeric",
+    domain = c(-0.5, 0.5),
+    palette = "RdBu",
+    na_color = "white"
+  )
+
+```
+
+
+<!-- ## Shiny -->
+
+<!-- ```{r} -->
+<!-- #| panel: sidebar -->
+
+<!-- selectInput("selected_state", "Select State:", choices = unique(hist_22_byCounty$state)) -->
+<!-- uiOutput("county_ui") -->
+<!-- checkboxInput("trend", "Trendline?") -->
+
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| panel: fill -->
+
+<!-- plotOutput('scatterPlot') -->
+
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| context: server -->
+
+<!-- # Update county based on the selected state -->
+<!-- output$county_ui <- renderUI({ -->
+<!--   req(input$selected_state) -->
+<!--   counties <- hist_22_filter |>  -->
+<!--     filter(state == input$selected_state) |>  -->
+<!--     distinct(county) |> arrange(county) |> pull() -->
+
+<!--   selectInput("selected_county", "Select County:", choices = counties) -->
+<!-- }) -->
+
+<!-- # Create the scatter plot -->
+<!-- output$scatterPlot <- renderPlot({ -->
+<!--   req(input$selected_state, input$selected_county) -->
+
+<!--   filtered_data <- hist_22_filter |>  -->
+<!--     filter(state == input$selected_state, county == input$selected_county) -->
+
+<!--   p = ggplot(filtered_data, aes(x = time_since_close, y = vote_pct, color = candidate)) + -->
+<!--     geom_point() + -->
+<!--     labs( -->
+<!--       title = paste("Votes Percentage Over Time in", input$selected_county, ",", input$selected_state), -->
+<!--       x = "Time",  -->
+<!--       y = "Percentage of Votes" -->
+<!--     ) + -->
+<!--     theme_bw() + -->
+<!--     scale_x_continuous(labels = scales::label_timespan(unit = "hours")) -->
+
+<!--   if (input$trend){ -->
+<!--     p + geom_smooth(se = FALSE) -->
+<!--   } else { -->
+<!--     p -->
+<!--   } -->
+<!-- }) -->
+
+
+<!-- ``` -->
