@@ -2,15 +2,15 @@ rm(list=ls())
 gc()
 
 library(tidyverse)
-library(lme4)
-library(marginaleffects)
-library(modelsummary)
-library(brms)
-library(ggdist)
+# library(lme4)
+# library(marginaleffects)
+# library(modelsummary)
+# library(brms)
+# library(ggdist)
 
 source("~/Dropbox (MIT)/Research/medsl_theme.R")
 
-hist_20 = read_csv("~/Downloads/voteshift_2020_byCounty_raw.csv") |>
+hist_20 = read_csv("data/voteshift/voteshift_2020_byCounty_raw.csv") |>
   select(state, county, timestamp, pct_forCand_atTimestamp, pct_atTimestamp) |>
   mutate(
     last_drop = max(timestamp) == timestamp,
@@ -22,7 +22,7 @@ hist_20 = read_csv("~/Downloads/voteshift_2020_byCounty_raw.csv") |>
     year = "2020"
   )
 
-hist_22 = read_csv("~/Downloads/voteshift_2022_byCounty_raw.csv") |>
+hist_22 = read_csv("data/voteshift/voteshift_2022_byCounty_raw.csv") |>
   select(state, county, office, candidate, timestamp, pct_forCand_atTimestamp, pct_atTimestamp) |>
   mutate(
     last_drop = max(timestamp) == timestamp,
@@ -35,6 +35,10 @@ hist_22 = read_csv("~/Downloads/voteshift_2022_byCounty_raw.csv") |>
   )
 
 hist = bind_rows(hist_20, hist_22)
+
+###################################
+## Model Experiments
+###################################
 
 mod_22_lmer = lmer(
   pct_forCand_atTimestamp ~ 1 + (pct_atTimestamp | state/county),
@@ -51,7 +55,7 @@ mod_yearFE = brm(
   data = hist
 )
 
-mod_yearFE = readRDS("~/Downloads/mod_yearFE.rds")
+mod_yearFE = readRDS("data/voteshift/mod_yearFE.rds")
 
 modelsummary(mod_22, mc.cores = 4)
 
@@ -109,19 +113,32 @@ p2 = predictions(mod_20,
 
 ggsave("~/Downloads/voteshift_2020_model.png", p2, width = 12, units = "in")
 
+###################################
+## Plot Shift by County
+###################################
+
 plot_countyPace_shift <- function(st){
 
   print(st)
 
   p1 = hist |>
     filter(state == st) |>
+    mutate(pct_forCand_atTimestamp = case_when(
+      pct_forCand_atTimestamp < -0.15 ~ -0.15,
+      pct_forCand_atTimestamp > 0.15 ~ 0.15,
+      .default = pct_forCand_atTimestamp
+    )) |> 
     ggplot(aes(x = pct_atTimestamp, y = pct_forCand_atTimestamp, color = year, group = year)) +
     geom_point() +
     geom_line() +
     geom_hline(yintercept = 0, linetype = "dashed") +
     scale_x_continuous(labels = scales::label_percent(), limits = c(0, 1), breaks = c(0, 0.5, 1)) +
+    scale_y_continuous(
+      limits = c(-0.15, 0.15), 
+      minor_breaks = seq(-0.15, 0.15, by = 0.01),
+      breaks = c(-0.15, -0.10, -0.05, 0, 0.05, 0.1, 0.15)) +
     facet_wrap(~ county) +
-    labs(x = "% In", y = "Dem Vote Shift", color = "Election", title = str_c("Dem Vote Shift in ", st)) +
+    labs(x = "% In", y = "Dem Vote Shift (pp)", color = "Election", title = str_c("Dem Vote Shift in ", st)) +
     theme_medsl() +
     scale_color_medsl() +
     theme(
@@ -129,10 +146,13 @@ plot_countyPace_shift <- function(st){
       axis.title.y = element_text(margin = margin(r = 0)),
       axis.title.x = element_text(margin = margin(t = 0)),
       plot.title = element_text(margin = margin(b = 0)),
+      panel.grid.minor = element_line(color = "#e0e0e0"),
       panel.spacing.x = unit(5, "mm")
     )
+  
+  # return(p1)
 
-  ggsave(sprintf("~/Downloads/cbs_figs/shift_byCounty_%s.jpg", st), width = 16, height = 12, units = "in")
+  ggsave(sprintf("figs/voteshift/shift_byCounty_%s.jpg", st), width = 16, height = 12, units = "in")
 
 }
 
@@ -166,3 +186,5 @@ plot_countyPace_share <- function(st){
 
 distinct(hist, state) |> pull() |> walk(plot_countyPace_shift)
 distinct(hist, state) |> pull() |> walk(plot_countyPace_share)
+
+plot_countyPace_shift("Maryland")
