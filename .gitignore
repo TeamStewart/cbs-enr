@@ -1,6 +1,8 @@
 /data/clean/*
 /data/raw/*
 /data/cbs_format/*
+figs/
+data/voteshift
 
 # History files
 .Rhistory
