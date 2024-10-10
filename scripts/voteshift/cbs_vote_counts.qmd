@@ -22,7 +22,11 @@ suppressPackageStartupMessages({
   library(gt)
 })
 
-hist_22 <- read_csv("data/voteshift/2022 County History.csv") |>
+hist_22 <- bind_rows(
+  read_csv("data/voteshift/2022 Gov County History.csv"),
+  read_csv("data/voteshift/2022 Sen County History.csv"),
+  read_csv("data/voteshift/2022 County History.csv")
+) |> 
   janitor::clean_names() |>
   mutate(timestamp = mdy_hm(timestamp, tz = "US/Eastern")) |>
   # remove newer timestamps since they're not useful to us and have some errors
@@ -30,15 +34,19 @@ hist_22 <- read_csv("data/voteshift/2022 County History.csv") |>
   filter(timestamp <= "2022-12-31") |> 
   distinct(state, county, office, timestamp, candidate, total_vote, prec_in)
 
-top_races <- distinct(hist_22, state, office) |>
-  filter(office == "Governor") |>
-  bind_rows(
-    tibble(state = c("Delaware", "North Carolina"), office = c("Attorney General", "Senate"))
-  )
+top_races <- hist_22 |> 
+  select(state, office) |> 
+  distinct(state, .keep_all = TRUE)
 
+# in LA, multiple Dems I chose the top-vote receiver
+# in UT, no Dem ran so I drop them
 democrats <- c(
   "Hobbs", "Jones", "Lamont", "Jennings", "Crist", "Abrams", "Heidt", "DeJear",
-  "Moore", "Beasley", "Shapiro", "Hofmeister", "McKee", "Cunningham", "O'Rourke"
+  "Moore", "Beasley", "Shapiro", "Hofmeister", "McKee", "Cunningham", "O'Rourke",
+  "Flowers", "Gara", "Newsom", "Polis", "Green", "Pritzker", "Kelly", "Mills", 
+  "Healey", "Whitmer", "Walz", "Blood", "Sisolak", "Sherman", "Lujan Grisham", 
+  "Hochul", "Whaley", "Kotek", "Smith", "Martin", "Siegel", "Evers", "Livingston",
+  "McDermott", "Booker", "Chambers", "Busch Valentine", "Christiansen", "Murray"
 )
 
 votes_byOffice <- inner_join(hist_22, top_races) |>
