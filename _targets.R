@@ -8,9 +8,11 @@
 rm(list=ls())
 gc()
 
-library(targets)
-library(tarchetypes)
-suppressMessages(library(tidyverse))
+suppressPackageStartupMessages({
+  library(targets)
+  library(tarchetypes)
+  library(tidyverse)
+})
 
 source("scripts/functions.R")
 
@@ -21,8 +23,7 @@ options(
 
 tar_option_set(
   packages = c(
-    "data.table", "tidyverse", "gt", "xml2", "aws.s3", "jsonlite", "fixest", "googledrive",
-    "marginaleffects", "rlang", "reticulate", "rvest", "httr2", "glue", "fs", "polite","janitor"
+    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", "googledrive"
   ),
   memory = "transient",
   format = "qs",
@@ -36,8 +37,14 @@ tar_config_set(
   seconds_reporter = 0.5
 )
 
-# generate the lookup table with important information for each state
-metadata = read_csv("metadata.csv")
+# get the metadata file, with the following structure
+# - state: (string) caps abbreviation of the state
+# - county: (string) lowercase county of interest in that state, if NA then statewide
+# - path: (string) generic cell for path/number/ID used by custom scrapers to get file
+# - model_swing: (boolean) whether to model swing for this county/state
+# - model_turnout: (boolean) whether to model turnout for this county/state
+# - upload: (boolean) whether to upload this jurisdiction to CBS AWS
+metadata = get_gsheet(sheet = "metadata")
 
 # ========================================
 ## PIPELINE
@@ -45,11 +52,11 @@ metadata = read_csv("metadata.csv")
 list(
   tar_map(
     metadata,
-    tar_target(time, get_timestamp(state, county, type, path), cue = tar_cue(mode = "always")),
-    tar_target(clean, process_data(state, county, type, time, path = path), error = "continue"),
-    tar_target(tbl_all, general_table(clean, state, county, type, time)),
-    tar_target(models, run_models(clean, state, county, type, time, modeling)),
-    tar_target(cbs, convert_cbs(clean, state, county, type, time, election_date, cbs_lookup, cbs_s3_path, google_drive_folder, upload = T, modeling)),
-    names = c(state, county, type)
+    tar_target(timestamp, get_timestamp(state, county, path), cue = tar_cue(mode = "always")),
+    tar_target(data, get_data(state, county, type, timestamp, path), error = "continue"),
+    tar_target(tbl_gen, create_table_generic(data, state, county, type, timestamp)),
+    tar_target(tbl_cbs, create_table_cbs(data, state, county, type, timestamp)),
+    tar_target(models, run_models(data, state, county, model_swing, model_turnout)),
+    names = c(state, county)
   )
 )
