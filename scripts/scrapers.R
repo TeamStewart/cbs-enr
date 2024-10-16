@@ -25,77 +25,10 @@ scrape_az <- function(state, county, path, timestamp){
         state = .env$state,
         race_name = case_match(
           ContestName,
-          "DEM US Senate" ~ "US SENATE-Democrat", 
-          "DEM US Rep Dist CD-1" ~ "US HOUSE-01-Democrat",
-          "DEM US Rep Dist CD-2" ~ "US HOUSE-02-Democrat",
-          "DEM US Rep Dist CD-3" ~ "US HOUSE-03-Democrat",
-          "DEM US Rep Dist CD-4" ~ "US HOUSE-04-Democrat",
-          "DEM US Rep Dist CD-5" ~ "US HOUSE-05-Democrat",
-          "DEM US Rep Dist CD-7" ~ "US HOUSE-07-Democrat",
-          "DEM US Rep Dist CD-8" ~ "US HOUSE-08-Democrat",
-          "DEM US Rep Dist CD-9" ~ "US HOUSE-09-Democrat",
-          "DEM County Recorder" ~ "COUNTY RECORDER-Democrat",
-          "REP US Senate" ~ "US SENATE-Republican",
-          "REP US Rep Dist CD-1" ~ "US HOUSE-01-Republican",
-          "REP US Rep Dist CD-2" ~ "US HOUSE-02-Republican",
-          "REP US Rep Dist CD-3" ~ "US HOUSE-03-Republican",
-          "REP US Rep Dist CD-4" ~ "US HOUSE-04-Republican",
-          "REP US Rep Dist CD-5" ~ "US HOUSE-05-Republican",
-          "REP US Rep Dist CD-7" ~ "US HOUSE-07-Republican",
-          "REP US Rep Dist CD-8" ~ "US HOUSE-08-Republican",
-          "REP US Rep Dist CD-9" ~ "US HOUSE-09-Republican",
-          "REP County Recorder" ~ "COUNTY RECORDER-Republican",
           .default = NA_character_
         ),
         candidate_name = case_match(
           CandidateName,
-          "CHERNY, ANDREI" ~ "Andrei Cherny",
-          "GALÁN-WOODS, MARLENE" ~ "Marlene Galán-Woods",
-          "HORNE, ANDREW" ~ "Andrew Horne",
-          "KROEMER, KURT" ~ "Kurt Kroemer",
-          "O'CALLAGHAN, CONOR" ~ "Conor O'Callaghan",
-          "SHAH, AMISH" ~ "Amish Shah",
-          "BACKIE, ROBERT" ~ "Robert Backie",
-          "GEORGE, KIM" ~ "Kim George",
-          "SCHWEIKERT, DAVID" ~ "David Schweikert",
-          "NEZ, JONATHAN" ~ "Jonathan Nez",
-          "CRANE, ELI" ~ "Eli Crane",
-          "SMITH, JACK" ~ "Jack Smith",
-          "ANSARI, YASSAMIN" ~ "Yassamin Ansari",
-          "TERÁN, RAQUEL" ~ "Raquel Terán",
-          "WOOTEN, DUANE M." ~ "Duane Wooten",
-          "MENDOZA, JESUS DAVID" ~ "Jesus Mendoza",
-          "Write-in" ~ "Write-ins",
-          "ZINK, JEFF" ~ "Jeff Zink",
-          "STANTON, GREG" ~ "Greg Stanton",
-          "COOPER, KELLY" ~ "Kelly Cooper",
-          "DAVISON, JEROME" ~ "Jerone Davison",
-          "GILES, DAVE" ~ "Dave Giles",
-          "JASSER, ZUHDI" ~ "Zuhdi Jasser",
-          "SCHAFFNER, KATRINA" ~ "Katrina Schaffner",
-          "BIGGS, ANDY" ~ "Andy Biggs",
-          "GRIJALVA, RAÚL M." ~ "Raúl Grijalva",
-          "BUTIEREZ SR., DANIEL FRANCIS" ~ "Daniel Butierez",
-          "WHITTEN, GREGORY" ~ "Greg Whitten",
-          "BRIODY, PATRICK \"PAT\"" ~ "Pat Briody",
-          "FRANKS, TRENT" ~ "Trent Franks",
-          "HAMADEH, ABRAHAM \"ABE\""~ "Abe Hamadeh",
-          "KERN, ANTHONY" ~ "Anthony Kern",
-          "MASTERS, BLAKE" ~ "Blake Masters",
-          "TOMA, BEN" ~ "Ben Toma",
-          "SMITH, QUACY" ~ "Quacy Smith",
-          "GOSAR, PAUL" ~ "Paul Gosar",
-          "GALLEGO, RUBEN" ~ "Ruben Gallego",
-          "LAKE, KARI" ~ "Kari Lake",
-          "LAMB, MARK" ~ "Mark Lamb",
-          "REYE, ELIZABETH JEAN" ~ "Elizabeth Reye",
-          "GALLEGOS, ISIAH" ~ "Isiah Gallegos",
-          "GLENN, NICHOLAS N." ~ "Nicholas Glenn",
-          "HEAP, JUSTIN" ~ "Justin Heap",
-          "HIATT, DON W" ~ "Don Hiatt",
-          "RICHER, STEPHEN" ~ "Stephen Richer",
-          "STRINGHAM, TIM" ~ "Tim Stringham",
-          "WILLIAMS, DUSTIN PAUL" ~ "Dustin Williams",
           .default = CandidateName
         ),
         candidate_party = case_when(
@@ -118,7 +51,9 @@ scrape_az <- function(state, county, path, timestamp){
       pivot_longer(cols = c("Aggregated","Election Day", "Early Voting", "Provisional"),names_to = "vote_mode", values_to = "precinct_total") |>
       select(state, race_id = ContestId, race_name, candidate_name,
         candidate_party, jurisdiction, precinct_id = PrecinctName, virtual_precinct,vote_mode, precinct_total)
-  } else if(county == 'PIMA'){
+  }
+  # TODO: Update Pima for 2024 general election
+  else if(county == 'PIMA'){
     csv_link <- (read_html(path) |>
                    # TODO: Find node identifier
                    html_nodes("ul:nth-child(2) li:nth-child(4) a") |>
@@ -171,28 +106,10 @@ scrape_az <- function(state, county, path, timestamp){
         precinct_total = as.integer(precinct_total),
         race_name = case_match(
           race_name,
-          "DEM U.S. Senator" ~ "US SENATE-Democrat", 
-          "DEM U.S. Representative in Congress District 6" ~ "US HOUSE-06-Democrat",
-          "DEM U.S. Representative in Congress District 7" ~ "US HOUSE-07-Democrat",
-          "REP U.S. Senator" ~ "US SENATE-Republican",
-          "REP U.S. Representative in Congress District 6" ~ "US HOUSE-06-Republican",
-          "REP U.S. Representative in Congress District 7" ~ "US HOUSE-07-Republican",
           .default = NA_character_
         ),
         candidate_name = case_when(
-          str_detect(candidate_name, regex("Write-in", ignore_case = T)) ~ "Write-ins",
-          str_detect(candidate_name, regex("ENGEL", ignore_case = T)) ~ "Kirsten Engel",
-          str_detect(candidate_name, regex("Ciscomani", ignore_case = T)) ~ "Juan Ciscomani",
-          str_detect(candidate_name, regex("Winn", ignore_case = T)) ~ "Kathleen Winn",
-          str_detect(candidate_name, regex("GRIJALVA", ignore_case = T)) ~ "Raúl Grijalva",
-          str_detect(candidate_name, regex("BUTIEREZ", ignore_case = T)) ~ "Daniel Butierez",
-          str_detect(candidate_name, regex("GALLEGO", ignore_case = T)) ~ "Ruben Gallego",
-          str_detect(candidate_name, regex("LAKE", ignore_case = T)) ~ "Kari Lake",
-          str_detect(candidate_name, regex("LAMB", ignore_case = T)) ~ "Mark Lamb",
-          str_detect(candidate_name, regex("REYE", ignore_case = T)) ~ "Elizabeth Reye",
-          candidate_name == "UNDER VOTES" ~ "Undervote",
-          candidate_name == "OVER VOTES"~ "Overvote",
-          TRUE ~ candidate_name
+          .default = candidate_name
         ),
         candidate_party = case_match(
           candidate_party,
@@ -210,76 +127,6 @@ scrape_az <- function(state, county, path, timestamp){
       ) |>
       filter(!is.na(race_name)) |>
       summarise(precinct_total = sum(precinct_total, na.rm = T), .by = c("state","race_id","race_name","candidate_name","candidate_party","jurisdiction","precinct_id","virtual_precinct","vote_mode"))
-  } else if(county == 'PINAL'){
-    get_clarity(state, county, path, type, timestamp) |> 
-      read_csv() |> 
-      filter(vote_mode != 'regVotersCounty') |>
-      mutate(
-        state = state,
-        jurisdiction = str_to_upper(jurisdiction),
-        virtual_precinct = FALSE
-      ) |> 
-      mutate(across(where(is.character), ~ na_if(.x, ""))) |> 
-      mutate(candidate_name = case_match(
-        vote_mode,
-        "Undervotes" ~ "Undervote",
-        "Overvotes" ~ "Overvote",
-        .default = candidate_name
-      ),
-      candidate_name = case_match(
-        candidate_name,
-        "NEZ, JONATHAN" ~ "Jonathan Nez",
-        "CRANE, ELI" ~ "Eli Crane",
-        "SMITH, JACK" ~ "Jack Smith",
-        "SCHAFFNER, KATRINA" ~ "Katrina Schaffner",
-        "BIGGS, ANDY" ~ "Andy Biggs",
-        "ENGEL, KIRSTEN" ~ "Kirsten Engel",
-        "CISCOMANI, JUAN" ~ "Juan Ciscomani",
-        "WINN, KATHLEEN" ~ "Kathleen Winn",
-        "GRIJALVA, RAÚL M." ~ "Raúl Grijalva",
-        "BUTIEREZ SR., DANIEL FRANCIS" ~ "Daniel Butierez",
-        "GALLEGO, RUBEN" ~ "Ruben Gallego",
-        "LAKE, KARI" ~ "Kari Lake",
-        "LAMB, MARK" ~ "Mark Lamb",
-        "REYE, ELIZABETH JEAN" ~ "Elizabeth Reye",
-        "UNDER VOTES" ~ "Undervote",
-        "OVER VOTES"~ "Overvote",
-        .default = candidate_name
-      )
-      ) |> 
-      mutate(vote_mode = case_match(
-        vote_mode, 
-        "Election Day" ~ "Election Day",
-        "Early Voting" ~ "Early Voting",
-        "Provisional" ~ "Provisional",
-        c("Undervotes", "Overvotes") ~ "Aggregated",
-        .default = NA_character_
-      )) |> 
-      mutate(candidate_party = case_match(
-        candidate_party,
-        # TODO: Fix mapping
-        "REP" ~ "Republican",
-        "DEM" ~ "Democrat",
-        .default = candidate_party
-      )) |> 
-      mutate(race_name = case_match(
-        race_name,
-        # TODO: Fix mapping
-        "REP - U.S. Senator" ~ "US SENATE-Republican",
-        "DEM - U.S. Senator" ~ "US SENATE-Democrat",
-        "REP - U.S. Representative - CD2" ~ "US HOUSE-02-Republican",
-        "DEM - U.S. Representative - CD2" ~ "US HOUSE-02-Democrat",
-        "REP - U.S. Representative - CD5" ~ "US HOUSE-05-Republican",
-        "DEM - U.S. Representative - CD5" ~ "US HOUSE-05-Democrat",
-        "REP - U.S. Representative - CD6" ~ "US HOUSE-06-Republican",
-        "DEM - U.S. Representative - CD6" ~ "US HOUSE-06-Democrat",
-        "REP - U.S. Representative - CD7" ~ "US HOUSE-07-Republican",
-        "DEM - U.S. Representative - CD7" ~ "US HOUSE-07-Democrat",
-        .default = NA_character_
-      )) |> 
-      filter(!is.na(race_name)) |>
-      select(state, race_id, race_name, candidate_name,
-             candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
   }
 }
 
@@ -417,8 +264,6 @@ scrape_fl <- function(state, county, path, timestamp) {
           .default = candidate_party
         ),
         race_name = case_when(
-          race_name == "President" & candidate_party == 'Republican' ~ "President-Republican",
-          race_name == "President" & candidate_party == 'Democrat' ~ "President-Democrat",
           TRUE ~ race_name
         )
       ) |>
@@ -460,13 +305,9 @@ scrape_fl <- function(state, county, path, timestamp) {
       common_mutate |>
         select(-any_of("Total Votes")) |>
         mutate(
-          race_name = case_when(
-            Contest %in% c("Republican President", "REP President", "UNITED STATES PRESIDENT (REP)", "President (REP)") ~ "President-Republican",
-            Contest %in% c("Democrat President", "DEM President", "UNITED STATES PRESIDENT (DEM)", "President (DEM)") ~ "President-Democrat",
-            Contest == "President" & Party == "REP" ~ "President-Republican",
-            Contest == "President" & Party == "DEM" ~ "President-Democrat"
-          )
-        ) |>
+          # TODO: update `race_name` for general
+          race_name = contest
+        )
         pivot_longer(cols = c("Mail Votes", "Early Votes", "Election Day Votes"), names_to = "vote_mode", values_to = "precinct_total") |>
         mutate(
           vote_mode = case_match(
@@ -483,12 +324,8 @@ scrape_fl <- function(state, county, path, timestamp) {
     } else {
       common_mutate |>
         mutate(
-          race_name = case_when(
-            Contest %in% c("Republican President", "REP President", "UNITED STATES PRESIDENT (REP)", "President (REP)") ~ "President-Republican",
-            Contest %in% c("Democrat President", "DEM President", "UNITED STATES PRESIDENT (DEM)", "President (DEM)") ~ "President-Democrat",
-            Contest == "President" & Party == "REP" ~ "President-Republican",
-            Contest == "President" & Party == "DEM" ~ "President-Democrat"
-          ),
+          # TODO: update `race_name` for general
+          race_name = contest,
           vote_mode = 'Total',
           precinct_total = `Total Votes`,
           precinct_total = ifelse(precinct_total == "-", NA, precinct_total) |> as.numeric()
@@ -530,6 +367,7 @@ scrape_nc <- function(state, county, path, timestamp) {
       ),
       # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
       # If primary, append election label: str_extract(`Contest Name`, "\\(.*?\\)") -- remove for general
+      # TODO: Update for 2024
       race_name = case_when(
         str_detect(`Contest Name`, "PRESIDENTIAL PREFERENCE") ~ str_c("President-", candidate_party),
         str_detect(`Contest Name`, "US SENATE") ~ str_c("US Senate-", candidate_party),
@@ -573,43 +411,43 @@ scrape_pa <- function(state, county, path, timestamp){
   if (county == "ALLEGHENY"){
     get_clarity(state, county, path) |> 
       read_csv() |> 
+      mutate(across(where(is.character), ~ na_if(.x, ""))) |> 
       mutate(
         state = "PA",
-        virtual_precinct = FALSE
-      ) |> 
-      mutate(across(where(is.character), ~ na_if(.x, ""))) |> 
-      mutate(candidate_name = case_match(
-        vote_mode,
-        "Undervotes" ~ "Undervote",
-        "Overvotes" ~ "Overvote",
-        .default = candidate_name
-      ),
+        virtual_precinct = FALSE,
+        candidate_name = case_match(
+          vote_mode,
+          "Undervotes" ~ "Undervote",
+          "Overvotes" ~ "Overvote",
+          .default = candidate_name
+        ),
         # remove incumbent indicator from Biden
-        candidate_name = str_remove_all(candidate_name, "\\(I\\)$") |> str_trim() |> str_squish()
+        candidate_name = str_remove_all(candidate_name, "\\(I\\)$") |> str_trim() |> str_squish(),
+        vote_mode = case_match(
+          vote_mode, 
+          "Election Day Votes" ~ "Election Day",
+          "Advance Voting Votes" ~ "Early Voting",
+          "Absentee by Mail Votes" ~ "Absentee/Mail",
+          "Provisional Votes" ~ "Provisional",
+          c("Undervotes", "Overvotes") ~ "Aggregated",
+          .default = NA_character_
+        ),
+        candidate_party = case_match(
+          candidate_party,
+          "REP" ~ "Republican",
+          "DEM" ~ "Democrat",
+          .default = candidate_party
+        ),
+        # TODO: Update for general
+        race_name = case_match(
+          race_name,
+          "President of the US - Rep" ~ "President-Republican",
+          "President of the US - Dem" ~ "President-Democrat",
+          "President of the US/Presidente de los Estados Unidos - Rep" ~ "President-Republican", 
+          "President of the US/Presidente de los Estados Unidos - Dem" ~ "President-Democrat",
+          .default = race_name
+        )
       ) |> 
-      mutate(vote_mode = case_match(
-        vote_mode, 
-        "Election Day Votes" ~ "Election Day",
-        "Advance Voting Votes" ~ "Early Voting",
-        "Absentee by Mail Votes" ~ "Absentee/Mail",
-        "Provisional Votes" ~ "Provisional",
-        c("Undervotes", "Overvotes") ~ "Aggregated",
-        .default = NA_character_
-      )) |> 
-      mutate(candidate_party = case_match(
-        candidate_party,
-        "REP" ~ "Republican",
-        "DEM" ~ "Democrat",
-        .default = candidate_party
-      )) |> 
-      mutate(race_name = case_match(
-        race_name,
-        "President of the US - Rep" ~ "President-Republican",
-        "President of the US - Dem" ~ "President-Democrat",
-        "President of the US/Presidente de los Estados Unidos - Rep" ~ "President-Republican", 
-        "President of the US/Presidente de los Estados Unidos - Dem" ~ "President-Democrat",
-        .default = race_name
-      )) |> 
       select(state, race_id, race_name, candidate_name, candidate_party, 
         jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
     
@@ -627,8 +465,10 @@ scrape_pa <- function(state, county, path, timestamp){
     most_recent_file <- files[order(file.info(files)$mtime, decreasing = TRUE)][1]
     
     read_csv(most_recent_file) |>
+      # TODO: Update for general
       filter(RaceName %in% c("=\"PRESIDENT OF THE UNITED STATES DEM Democratic (VOTE FOR 1)\"", "=\"PRESIDENT OF THE UNITED STATES REP Republican (VOTE FOR 1)\"") & !str_detect(PrecinctName,"Congressional")) |>
       mutate(
+        # TODO: Update for general
         RaceName = case_match(
           RaceName,
           "=\"PRESIDENT OF THE UNITED STATES DEM Democratic (VOTE FOR 1)\"" ~ "President-Democrat",
@@ -639,6 +479,7 @@ scrape_pa <- function(state, county, path, timestamp){
           "=\"DEM\"" ~ "Democrat",
           "=\"REP\"" ~ "Republican",
           .default = NA_character_),
+        # TODO: Update for general
         CandidateName = case_match(
           CandidateName,
           "=\"JOSEPH R BIDEN JR DEM\"" ~ "Joseph R. Biden",

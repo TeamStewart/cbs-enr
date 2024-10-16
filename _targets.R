@@ -8,9 +8,11 @@
 rm(list=ls())
 gc()
 
-library(targets)
-library(tarchetypes)
-suppressMessages(library(tidyverse))
+suppressPackageStartupMessages({
+  library(targets)
+  library(tarchetypes)
+  library(tidyverse)
+})
 
 source("scripts/functions.R")
 
