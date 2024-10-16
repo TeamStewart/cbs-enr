@@ -8,7 +8,6 @@ import re
 
 import dateutil.parser
 from lxml import etree
-import zipfile
 import sys
 
 
@@ -612,7 +611,7 @@ def _flatten_result(r):
         'candidate_party': r.choice.party if r.choice is not None else None
     }
 
-def get_data(state, path):
+def get_data_clarity(state, path):
     try:
         with zipfile.ZipFile(path, 'r') as zip_ref:
             file_names = zip_ref.namelist()
@@ -642,8 +641,8 @@ def get_data(state, path):
 #         return
 #     state = sys.argv[1]
 #     zip_path = sys.argv[2]
-
-#     get_data(state, zip_path)
-
+# 
+#     get_data_clarity(state, zip_path)
+# 
 # if __name__ == "__main__":
 #     main()

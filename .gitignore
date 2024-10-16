@@ -53,7 +53,6 @@ rsconnect/
 .DS_Store
 
 /.quarto/
-data/raw/nc_primary.zip
 scripts/sample/ga_allraces.csv
 scripts/sample/ga_runoff_allraces.csv
 scripts/sample/final_merged.csv
@@ -64,3 +63,5 @@ scripts/sample/runoff_votes.csv
 data/voteshift/2020 Pres County History AZ-MO.csv
 data/voteshift/2020 Pres County History MT-WY.csv
 data/voteshift/2022 County History.csv
+/data
+/pages

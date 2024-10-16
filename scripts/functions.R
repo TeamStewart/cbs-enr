@@ -24,20 +24,34 @@ process_data <- function(state, county, type, timestamp, path = NULL) {
   return(d)
 }
 
-get_timestamp <- function(state, county, type, path) {
-  clarity_timestamp <- function(){
-    county_tmp = str_to_title(county) |> str_replace_all(" ", "_")
+get_timestamp <- function(state, county, path) {
+  clarity_timestamp <- function() {
     
-    version <- request(glue("https://results.enr.clarityelections.com/{state}/{county_tmp}/{path}/current_ver.txt")) |> 
-      req_headers("Accept" = "application/txt") |> 
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-      req_perform() |> 
-      resp_body_string()
+    if (is.na(county)) {
+      version = request(glue("https://results.enr.clarityelections.com/{state}/{path}/current_ver.txt")) |>
+        req_headers("Accept" = "application/txt") |>
+        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
+        req_perform() |>
+        resp_body_string()
+      
+      settings = glue("https://results.enr.clarityelections.com/{state}/{path}/{version}/json/en/electionsettings.json")
+    } 
+    else {
+      county_tmp <- str_to_title(county) |> str_replace_all(" ", "_")
+      
+      version <- request(glue("https://results.enr.clarityelections.com/{state}/{county_tmp}/{path}/current_ver.txt")) |>
+        req_headers("Accept" = "application/txt") |>
+        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
+        req_perform() |>
+        resp_body_string()
+      
+      settings = glue("https://results.enr.clarityelections.com/{state}/{county_tmp}/{path}/{version}/json/en/electionsettings.json")
+    }
     
-    request(glue("https://results.enr.clarityelections.com/{state}/{county_tmp}/{path}/{version}/json/en/electionsettings.json")) |> 
-      req_headers("Accept" = "application/json") |> 
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-      req_perform() |> 
+    request(settings) |>
+      req_headers("Accept" = "application/json") |>
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
+      req_perform() |>
       resp_body_json() |>
       pluck("websiteupdatedat") |> 
       mdy_hms(tz = "America/New_York") |>
@@ -135,14 +149,34 @@ get_timestamp <- function(state, county, type, path) {
     "FL" = fl_timestamp(),
     "NC" = nc_timestamp(),
     "PA" = pa_timestamp(),
-    "TX" = tx_timestamp(),
-    "WI" = wi_timestamp(),
   )
 }
 
-general_table <- function(data, state, county, type, timestamp) {
+get_data <- function(state, county, timestamp, path = NULL) {
   
-  if(county != "all"){
+  dir_create(glue("data/raw/{state}"))
+  dir_create(glue("data/input/{state}"))
+  
+  d <- switch(state,
+    "AZ" = scrape_az(state, county, path, timestamp),
+    "GA" = scrape_ga(state, county, path, timestamp),
+    "FL" = scrape_fl(state, county, path, timestamp),
+    "NC" = scrape_nc(state, county, path, timestamp),
+    "PA" = scrape_pa(state, county, path, timestamp),
+  )
+
+  # save latest version
+  dir_create(glue("data/clean/{state}"))
+  write_csv(d, glue("data/clean/{state}/{state}_{county}_{ELECTION_TYPE}_latest.csv"))
+
+  # save timestamped version
+  write_csv(d, glue("data/clean/{state}/{state}_{county}_{ELECTION_TYPE}_{timestamp}.csv"))
+
+  return(d)
+}
+
+create_table_generic <- function(data, state, county, type, timestamp) {
+  if (!is.na(county)) {
     locale <- str_c(str_to_title(county), ", ", str_to_upper(state))
   } else {
     locale <- str_to_upper(state)

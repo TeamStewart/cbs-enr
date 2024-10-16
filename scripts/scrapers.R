@@ -1,5 +1,7 @@
 ## Arizona
-scrape_az <- function(state, county, type, path = NULL, timestamp){
+scrape_az <- function(state, county, path, timestamp){
+  
+  # TODO: Update Maricopa for 2024 general election
   if(county == 'MARICOPA'){
     # retrieve file link -- they might change it over the course of the night
     path <- read_html(path) |>
@@ -8,7 +10,7 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
     
     path <- str_c('https://elections.maricopa.gov',path)
     
-    source_python("scripts/dynamic_download.py")
+    source_python("scripts/util/dynamic_download.py")
     get_file(path, county, state)
     
     # Get file name of the most recently downloaded raw file
@@ -282,16 +284,16 @@ scrape_az <- function(state, county, type, path = NULL, timestamp){
 }
 
 ## Georgia
-scrape_ga <- function(state, county, type, path = NULL, timestamp){
+scrape_ga <- function(state, county, path, timestamp){
   
-  get_counties <- function(clarity_num){
+  get_counties <- function(){
     
-    version <- request(sprintf("https://results.enr.clarityelections.com/GA/%s/current_ver.txt", clarity_num)) |> 
+    version <- request(glue("https://results.enr.clarityelections.com/{state}/{path}/current_ver.txt")) |> 
       req_headers("Accept" = "application/txt") |> 
       req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
       req_retry(max_tries = 5) |> 
       req_perform() |> 
-      resp_body_string() 
+      resp_body_string()
     
     if (file.exists("data/input/GA/county_versions.csv")) {
       counties <- read_csv("data/input/GA/county_versions.csv", col_types = "cccc", show_col_types = FALSE)
@@ -299,7 +301,7 @@ scrape_ga <- function(state, county, type, path = NULL, timestamp){
       counties <- tibble(county = "", version = "")
     }
     
-    cntys <- request(sprintf("https://results.enr.clarityelections.com/GA/%s/%s/json/en/electionsettings.json", clarity_num, version)) |> 
+    cntys <- request(glue("https://results.enr.clarityelections.com/GA/{path}/{version}/json/en/electionsettings.json")) |> 
       req_headers("Accept" = "application/json") |> 
       req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
       req_retry(max_tries = 5) |> 
@@ -309,28 +311,25 @@ scrape_ga <- function(state, county, type, path = NULL, timestamp){
       as_tibble_col() |> 
       unnest(cols = value) |> 
       separate_wider_delim(cols = value, delim = "|", names = c("county", "sitenum", "version", "timestamp", "unknown")) |> 
-      mutate(county_url = sprintf("https://results.enr.clarityelections.com/GA/%s/%s/current_ver.txt", county, sitenum)) |> 
+      mutate(county_url = glue("https://results.enr.clarityelections.com/GA/{county}/{sitenum}/current_ver.txt")) |> 
       mutate(version = map_chr(county_url, ~ request(.x) |> 
           req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
           req_perform() |> 
           resp_body_string()
       )) |> 
-      mutate(url = sprintf("https://results.enr.clarityelections.com/GA/%s/%s/%s/reports/detailxml.zip", county, sitenum, version)) |> 
-      select(county, version, timestamp, url) |> 
-      # drop counties where we already have the latest version
-      anti_join(counties, join_by(county, version))
+      mutate(url = glue("https://results.enr.clarityelections.com/GA/{county}/{sitenum}/{version}/reports/detailxml.zip")) |> 
+      select(county, version, timestamp, url)
     
     # update the version file with the latest versions
-    counties |> 
-      anti_join(cntys, join_by(county, version)) |> 
-      write_csv("data/input/GA/county_versions.csv")
+    write_csv(cntys, "data/input/GA/county_versions.csv")
     
-    return(cntys)
+    # don't update counties where we already have the latest version
+    anti_join(cntys, counties, join_by(county, version))
     
   }
   
-  counties <- get_counties(clarity_num = path) |> 
-    mutate(local = str_c("data/raw/GA/", county, ".zip"))
+  counties <- get_counties() |> mutate(local = str_c("data/raw/GA/", county, ".zip"))
+  # counties <- read_csv("data/input/GA/county_versions.csv") |> mutate(local = str_c("data/raw/GA/", county, ".zip"))
   
   download_file <- function(url){
     tryCatch(
@@ -344,9 +343,9 @@ scrape_ga <- function(state, county, type, path = NULL, timestamp){
   
   map(counties$url, download_file)
   
-  source_python("scripts/clarity_scraper.py")
+  source_python("scripts/util/clarity_scraper.py")
   
-  pull(counties, local) |> walk(state, get_data)
+  pull(counties, local) |> walk(.f = \(x) get_data_clarity(state, x))
   
   list.files("data/raw/GA", pattern = "*.csv", full.names = TRUE) |> 
     lapply(fread) |> 
@@ -379,21 +378,17 @@ scrape_ga <- function(state, county, type, path = NULL, timestamp){
       "DEM" ~ "Democrat",
       .default = candidate_party
     )) |> 
-    mutate(race_name = case_match(
-      race_name,
-      "President of the US - Rep" ~ "President-Republican",
-      "President of the US - Dem" ~ "President-Democrat",
-      "President of the US/Presidente de los Estados Unidos - Rep" ~ "President-Republican", 
-      "President of the US/Presidente de los Estados Unidos - Dem" ~ "President-Democrat",
-      .default = race_name
-    )) |> 
+    # mutate(race_name = case_match(
+    #   race_name,
+    #   .default = race_name
+    # )) |> 
     select(state, race_id, race_name, candidate_name, candidate_party, 
       jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
   
 }
 
 ## Florida
-scrape_fl <- function(state, county, type, path = NULL, timestamp) {
+scrape_fl <- function(state, county, path, timestamp) {
   process_clarity <- function(state, county, path) {
     get_clarity(state, county, path) |>
       read_csv() |>
@@ -512,7 +507,7 @@ scrape_fl <- function(state, county, type, path = NULL, timestamp) {
 }
 
 ## North Carolina
-scrape_nc <- function(state, county, type, path = NULL, timestamp) {
+scrape_nc <- function(state, county, path, timestamp) {
   
   raw_file_path = glue('data/raw/NC/nc_primary_{timestamp}.zip')
   
@@ -573,7 +568,7 @@ scrape_nc <- function(state, county, type, path = NULL, timestamp) {
 }
 
 ## Pennsylvania
-scrape_pa <- function(state, county, type, path = NULL, timestamp){
+scrape_pa <- function(state, county, path, timestamp){
   
   if (county == "ALLEGHENY"){
     get_clarity(state, county, path) |> 
@@ -619,9 +614,10 @@ scrape_pa <- function(state, county, type, path = NULL, timestamp){
         jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
     
     
-  } else if (county == "PHILADELPHIA"){
-    # dynamically retrive file via python script
-    source_python("scripts/dynamic_download.py")
+  } 
+  else if (county == "PHILADELPHIA"){
+    # dynamically retrieve file via python script
+    source_python("scripts/util/dynamic_download.py")
     get_file(path, county, state)
     
     # Get file name of the most recently downloaded raw file
@@ -671,193 +667,8 @@ scrape_pa <- function(state, county, type, path = NULL, timestamp){
   }
 }
 
-## Texas
-scrape_tx <- function(state, county, type, path = NULL, timestamp){
-  
-  if (county == "BEXAR"){
-    
-    drop_cols <- "Precinct Summary|Electionware Copyright|Summary Results|Joint Primary Election|1-Mar-22|Total Votes Cast|Statistics|Registered Voters|Ballots Cast|Voter Turnout|March 1, 2022"
-    
-    d <- fread(path, 
-      select = c(1, 2, 7, 9, 12),
-      skip = 3,
-      fill = TRUE,
-      blank.lines.skip = TRUE,
-      colClasses = list(character=1:12),
-      na.strings = "",
-      col.names = c("candidate_name", "race_name", "Election Day", "Absentee/Mail", "Early Voting")) |> 
-      as_tibble() |> 
-      mutate(race_name = na_if(race_name, "Vote For 1")) |> 
-      fill(race_name, .direction = "down") |> 
-      filter(!(str_detect(candidate_name, drop_cols))) |> 
-      mutate(precinct_id = str_extract(candidate_name, "\\d{4}")) |> 
-      fill(precinct_id, .direction = "down") |> 
-      filter(candidate_name != precinct_id) |> 
-      mutate(candidate_party = str_extract(race_name, ".*?\\s") |> str_squish(),
-        race_name = str_remove(race_name, candidate_party) |> str_squish(),
-        candidate_party = case_match(candidate_party,
-          "DEM" ~ "Democrat",
-          "REP" ~ "Republican"),
-        jurisdiction = county,
-        state = state) |> 
-      pivot_longer(cols = c(`Election Day`, `Absentee/Mail`, `Early Voting`), values_to = "precinct_total", names_to = "vote_mode") |> 
-      # mutate(race_name = case_when(
-      #   str_detect(race_name, "United States President") ~ "President",
-      #   str_detect(race_name, "United States Senator") ~ "US Senate",
-      #   str_detect(race_name, "United States Representative") ~ "US House",
-      #   str_detect(race_name, "Governor") ~ "Governor",
-      #   str_detect(race_name, "State Representative") ~ "State Legislature-Lower District",
-      #   str_detect(race_name, "State Senator") ~ "State Legislature-Upper District",
-      #   .default = race_name
-      # )) |> 
-      mutate(precinct_total = as.numeric(precinct_total),
-        precinct_total = replace_na(precinct_total, 0)) |> 
-      mutate(virtual_precinct = FALSE) |> 
-      filter(max(precinct_total) > 0, .by = c(race_name, candidate_name, candidate_party)) |> 
-      select(state, jurisdiction, precinct_id, race_name, candidate_name, candidate_party, vote_mode, precinct_total, virtual_precinct)
-    
-  } 
-  else if (county == "HIDALGO"){
-    
-    d = get_clarity(state, county, path) |> 
-      read_csv() |> 
-      mutate(
-        state = state,
-        virtual_precinct = FALSE,
-        candidate_name = case_match(
-          vote_mode,
-          "Undervotes" ~ "Undervote",
-          "Overvotes" ~ "Overvote",
-          .default = candidate_name
-        ),
-        vote_mode = case_match(
-          vote_mode,
-          "Election" ~ "Election Day",
-          "Early" ~ "Early Voting",
-          "Absentee" ~ "Absentee/Mail",
-          c("Undervotes", "Overvotes") ~ "Aggregated",
-          .default = vote_mode
-        ),
-        candidate_party = case_match(
-          candidate_party,
-          "REP" ~ "Republican",
-          "DEM" ~ "Democrat",
-          .default = NA_character_
-        ),
-        race_name = case_match(
-          race_name,
-          "(R) President" ~ "President-Republican",
-          "(D) President" ~ "President-Democrat",
-          "(R) US Senator" ~ "US Senate-Republican",
-          "(D) US Senator" ~ "US Senate-Democrat",
-          "(D) US Rep 16" ~ "US House-16-Democrat",
-          "(D) US Rep 23" ~ "US House-23-Democrat",
-          "(R) US Rep 16" ~ "US House-16-Republican",
-          "(R) US Rep 23" ~ "US House-23-Republican",
-          .default = race_name
-        )
-      ) |> 
-      select(state, race_id, race_name, candidate_name, candidate_party, 
-        jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
-    
-  } 
-  else if (county == "EL PASO"){
-    
-    d = get_clarity(state, county, path) |> 
-      read_csv() |> 
-      filter(vote_mode != "regVotersCounty") |> 
-      mutate(
-        state = "TX",
-        virtual_precinct = FALSE,
-        vote_mode = case_match(
-          vote_mode,
-          "Absentee By Mail" ~ "Absentee/Mail",
-          .default = vote_mode
-        ),
-        candidate_party = case_when(
-          str_detect(candidate_name, fixed("(R)")) ~ "Republican",
-          str_detect(candidate_name, fixed("(D)")) ~ "Democrat",
-          .default = NA_character_
-        ),
-        race_name = case_match(
-          race_name,
-          "(R) President" ~ "President-Republican",
-          "(D) President" ~ "President-Democrat",
-          "(R) US Senator" ~ "US Senate-Republican",
-          "(D) US Senator" ~ "US Senate-Democrat",
-          "(D) US Rep 16" ~ "US House-16-Democrat",
-          "(D) US Rep 23" ~ "US House-23-Democrat",
-          "(R) US Rep 16" ~ "US House-16-Republican",
-          "(R) US Rep 23" ~ "US House-23-Republican",
-          .default = race_name
-        )
-      ) |> 
-      select(state, race_id, race_name, candidate_name, candidate_party, 
-        jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
-    
-  }
-  else {
-    stop("Invalid county given to Texas scraper")
-  }
-  return(d)
-  
-}
-
-## Wisconsin
-scrape_wi <- function(state, county, type, path = NULL, timestamp){
-  if(county == 'MILWAUKEE'){
-    precinct_text = read_html(path) |>
-      html_elements('.precinctTable td') |> html_text()
-    
-    # save raw text
-    writeLines(precinct_text, sprintf("data/raw/%s/%s_%s_raw_%s.txt",state, state, county, timestamp))
-    
-    dem_results <- matrix(precinct_text[4241:7420],ncol = 6,byrow = T) |>
-      as.data.frame() |>
-      select(-1) |>
-      slice(-1)
-    colnames(dem_results) <- c("Ward","Joe Biden", "Dean Phillips", "No Preference","Write-in")
-    dem_results <- dem_results |>
-      pivot_longer(cols = c("Joe Biden", "Dean Phillips", "No Preference","Write-in"),names_to = "candidate_name", values_to = "precinct_total") |>
-      mutate(
-        state = .env$state,
-        jurisdiction = .env$county,
-        race_id = NA,
-        race_name = "President-Democrat",
-        candidate_party = "Democrat",
-        precinct_id = Ward,
-        virtual_precinct = FALSE,
-        vote_mode = "Total"
-      ) |> 
-      select(state, race_id, race_name, candidate_name,
-             candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
-    
-    
-    rep_results <- matrix(precinct_text[7421:12190],ncol = 9,byrow = T) |>
-      as.data.frame() |>
-      select(-1) |>
-      slice(-1)
-    colnames(rep_results) <- c("Ward",'Chris Christie','Vivek Ramaswamy', 'Ron DeSantis', 'Nikki Haley','Donald Trump', "No Preference","Write-in")
-    rep_results <- rep_results |>
-      pivot_longer(cols = c('Chris Christie','Vivek Ramaswamy', 'Ron DeSantis', 'Nikki Haley','Donald Trump', "No Preference","Write-in"), names_to = "candidate_name", values_to = "precinct_total") |>
-      mutate(
-        state = .env$state,
-        jurisdiction = .env$county,
-        race_id = NA,
-        race_name = "President-Republican",
-        candidate_party = "Republican",
-        precinct_id = Ward,
-        virtual_precinct = FALSE,
-        vote_mode = "Total"
-      ) |> 
-      select(state, race_id, race_name, candidate_name,
-             candidate_party, jurisdiction, precinct_id, virtual_precinct,vote_mode, precinct_total)
-    
-    rbind(dem_results, rep_results) 
-  }
-}
-
-get_clarity <- function(state, county, path, type, timestamp){
+## generic function to get clarity files
+get_clarity <- function(state, county, path, timestamp){
   
   county = str_to_title(county) |> str_replace_all(" ", "_")
   download_path = glue("data/raw/{state}/{state}_{county}_{type}_raw_{timestamp}.zip")
@@ -883,8 +694,8 @@ get_clarity <- function(state, county, path, type, timestamp){
   )
   
   # run clarity scraper
-  source_python("scripts/clarity_scraper.py")
-  get_data(state, download_path)
+  source_python("scripts/util/clarity_scraper.py")
+  get_data_clarity(state, download_path)
   
   download_path |> str_replace("zip$", "csv")
   
