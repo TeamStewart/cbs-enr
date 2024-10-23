@@ -17,13 +17,15 @@ suppressPackageStartupMessages({
 source("scripts/functions.R")
 
 options(
-  readr.show_col_types = FALSE
+  readr.show_col_types = FALSE,
+  gargle_oauth_email = TRUE
 )
 
 tar_option_set(
   packages = c(
     # tar_renv()
-    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", "googledrive", "httr2", "rvest", "reticulate"
+    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", "googledrive", 
+    "httr2", "rvest", "reticulate", "sf"
   ),
   memory = "transient",
   format = "qs",
@@ -43,7 +45,7 @@ tar_config_set(
 # - model_swing: (boolean) whether to model swing for this county/state
 # - model_turnout: (boolean) whether to model turnout for this county/state
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
-metadata = get_gsheet(sheet = "metadata") |> select(-notes)
+metadata = get_gsheet(sheet = "metadata")
 
 # ========================================
 ## PIPELINE

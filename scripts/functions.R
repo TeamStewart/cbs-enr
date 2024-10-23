@@ -121,10 +121,10 @@ get_data <- function(state, county, timestamp, path = NULL) {
 
   # save latest version
   dir_create(glue("data/clean/{state}"))
-  write_csv(d, glue("data/clean/{state}/{state}_{county}_{ELECTION_TYPE}_latest.csv"))
+  write_csv(d, glue("data/clean/{state}/{state}_{county}_{ELECTION_DATE}_latest.csv"))
 
   # save timestamped version
-  write_csv(d, glue("data/clean/{state}/{state}_{county}_{ELECTION_TYPE}_{timestamp}.csv"))
+  write_csv(d, glue("data/clean/{state}/{state}_{county}_{ELECTION_DATE}_{timestamp}.csv"))
 
   return(d)
 }
