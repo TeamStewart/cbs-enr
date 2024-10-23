@@ -34,7 +34,7 @@ sf_use_s2(FALSE)
 
 top_contests_22 = tribble(
   ~state, ~office, ~candidate,
-  "GA", "US SENATE", "RAPHAEL WARNOCK"
+  "GA", "US SENATE"
 )
 
 reports = tibble(
@@ -43,40 +43,48 @@ reports = tibble(
 ) |> 
   arrange(timestamp)
 
+# current reported precinct-level data from Clarity
+# maybe for testing should switch this to 2022
 data24 = read_csv(reports$path[10]) |> 
   filter(race_name == "President-Democrat") |> 
-  select(state, county = jurisdiction, precinct_24 = precinct_id, candidate_name, vote_mode, precinct_total) |> 
+  select(state, county = jurisdiction, precinct_24 = precinct_id, candidate_name, vote_mode, votes_24 = precinct_total) |> 
   mutate(
-    precinct_votes = sum(precinct_total),
+    votes_precTotal_24 = sum(votes_24),
+    votePct_biden_24 = ifelse(
+      votes_precTotal_24 > 0, 
+      sum(votes_24 * str_detect(candidate_name, regex("Biden", ignore_case = TRUE))) / votes_precTotal_24, 
+      NA
+    ),
+    # votePct_biden_byMode_24 = ifelse(votes_precTotal_24 > 0, votes_24 / sum(votes_24), NA),
     .by = c(state, county, precinct_24)
   ) |> 
-  # mutate(
-  #   precinct_votes_byMode = sum(precinct_total),
-  #   .by = c(state, county, precinct_24, vote_mode)
-  # ) |> 
-  filter(str_detect(candidate_name, "Biden")) |> 
-  mutate(
-    precinct_pct = ifelse(precinct_votes > 0, sum(precinct_total) / precinct_votes, NA),
-    .by = c(state, county, precinct_24)
-  ) |> 
-  # mutate(
-  #   precinct_pct_byMode = ifelse(precinct_votes_byMode > 0, precinct_total / precinct_votes_byMode, NA),
-  #   .by = c(state, county, precinct_24, vote_mode)
-  # ) |> 
+  filter(str_detect(candidate_name, "Biden")) |>
+  select(-candidate_name) |> 
   mutate(
     county = str_to_upper(county)
   )
 
+# MEDSL 2022 precinct-level data
 data22 = read_csv("~/Dropbox (MIT)/Research/cbs-enr/data/input/GA/results_2022.csv") |> 
-  select(state = state_po, county = county_name, precinct_22 = precinct, office, candidate, mode, votes) |> 
-  inner_join(top_contests_22) |>
-  filter(mode != "TOTAL") |> 
+  filter(stage == "GEN") |> 
+  select(state = state_po, county = county_name, precinct_22 = precinct, office, candidate, mode, votes) |>
+  filter(office == "US SENATE", mode != "TOTAL") |> 
   mutate(
     votePct_byMode = votes / sum(votes, na.rm = TRUE),
-    .by = c(state, county, precinct_22)
+    .by = c(state, county, precinct_22, candidate)
   ) |> 
-  select(state, county, precinct_22, mode, votePct_byMode)
+  filter(candidate == "RAPHAEL WARNOCK") |> 
+  mutate(
+    mode = case_match(
+      mode,
+      "ADVANCED" ~ "Early Voting",
+      "ELECTION DAY" ~ "Election Day",
+      "ABSENTEE" ~ "Absentee/Mail",
+      "PROVISIONAL" ~ "Provisional"
+    )
+  )
 
+# 2020 shapefiles and results, from VEST data
 shp20 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga_2020/") |> 
   st_transform("NAD83") |>
   select(
@@ -91,10 +99,11 @@ shp20 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga_2020/") |>
   select(-C20PRERTRU:-C20PRELJOR) |> 
   st_make_valid()
 
+# 2022 shapefiles, from the GA legis reapportionment website
 shp22 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga-precincts2022-shape/") |> 
   select(county = COUNTY, precinct_22 = PRECINCT_N, geometry) |> 
   drop_na(county) |> 
-  mutate(precinct_22 = str_to_upper(precinct_22), state = "GA") |> 
+  mutate(precinct_22 = str_to_upper(precinct_22)) |> 
   mutate(precinct_22 = case_when(
     .default = precinct_22,
     county == "BARROW" ~ str_remove(precinct_22, "^0+"),
@@ -108,15 +117,15 @@ precinct_merge = intersection |>
   st_drop_geometry() |>
   drop_na(precinct_20, precinct_22) |> 
   mutate(weight = as.numeric(area / sum(area)), .by = c(county, precinct_22)) |> 
+  left_join(data22, by = join_by(county, precinct_22), relationship = "many-to-many") |> 
+  drop_na(votePct_byMode) |> 
   # weight percentages by merged precincts
   summarize(
     biden_20_byPrec = sum(biden_20_byPrec * weight),
     votes_20_byPrec = sum(votes_20_byPrec * weight),
-    .by = c(county, precinct_22)
-  ) |> 
-  select(state, county, precinct_22, biden_20_byPrec, votes_20_byPrec) |> 
-  left_join(data22, by = join_by(county, precinct_22), relationship = "many-to-many") |> 
-  drop_na(votePct_byMode)
+    votePct_byMode = sum(votePct_byMode * weight),
+    .by = c(state, county, precinct_22, mode)
+  )
   
 precincts_24 = distinct(data24, state, county, precinct_24)
 
@@ -137,26 +146,30 @@ match_fuzzy = jaccard_left_join(
 unmatched = anti_join(precincts_24, match_exact) |> anti_join(match_fuzzy)
 
 voteHist_byPrecinct = bind_rows(match_exact, match_fuzzy, unmatched)
+
 voteHist_byCounty = shp20 |> 
   st_drop_geometry() |> 
   summarise(
     biden_20_byCounty = weighted.mean(biden_20_byPrec, votes_20_byPrec),
     state = "GA",
-    .by = c(county)
-  ) |> 
-  arrange(county)
+    .by = county
+  )
 
 merged = data24 |> 
   filter(str_detect(candidate_name, "Biden")) |> 
-  left_join(voteHist_byPrecinct, join_by(state, county, precinct_24), relationship = "many-to-many") |> 
+  left_join(voteHist_byPrecinct, join_by(state, county, precinct_24, vote_mode == mode), relationship = "many-to-many") |> 
   left_join(voteHist_byCounty, join_by(state, county), relationship = "many-to-many") |> 
   mutate(
     reported_eday = max(vote_mode == "Election Day" & precinct_total > 0) == 1,
     .by = c(state, county, precinct_24)
     ) |> 
   mutate(
+    # determine the lower bound for this precinct on Biden's '20 vote %
+    # if for some reason we were not able to successfully merge data, this encodes the maximum uncertainty
     biden_20_lower = coalesce(biden_20_byPrec, biden_20_byCounty, 0),
+    # same for the upper bound
     biden_20_upper = coalesce(biden_20_byPrec, biden_20_byCounty, 1),
+    # compute the current swing
     swing_lower = precinct_pct - biden_20_lower,
     swing_upper = precinct_pct - biden_20_upper,
   ) |> 
