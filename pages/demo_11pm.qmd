@@ -1,0 +1,208 @@
+---
+title: "Georgia Demo -- '11pm'"
+date: ""
+author: 
+- Joseph R. Loffredo, Mason Reece, Charles Stewart III
+affiliation: Massachusetts Institute of Technology
+page-layout: full
+format:
+  html:
+    theme: cosmo
+    toc: false
+    echo: false
+    message: false
+    warning: false
+    cache: false
+---
+
+```{r}
+rm(list = ls())
+gc()
+
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(gt)
+  library(sf)
+  library(zoomerjoin)
+  library(reticulate)
+  library(httr2)
+  library(rvest)
+  library(glue)
+})
+
+sf_use_s2(FALSE)
+
+top_contests_22 = tribble(
+  ~state, ~office, ~candidate,
+  "GA", "US SENATE", "RAPHAEL WARNOCK"
+)
+
+reports = tibble(
+  path = list.files("~/Dropbox (MIT)/Research/2024 Election Results/primaries/data/clean/GA", pattern = "\\d+\\.csv", full.names = TRUE),
+  timestamp = path |> str_remove(fixed("/2024 Election Results/primaries/data/clean/GA/")) |> str_extract("\\d{4}.*?(\\d{2}(?:\\.csv))") |> str_remove(fixed(".csv")) |> ydm_hms(tz = "US/Eastern")
+) |> 
+  arrange(timestamp)
+
+data24 = read_csv(reports$path[10]) |> 
+  filter(race_name == "President-Democrat") |> 
+  select(state, county = jurisdiction, precinct_24 = precinct_id, candidate_name, vote_mode, precinct_total) |> 
+  mutate(
+    precinct_votes = sum(precinct_total),
+    .by = c(state, county, precinct_24)
+  ) |> 
+  # mutate(
+  #   precinct_votes_byMode = sum(precinct_total),
+  #   .by = c(state, county, precinct_24, vote_mode)
+  # ) |> 
+  filter(str_detect(candidate_name, "Biden")) |> 
+  mutate(
+    precinct_pct = ifelse(precinct_votes > 0, sum(precinct_total) / precinct_votes, NA),
+    .by = c(state, county, precinct_24)
+  ) |> 
+  # mutate(
+  #   precinct_pct_byMode = ifelse(precinct_votes_byMode > 0, precinct_total / precinct_votes_byMode, NA),
+  #   .by = c(state, county, precinct_24, vote_mode)
+  # ) |> 
+  mutate(
+    county = str_to_upper(county)
+  )
+
+data22 = read_csv("~/Dropbox (MIT)/Research/cbs-enr/data/input/GA/results_2022.csv") |> 
+  select(state = state_po, county = county_name, precinct_22 = precinct, office, candidate, mode, votes) |> 
+  inner_join(top_contests_22) |>
+  filter(mode != "TOTAL") |> 
+  mutate(
+    votePct_byMode = votes / sum(votes, na.rm = TRUE),
+    .by = c(state, county, precinct_22)
+  ) |> 
+  select(state, county, precinct_22, mode, votePct_byMode)
+
+shp20 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga_2020/") |> 
+  st_transform("NAD83") |>
+  select(
+    precinct_20 = PRECINCT_N, county = CTYNAME,
+    C20PRERTRU, C20PREDBID, C20PRELJOR
+  ) |> 
+  filter(!(C20PRERTRU + C20PREDBID + C20PRELJOR == 0)) |>
+  mutate(
+    biden_20_byPrec = C20PREDBID / (C20PRERTRU + C20PREDBID + C20PRELJOR),
+    votes_20_byPrec = C20PRERTRU + C20PREDBID + C20PRELJOR
+  ) |>
+  select(-C20PRERTRU:-C20PRELJOR) |> 
+  st_make_valid()
+
+shp22 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga-precincts2022-shape/") |> 
+  select(county = COUNTY, precinct_22 = PRECINCT_N, geometry) |> 
+  drop_na(county) |> 
+  mutate(precinct_22 = str_to_upper(precinct_22), state = "GA") |> 
+  mutate(precinct_22 = case_when(
+    .default = precinct_22,
+    county == "BARROW" ~ str_remove(precinct_22, "^0+"),
+    county == "SPALDING" ~ str_remove(precinct_22, "^0+")
+  ))
+
+intersection = st_intersection(shp22, shp20) |> filter(county == county.1)
+
+precinct_merge = intersection |> 
+  mutate(area = st_area(intersection) |> as.numeric()) |> 
+  st_drop_geometry() |>
+  drop_na(precinct_20, precinct_22) |> 
+  mutate(weight = as.numeric(area / sum(area)), .by = c(county, precinct_22)) |> 
+  # weight percentages by merged precincts
+  summarize(
+    biden_20_byPrec = sum(biden_20_byPrec * weight),
+    votes_20_byPrec = sum(votes_20_byPrec * weight),
+    .by = c(county, precinct_22)
+  ) |> 
+  select(state, county, precinct_22, biden_20_byPrec, votes_20_byPrec) |> 
+  left_join(data22, by = join_by(county, precinct_22), relationship = "many-to-many") |> 
+  drop_na(votePct_byMode)
+  
+precincts_24 = distinct(data24, state, county, precinct_24)
+
+match_exact = inner_join(precincts_24, precinct_merge, by = c("state", "county", "precinct_24" = "precinct_22"))
+
+match_fuzzy = jaccard_left_join(
+  anti_join(precincts_24, match_exact), precinct_merge,
+  by = c("precinct_24" = "precinct_22"),
+  block_by = c("state", "county"),
+  threshold = 0.75,
+  n_bands = 50, band_width = 8, n_gram_width = 5,
+  clean = TRUE, similarity_column = "similarity"
+) |> 
+  filter(similarity == max(similarity), .by = c(state.x, county.x, precinct_24)) |> 
+  select(state = state.x, county = county.x, precinct_24, biden_20_byPrec, votes_20_byPrec, votePct_byMode) |> 
+  arrange(state, county, precinct_24)
+
+unmatched = anti_join(precincts_24, match_exact) |> anti_join(match_fuzzy)
+
+voteHist_byPrecinct = bind_rows(match_exact, match_fuzzy, unmatched)
+voteHist_byCounty = shp20 |> 
+  st_drop_geometry() |> 
+  summarise(
+    biden_20_byCounty = weighted.mean(biden_20_byPrec, votes_20_byPrec),
+    state = "GA",
+    .by = c(county)
+  ) |> 
+  arrange(county)
+
+merged = data24 |> 
+  filter(str_detect(candidate_name, "Biden")) |> 
+  left_join(voteHist_byPrecinct, join_by(state, county, precinct_24), relationship = "many-to-many") |> 
+  left_join(voteHist_byCounty, join_by(state, county), relationship = "many-to-many") |> 
+  mutate(
+    reported_eday = max(vote_mode == "Election Day" & precinct_total > 0) == 1,
+    .by = c(state, county, precinct_24)
+    ) |> 
+  mutate(
+    biden_20_lower = coalesce(biden_20_byPrec, biden_20_byCounty, 0),
+    biden_20_upper = coalesce(biden_20_byPrec, biden_20_byCounty, 1),
+    swing_lower = precinct_pct - biden_20_lower,
+    swing_upper = precinct_pct - biden_20_upper,
+  ) |> 
+  select(-biden_20_byPrec, -biden_20_byCounty)
+
+reported = merged |> filter(reported_eday, vote_mode == "Election Day")
+max_swing = reported |> pull(swing_upper) |> max(na.rm = TRUE)
+min_swing = reported |> pull(swing_lower) |> min(na.rm = TRUE)
+
+imputed = merged |> 
+  mutate(
+    votes_lower = case_when(
+      reported_eday ~ precinct_total,
+      sum(precinct_total) == 0 ~ votes_20_byPrec * biden_20_lower
+    ),
+    votes_upper = case_when(
+      # if votes are reported, use those
+      precinct_total > 0 ~ precinct_total,
+      # when no votes have been reported for mail, early, or eday
+      sum(precinct_total) == 0 ~ votes_20_byPrec * biden_20_upper,
+      
+    ),
+    .by = c(state, county, precinct_24)
+  )
+
+```
+
+
+## Votes In?
+
+Number of precincts reporting
+Estimated % of total votes
+
+## Estimated Vote Share (Trump vs. Haley)
+
+<!-- point estimate and uncertainty bounds -->
+
+### Cumulative Plot of Estimated Vote Share
+
+### Cumulative Plot of Swing
+
+## Estimated Turnout
+
+### Cumulative Plot of Estimated Vote Share
+
+## County-level Results
+
+full table of current county-level results and where we are missing
+
