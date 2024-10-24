@@ -1,5 +1,5 @@
 ---
-title: "Georgia Demo -- '11pm'"
+title: "Georgia 2022 Demo -- The Report at '11pm'"
 date: ""
 author: 
 - Joseph R. Loffredo, Mason Reece, Charles Stewart III
@@ -28,61 +28,129 @@ suppressPackageStartupMessages({
   library(httr2)
   library(rvest)
   library(glue)
+  library(fs)
 })
 
 sf_use_s2(FALSE)
 
-top_contests_22 = tribble(
-  ~state, ~office, ~candidate,
-  "GA", "US SENATE"
-)
+```
 
-reports = tibble(
-  path = list.files("~/Dropbox (MIT)/Research/2024 Election Results/primaries/data/clean/GA", pattern = "\\d+\\.csv", full.names = TRUE),
-  timestamp = path |> str_remove(fixed("/2024 Election Results/primaries/data/clean/GA/")) |> str_extract("\\d{4}.*?(\\d{2}(?:\\.csv))") |> str_remove(fixed(".csv")) |> ydm_hms(tz = "US/Eastern")
-) |> 
-  arrange(timestamp)
+```{r}
+#| eval: false
+#| echo: false
 
-# current reported precinct-level data from Clarity
-# maybe for testing should switch this to 2022
-data24 = read_csv(reports$path[10]) |> 
-  filter(race_name == "President-Democrat") |> 
-  select(state, county = jurisdiction, precinct_24 = precinct_id, candidate_name, vote_mode, votes_24 = precinct_total) |> 
+counties = request(glue("https://results.enr.clarityelections.com/GA/115465/314082/json/en/electionsettings.json")) |> 
+  req_headers("Accept" = "application/json") |> 
+  req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+  req_retry(max_tries = 5) |> 
+  req_perform() |> 
+  resp_body_json() |> 
+  pluck("settings", "electiondetails", "participatingcounties") |> 
+  as_tibble_col() |> 
+  unnest(cols = value) |> 
+  separate_wider_delim(cols = value, delim = "|", names = c("county", "sitenum", "version", "timestamp", "unknown")) |> 
+  mutate(county_url = glue("https://results.enr.clarityelections.com/GA/{county}/{sitenum}/current_ver.txt")) |> 
+  mutate(version = map_chr(county_url, ~ request(.x) |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_perform() |> 
+      resp_body_string()
+  )) |> 
+  mutate(url = glue("https://results.enr.clarityelections.com/GA/{county}/{sitenum}/{version}/json/en/electionsettings.json")) |> 
+  select(county, sitenum, timestamp, url) |> 
   mutate(
-    votes_precTotal_24 = sum(votes_24),
-    votePct_biden_24 = ifelse(
-      votes_precTotal_24 > 0, 
-      sum(votes_24 * str_detect(candidate_name, regex("Biden", ignore_case = TRUE))) / votes_precTotal_24, 
+    version = map(url, ~ request(.x) |> 
+        req_headers("Accept" = "application/json") |> 
+        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+        req_retry(max_tries = 5) |> 
+        req_perform() |> 
+        resp_body_json() |> 
+        pluck("versions")
+      )
+  ) |> 
+  unnest_longer(col = version) |> 
+  mutate(url = glue("https://results.enr.clarityelections.com/GA/{county}/{sitenum}/{version}/reports/detailxml.zip"))
+
+download_file <- function(url, version){
+  tryCatch(
+    request(url) |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
+      req_retry(max_tries = 5) |> 
+      req_perform(path = str_c("data/raw/GA/", str_extract(url, "(GA/)(.*?)(/)", group = 2), "_", version, ".zip")),
+    httr2_http_404 = function(cnd) NULL
+  )
+}
+
+map2(counties$url, counties$version, download_file)
+
+source_python("scripts/util/clarity_scraper.py")
+
+counties |> 
+  mutate(
+    local = glue("data/raw/GA/{county}_{version}.zip")
+  ) |> 
+  pull(local) |> 
+  walk(.f = \(x) get_data_clarity("GA", x))
+
+list.files("data/raw/GA", pattern = "*.csv", full.names = TRUE) |> 
+  lapply(fread) |> 
+  rbindlist(use.names = TRUE) |> 
+  transform(
+    state = "GA"
+  ) |> 
+  fwrite("~/Dropbox (MIT)/Research/2024 Election Results/22_general/GA_allReports.csv")
+
+```
+
+
+```{r}
+
+dem_candidate_regex = regex("Warnock|\\(Dem\\)", ignore_case = TRUE)
+
+# reported precinct-level data from Clarity in 2022 at 11pm
+data22 = read_csv("~/Dropbox (MIT)/Research/2024 Election Results/22_general/GA_allReports.csv") |> 
+  filter(str_detect(race_name, "US Senate"), timestamp <= ymd_hm("2022-11-09 4:00am")) |> 
+  filter(timestamp == max(timestamp), .by = c(state, jurisdiction, precinct_id)) |> 
+  select(state, county = jurisdiction, precinct_22 = precinct_id, candidate_name, vote_mode, votes_22 = precinct_total, timestamp) |> 
+  mutate(
+    candidate_name = case_when(
+      str_detect(vote_mode, fixed("Undervote", ignore_case=TRUE)) ~ "Undervote",
+      str_detect(vote_mode, fixed("Overvote", ignore_case=TRUE)) ~ "Overvote",
+      .default = candidate_name
+    ),
+    votes_precTotal_22 = sum(votes_22),
+    votePct_dem_22 = ifelse(
+      votes_precTotal_22 > 0, 
+      sum(votes_22 * str_detect(candidate_name, dem_candidate_regex)) / votes_precTotal_22, 
       NA
     ),
-    # votePct_biden_byMode_24 = ifelse(votes_precTotal_24 > 0, votes_24 / sum(votes_24), NA),
-    .by = c(state, county, precinct_24)
+    .by = c(state, county, precinct_22)
   ) |> 
-  filter(str_detect(candidate_name, "Biden")) |>
+  filter(str_detect(candidate_name, dem_candidate_regex)) |>
   select(-candidate_name) |> 
   mutate(
-    county = str_to_upper(county)
+    county = str_to_upper(county),
+    precinct_22 = str_to_upper(precinct_22)
   )
 
 # MEDSL 2022 precinct-level data
-data22 = read_csv("~/Dropbox (MIT)/Research/cbs-enr/data/input/GA/results_2022.csv") |> 
-  filter(stage == "GEN") |> 
-  select(state = state_po, county = county_name, precinct_22 = precinct, office, candidate, mode, votes) |>
-  filter(office == "US SENATE", mode != "TOTAL") |> 
-  mutate(
-    votePct_byMode = votes / sum(votes, na.rm = TRUE),
-    .by = c(state, county, precinct_22, candidate)
-  ) |> 
-  filter(candidate == "RAPHAEL WARNOCK") |> 
-  mutate(
-    mode = case_match(
-      mode,
-      "ADVANCED" ~ "Early Voting",
-      "ELECTION DAY" ~ "Election Day",
-      "ABSENTEE" ~ "Absentee/Mail",
-      "PROVISIONAL" ~ "Provisional"
-    )
-  )
+# data22 = read_csv("~/Dropbox (MIT)/Research/cbs-enr/data/input/GA/results_2022.csv") |> 
+#   filter(stage == "GEN") |> 
+#   select(state = state_po, county = county_name, precinct_22 = precinct, office, candidate, mode, votes) |>
+#   filter(office == "US SENATE", mode != "TOTAL") |> 
+#   mutate(
+#     votePct_byMode = votes / sum(votes, na.rm = TRUE),
+#     .by = c(state, county, precinct_22, candidate)
+#   ) |> 
+#   filter(candidate == "RAPHAEL WARNOCK") |> 
+#   mutate(
+#     mode = case_match(
+#       mode,
+#       "ADVANCED" ~ "Early Voting",
+#       "ELECTION DAY" ~ "Election Day",
+#       "ABSENTEE" ~ "Absentee/Mail",
+#       "PROVISIONAL" ~ "Provisional"
+#     )
+#   )
 
 # 2020 shapefiles and results, from VEST data
 shp20 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga_2020/") |> 
@@ -93,8 +161,8 @@ shp20 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga_2020/") |>
   ) |> 
   filter(!(C20PRERTRU + C20PREDBID + C20PRELJOR == 0)) |>
   mutate(
-    biden_20_byPrec = C20PREDBID / (C20PRERTRU + C20PREDBID + C20PRELJOR),
-    votes_20_byPrec = C20PRERTRU + C20PREDBID + C20PRELJOR
+    votePct_dem_20 = C20PREDBID / (C20PRERTRU + C20PREDBID + C20PRELJOR),
+    votes_precTotal_20 = C20PRERTRU + C20PREDBID + C20PRELJOR
   ) |>
   select(-C20PRERTRU:-C20PRELJOR) |> 
   st_make_valid()
@@ -117,15 +185,15 @@ precinct_merge = intersection |>
   st_drop_geometry() |>
   drop_na(precinct_20, precinct_22) |> 
   mutate(weight = as.numeric(area / sum(area)), .by = c(county, precinct_22)) |> 
-  left_join(data22, by = join_by(county, precinct_22), relationship = "many-to-many") |> 
-  drop_na(votePct_byMode) |> 
   # weight percentages by merged precincts
   summarize(
-    biden_20_byPrec = sum(biden_20_byPrec * weight),
-    votes_20_byPrec = sum(votes_20_byPrec * weight),
-    votePct_byMode = sum(votePct_byMode * weight),
-    .by = c(state, county, precinct_22, mode)
-  )
+    votePct_dem_20 = sum(votePct_dem_20 * weight),
+    votes_precTotal_20 = sum(votes_precTotal_20 * weight),
+    .by = c(county, precinct_22)
+  ) |> 
+  left_join(data22, by = join_by(county, precinct_22), relationship = "many-to-many")
+
+### Mason stopped here on 10/23, was updating to use 2022 live reports
   
 precincts_24 = distinct(data24, state, county, precinct_24)
 
@@ -138,9 +206,9 @@ match_fuzzy = jaccard_left_join(
   threshold = 0.75,
   n_bands = 50, band_width = 8, n_gram_width = 5,
   clean = TRUE, similarity_column = "similarity"
-) |> 
-  filter(similarity == max(similarity), .by = c(state.x, county.x, precinct_24)) |> 
-  select(state = state.x, county = county.x, precinct_24, biden_20_byPrec, votes_20_byPrec, votePct_byMode) |> 
+) |>
+  filter(similarity == max(similarity), .by = c(state.x, county.x, precinct_24)) |>
+  select(state = state.x, county = county.x, precinct_24, biden_20_byPrec, votes_20_byPrec, votePct_byMode) |>
   arrange(state, county, precinct_24)
 
 unmatched = anti_join(precincts_24, match_exact) |> anti_join(match_fuzzy)
