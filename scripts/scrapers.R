@@ -248,7 +248,7 @@ scrape_nc <- function(state, county, path, timestamp) {
     # Filter to target contests: President, Governor
     filter(contest_name %in% c('US PRESIDENT', 'NC GOVERNOR')) |>
     mutate(
-      timestamp = timestamp,
+      timestamp = timestamp |> ymd_hms(tz = "America/New_York"),
       state = "NC",
       # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
       contest_name = case_match(
@@ -296,7 +296,7 @@ scrape_nc <- function(state, county, path, timestamp) {
       precinct_id = precinct
     ) |>
     select(
-      state, race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, election_day:provisional
+      state, race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, election_day:provisional, timestamp
     ) |>
     pivot_longer(cols = election_day:provisional, names_to = "vote_mode", values_to = "precinct_total") |>
     mutate(
