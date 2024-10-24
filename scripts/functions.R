@@ -46,8 +46,6 @@ get_timestamp <- function(state, county, path) {
         mdy_hms(tz = "America/Phoenix") |>
         with_tz(tzone = "America/New_York") |>
         str_replace_all("-|:| ", "_")
-    } else if (county == "PINAL") {
-      clarity_timestamp()
     } else if (county == "PIMA") {
       Sys.time() |>
         str_extract("\\d{4}-\\d{2}-\\d{2} \\d{1,2}:\\d{2}:\\d{2}") |>
@@ -55,21 +53,8 @@ get_timestamp <- function(state, county, path) {
     }
   }
 
-  fl_timestamp <- function() {
-    if (county %in% c("MARTIN", "PINELLAS")) {
-      clarity_timestamp()
-    } else {
-      read_html(path) |>
-        html_element("#LastUpdated") |>
-        html_text2() |>
-        str_extract("\\d{2}/\\d{2}/\\d{4} \\d{1,2}:\\d{2}:\\d{2} [ap]m") |>
-        mdy_hms(tz = "America/New_York") |>
-        str_replace_all("-|:| ", "_")
-    }
-  }
-
   nc_timestamp <- function() {
-    read_xml("https://s3.amazonaws.com/dl.ncsbe.gov?delimiter=/&prefix=ENRS/2024_03_05/") |>
+    read_xml("https://s3.amazonaws.com/dl.ncsbe.gov?delimiter=/&prefix=ENRS/2024_11_05/") |>
       xml2::as_list() |>
       pluck("ListBucketResult", function(x) x[names(x) == "Contents"]) |>
       map(
@@ -79,7 +64,7 @@ get_timestamp <- function(state, county, path) {
         )
       ) |>
       list_rbind() |>
-      filter(Key == "ENRS/2024_03_05/results_pct_20240305.zip") |>
+      filter(Key == "ENRS/2024_11_05/results_pct_20241105.zip") |>
       pull(LastModified) |>
       ymd_hms(tz = "America/New_York") |>
       str_replace_all("-|:| ", "_")

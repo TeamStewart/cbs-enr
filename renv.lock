@@ -9,9 +9,9 @@
     ]
   },
   "Python": {
-    "Version": "3.10.12",
+    "Version": "3.9.6",
     "Type": "virtualenv",
-    "Name": "./renv/python/virtualenvs/renv-python-3.10"
+    "Name": "./renv/python/virtualenvs/renv-python-3.9"
   },
   "Packages": {
     "DBI": {
