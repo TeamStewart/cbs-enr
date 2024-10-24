@@ -38,7 +38,7 @@ get_timestamp <- function(state, county, path) {
   }
 
   az_timestamp <- function() {
-    if (county == "MARICOPA") {
+    if (county == "Maricopa") {
       read_html("https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch") |>
         html_element(":nth-child(8) small") |>
         html_text2() |>

@@ -12,77 +12,96 @@ library(xml2)
 
 #renv::use_python()
 
-state = 'NC'
-county = NA
-path = 'http://dl.ncsbe.gov/ENRS/2024_11_05/results_pct_20241105.zip'
-timestamp = nc_timestamp()
+state = 'AZ'
+county = 'Maricopa'
+path = 'https://elections.maricopa.gov/results-and-data/election-results.html'
+timestamp = az_timestamp()
 
-test = fread(cmd = glue("unzip -p {raw_file_path}")) |>
-  # Clean raw file variable names
-  clean_names() |>
+path <- read_html(path) |>
+  html_nodes(xpath = "//a[contains(text(), '2024 November General Election Results.txt')]") |>
+  html_attr('href')
+
+path <- str_c('https://elections.maricopa.gov',path)
+
+# Download file
+source_python("scripts/util/dynamic_download.py")
+get_file(path, county, state)
+
+# Rename raw file to include identifiers and timestamp
+## Get list of raw files
+files <- list.files(path = "data/raw/AZ", full.names = TRUE)
+## Get file info and sort by modification time in descending order
+most_recent_file <- files[order(file.info(files)$mtime, decreasing = TRUE)][1]
+## Rename file
+raw_file_path = glue('data/raw/AZ/az_maricopa_{timestamp}.txt')
+file.rename(most_recent_file, raw_file_path)
+
+cleaned <- fread(raw_file_path, header = TRUE, sep = "\t", quote = "") |>
+  # clean column names
+  clean_names() |> 
   # Filter to target contests: President, Governor
-  filter(contest_name %in% c('US PRESIDENT', 'NC GOVERNOR')) |>
+  filter(contest_name %in% c('Presidential Electors', 'US Senate')) |>
+  # recode variables
   mutate(
-    timestamp = timestamp,
-    state = "NC",
+    timestamp = timestamp |> ymd_hms(tz = "America/New_York"),
+    state = 'AZ',
+    county = 'Maricopa',
     # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
     contest_name = case_match(
       contest_name,
-      "US PRESIDENT" ~ "President",
-      "NC GOVERNOR" ~ "Governor"), 
-      # Recode candidate party: Democrat, Republican, Libertarian, Constitution, Green, Independent, Justice for All
-      choice_party = case_match(
-        choice_party,
-        "DEM" ~ "Democrat",
-        "REP" ~ "Republican",
-        "LIB" ~ "Libertarian",
-        "CST" ~ "Constitution",
-        "GRE" ~ "Green",
-        "UNA" ~ "Independent",
-        "JFA" ~ "Justice for All",
-        .default = "Other"),
-    # Recode candidate names
-    choice = case_match(
-      choice,
-      # NC presidential candidates
-      "Chase Oliver" ~ "Chase Oliver",
-      "Cornel West" ~ "Cornel West",
-      "Donald J. Trump" ~ "Donald Trump",
-      "Jill Stein" ~ "Jill Stein",
-      "Kamala D. Harris" ~ "Kamala Harris",
-      "Randall Terry" ~ "Randall Terry",
-      "Write-In (Miscellaneous)" ~ "Write-In",
-      # NC gubernatorial candidates
-      "Josh Stein" ~ "Josh Stein",
-      "Mark Robinson" ~ "Mark Robinson",
-      "Mike Ross" ~ "Mike Ross",
-      "Vinny Smith" ~ "Vinny Smith",
-      "Wayne Turner" ~ "Wayne Turner"
-      ), 
-    # Create virtual precinct column: real == TRUE, administrative == FALSE
-    virtual_precinct = (real_precinct == "N")
-  ) |>
-  rename(
-    race_id = contest_group_id,
-    race_name = contest_name,
-    candidate_name = choice,
-    candidate_party = choice_party,
-    jurisdiction = county,
-    precinct_id = precinct
-  ) |>
-  select(
-    state, race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, election_day:provisional
-  ) |>
-  pivot_longer(cols = election_day:provisional, names_to = "vote_mode", values_to = "precinct_total") |>
-  mutate(
-    # Specify vote modes: Election Day, Provisional, Absentee/Mail, Early Voting, Other
-    vote_mode = case_match(
-      vote_mode,
-      "election_day" ~ "Election Day",
-      "early_voting" ~ "Early Voting",
-      "absentee_by_mail" ~ "Absentee/Mail",
-      "provisional" ~ "Provisional",
+      "Presidential Electors" ~ "President",
+      "US Senate" ~ "Senate"),
+    # Recode candidate party: Democrat, Republican, Libertarian, Constitution, Green, Independent, Justice for All
+    candidate_affiliation = case_match(
+      candidate_affiliation,
+      "DEM" ~ "Democrat",
+      "REP" ~ "Republican",
+      "LBT" ~ "Libertarian",
+      "GRN" ~ "Green",
       .default = "Other"
-    )
+    ),
+    # Recode candidate names
+    candidate_name = case_match(
+      candidate_name,
+      # AZ presidential candidates
+      "OLIVER / TER MAAT" ~ "Chase Oliver",
+      "TRUMP / VANCE" ~ "Donald Trump",
+      "STEIN / WARE" ~ "Jill Stein",
+      "HARRIS / WALZ" ~ "Kamala Harris",
+      "Write-in" ~ "Write-ins",
+      # AZ senate candidates
+      "GALLEGO, RUBEN" ~ "Ruben Gallego",
+      "LAKE, KARI" ~ "Kari Lake",
+      "QUINTANA, EDUARDO" ~ "Eduardo Quintana",
+    ), 
+    virtual_precinct = FALSE,
   ) |>
+  pivot_longer(cols = c(starts_with("votes_"), "undervotes","overvotes"), 
+               names_to = "vote_mode", 
+               values_to = "precinct_total") |>
+  # Remove the "votes_" prefix from the vote_mode values
+  mutate(vote_mode = str_replace(vote_mode, "votes_", "")) |>
+  select(
+    state, race_id = contest_id, race_name = contest_name , candidate_name,
+    candidate_party = candidate_affiliation, jurisdiction = county, precinct_id = precinct_name, 
+    virtual_precinct, timestamp, vote_mode, precinct_total)
+
+# Produce precinct-level under/overvote totals
+over_under <- cleaned |>
+  filter(vote_mode %in% c("undervotes", "overvotes")) |>
+  mutate(
+    candidate_name = ifelse(vote_mode == "undervotes", "Undervotes", "Overvotes"),
+    candidate_party = "",
+    vote_mode = "Overvote/Undervote") |>
+  summarise(
+    precinct_total = sum(precinct_total, na.rm = T), 
+    .by = c("state","race_id","race_name","candidate_name","candidate_party","jurisdiction","precinct_id","virtual_precinct","timestamp","vote_mode"))
+
+# Combine cleaned data with over/undervote totals
+cleaned |>
+  filter(!vote_mode %in% c("undervotes", "overvotes")) |>
+  bind_rows(over_under) |>
   arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
+  
+  
+  
