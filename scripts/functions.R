@@ -52,6 +52,21 @@ get_timestamp <- function(state, county, path) {
         str_replace_all("-|:| ", "_")
     }
   }
+  
+  ga_timestamp <- function(){
+    read_html("https://app.enhancedvoting.com/results/public/api/elections/Georgia/2024NovGen") |>
+      html_text() |>
+      fromJSON() |>
+      pluck("lastUpdated") |>
+      ymd_hms() |>
+      floor_date(unit = "second") |>
+      with_tz(tzone = "America/New_York") |>
+      str_replace_all("-|:| ", "_")
+  }
+  
+  mi_timestamp <- function(){
+    if(county == "Oakland"){clarity_timestamp()}
+  }
 
   nc_timestamp <- function() {
     read_xml("https://s3.amazonaws.com/dl.ncsbe.gov?delimiter=/&prefix=ENRS/2024_11_05/") |>
@@ -84,8 +99,8 @@ get_timestamp <- function(state, county, path) {
 
   switch(state,
     "AZ" = az_timestamp(),
-    "GA" = clarity_timestamp(),
-    "FL" = fl_timestamp(),
+    "GA" = ga_timestamp(),
+    "MI" = mi_timestamp(),
     "NC" = nc_timestamp(),
     "PA" = pa_timestamp(),
   )
