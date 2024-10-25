@@ -99,17 +99,22 @@ get_data <- function(state, county, timestamp, path = NULL) {
   d <- switch(state,
     "AZ" = scrape_az(state, county, path, timestamp),
     "GA" = scrape_ga(state, county, path, timestamp),
-    "FL" = scrape_fl(state, county, path, timestamp),
+    "MI" = scrape_mi(state, county, path, timestamp),
     "NC" = scrape_nc(state, county, path, timestamp),
     "PA" = scrape_pa(state, county, path, timestamp),
   )
 
-  # save latest version
   dir_create(glue("data/clean/{state}"))
-  write_csv(d, glue("data/clean/{state}/{state}_{county}_{ELECTION_DATE}_latest.csv"))
-
-  # save timestamped version
-  write_csv(d, glue("data/clean/{state}/{state}_{county}_{ELECTION_DATE}_{timestamp}.csv"))
+  if(state %in% c('MI')){
+    # save latest version; timestamped version already saved
+    write_csv(d, glue("data/clean/{state}/{state}_{county}_{ELECTION_DATE}_latest.csv"))
+  } else{
+    # save latest version
+    write_csv(d, glue("data/clean/{state}/{state}_{county}_{ELECTION_DATE}_latest.csv"))
+    # save timestamped version
+    write_csv(d, glue("data/clean/{state}/{state}_{county}_{ELECTION_DATE}_{timestamp}.csv"))
+  }
+  
 
   return(d)
 }

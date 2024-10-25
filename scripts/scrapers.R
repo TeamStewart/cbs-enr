@@ -77,7 +77,7 @@ scrape_az <- function(state, county, path, timestamp){
       filter(vote_mode %in% c("undervotes", "overvotes")) |>
       mutate(
         candidate_name = ifelse(vote_mode == "undervotes", "Undervotes", "Overvotes"),
-        candidate_party = "",
+        candidate_party = NA,
         vote_mode = "Overvote/Undervote") |>
       summarise(
         precinct_total = sum(precinct_total, na.rm = T), 
@@ -291,7 +291,93 @@ scrape_nc <- function(state, county, path, timestamp) {
 
 ## Michigan
 scrape_mi <- function(state, county, path, timestamp){
+  if(county == 'Oakland'){
+    # Download Clarity files
+    get_clarity(state, county, path)
+    
+    # Build list of Clarity files
+    raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    
+    clean_oakland_mi <- function(file){
+      cleaned <- read_csv(file) |>
+        filter(race_name == "Electors of President and Vice-President of the United States") |>
+        mutate(
+          timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+          state = "MI",
+          jurisdiction = "Oakland",
+          # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
+          race_name = case_match(
+            race_name,
+            "Electors of President and Vice-President of the United States" ~ "President"), 
+          # Recode candidate party: Democrat, Republican, Libertarian, US Taxpayers, Green, Natural Law, Justice for All
+          candidate_party = case_match(
+            candidate_party,
+            "DEM" ~ "Democrat",
+            "REP" ~ "Republican",
+            "LIB" ~ "Libertarian",
+            "UST" ~ "US Taxpayers",
+            "GRN" ~ "Green",
+            "NL" ~ "Natural Law",
+            .default = "Other"),
+          # Recode candidate names
+          candidate_name = case_match(
+            candidate_name,
+            # Oakland, MI presidential candidates
+            "Chase Oliver/Mike ter Maat" ~ "Chase Oliver",
+            "Cornel West/Melina Abdullah" ~ "Cornel West",
+            "Donald J. Trump/J. D. Vance" ~ "Donald Trump",
+            "Jill Stein/Rudolph Ware" ~ "Jill Stein",
+            "Kamala D. Harris/Tim Walz" ~ "Kamala Harris",
+            "Randall Terry/Stephen E. Broden" ~ "Randall Terry",
+            "Joseph Kishore/Jerry White" ~ "Joseph Kishore",
+            "Rejected write-ins" ~ "Write-ins",
+            "Unassigned write-ins" ~ "Write-ins",
+          ), 
+          # Create virtual precinct column: real == TRUE, administrative == FALSE
+          virtual_precinct = F,
+          # Deal with under/overvotes
+          candidate_name = case_when(
+            vote_mode == "Undervotes" ~ "Undervotes",
+            vote_mode == "Overvotes" ~ "Overvotes",
+            TRUE ~ candidate_name
+          ),
+          candidate_party = ifelse(vote_mode %in% c("Undervotes", "Overvotes"), NA_character_, candidate_party),
+          vote_mode = ifelse(vote_mode %in% c("Undervotes", "Overvotes"), "Overvote/Undervote", vote_mode)
+        ) |>
+        mutate(
+          # Specify vote modes: Election Day, Provisional, Absentee/Mail, Early Voting, Other
+          vote_mode = case_match(
+            vote_mode,
+            "Election" ~ "Election Day",
+            "Absentee - Local" ~ "Absentee/Mail",
+            "Absentee - County" ~ "Absentee/Mail",
+            "Early Voting - Regional" ~ "Early Voting",
+            "Early Voting - Central" ~ "Early Voting",
+            .default = "Other"
+          )
+        ) |>
+        summarise(
+          precinct_total = sum(precinct_total, na.rm = T),
+          .by = c("state","race_id","race_name","candidate_name","candidate_party","jurisdiction","precinct_id","virtual_precinct","timestamp","vote_mode")) |>
+        arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
+      
+      file_timestamp <- cleaned |> pull(timestamp) |> unique() |> max() |> str_replace_all("-|:| ", "_")
+      
+      write_csv(cleaned, file = glue("data/clean/{state}/{county}_{file_timestamp}.csv"))
+    }
+    
+    cleaned_files <- lapply(raw_files, clean_oakland_mi)
+    
+    # Return latest timestamped version
+    return(read_csv(list.files(path = glue("data/clean/{state}"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
+  }
   
+  
+  # Build list of Clarity files
+  
+  # Function to clean Clarity files
+  
+  # ifelse for Oakland vs. Macomb
 }
 
 ## Pennsylvania
@@ -398,9 +484,7 @@ scrape_pa <- function(state, county, path, timestamp){
 }
 
 ## generic function to get clarity files
-get_clarity <- function(state, county, path, timestamp){
-  # Create directory for raw files
-  dir_create(glue("data/raw/{state}"))
+get_clarity <- function(state, county, path){
   
   if(is.na(county)){
     # Statewide clarity site
