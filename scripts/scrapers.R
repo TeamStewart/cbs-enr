@@ -170,67 +170,6 @@ scrape_az <- function(state, county, path, timestamp){
 ## Georgia
 scrape_ga <- function(state, county, path, timestamp){
   
-  get_counties <- function(){
-    
-    version <- request(glue("https://results.enr.clarityelections.com/{state}/{path}/current_ver.txt")) |> 
-      req_headers("Accept" = "application/txt") |> 
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-      req_retry(max_tries = 5) |> 
-      req_perform() |> 
-      resp_body_string()
-    
-    if (file.exists("data/input/GA/county_versions.csv")) {
-      counties <- read_csv("data/input/GA/county_versions.csv", col_types = "cccc", show_col_types = FALSE)
-    } else {
-      counties <- tibble(county = "", version = "")
-    }
-    
-    cntys <- request(glue("https://results.enr.clarityelections.com/GA/{path}/{version}/json/en/electionsettings.json")) |> 
-      req_headers("Accept" = "application/json") |> 
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-      req_retry(max_tries = 5) |> 
-      req_perform() |> 
-      resp_body_json() |>
-      pluck("settings", "electiondetails", "participatingcounties") |> 
-      as_tibble_col() |> 
-      unnest(cols = value) |> 
-      separate_wider_delim(cols = value, delim = "|", names = c("county", "sitenum", "version", "timestamp", "unknown")) |> 
-      mutate(county_url = glue("https://results.enr.clarityelections.com/GA/{county}/{sitenum}/current_ver.txt")) |> 
-      mutate(version = map_chr(county_url, ~ request(.x) |> 
-          req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-          req_perform() |> 
-          resp_body_string()
-      )) |> 
-      mutate(url = glue("https://results.enr.clarityelections.com/GA/{county}/{sitenum}/{version}/reports/detailxml.zip")) |> 
-      select(county, version, timestamp, url)
-    
-    # update the version file with the latest versions
-    write_csv(cntys, "data/input/GA/county_versions.csv")
-    
-    # don't update counties where we already have the latest version
-    anti_join(cntys, counties, join_by(county, version))
-    
-  }
-  
-  counties <- get_counties() |> mutate(local = str_c("data/raw/GA/", county, ".zip"))
-  # counties <- read_csv("data/input/GA/county_versions.csv") |> mutate(local = str_c("data/raw/GA/", county, ".zip"))
-  
-  download_file <- function(url){
-    tryCatch(
-      request(url) |> 
-        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
-        req_retry(max_tries = 5) |> 
-        req_perform(path = str_c("data/raw/ga/", str_extract(url, "(GA/)(.*?)(/)", group = 2), ".zip")),
-      httr2_http_404 = function(cnd) NULL
-    )
-  }
-  
-  map(counties$url, download_file)
-  
-  source_python("scripts/util/clarity_scraper.py")
-  
-  pull(counties, local) |> walk(.f = \(x) get_data_clarity(state, x))
-  
   list.files("data/raw/GA", pattern = "*.csv", full.names = TRUE) |> 
     lapply(fread) |> 
     rbindlist(use.names = TRUE) |> 
@@ -350,6 +289,11 @@ scrape_nc <- function(state, county, path, timestamp) {
     arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
 }
 
+## Michigan
+scrape_mi <- function(state, county, path, timestamp){
+  
+}
+
 ## Pennsylvania
 scrape_pa <- function(state, county, path, timestamp){
   
@@ -455,34 +399,132 @@ scrape_pa <- function(state, county, path, timestamp){
 
 ## generic function to get clarity files
 get_clarity <- function(state, county, path, timestamp){
-  
-  county = str_to_title(county) |> str_replace_all(" ", "_")
-  download_path = glue("data/raw/{state}/{state}_{county}_raw_{timestamp}.zip")
-  
+  # Create directory for raw files
   dir_create(glue("data/raw/{state}"))
   
-  # get the latest version number of the file
-  version = request(glue("https://results.enr.clarityelections.com/{state}/{county}/{path}/current_ver.txt")) |> 
-    req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
-    req_perform() |> 
-    resp_body_string()
-  
-  # build the url
-  url = glue("https://results.enr.clarityelections.com/{state}/{county}/{path}/{version}/reports/detailxml.zip")
-  
-  # try to download the file
-  tryCatch(
-    request(url) |> 
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
+  if(is.na(county)){
+    # Statewide clarity site
+    version <- request(glue("https://results.enr.clarityelections.com/{state}/{path}/current_ver.txt")) |> 
+      req_headers("Accept" = "application/txt") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
       req_retry(max_tries = 5) |> 
-      req_perform(path = download_path),
-    httr2_http_404 = function(cnd) NULL
-  )
-  
-  # run clarity scraper
-  source_python("scripts/util/clarity_scraper.py")
-  get_data_clarity(state, download_path)
-  
-  download_path |> str_replace("zip$", "csv")
+      req_perform() |> 
+      resp_body_string()
+    
+    counties <- request(glue("https://results.enr.clarityelections.com/{state}/{path}/{version}/json/en/electionsettings.json")) |> 
+      req_headers("Accept" = "application/json") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_retry(max_tries = 5) |> 
+      req_perform() |> 
+      resp_body_json() |> 
+      pluck("settings", "electiondetails", "participatingcounties") |> 
+      as_tibble_col() |> 
+      unnest(cols = value) |> 
+      separate_wider_delim(cols = value, delim = "|", names = c("county", "sitenum", "version", "timestamp", "unknown")) |> 
+      mutate(county_url = glue("https://results.enr.clarityelections.com/{state}/{county}/{sitenum}/current_ver.txt")) |> 
+      mutate(version = map_chr(county_url, ~ request(.x) |> 
+                                 req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+                                 req_perform() |> 
+                                 resp_body_string()
+      )) |> 
+      mutate(url = glue("https://results.enr.clarityelections.com/{state}/{county}/{sitenum}/{version}/json/en/electionsettings.json")) |> 
+      select(county, sitenum, timestamp, url) |> 
+      mutate(
+        version = map(url, ~ request(.x) |> 
+                        req_headers("Accept" = "application/json") |> 
+                        req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+                        req_retry(max_tries = 5) |> 
+                        req_perform() |> 
+                        resp_body_json() |> 
+                        pluck("versions")
+        )
+      ) |> 
+      unnest_longer(col = version) |> 
+      mutate(
+        url = glue("https://results.enr.clarityelections.com/{state}/{county}/{sitenum}/{version}/reports/detailxml.zip"),
+        raw_file_path = glue("data/raw/{state}/{county}_{version}.zip"))
+    
+    download_file <- function(url, version) {
+      tryCatch(
+        # Send the request to download the file
+        request(url) |> 
+          req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+          req_retry(max_tries = 5) |> 
+          # Define the path with the `version` suffix for each file
+          req_perform(
+            path = str_c(
+              glue("data/raw/{state}/"),
+              str_extract(url, glue("({state}/)(.*?)(/)"), group = 2),
+              "_", version, ".zip")),
+        # Handle 404 error silently
+        httr2_http_404 = function(cnd) NULL
+      )
+    }
+    
+    # Apply the function using map2 on url and version columns from `counties`
+    map2(counties$url, counties$version, download_file)
+    
+    # Check which versions already downloaded, omit from the list to scrape
+    counties <- counties |> mutate(
+      state = state,
+      csv_downloaded = file.exists(glue("data/raw/{state}/{county}_{version}.csv")))
+    
+    source_python("scripts/util/clarity_scraper.py")
+    
+    counties |> filter(!csv_downloaded) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x))
+  } else{
+    # County level clarity site
+    county = str_to_title(county) |> str_replace_all(" ", "_")
+    
+    version <- request(glue("https://results.enr.clarityelections.com/{state}/{county}/{path}/current_ver.txt")) |> 
+      req_headers("Accept" = "application/txt") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_retry(max_tries = 5) |> 
+      req_perform() |> 
+      resp_body_string()
+    
+    version_files <- request(glue("https://results.enr.clarityelections.com/{state}/{county}/{path}/{version}/json/en/electionsettings.json")) |> 
+      req_headers("Accept" = "application/json") |> 
+      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+      req_retry(max_tries = 5) |> 
+      req_perform() |> 
+      resp_body_json() |> 
+      pluck("versions") |> 
+      as_tibble_col() |> 
+      unnest(cols = value) |> 
+      mutate(
+        state = state, 
+        county = county,
+        url = glue("https://results.enr.clarityelections.com/{state}/{county}/{path}/{value}/reports/detailxml.zip"),
+        raw_file_path = glue('data/raw/{state}/{county}_{value}.zip'))
+    
+    download_file <- function(url, version) {
+      tryCatch(
+        # Send the request to download the file
+        request(url) |> 
+          req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |> 
+          req_retry(max_tries = 5) |> 
+          # Define the path with the `version` suffix for each file
+          req_perform(
+            path = str_c(
+              glue("data/raw/{state}/"),
+              str_extract(url, glue("({state}/)(.*?)(/)"), group = 2),
+              "_", version, ".zip")),
+        # Handle 404 error silently
+        httr2_http_404 = function(cnd) NULL
+      )
+    }
+    
+    map2(version_files$url, version_files$value, download_file)
+    
+    # Check which versions already downloaded, omit from the list to scrape
+    version_files <- version_files |> mutate(
+      state = state,
+      csv_downloaded = file.exists(glue("data/raw/{state}/{county}_{value}.csv")))
+    
+    source_python("scripts/util/clarity_scraper.py")
+    
+    version_files |> filter(!csv_downloaded) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x))
+  }
   
 }

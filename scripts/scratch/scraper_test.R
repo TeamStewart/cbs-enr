@@ -12,10 +12,10 @@ library(xml2)
 
 #renv::use_python()
 
-state = 'AZ'
-county = 'Maricopa'
-path = 'https://elections.maricopa.gov/results-and-data/election-results.html'
-timestamp = az_timestamp()
+state = 'MI'
+county = 'Oakland'
+path = 122321
+timestamp = clarity_timestamp()
 
 path <- read_html(path) |>
   html_nodes(xpath = "//a[contains(text(), '2024 November General Election Results.txt')]") |>
