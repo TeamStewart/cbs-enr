@@ -9,13 +9,14 @@ library(httr2)
 library(rvest)
 library(reticulate)
 library(xml2)
+library(jsonlite)
 
 #renv::use_python()
 
-state = 'MI'
-county = 'Oakland'
-path = 122321
-timestamp = clarity_timestamp()
+state = 'GA'
+county = NA
+path = 'https://app.enhancedvoting.com/cdn/results/Georgia/export-2024NovGen.json'
+timestamp = ga_timestamp()
 
 path <- read_html(path) |>
   html_nodes(xpath = "//a[contains(text(), '2024 November General Election Results.txt')]") |>

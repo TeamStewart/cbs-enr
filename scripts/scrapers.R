@@ -169,45 +169,75 @@ scrape_az <- function(state, county, path, timestamp){
 
 ## Georgia
 scrape_ga <- function(state, county, path, timestamp){
+  # Download the raw json
+  raw_file_path = glue('data/raw/GA/ga_{timestamp}.json')
+  download.file(path, destfile = raw_file_path)
   
-  list.files("data/raw/GA", pattern = "*.csv", full.names = TRUE) |> 
-    lapply(fread) |> 
-    rbindlist(use.names = TRUE) |> 
-    as_tibble() |> 
-    mutate(state = "GA",
-      virtual_precinct = FALSE) |> 
-    mutate(across(where(is.character), ~ na_if(.x, ""))) |> 
-    mutate(candidate_name = case_match(
-      vote_mode,
-      "Undervotes" ~ "Undervote",
-      "Overvotes" ~ "Overvote",
-      .default = candidate_name
-    ),
-      # remove incumbent indicator from Biden
-      candidate_name = str_remove_all(candidate_name, "\\(I\\)$") |> str_trim() |> str_squish()
-    ) |> 
-    mutate(vote_mode = case_match(
-      vote_mode, 
-      "Election Day Votes" ~ "Election Day",
-      "Advance Voting Votes" ~ "Early Voting",
-      "Absentee by Mail Votes" ~ "Absentee/Mail",
-      "Provisional Votes" ~ "Provisional",
-      c("Undervotes", "Overvotes") ~ "Aggregated",
-      .default = NA_character_
-    )) |> 
-    mutate(candidate_party = case_match(
-      candidate_party,
-      "REP" ~ "Republican",
-      "DEM" ~ "Democrat",
-      .default = candidate_party
-    )) |> 
-    # mutate(race_name = case_match(
-    #   race_name,
-    #   .default = race_name
-    # )) |> 
-    select(state, race_id, race_name, candidate_name, candidate_party, 
-      jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
-  
+  # Clean the raw json
+  read_json(raw_file_path) |> 
+    pluck('localResults') |> 
+    map_df(~.x) |>
+    unnest_wider(col = ballotItems, names_repair = "unique") |>
+    filter(`name...5` == 'President of the US') |>
+    unnest_longer(col = ballotOptions) |>
+    unnest_wider(col = ballotOptions, names_repair = "unique") |>
+    select(-groupResults) |>
+    # Unnest the precinctResults to get individual rows for each precinct
+    unnest_longer(col = precinctResults) |>
+    unnest_wider(col = precinctResults, names_repair = "unique") |>
+    # Now unnest the groupResults within each precinct
+    unnest_longer(col = groupResults) |>
+    unnest_wider(col = groupResults, names_repair = "unique") |>
+    clean_names() |>
+    select(-c(id_1, type, vote_for:contest_type, id_11, ballot_order_13, vote_count_14, vote_count_19, reporting_status, ranked_choice_results, is_virtual)) |>
+    rename(
+      jurisdiction = name_2,
+      race_id = id_4,
+      race_name = name_5,
+      candidate_name = name_12,
+      candidate_party = political_party,
+      precinct_id = id_16,
+      virtual_precinct = is_from_virtual_precinct,
+      vote_mode = group_name,
+      precinct_total = vote_count_22
+    ) |>
+    mutate(
+      timestamp = timestamp |> ymd_hms(tz = "America/New_York"),
+      state = 'GA',
+      jurisdiction = jurisdiction |> str_remove(" County"),
+      # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
+      race_name = case_match(race_name,"President of the US" ~ "President"),
+      # Recode candidate party: Democrat, Republican, Libertarian, Constitution, Green, Independent, Justice for All
+      ## Fix an issue from one county
+      candidate_party = ifelse(
+        candidate_party == 'DEM' | candidate_party == "", 
+        str_extract(candidate_name, "\\(.*?\\)") |> str_remove_all("[()]"),
+        candidate_party), 
+      ## Now recode after fix
+      candidate_party = case_when(
+        candidate_party == "Dem" ~ "Democrat",
+        candidate_party == "Rep" ~ "Republican",
+        candidate_party == "Lib" ~ "Libertarian",
+        candidate_party == "Grn" ~ "Green",
+        candidate_party == "Ind" ~ "Independent",
+        TRUE ~ "Other"
+      ),
+      # Recode candidate names
+      candidate_name = case_match(
+        candidate_name,
+        # GA presidential candidates
+        "Chase Oliver (Lib)" ~ "Chase Oliver",
+        "Donald J. Trump (Rep)" ~ "Donald Trump",
+        "Jill Stein (Grn)" ~ "Jill Stein",
+        "Kamala D. Harris (Dem)" ~ "Kamala Harris",
+        "Claudia De la Cruz (Ind)" ~ "Claudia De la Cruz",
+        "Cornel West (Ind)" ~ "Cornel West",
+        "Write-in" ~ "Write-ins",
+      )
+    ) |>
+    select(state, race_id, race_name, candidate_name, candidate_party,
+           jurisdiction, precinct_id, virtual_precinct, timestamp, vote_mode, precinct_total) |>
+    arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
 }
 
 ## North Carolina

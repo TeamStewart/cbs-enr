@@ -25,7 +25,7 @@ tar_option_set(
   packages = c(
     # tar_renv()
     "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", 
-    "googledrive", "httr2", "rvest", "reticulate", "sf", "xml2"
+    "googledrive", "httr2", "rvest", "reticulate", "sf", "xml2", "jsonlite"
   ),
   memory = "transient",
   format = "qs",
