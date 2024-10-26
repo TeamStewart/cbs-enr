@@ -13,10 +13,10 @@ library(jsonlite)
 
 #renv::use_python()
 
-state = 'GA'
-county = NA
-path = 'https://app.enhancedvoting.com/cdn/results/Georgia/export-2024NovGen.json'
-timestamp = ga_timestamp()
+state = 'PA'
+county = 'Philadelphia'
+path = 'https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?'
+timestamp = pa_timestamp()
 
 path <- read_html(path) |>
   html_nodes(xpath = "//a[contains(text(), '2024 November General Election Results.txt')]") |>

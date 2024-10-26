@@ -240,85 +240,6 @@ scrape_ga <- function(state, county, path, timestamp){
     arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
 }
 
-## North Carolina
-scrape_nc <- function(state, county, path, timestamp) {
-  
-  raw_file_path = glue('data/raw/NC/nc_{timestamp}.zip')
-  
-  download.file(path, destfile = raw_file_path)
-  
-  # read the data
-  fread(cmd = glue("unzip -p {raw_file_path}")) |>
-    # Clean raw file variable names
-    clean_names() |>
-    # Filter to target contests: President, Governor
-    filter(contest_name %in% c('US PRESIDENT', 'NC GOVERNOR')) |>
-    mutate(
-      timestamp = timestamp |> ymd_hms(tz = "America/New_York"),
-      state = "NC",
-      # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
-      contest_name = case_match(
-        contest_name,
-        "US PRESIDENT" ~ "President",
-        "NC GOVERNOR" ~ "Governor"), 
-      # Recode candidate party: Democrat, Republican, Libertarian, Constitution, Green, Independent, Justice for All
-      choice_party = case_match(
-        choice_party,
-        "DEM" ~ "Democrat",
-        "REP" ~ "Republican",
-        "LIB" ~ "Libertarian",
-        "CST" ~ "Constitution",
-        "GRE" ~ "Green",
-        "UNA" ~ "Independent",
-        "JFA" ~ "Justice for All",
-        .default = "Other"),
-      # Recode candidate names
-      choice = case_match(
-        choice,
-        # NC presidential candidates
-        "Chase Oliver" ~ "Chase Oliver",
-        "Cornel West" ~ "Cornel West",
-        "Donald J. Trump" ~ "Donald Trump",
-        "Jill Stein" ~ "Jill Stein",
-        "Kamala D. Harris" ~ "Kamala Harris",
-        "Randall Terry" ~ "Randall Terry",
-        "Write-In (Miscellaneous)" ~ "Write-ins",
-        # NC gubernatorial candidates
-        "Josh Stein" ~ "Josh Stein",
-        "Mark Robinson" ~ "Mark Robinson",
-        "Mike Ross" ~ "Mike Ross",
-        "Vinny Smith" ~ "Vinny Smith",
-        "Wayne Turner" ~ "Wayne Turner"
-      ), 
-      # Create virtual precinct column: real == TRUE, administrative == FALSE
-      virtual_precinct = (real_precinct == "N")
-    ) |>
-    rename(
-      race_id = contest_group_id,
-      race_name = contest_name,
-      candidate_name = choice,
-      candidate_party = choice_party,
-      jurisdiction = county,
-      precinct_id = precinct
-    ) |>
-    select(
-      state, race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, election_day:provisional, timestamp
-    ) |>
-    pivot_longer(cols = election_day:provisional, names_to = "vote_mode", values_to = "precinct_total") |>
-    mutate(
-      # Specify vote modes: Election Day, Provisional, Absentee/Mail, Early Voting, Other
-      vote_mode = case_match(
-        vote_mode,
-        "election_day" ~ "Election Day",
-        "early_voting" ~ "Early Voting",
-        "absentee_by_mail" ~ "Absentee/Mail",
-        "provisional" ~ "Provisional",
-        .default = "Other"
-      )
-    ) |>
-    arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
-}
-
 ## Michigan
 scrape_mi <- function(state, county, path, timestamp){
   if(county == 'Oakland'){
@@ -410,106 +331,146 @@ scrape_mi <- function(state, county, path, timestamp){
   # ifelse for Oakland vs. Macomb
 }
 
+## North Carolina
+scrape_nc <- function(state, county, path, timestamp) {
+  
+  raw_file_path = glue('data/raw/NC/nc_{timestamp}.zip')
+  
+  download.file(path, destfile = raw_file_path)
+  
+  # read the data
+  fread(cmd = glue("unzip -p {raw_file_path}")) |>
+    # Clean raw file variable names
+    clean_names() |>
+    # Filter to target contests: President, Governor
+    filter(contest_name %in% c('US PRESIDENT', 'NC GOVERNOR')) |>
+    mutate(
+      timestamp = timestamp |> ymd_hms(tz = "America/New_York"),
+      state = "NC",
+      # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
+      contest_name = case_match(
+        contest_name,
+        "US PRESIDENT" ~ "President",
+        "NC GOVERNOR" ~ "Governor"), 
+      # Recode candidate party: Democrat, Republican, Libertarian, Constitution, Green, Independent, Justice for All
+      choice_party = case_match(
+        choice_party,
+        "DEM" ~ "Democrat",
+        "REP" ~ "Republican",
+        "LIB" ~ "Libertarian",
+        "CST" ~ "Constitution",
+        "GRE" ~ "Green",
+        "UNA" ~ "Independent",
+        "JFA" ~ "Justice for All",
+        .default = "Other"),
+      # Recode candidate names
+      choice = case_match(
+        choice,
+        # NC presidential candidates
+        "Chase Oliver" ~ "Chase Oliver",
+        "Cornel West" ~ "Cornel West",
+        "Donald J. Trump" ~ "Donald Trump",
+        "Jill Stein" ~ "Jill Stein",
+        "Kamala D. Harris" ~ "Kamala Harris",
+        "Randall Terry" ~ "Randall Terry",
+        "Write-In (Miscellaneous)" ~ "Write-ins",
+        # NC gubernatorial candidates
+        "Josh Stein" ~ "Josh Stein",
+        "Mark Robinson" ~ "Mark Robinson",
+        "Mike Ross" ~ "Mike Ross",
+        "Vinny Smith" ~ "Vinny Smith",
+        "Wayne Turner" ~ "Wayne Turner"
+      ), 
+      # Create virtual precinct column: real == TRUE, administrative == FALSE
+      virtual_precinct = (real_precinct == "N")
+    ) |>
+    rename(
+      race_id = contest_group_id,
+      race_name = contest_name,
+      candidate_name = choice,
+      candidate_party = choice_party,
+      jurisdiction = county,
+      precinct_id = precinct
+    ) |>
+    select(
+      state, race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, election_day:provisional, timestamp
+    ) |>
+    pivot_longer(cols = election_day:provisional, names_to = "vote_mode", values_to = "precinct_total") |>
+    mutate(
+      # Specify vote modes: Election Day, Provisional, Absentee/Mail, Early Voting, Other
+      vote_mode = case_match(
+        vote_mode,
+        "election_day" ~ "Election Day",
+        "early_voting" ~ "Early Voting",
+        "absentee_by_mail" ~ "Absentee/Mail",
+        "provisional" ~ "Provisional",
+        .default = "Other"
+      )
+    ) |>
+    arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
+}
+
 ## Pennsylvania
 scrape_pa <- function(state, county, path, timestamp){
-  
   if (county == "ALLEGHENY"){
-    get_clarity(state, county, path) |> 
-      read_csv() |> 
-      mutate(across(where(is.character), ~ na_if(.x, ""))) |> 
-      mutate(
-        state = "PA",
-        virtual_precinct = FALSE,
-        candidate_name = case_match(
-          vote_mode,
-          "Undervotes" ~ "Undervote",
-          "Overvotes" ~ "Overvote",
-          .default = candidate_name
-        ),
-        # remove incumbent indicator from Biden
-        candidate_name = str_remove_all(candidate_name, "\\(I\\)$") |> str_trim() |> str_squish(),
-        vote_mode = case_match(
-          vote_mode, 
-          "Election Day Votes" ~ "Election Day",
-          "Advance Voting Votes" ~ "Early Voting",
-          "Absentee by Mail Votes" ~ "Absentee/Mail",
-          "Provisional Votes" ~ "Provisional",
-          c("Undervotes", "Overvotes") ~ "Aggregated",
-          .default = NA_character_
-        ),
-        candidate_party = case_match(
-          candidate_party,
-          "REP" ~ "Republican",
-          "DEM" ~ "Democrat",
-          .default = candidate_party
-        ),
-        # TODO: Update for general
-        race_name = case_match(
-          race_name,
-          "President of the US - Rep" ~ "President-Republican",
-          "President of the US - Dem" ~ "President-Democrat",
-          "President of the US/Presidente de los Estados Unidos - Rep" ~ "President-Republican", 
-          "President of the US/Presidente de los Estados Unidos - Dem" ~ "President-Democrat",
-          .default = race_name
-        )
-      ) |> 
-      select(state, race_id, race_name, candidate_name, candidate_party, 
-        jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
-    
-    
   } 
-  else if (county == "PHILADELPHIA"){
+  else if (county == "Philadelphia"){
     # dynamically retrieve file via python script
     source_python("scripts/util/dynamic_download.py")
     get_file(path, county, state)
     
-    # Get file name of the most recently downloaded raw file
-    files <- list.files(path = "data/raw/PA", full.names = TRUE, pattern = "^Philadelphia")
+    # Rename latest file
+    raw_file_path <- glue("data/raw/{state}/{county}_{timestamp}.csv")
+    most_recent_file <- dir_info(glue("data/raw/{state}")) |> arrange(desc(modification_time)) |> slice(1) |> pull(path)
+    file.rename(most_recent_file, raw_file_path)
     
-    # Get file info and sort by modification time in descending order
-    most_recent_file <- files[order(file.info(files)$mtime, decreasing = TRUE)][1]
-    
-    read_csv(most_recent_file) |>
-      # TODO: Update for general
-      filter(RaceName %in% c("=\"PRESIDENT OF THE UNITED STATES DEM Democratic (VOTE FOR 1)\"", "=\"PRESIDENT OF THE UNITED STATES REP Republican (VOTE FOR 1)\"") & !str_detect(PrecinctName,"Congressional")) |>
+    read_csv(raw_file_path) |>
+      # deal with weird Philly formatting
+      mutate(across(everything(), ~ gsub('^="|"$|",$', '', .))) |>
+      clean_names() |>
+      filter(race_name == 'PRESIDENT AND VICE-PRESIDENT OF THE UNITED STATES (VOTE FOR 1)') |>
       mutate(
-        # TODO: Update for general
-        RaceName = case_match(
-          RaceName,
-          "=\"PRESIDENT OF THE UNITED STATES DEM Democratic (VOTE FOR 1)\"" ~ "President-Democrat",
-          "=\"PRESIDENT OF THE UNITED STATES REP Republican (VOTE FOR 1)\"" ~ "President-Republican",
+        current_date_time = current_date_time |> mdy_hms(tz = "America/New_York"),
+        state = "PA",
+        jurisdiction = "Philadelphia",
+        # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
+        race_name = case_match(
+          race_name,
+          "PRESIDENT AND VICE-PRESIDENT OF THE UNITED STATES (VOTE FOR 1)" ~ "President"),
+        # Recode candidate party: Democrat, Republican, Libertarian, US Taxpayers, Green, Natural Law, Justice for All
+        party_code = case_match(
+          party_code,
+          "DEM" ~ "Democrat",
+          "REP" ~ "Republican",
+          "LIB" ~ "Libertarian",
+          "GRN" ~ "Green",
+          .default = 'Other'),
+        # Recode candidate names
+        candidate_name = case_match(
+          candidate_name,
+          "CHASE OLIVER & MIKE TER MAAT LIB" ~ "Chase Oliver",
+          "DONALD J TRUMP & JD VANCE REP" ~ "Donald Trump",
+          "JILL STEIN & RUDOLPH WARE GRN" ~ "Jill Stein",
+          "KAMALA D HARRIS & TIM WALZ DEM" ~ "Kamala Harris",
+          "Write-in" ~ "Write-ins",
           .default = NA_character_),
-        PartyCode = case_match(
-          PartyCode,
-          "=\"DEM\"" ~ "Democrat",
-          "=\"REP\"" ~ "Republican",
-          .default = NA_character_),
-        # TODO: Update for general
-        CandidateName = case_match(
-          CandidateName,
-          "=\"JOSEPH R BIDEN JR DEM\"" ~ "Joseph R. Biden",
-          "=\"DEAN PHILLIPS DEM\"" ~ "Dean Phillips",
-          "=\"Write-in\"" ~ "Write-in",
-          "=\"NIKKI R HALEY REP\"" ~ "Nikki Haley",
-          "=\"DONALD J TRUMP REP\"" ~ "Donald J. Trump",
-          .default = NA_character_),
-        PrecinctName = str_replace_all(PrecinctName, "\"|=", ""),
-        CandidateVotes = str_replace_all(CandidateVotes, "\"|=", ""),
-        state = .env$state,
-        jurisdiction = .env$county,
-        race_id = NA,
         virtual_precinct = FALSE,
-        vote_mode = 'Total'
+        race_id = NA
       ) |>
+      pivot_longer(cols = c(election_day:provisional), names_to = "vote_mode", values_to = "precinct_total") |>
+      mutate(
+        vote_mode = case_match(
+          vote_mode,
+          "election_day" ~ "Election Day",
+          "mail_votes" ~ "Absentee/Mail",
+          "provisional" ~ "Provisional")) |>
       rename(
-        race_name = RaceName,
-        candidate_name = CandidateName,
-        candidate_party = PartyCode,
-        precinct_id = PrecinctName,
-        precinct_total = CandidateVotes
+        candidate_party = party_code,
+        precinct_id = precinct_name,
+        timestamp = current_date_time
       ) |>
-      select(state, race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
-    
+      select(state, race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, timestamp, vote_mode, precinct_total) |>
+      arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
   }
 }
 

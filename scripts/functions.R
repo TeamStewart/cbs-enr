@@ -88,7 +88,7 @@ get_timestamp <- function(state, county, path) {
   pa_timestamp <- function() {
     if (county == "ALLEGHENY") {
       clarity_timestamp()
-    } else if (county == "PHILADELPHIA") {
+    } else if (county == "Philadelphia") {
       read_html("https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?") |>
         html_element(".turnout-last-updated-time") |>
         html_text() |>
