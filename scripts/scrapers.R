@@ -251,7 +251,7 @@ scrape_mi <- function(state, county, path, timestamp){
     
     clean_oakland_mi <- function(file){
       cleaned <- read_csv(file) |>
-        filter(race_name == "Electors of President and Vice-President of the United States") |>
+        filter(race_name %in% c("Electors of President and Vice-President of the United States", "United States Senator")) |>
         mutate(
           timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
           state = "MI",
@@ -259,7 +259,8 @@ scrape_mi <- function(state, county, path, timestamp){
           # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
           race_name = case_match(
             race_name,
-            "Electors of President and Vice-President of the United States" ~ "President"), 
+            "Electors of President and Vice-President of the United States" ~ "President",
+            "United States Senator" ~ "Senate"), 
           # Recode candidate party: Democrat, Republican, Libertarian, US Taxpayers, Green, Natural Law, Justice for All
           candidate_party = case_match(
             candidate_party,
@@ -283,6 +284,13 @@ scrape_mi <- function(state, county, path, timestamp){
             "Joseph Kishore/Jerry White" ~ "Joseph Kishore",
             "Rejected write-ins" ~ "Write-ins",
             "Unassigned write-ins" ~ "Write-ins",
+            # Oakland, MI senate candidates
+            "Elissa Slotkin" ~ "Elissa Slotkin",
+            "Mike Rogers" ~ "Mike Rogers",
+            "Joseph Solis-Mullen" ~ "Joseph Solis-Mullen",
+            "Dave Stein" ~ "Dave Stein",
+            "Douglas P. Marsh" ~ "Douglas Marsh",
+            "Doug Dern" ~ "Doug Dern"
           ), 
           # Create virtual precinct column: real == TRUE, administrative == FALSE
           virtual_precinct = F,
@@ -413,6 +421,7 @@ scrape_nc <- function(state, county, path, timestamp) {
 ## Pennsylvania
 scrape_pa <- function(state, county, path, timestamp){
   if (county == "ALLEGHENY"){
+    
   } 
   else if (county == "Philadelphia"){
     # dynamically retrieve file via python script
@@ -428,7 +437,7 @@ scrape_pa <- function(state, county, path, timestamp){
       # deal with weird Philly formatting
       mutate(across(everything(), ~ gsub('^="|"$|",$', '', .))) |>
       clean_names() |>
-      filter(race_name == 'PRESIDENT AND VICE-PRESIDENT OF THE UNITED STATES (VOTE FOR 1)') |>
+      filter(race_name %in% c('PRESIDENT AND VICE-PRESIDENT OF THE UNITED STATES (VOTE FOR 1)','UNITED STATES SENATOR (VOTE FOR 1)')) |>
       mutate(
         current_date_time = current_date_time |> mdy_hms(tz = "America/New_York"),
         state = "PA",
@@ -436,7 +445,8 @@ scrape_pa <- function(state, county, path, timestamp){
         # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
         race_name = case_match(
           race_name,
-          "PRESIDENT AND VICE-PRESIDENT OF THE UNITED STATES (VOTE FOR 1)" ~ "President"),
+          "PRESIDENT AND VICE-PRESIDENT OF THE UNITED STATES (VOTE FOR 1)" ~ "President",
+          "UNITED STATES SENATOR (VOTE FOR 1)" ~ "Senate"),
         # Recode candidate party: Democrat, Republican, Libertarian, US Taxpayers, Green, Natural Law, Justice for All
         party_code = case_match(
           party_code,
@@ -448,11 +458,18 @@ scrape_pa <- function(state, county, path, timestamp){
         # Recode candidate names
         candidate_name = case_match(
           candidate_name,
+          # PA presidential candidates
           "CHASE OLIVER & MIKE TER MAAT LIB" ~ "Chase Oliver",
           "DONALD J TRUMP & JD VANCE REP" ~ "Donald Trump",
           "JILL STEIN & RUDOLPH WARE GRN" ~ "Jill Stein",
           "KAMALA D HARRIS & TIM WALZ DEM" ~ "Kamala Harris",
           "Write-in" ~ "Write-ins",
+          # PA senate candidates
+          "ROBERT P CASEY JR DEM" ~ "Bob Casey",
+          "LEILA HAZOU GRN" ~ "Leila Hazou",
+          "DAVE MCCORMICK REP" ~ "Dave McCormick",
+          "MARTY SELKER CST" ~ "Marty Selker",
+          "JOHN C THOMAS LIB"~"John Thomas",
           .default = NA_character_),
         virtual_precinct = FALSE,
         race_id = NA

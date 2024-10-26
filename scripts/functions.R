@@ -3,6 +3,11 @@ source("scripts/util/globals.R")
 source("scripts/scrapers.R")
 source("scripts/models.R")
 
+# Constants
+GOOGLE_DRIVE_PATH <- "https://drive.google.com/drive/folders/1741SR-N8X01Pao_soiwwqCjuMFwAgo5k?usp=sharing"
+CBS_S3_PATH <- ""
+DROPBOX_PATH <- ""
+
 get_timestamp <- function(state, county, path) {
   clarity_timestamp <- function() {
     
@@ -201,15 +206,22 @@ create_table_generic <- function(data, state, county, type, timestamp) {
 }
 
 create_table_cbs <- function(data, state, county, type, timestamp, upload = FALSE) {
-  sf <- suppressMessages(stamp("2022-11-09T11:26:47Z"))
-
+  # TODO: CBS has separate buckets for state/office, so need to split
+  # Precincts/20241105-AZ-P
+  # Precincts/20241105-AZ-S
+  # Precincts/20241105-GA-P
+  # Precincts/20241105-MI-P
+  # Precincts/20241105-MI-S
+  # Precincts/20241105-NC-P
+  # Precincts/20241105-NC-G
+  # Precincts/20241105-PA-P
+  # Precincts/20241105-PA-S
+  
   lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv",
     skip = 1,
-    col_names = c("state_name", "postalCode", "st", "state_fips", "county_name", "cnty", "county_fips")
-  ) |>
+    col_names = c("state_name", "postalCode", "st", "state_fips", "county_name", "cnty", "county_fips")) |>
     filter(postalCode == state) |>
-    select(-state_fips) |>
-    mutate(county_name = str_to_upper(county_name))
+    select(-state_fips)
 
   lookup_cands <- read_csv(glue("data/input/cbs_lookups/{cbs_lookup}"),
     col_select = c(-LastName),
