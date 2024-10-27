@@ -86,6 +86,15 @@ scrape_az <- function(state, county, path, timestamp){
     # Combine cleaned data with over/undervote totals
     cleaned |>
       filter(!vote_mode %in% c("undervotes", "overvotes")) |>
+      mutate(
+        vote_mode = case_match(
+          vote_mode,
+          "election_day" ~ "Election Day",
+          "early_vote" ~ "Early Voting",
+          "absentee_by_mail" ~ "Absentee/Mail",
+          "provisional" ~ "Provisional"
+        )
+      ) |>
       bind_rows(over_under) |>
       arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
   }
@@ -233,6 +242,13 @@ scrape_ga <- function(state, county, path, timestamp){
         "Claudia De la Cruz (Ind)" ~ "Claudia De la Cruz",
         "Cornel West (Ind)" ~ "Cornel West",
         "Write-in" ~ "Write-ins",
+      ),
+      vote_mode = case_match(
+        vote_mode,
+        "Election Day" ~ "Election Day",
+        "Advanced Voting" ~ "Early Voting",
+        "Absentee by Mail" ~ "Absentee/VBM",
+        "Provisional" ~ "Provisional"
       )
     ) |>
     select(state, race_id, race_name, candidate_name, candidate_party,
