@@ -104,10 +104,11 @@ list.files("data/raw/GA", pattern = "*.csv", full.names = TRUE) |>
 
 ```{r}
 
+# Utility regex for detecting which candidate is which
 dem_candidate_regex = regex("Warnock|\\(Dem\\)", ignore_case = TRUE)
 rep_candidate_regex = regex("Walker|\\(Rep\\)", ignore_case = TRUE)
 
-# reported precinct-level data from Clarity in 2022 at 11pm
+# reported precinct-level data from Clarity in 2022 at 4am
 data22 = read_csv("~/Dropbox (MIT)/Research/2024 Election Results/22_general/GA_allReports.csv") |> 
   filter(str_detect(race_name, "US Senate"), timestamp <= ymd_hm("2022-11-09 4:00am")) |> 
   filter(timestamp == max(timestamp), .by = c(state, jurisdiction, precinct_id)) |>
@@ -131,6 +132,8 @@ data22 = read_csv("~/Dropbox (MIT)/Research/2024 Election Results/22_general/GA_
     votes_precTotal_22 = sum(votes_22),
     .by = c(state, county, precinct_22)
   ) |> 
+  # compute these summary cols for everyone, but then notably immediately filter down to just the Dem
+  # candidate for the raw values
   mutate(
     votePct_dem_22 = sum(votes_22 * str_detect(candidate_name, dem_candidate_regex)) / sum(votes_22),
     votePct_rep_22 = sum(votes_22 * str_detect(candidate_name, rep_candidate_regex)) / sum(votes_22),
@@ -139,20 +142,6 @@ data22 = read_csv("~/Dropbox (MIT)/Research/2024 Election Results/22_general/GA_
   ) |> 
   filter(str_detect(candidate_name, dem_candidate_regex)) |>
   select(-candidate_name) |> 
-  mutate(
-    county = str_to_upper(county),
-    precinct_22 = str_to_upper(precinct_22)
-  )
-
-data22_final = read_csv("~/Dropbox (MIT)/Research/2024 Election Results/22_general/GA_allReports.csv") |> 
-  filter(str_detect(race_name, "US Senate")) |> 
-  filter(timestamp == max(timestamp), .by = c(state, jurisdiction, precinct_id)) |> 
-  filter(timestamp > ymd("2022-10-15")) |> 
-  select(state, county = jurisdiction, precinct_22 = precinct_id, votes_22 = precinct_total) |> 
-  summarize(
-    votes_precFinal_22 = sum(votes_22),
-    .by = c(state, county, precinct_22)
-  ) |> 
   mutate(
     county = str_to_upper(county),
     precinct_22 = str_to_upper(precinct_22)
@@ -181,7 +170,7 @@ data20 = read_csv("~/Dropbox (MIT)/Research/MEDSL Precinct Data/2020-ga-precinct
   filter(str_detect(candidate, "BIDEN")) |> 
   select(-candidate)
 
-# 2020 shapefiles and results, from VEST data
+# 2020 shapefiles, from VEST data
 shp20 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga_2020/") |> 
   st_transform("NAD83") |>
   select(
@@ -216,18 +205,23 @@ shp22 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga-precincts20
     county == "SPALDING" ~ str_remove(precinct_22, "^0+")
   ))
 
+# merge the shapes together so that we can compute an overlap score
 intersection = st_intersection(shp22, shp20) |> filter(county == county.1)
 
 precinct_merge = intersection |> 
+  # create the areal weighting
   mutate(area = st_area(intersection) |> as.numeric()) |> 
   st_drop_geometry() |>
   drop_na(precinct_20, precinct_22) |> 
   mutate(weight = as.numeric(area / sum(area)), .by = c(county, precinct_22)) |> 
+  # now full-join to ensure all county x precincts are represented in the data
+  # so that we can fill in some missigness
   full_join(
     expand(shp20, nesting(county, precinct_20), vote_mode = c("ABSENTEE", "ADVANCED VOTING", "ELECTION DAY", "PROVISIONAL")),
     join_by(county, precinct_20),
     relationship = "many-to-many"
   ) |> 
+  # add the matched 2020 data
   left_join(data20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
   # fill in missigness with county mean so we can make estimates
   mutate(
@@ -243,7 +237,9 @@ precinct_merge = intersection |>
     votes_20 = sum(votes_20 * weight),
     .by = c(county, precinct_22, vote_mode)
   ) |> 
+  # now add 2022 data
   full_join(data22, by = join_by(county, precinct_22, vote_mode), relationship = "many-to-many") |>  
+  # create some helper columns for what reporting status we're at in each precinct
   mutate(
     reported_none = sum(votes_22 > 0) == 0,
     reported_all = sum(votes_22 > 0) >= 3,
@@ -322,6 +318,7 @@ estimates = precinct_merge |>
     votes_22_demTop = replace_na(votes_22_demTop, 0)
   )
 
+# check out some examples of the filtering working
 estimates |> filter(!reported_all) |> select(vote_mode, votes_20, votes_22, starts_with("votes_22_dem"))
 
 sum(estimates$votes_22_demTop)
