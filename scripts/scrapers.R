@@ -444,7 +444,7 @@ scrape_pa <- function(state, county, path, timestamp){
     
     # Rename latest file
     raw_file_path <- glue("data/raw/{state}/{state}_{county}_{timestamp}.csv")
-    most_recent_file <- dir_info(glue("data/raw/{state}")) |> filter(str_detect(path, glue("{state}_{county}"))) |> arrange(desc(modification_time)) |> slice(1) |> pull(path)
+    most_recent_file <- dir_info(glue("data/raw/{state}")) |> filter(str_detect(path, glue("Philadelphia"))) |> arrange(desc(modification_time)) |> slice(1) |> pull(path)
     file.rename(most_recent_file, raw_file_path)
     
     read_csv(raw_file_path) |>
