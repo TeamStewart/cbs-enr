@@ -19,7 +19,7 @@ scrape_az <- function(state, county, path, timestamp){
     ## Get file info and sort by modification time in descending order
     most_recent_file <- files[order(file.info(files)$mtime, decreasing = TRUE)][1]
     ## Rename file
-    raw_file_path = glue('data/raw/AZ/az_maricopa_{timestamp}.txt')
+    raw_file_path = glue('data/raw/AZ/AZ_Maricopa_{timestamp}.txt')
     file.rename(most_recent_file, raw_file_path)
     
     cleaned <- fread(raw_file_path, header = TRUE, sep = "\t", quote = "") |>
@@ -100,86 +100,14 @@ scrape_az <- function(state, county, path, timestamp){
   }
   # TODO: Update Pima for 2024 general election
   else if(county == 'PIMA'){
-    csv_link <- (read_html(path) |>
-                   # TODO: Find node identifier
-                   html_nodes("ul:nth-child(2) li:nth-child(4) a") |>
-                   html_attr("href"))[1]
     
-    raw_csv <- read_csv(csv_link, col_names = FALSE)
-    
-    # Write raw files
-    write_csv(raw_csv, glue("data/raw/AZ/{state}_{county}_{type}_raw_{timestamp}.csv"))
-    
-    # TODO: Fix start row, col vals
-    start_row <- 4
-    start_column <- 19
-    
-    # Extract metaraw_csv from the CSV
-    vote_modes <- raw_csv[[1]][start_row:nrow(raw_csv)]
-    precinct_ids <- raw_csv[[3]][start_row:nrow(raw_csv)]
-    race_name <- as.character(raw_csv[1, start_column:ncol(raw_csv)])
-    candidate_party <- as.character(raw_csv[2, start_column:ncol(raw_csv)])
-    candidate_name <- as.character(raw_csv[3, start_column:ncol(raw_csv)])
-    # Generate unique race_id for each unique race_name
-    unique_race_names <- unique(race_name)
-    race_ids <- match(race_name, unique_race_names)
-    
-    # Create a new raw_csvframe to hold the cleaned raw_csv
-    cleaned_raw_csv <- data.frame(
-      state = state,
-      race_id = rep(race_ids, each = length(precinct_ids)),
-      race_name = rep(race_name, each = length(precinct_ids)),
-      candidate_name = rep(candidate_name, each = length(precinct_ids)),
-      candidate_party = rep(candidate_party, each = length(precinct_ids)),
-      jurisdiction = county,
-      precinct_id = rep(precinct_ids, times = length(race_name)),
-      virtual_precinct = FALSE,
-      vote_mode = rep(vote_modes, times = length(race_name)),
-      precinct_total = integer(length(precinct_ids) * length(race_name)),
-      stringsAsFactors = FALSE
-    )
-    
-    # Process each column containing precinct totals
-    cand_index <- 1
-    for (col_index in start_column:ncol(raw_csv)) {
-      precinct_totals <- raw_csv[start_row:nrow(raw_csv), col_index] |> as_vector() |> as.integer()
-      cleaned_raw_csv$precinct_total[cleaned_raw_csv$candidate_name == candidate_name[cand_index]] <- precinct_totals
-      cand_index <- cand_index + 1
-    }
-    
-    cleaned_raw_csv |> filter(precinct_id != 'COUNTY TOTALS') |>
-      mutate(
-        precinct_total = as.integer(precinct_total),
-        race_name = case_match(
-          race_name,
-          .default = NA_character_
-        ),
-        candidate_name = case_when(
-          .default = candidate_name
-        ),
-        candidate_party = case_match(
-          candidate_party,
-          "DEM" ~ "Democrat",
-          "REP" ~ "Republican",
-          .default = NA_character_
-        ),
-        vote_mode = case_when(
-          candidate_name == "Undervote" ~ "Aggregated",
-          candidate_name == "Overvote" ~ "Aggregated",
-          vote_mode == "POLLS" ~ "Election Day",
-          vote_mode == "EARLY" ~ "Early Voting",
-          vote_mode == "PROVISIONAL" ~ "Provisional"
-        )
-      ) |>
-      filter(!is.na(race_name)) |>
-      summarise(precinct_total = sum(precinct_total, na.rm = T), .by = c("state","race_id","race_name","candidate_name","candidate_party","jurisdiction","precinct_id","virtual_precinct","vote_mode"))
   }
 }
 
 ## Georgia
 scrape_ga <- function(state, county, path, timestamp){
   # Download the raw json
-  raw_file_path = glue('data/raw/GA/ga_{timestamp}.json')
+  raw_file_path = glue('data/raw/GA/GA_{timestamp}.json')
   download.file(path, destfile = raw_file_path)
   
   # Clean the raw json
@@ -346,19 +274,12 @@ scrape_mi <- function(state, county, path, timestamp){
     # Return latest timestamped version
     return(read_csv(list.files(path = glue("data/clean/{state}"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
   }
-  
-  
-  # Build list of Clarity files
-  
-  # Function to clean Clarity files
-  
-  # ifelse for Oakland vs. Macomb
 }
 
 ## North Carolina
 scrape_nc <- function(state, county, path, timestamp) {
   
-  raw_file_path = glue('data/raw/NC/nc_{timestamp}.zip')
+  raw_file_path = glue('data/raw/NC/NC_{timestamp}.zip')
   
   download.file(path, destfile = raw_file_path)
   
@@ -522,8 +443,8 @@ scrape_pa <- function(state, county, path, timestamp){
     get_file(path, county, state)
     
     # Rename latest file
-    raw_file_path <- glue("data/raw/{state}/{county}_{timestamp}.csv")
-    most_recent_file <- dir_info(glue("data/raw/{state}")) |> arrange(desc(modification_time)) |> slice(1) |> pull(path)
+    raw_file_path <- glue("data/raw/{state}/{state}_{county}_{timestamp}.csv")
+    most_recent_file <- dir_info(glue("data/raw/{state}")) |> filter(str_detect(path, glue("{state}_{county}"))) |> arrange(desc(modification_time)) |> slice(1) |> pull(path)
     file.rename(most_recent_file, raw_file_path)
     
     read_csv(raw_file_path) |>
