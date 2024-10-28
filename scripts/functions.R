@@ -125,7 +125,7 @@ get_data <- function(state, county, timestamp, path = NULL) {
     "MI" = c("Oakland", "Macomb"),
     "PA" = c("Delaware")
   )
-  if (state %in% names(special_counties) && county %in% special_counties[[state]]) {
+  if (state %in% names(clarity_counties) && county %in% clarity_counties[[state]]) {
     # save latest version; timestamped version already saved
     write_csv(d, glue("data/clean/{state}/{local_file_name}_latest.csv"))
   } else{
@@ -156,6 +156,8 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   
   # Append CBS lookup info
   formatted <- data |>
+    # For the purposes of CBS, remove undervote/overvotes
+    filter(vote_mode != "Overvote/Undervote") |>
     mutate(
       jCde = "0",
       ofc = case_match(

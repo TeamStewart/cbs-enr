@@ -1,0 +1,24 @@
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+.Random.seed|object|27f1ac96603b65d8|||||||||||||||
+create_table_cbs|function|fc38f53985b186d5|||||||||||||||
+data_AZ_Maricopa|stem|e326825b1f7ca087|1246177af406de46|abb5ecd74ffe896b|-120925747||t20024.6682342901s|0ba35f816ff6da18|24151|qs|local|vector|||2.892||
+ELECTION_DATE|object|8570071620b95baa|||||||||||||||
+get_clarity|function|a3c80326d33d5776|||||||||||||||
+get_data|function|e6568d871ef697a1|||||||||||||||
+get_gsheet|function|099ea774dbfd59b4|||||||||||||||
+get_timestamp|function|0a9b351a504fd8aa|||||||||||||||
+lookup_state_name|function|3572d7f708158618|||||||||||||||
+metadata|object|84a1653db9fa9a76|||||||||||||||
+PATH_CBS_S3|object|aea739ceef2eaf0b|||||||||||||||
+PATH_DROPBOX|object|6c086c4c1e1d4ee4|||||||||||||||
+PATH_GDRIVE|object|e93a912542c4c514|||||||||||||||
+run_model_swing|function|795631fd84859295|||||||||||||||
+run_model_turnout|function|795631fd84859295|||||||||||||||
+run_models|function|646b108d12ccd40d|||||||||||||||
+scrape_az|function|d299f0cc1cdd6fca|||||||||||||||
+scrape_ga|function|29a290886e355fae|||||||||||||||
+scrape_mi|function|8b5d19f03dec435d|||||||||||||||
+scrape_nc|function|4770cba74fb2e597|||||||||||||||
+scrape_pa|function|c563afe74ba030c8|||||||||||||||
+tbl_cbs_AZ_Maricopa|stem||7153e55fcdbf18ba|8d70656f7b64a739|-1904506548||t20024.6677797476s||0|qs|local|vector|||0.214||ℹ In argument key  mapkey, jsonliteunbox.Caused by error in mapℹ In index 937.Caused by error Tried to unbox dataframe with 2 rows.
+timestamp_AZ_Maricopa|stem|5471ca68b5112a7b|811f19eacc390e49|d4957c4a37fe6de4|1242395665||t20024.6681992323s|86c36464e2e2a367|58|qs|local|vector|||1.002||

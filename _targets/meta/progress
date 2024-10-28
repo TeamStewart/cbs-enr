@@ -1,0 +1,7 @@
+name|type|parent|branches|progress
+timestamp_AZ_Maricopa|stem|timestamp_AZ_Maricopa|0|dispatched
+timestamp_AZ_Maricopa|stem|timestamp_AZ_Maricopa|0|completed
+data_AZ_Maricopa|stem|data_AZ_Maricopa|0|dispatched
+data_AZ_Maricopa|stem|data_AZ_Maricopa|0|completed
+tbl_cbs_AZ_Maricopa|stem|tbl_cbs_AZ_Maricopa|0|dispatched
+tbl_cbs_AZ_Maricopa|stem|tbl_cbs_AZ_Maricopa|0|errored
