@@ -1,11 +1,11 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|ac9a95d2a1f806bd|||||||||||||||
+.Random.seed|object|a2bca304317ab67d|||||||||||||||
 create_table_cbs|function|f680de9b28ae8333|||||||||||||||
-data_AZ_Maricopa|stem|e326825b1f7ca087|1246177af406de46|abb5ecd74ffe896b|-120925747||t20024.6682342901s|0ba35f816ff6da18|24151|qs|local|vector|||2.892||
-data_PA_Philadelphia|stem||31db8a19d0865366|2c4e557c4baaa346|-626388640||t20024.6757944848s||0|qs|local|vector|||17.596||from and to are of different lengths
+data_AZ_Maricopa|stem|e326825b1f7ca087|1246177af406de46|23969dbca1460468|-120925747||t20024.6844904384s|0ba35f816ff6da18|24151|qs|local|vector|||3.132||
+data_PA_Philadelphia|stem|7976070252e6ae36|31db8a19d0865366|990d3d8e0fdc814a|-626388640||t20024.6847340302s|3467098f98c8219a|5923|qs|local|vector|||20.202|One or more parsing issues, call problems on your data frame for details,e.g.  dat  vroom...  problemsdat|
 ELECTION_DATE|object|8570071620b95baa|||||||||||||||
 get_clarity|function|a3c80326d33d5776|||||||||||||||
-get_data|function|e6568d871ef697a1|||||||||||||||
+get_data|function|c977469384e8b281|||||||||||||||
 get_gsheet|function|099ea774dbfd59b4|||||||||||||||
 get_timestamp|function|0a9b351a504fd8aa|||||||||||||||
 lookup_state_name|function|3572d7f708158618|||||||||||||||
@@ -21,8 +21,8 @@ scrape_az|function|d299f0cc1cdd6fca|||||||||||||||
 scrape_ga|function|29a290886e355fae|||||||||||||||
 scrape_mi|function|8b5d19f03dec435d|||||||||||||||
 scrape_nc|function|4770cba74fb2e597|||||||||||||||
-scrape_pa|function|c563afe74ba030c8|||||||||||||||
+scrape_pa|function|10470327ddcf8ae5|||||||||||||||
 tbl_cbs_AZ_Maricopa|stem|e7c44b5a52634110|7153e55fcdbf18ba|fcf24d83c2be0c1b|-1904506548||t20024.6757732308s|25b9ffd7c2e278fa|27234|qs|local|vector|||0.243||
-tbl_cbs_PA_Philadelphia|stem||8045b3b19078741f|0baedeeadd8f660e|-1390787123||t20024.6757958518s||0|qs|local|vector|||0.002||could not load dependencies of target tbl_cbs_PA_Philadelphia. Expecting a single string value typecharacter extent0.
-timestamp_AZ_Maricopa|stem|5471ca68b5112a7b|811f19eacc390e49|d4957c4a37fe6de4|1242395665||t20024.6804297943s|86c36464e2e2a367|58|qs|local|vector|||1.287||
-timestamp_PA_Philadelphia|stem|0ba5da2012aeb552|10aad69ff7afb69a|d4957c4a37fe6de4|-1536386861||t20024.6804463901s|86c36464e2e2a367|58|qs|local|vector|||0.616||
+tbl_cbs_PA_Philadelphia|stem||8045b3b19078741f|7b3d1e2f32acf162|-1390787123||t20024.6757958518s||0|qs|local|vector|||0.172||ℹ In argument cVote  rowSums....Caused by error in rowSums x must be numeric
+timestamp_AZ_Maricopa|stem|5471ca68b5112a7b|811f19eacc390e49|d4957c4a37fe6de4|1242395665||t20024.6844525956s|86c36464e2e2a367|58|qs|local|vector|||1.192||
+timestamp_PA_Philadelphia|stem|0ba5da2012aeb552|10aad69ff7afb69a|d4957c4a37fe6de4|-1536386861||t20024.6844978828s|86c36464e2e2a367|58|qs|local|vector|||0.533||

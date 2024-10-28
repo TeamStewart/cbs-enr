@@ -1,13 +1,13 @@
 name|type|parent|branches|progress
 timestamp_AZ_Maricopa|stem|timestamp_AZ_Maricopa|0|dispatched
 timestamp_AZ_Maricopa|stem|timestamp_AZ_Maricopa|0|completed
-data_AZ_Maricopa|stem|data_AZ_Maricopa|0|skipped
+data_AZ_Maricopa|stem|data_AZ_Maricopa|0|dispatched
+data_AZ_Maricopa|stem|data_AZ_Maricopa|0|completed
 tbl_cbs_AZ_Maricopa|stem|tbl_cbs_AZ_Maricopa|0|skipped
-models_AZ_Maricopa|stem|models_AZ_Maricopa|0|dispatched
-models_AZ_Maricopa|stem|models_AZ_Maricopa|0|completed
+models_AZ_Maricopa|stem|models_AZ_Maricopa|0|skipped
 timestamp_PA_Philadelphia|stem|timestamp_PA_Philadelphia|0|dispatched
 timestamp_PA_Philadelphia|stem|timestamp_PA_Philadelphia|0|completed
 data_PA_Philadelphia|stem|data_PA_Philadelphia|0|dispatched
-data_PA_Philadelphia|stem|data_PA_Philadelphia|0|errored
+data_PA_Philadelphia|stem|data_PA_Philadelphia|0|completed
 tbl_cbs_PA_Philadelphia|stem|tbl_cbs_PA_Philadelphia|0|dispatched
 tbl_cbs_PA_Philadelphia|stem|tbl_cbs_PA_Philadelphia|0|errored

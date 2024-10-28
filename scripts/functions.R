@@ -195,6 +195,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
       cName = candidate_name,
       eType = election_type_code,
       cId = candidate_id) |>
+    mutate(across(c(edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote), as.integer)) |> 
     mutate(
       cVote = rowSums(across(c(edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote), ~ replace_na(., 0))),
       ts = ymd_hms(timestamp, tz = "America/New_York")) |>
