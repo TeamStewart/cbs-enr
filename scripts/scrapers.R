@@ -247,7 +247,7 @@ scrape_ga <- function(state, county, path, timestamp){
         vote_mode,
         "Election Day" ~ "Election Day",
         "Advanced Voting" ~ "Early Voting",
-        "Absentee by Mail" ~ "Absentee/VBM",
+        "Absentee by Mail" ~ "Absentee/Mail",
         "Provisional" ~ "Provisional"
       )
     ) |>
@@ -338,7 +338,7 @@ scrape_mi <- function(state, county, path, timestamp){
       
       file_timestamp <- cleaned |> pull(timestamp) |> unique() |> max() |> str_replace_all("-|:| ", "_")
       
-      write_csv(cleaned, file = glue("data/clean/{state}/{county}_{file_timestamp}.csv"))
+      write_csv(cleaned, file = glue("data/clean/{state}/{state}_{county}_{file_timestamp}.csv"))
     }
     
     cleaned_files <- lapply(raw_files, clean_oakland_mi)
@@ -436,10 +436,87 @@ scrape_nc <- function(state, county, path, timestamp) {
 
 ## Pennsylvania
 scrape_pa <- function(state, county, path, timestamp){
-  if (county == "ALLEGHENY"){
+  if (county == "Allegheny"){
     
-  } 
-  else if (county == "Philadelphia"){
+  } else if (county == "Delaware"){
+    # Download Clarity files
+    get_clarity(state, county, path)
+    
+    # Build list of Clarity files
+    raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    
+    clean_delaware_pa <- function(file){
+      cleaned <- read_csv(file) |>
+        filter(race_name %in% c("Presidential Electors", "United States Senator")) |>
+        mutate(
+          timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+          state = "PA",
+          jurisdiction = "Delaware",
+          # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
+          race_name = case_match(
+            race_name,
+            "Presidential Electors" ~ "President",
+            "United States Senator" ~ "Senate"), 
+          # Recode candidate party: Democrat, Republican, Libertarian, US Taxpayers, Green, Natural Law, Justice for All
+          candidate_party = case_match(
+            candidate_party,
+            "DEM" ~ "Democrat",
+            "REP" ~ "Republican",
+            "LIB" ~ "Libertarian",
+            "GRN" ~ "Green",
+            "CST" ~ "Constitution",
+            .default = "Other"),
+          # Recode candidate names
+          candidate_name = case_match(
+            candidate_name,
+            # Delaware, PA presidential candidates
+            "(13) Chase Oliver / Mike ter Maat" ~ "Chase Oliver",
+            "(12) Donald J. Trump /  JD Vance" ~ "Donald Trump",
+            "(14) Jill Stein / Rudolph Ware" ~ "Jill Stein",
+            "(11) Kamala D. Harris / Tim Walz" ~ "Kamala Harris",
+            # Delaware, PA senate candidates
+            "(21) Robert P. Casey Jr." ~ "Bob Casey",
+            "(24) Leila Hazou" ~ "Leila Hazou",
+            "(22) Dave McCormick" ~ "Dave McCormick",
+            "(25) Marty Selker" ~ "Marty Selker",
+            "(23) John C. Thomas" ~ "John Thomas",
+          ), 
+          # Create virtual precinct column: real == TRUE, administrative == FALSE
+          virtual_precinct = F,
+          # Deal with under/overvotes
+          candidate_name = case_when(
+            vote_mode == "Undervotes" ~ "Undervotes",
+            vote_mode == "Overvotes" ~ "Overvotes",
+            TRUE ~ candidate_name
+          ),
+          candidate_party = ifelse(vote_mode %in% c("Undervotes", "Overvotes"), NA_character_, candidate_party),
+          # Specify vote modes: Election Day, Provisional, Absentee/Mail, Early Voting, Other
+          vote_mode = case_match(
+            vote_mode,
+            "Election Day Votes" ~ "Election Day",
+            "Mail Votes" ~ "Absentee/Mail",
+            "Provisional Votes" ~ "Provisional",
+            "Undervotes" ~ "Overvote/Undervote",
+            "Overvotes" ~ "Overvote/Undervote",
+            .default = "Other"
+          )
+        ) |>
+        summarise(
+          precinct_total = sum(precinct_total, na.rm = T),
+          .by = c("state","race_id","race_name","candidate_name","candidate_party","jurisdiction","precinct_id","virtual_precinct","timestamp","vote_mode")) |>
+        arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
+      
+      file_timestamp <- cleaned |> pull(timestamp) |> unique() |> max() |> str_replace_all("-|:| ", "_")
+      
+      write_csv(cleaned, file = glue("data/clean/{state}/{state}_{county}_{file_timestamp}.csv"))
+    }
+    
+    cleaned_files <- lapply(raw_files, clean_delaware_pa)
+    
+    # Return latest timestamped version
+    return(read_csv(list.files(path = glue("data/clean/{state}"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
+    
+  } else if (county == "Philadelphia"){
     # dynamically retrieve file via python script
     source_python("scripts/util/dynamic_download.py")
     get_file(path, county, state)

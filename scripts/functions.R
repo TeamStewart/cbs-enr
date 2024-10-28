@@ -86,7 +86,7 @@ get_timestamp <- function(state, county, path) {
   }
 
   pa_timestamp <- function() {
-    if (county == "ALLEGHENY") {
+    if (county %in% c("Allegheny","Delaware")) {
       clarity_timestamp()
     } else if (county == "Philadelphia") {
       read_html("https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?") |>
@@ -122,7 +122,8 @@ get_data <- function(state, county, timestamp, path = NULL) {
   dir_create(glue("data/clean/{state}"))
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
   clarity_counties <- list(
-    "MI" = c("Oakland", "Macomb")
+    "MI" = c("Oakland", "Macomb"),
+    "PA" = c("Delaware")
   )
   if (state %in% names(special_counties) && county %in% special_counties[[state]]) {
     # save latest version; timestamped version already saved
@@ -177,7 +178,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     pivot_wider(names_from = vote_mode, values_from = precinct_total)
   
   # Verify if we have all target vote_modes; if not, add NA column
-  target_vote_modes <- c("Election Day", "Early Voting", "Absentee/VBM", "Provisional")
+  target_vote_modes <- c("Election Day", "Early Voting", "Absentee/Mail", "Provisional")
   missing_cols <- setdiff(target_vote_modes, names(formatted))
   formatted[missing_cols] <- NA
    
@@ -187,7 +188,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
       cnty = cbs_county_id,
       edayVote = `Election Day`,
       earlyInPersonVote = `Early Voting`,
-      earlyByMailVote = `Absentee/VBM`,
+      earlyByMailVote = `Absentee/Mail`,
       provisionalVote = Provisional,
       cName = candidate_name,
       eType = election_type_code,
