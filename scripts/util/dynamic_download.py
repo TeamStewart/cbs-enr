@@ -26,11 +26,21 @@ def setup_driver(state):
     
     return driver, download_directory
 
+def download_wait(download_directory):
+    seconds = 0
+    dl_wait = True
+    while dl_wait and seconds < 30:
+        time.sleep(1)
+        dl_wait = False
+        for fname in os.listdir(download_directory):
+            if fname.endswith('.crdownload'):
+                dl_wait = True
+        seconds += 0.5
+    return seconds
+
 def rename_file_with_timestamp(directory):
-    # Wait for the new file to be downloaded completely
-    time.sleep(10)  # Wait to ensure file has been fully downloaded
     files = os.listdir(directory)
-    full_paths = [os.path.join(directory, f) for f in files if f.endswith(".csv")]
+    full_paths = [os.path.join(directory, f) for f in files if f.endswith((".csv", ".txt"))]
 
     if not full_paths:
         return None  # No csv files found
@@ -39,8 +49,8 @@ def rename_file_with_timestamp(directory):
     most_recent_file = max(full_paths, key=os.path.getmtime)
     
     # Generate a timestamp for renaming
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    new_filename = f"{os.path.splitext(os.path.basename(most_recent_file))[0]}_{timestamp}.csv"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    new_filename = f"{os.path.splitext(os.path.basename(most_recent_file))[0]}_{timestamp}{os.path.splitext(most_recent_file)[1]}"
     new_path = os.path.join(directory, new_filename)
 
     # Rename the file
@@ -51,22 +61,20 @@ def rename_file_with_timestamp(directory):
 def get_file(path, county, state):
     # Initialize the driver
     driver, download_directory = setup_driver(state)
+    
     # Navigate to the URL
     driver.get(path)
     
-    # Wait for some time to ensure the file gets downloaded. Adjust the sleep time as necessary.
-    time.sleep(8)
-    
     # In Philadelphia County, PA, dynamically click download link
-    if state == "PA" and county == "Philadelphia":
-        download_button = driver.find_element(By.ID, "MainContent_LinkButton1")
-        download_button.click()
+    if state == "PA" and county == "PHILADELPHIA": driver.find_element(By.ID, "MainContent_LinkButton1").click()
+    
+    # Wait for some time to ensure the file gets downloaded
+    download_seconds = download_wait(download_directory)
+    
+    if download_seconds == 30:
+        raise Exception("Download did not complete successfully")
         
-        # wait more time for crdownload to unpack
-        time.sleep(10)
-        
-        renamed_file = rename_file_with_timestamp(download_directory)
+    rename_file_with_timestamp(download_directory)
         
     # Close the webdriver
     driver.quit()
-
