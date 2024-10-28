@@ -19,8 +19,8 @@ source("scripts/functions.R")
 
 #renv::use_python()
 
-state = 'PA'
-county = 'Philadelphia'
-path = 'https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch'
+state = 'MI'
+county = 'Oakland'
+path = 'https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?'
 timestamp = get_timestamp(state, county, path)
 data = get_data(state, county, timestamp, path)
