@@ -20,9 +20,21 @@ execute_script <- function() {
 
 # Main loop to schedule and execute the script every 4 minutes
 while (TRUE) {
-  execute_script()
-
+  
   run_time <- format(Sys.time(), format="%Y-%m-%d %H:%M:%S") |> str_replace_all("-|:| ", "_")
+  
+  dir_create("logs/")
+  
+  con <- file("automation_{run_time}.log")
+  sink(con, append=TRUE)
+  sink(con, append=TRUE, type="message")
+  
+  execute_script()
+  
+  # Restore output to console
+  sink() 
+  sink(type="message")
+  
   # push and commit to git
   # to get this to work, (1) https://docs.ropensci.org/git2r/reference/cred_token.html
   # (2) https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
