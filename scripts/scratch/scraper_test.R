@@ -21,6 +21,6 @@ source("scripts/functions.R")
 
 state = 'MI'
 county = 'Oakland'
-path = 'https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?'
+path = 122321
 timestamp = get_timestamp(state, county, path)
 data = get_data(state, county, timestamp, path)

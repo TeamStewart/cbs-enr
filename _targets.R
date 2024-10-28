@@ -55,7 +55,7 @@ list(
     metadata,
     tar_target(timestamp, get_timestamp(state, county, path), cue = tar_cue(mode = "always")),
     tar_target(data, get_data(state, county, timestamp, path), error = "continue"),
-    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp)),
+    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
     tar_target(models, run_models(data, state, county, model_swing, model_turnout)),
     names = c(state, county)
   )
