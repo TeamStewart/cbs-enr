@@ -66,7 +66,7 @@ def get_file(path, county, state):
     driver.get(path)
     
     # In Philadelphia County, PA, dynamically click download link
-    if state == "PA" and county == "PHILADELPHIA": driver.find_element(By.ID, "MainContent_LinkButton1").click()
+    if state == "PA" and county == "Philadelphia": driver.find_element(By.ID, "MainContent_LinkButton1").click()
     
     # Wait for some time to ensure the file gets downloaded
     download_seconds = download_wait(download_directory)
