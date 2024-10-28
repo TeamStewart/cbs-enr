@@ -25,7 +25,7 @@ while (TRUE) {
   
   dir_create("logs/")
   
-  con <- file("automation_{run_time}.log")
+  con <- file(glue("automation_{run_time}.log"))
   sink(con, append=TRUE)
   sink(con, append=TRUE, type="message")
   
