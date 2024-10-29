@@ -292,6 +292,8 @@ scrape_nc <- function(state, county, path, timestamp) {
     mutate(
       timestamp = timestamp |> ymd_hms(tz = "America/New_York"),
       state = "NC",
+      # Change to title case from upper case for joining to CBS meta
+      county = str_to_title(county),
       # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
       contest_name = case_match(
         contest_name,

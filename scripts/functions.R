@@ -198,7 +198,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     mutate(across(c(edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote), as.integer)) |> 
     mutate(
       cVote = rowSums(across(c(edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote), ~ replace_na(., 0))),
-      ts = ymd_hms(timestamp, tz = "America/New_York")) |>
+      ts = ymd_hms(timestamp, tz = "America/New_York") |> with_tz(tzone = 'UTC') |> format("%Y-%m-%dT%H:%M:%SZ")) |>
     select(
       eDate, jType, real_precinct, st, eType, jCde, ofc, cnty, pcnt, pcntUUID, pcntName,
       cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote,ts) |>
