@@ -30,9 +30,13 @@ suppressPackageStartupMessages({
   library(glue)
   library(fs)
   library(here)
+  library(data.table)
 })
 
 sf_use_s2(FALSE)
+
+# Change dropbox path for Joe or Mason
+dropbox_path <- ifelse(Sys.info()["user"] == "josephloffredo", "~/Dropbox (MIT)/2024 Election Results", "~/Dropbox (MIT)/Research/2024 Election Results")
 
 ```
 
@@ -83,22 +87,22 @@ download_file <- function(url, version){
 
 map2(counties$url, counties$version, download_file)
 
-source_python("scripts/util/clarity_scraper.py")
+source_python(here("scripts/util/clarity_scraper.py"))
 
 counties |> 
   mutate(
-    local = glue("data/raw/GA/{county}_{version}.zip")
+    local = glue(here("data/raw/GA/{county}_{version}.zip"))
   ) |> 
   pull(local) |> 
   walk(.f = \(x) get_data_clarity("GA", x))
 
-list.files("data/raw/GA", pattern = "*.csv", full.names = TRUE) |> 
+list.files(here("data", "raw", "GA"), pattern = "*.csv", full.names = TRUE) |> 
   lapply(fread) |> 
   rbindlist(use.names = TRUE) |> 
   transform(
     state = "GA"
   ) |> 
-  fwrite("~/Dropbox (MIT)/Research/2024 Election Results/22_general/GA_allReports.csv")
+  fwrite(glue("{dropbox_path}/22_general/GA_allReports.csv"))
 
 ```
 
@@ -110,7 +114,7 @@ dem_candidate_regex = regex("Warnock|\\(Dem\\)", ignore_case = TRUE)
 rep_candidate_regex = regex("Walker|\\(Rep\\)", ignore_case = TRUE)
 
 # reported precinct-level data from Clarity in 2022 at 4am
-data22 = read_csv("~/Dropbox (MIT)/Research/2024 Election Results/22_general/GA_allReports.csv") |> 
+data22 <- read_csv(glue("{dropbox_path}/22_general/GA_allReports.csv")) |> 
   filter(str_detect(race_name, "US Senate"), timestamp <= ymd_hm("2022-11-09 4:00am")) |> 
   filter(timestamp == max(timestamp), .by = c(state, jurisdiction, precinct_id)) |>
   # it looks like some precincts are leftover from another election or redefined accidentally
@@ -149,7 +153,8 @@ data22 = read_csv("~/Dropbox (MIT)/Research/2024 Election Results/22_general/GA_
   )
 
 # MEDSL 2020 precinct data, by mode
-data20 = read_csv("~/Dropbox (MIT)/Research/MEDSL Precinct Data/2020-ga-precinct-general.csv") |> 
+## Specifically, this gets Dem totals by vote mode, with column for total votes
+data20 <- read_csv(glue("{dropbox_path}/22_general/2020-ga-precinct-general.csv")) |> 
   filter(stage == "GEN", office == "US PRESIDENT") |> 
   select(county = county_name, precinct_20 = precinct, candidate, vote_mode = mode, votes_20 = votes) |> 
   mutate(
@@ -172,7 +177,7 @@ data20 = read_csv("~/Dropbox (MIT)/Research/MEDSL Precinct Data/2020-ga-precinct
   select(-candidate)
 
 # 2020 shapefiles, from VEST data
-shp20 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga_2020/") |> 
+shp20 <- read_sf(here("data/shapefiles/ga_2020/")) |> 
   st_transform("NAD83") |>
   select(
     precinct_20 = PRECINCT_N, county = CTYNAME
@@ -196,7 +201,7 @@ shp20 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga_2020/") |>
   drop_na(county)
 
 # 2022 shapefiles, from the GA legis reapportionment website
-shp22 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga-precincts2022-shape/") |> 
+shp22 <- read_sf(here("data/shapefiles/ga-precincts2022-shape/")) |> 
   select(county = COUNTY, precinct_22 = PRECINCT_N, geometry) |> 
   drop_na(county) |> 
   mutate(precinct_22 = str_to_upper(precinct_22)) |> 
@@ -207,9 +212,9 @@ shp22 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga-precincts20
   ))
 
 # merge the shapes together so that we can compute an overlap score
-intersection = st_intersection(shp22, shp20) |> filter(county == county.1)
+intersection <- st_intersection(shp22, shp20) |> filter(county == county.1)
 
-precinct_merge = intersection |> 
+precinct_merge <- intersection |> 
   # create the areal weighting
   mutate(area = st_area(intersection) |> as.numeric()) |> 
   st_drop_geometry() |>
@@ -248,11 +253,13 @@ precinct_merge = intersection |>
     .by = c(state, county, precinct_22)
   )
 
-turnout_summary = precinct_merge |> 
+turnout_summary <- precinct_merge |> 
   filter(reported_all) |> 
   distinct(state, county, precinct_22, votes_precFinal_20, votes_precTotal_22) |> 
   mutate(
-    diff = votes_precTotal_22 / votes_precFinal_20
+    # other option: diff = (votes_precTotal_22 - votes_precFinal_20) / votes_precFinal_20
+    #diff = (votes_precTotal_22 - votes_precFinal_20) / votes_precFinal_20
+    # diff = votes_precTotal_22 / votes_precFinal_20
   ) |> 
   summarise(
     turn_top = quantile(diff, 0.98, na.rm = TRUE),
@@ -265,7 +272,7 @@ turnout_summary = precinct_merge |>
   ) |>
   mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))))
 
-swing_summary = precinct_merge |> 
+swing_summary <- precinct_merge |> 
   filter(reported_all) |> 
   distinct(state, county, precinct_22, vote_mode, votePct_dem_22, votePct_rep_22) |> 
   filter(!is.nan(votePct_dem_22)) |> 
@@ -283,7 +290,7 @@ swing_summary = precinct_merge |>
   ) |> 
   mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode)
   
-estimates = precinct_merge |> 
+estimates <- precinct_merge |> 
   full_join(turnout_summary, join_by(county)) |> 
   full_join(swing_summary, join_by(county, vote_mode)) |> 
   mutate(
@@ -395,7 +402,3 @@ imputed = merged |>
   )
 
 ```
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
