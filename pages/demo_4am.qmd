@@ -225,7 +225,7 @@ precinct_merge = intersection |>
   left_join(data20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
   # fill in missigness with county mean so we can make estimates
   mutate(
-    across(c(votes_20, votePct_dem_20, votePct_rep_20, votePct_diff_20, votes_precFinal_20), ~ mean(.x, na.rm=TRUE)),
+    across(c(votes_20, votePct_dem_20, votePct_rep_20, votePct_diff_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
     .by = c(county, vote_mode)
   ) |> 
   # weight percentages by merged precincts
@@ -299,19 +299,19 @@ estimates = precinct_merge |>
       reported_all ~ votes_22,
       # keep early or mail votes that are already in
       votes_22 > 0 ~ votes_22,
-      .default = votes_20 * (dem_med / votePct_dem_20) * turn_med
+      .default = votes_20 + (votes_20 * (dem_med - votePct_dem_20)) * turn_med
     ),
     votes_22_demBot = case_when(
       reported_all ~ votes_22,
       # keep early or mail votes that are already in
       votes_22 > 0 ~ votes_22,
-      .default = votes_20 * (dem_bot / votePct_dem_20) * turn_bot
+      .default = votes_20 + (votes_20 * (dem_bot - votePct_dem_20)) * turn_bot
     ),
     votes_22_demTop = case_when(
       reported_all ~ votes_22,
       # keep early or mail votes that are already in
       votes_22 > 0 ~ votes_22,
-      .default = votes_20 * (dem_top / votePct_dem_20) * turn_top
+      .default = votes_20 + (votes_20 * (dem_top - votePct_dem_20)) * turn_top
     ),
     votes_22_demEst = replace_na(votes_22_demEst, 0),
     votes_22_demBot = replace_na(votes_22_demBot, 0),
@@ -321,6 +321,8 @@ estimates = precinct_merge |>
 # check out some examples of the filtering working
 estimates |> filter(!reported_all) |> select(vote_mode, votes_20, votes_22, starts_with("votes_22_dem"))
 
+sum(estimates$votes_22_demEst)
+sum(estimates$votes_22_demBot)
 sum(estimates$votes_22_demTop)
 
 ```
