@@ -17,13 +17,15 @@ suppressPackageStartupMessages({
 source("scripts/functions.R")
 
 options(
-  readr.show_col_types = FALSE
+  readr.show_col_types = FALSE,
+  gargle_oauth_email = TRUE
 )
 
 tar_option_set(
   packages = c(
     # tar_renv()
-    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", "googledrive", "httr2", "rvest", "reticulate"
+    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", 
+    "googledrive", "httr2", "rvest", "reticulate", "sf", "xml2", "jsonlite"
   ),
   memory = "transient",
   format = "qs",
@@ -43,18 +45,17 @@ tar_config_set(
 # - model_swing: (boolean) whether to model swing for this county/state
 # - model_turnout: (boolean) whether to model turnout for this county/state
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
-metadata = get_gsheet(sheet = "metadata") |> select(-notes)
+metadata = get_gsheet(sheet = "metadata")
 
 # ========================================
 ## PIPELINE
-# ========================================
+# ====================Z====================
 list(
   tar_map(
     metadata,
     tar_target(timestamp, get_timestamp(state, county, path), cue = tar_cue(mode = "always")),
     tar_target(data, get_data(state, county, timestamp, path), error = "continue"),
-    tar_target(tbl_gen, create_table_generic(data, state, county, type, timestamp)),
-    tar_target(tbl_cbs, create_table_cbs(data, state, county, type, timestamp)),
+    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
     tar_target(models, run_models(data, state, county, model_swing, model_turnout)),
     names = c(state, county)
   )

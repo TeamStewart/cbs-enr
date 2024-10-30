@@ -21,7 +21,7 @@ class Parser(object):
     """
 
     def __init__(self):
-        # self.timestamp = None
+        self.timestamp = None
         # self.election_name = None
         # self.election_date = None
         self.region = None
@@ -47,7 +47,7 @@ class Parser(object):
             tree = etree.parse(f)
 
         election_voter_turnout = self._parse_election_voter_turnout(tree) or [0, 0, 0]
-        # self.timestamp = self._parse_timestamp(tree)
+        self.timestamp = self._parse_timestamp(tree)
         # self.election_name = self._parse_election_name(tree)
         # self.election_date = self._parse_election_date(tree)
         self.region = self._parse_region(tree)
@@ -602,6 +602,7 @@ class Result(namedtuple('ResultBase', RESULT_FIELDS)):
 
 def _flatten_result(r):
     return {
+        # 'timestamp': r.timestamp,
         'race_id': r.contest.key,
         'race_name': r.contest.text,
         'vote_mode': r.vote_type,
@@ -618,17 +619,18 @@ def get_data_clarity(state, path):
             # Assuming the file you want to parse is the first file in the archive
             file_to_parse = file_names[0]
             try:
-                zip_ref.extract(file_to_parse, f'../data/raw/{state}/')
+                zip_ref.extract(file_to_parse, f'data/raw/{state}/')
             except zipfile.BadZipFile as e:
                 print(f"Failed to extract zip file: {e} at {path}")
 
-            zip_ref.extract(file_to_parse, f'../data/raw/{state}/')
+            zip_ref.extract(file_to_parse, f'data/raw/{state}/')
 
         p = Parser()
-        p.parse(f'../data/raw/{state}/{file_to_parse}')
+        p.parse(f'data/raw/{state}/{file_to_parse}')
 
         df = pd.DataFrame([_flatten_result(r) for r in p.results if r.jurisdiction is not None])
         df['jurisdiction'] = p.region
+        df['timestamp'] = p.timestamp
 
         df.to_csv(path.replace(".zip", ".csv"), index=False)
     except Exception as e:
