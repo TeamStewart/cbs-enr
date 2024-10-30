@@ -29,6 +29,7 @@ suppressPackageStartupMessages({
   library(rvest)
   library(glue)
   library(fs)
+  library(here)
 })
 
 sf_use_s2(FALSE)
@@ -75,7 +76,7 @@ download_file <- function(url, version){
     request(url) |> 
       req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
       req_retry(max_tries = 5) |> 
-      req_perform(path = str_c("data/raw/GA/", str_extract(url, "(GA/)(.*?)(/)", group = 2), "_", version, ".zip")),
+      req_perform(path = here(str_c("data/raw/GA/", str_extract(url, "(GA/)(.*?)(/)", group = 2), "_", version, ".zip"))),
     httr2_http_404 = function(cnd) NULL
   )
 }
@@ -394,4 +395,7 @@ imputed = merged |>
   )
 
 ```
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
