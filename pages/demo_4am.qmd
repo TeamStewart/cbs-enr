@@ -424,13 +424,23 @@ summaries = summaries_byCounty_byMode |>
 
 ```
 
+## How Many Votes Are In?
 
-## Votes In?
+`r summaries$votes_total_22` votes are in, `r summaries$votes_total_22 / summaries$votes_total_20`% of the 2020 total
 
-Number of precincts reporting
-Estimated % of total votes
+_Precincts reporting all modes_: `r prec_reported_all` out of `r prec_total` total precincts (`r 100*round(prec_reported_all / prec_total, 2)`%)
 
-## Estimated Vote Share (Trump vs. Haley)
+_Precincts reporting Election Day_: `r prec_reported_eday` out of `r prec_total` total precincts (`r 100*round(prec_reported_eday / prec_total, 2)`%)
+
+## Estimated Vote Share (Dem vs. Rep)
+
+_Swing_: `r 100*(summaries$demShare_estimate - summaries$repShare_estimate)`% with uncertainty bounds [`r 100*(summaries$demShare_lower - summaries$repShare_lower)`% -- `r 100*(summaries$demShare_upper - summaries$repShare_upper)`%]
+
+_Swing vs 2020_: `r 100*(summaries$swing_estimate)`% with uncertainty bounds [`r 100*(summaries$swing_lower)`% -- `r 100*(summaries$swing_upper)`%]
+
+_Democrat_: `r summaries$demVotes_estimate` with uncertainty bounds [`r summaries$demVotes_lower` -- `r summaries$demVotes_upper`]
+
+_Republican_: `r summaries$repVotes_estimate` with uncertainty bounds [`r summaries$repVotes_lower` -- `r summaries$repVotes_upper`]
 
 <!-- point estimate and uncertainty bounds -->
 
