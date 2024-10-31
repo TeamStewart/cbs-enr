@@ -273,6 +273,88 @@ scrape_mi <- function(state, county, path, timestamp){
     
     # Return latest timestamped version
     return(read_csv(list.files(path = glue("data/clean/{state}"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
+  } else if(county == 'Ingham'){
+    # Download the raw json
+    raw_file_path = glue('data/raw/{state}/{state}_{county}_{timestamp}.json')
+    download.file(path, destfile = raw_file_path)
+    
+    # Clean the raw json
+    read_json(raw_file_path) |> 
+      pluck('results', "ballotItems") |>
+      map_df(~.x) |>
+      filter(name %in% c('President/Vice-President of the United States', 'United States Senator')) |>
+      unnest_wider(col = ballotOptions, names_repair = "unique") |>
+      select(-groupResults) |>
+      # Unnest the precinctResults to get individual rows for each precinct
+      unnest_longer(col = precinctResults) |>
+      unnest_wider(col = precinctResults, names_repair = "unique") |>
+      # Now unnest the groupResults within each precinct
+      unnest_longer(col = groupResults) |>
+      unnest_wider(col = groupResults, names_repair = "unique") |>
+      clean_names() |>
+      select(-c(type, vote_for:contest_type, ballot_order_11, vote_count_12, vote_count_17, reporting_status, is_virtual)) |>
+      rename(
+        race_id = id_2,
+        race_name = name_3,
+        candidate_name = name_10,
+        candidate_party = political_party,
+        precinct_id = name_15,
+        virtual_precinct = is_from_virtual_precinct,
+        vote_mode = group_name,
+        precinct_total = vote_count_20
+      ) |>
+      mutate(
+        timestamp = timestamp |> ymd_hms(tz = "America/New_York"),
+        state = 'MI',
+        jurisdiction = 'Ingham',
+        # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
+        race_name = case_match(
+          race_name,
+          'President/Vice-President of the United States' ~ "President",
+          'United States Senator' ~ "Senate",
+          ),
+        # Recode candidate party: Democrat, Republican, Libertarian, Constitution, Green, Independent, Justice for All
+        candidate_party = case_match(
+          candidate_party,
+          "Democrat" ~ "Democrat",
+          "Republican" ~ "Republican",
+          "Libertarian" ~ "Libertarian",
+          "U.S. Taxpayers" ~ "US Taxpayers",
+          "Green" ~ "Green",
+          "Natural Law" ~ "Natural Law",
+          .default = "Other"
+        ),
+        # Recode candidate names
+        candidate_name = case_match(
+          candidate_name,
+          # Oakland, MI presidential candidates
+          "Chase Oliver" ~ "Chase Oliver",
+          "Cornel West" ~ "Cornel West",
+          "Donald J. Trump" ~ "Donald Trump",
+          "Jill Stein" ~ "Jill Stein",
+          "Kamala D. Harris" ~ "Kamala Harris",
+          "Randall Terry" ~ "Randall Terry",
+          "Joseph Kishore" ~ "Joseph Kishore",
+          "Robert F. Kennedy, Jr." ~ "Robert F. Kennedy Jr.",
+          "Write-in" ~ "Write-ins",
+          # Oakland, MI senate candidates
+          "Elissa Slotkin" ~ "Elissa Slotkin",
+          "Mike Rogers" ~ "Mike Rogers",
+          "Joseph Solis-Mullen" ~ "Joseph Solis-Mullen",
+          "Dave Stein" ~ "Dave Stein",
+          "Douglas P. Marsh" ~ "Douglas Marsh",
+          "Doug Dern" ~ "Doug Dern"
+        ),
+        vote_mode = case_match(
+          vote_mode,
+          "Election Day" ~ "Election Day",
+          "Early Voting" ~ "Early Voting",
+          "AV Counting Boards" ~ "Absentee/Mail"
+        )
+      ) |>
+      select(state, race_id, race_name, candidate_name, candidate_party,
+             jurisdiction, precinct_id, virtual_precinct, timestamp, vote_mode, precinct_total) |>
+      arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
   }
 }
 
