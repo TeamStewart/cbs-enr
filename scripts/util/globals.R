@@ -1,7 +1,7 @@
-PATH_GDRIVE = ""
+PATH_GDRIVE = "https://drive.google.com/drive/folders/1741SR-N8X01Pao_soiwwqCjuMFwAgo5k"
 PATH_CBS_S3 = "cbsn-elections-external-models"
 PATH_LOCAL = ""
-ELECTION_DATE = "2024_general"
+ELECTION_DATE = "20241105"
 PATH_DROPBOX = ""
 
 local({
