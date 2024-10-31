@@ -120,66 +120,36 @@ list.files(here("data", "raw", "GA"), pattern = "*.csv", full.names = TRUE) |>
 dem_candidate_regex = regex("Warnock|\\(Dem\\)", ignore_case = TRUE)
 rep_candidate_regex = regex("Walker|\\(Rep\\)", ignore_case = TRUE)
 
-# reported precinct-level data from Clarity in 2022 at 4am
-data22 <- read_csv(glue("{dropbox_path}/22_general/GA_allReports.csv")) |> 
-  filter(str_detect(race_name, "US Senate"), timestamp <= ymd_hm("2022-11-09 4:00am")) |> 
-  filter(timestamp == max(timestamp), .by = c(state, jurisdiction, precinct_id)) |>
-  # it looks like some precincts are leftover from another election or redefined accidentally
-  # this removes those extra old precincts which are all zeroes
-  filter(timestamp > ymd("2022-10-15")) |>
-  select(state, county = jurisdiction, precinct_22 = precinct_id, candidate_name, vote_mode, votes_22 = precinct_total, timestamp) |> 
-  mutate(
-    candidate_name = case_when(
-      str_detect(vote_mode, fixed("Undervote", ignore_case=TRUE)) ~ "Undervote",
-      str_detect(vote_mode, fixed("Overvote", ignore_case=TRUE)) ~ "Overvote",
-      .default = candidate_name
-    ),
-    vote_mode = case_match(
-      vote_mode,
-      "Absentee by Mail Votes" ~ "ABSENTEE",
-      "Advance Voting Votes" ~ "ADVANCED VOTING",
-      "Election Day Votes" ~ "ELECTION DAY",
-      "Provisional Votes" ~ "PROVISIONAL",
-    ),
-    votes_precTotal_22 = sum(votes_22),
-    .by = c(state, county, precinct_22)
-  ) |> 
-  # compute these summary cols for everyone, but then notably immediately filter down to just the Dem
-  # candidate for the raw values
-  mutate(
-    votePct_dem_22 = sum(votes_22 * str_detect(candidate_name, dem_candidate_regex)) / sum(votes_22),
-    votePct_rep_22 = sum(votes_22 * str_detect(candidate_name, rep_candidate_regex)) / sum(votes_22),
-    votePct_diff_22 = votePct_dem_22 - votePct_rep_22,
-    .by = c(county, precinct_22, vote_mode)
-  ) |> 
-  filter(str_detect(candidate_name, dem_candidate_regex)) |>
-  select(-candidate_name) |> 
-  mutate(
-    county = str_to_upper(county),
-    precinct_22 = str_to_upper(precinct_22)
-  )
-
 # MEDSL 2020 precinct data, by mode
 ## Specifically, this gets Dem totals by vote mode, with column for total votes
-data20 <- read_csv(glue("{dropbox_path}/22_general/2020-ga-precinct-general.csv")) |> 
+data20 <- read_csv(glue("{PATH_DROPBOX}/22_general/2020-ga-precinct-general.csv")) |> 
   filter(stage == "GEN", office == "US PRESIDENT") |> 
   select(county = county_name, precinct_20 = precinct, candidate, vote_mode = mode, votes_20 = votes) |> 
   mutate(
     state = "GA",
     votes_precFinal_20 = sum(votes_20),
-    .by = c(county, precinct_20)
+    .by = c(county, precinct_20, vote_mode)
   ) |> 
   mutate(
     votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
     votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
-    votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
+    # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
     .by = c(county, precinct_20, vote_mode)
   ) |> 
-  mutate(precinct_20 = case_when(
+  mutate(
+    precinct_20 = case_when(
     .default = precinct_20,
     county == "SPALDING" ~ str_pad(precinct_20, width = 2, side = "left", pad = "0"),
     county == "CHATHAM" ~ str_sub(precinct_20, start = 7)
-  )) |> 
+    ),
+    vote_mode = case_match(
+      vote_mode,
+      "ABSENTEE" ~ "Absentee/Mail",
+      "ADVANCED VOTING" ~ "Early Voting",
+      "ELECTION DAY" ~ "Election Day",
+      "PROVISIONAL" ~ "Provisional",
+    ),
+  ) |> 
   filter(str_detect(candidate, "BIDEN")) |> 
   select(-candidate)
 
@@ -221,7 +191,7 @@ shp22 <- read_sf(here("data/shapefiles/ga-precincts2022-shape/")) |>
 # merge the shapes together so that we can compute an overlap score
 intersection <- st_intersection(shp22, shp20) |> filter(county == county.1)
 
-precinct_merge <- intersection |> 
+data_history <- intersection |> 
   # create the areal weighting
   mutate(area = st_area(intersection) |> as.numeric()) |> 
   st_drop_geometry() |>
@@ -230,7 +200,7 @@ precinct_merge <- intersection |>
   # now full-join to ensure all county x precincts are represented in the data
   # so that we can fill in some missigness
   full_join(
-    expand(shp20, nesting(county, precinct_20), vote_mode = c("ABSENTEE", "ADVANCED VOTING", "ELECTION DAY", "PROVISIONAL")),
+    expand(shp20, nesting(county, precinct_20), vote_mode = c("Absentee/Mail", "Early Voting", "Election Day", "Provisional")),
     join_by(county, precinct_20),
     relationship = "many-to-many"
   ) |> 
@@ -238,107 +208,219 @@ precinct_merge <- intersection |>
   left_join(data20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
   # fill in missigness with county mean so we can make estimates
   mutate(
-    across(c(votes_20, votePct_dem_20, votePct_rep_20, votePct_diff_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
+    across(c(votes_20, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
     .by = c(county, vote_mode)
   ) |> 
   # weight percentages by merged precincts
   summarize(
     votePct_dem_20 = sum(votePct_dem_20 * weight),
     votePct_rep_20 = sum(votePct_rep_20 * weight),
-    votePct_diff_20 = sum(votePct_diff_20 * weight),
+    # votePct_diff_20 = sum(votePct_diff_20 * weight),
     votes_precFinal_20 = sum(votes_precFinal_20 * weight),
     votes_20 = sum(votes_20 * weight),
     .by = c(county, precinct_22, vote_mode)
+  )
+
+```
+
+```{r gen_estimates}
+#| code-fold: true
+
+data22 <- read_csv(glue("{PATH_DROPBOX}/22_general/GA_allReports.csv")) |> 
+  filter(str_detect(race_name, "US Senate"), timestamp <= ymd_hm("2022-11-09 4:00am")) |> 
+  filter(timestamp == max(timestamp), .by = c(state, jurisdiction, precinct_id)) |>
+  # it looks like some precincts are leftover from another election or redefined accidentally
+  # this removes those extra old precincts which are all zeroes
+  filter(timestamp > ymd("2022-11-07")) |>
+  select(state, county = jurisdiction, precinct_22 = precinct_id, candidate_name, vote_mode, votes_22 = precinct_total, timestamp) |> 
+  mutate(
+    candidate_name = case_when(
+      str_detect(vote_mode, fixed("Undervote", ignore_case=TRUE)) ~ "Undervote",
+      str_detect(vote_mode, fixed("Overvote", ignore_case=TRUE)) ~ "Overvote",
+      .default = candidate_name
+    ),
+    vote_mode = case_match(
+      vote_mode,
+      "Absentee by Mail Votes" ~ "Absentee/Mail",
+      "Advance Voting Votes" ~ "Early Voting",
+      "Election Day Votes" ~ "Election Day",
+      "Provisional Votes" ~ "Provisional"
+    ),
+    county = str_to_upper(county),
+    precinct_22 = str_to_upper(precinct_22)
   ) |> 
-  # now add 2022 data
-  full_join(data22, by = join_by(county, precinct_22, vote_mode), relationship = "many-to-many") |>  
+  # compute summary cols
+  summarize(
+    votes_precTotal_22 = sum(votes_22),
+    votes_22_dem = sum(votes_22 * str_detect(candidate_name, dem_candidate_regex)),
+    votes_22_rep = sum(votes_22 * str_detect(candidate_name, rep_candidate_regex)),
+    votePct_dem_22 = votes_22_dem / votes_precTotal_22,
+    votePct_rep_22 = votes_22_rep / votes_precTotal_22,
+    .by = c(state, county, precinct_22, vote_mode, timestamp)
+  ) |>
+  drop_na(vote_mode)
+
+data22_history <- data22 |> 
+  left_join(data_history, by = join_by(county, precinct_22, vote_mode), relationship = "many-to-many") |> 
   # create some helper columns for what reporting status we're at in each precinct
   mutate(
-    reported_none = sum(votes_22 > 0) == 0,
-    reported_all = sum(votes_22 > 0) >= 3,
-    reported_eday = max(vote_mode == "ELECTION DAY" & votes_22 > 0) == 1, 
+    reported_none = sum(votes_22_dem + votes_22_rep > 0) == 0,
+    reported_all = sum(votes_22_dem + votes_22_rep > 0) >= 3,
+    reported_eday = max(vote_mode == "Election Day" & votes_22_dem + votes_22_rep > 0) == 1,
+    reported_mail = max(vote_mode == "Absentee/Mail" & votes_22_dem + votes_22_rep > 0) == 1,
+    reported_early = max(vote_mode == "Early Voting" & votes_22_dem + votes_22_rep > 0) == 1,
     .by = c(state, county, precinct_22)
   )
 
-turnout_summary <- precinct_merge |> 
+prec_total = data22_history |> distinct(county, precinct_22) |> tally() |> pull()
+prec_reported_all = data22_history |> distinct(county, precinct_22, reported_all) |> pull(-1) |> sum()
+prec_reported_eday = data22_history |> distinct(county, precinct_22, reported_eday) |> pull(-1) |> sum()
+
+quantile_lower = (prec_reported_all / prec_total)/2
+quantile_upper = 1 - quantile_lower
+
+turnout_summary <- data22_history |> 
   filter(reported_all) |> 
-  distinct(state, county, precinct_22, votes_precFinal_20, votes_precTotal_22) |> 
+  distinct(state, county, precinct_22, vote_mode, votes_precFinal_20, votes_precTotal_22) |> 
   mutate(
     # other option: diff = (votes_precTotal_22 - votes_precFinal_20) / votes_precFinal_20
-    #diff = (votes_precTotal_22 - votes_precFinal_20) / votes_precFinal_20
-    # diff = votes_precTotal_22 / votes_precFinal_20
+    # diff = (votes_precTotal_22 - votes_precFinal_20) / votes_precFinal_20
+    diff = ifelse(vote_mode == "Provisional", 1, votes_precTotal_22 / votes_precFinal_20)
   ) |> 
   summarise(
-    turn_top = quantile(diff, 0.98, na.rm = TRUE),
-    turn_bot = quantile(diff, 0.02, na.rm = TRUE),
+    turn_top = quantile(diff, quantile_upper, na.rm = TRUE),
+    turn_bot = quantile(diff, quantile_lower, na.rm = TRUE),
     turn_med = median(diff, na.rm = TRUE),
     .by = county
   ) |> 
   right_join(
-    expand(precinct_merge, county)
+    expand(data22_history, county, vote_mode) |> drop_na(vote_mode)
   ) |>
-  mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))))
+  mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode)
 
-swing_summary <- precinct_merge |> 
+swing_summary <- data22_history |> 
   filter(reported_all) |> 
   distinct(state, county, precinct_22, vote_mode, votePct_dem_22, votePct_rep_22) |> 
   filter(!is.nan(votePct_dem_22)) |> 
   summarise(
-    dem_top = quantile(votePct_dem_22, 0.98),
-    dem_bot = quantile(votePct_dem_22, 0.02),
+    dem_top = quantile(votePct_dem_22, quantile_upper),
+    dem_bot = quantile(votePct_dem_22, quantile_lower),
     dem_med = median(votePct_dem_22),
-    rep_top = quantile(votePct_rep_22, 0.98),
-    rep_bot = quantile(votePct_rep_22, 0.02),
+    rep_top = quantile(votePct_rep_22, quantile_upper),
+    rep_bot = quantile(votePct_rep_22, quantile_lower),
     rep_med = median(votePct_rep_22),
     .by = c(county, vote_mode)
   ) |> 
   right_join(
-    expand(precinct_merge, county, vote_mode) |> drop_na(vote_mode)
+    expand(data22_history, county, vote_mode) |> drop_na(vote_mode)
   ) |> 
   mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode)
   
-estimates <- precinct_merge |> 
-  full_join(turnout_summary, join_by(county)) |> 
+estimates <- data22_history |> 
+  full_join(turnout_summary, join_by(county, vote_mode)) |> 
   full_join(swing_summary, join_by(county, vote_mode)) |> 
   mutate(
     votePct_dem_20 = replace_na(votePct_dem_20, mean(votePct_dem_20, na.rm = TRUE)),
+    votePct_rep_20 = replace_na(votePct_rep_20, mean(votePct_rep_20, na.rm = TRUE)),
     votes_precFinal_20 = replace_na(votes_precFinal_20, mean(votes_precFinal_20, na.rm = TRUE)),
     .by = c(county, vote_mode)
   ) |> 
   mutate(
     votePct_dem_20 = replace_na(votePct_dem_20, mean(votePct_dem_20, na.rm = TRUE)),
+    votePct_rep_20 = replace_na(votePct_rep_20, mean(votePct_rep_20, na.rm = TRUE)),
     votes_precFinal_20 = replace_na(votes_precFinal_20, mean(votes_precFinal_20, na.rm = TRUE))
   ) |>
   mutate(
+    votes_precTotal_22 = case_when(
+      reported_all ~ votes_precTotal_22,
+      votes_precTotal_22 > 0 ~ votes_precTotal_22,
+      .default = votes_precFinal_20 * turn_med
+    ),
     votes_22_demEst = case_when(
-      reported_all ~ votes_22,
+      reported_all ~ votes_22_dem,
       # keep early or mail votes that are already in
-      votes_22 > 0 ~ votes_22,
-      .default = votes_20 + (votes_20 * (dem_med - votePct_dem_20)) * turn_med
+      votes_22_dem > 0 ~ votes_22_dem,
+      .default = (votes_20 + (votes_20 * (dem_med - votePct_dem_20))) * turn_med
     ),
     votes_22_demBot = case_when(
-      reported_all ~ votes_22,
-      # keep early or mail votes that are already in
-      votes_22 > 0 ~ votes_22,
-      .default = votes_20 + (votes_20 * (dem_bot - votePct_dem_20)) * turn_bot
+      reported_all ~ votes_22_dem,
+      # keep early, mail, or provisional votes that are already in
+      votes_22_dem > 0 ~ votes_22_dem,
+      .default = (votes_20 + (votes_20 * (dem_bot - votePct_dem_20))) * turn_bot
     ),
     votes_22_demTop = case_when(
-      reported_all ~ votes_22,
+      reported_all ~ votes_22_dem,
       # keep early or mail votes that are already in
-      votes_22 > 0 ~ votes_22,
-      .default = votes_20 + (votes_20 * (dem_top - votePct_dem_20)) * turn_top
+      votes_22_dem > 0 ~ votes_22_dem,
+      .default = (votes_20 + (votes_20 * (dem_top - votePct_dem_20))) * turn_top
     ),
     votes_22_demEst = replace_na(votes_22_demEst, 0),
     votes_22_demBot = replace_na(votes_22_demBot, 0),
-    votes_22_demTop = replace_na(votes_22_demTop, 0)
+    votes_22_demTop = replace_na(votes_22_demTop, 0),
+    votes_22_repEst = case_when(
+      reported_all ~ votes_22_rep,
+      # keep early or mail votes that are already in
+      votes_22_rep > 0 ~ votes_22_rep,
+      .default = (votes_20 + (votes_20 * (rep_med - votePct_rep_20))) * turn_med
+    ),
+    votes_22_repBot = case_when(
+      reported_all ~ votes_22_rep,
+      # keep early or mail votes that are already in
+      votes_22_rep > 0 ~ votes_22_rep,
+      .default = (votes_20 + (votes_20 * (rep_bot - votePct_rep_20))) * turn_bot
+    ),
+    votes_22_repTop = case_when(
+      reported_all ~ votes_22_rep,
+      # keep early or mail votes that are already in
+      votes_22_rep > 0 ~ votes_22_rep,
+      .default = (votes_20 + (votes_20 * (rep_top - votePct_rep_20))) * turn_top
+    ),
+    votes_22_repEst = replace_na(votes_22_repEst, 0),
+    votes_22_repBot = replace_na(votes_22_repBot, 0),
+    votes_22_repTop = replace_na(votes_22_repTop, 0)
   )
 
-# check out some examples of the filtering working
-estimates |> filter(!reported_all) |> select(vote_mode, votes_20, votes_22, starts_with("votes_22_dem"))
+```
 
-sum(estimates$votes_22_demEst)
-sum(estimates$votes_22_demBot)
-sum(estimates$votes_22_demTop)
+```{r gen_models}
+
+summaries_byCounty_byMode = estimates |> 
+  summarize(
+    votes_total_20 = sum(votes_precFinal_20),
+    votes_total_22 = sum(votes_precTotal_22, na.rm = TRUE),
+    demVotes_lower = sum(votes_22_demBot),
+    demVotes_estimate = sum(votes_22_demEst),
+    demVotes_upper = sum(votes_22_demTop),
+    repVotes_lower = sum(votes_22_repBot),
+    repVotes_estimate = sum(votes_22_repEst),
+    repVotes_upper = sum(votes_22_repTop),
+    demShare_20 = weighted.mean(votePct_dem_20, votes_precFinal_20),
+    repShare_20 = weighted.mean(votePct_rep_20, votes_precFinal_20),
+    demShare_lower = demVotes_lower / votes_total_22,
+    demShare_estimate = demVotes_estimate / votes_total_22,
+    demShare_upper = demVotes_upper / votes_total_22,
+    repShare_lower = repVotes_lower / votes_total_22,
+    repShare_estimate = repVotes_estimate / votes_total_22,
+    repShare_upper = repVotes_upper / votes_total_22,
+    swing_lower = (demShare_lower - repShare_lower) - (demShare_20 - repShare_20),
+    swing_estimate = (demShare_estimate - repShare_estimate) - (demShare_20 - repShare_20),
+    swing_upper = (demShare_upper - repShare_upper) - (demShare_20 - repShare_20),
+    .by = c(state, county, vote_mode)
+  )
+
+summaries_byCounty = summaries_byCounty_byMode |> 
+  summarise(
+    across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
+    across(votes_total_20:repVotes_upper, sum),
+    .by = c(state, county)
+  )
+
+summaries = summaries_byCounty_byMode |> 
+  summarise(
+    across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
+    across(votes_total_20:repVotes_upper, sum),
+    .by = c(state)
+  )
 
 ```
 
