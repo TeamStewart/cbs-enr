@@ -35,8 +35,6 @@ suppressPackageStartupMessages({
 
 sf_use_s2(FALSE)
 
-# Change dropbox path for Joe or Mason
-dropbox_path <- ifelse(Sys.info()["user"] == "josephloffredo", "~/Dropbox (MIT)/2024 Election Results", "~/Dropbox (MIT)/Research/2024 Election Results")
 
 ```
 
