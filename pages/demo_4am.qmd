@@ -1,5 +1,5 @@
 ---
-title: "Georgia 2022 Demo -- The Report at '4am'"
+title: "Georgia 2022 Demo -- The Website at '4am'"
 date: ""
 author: 
 - Joseph R. Loffredo, Mason Reece, Charles Stewart III
@@ -12,35 +12,44 @@ format:
     echo: false
     message: false
     warning: false
-    cache: false
+    cache: true
 ---
 
-```{r}
+Notes
+- All "swing" percentages are calculated as the raw vote share for Harris (or other Dem candidate) - the raw vote share for Trump (or other Rep candidate). The vote shares are computed as the % of votes each candidate receives, where the denominator is all votes cast in that contest (including third-party candidates, if any). Positive values indicate that Harris/Dem is winning and negative values indicate that Trump/Rep is winning.
+
+```{r setup}
+#| cache: false
 rm(list = ls())
-gc()
 
 suppressPackageStartupMessages({
   library(tidyverse)
-  library(gt)
   library(sf)
-  library(zoomerjoin)
-  library(reticulate)
-  library(httr2)
-  library(rvest)
   library(glue)
-  library(fs)
   library(here)
-  library(data.table)
 })
 
 sf_use_s2(FALSE)
 
+options(scipen = 800)
+
+inline_hook <- function(x) {
+  if (is.numeric(x)) {
+    format(x, digits = 2, nsmall = 0, big.mark = ",")
+  } else x
+}
+knitr::knit_hooks$set(inline = inline_hook)
+
+source(here("scripts", "util", "globals.R"))
 
 ```
 
-```{r}
+```{r download22}
 #| eval: false
 #| echo: false
+
+
+# code to create entire 2022 history from Clarity
 
 counties = request(glue("https://results.enr.clarityelections.com/GA/115465/314082/json/en/electionsettings.json")) |> 
   req_headers("Accept" = "application/json") |> 
@@ -100,12 +109,12 @@ list.files(here("data", "raw", "GA"), pattern = "*.csv", full.names = TRUE) |>
   transform(
     state = "GA"
   ) |> 
-  fwrite(glue("{dropbox_path}/22_general/GA_allReports.csv"))
+  fwrite(glue("{PATH_DROPBOX}/22_general/GA_allReports.csv"))
 
 ```
 
-
-```{r}
+```{r pre}
+#| code-fold: true
 
 # Utility regex for detecting which candidate is which
 dem_candidate_regex = regex("Warnock|\\(Dem\\)", ignore_case = TRUE)
@@ -354,49 +363,3 @@ Estimated % of total votes
 ## County-level Results
 
 full table of current county-level results and where we are missing
-
-## Archive Code
-
-```{r}
-
-merged = data24 |> 
-  filter(str_detect(candidate_name, "Biden")) |> 
-  left_join(voteHist_byPrecinct, join_by(state, county, precinct_24, vote_mode == mode), relationship = "many-to-many") |> 
-  left_join(voteHist_byCounty, join_by(state, county), relationship = "many-to-many") |> 
-  mutate(
-    reported_eday = max(vote_mode == "Election Day" & precinct_total > 0) == 1,
-    .by = c(state, county, precinct_24)
-    ) |> 
-  mutate(
-    # determine the lower bound for this precinct on Biden's '20 vote %
-    # if for some reason we were not able to successfully merge data, this encodes the maximum uncertainty
-    biden_20_lower = coalesce(biden_20_byPrec, biden_20_byCounty, 0),
-    # same for the upper bound
-    biden_20_upper = coalesce(biden_20_byPrec, biden_20_byCounty, 1),
-    # compute the current swing
-    swing_lower = precinct_pct - biden_20_lower,
-    swing_upper = precinct_pct - biden_20_upper,
-  ) |> 
-  select(-biden_20_byPrec, -biden_20_byCounty)
-
-reported = merged |> filter(reported_eday, vote_mode == "Election Day")
-max_swing = reported |> pull(swing_upper) |> max(na.rm = TRUE)
-min_swing = reported |> pull(swing_lower) |> min(na.rm = TRUE)
-
-imputed = merged |> 
-  mutate(
-    votes_lower = case_when(
-      reported_eday ~ precinct_total,
-      sum(precinct_total) == 0 ~ votes_20_byPrec * biden_20_lower
-    ),
-    votes_upper = case_when(
-      # if votes are reported, use those
-      precinct_total > 0 ~ precinct_total,
-      # when no votes have been reported for mail, early, or eday
-      sum(precinct_total) == 0 ~ votes_20_byPrec * biden_20_upper,
-      
-    ),
-    .by = c(state, county, precinct_24)
-  )
-
-```
