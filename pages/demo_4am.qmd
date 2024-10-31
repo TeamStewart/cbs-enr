@@ -120,7 +120,6 @@ list.files(here("data", "raw", "GA"), pattern = "*.csv", full.names = TRUE) |>
 ```
 
 ```{r pre}
-#| code-fold: true
 
 # Utility regex for detecting which candidate is which
 dem_candidate_regex = regex("Warnock|\\(Dem\\)", ignore_case = TRUE)
@@ -403,8 +402,6 @@ estimates <- data22_history |>
 
 ```{r gen_models}
 
-# read_csv("~/Downloads/ga22_cleaned.csv") |> filter(office == "US SENATE", stage == "GEN", mode != "TOTAL") |> summarize(votes = sum(votes), .by = mode)
-
 summaries_byCounty_byMode = estimates |> 
   summarize(
     votes_total_20 = sum(votes_precFinal_20),
@@ -419,12 +416,12 @@ summaries_byCounty_byMode = estimates |>
     repVotes_upper = sum(votes_22_repTop),
     demShare_20 = weighted.mean(votePct_dem_20, votes_precFinal_20),
     repShare_20 = weighted.mean(votePct_rep_20, votes_precFinal_20),
-    demShare_lower = demVotes_lower / votes_total_22_estimate,
-    demShare_estimate = demVotes_estimate / votes_total_22_estimate,
-    demShare_upper = demVotes_upper / votes_total_22_estimate,
-    repShare_lower = repVotes_lower / votes_total_22_estimate,
-    repShare_estimate = repVotes_estimate / votes_total_22_estimate,
-    repShare_upper = repVotes_upper / votes_total_22_estimate,
+    demShare_lower = demVotes_lower / (demVotes_lower + repVotes_lower),
+    demShare_estimate = demVotes_estimate / (demVotes_lower + repVotes_lower),
+    demShare_upper = demVotes_upper / (demVotes_lower + repVotes_lower),
+    repShare_lower = repVotes_lower / (demVotes_lower + repVotes_lower),
+    repShare_estimate = repVotes_estimate / (demVotes_lower + repVotes_lower),
+    repShare_upper = repVotes_upper / (demVotes_lower + repVotes_lower),
     swing_lower = (demShare_lower - repShare_lower) - (demShare_20 - repShare_20),
     swing_estimate = (demShare_estimate - repShare_estimate) - (demShare_20 - repShare_20),
     swing_upper = (demShare_upper - repShare_upper) - (demShare_20 - repShare_20),
