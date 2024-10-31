@@ -65,7 +65,18 @@ get_timestamp <- function(state, county, path) {
   }
   
   mi_timestamp <- function(){
-    if(county == "Oakland"){clarity_timestamp()}
+    if(county == "Oakland"){
+      clarity_timestamp()
+    } else if(county == "Ingham"){
+      read_html("https://app.enhancedvoting.com/results/public/api/elections/ingham-county-mi/general11052024") |>
+        html_text() |>
+        fromJSON() |>
+        pluck("lastUpdated") |>
+        ymd_hms() |>
+        floor_date(unit = "second") |>
+        with_tz(tzone = "America/New_York") |>
+        str_replace_all("-|:| ", "_")
+    }
   }
 
   nc_timestamp <- function() {
