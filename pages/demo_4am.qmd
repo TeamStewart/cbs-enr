@@ -1,43 +1,61 @@
 ---
-title: "Georgia 2022 Demo -- The Report at '4am'"
+title: "Georgia 2022 Demo -- The Website at '4am'"
 date: ""
 author: 
 - Joseph R. Loffredo, Mason Reece, Charles Stewart III
 affiliation: Massachusetts Institute of Technology
 page-layout: full
+embed-resources: true
 format:
   html:
     theme: cosmo
-    toc: false
+    toc: true
+    toc-location: body
     echo: false
     message: false
     warning: false
-    cache: false
+    cache: true
 ---
 
-```{r}
+Notes:
+
+- All "swing" percentages are calculated as the raw vote share for Harris (or other Dem candidate) - the raw vote share for Trump (or other Rep candidate). The vote shares are computed as the % of votes each candidate receives, where the denominator is all votes cast in that contest (including third-party candidates, if any). Positive values indicate that Harris/Dem is winning and negative values indicate that Trump/Rep is winning.
+
+- "Swing vs 2020" is a difference-in-differences: (Dem24 - Rep24) - (Dem20 - Rep20). Positive values indicate that the Dem is doing better in this election than in the last one, whereas negative values indicate the Rep is doing better.
+
+```{r setup}
+#| cache: false
 rm(list = ls())
-gc()
 
 suppressPackageStartupMessages({
   library(tidyverse)
-  library(gt)
   library(sf)
-  library(zoomerjoin)
-  library(reticulate)
-  library(httr2)
-  library(rvest)
+  library(gt)
   library(glue)
-  library(fs)
+  library(here)
 })
 
 sf_use_s2(FALSE)
 
+options(scipen = 800)
+
+inline_hook <- function(x) {
+  if (is.numeric(x)) {
+    format(x, digits = 2, nsmall = 0, big.mark = ",")
+  } else x
+}
+knitr::knit_hooks$set(inline = inline_hook)
+
+source(here("scripts", "util", "globals.R"))
+
 ```
 
-```{r}
+```{r download22}
 #| eval: false
 #| echo: false
+
+
+# code to create entire 2022 history from Clarity
 
 counties = request(glue("https://results.enr.clarityelections.com/GA/115465/314082/json/en/electionsettings.json")) |> 
   req_headers("Accept" = "application/json") |> 
@@ -75,100 +93,97 @@ download_file <- function(url, version){
     request(url) |> 
       req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
       req_retry(max_tries = 5) |> 
-      req_perform(path = str_c("data/raw/GA/", str_extract(url, "(GA/)(.*?)(/)", group = 2), "_", version, ".zip")),
+      req_perform(path = here(str_c("data/raw/GA/", str_extract(url, "(GA/)(.*?)(/)", group = 2), "_", version, ".zip"))),
     httr2_http_404 = function(cnd) NULL
   )
 }
 
 map2(counties$url, counties$version, download_file)
 
-source_python("scripts/util/clarity_scraper.py")
+source_python(here("scripts/util/clarity_scraper.py"))
 
 counties |> 
   mutate(
-    local = glue("data/raw/GA/{county}_{version}.zip")
+    local = glue(here("data/raw/GA/{county}_{version}.zip"))
   ) |> 
   pull(local) |> 
   walk(.f = \(x) get_data_clarity("GA", x))
 
-list.files("data/raw/GA", pattern = "*.csv", full.names = TRUE) |> 
+list.files(here("data", "raw", "GA"), pattern = "*.csv", full.names = TRUE) |> 
   lapply(fread) |> 
   rbindlist(use.names = TRUE) |> 
   transform(
     state = "GA"
   ) |> 
-  fwrite("~/Dropbox (MIT)/Research/2024 Election Results/22_general/GA_allReports.csv")
+  fwrite(glue("{PATH_DROPBOX}/22_general/GA_allReports.csv"))
 
 ```
 
+```{r pre}
 
-```{r}
-
+# Utility regex for detecting which candidate is which
 dem_candidate_regex = regex("Warnock|\\(Dem\\)", ignore_case = TRUE)
+rep_candidate_regex = regex("Walker|\\(Rep\\)", ignore_case = TRUE)
 
-# reported precinct-level data from Clarity in 2022 at 11pm
-data22 = read_csv("~/Dropbox (MIT)/Research/2024 Election Results/22_general/GA_allReports.csv") |> 
-  filter(str_detect(race_name, "US Senate"), timestamp <= ymd_hm("2022-11-09 4:00am")) |> 
-  filter(timestamp == max(timestamp), .by = c(state, jurisdiction, precinct_id)) |> 
-  select(state, county = jurisdiction, precinct_22 = precinct_id, candidate_name, vote_mode, votes_22 = precinct_total, timestamp) |> 
+# MEDSL 2020 precinct data, by mode
+## Specifically, this gets Dem totals by vote mode, with column for total votes
+data20 <- read_csv(glue("{PATH_DROPBOX}/22_general/2020-ga-precinct-general.csv")) |> 
+  filter(stage == "GEN", office == "US PRESIDENT") |> 
+  select(county = county_name, precinct_20 = precinct, candidate, vote_mode = mode, votes_20 = votes) |> 
   mutate(
-    candidate_name = case_when(
-      str_detect(vote_mode, fixed("Undervote", ignore_case=TRUE)) ~ "Undervote",
-      str_detect(vote_mode, fixed("Overvote", ignore_case=TRUE)) ~ "Overvote",
-      .default = candidate_name
-    ),
-    votes_precTotal_22 = sum(votes_22),
-    votePct_dem_22 = ifelse(
-      votes_precTotal_22 > 0, 
-      sum(votes_22 * str_detect(candidate_name, dem_candidate_regex)) / votes_precTotal_22, 
-      NA
-    ),
-    .by = c(state, county, precinct_22)
+    state = "GA",
+    votes_precFinal_20 = sum(votes_20),
+    .by = c(county, precinct_20, vote_mode)
   ) |> 
-  filter(str_detect(candidate_name, dem_candidate_regex)) |>
-  select(-candidate_name) |> 
   mutate(
-    county = str_to_upper(county),
-    precinct_22 = str_to_upper(precinct_22)
-  )
+    votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
+    votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
+    # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
+    .by = c(county, precinct_20, vote_mode)
+  ) |> 
+  mutate(
+    precinct_20 = case_when(
+    .default = precinct_20,
+    county == "SPALDING" ~ str_pad(precinct_20, width = 2, side = "left", pad = "0"),
+    county == "CHATHAM" ~ str_sub(precinct_20, start = 7)
+    ),
+    vote_mode = case_match(
+      vote_mode,
+      "ABSENTEE" ~ "Absentee/Mail",
+      "ADVANCED VOTING" ~ "Early Voting",
+      "ELECTION DAY" ~ "Election Day",
+      "PROVISIONAL" ~ "Provisional",
+    ),
+  ) |> 
+  filter(str_detect(candidate, "BIDEN")) |> 
+  select(-candidate)
 
-# MEDSL 2022 precinct-level data
-# data22 = read_csv("~/Dropbox (MIT)/Research/cbs-enr/data/input/GA/results_2022.csv") |> 
-#   filter(stage == "GEN") |> 
-#   select(state = state_po, county = county_name, precinct_22 = precinct, office, candidate, mode, votes) |>
-#   filter(office == "US SENATE", mode != "TOTAL") |> 
-#   mutate(
-#     votePct_byMode = votes / sum(votes, na.rm = TRUE),
-#     .by = c(state, county, precinct_22, candidate)
-#   ) |> 
-#   filter(candidate == "RAPHAEL WARNOCK") |> 
-#   mutate(
-#     mode = case_match(
-#       mode,
-#       "ADVANCED" ~ "Early Voting",
-#       "ELECTION DAY" ~ "Election Day",
-#       "ABSENTEE" ~ "Absentee/Mail",
-#       "PROVISIONAL" ~ "Provisional"
-#     )
-#   )
-
-# 2020 shapefiles and results, from VEST data
-shp20 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga_2020/") |> 
+# 2020 shapefiles, from VEST data
+shp20 <- read_sf(here("data/shapefiles/ga_2020/")) |> 
   st_transform("NAD83") |>
   select(
-    precinct_20 = PRECINCT_N, county = CTYNAME,
-    C20PRERTRU, C20PREDBID, C20PRELJOR
+    precinct_20 = PRECINCT_N, county = CTYNAME
   ) |> 
-  filter(!(C20PRERTRU + C20PREDBID + C20PRELJOR == 0)) |>
   mutate(
-    votePct_dem_20 = C20PREDBID / (C20PRERTRU + C20PREDBID + C20PRELJOR),
-    votes_precTotal_20 = C20PRERTRU + C20PREDBID + C20PRELJOR
-  ) |>
-  select(-C20PRERTRU:-C20PRELJOR) |> 
-  st_make_valid()
+    # change several precinct names to match MEDSL data
+    precinct_20 = str_to_upper(precinct_20),
+    precinct_20 = case_when(
+      .default = precinct_20,
+      county == "CHATTAHOOCHEE" ~ str_remove(precinct_20, fixed(" (INCLUDES FTBEN 1-3)")),
+      county == "WILKES" & precinct_20 == "TIGNALL SCH LUNCH RM" ~ "TIGNAL SCH LUNCH RM",
+      county == "THOMAS" & precinct_20 == "LITTLE OCHLOCKNEE" ~ "LITTLE OCHLOCKNEE BAPTIST CHURCH",
+      county == "LAMAR" & precinct_20 == "CHAPPELL MILL VFD" ~ "CHAPPELL MILL V FD",
+      county == "COBB" & str_detect(precinct_20, "POWDER SPRINGS") ~ str_replace(precinct_20, "POWDER SPRINGS", "POWDERS SPRINGS"),
+      county == "CHATHAM" & precinct_20 == "POOLER REC CENTER GYM" ~ "POOLER RECREATION CENTER GYMNASIUM",
+      county == "CHATHAM" & precinct_20 == "RESURRECTION OF OUR LORD CHURCH" ~ "RESUR OF OUR LORD CHURCH",
+      county == "GWINNETT" ~ str_remove(precinct_20, "^\\d{3} ")
+    )
+  ) |> 
+  st_make_valid() |> 
+  drop_na(county)
 
 # 2022 shapefiles, from the GA legis reapportionment website
-shp22 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga-precincts2022-shape/") |> 
+shp22 <- read_sf(here("data/shapefiles/ga-precincts2022-shape/")) |> 
   select(county = COUNTY, precinct_22 = PRECINCT_N, geometry) |> 
   drop_na(county) |> 
   mutate(precinct_22 = str_to_upper(precinct_22)) |> 
@@ -178,102 +193,285 @@ shp22 = read_sf("~/Dropbox (MIT)/Research/cbs-enr/data/shapefiles/ga-precincts20
     county == "SPALDING" ~ str_remove(precinct_22, "^0+")
   ))
 
-intersection = st_intersection(shp22, shp20) |> filter(county == county.1)
+# merge the shapes together so that we can compute an overlap score
+intersection <- st_intersection(shp22, shp20) |> filter(county == county.1)
 
-precinct_merge = intersection |> 
+data_history <- intersection |> 
+  # create the areal weighting
   mutate(area = st_area(intersection) |> as.numeric()) |> 
   st_drop_geometry() |>
   drop_na(precinct_20, precinct_22) |> 
   mutate(weight = as.numeric(area / sum(area)), .by = c(county, precinct_22)) |> 
+  # now full-join to ensure all county x precincts are represented in the data
+  # so that we can fill in some missigness
+  full_join(
+    expand(shp20, nesting(county, precinct_20), vote_mode = c("Absentee/Mail", "Early Voting", "Election Day", "Provisional")),
+    join_by(county, precinct_20),
+    relationship = "many-to-many"
+  ) |> 
+  # add the matched 2020 data
+  left_join(data20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
+  # fill in missigness with county mean so we can make estimates
+  mutate(
+    across(c(votes_20, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
+    .by = c(county, vote_mode)
+  ) |> 
   # weight percentages by merged precincts
   summarize(
     votePct_dem_20 = sum(votePct_dem_20 * weight),
-    votes_precTotal_20 = sum(votes_precTotal_20 * weight),
-    .by = c(county, precinct_22)
-  ) |> 
-  left_join(data22, by = join_by(county, precinct_22), relationship = "many-to-many")
-
-### Mason stopped here on 10/23, was updating to use 2022 live reports
-  
-precincts_24 = distinct(data24, state, county, precinct_24)
-
-match_exact = inner_join(precincts_24, precinct_merge, by = c("state", "county", "precinct_24" = "precinct_22"))
-
-match_fuzzy = jaccard_left_join(
-  anti_join(precincts_24, match_exact), precinct_merge,
-  by = c("precinct_24" = "precinct_22"),
-  block_by = c("state", "county"),
-  threshold = 0.75,
-  n_bands = 50, band_width = 8, n_gram_width = 5,
-  clean = TRUE, similarity_column = "similarity"
-) |>
-  filter(similarity == max(similarity), .by = c(state.x, county.x, precinct_24)) |>
-  select(state = state.x, county = county.x, precinct_24, biden_20_byPrec, votes_20_byPrec, votePct_byMode) |>
-  arrange(state, county, precinct_24)
-
-unmatched = anti_join(precincts_24, match_exact) |> anti_join(match_fuzzy)
-
-voteHist_byPrecinct = bind_rows(match_exact, match_fuzzy, unmatched)
-
-voteHist_byCounty = shp20 |> 
-  st_drop_geometry() |> 
-  summarise(
-    biden_20_byCounty = weighted.mean(biden_20_byPrec, votes_20_byPrec),
-    state = "GA",
-    .by = county
-  )
-
-merged = data24 |> 
-  filter(str_detect(candidate_name, "Biden")) |> 
-  left_join(voteHist_byPrecinct, join_by(state, county, precinct_24, vote_mode == mode), relationship = "many-to-many") |> 
-  left_join(voteHist_byCounty, join_by(state, county), relationship = "many-to-many") |> 
-  mutate(
-    reported_eday = max(vote_mode == "Election Day" & precinct_total > 0) == 1,
-    .by = c(state, county, precinct_24)
-    ) |> 
-  mutate(
-    # determine the lower bound for this precinct on Biden's '20 vote %
-    # if for some reason we were not able to successfully merge data, this encodes the maximum uncertainty
-    biden_20_lower = coalesce(biden_20_byPrec, biden_20_byCounty, 0),
-    # same for the upper bound
-    biden_20_upper = coalesce(biden_20_byPrec, biden_20_byCounty, 1),
-    # compute the current swing
-    swing_lower = precinct_pct - biden_20_lower,
-    swing_upper = precinct_pct - biden_20_upper,
-  ) |> 
-  select(-biden_20_byPrec, -biden_20_byCounty)
-
-reported = merged |> filter(reported_eday, vote_mode == "Election Day")
-max_swing = reported |> pull(swing_upper) |> max(na.rm = TRUE)
-min_swing = reported |> pull(swing_lower) |> min(na.rm = TRUE)
-
-imputed = merged |> 
-  mutate(
-    votes_lower = case_when(
-      reported_eday ~ precinct_total,
-      sum(precinct_total) == 0 ~ votes_20_byPrec * biden_20_lower
-    ),
-    votes_upper = case_when(
-      # if votes are reported, use those
-      precinct_total > 0 ~ precinct_total,
-      # when no votes have been reported for mail, early, or eday
-      sum(precinct_total) == 0 ~ votes_20_byPrec * biden_20_upper,
-      
-    ),
-    .by = c(state, county, precinct_24)
+    votePct_rep_20 = sum(votePct_rep_20 * weight),
+    # votePct_diff_20 = sum(votePct_diff_20 * weight),
+    votes_precFinal_20 = sum(votes_precFinal_20 * weight),
+    votes_20 = sum(votes_20 * weight),
+    .by = c(county, precinct_22, vote_mode)
   )
 
 ```
 
+```{r gen_estimates}
+#| code-fold: true
 
-## Votes In?
+data22 <- read_csv(glue("{PATH_DROPBOX}/22_general/GA_allReports.csv")) |> 
+  filter(str_detect(race_name, "US Senate"), timestamp <= ymd_hm("2022-11-09 4:00am")) |> 
+  filter(timestamp == max(timestamp), .by = c(state, jurisdiction, precinct_id)) |>
+  # it looks like some precincts are leftover from another election or redefined accidentally
+  # this removes those extra old precincts which are all zeroes
+  filter(timestamp > ymd("2022-11-07")) |>
+  select(state, county = jurisdiction, precinct_22 = precinct_id, candidate_name, vote_mode, votes_22 = precinct_total, timestamp) |> 
+  mutate(
+    candidate_name = case_when(
+      str_detect(vote_mode, fixed("Undervote", ignore_case=TRUE)) ~ "Undervote",
+      str_detect(vote_mode, fixed("Overvote", ignore_case=TRUE)) ~ "Overvote",
+      .default = candidate_name
+    ),
+    vote_mode = case_match(
+      vote_mode,
+      "Absentee by Mail Votes" ~ "Absentee/Mail",
+      "Advance Voting Votes" ~ "Early Voting",
+      "Election Day Votes" ~ "Election Day",
+      "Provisional Votes" ~ "Provisional"
+    ),
+    county = str_to_upper(county),
+    precinct_22 = str_to_upper(precinct_22)
+  ) |> 
+  # compute summary cols
+  summarize(
+    votes_precTotal_22 = sum(votes_22),
+    votes_22_dem = sum(votes_22 * str_detect(candidate_name, dem_candidate_regex)),
+    votes_22_rep = sum(votes_22 * str_detect(candidate_name, rep_candidate_regex)),
+    votePct_dem_22 = votes_22_dem / votes_precTotal_22,
+    votePct_rep_22 = votes_22_rep / votes_precTotal_22,
+    .by = c(state, county, precinct_22, vote_mode, timestamp)
+  ) |>
+  drop_na(vote_mode)
 
-Number of precincts reporting
-Estimated % of total votes
+data22_history <- data22 |> 
+  left_join(data_history, by = join_by(county, precinct_22, vote_mode), relationship = "many-to-many") |> 
+  # create some helper columns for what reporting status we're at in each precinct
+  mutate(
+    reported_none = sum(votes_22_dem + votes_22_rep > 0) == 0,
+    reported_all = sum(votes_22_dem + votes_22_rep > 0) >= 3,
+    reported_eday = max(vote_mode == "Election Day" & votes_22_dem + votes_22_rep > 0) == 1,
+    reported_mail = max(vote_mode == "Absentee/Mail" & votes_22_dem + votes_22_rep > 0) == 1,
+    reported_early = max(vote_mode == "Early Voting" & votes_22_dem + votes_22_rep > 0) == 1,
+    .by = c(state, county, precinct_22)
+  )
 
-## Estimated Vote Share (Trump vs. Haley)
+prec_total = data22_history |> distinct(county, precinct_22) |> tally() |> pull()
+prec_reported_all = data22_history |> distinct(county, precinct_22, reported_all) |> pull(-1) |> sum()
+prec_reported_eday = data22_history |> distinct(county, precinct_22, reported_eday) |> pull(-1) |> sum()
 
-<!-- point estimate and uncertainty bounds -->
+quantile_lower = (prec_reported_all / prec_total)/2
+quantile_upper = 1 - quantile_lower
+
+turnout_summary <- data22_history |> 
+  filter(reported_all) |> 
+  distinct(state, county, precinct_22, vote_mode, votes_precFinal_20, votes_precTotal_22) |> 
+  mutate(
+    # other option: diff = (votes_precTotal_22 - votes_precFinal_20) / votes_precFinal_20
+    # diff = (votes_precTotal_22 - votes_precFinal_20) / votes_precFinal_20
+    diff = ifelse(vote_mode == "Provisional", 1, votes_precTotal_22 / votes_precFinal_20)
+  ) |> 
+  summarise(
+    turn_top = quantile(diff, quantile_upper, na.rm = TRUE),
+    turn_bot = quantile(diff, quantile_lower, na.rm = TRUE),
+    turn_med = median(diff, na.rm = TRUE),
+    .by = c(county, vote_mode)
+  ) |> 
+  right_join(
+    expand(data22_history, county, vote_mode) |> drop_na(vote_mode)
+  ) |>
+  mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode)
+
+swing_summary <- data22_history |> 
+  filter(reported_all) |> 
+  distinct(state, county, precinct_22, vote_mode, votePct_dem_22, votePct_rep_22) |> 
+  filter(!is.nan(votePct_dem_22)) |> 
+  summarise(
+    dem_top = quantile(votePct_dem_22, quantile_upper),
+    dem_bot = quantile(votePct_dem_22, quantile_lower),
+    dem_med = median(votePct_dem_22),
+    rep_top = quantile(votePct_rep_22, quantile_upper),
+    rep_bot = quantile(votePct_rep_22, quantile_lower),
+    rep_med = median(votePct_rep_22),
+    .by = c(county, vote_mode)
+  ) |> 
+  right_join(
+    expand(data22_history, county, vote_mode) |> drop_na(vote_mode)
+  ) |> 
+  mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode)
+  
+estimates <- data22_history |> 
+  full_join(turnout_summary, join_by(county, vote_mode)) |> 
+  full_join(swing_summary, join_by(county, vote_mode)) |> 
+  mutate(
+    votePct_dem_20 = replace_na(votePct_dem_20, mean(votePct_dem_20, na.rm = TRUE)),
+    votePct_rep_20 = replace_na(votePct_rep_20, mean(votePct_rep_20, na.rm = TRUE)),
+    votes_precFinal_20 = replace_na(votes_precFinal_20, mean(votes_precFinal_20, na.rm = TRUE)),
+    .by = c(county, vote_mode)
+  ) |> 
+  mutate(
+    votePct_dem_20 = replace_na(votePct_dem_20, mean(votePct_dem_20, na.rm = TRUE)),
+    votePct_rep_20 = replace_na(votePct_rep_20, mean(votePct_rep_20, na.rm = TRUE)),
+    votes_precFinal_20 = replace_na(votes_precFinal_20, mean(votes_precFinal_20, na.rm = TRUE))
+  ) |>
+  mutate(
+    votes_22_precTotalEst = case_when(
+      reported_all ~ votes_precTotal_22,
+      votes_precTotal_22 > 0 ~ votes_precTotal_22,
+      .default = votes_precFinal_20 * turn_med
+    ),
+    votes_22_precTotalBot = case_when(
+      reported_all ~ votes_precTotal_22,
+      votes_precTotal_22 > 0 ~ votes_precTotal_22,
+      .default = votes_precFinal_20 * turn_bot
+    ),
+    votes_22_precTotalTop = case_when(
+      reported_all ~ votes_precTotal_22,
+      votes_precTotal_22 > 0 ~ votes_precTotal_22,
+      .default = votes_precFinal_20 * turn_top
+    ),
+    votes_22_precTotalEst = replace_na(votes_22_precTotalEst, 0),
+    votes_22_precTotalBot = replace_na(votes_22_precTotalBot, 0),
+    votes_22_precTotalTop = replace_na(votes_22_precTotalTop, 0),
+    votes_22_demEst = case_when(
+      reported_all ~ votes_22_dem,
+      # keep early or mail votes that are already in
+      votes_22_dem > 0 ~ votes_22_dem,
+      .default = (votes_20 + (votes_20 * (dem_med - votePct_dem_20))) * turn_med
+    ),
+    votes_22_demBot = case_when(
+      reported_all ~ votes_22_dem,
+      # keep early, mail, or provisional votes that are already in
+      votes_22_dem > 0 ~ votes_22_dem,
+      .default = (votes_20 + (votes_20 * (dem_bot - votePct_dem_20))) * turn_bot
+    ),
+    votes_22_demTop = case_when(
+      reported_all ~ votes_22_dem,
+      # keep early or mail votes that are already in
+      votes_22_dem > 0 ~ votes_22_dem,
+      .default = (votes_20 + (votes_20 * (dem_top - votePct_dem_20))) * turn_top
+    ),
+    votes_22_demEst = replace_na(votes_22_demEst, 0),
+    votes_22_demBot = replace_na(votes_22_demBot, 0),
+    votes_22_demTop = replace_na(votes_22_demTop, 0),
+    votes_22_repEst = case_when(
+      reported_all ~ votes_22_rep,
+      # keep early or mail votes that are already in
+      votes_22_rep > 0 ~ votes_22_rep,
+      .default = (votes_20 + (votes_20 * (rep_med - votePct_rep_20))) * turn_med
+    ),
+    votes_22_repBot = case_when(
+      reported_all ~ votes_22_rep,
+      # keep early or mail votes that are already in
+      votes_22_rep > 0 ~ votes_22_rep,
+      .default = (votes_20 + (votes_20 * (rep_bot - votePct_rep_20))) * turn_bot
+    ),
+    votes_22_repTop = case_when(
+      reported_all ~ votes_22_rep,
+      # keep early or mail votes that are already in
+      votes_22_rep > 0 ~ votes_22_rep,
+      .default = (votes_20 + (votes_20 * (rep_top - votePct_rep_20))) * turn_top
+    ),
+    votes_22_repEst = replace_na(votes_22_repEst, 0),
+    votes_22_repBot = replace_na(votes_22_repBot, 0),
+    votes_22_repTop = replace_na(votes_22_repTop, 0)
+  )
+
+```
+
+```{r gen_models}
+
+summaries_byCounty_byMode = estimates |> 
+  summarize(
+    votes_total_20 = sum(votes_precFinal_20),
+    votes_total_22_lower = sum(votes_22_precTotalBot),
+    votes_total_22_estimate = sum(votes_22_precTotalEst),
+    votes_total_22_upper = sum(votes_22_precTotalTop),
+    demVotes_lower = sum(votes_22_demBot),
+    demVotes_estimate = sum(votes_22_demEst),
+    demVotes_upper = sum(votes_22_demTop),
+    repVotes_lower = sum(votes_22_repBot),
+    repVotes_estimate = sum(votes_22_repEst),
+    repVotes_upper = sum(votes_22_repTop),
+    demShare_20 = weighted.mean(votePct_dem_20, votes_precFinal_20),
+    repShare_20 = weighted.mean(votePct_rep_20, votes_precFinal_20),
+    demShare_lower = demVotes_lower / (demVotes_lower + repVotes_lower),
+    demShare_estimate = demVotes_estimate / (demVotes_lower + repVotes_lower),
+    demShare_upper = demVotes_upper / (demVotes_lower + repVotes_lower),
+    repShare_lower = repVotes_lower / (demVotes_lower + repVotes_lower),
+    repShare_estimate = repVotes_estimate / (demVotes_lower + repVotes_lower),
+    repShare_upper = repVotes_upper / (demVotes_lower + repVotes_lower),
+    swing_lower = (demShare_lower - repShare_lower) - (demShare_20 - repShare_20),
+    swing_estimate = (demShare_estimate - repShare_estimate) - (demShare_20 - repShare_20),
+    swing_upper = (demShare_upper - repShare_upper) - (demShare_20 - repShare_20),
+    .by = c(state, county, vote_mode, timestamp)
+  )
+
+summaries_byCounty = summaries_byCounty_byMode |> 
+  summarise(
+    across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
+    across(votes_total_20:repVotes_upper, sum),
+    .by = c(state, county)
+  )
+
+summaries_byMode = summaries_byCounty_byMode |> 
+  summarise(
+    across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
+    across(votes_total_20:repVotes_upper, sum),
+    .by = c(state, vote_mode)
+  )
+
+summaries = summaries_byCounty_byMode |> 
+  summarise(
+    across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
+    across(votes_total_20:repVotes_upper, sum),
+    .by = c(state)
+  )
+
+```
+
+## How Many Votes Are In?
+
+`r sum(pull(data22_history, votes_precTotal_22))` **total** votes are in, `r 100*sum(pull(data22_history, votes_precTotal_22)) / sum(pull(data22_history, votes_precFinal_20), na.rm=TRUE)`% of the 2020 total
+
+`r sum(pull(filter(data22_history, vote_mode=="Election Day"), votes_precTotal_22))` **Election Day** votes are in, `r 100*sum(pull(filter(data22_history, vote_mode=="Election Day"), votes_precTotal_22)) / sum(pull(filter(data22_history, vote_mode=="Election Day"), votes_precFinal_20), na.rm=TRUE)`% of the 2020 total
+
+- We estimate the **final Election Day turnout** will be `r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_22_estimate)` with uncertainty bounds [`r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_22_lower)` -- `r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_22_upper)`]
+
+**Precincts reporting all modes**: `r prec_reported_all` out of `r prec_total` total precincts (`r 100*round(prec_reported_all / prec_total, 2)`%)
+
+**Precincts reporting Election Day**: `r prec_reported_eday` out of `r prec_total` total precincts (`r 100*round(prec_reported_eday / prec_total, 2)`%)
+
+## Vote Estimates
+
+**Swing**: `r 100*(summaries$demShare_estimate - summaries$repShare_estimate)`% with uncertainty bounds [`r 100*(summaries$demShare_lower - summaries$repShare_lower)`% to `r 100*(summaries$demShare_upper - summaries$repShare_upper)`%]
+
+**Swing vs 2020**: `r 100*(summaries$swing_estimate)`% with uncertainty bounds [`r 100*(summaries$swing_lower)`% to `r 100*(summaries$swing_upper)`%]
+
+**Democrat**: `r summaries$demVotes_estimate` with uncertainty bounds [`r summaries$demVotes_lower` to `r summaries$demVotes_upper`]
+
+**Republican**: `r summaries$repVotes_estimate` with uncertainty bounds [`r summaries$repVotes_lower` to `r summaries$repVotes_upper`]
 
 ### Cumulative Plot of Estimated Vote Share
 
@@ -281,9 +479,66 @@ Estimated % of total votes
 
 ## Estimated Turnout
 
-### Cumulative Plot of Estimated Vote Share
+### Cumulative Plot of Estimated Election Day Votes
+
+### Cumulative Plot of Estimated Total Votes
+
+## County-level Results by Mode
+
+```{r}
+
+summaries_byCounty_byMode |> 
+  mutate(
+    county = str_to_title(county),
+    across(c(contains("swing"), contains("Share")), ~ scales::label_percent()(.x)),
+    across(votes_total_20:repVotes_upper, ~ round(.x, digits = 0) |> format(big.mark = ",") |> as.character())
+  ) |> 
+  mutate(
+    votes_total_22 = case_when(
+      votes_total_22_estimate == votes_total_22_lower & votes_total_22_estimate == votes_total_22_upper ~  votes_total_22_estimate,
+      .default = glue("{votes_total_22_estimate} [{votes_total_22_lower} to {votes_total_22_upper}]")
+    ),
+    votes_dem_22 = case_when(
+      demVotes_estimate == demVotes_lower & demVotes_estimate == demVotes_upper ~  demVotes_estimate,
+      .default = glue("{demVotes_estimate} [{demVotes_lower} to {demVotes_upper}]")
+    ),
+    votes_rep_22 = case_when(
+      repVotes_estimate == repVotes_lower & repVotes_estimate == repVotes_upper ~  repVotes_estimate,
+      .default = glue("{repVotes_estimate} [{repVotes_lower} to {repVotes_upper}]")
+    ),
+    swing_22 = case_when(
+      is.na(swing_estimate) | vote_mode == "Provisional" ~ NA,
+      swing_estimate == swing_lower & swing_estimate == swing_upper ~ swing_estimate,
+      .default = glue("{swing_estimate} [{swing_lower} to {swing_upper}]")
+    )
+  ) |> 
+  select(county, vote_mode, timestamp, votes_total_20, votes_total_22:swing_22) |> 
+  gt(
+    # groupname_col = "county", rowname_col = "vote_mode"
+  ) |> 
+  # tab_stubhead("Vote Mode") |> 
+  fmt_datetime(columns = timestamp, date_style = "MMMd", time_style = "h_m_s_p") |> 
+  sub_missing() |> 
+  cols_label(
+    county = "County",
+    vote_mode = "Vote Mode",
+    timestamp = "Last Reported",
+    votes_total_20 = "2020 Votes",
+    votes_total_22 = "2022 Votes",
+    votes_dem_22 = "2022 Dem Votes",
+    votes_rep_22 = "2022 Rep Votes",
+    swing_22 = "2022 Swing"
+  ) |> 
+  cols_width(
+    timestamp ~ px(165)
+  ) |> 
+  opt_interactive(
+    use_filters = TRUE,
+    use_compact_mode = TRUE,
+    use_resizers = TRUE,
+    page_size_default = 25
+  )
+
+```
 
 ## County-level Results
-
-full table of current county-level results and where we are missing
-
