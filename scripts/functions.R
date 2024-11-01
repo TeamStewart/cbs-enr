@@ -267,8 +267,8 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     )
     
     #### Write to shared Dropbox folder ####
-    write_csv(data, glue("{PATH_DROPBOX}/{state}/{local_file_name}_latest.csv"))
-    write_csv(data, glue("{PATH_DROPBOX}/{state}/{local_file_name}_{timestamp}.csv"))
+    write_csv(data, glue("{PATH_DROPBOX}/24_general/{state}/{local_file_name}_latest.csv"))
+    write_csv(data, glue("{PATH_DROPBOX}/24_general/{state}/{local_file_name}_{timestamp}.csv"))
   }
 
   return(formatted)

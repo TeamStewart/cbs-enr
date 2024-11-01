@@ -442,6 +442,75 @@ scrape_nc <- function(state, county, path, timestamp) {
 ## Pennsylvania
 scrape_pa <- function(state, county, path, timestamp){
   if (county == "Allegheny"){
+    # Download Clarity files
+    get_clarity(state, county, path)
+    
+    # Build list of Clarity files
+    raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    
+    clean_allegheny_pa <- function(file){
+      cleaned <- read_csv(file) |>
+        filter(race_name %in% c("Presidential Electors", "United States Senator") & vote_mode != 'regVotersCounty') |>
+        mutate(
+          timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+          state = "PA",
+          jurisdiction = "Allegheny",
+          # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
+          race_name = case_match(
+            race_name,
+            "Presidential Electors" ~ "President",
+            "United States Senator" ~ "Senate"), 
+          # Recode candidate party: Democrat, Republican, Libertarian, US Taxpayers, Green, Natural Law, Justice for All
+          candidate_party = case_match(
+            candidate_party,
+            "DEM" ~ "Democrat",
+            "REP" ~ "Republican",
+            "LIB" ~ "Libertarian",
+            "GRN" ~ "Green",
+            .default = "Other"),
+          # Recode candidate names
+          candidate_name = case_match(
+            candidate_name,
+            # PA presidential candidates
+            "Chase Oliver" ~ "Chase Oliver",
+            "Donald J. Trump" ~ "Donald Trump",
+            "Jill Stein" ~ "Jill Stein",
+            "Kamala D. Harris" ~ "Kamala Harris",
+            "Write-in" ~ "Write-ins",
+            # PA senate candidates
+            "Robert P. Casey, Jr." ~ "Bob Casey",
+            "Leila Hazou" ~ "Leila Hazou",
+            "Dave McCormick" ~ "Dave McCormick",
+            "Marty Selker" ~ "Marty Selker",
+            "John C. Thomas" ~ "John Thomas",
+          ), 
+          # Create virtual precinct column: real == TRUE, administrative == FALSE
+          virtual_precinct = F
+        ) |>
+        mutate(
+          # Specify vote modes: Election Day, Provisional, Absentee/Mail, Early Voting, Other
+          vote_mode = case_match(
+            vote_mode,
+            "Election Day" ~ "Election Day",
+            "Absentee" ~ "Absentee/Mail",
+            "Provisional" ~ "Provisional",
+            .default = "Other"
+          )
+        ) |>
+        summarise(
+          precinct_total = sum(precinct_total, na.rm = T),
+          .by = c("state","race_id","race_name","candidate_name","candidate_party","jurisdiction","precinct_id","virtual_precinct","timestamp","vote_mode")) |>
+        arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
+      
+      file_timestamp <- cleaned |> pull(timestamp) |> unique() |> max() |> str_replace_all("-|:| ", "_")
+      
+      write_csv(cleaned, file = glue("data/clean/{state}/{state}_{county}_{file_timestamp}.csv"))
+    }
+    
+    cleaned_files <- lapply(raw_files, clean_allegheny_pa)
+    
+    # Return latest timestamped version
+    return(read_csv(list.files(path = glue("data/clean/{state}"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
     
   } else if (county == "Delaware"){
     # Download Clarity files
