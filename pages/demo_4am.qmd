@@ -14,7 +14,6 @@ format:
     echo: false
     message: false
     warning: false
-    cache: true
 ---
 
 Notes:
@@ -120,6 +119,7 @@ list.files(here("data", "raw", "GA"), pattern = "*.csv", full.names = TRUE) |>
 ```
 
 ```{r pre}
+#| cache: true
 
 # Utility regex for detecting which candidate is which
 dem_candidate_regex = regex("Warnock|\\(Dem\\)", ignore_case = TRUE)
@@ -228,8 +228,8 @@ data_history <- intersection |>
 
 ```
 
-```{r gen_estimates}
-#| code-fold: true
+```{r live}
+#| cache: true
 
 data22 <- read_csv(glue("{PATH_DROPBOX}/22_general/GA_allReports.csv")) |> 
   filter(str_detect(race_name, "US Senate"), timestamp <= ymd_hm("2022-11-09 4:00am")) |> 
@@ -237,7 +237,7 @@ data22 <- read_csv(glue("{PATH_DROPBOX}/22_general/GA_allReports.csv")) |>
   # it looks like some precincts are leftover from another election or redefined accidentally
   # this removes those extra old precincts which are all zeroes
   filter(timestamp > ymd("2022-11-07")) |>
-  select(state, county = jurisdiction, precinct_22 = precinct_id, candidate_name, vote_mode, votes_22 = precinct_total, timestamp) |> 
+  select(state, county = jurisdiction, precinct_22 = precinct_id, candidate_name, vote_mode, votes_22 = precinct_total, timestamp) |>
   mutate(
     candidate_name = case_when(
       str_detect(vote_mode, fixed("Undervote", ignore_case=TRUE)) ~ "Undervote",
@@ -284,12 +284,15 @@ prec_reported_eday = data22_history |> distinct(county, precinct_22, reported_ed
 quantile_lower = (prec_reported_all / prec_total)/2
 quantile_upper = 1 - quantile_lower
 
+```
+
+```{r gen_estimates}
+
 turnout_summary <- data22_history |> 
   filter(reported_all) |> 
   distinct(state, county, precinct_22, vote_mode, votes_precFinal_20, votes_precTotal_22) |> 
   mutate(
-    # other option: diff = (votes_precTotal_22 - votes_precFinal_20) / votes_precFinal_20
-    # diff = (votes_precTotal_22 - votes_precFinal_20) / votes_precFinal_20
+    # diff = ifelse(vote_mode == "Provisional", 1, votes_precTotal_22 / votes_precFinal_20),
     diff = ifelse(vote_mode == "Provisional", 1, votes_precTotal_22 / votes_precFinal_20)
   ) |> 
   summarise(
@@ -417,11 +420,11 @@ summaries_byCounty_byMode = estimates |>
     demShare_20 = weighted.mean(votePct_dem_20, votes_precFinal_20),
     repShare_20 = weighted.mean(votePct_rep_20, votes_precFinal_20),
     demShare_lower = demVotes_lower / (demVotes_lower + repVotes_lower),
-    demShare_estimate = demVotes_estimate / (demVotes_lower + repVotes_lower),
-    demShare_upper = demVotes_upper / (demVotes_lower + repVotes_lower),
+    demShare_estimate = demVotes_estimate / (demVotes_estimate + repVotes_estimate),
+    demShare_upper = demVotes_upper / (demVotes_upper + repVotes_upper),
     repShare_lower = repVotes_lower / (demVotes_lower + repVotes_lower),
-    repShare_estimate = repVotes_estimate / (demVotes_lower + repVotes_lower),
-    repShare_upper = repVotes_upper / (demVotes_lower + repVotes_lower),
+    repShare_estimate = repVotes_estimate / (demVotes_estimate + repVotes_estimate),
+    repShare_upper = repVotes_upper / (demVotes_upper + repVotes_upper),
     swing_lower = (demShare_lower - repShare_lower) - (demShare_20 - repShare_20),
     swing_estimate = (demShare_estimate - repShare_estimate) - (demShare_20 - repShare_20),
     swing_upper = (demShare_upper - repShare_upper) - (demShare_20 - repShare_20),
@@ -430,21 +433,22 @@ summaries_byCounty_byMode = estimates |>
 
 summaries_byCounty = summaries_byCounty_byMode |> 
   summarise(
-    across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
+    timestamp = max(timestamp),
+    across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, (demVotes_estimate + repVotes_estimate), na.rm = TRUE)),
     across(votes_total_20:repVotes_upper, sum),
     .by = c(state, county)
   )
 
 summaries_byMode = summaries_byCounty_byMode |> 
   summarise(
-    across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
+    across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, (demVotes_estimate + repVotes_estimate), na.rm = TRUE)),
     across(votes_total_20:repVotes_upper, sum),
     .by = c(state, vote_mode)
   )
 
 summaries = summaries_byCounty_byMode |> 
   summarise(
-    across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
+    across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_22_estimate, na.rm = TRUE)),
     across(votes_total_20:repVotes_upper, sum),
     .by = c(state)
   )
@@ -455,9 +459,11 @@ summaries = summaries_byCounty_byMode |>
 
 `r sum(pull(data22_history, votes_precTotal_22))` **total** votes are in, `r 100*sum(pull(data22_history, votes_precTotal_22)) / sum(pull(data22_history, votes_precFinal_20), na.rm=TRUE)`% of the 2020 total
 
+- We estimate the **final total turnout** will be `r summaries$votes_total_22_estimate` with uncertainty bounds [`r summaries$votes_total_22_lower` to `r summaries$votes_total_22_upper`]
+
 `r sum(pull(filter(data22_history, vote_mode=="Election Day"), votes_precTotal_22))` **Election Day** votes are in, `r 100*sum(pull(filter(data22_history, vote_mode=="Election Day"), votes_precTotal_22)) / sum(pull(filter(data22_history, vote_mode=="Election Day"), votes_precFinal_20), na.rm=TRUE)`% of the 2020 total
 
-- We estimate the **final Election Day turnout** will be `r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_22_estimate)` with uncertainty bounds [`r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_22_lower)` -- `r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_22_upper)`]
+- We estimate the **final Election Day turnout** will be `r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_22_estimate)` with uncertainty bounds [`r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_22_lower)` to `r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_22_upper)`]
 
 **Precincts reporting all modes**: `r prec_reported_all` out of `r prec_total` total precincts (`r 100*round(prec_reported_all / prec_total, 2)`%)
 
@@ -469,11 +475,35 @@ summaries = summaries_byCounty_byMode |>
 
 **Swing vs 2020**: `r 100*(summaries$swing_estimate)`% with uncertainty bounds [`r 100*(summaries$swing_lower)`% to `r 100*(summaries$swing_upper)`%]
 
+```{r tbl_mode}
+#| 
+
+summaries_byMode |> 
+  mutate(
+    across(c(contains("swing")), ~ scales::label_percent(accuracy = 0.01)(.x)),
+    swing_22 = glue("{swing_estimate} [{swing_lower} to {swing_upper}]")
+  ) |> 
+  filter(vote_mode != "Provisional") |> 
+  select(vote_mode, swing_22) |> 
+  gt() |> 
+  tab_style_body(
+    style = cell_text(font = "Hack"),
+    fn = \(x) TRUE
+  ) |>
+  cols_align(align = "center") |> 
+  cols_label(
+    vote_mode = "Vote Mode",
+    swing_22 = "Swing vs 2020"
+  )
+
+```
+
+
 **Democrat**: `r summaries$demVotes_estimate` with uncertainty bounds [`r summaries$demVotes_lower` to `r summaries$demVotes_upper`]
 
 **Republican**: `r summaries$repVotes_estimate` with uncertainty bounds [`r summaries$repVotes_lower` to `r summaries$repVotes_upper`]
 
-### Cumulative Plot of Estimated Vote Share
+### Cumulative Plot of Estimated Vote Share (Dem and Rep)
 
 ### Cumulative Plot of Swing
 
@@ -485,60 +515,141 @@ summaries = summaries_byCounty_byMode |>
 
 ## County-level Results by Mode
 
-```{r}
+```{r tbl_county_mode}
 
 summaries_byCounty_byMode |> 
   mutate(
+    tmp = swing_estimate,
     county = str_to_title(county),
-    across(c(contains("swing"), contains("Share")), ~ scales::label_percent()(.x)),
-    across(votes_total_20:repVotes_upper, ~ round(.x, digits = 0) |> format(big.mark = ",") |> as.character())
+    across(c(contains("swing"), contains("Share")), ~ scales::label_percent(accuracy = 0.01)(.x)),
+    across(votes_total_20:repVotes_upper, ~ round(.x, digits = 0) |> format(big.mark = ",") |> as.character() |> str_squish())
   ) |> 
   mutate(
     votes_total_22 = case_when(
       votes_total_22_estimate == votes_total_22_lower & votes_total_22_estimate == votes_total_22_upper ~  votes_total_22_estimate,
-      .default = glue("{votes_total_22_estimate} [{votes_total_22_lower} to {votes_total_22_upper}]")
+      .default = glue("{votes_total_22_estimate} <br> [{votes_total_22_lower} to {votes_total_22_upper}]")
     ),
     votes_dem_22 = case_when(
       demVotes_estimate == demVotes_lower & demVotes_estimate == demVotes_upper ~  demVotes_estimate,
-      .default = glue("{demVotes_estimate} [{demVotes_lower} to {demVotes_upper}]")
+      .default = glue("{demVotes_estimate} <br> [{demVotes_lower} to {demVotes_upper}]")
     ),
     votes_rep_22 = case_when(
       repVotes_estimate == repVotes_lower & repVotes_estimate == repVotes_upper ~  repVotes_estimate,
-      .default = glue("{repVotes_estimate} [{repVotes_lower} to {repVotes_upper}]")
+      .default = glue("{repVotes_estimate} <br> [{repVotes_lower} to {repVotes_upper}]")
     ),
     swing_22 = case_when(
       is.na(swing_estimate) | vote_mode == "Provisional" ~ NA,
       swing_estimate == swing_lower & swing_estimate == swing_upper ~ swing_estimate,
-      .default = glue("{swing_estimate} [{swing_lower} to {swing_upper}]")
+      .default = glue("{swing_estimate} <br> [{swing_lower} to {swing_upper}]")
     )
   ) |> 
-  select(county, vote_mode, timestamp, votes_total_20, votes_total_22:swing_22) |> 
-  gt(
-    # groupname_col = "county", rowname_col = "vote_mode"
-  ) |> 
-  # tab_stubhead("Vote Mode") |> 
+  select(county, vote_mode, timestamp, votes_total_20, votes_total_22:swing_22, tmp) |> 
+  gt() |> 
+  cols_hide(tmp) |>
   fmt_datetime(columns = timestamp, date_style = "MMMd", time_style = "h_m_s_p") |> 
   sub_missing() |> 
-  cols_label(
-    county = "County",
-    vote_mode = "Vote Mode",
-    timestamp = "Last Reported",
-    votes_total_20 = "2020 Votes",
-    votes_total_22 = "2022 Votes",
-    votes_dem_22 = "2022 Dem Votes",
-    votes_rep_22 = "2022 Rep Votes",
-    swing_22 = "2022 Swing"
+  fmt_markdown(columns = votes_total_22:swing_22) |> 
+  data_color(
+    columns = tmp,
+    target_columns = swing_22,
+    palette = c("#F6573E", "white", "#3791FF"),
+    domain = c(-0.25, 0.25),
+    na_color = "white"
   ) |> 
   cols_width(
-    timestamp ~ px(165)
+    timestamp ~ px(185)
   ) |> 
   opt_interactive(
     use_filters = TRUE,
     use_compact_mode = TRUE,
     use_resizers = TRUE,
     page_size_default = 25
+  ) |> 
+  tab_style_body(
+    columns = timestamp:swing_22,
+    style = cell_text(font = "Hack"),
+    fn = \(x) TRUE
+  ) |>
+  cols_align(align = "center", columns = votes_total_20:swing_22) |> 
+  cols_label(
+    county = "County",
+    vote_mode = "Vote Mode",
+    timestamp = "Last Reported",
+    votes_total_20 = "2020 Votes",
+    votes_total_22 = "Votes",
+    votes_dem_22 = "Dem Votes",
+    votes_rep_22 = "Rep Votes",
+    swing_22 = "Swing vs 2020"
   )
 
 ```
 
 ## County-level Results
+
+```{r tbl_county}
+
+summaries_byCounty |> 
+  mutate(
+    tmp = swing_estimate,
+    county = str_to_title(county),
+    across(c(contains("swing"), contains("Share")), ~ scales::label_percent(accuracy = 0.01)(.x)),
+    across(votes_total_20:repVotes_upper, ~ round(.x, digits = 0) |> format(big.mark = ",") |> as.character() |> str_squish())
+  ) |> 
+  mutate(
+    votes_total_22 = case_when(
+      votes_total_22_estimate == votes_total_22_lower & votes_total_22_estimate == votes_total_22_upper ~  votes_total_22_estimate,
+      .default = glue("{votes_total_22_estimate} <br> [{votes_total_22_lower} to {votes_total_22_upper}]")
+    ),
+    votes_dem_22 = case_when(
+      demVotes_estimate == demVotes_lower & demVotes_estimate == demVotes_upper ~  demVotes_estimate,
+      .default = glue("{demVotes_estimate} <br> [{demVotes_lower} to {demVotes_upper}]")
+    ),
+    votes_rep_22 = case_when(
+      repVotes_estimate == repVotes_lower & repVotes_estimate == repVotes_upper ~  repVotes_estimate,
+      .default = glue("{repVotes_estimate} <br> [{repVotes_lower} to {repVotes_upper}]")
+    ),
+    swing_22 = case_when(
+      is.na(swing_estimate) ~ NA,
+      swing_estimate == swing_lower & swing_estimate == swing_upper ~ swing_estimate,
+      .default = glue("{swing_estimate} <br> [{swing_lower} to {swing_upper}]")
+    )
+  ) |> 
+  select(county, timestamp, votes_total_20, votes_total_22:swing_22, tmp) |> 
+  gt() |> 
+  cols_hide(tmp) |>
+  fmt_datetime(columns = timestamp, date_style = "MMMd", time_style = "h_m_s_p") |> 
+  sub_missing() |>
+  fmt_markdown(columns = votes_total_22:swing_22) |> 
+  data_color(
+    columns = tmp,
+    target_columns = swing_22,
+    palette = c("#F6573E", "white", "#3791FF"),
+    domain = c(-0.25, 0.25),
+    na_color = "white"
+  ) |> 
+  cols_width(
+    timestamp ~ px(185)
+  ) |> 
+  opt_interactive(
+    use_filters = TRUE,
+    use_compact_mode = TRUE,
+    use_resizers = TRUE,
+    page_size_default = 25
+  ) |> 
+  tab_style_body(
+    columns = timestamp:swing_22,
+    style = cell_text(font = "Hack"),
+    fn = \(x) TRUE
+  ) |>
+  cols_align(align = "center", columns = votes_total_20:swing_22) |> 
+  cols_label(
+    county = "County",
+    timestamp = "Last Reported",
+    votes_total_20 = "2020 Votes",
+    votes_total_22 = "Votes",
+    votes_dem_22 = "Dem Votes",
+    votes_rep_22 = "Rep Votes",
+    swing_22 = "Swing vs 2020"
+  )
+
+```
