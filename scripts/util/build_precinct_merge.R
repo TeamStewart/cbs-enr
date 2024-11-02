@@ -17,6 +17,105 @@ options(scipen = 800)
 
 source(here("scripts", "util", "globals.R"))
 
+# Arizona -----------------------------------------------------------------
+data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-az-precinct-general.csv")) |> 
+  filter(stage == "GEN", office == "US PRESIDENT", county_name %in% c('MARICOPA','PIMA')) |> 
+  select(county = county_name, precinct_20 = precinct, candidate, vote_mode = mode, votes_20 = votes) |> 
+  mutate(
+    state = "AZ",
+    votes_precFinal_20 = sum(votes_20),
+    .by = c(county, precinct_20, vote_mode)
+  ) |> 
+  mutate(
+    votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
+    votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
+    # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
+    .by = c(county, precinct_20, vote_mode)
+  ) |> 
+  mutate(
+    vote_mode = case_match(
+      vote_mode,
+      "ELECTION DAY" ~ "Election Day",
+      "EARLY" ~ "Early Voting",
+      "PROVISIONAL" ~ "Provisional"
+    ),
+  ) |> 
+  filter(str_detect(candidate, "BIDEN") & vote_mode != "TOTAL") |> 
+  select(-candidate)
+
+# 2020 shapefiles, from VEST data
+shp20 <- read_sf(here("data/shapefiles/az_20/")) |> 
+  filter(COUNTYFP20 %in% c("013", "019")) |>
+  st_transform("NAD83") |>
+  mutate(
+    county = case_match(
+      COUNTYFP20,
+      "013" ~ "MARICOPA",
+      "019" ~ "PIMA"),
+    precinct_20 = case_when(
+      county == "MARICOPA" ~ str_c(str_sub(GEOID20, -4), NAME20, sep = " "),
+      county == "PIMA" ~ NAME20 |> as.character() |> str_pad(width = 3, side = "left", pad = "0")
+    )
+  ) |>
+  select(precinct_20, county) |>
+  st_make_valid() |> 
+  drop_na(county)
+
+# 2024 shapefiles, geojson
+maricopa_shp24 <- read_sf("data/shapefiles/az_maricopa_24.geojson") |>
+  st_transform("NAD83") |>
+  mutate(
+    county = "MARICOPA",
+    precinct_24 = str_c(str_pad(PctNum, 4, "left", "0"), BdName, sep = " "),
+  ) |>
+  select(precinct_24, county)
+
+pima_shp24 <- read_sf("data/shapefiles/az_pima_24.geojson") |>
+  st_transform("NAD83") |>
+  mutate(
+    county = "PIMA",
+    precinct_24 = str_pad(PRECINCT, 3, "left", "0")
+  ) |>  
+  select(precinct_24, county)
+
+shp24 <- bind_rows(maricopa_shp24, pima_shp24)
+
+# merge the shapes together so that we can compute an overlap score
+intersection <- st_intersection(shp24, shp20) |> filter(county == county.1)
+
+data_history <- intersection |> 
+  # create the areal weighting
+  mutate(area = st_area(intersection) |> as.numeric()) |> 
+  st_drop_geometry() |>
+  drop_na(precinct_20, precinct_24) |> 
+  mutate(weight = as.numeric(area / sum(area)), .by = c(county, precinct_24)) |> 
+  # now full-join to ensure all county x precincts are represented in the data
+  # so that we can fill in some missigness
+  full_join(
+    expand(shp20, nesting(county, precinct_20), vote_mode = c("Absentee/Mail", "Early Voting", "Election Day", "Provisional")),
+    join_by(county, precinct_20),
+    relationship = "many-to-many"
+  ) |> 
+  # add the matched 2020 data
+  left_join(data20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
+  # fill in missigness with county mean so we can make estimates
+  mutate(
+    across(c(votes_20, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
+    .by = c(county, vote_mode)
+  ) |> 
+  # weight percentages by merged precincts
+  summarize(
+    votePct_dem_20 = sum(votePct_dem_20 * weight),
+    votePct_rep_20 = sum(votePct_rep_20 * weight),
+    # votePct_diff_20 = sum(votePct_diff_20 * weight),
+    votes_precFinal_20 = sum(votes_precFinal_20 * weight),
+    votes_20 = sum(votes_20 * weight),
+    .by = c(county, precinct_24, vote_mode)
+  )
+
+# Write csv
+write_csv(data_history, glue("{PATH_DROPBOX}/history/AZ_history.csv"))
+
 # Georgia -----------------------------------------------------------------
 # MEDSL 2020 precinct data, by mode
 ## Specifically, this gets Dem totals by vote mode, with column for total votes
