@@ -45,7 +45,7 @@ tar_config_set(
 # - path: (string) generic cell for path/number/ID used by custom scrapers to get file
 # - preelection_totals: (boolean) 
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
-metadata = get_gsheet(sheet = "metadata", col_types = "cccll") |> filter(state == "GA")
+metadata = get_gsheet(sheet = "metadata", col_types = "cccll")
 
 # ========================================
 ## PIPELINE
