@@ -1,0 +1,35 @@
+project:
+  type: website
+  execute-dir: project
+  output-dir: docs
+  render:
+    - "pages/*.qmd"
+    - "!archive/"
+
+website:
+  title: "2024 Election Results"
+  navbar:
+    background: primary
+    search: false
+    pinned: true
+    left: 
+      - pages/GA.qmd
+      # - pages/ga.qmd
+      # - pages/tx.qmd
+      
+date: now
+date-format: "MMM D HH:mm:ss A z"
+author: 
+- Joseph R. Loffredo, Mason Reece, Charles Stewart III
+affiliation: Massachusetts Institute of Technology
+page-layout: full
+embed-resources: true
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-location: body
+    echo: false
+    message: false
+    warning: false

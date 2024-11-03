@@ -132,14 +132,14 @@ data20 <- read_csv(glue("{PATH_DROPBOX}/22_general/2020-ga-precinct-general.csv"
   select(county = county_name, precinct_20 = precinct, candidate, vote_mode = mode, votes_20 = votes) |> 
   mutate(
     state = "GA",
-    votes_precFinal_20 = sum(votes_20),
-    .by = c(county, precinct_20, vote_mode)
   ) |> 
-  mutate(
-    votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
-    votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
-    # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
-    .by = c(county, precinct_20, vote_mode)
+  summarize(
+    votes_precFinal_20 = sum(votes_20),
+    votes_20_dem = sum(votes_20 * str_detect(candidate, "BIDEN")),
+    votes_20_rep = sum(votes_20 * str_detect(candidate, "TRUMP")),
+    votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / votes_precFinal_20,
+    votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / votes_precFinal_20,
+    .by = c(state, county, precinct_20, vote_mode)
   ) |> 
   mutate(
     precinct_20 = case_when(
@@ -154,9 +154,7 @@ data20 <- read_csv(glue("{PATH_DROPBOX}/22_general/2020-ga-precinct-general.csv"
       "ELECTION DAY" ~ "Election Day",
       "PROVISIONAL" ~ "Provisional",
     ),
-  ) |> 
-  filter(str_detect(candidate, "BIDEN")) |> 
-  select(-candidate)
+  )
 
 # 2020 shapefiles, from VEST data
 shp20 <- read_sf(here("data/shapefiles/ga_2020/")) |> 
@@ -213,16 +211,16 @@ data_history <- intersection |>
   left_join(data20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
   # fill in missigness with county mean so we can make estimates
   mutate(
-    across(c(votes_20, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
+    across(c(votes_20_dem, votes_20_rep, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
     .by = c(county, vote_mode)
   ) |> 
   # weight percentages by merged precincts
   summarize(
+    votes_20_dem = sum(votes_20_dem * weight),
+    votes_20_rep = sum(votes_20_rep * weight),
     votePct_dem_20 = sum(votePct_dem_20 * weight),
     votePct_rep_20 = sum(votePct_rep_20 * weight),
-    # votePct_diff_20 = sum(votePct_diff_20 * weight),
     votes_precFinal_20 = sum(votes_precFinal_20 * weight),
-    votes_20 = sum(votes_20 * weight),
     .by = c(county, precinct_22, vote_mode)
   )
 
