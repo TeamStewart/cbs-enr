@@ -59,4 +59,5 @@ list(
     #tar_target(models, run_models(data, state, county, model_swing, model_turnout)),
     names = c(state, county)
   )
+  tar_target(uploads, upload_html(website))
 )

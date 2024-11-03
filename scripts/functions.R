@@ -145,7 +145,6 @@ get_data <- function(state, county, timestamp, path = NULL) {
     # save timestamped version
     write_csv(d, glue("data/clean/{state}/{local_file_name}_{timestamp}.csv"))
   }
-  
 
   return(d)
 }
@@ -272,4 +271,19 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   }
 
   return(formatted)
+}
+
+upload_html <- function(website){
+  
+  upload_single <- function(path){
+    
+    state = str_extract(path, "(docs/pages/)(.*?)\\.html", group = 2) |> str_extract("(.*)(?-)", group = 1)
+    juris = str_extract(path, "(docs/pages/)(.*?)\\.html", group = 2)
+    
+    put_object(file = path, object = glue("20241105-{state}-P/model_{juris}.html"), bucket = PATH_CBS_S3, multipart = TRUE)
+  }
+  
+  files = list.files(path = "docs/pages", pattern = "*.html", full.names = TRUE, recursive = TRUE)
+  
+  walk(files, upload_single)
 }
