@@ -106,7 +106,7 @@ models_full |>
   ) +
   theme_bw() +
   scale_x_datetime(
-    labels = scales::label_date(format = "%m-%d \n %H:%M %p", tz = "US/Eastern")
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
   ) +
   scale_color_manual(values = c("Dem" = "#3791FF", "Rep" = "#F6573E")) +
   geom_hline(yintercept = 0.5, linetype = "dashed")
@@ -147,7 +147,7 @@ models_full |>
   ) +
   theme_bw() +
   scale_x_datetime(
-    labels = scales::label_date(format = "%m-%d \n %H:%M %p", tz = "US/Eastern")
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
   ) +
   geom_hline(yintercept = 0, linetype = "dashed")
 
@@ -182,7 +182,7 @@ models_full |>
     labels = scales::label_comma()
   ) +
   scale_x_datetime(
-    labels = scales::label_date(format = "%m-%d \n %H:%M %p", tz = "US/Eastern")
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
   ) +
   geom_hline(yintercept = 0, linetype = "dashed")
 
@@ -214,7 +214,7 @@ models_full |>
     labels = scales::label_comma()
   ) +
   scale_x_datetime(
-    labels = scales::label_date(format = "%m-%d \n %H:%M %p", tz = "US/Eastern")
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
   ) +
   geom_hline(yintercept = 0, linetype = "dashed")
 
