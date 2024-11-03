@@ -8,6 +8,12 @@ library(tidyverse)
 library(sf)
 library(glue)
 library(here)
+library(httr2)
+library(rvest)
+library(reticulate)
+library(xml2)
+library(jsonlite)
+library(janitor)
 
 rm(list = ls())
 gc()
@@ -27,6 +33,8 @@ data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-az-precinct-gen
     .by = c(county, precinct_20, vote_mode)
   ) |> 
   mutate(
+    votes_20_dem = sum(votes_20 * str_detect(candidate, "BIDEN")),
+    votes_20_rep = sum(votes_20 * str_detect(candidate, "TRUMP")),
     votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
     votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
     # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
@@ -39,9 +47,9 @@ data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-az-precinct-gen
       "EARLY" ~ "Early Voting",
       "PROVISIONAL" ~ "Provisional"
     ),
-  ) |> 
-  filter(str_detect(candidate, "BIDEN") & vote_mode != "TOTAL") |> 
-  select(-candidate)
+  ) |>
+  select(-c(candidate, votes_20)) |>
+  distinct()
 
 # 2020 shapefiles, from VEST data
 shp20 <- read_sf(here("data/shapefiles/az_20/")) |> 
@@ -100,7 +108,7 @@ data_history <- intersection |>
   left_join(data20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
   # fill in missigness with county mean so we can make estimates
   mutate(
-    across(c(votes_20, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
+    across(c(votes_20_dem, votes_20_rep, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
     .by = c(county, vote_mode)
   ) |> 
   # weight percentages by merged precincts
@@ -109,7 +117,8 @@ data_history <- intersection |>
     votePct_rep_20 = sum(votePct_rep_20 * weight),
     # votePct_diff_20 = sum(votePct_diff_20 * weight),
     votes_precFinal_20 = sum(votes_precFinal_20 * weight),
-    votes_20 = sum(votes_20 * weight),
+    votes_20_dem = sum(votes_20_dem * weight),
+    votes_20_rep = sum(votes_20_rep * weight),
     .by = c(county, precinct_24, vote_mode)
   )
 
@@ -128,6 +137,8 @@ data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-ga-precinct-gen
     .by = c(county, precinct_20, vote_mode)
   ) |> 
   mutate(
+    votes_20_dem = sum(votes_20 * str_detect(candidate, "BIDEN")),
+    votes_20_rep = sum(votes_20 * str_detect(candidate, "TRUMP")),
     votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
     votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
     # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
@@ -150,8 +161,8 @@ data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-ga-precinct-gen
       "PROVISIONAL" ~ "Provisional",
     ),
   ) |> 
-  filter(str_detect(candidate, "BIDEN") & vote_mode != "TOTAL") |> 
-  select(-candidate)
+  select(-c(candidate, votes_20)) |>
+  distinct()
 
 # 2020 shapefiles, from VEST data
 shp20 <- read_sf(here("data/shapefiles/ga_2020/")) |> 
@@ -208,7 +219,7 @@ data_history <- intersection |>
   left_join(data20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
   # fill in missigness with county mean so we can make estimates
   mutate(
-    across(c(votes_20, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
+    across(c(votes_20_dem, votes_20_rep, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
     .by = c(county, vote_mode)
   ) |> 
   # weight percentages by merged precincts
@@ -217,12 +228,344 @@ data_history <- intersection |>
     votePct_rep_20 = sum(votePct_rep_20 * weight),
     # votePct_diff_20 = sum(votePct_diff_20 * weight),
     votes_precFinal_20 = sum(votes_precFinal_20 * weight),
-    votes_20 = sum(votes_20 * weight),
+    votes_20_dem = sum(votes_20_dem * weight),
+    votes_20_rep = sum(votes_20_rep * weight),
     .by = c(county, precinct_24, vote_mode)
   )
 
 # Write csv
 write_csv(data_history, glue("{PATH_DROPBOX}/history/GA_history.csv"))
+
+# Michigan ----------------------------------------------------------------
+## Oakland County -- clarity site
+state <- 'MI'; county <- 'Oakland'; path = 105840
+source("scripts/scrapers.R")
+
+# Get 2020 from clarity
+# Download Clarity files
+#get_clarity(state, county, path)
+
+# Build list of Clarity files
+raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+
+clean_oakland_mi <- function(file){
+  cleaned <- read_csv(file) |>
+    filter(race_name == "Electors of President and Vice-President of the United States") |>
+    mutate(
+      state = "MI",
+      county = "Oakland",
+      timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+      # Recode candidate names
+      candidate = case_match(
+        candidate_name,
+        # Oakland, MI presidential candidates
+        "Joseph R. Biden/Kamala D. Harris" ~ "BIDEN",
+        "Donald J. Trump/Michael R. Pence" ~ "TRUMP",
+        .default = 'Other'
+      )
+    ) |>
+    mutate(
+      # Specify vote modes: Election Day, Provisional, Absentee/Mail, Early Voting, Other
+      vote_mode = case_match(
+        vote_mode,
+        "Election" ~ "Election Day",
+        "Absentee" ~ "Absentee/Mail",
+        .default = "Provisional"
+      )
+    ) |>
+    rename(precinct_20 = precinct_id) |>
+    summarise(
+      votes_20 = sum(precinct_total, na.rm = T),
+      .by = c("state", "county", "precinct_20", "candidate", "vote_mode", "timestamp")) 
+  
+  file_timestamp <- cleaned |> pull(timestamp) |> unique() |> max() |> str_replace_all("-|:| ", "_")
+  
+  write_csv(cleaned, file = glue("{PATH_DROPBOX}/misc_precinct_historical/{state}_{county}_{file_timestamp}.csv"))
+}
+
+#cleaned_files <- lapply(raw_files, clean_oakland_mi)
+
+oakland_data20 <- read_csv(list.files(path = glue("{PATH_DROPBOX}/misc_precinct_historical"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()) |>
+  select(-timestamp) |>
+  mutate(
+    votes_precFinal_20 = sum(votes_20),
+    .by = c(county, precinct_20, vote_mode)
+  ) |> 
+  mutate(
+    votes_20_dem = sum(votes_20 * str_detect(candidate, "BIDEN")),
+    votes_20_rep = sum(votes_20 * str_detect(candidate, "TRUMP")),
+    votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
+    votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
+    # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
+    .by = c(county, precinct_20, vote_mode)
+  ) |>
+  select(-c(candidate, votes_20)) |>
+  distinct()
+
+## Macomb County
+link <- 'https://macombgovdocs.org/clerk/electionresults/2020/November20/5-bd-print.html'
+raw_table <- (read_html(link) |> 
+                html_nodes("table") |> 
+                html_table(fill = TRUE))[[2]] |> 
+  as_tibble(.name_repair = function(names) {
+    # Replace empty column names with placeholders
+    names[names == ""] <- paste0("Unnamed_", seq_along(names[names == ""]))
+    make.unique(names)
+  }) |>
+  select(-c(Unnamed_1, Unnamed_3, `POLL BOOK TOTALS`, ends_with(".2"))) |>
+  janitor::clean_names() |>
+  rename_with(~ case_when(
+    . == "unnamed_2" ~ "precinct",
+    str_detect(., "_1$") ~ paste0("electionday_", str_remove(., "_1$")),
+    TRUE ~ paste0("absentee_", .)
+  )) |>
+  filter(precinct != '' & precinct != 'TOTALS') |>
+  mutate(township = ifelse(!grepl("^\\d+$", precinct), precinct, NA)) |>  # Identify township rows by non-digit values
+  fill(township, .direction = "down") |>  # Fill down the township names
+  filter(grepl("^\\d+$", precinct)) |>
+  mutate(precinct = str_c(township, precinct, sep = " ")) |>
+  select(-township) |>
+  pivot_longer(cols = -precinct, names_to = c("vote_mode", "candidate"), names_pattern = "([^_]+)_(.*)", values_to = "votes_20") |>
+  mutate(
+    candidate = case_when(
+      str_detect(candidate, "biden") ~ "BIDEN",
+      str_detect(candidate, "trump") ~ "TRUMP",
+      TRUE ~ "Other"
+    ),
+    vote_mode = case_match(
+      vote_mode,
+      "electionday" ~ "Election Day",
+      "absentee" ~ "Absentee/Mail"
+    ),
+    votes_20 = as.numeric(votes_20)
+  ) |>
+  summarise(
+    votes_20 = sum(votes_20, na.rm = T),
+    .by = c(precinct, candidate, vote_mode)) |>
+  rename(precinct_20 = precinct) |>
+  mutate(
+    state = "MI",
+    county = "Macomb")
+
+macomb_data20 <- raw_table |>
+  mutate(
+    votes_precFinal_20 = sum(votes_20),
+    .by = c(state, county, precinct_20, vote_mode)
+  ) |> 
+  mutate(
+    votes_20_dem = sum(votes_20 * str_detect(candidate, "BIDEN")),
+    votes_20_rep = sum(votes_20 * str_detect(candidate, "TRUMP")),
+    votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
+    votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
+    # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
+    .by = c(state, county, precinct_20, vote_mode)
+  ) |>
+  filter(str_detect(candidate, "BIDEN")) |> 
+  select(-c(candidate, votes_20)) |>
+  distinct() |>
+  select(colnames(oakland_data20))
+ 
+## Ingham County
+ingham_data20 <- readxl::read_xlsx(glue("{PATH_DROPBOX}/misc_precinct_historical/OFFICIALNovember2020StatementOfVotesCastRPT.xlsx")) |>
+  filter(Precinct != "Total" & Precinct != 'Precinct') |>
+  select(-c(2,3,10,11)) |>
+  mutate(vote_mode = ifelse(Precinct %in% c("Election Day", "AV Counting Boards"), Precinct, NA),
+         Precinct = ifelse(Precinct %in% c("Election Day", "AV Counting Boards"), NA, Precinct)) %>%
+  # Fill the Precinct column downwards
+  fill(Precinct) %>%
+  # Filter out rows that do not have a vote_mode (i.e., only precinct labels)
+  filter(!is.na(vote_mode)) |>
+  pivot_longer(cols = -c(Precinct, vote_mode), names_to = "candidate", values_to = "votes_20") |>
+  mutate(
+    state = 'MI',
+    county = 'Ingham',
+    candidate = case_when(
+      str_detect(candidate, "Biden") ~ "BIDEN",
+      str_detect(candidate, "Trump") ~ "TRUMP",
+      TRUE ~ "Other"
+    ),
+    vote_mode = case_match(
+      vote_mode,
+      "Election Day" ~ "Election Day",
+      "AV Counting Boards" ~ "Absentee/Mail"
+    ),
+    votes_20 = as.numeric(votes_20)
+  ) |>
+  clean_names() |>
+  rename(precinct_20 = precinct) |>
+  summarise(
+    votes_20 = sum(votes_20, na.rm = T),
+    .by = c(state, county, precinct_20, candidate, vote_mode)) |>
+  mutate(
+    votes_precFinal_20 = sum(votes_20),
+    .by = c(state, county, precinct_20, vote_mode)
+  ) |> 
+  mutate(
+    votes_20_dem = sum(votes_20 * str_detect(candidate, "BIDEN")),
+    votes_20_rep = sum(votes_20 * str_detect(candidate, "TRUMP")),
+    votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
+    votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
+    # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
+    .by = c(state, county, precinct_20, vote_mode)
+  ) |>
+  select(-c(candidate, votes_20)) |>
+  distinct() |>
+  select(colnames(oakland_data20))
+
+## Eaton County
+state <- 'MI'; county <- 'Eaton'; path = 106278
+source("scripts/scrapers.R")
+
+# Get 2020 from clarity
+# Download Clarity files
+#get_clarity(state, county, path)
+
+# Build list of Clarity files
+raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+
+clean_eaton_mi <- function(file){
+  cleaned <- read_csv(file) |>
+    filter(race_name == "Electors of President and Vice-President of the United States") |>
+    mutate(
+      state = "MI",
+      county = "Eaton",
+      timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+      # Recode candidate names
+      candidate = case_match(
+        candidate_name,
+        # Oakland, MI presidential candidates
+        "Joseph R. Biden/Kamala D. Harris" ~ "BIDEN",
+        "Donald J. Trump/Michael R. Pence" ~ "TRUMP",
+        .default = 'Other'
+      )
+    ) |>
+    mutate(
+      # Specify vote modes: Election Day, Provisional, Absentee/Mail, Early Voting, Other
+      vote_mode = case_match(
+        vote_mode,
+        "Election" ~ "Election Day",
+        "Absentee" ~ "Absentee/Mail",
+        .default = "Provisional"
+      )
+    ) |>
+    rename(precinct_20 = precinct_id) |>
+    summarise(
+      votes_20 = sum(precinct_total, na.rm = T),
+      .by = c("state", "county", "precinct_20", "candidate", "vote_mode", "timestamp")) 
+  
+  file_timestamp <- cleaned |> pull(timestamp) |> unique() |> max() |> str_replace_all("-|:| ", "_")
+  
+  write_csv(cleaned, file = glue("{PATH_DROPBOX}/misc_precinct_historical/{state}_{county}_{file_timestamp}.csv"))
+}
+
+#cleaned_files <- lapply(raw_files, clean_eaton_mi)
+
+eaton_data20 <- read_csv(list.files(path = glue("{PATH_DROPBOX}/misc_precinct_historical"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()) |>
+  select(-timestamp) |>
+  mutate(
+    votes_precFinal_20 = sum(votes_20),
+    .by = c(county, precinct_20, vote_mode)
+  ) |> 
+  mutate(
+    votes_20_dem = sum(votes_20 * str_detect(candidate, "BIDEN")),
+    votes_20_rep = sum(votes_20 * str_detect(candidate, "TRUMP")),
+    votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
+    votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
+    # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
+    .by = c(county, precinct_20, vote_mode)
+  ) |>
+  select(-c(candidate, votes_20)) |>
+  distinct()
+
+# 2020 shapefiles, from VEST data
+township_lookup <- tigris::county_subdivisions(state = "MI", year = 2020) |>
+  mutate(NAMELSAD = str_to_title(NAMELSAD)) |>
+  select(COUNTYFIPS = COUNTYFP, MCDFIPS = COUSUBFP, NAMELSAD) |>
+  st_drop_geometry()
+
+shp20 <- read_sf("data/shapefiles/MI_2020_Voting_Precincts/") |> 
+  st_transform("NAD83") |>
+  left_join(township_lookup, by = c("COUNTYFIPS", "MCDFIPS")) |>
+  filter(COUNTYFIPS %in% c('125','099','065','045')) |>
+  mutate(
+    county = case_match(
+      COUNTYFIPS,
+      "125" ~ "Oakland",
+      "099" ~ "Macomb",
+      "065" ~ "Ingham",
+      "045" ~ "Eaton"),
+    NAMELSAD = case_when(
+      county %in% c('Eaton', 'Ingham') ~ str_replace(NAMELSAD, "(.*) City$", "City of \\1"),
+      county == 'Macomb' ~ str_to_upper(NAMELSAD) |> str_remove_all(" CITY"),
+      TRUE ~ NAMELSAD),
+    PRECINCT = str_replace(PRECINCT, "^0+", ""),
+    PRECINCT = ifelse(county == 'Macomb', str_pad(PRECINCT, 2, pad = "0"), PRECINCT),
+    WARD = str_replace(WARD, "^0+", ""),
+    precinct_20 = case_when(
+      county == 'Macomb' ~ glue("{NAMELSAD} {PRECINCT}"),
+      WARD != '' ~ glue("{NAMELSAD}, Ward {WARD}, Precinct {PRECINCT}"),
+      TRUE ~ glue("{NAMELSAD}, Precinct {PRECINCT}"))
+    ) |>
+  select(precinct_20, county) |> 
+  st_make_valid() |> 
+  drop_na(county)
+
+# 2022 shapefiles, from the GA legis reapportionment website
+shp24 <- read_sf("data/shapefiles/MI_2024_Voting_Precincts/") |> 
+  st_transform("NAD83") |>
+  filter(COUNTYFIPS %in% c('125','099','065','045')) |>
+  mutate(
+    county = case_match(
+      COUNTYFIPS,
+      "125" ~ "Oakland",
+      "099" ~ "Macomb",
+      "065" ~ "Ingham",
+      "045" ~ "Eaton")
+  ) |>
+  select(
+    precinct_24 = Precinct_L, county
+  ) |> 
+  st_make_valid() |> 
+  drop_na(county)
+
+data20 <- bind_rows(oakland_data20, macomb_data20, ingham_data20, eaton_data20)
+
+# merge the shapes together so that we can compute an overlap score
+intersection <- st_intersection(shp24, shp20) |> filter(county == county.1)
+
+data_history <- intersection |> 
+  # create the areal weighting
+  mutate(area = st_area(intersection) |> as.numeric()) |> 
+  st_drop_geometry() |>
+  drop_na(precinct_20, precinct_24) |> 
+  mutate(weight = as.numeric(area / sum(area)), .by = c(county, precinct_24)) |> 
+  # now full-join to ensure all county x precincts are represented in the data
+  # so that we can fill in some missigness
+  full_join(
+    expand(shp20, nesting(county, precinct_20), vote_mode = c("Absentee/Mail", "Early Voting", "Election Day", "Provisional")),
+    join_by(county, precinct_20),
+    relationship = "many-to-many"
+  ) |> 
+  # add the matched 2020 data
+  left_join(data20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
+  # fill in missigness with county mean so we can make estimates
+  mutate(
+    across(c(votes_20_dem, votes_20_rep, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
+    .by = c(county, vote_mode)
+  ) |> 
+  # weight percentages by merged precincts
+  summarize(
+    votePct_dem_20 = sum(votePct_dem_20 * weight),
+    votePct_rep_20 = sum(votePct_rep_20 * weight),
+    # votePct_diff_20 = sum(votePct_diff_20 * weight),
+    votes_precFinal_20 = sum(votes_precFinal_20 * weight),
+    votes_20_dem = sum(votes_20_dem * weight),
+    votes_20_rep = sum(votes_20_rep * weight),
+    .by = c(county, precinct_24, vote_mode)
+  )
+
+# Write csv
+write_csv(data_history, glue("{PATH_DROPBOX}/history/MI_history.csv"))
 
 # North Carolina ----------------------------------------------------------
 # MEDSL 2020 precinct data, by mode
@@ -236,6 +579,8 @@ data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-nc-precinct-gen
     .by = c(county, precinct_20, vote_mode)
   ) |> 
   mutate(
+    votes_20_dem = sum(votes_20 * str_detect(candidate, "BIDEN")),
+    votes_20_rep = sum(votes_20 * str_detect(candidate, "TRUMP")),
     votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
     votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
     # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
@@ -250,8 +595,8 @@ data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-nc-precinct-gen
       "PROVISIONAL" ~ "Provisional",
     ),
   ) |> 
-  filter(str_detect(candidate, "BIDEN")) |> 
-  select(-candidate)
+  select(-c(candidate, votes_20)) |>
+  distinct()
 
 # 2020 shapefiles, from VEST data
 shp20 <- read_sf("data/shapefiles/nc_20/") |> 
@@ -291,7 +636,7 @@ data_history <- intersection |>
   left_join(data20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
   # fill in missigness with county mean so we can make estimates
   mutate(
-    across(c(votes_20, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
+    across(c(votes_20_dem, votes_20_rep, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
     .by = c(county, vote_mode)
   ) |> 
   # weight percentages by merged precincts
@@ -300,15 +645,14 @@ data_history <- intersection |>
     votePct_rep_20 = sum(votePct_rep_20 * weight),
     # votePct_diff_20 = sum(votePct_diff_20 * weight),
     votes_precFinal_20 = sum(votes_precFinal_20 * weight),
-    votes_20 = sum(votes_20 * weight),
+    votes_20_dem = sum(votes_20_dem * weight),
+    votes_20_rep = sum(votes_20_rep * weight),
     .by = c(county, precinct_24, vote_mode)
-  ) |>
-  mutate(county = str_to_title(county))
+  )
 
 
 # Write csv
 write_csv(data_history, glue("{PATH_DROPBOX}/history/NC_history.csv"))
-
 
 # Pennsylvania ------------------------------------------------------------
 #### Philadelphia ####
@@ -343,13 +687,15 @@ philly_20 <- readxl::read_excel(glue("{PATH_DROPBOX}/misc_precinct_historical/PA
     .by = c(county, precinct_20, vote_mode)
   ) |>
   mutate(
+    votes_20_dem = sum(votes_20 * str_detect(candidate, "BIDEN")),
+    votes_20_rep = sum(votes_20 * str_detect(candidate, "TRUMP")),
     votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
     votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
     # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
     .by = c(county, precinct_20, vote_mode)
   ) |> 
-  filter(str_detect(candidate, "BIDEN")) |> 
-  select(-candidate)
+  select(-c(candidate, votes_20)) |>
+  distinct()
 
 # 2020 shapefiles, from PA Open Data
 shp20 <- read_sf("data/shapefiles/PhillyPlanning_Political_Divisions2020/") |> 
@@ -389,7 +735,7 @@ philly_data_history <- intersection |>
   left_join(philly_20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
   # fill in missigness with county mean so we can make estimates
   mutate(
-    across(c(votes_20, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
+    across(c(votes_20_dem, votes_20_rep, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
     .by = c(county, vote_mode)
   ) |> 
   # weight percentages by merged precincts
@@ -398,7 +744,8 @@ philly_data_history <- intersection |>
     votePct_rep_20 = sum(votePct_rep_20 * weight),
     # votePct_diff_20 = sum(votePct_diff_20 * weight),
     votes_precFinal_20 = sum(votes_precFinal_20 * weight),
-    votes_20 = sum(votes_20 * weight),
+    votes_20_dem = sum(votes_20_dem * weight),
+    votes_20_rep = sum(votes_20_rep * weight),
     .by = c(county, precinct_24, vote_mode)
   ) |>
   mutate(county = str_to_title(county))
@@ -431,13 +778,15 @@ delaware_20 <- read_csv(glue("{PATH_DROPBOX}/misc_precinct_historical/20201103__
     .by = c(county, precinct_20, vote_mode)
   ) |>
   mutate(
+    votes_20_dem = sum(votes_20 * str_detect(candidate, "BIDEN")),
+    votes_20_rep = sum(votes_20 * str_detect(candidate, "TRUMP")),
     votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
     votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
     # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
     .by = c(county, precinct_20, vote_mode)
   ) |> 
-  filter(str_detect(candidate, "BIDEN")) |> 
-  select(-candidate)
+  select(-c(candidate, votes_20)) |>
+  distinct()
 
 # 2020 shapefiles, from PA Open Data
 shp20 <- read_sf("data/shapefiles/pa_2020/") |> 
@@ -485,7 +834,7 @@ delaware_data_history <- intersection |>
   left_join(delaware_20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
   # fill in missigness with county mean so we can make estimates
   mutate(
-    across(c(votes_20, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
+    across(c(votes_20_dem, votes_20_rep, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
     .by = c(county, vote_mode)
   ) |> 
   # weight percentages by merged precincts
@@ -494,7 +843,8 @@ delaware_data_history <- intersection |>
     votePct_rep_20 = sum(votePct_rep_20 * weight),
     # votePct_diff_20 = sum(votePct_diff_20 * weight),
     votes_precFinal_20 = sum(votes_precFinal_20 * weight),
-    votes_20 = sum(votes_20 * weight),
+    votes_20_dem = sum(votes_20_dem * weight),
+    votes_20_rep = sum(votes_20_rep * weight),
     .by = c(county, precinct_24, vote_mode)
   ) |>
   mutate(county = str_to_title(county)) |>
@@ -561,13 +911,15 @@ allegheny_20 <- read_csv(list.files(path = glue("{PATH_DROPBOX}/misc_precinct_hi
     .by = c(county, precinct_20, vote_mode)
   ) |> 
   mutate(
+    votes_20_dem = sum(votes_20 * str_detect(candidate, "BIDEN")),
+    votes_20_rep = sum(votes_20 * str_detect(candidate, "TRUMP")),
     votePct_dem_20 = sum(votes_20 * str_detect(candidate, "BIDEN")) / sum(votes_20),
     votePct_rep_20 = sum(votes_20 * str_detect(candidate, "TRUMP")) / sum(votes_20),
     # votePct_diff_20 = votePct_dem_20 - votePct_rep_20,
     .by = c(county, precinct_20, vote_mode)
   ) |>
-  filter(str_detect(candidate, "BIDEN")) |> 
-  select(-candidate)
+  select(-c(candidate, votes_20)) |>
+  distinct()
 
 # 2020 shapefiles, from PA Open Data
 shp20 <- read_sf("data/shapefiles/pa_2020/") |> 
@@ -614,7 +966,7 @@ allegheny_data_history <- intersection |>
   left_join(allegheny_20, join_by(county, precinct_20, vote_mode), relationship = "many-to-many") |> 
   # fill in missigness with county mean so we can make estimates
   mutate(
-    across(c(votes_20, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
+    across(c(votes_20_dem, votes_20_rep, votePct_dem_20, votePct_rep_20, votes_precFinal_20), ~ replace_na(.x, mean(.x, na.rm=TRUE))),
     .by = c(county, vote_mode)
   ) |> 
   # weight percentages by merged precincts
@@ -623,7 +975,8 @@ allegheny_data_history <- intersection |>
     votePct_rep_20 = sum(votePct_rep_20 * weight),
     # votePct_diff_20 = sum(votePct_diff_20 * weight),
     votes_precFinal_20 = sum(votes_precFinal_20 * weight),
-    votes_20 = sum(votes_20 * weight),
+    votes_20_dem = sum(votes_20_dem * weight),
+    votes_20_rep = sum(votes_20_rep * weight),
     .by = c(county, precinct_24, vote_mode)
   ) |>
   mutate(county = str_to_title(county))

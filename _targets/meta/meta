@@ -1,15 +1,15 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|4fc36dff1d5ed8d8|||||||||||||||
+.Random.seed|object|f97a27f766eff05a|||||||||||||||
 create_table_cbs|function|762189909ccf1bf3|||||||||||||||
 data_AZ_Maricopa|stem|e326825b1f7ca087|1246177af406de46|d49978dae9bcdbfa|-120925747||t20028.0725093665s|0ba35f816ff6da18|24151|qs|local|vector|||8.309||
 data_AZ_Pima|stem||12da3421d078aba4|c67500d0740e6f8b|95377190||t20029.2205277918s||0|qs|local|vector|||0.02||is.data.framex is not TRUE
-data_GA_NA|stem|1277c3a406ed225b|be6a3d224f3a771b|498f5e37c5dabb0f|-931803180||t20029.2211326154s|8a81686054894fca|12207|qs|local|vector|||4.597||
+data_GA_NA|stem|3e00434fe91cae8b|be6a3d224f3a771b|ce22e975d7ef6eec|-931803180||t20030.6700331696s|04b5f903eb9565a6|12213|qs|local|vector|||4.613||
 data_MI_Ingham|stem|10749e99ccf511b7|66b00feddd0960eb|b18003166a7d9e91|57551775||t20029.2210026486s|7fcd9fd149e24489|1406|qs|local|vector|||2.266||
 data_MI_Oakland|stem|55acd23b9f57efc7|794720768df4fad7|e1fd7257a0c65a8e|481620507||t20028.0731656264s|dffa54c36b20ca55|5825|qs|local|vector|||1.067||
 data_NC_NA|stem|58b0cda5db022704|3094de461a56d540|4203ddd6a7db5a61|-220573991||t20028.0732487088s|e98c36e44bea2fe9|23993|qs|local|vector|||0.827||
 data_PA_Allegheny|stem|a22de46e0627f035|cdf7d26e07630740|9cd86c24b15cebb8|908748033||t20028.0726283603s|fcbd9f4d8778b904|12710|qs|local|vector|||2.095||
 data_PA_Delaware|stem|331f0e1e2f26e0bd|6ab30fa00633e37f|1085e8d901940a69|648836767||t20028.0730866455s|c6ace6560a38c1f5|5514|qs|local|vector|||2.782||
-data_PA_Philadelphia|stem|87f1931946fece8b|31db8a19d0865366|70157d6be0fa8c77|-626388640||t20028.0728280534s|63334fa0b2d54c79|3860|qs|local|vector|||15.944|One or more parsing issues, call problems on your data frame for details,e.g.  dat  vroom...  problemsdat|
+data_PA_Philadelphia|stem|a79feb1b5f266210|31db8a19d0865366|d7b6c5b1d95a37af|-626388640||t20030.6698787456s|603e9798dc93b5ef|3863|qs|local|vector|||21.563|One or more parsing issues, call problems on your data frame for details,e.g.  dat  vroom...  problemsdat|
 ELECTION_DATE|object|8570071620b95baa|||||||||||||||
 get_clarity|function|a3c80326d33d5776|||||||||||||||
 get_data|function|33f219a2ad714c1d|||||||||||||||
@@ -32,19 +32,19 @@ scrape_nc|function|85fcf87180fd5e7d|||||||||||||||
 scrape_pa|function|1f01fbae22e8b8b8|||||||||||||||
 tbl_cbs_AZ_Maricopa|stem|22bba7426ee0c5f5|acb4d7e597c8a4ac|a5fdd9aa8c03b2aa|-1904506548||t20028.072596415s|0216fa579e048448|27201|qs|local|vector|||7.342||
 tbl_cbs_AZ_Pima|stem||dafdbc0720341614|f62e1446361831d5|119859960||t20029.2205352105s||0|qs|local|vector|||0.002||could not load dependencies of target tbl_cbs_AZ_Pima. Expecting a single string value typecharacter extent0.
-tbl_cbs_GA_NA|stem|226f6c92ed380419|a62d2c1a55344585|63582695c4c1675a|-1915198637||t20029.2212016624s|9cc4b57f701df10b|30599|qs|local|vector|||5.728||
+tbl_cbs_GA_NA|stem|837b746d38f7db44|a62d2c1a55344585|8eb0feeb102b755c|-1915198637||t20030.6701036089s|9cc4b57f701df10b|30599|qs|local|vector|||5.811||
 tbl_cbs_MI_Ingham|stem|6f4dd618935d46a8|1993590d0cbdad21|3e9ce40f5507ec90|641481856||t20029.2210606869s|43a1223249ea92a6|2022|qs|local|vector|||4.349||
 tbl_cbs_MI_Oakland|stem|d795403ef53ed8ad|c62c8559b253c44d|016e899f899e6fac|1385269304||t20028.0732315748s|4c1de76478a85d32|13384|qs|local|vector|||5.515||
 tbl_cbs_NC_NA|stem|8186afb128484666|1d726c3cb04bd5cd|c57b628378ce8f37|-570526909||t20028.0734117815s|b1cc049386b33da8|58506|qs|local|vector|||13.728||
 tbl_cbs_PA_Allegheny|stem|9272461a99c04971|34482577ea3ebf46|6f23a9f18580193e|-145023305||t20028.0726327883s|5e5bcdfd7356185c|20476|qs|local|vector|||0.149||
 tbl_cbs_PA_Delaware|stem|dffb928703915a37|ddb575659d69571d|1edaaea311fe64b8|1246367177||t20028.0731493389s|3c9c72dbc809fb8c|7374|qs|local|vector|||5.274||
-tbl_cbs_PA_Philadelphia|stem|f807e82662080da8|a6a11fcf5626374f|2c70744a51e34a7c|-1390787123||t20028.0729197045s|bbd6ef6a6a2fba76|12326|qs|local|vector|||7.651||
-timestamp_AZ_Maricopa|stem|5471ca68b5112a7b|811f19eacc390e49|35e61270e2ef27b1|1242395665||t20029.2210663871s|86c36464e2e2a367|58|qs|local|vector|||0.396||
+tbl_cbs_PA_Philadelphia|stem|376c7af9ccc21f7b|a6a11fcf5626374f|c6fe12eda1b4f3cd|-1390787123||t20030.6699751517s|01ab4d9c42d57f7d|12325|qs|local|vector|||7.466||
+timestamp_AZ_Maricopa|stem|5471ca68b5112a7b|811f19eacc390e49|35e61270e2ef27b1|1242395665||t20030.6696162827s|86c36464e2e2a367|58|qs|local|vector|||0.358||
 timestamp_AZ_Pima|stem|3b56b8ffa0e62a6f|46af935772e99e80|35e61270e2ef27b1|-728260326||t20029.2205266226s|28e76c0917097715|38|qs|local|vector|||0.001||
-timestamp_GA_NA|stem|39967b5c0fabbbfd|f1580ae86d2ca893|35e61270e2ef27b1|828350109||t20029.2210773568s|86c36464e2e2a367|58|qs|local|vector|||0.092||
-timestamp_MI_Ingham|stem|468bd461ce45b8b3|a1e1c3cf419e783c|35e61270e2ef27b1|-664073679||t20029.2209752711s|86c36464e2e2a367|58|qs|local|vector|||0.936||
-timestamp_MI_Oakland|stem|c5f2f9b9b8c48bf3|2e258c4312b1fba7|35e61270e2ef27b1|-1127784139||t20029.2212057892s|86c36464e2e2a367|58|qs|local|vector|||0.04||
-timestamp_NC_NA|stem|d5b30562ee10cd56|f5925528f2966224|35e61270e2ef27b1|-873101443||t20029.2212085939s|86c36464e2e2a367|58|qs|local|vector|||0.144||
-timestamp_PA_Allegheny|stem|e11556a5363f3436|0daa51a2310d6de3|35e61270e2ef27b1|-577555289||t20029.221068504s|86c36464e2e2a367|58|qs|local|vector|||0.07||
-timestamp_PA_Delaware|stem|0d23c3b56be906cf|721b1175d9702696|35e61270e2ef27b1|-277826127||t20029.2212041318s|86c36464e2e2a367|58|qs|local|vector|||0.061||
-timestamp_PA_Philadelphia|stem|dde80fd2d2b2ff14|10aad69ff7afb69a|35e61270e2ef27b1|-1536386861||t20029.2210749222s|86c36464e2e2a367|58|qs|local|vector|||0.458||
+timestamp_GA_NA|stem|9ccdae02eb016594|f1580ae86d2ca893|35e61270e2ef27b1|828350109||t20030.6699778234s|86c36464e2e2a367|58|qs|local|vector|||0.123||
+timestamp_MI_Ingham|stem|468bd461ce45b8b3|a1e1c3cf419e783c|35e61270e2ef27b1|-664073679||t20030.6696100512s|86c36464e2e2a367|58|qs|local|vector|||1.057||
+timestamp_MI_Oakland|stem|c5f2f9b9b8c48bf3|2e258c4312b1fba7|35e61270e2ef27b1|-1127784139||t20030.6701081439s|86c36464e2e2a367|58|qs|local|vector|||0.049||
+timestamp_NC_NA|stem|d5b30562ee10cd56|f5925528f2966224|35e61270e2ef27b1|-873101443||t20030.6701109056s|86c36464e2e2a367|58|qs|local|vector|||0.124||
+timestamp_PA_Allegheny|stem|e11556a5363f3436|0daa51a2310d6de3|35e61270e2ef27b1|-577555289||t20030.6696197797s|86c36464e2e2a367|58|qs|local|vector|||0.125||
+timestamp_PA_Delaware|stem|0d23c3b56be906cf|721b1175d9702696|35e61270e2ef27b1|-277826127||t20030.6701061298s|86c36464e2e2a367|58|qs|local|vector|||0.074||
+timestamp_PA_Philadelphia|stem|3c2204894c2a34da|10aad69ff7afb69a|35e61270e2ef27b1|-1536386861||t20030.6696266723s|86c36464e2e2a367|58|qs|local|vector|||0.448||
