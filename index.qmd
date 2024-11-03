@@ -1,0 +1,12 @@
+---
+title: "2024 Election Results"
+
+---
+
+This is the website for the 2024 Election Results. Use the tabs on the top to switch between states.
+
+Notes:
+
+- All "swing" percentages are calculated as the raw vote share for Harris (or other Dem candidate) - the raw vote share for Trump (or other Rep candidate). The vote shares are computed as the % of votes each candidate receives, where the denominator is all votes cast in that contest (including third-party candidates, if any). Positive values indicate that Harris/Dem is winning and negative values indicate that Trump/Rep is winning.
+
+- "Swing vs 2020" is a difference-in-differences: (Dem24 - Rep24) - (Dem20 - Rep20). Positive values indicate that the Dem is doing better in this election than in the last one, whereas negative values indicate the Rep is doing better.
