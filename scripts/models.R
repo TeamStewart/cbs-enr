@@ -135,19 +135,19 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
         reported_all ~ votes_24_dem,
         # keep early or mail votes that are already in
         votes_24_dem > 0 ~ votes_24_dem,
-        .default = (votes_20 + (votes_20 * (dem_med - votePct_dem_20))) * turn_med
+        .default = (votes_20_dem + (votes_20_dem * (dem_med - votePct_dem_20))) * turn_med
       ),
       votes_24_demBot = case_when(
         reported_all ~ votes_24_dem,
         # keep early, mail, or provisional votes that are already in
         votes_24_dem > 0 ~ votes_24_dem,
-        .default = (votes_20 + (votes_20 * (dem_bot - votePct_dem_20))) * turn_bot
+        .default = (votes_20_dem + (votes_20_dem * (dem_bot - votePct_dem_20))) * turn_bot
       ),
       votes_24_demTop = case_when(
         reported_all ~ votes_24_dem,
         # keep early or mail votes that are already in
         votes_24_dem > 0 ~ votes_24_dem,
-        .default = (votes_20 + (votes_20 * (dem_top - votePct_dem_20))) * turn_top
+        .default = (votes_20_dem + (votes_20_dem * (dem_top - votePct_dem_20))) * turn_top
       ),
       votes_24_demEst = replace_na(votes_24_demEst, 0),
       votes_24_demBot = replace_na(votes_24_demBot, 0),
@@ -156,19 +156,19 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
         reported_all ~ votes_24_rep,
         # keep early or mail votes that are already in
         votes_24_rep > 0 ~ votes_24_rep,
-        .default = (votes_20 + (votes_20 * (rep_med - votePct_rep_20))) * turn_med
+        .default = (votes_20_rep + (votes_20_rep * (rep_med - votePct_rep_20))) * turn_med
       ),
       votes_24_repBot = case_when(
         reported_all ~ votes_24_rep,
         # keep early or mail votes that are already in
         votes_24_rep > 0 ~ votes_24_rep,
-        .default = (votes_20 + (votes_20 * (rep_bot - votePct_rep_20))) * turn_bot
+        .default = (votes_20_rep + (votes_20_rep * (rep_bot - votePct_rep_20))) * turn_bot
       ),
       votes_24_repTop = case_when(
         reported_all ~ votes_24_rep,
         # keep early or mail votes that are already in
         votes_24_rep > 0 ~ votes_24_rep,
-        .default = (votes_20 + (votes_20 * (rep_top - votePct_rep_20))) * turn_top
+        .default = (votes_20_rep + (votes_20_rep * (rep_top - votePct_rep_20))) * turn_top
       ),
       votes_24_repEst = replace_na(votes_24_repEst, 0),
       votes_24_repBot = replace_na(votes_24_repBot, 0),
