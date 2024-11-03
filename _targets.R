@@ -18,13 +18,14 @@ source("scripts/functions.R")
 
 options(
   readr.show_col_types = FALSE,
-  gargle_oauth_email = TRUE
+  gargle_oauth_email = TRUE,
+  scipen = 999
 )
 
 tar_option_set(
   packages = c(
     # tar_renv()
-    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", 
+    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", "gt",
     "googledrive", "httr2", "rvest", "reticulate", "sf", "xml2", "jsonlite"
   ),
   memory = "transient",
@@ -42,10 +43,9 @@ tar_config_set(
 # - state: (string) caps abbreviation of the state
 # - county: (string) lowercase county of interest in that state, if NA then statewide
 # - path: (string) generic cell for path/number/ID used by custom scrapers to get file
-# - model_swing: (boolean) whether to model swing for this county/state
-# - model_turnout: (boolean) whether to model turnout for this county/state
+# - preelection_totals: (boolean) 
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
-metadata = get_gsheet(sheet = "metadata")
+metadata = get_gsheet(sheet = "metadata", col_types = "cccll") |> filter(state == "GA")
 
 # ========================================
 ## PIPELINE
@@ -55,9 +55,10 @@ list(
     metadata,
     tar_target(timestamp, get_timestamp(state, county, path), cue = tar_cue(mode = "always")),
     tar_target(data, get_data(state, county, timestamp, path), error = "continue"),
-    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
-    #tar_target(models, run_models(data, state, county, model_swing, model_turnout)),
+    # tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
+    tar_target(model, run_models(data, state, county, timestamp, preelection_totals)),
     names = c(state, county)
-  )
+  ),
+  tar_quarto(website, cache = FALSE, quiet = FALSE),
   tar_target(uploads, upload_html(website))
 )
