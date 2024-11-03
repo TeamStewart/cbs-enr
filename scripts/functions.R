@@ -184,6 +184,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     left_join(lookup_cands, by = c("state_name" = "state", "office", "jCde" = "jurisdiction_code", "candidate_name" = "full_name")) |>
     mutate(
       jType = ifelse(jCde == "0", "SW", "CD"),
+      precinct_id = ifelse(jurisdiction == 'Philadelphia', precinct_id |> str_remove_all("-") |> str_squish(), precinct_id),
       pcntName = str_c(county_fips, precinct_id, sep = "_"),
       pcnt = pcntName,
       pcntUUID = pcntName) |>
