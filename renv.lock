@@ -9,9 +9,9 @@
     ]
   },
   "Python": {
-    "Version": "3.10.14",
+    "Version": "3.10.12",
     "Type": "virtualenv",
-    "Name": "./renv/python/virtualenvs/renv-python-3.9"
+    "Name": "./renv/python/virtualenvs/renv-python-3.10"
   },
   "Packages": {
     "DBI": {
@@ -439,17 +439,6 @@
         "R"
       ],
       "Hash": "61e097f35917d342622f21cdc79c256e"
-    },
-    "collapse": {
-      "Package": "collapse",
-      "Version": "2.0.16",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "Rcpp"
-      ],
-      "Hash": "6c44b359839bd71fc5cc7818e1c4a5bb"
     },
     "colorspace": {
       "Package": "colorspace",
@@ -2552,20 +2541,6 @@
         "utils"
       ],
       "Hash": "5c715954112b45499fb1dadc6ee6ee3e"
-    },
-    "zoomerjoin": {
-      "Package": "zoomerjoin",
-      "Version": "0.2.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "collapse",
-        "dplyr",
-        "tibble",
-        "tidyr"
-      ],
-      "Hash": "402146e793f007e55dec69792ab944c6"
     }
   }
 }
