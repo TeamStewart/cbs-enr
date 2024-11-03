@@ -33,3 +33,4 @@ format:
     echo: false
     message: false
     warning: false
+    minimal: true

@@ -9,9 +9,19 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   rep_candidate_regex = regex("Walker|\\(Rep\\)", ignore_case = TRUE)
   
   timestamps = data |> 
+    rename(
+      precinct_24 = precinct_id,
+      votes_24 = precinct_total,
+      county = jurisdiction
+    ) |> 
     distinct(state, county, precinct_24, timestamp)
   
   data_history = data |> 
+    rename(
+      precinct_24 = precinct_id,
+      votes_24 = precinct_total,
+      county = jurisdiction
+    ) |> 
     # compute summary cols
     summarize(
       votes_precTotal_24 = sum(votes_24),
