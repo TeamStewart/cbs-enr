@@ -5,12 +5,15 @@ title: "Georgia"
 ```{r}
 
 source("scripts/util/globals.R")
+source("scripts/models.R")
+source("scripts/plotters.R")
 
 suppressPackageStartupMessages({
   library(targets)
   library(tidyverse)
   library(gt)
   library(glue)
+  library(fs)
 })
 
 inline_hook <- function(x) {
@@ -23,7 +26,45 @@ knitr::knit_hooks$set(inline = inline_hook)
 options(scipen = 999)
 
 # load two data sources, current results and historical modeling data
-tar_read(model_GA_NA) |> list2env(envir = .GlobalEnv) |> invisible()
+# tar_read(model_GA_NA) |> list2env(envir = .GlobalEnv) |> invisible()
+
+times = read_csv(glue("{PATH_DROPBOX}/22_general/GA_allReports.csv")) |> 
+  filter(race_name == "US Senate", timestamp > ymd_hm("2022-11-08 12:00PM", tz = "US/Eastern"), timestamp < ymd("2023-01-01")) |> 
+  mutate(
+    timestamp = round_date(timestamp, unit = "5 min")
+  ) |> 
+  distinct(timestamp) |> 
+  pull() |> 
+  sort()
+
+get_data <- function(time){
+  
+  read_csv(glue("{PATH_DROPBOX}/22_general/GA_allReports_senate.csv")) |> 
+    filter(timestamp <= time, timestamp > ymd("2022-11-06")) |> 
+    filter(timestamp == max(timestamp), .by = c(state, jurisdiction, precinct_id)) |>
+    select(state, jurisdiction, precinct_id, candidate_name, vote_mode, precinct_total, timestamp) |>
+    mutate(
+      candidate_name = case_when(
+        str_detect(vote_mode, fixed("Undervote", ignore_case=TRUE)) ~ "Undervote",
+        str_detect(vote_mode, fixed("Overvote", ignore_case=TRUE)) ~ "Overvote",
+        .default = candidate_name
+      ),
+      vote_mode = case_match(
+        vote_mode,
+        "Absentee by Mail Votes" ~ "Absentee/Mail",
+        "Advance Voting Votes" ~ "Early Voting",
+        "Election Day Votes" ~ "Election Day",
+        "Provisional Votes" ~ "Provisional",
+        .default = NA_character_
+      ),
+      jurisdiction = str_to_upper(jurisdiction),
+      precinct_id = str_to_upper(precinct_id)
+    )
+  
+}
+
+m = get_data(times[75]) |> run_models("GA", "NA", times[75], FALSE)
+list2env(m, envir = .GlobalEnv) |> invisible()
 
 ```
 
@@ -113,7 +154,9 @@ tar_read(plot_votesAll_GA_NA)
 
 ```{r tbl_county_mode}
 
-tar_read(tbl_countyMode_GA_NA)
+# tar_read(tbl_countyMode_GA_NA)
+
+make_tbl_countyMode(m)
 
 ```
 
@@ -121,7 +164,9 @@ tar_read(tbl_countyMode_GA_NA)
 
 ```{r tbl_county}
 
-tar_read(tbl_county_GA_NA)
+# tar_read(tbl_county_GA_NA)
+
+make_tbl_county(m)
 
 ```
 
