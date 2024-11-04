@@ -1,5 +1,5 @@
 ---
-title: "Georgia"
+title: "Michigan -- Ingham"
 ---
 
 ```{r}
@@ -23,7 +23,7 @@ knitr::knit_hooks$set(inline = inline_hook)
 options(scipen = 999)
 
 # load two data sources, current results and historical modeling data
-tar_read(model_GA_NA) |> list2env(envir = .GlobalEnv) |> invisible()
+tar_read(model_MI_Ingham) |> list2env(envir = .GlobalEnv) |> invisible()
 
 ```
 
@@ -78,7 +78,7 @@ summaries_byMode |>
 
 ```{r}
 
-tar_read(plot_voteShare_GA_NA)
+tar_read(plot_voteShare_MI_Ingham)
 
 ```
 
@@ -86,7 +86,7 @@ tar_read(plot_voteShare_GA_NA)
 
 ```{r}
 
-tar_read(plot_margin2020_GA_NA)
+tar_read(plot_margin2020_MI_Ingham)
 
 ```
 
@@ -96,7 +96,7 @@ tar_read(plot_margin2020_GA_NA)
 
 ```{r}
 
-tar_read(plot_votesEDay_GA_NA)
+tar_read(plot_votesEDay_MI_Ingham)
 
 ```
 
@@ -104,7 +104,7 @@ tar_read(plot_votesEDay_GA_NA)
 
 ```{r}
 
-tar_read(plot_votesAll_GA_NA)
+tar_read(plot_votesAll_MI_Ingham)
 
 ```
 
@@ -113,7 +113,7 @@ tar_read(plot_votesAll_GA_NA)
 
 ```{r tbl_county_mode}
 
-tar_read(tbl_countyMode_GA_NA)
+tar_read(tbl_countyMode_MI_Ingham)
 
 ```
 
@@ -121,7 +121,7 @@ tar_read(tbl_countyMode_GA_NA)
 
 ```{r tbl_county}
 
-tar_read(tbl_county_GA_NA)
+tar_read(tbl_county_MI_Ingham)
 
 ```
 
