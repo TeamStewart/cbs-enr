@@ -107,7 +107,7 @@ scrape_az <- function(state, county, path, timestamp){
 ## Georgia
 scrape_ga <- function(state, county, path, timestamp){
   # Download the raw json
-  raw_file_path = glue('data/raw/GA/GA_{timestamp}.json')
+  raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/GA_{timestamp}.json')
   download.file(path, destfile = raw_file_path)
   
   # Clean the raw json
