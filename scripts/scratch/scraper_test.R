@@ -19,8 +19,8 @@ source("scripts/functions.R")
 
 #renv::use_python()
 
-state = 'NC'
-county = NA
-path = 'http://dl.ncsbe.gov/ENRS/2024_11_05/results_pct_20241105.zip'
+state = 'AZ'
+county = 'Maricopa'
+path = 'https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch'
 timestamp = get_timestamp(state, county, path)
 data = get_data(state, county, timestamp, path)
