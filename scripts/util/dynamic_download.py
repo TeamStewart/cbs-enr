@@ -6,11 +6,11 @@ import os
 import time
 from datetime import datetime
 
-def setup_driver(state):
+def setup_driver(state, dropbox_path):
     # Set up Chrome options
     chrome_options = Options()
     
-    download_directory = os.path.abspath("data/raw/{}".format(state))
+    download_directory = os.path.abspath(f'{dropbox_path}/24_general/{state}/raw')
     
     # Specify the download directory and enable automatic downloads
     prefs = {"download.default_directory": download_directory,
@@ -58,9 +58,11 @@ def rename_file_with_timestamp(directory):
 
     return new_filename
 
-def get_file(path, county, state):
+def get_file(path, county, state, dropbox_path):
+    # Ensure the provided path is expanded
+    dropbox_path = os.path.expanduser(dropbox_path)
     # Initialize the driver
-    driver, download_directory = setup_driver(state)
+    driver, download_directory = setup_driver(state, dropbox_path)
     
     # Navigate to the URL
     driver.get(path)

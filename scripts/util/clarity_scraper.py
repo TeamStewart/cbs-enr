@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import zipfile
+import os
 
 from collections import namedtuple
 import datetime
@@ -612,21 +613,25 @@ def _flatten_result(r):
         'candidate_party': r.choice.party if r.choice is not None else None
     }
 
-def get_data_clarity(state, path):
+def get_data_clarity(state, path, dropbox_path):
     try:
+        # Ensure the provided path is expanded
+        path = os.path.expanduser(path)
+        dropbox_path = os.path.expanduser(dropbox_path)
+        
         with zipfile.ZipFile(path, 'r') as zip_ref:
             file_names = zip_ref.namelist()
             # Assuming the file you want to parse is the first file in the archive
             file_to_parse = file_names[0]
             try:
-                zip_ref.extract(file_to_parse, f'data/raw/{state}/')
+                zip_ref.extract(file_to_parse, f'{dropbox_path}/24_general/{state}/raw/')
             except zipfile.BadZipFile as e:
                 print(f"Failed to extract zip file: {e} at {path}")
 
-            zip_ref.extract(file_to_parse, f'data/raw/{state}/')
+            zip_ref.extract(file_to_parse, f'{dropbox_path}/24_general/{state}/raw/')
 
         p = Parser()
-        p.parse(f'data/raw/{state}/{file_to_parse}')
+        p.parse(f'{dropbox_path}/24_general/{state}/raw/{file_to_parse}')
 
         df = pd.DataFrame([_flatten_result(r) for r in p.results if r.jurisdiction is not None])
         df['jurisdiction'] = p.region

@@ -262,7 +262,7 @@ source("scripts/scrapers.R")
 
 # Get 2020 from clarity
 # Download Clarity files
-#get_clarity(state, county, path)
+get_clarity(state, county, path)
 
 # Build list of Clarity files
 raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
@@ -588,6 +588,13 @@ data_history <- intersection |>
     precinct_24 = case_when(
       county == 'Macomb' ~ str_replace_all(precinct_24, c("Township" = "Twp", "City of "="", "Precinct" = "Pct")) |>
         str_trim() |> str_squish(),
+      county == 'Oakland' ~ str_replace_all(
+        precinct_24, 
+        c(
+          "^(Township of|Charter Township of) (\\w+), Precinct (\\d+)$" = "\\2 Township, Precinct \\3",
+          "^City of " = ""
+        )
+      ),
       TRUE ~ precinct_24
     )
   )
@@ -1028,7 +1035,7 @@ write_csv(data_history, glue("{PATH_DROPBOX}/history/PA_history.csv"))
 
 
 # Testing -----------------------------------------------------------------
-# zero_file <- read_csv("data/clean/PA/PA_Allegheny_latest.csv")
+zero_file <- read_csv(glue("{PATH_DROPBOX}/24_general/MI/cl"))
 
 # test <- zero_file |> select(precinct_id) |> distinct() |> 
 #   anti_join(allegheny_data_history, by = c("precinct_id" = "precinct_24"))
