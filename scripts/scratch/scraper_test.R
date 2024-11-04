@@ -19,8 +19,8 @@ source("scripts/functions.R")
 
 #renv::use_python()
 
-state = 'GA'
-county = NA
-path = 'https://app.enhancedvoting.com/cdn/results/Georgia/export-2024NovGen.json'
+state = 'PA'
+county = 'Philadelphia'
+path = 'https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?'
 timestamp = get_timestamp(state, county, path)
 data = get_data(state, county, timestamp, path)
