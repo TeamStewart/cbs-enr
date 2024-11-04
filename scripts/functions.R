@@ -160,7 +160,7 @@ fill_missing_mode <- function(data) {
       nesting(state, race_id, race_name, candidate_name, candidate_party,
               jurisdiction, precinct_id, virtual_precinct, timestamp)) |>
     fill(vote_mode, .direction = "down") |>
-    select(column_names) |>
+    select(all_of(column_names)) |>
     replace_na(list(precinct_total = 0))
 }
 

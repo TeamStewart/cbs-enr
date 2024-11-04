@@ -19,8 +19,8 @@ source("scripts/functions.R")
 
 #renv::use_python()
 
-state = 'MI'
-county = 'Eaton'
-path = 122590
+state = 'AZ'
+county = 'Maricopa'
+path = 'https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch'
 timestamp = get_timestamp(state, county, path)
 data = get_data(state, county, timestamp, path)
