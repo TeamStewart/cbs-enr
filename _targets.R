@@ -31,7 +31,7 @@ tar_option_set(
   memory = "transient",
   format = "qs",
   garbage_collection = TRUE,
-  controller = crew::crew_controller_local(workers = 1)
+  controller = crew::crew_controller_local(workers = 4)
 )
 
 tar_config_set(
@@ -45,7 +45,7 @@ tar_config_set(
 # - path: (string) generic cell for path/number/ID used by custom scrapers to get file
 # - preelection_totals: (boolean) 
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
-metadata = get_gsheet(sheet = "metadata", col_types = "cccll")
+metadata = get_gsheet(sheet = "metadata", col_types = "cccll") |> drop_na(path)
 
 # ========================================
 ## PIPELINE
@@ -57,6 +57,12 @@ list(
     tar_target(data, get_data(state, county, timestamp, path), error = "continue"),
     # tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
     tar_target(model, run_models(data, state, county, timestamp, preelection_totals)),
+    tar_target(plot_voteShare, make_plot_voteShare(model, state, county), error = "continue"),
+    tar_target(plot_margin2020, make_plot_margin2020(model, state, county), error = "continue"),
+    tar_target(plot_votesEDay, make_plot_votesEDay(model, state, county), error = "continue"),
+    tar_target(plot_votesAll, make_plot_votesAll(model, state, county), error = "continue"),
+    tar_target(tbl_countyMode, make_tbl_countyMode(model, state, county), error = "continue"),
+    tar_target(tbl_county, make_tbl_county(model, state, county)),
     names = c(state, county)
   ),
   tar_quarto(website, cache = FALSE, quiet = FALSE),

@@ -141,7 +141,7 @@ scrape_ga <- function(state, county, path, timestamp){
     mutate(
       timestamp = timestamp |> ymd_hms(tz = "America/New_York"),
       state = 'GA',
-      jurisdiction = jurisdiction |> str_remove(" County"),
+      jurisdiction = jurisdiction |> str_remove(" County") |> str_to_upper(),
       # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
       race_name = case_match(race_name,"President of the US" ~ "President"),
       # Recode candidate party: Democrat, Republican, Libertarian, Constitution, Green, Independent, Justice for All
@@ -809,10 +809,11 @@ scrape_pa <- function(state, county, path, timestamp){
           "JOHN C THOMAS LIB"~"John Thomas",
           .default = NA_character_),
         virtual_precinct = FALSE,
-        race_id = NA
+        race_id = NA,
       ) |>
       pivot_longer(cols = c(election_day:provisional), names_to = "vote_mode", values_to = "precinct_total") |>
       mutate(
+        precinct_total = as.numeric(precinct_total),
         vote_mode = case_match(
           vote_mode,
           "election_day" ~ "Election Day",
