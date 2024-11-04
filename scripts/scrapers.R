@@ -534,7 +534,7 @@ scrape_mi <- function(state, county, path, timestamp){
 ## North Carolina
 scrape_nc <- function(state, county, path, timestamp) {
   
-  raw_file_path = glue('data/raw/NC/NC_{timestamp}.zip')
+  raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/{state}_{timestamp}.zip')
   
   download.file(path, destfile = raw_file_path)
   
