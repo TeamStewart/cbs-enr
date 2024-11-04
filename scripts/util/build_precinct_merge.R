@@ -23,7 +23,22 @@ options(scipen = 800)
 
 source(here("scripts", "util", "globals.R"))
 
+fill_missing_mode <- function(data, target_modes) {
+  column_names <- colnames(data)
+  
+  data |>
+    complete(
+      vote_mode = target_modes, 
+      nesting(state, county, precinct_20)) |>
+    fill(vote_mode, .direction = "down") |>
+    select(all_of(column_names)) |>
+    mutate(across(where(is.numeric), ~ replace_na(., 0))) 
+}
+
+
 # Arizona -----------------------------------------------------------------
+az_vote_modes <- read_csv("data/clean/AZ/AZ_Maricopa_latest.csv") |> pull(vote_mode) |> unique()
+
 data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-az-precinct-general.csv")) |> 
   filter(stage == "GEN", office == "US PRESIDENT", county_name %in% c('MARICOPA','PIMA')) |> 
   select(county = county_name, precinct_20 = precinct, candidate, vote_mode = mode, votes_20 = votes) |> 
@@ -49,7 +64,8 @@ data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-az-precinct-gen
     ),
   ) |>
   select(-c(candidate, votes_20)) |>
-  distinct()
+  distinct() |>
+  fill_missing_mode(az_vote_modes)
 
 # 2020 shapefiles, from VEST data
 shp20 <- read_sf(here("data/shapefiles/az_20/")) |> 
@@ -100,7 +116,7 @@ data_history <- intersection |>
   # now full-join to ensure all county x precincts are represented in the data
   # so that we can fill in some missigness
   full_join(
-    expand(shp20, nesting(county, precinct_20), vote_mode = c("Absentee/Mail", "Early Voting", "Election Day", "Provisional")),
+    expand(shp20, nesting(county, precinct_20), vote_mode = az_vote_modes),
     join_by(county, precinct_20),
     relationship = "many-to-many"
   ) |> 
@@ -126,6 +142,7 @@ data_history <- intersection |>
 write_csv(data_history, glue("{PATH_DROPBOX}/history/AZ_history.csv"))
 
 # Georgia -----------------------------------------------------------------
+ga_vote_modes <- read_csv("data/clean/GA/GA_latest.csv") |> pull("vote_mode") |> unique()
 # MEDSL 2020 precinct data, by mode
 ## Specifically, this gets Dem totals by vote mode, with column for total votes
 data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-ga-precinct-general.csv")) |> 
@@ -162,7 +179,8 @@ data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-ga-precinct-gen
     ),
   ) |> 
   select(-c(candidate, votes_20)) |>
-  distinct()
+  distinct() |>
+  fill_missing_mode(ga_vote_modes)
 
 # 2020 shapefiles, from VEST data
 shp20 <- read_sf(here("data/shapefiles/ga_2020/")) |> 
@@ -211,7 +229,7 @@ data_history <- intersection |>
   # now full-join to ensure all county x precincts are represented in the data
   # so that we can fill in some missigness
   full_join(
-    expand(shp20, nesting(county, precinct_20), vote_mode = c("Absentee/Mail", "Early Voting", "Election Day", "Provisional")),
+    expand(shp20, nesting(county, precinct_20), vote_mode = ga_vote_modes),
     join_by(county, precinct_20),
     relationship = "many-to-many"
   ) |> 
@@ -237,6 +255,8 @@ data_history <- intersection |>
 write_csv(data_history, glue("{PATH_DROPBOX}/history/GA_history.csv"))
 
 # Michigan ----------------------------------------------------------------
+mi_vote_modes <- c("Absentee/Mail", "Early Voting", "Election Day", "Provisional", "Overvote/Undervote")
+
 ## Oakland County -- clarity site
 state <- 'MI'; county <- 'Oakland'; path = 105840
 source("scripts/scrapers.R")
@@ -276,14 +296,14 @@ clean_oakland_mi <- function(file){
     rename(precinct_20 = precinct_id) |>
     summarise(
       votes_20 = sum(precinct_total, na.rm = T),
-      .by = c("state", "county", "precinct_20", "candidate", "vote_mode", "timestamp")) 
+      .by = c("state", "county", "precinct_20", "candidate", "vote_mode", "timestamp"))
   
   file_timestamp <- cleaned |> pull(timestamp) |> unique() |> max() |> str_replace_all("-|:| ", "_")
   
   write_csv(cleaned, file = glue("{PATH_DROPBOX}/misc_precinct_historical/{state}_{county}_{file_timestamp}.csv"))
 }
 
-#cleaned_files <- lapply(raw_files, clean_oakland_mi)
+cleaned_files <- lapply(raw_files, clean_oakland_mi)
 
 oakland_data20 <- read_csv(list.files(path = glue("{PATH_DROPBOX}/misc_precinct_historical"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()) |>
   select(-timestamp) |>
@@ -418,7 +438,7 @@ source("scripts/scrapers.R")
 
 # Get 2020 from clarity
 # Download Clarity files
-#get_clarity(state, county, path)
+get_clarity(state, county, path)
 
 # Build list of Clarity files
 raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
@@ -458,7 +478,7 @@ clean_eaton_mi <- function(file){
   write_csv(cleaned, file = glue("{PATH_DROPBOX}/misc_precinct_historical/{state}_{county}_{file_timestamp}.csv"))
 }
 
-#cleaned_files <- lapply(raw_files, clean_eaton_mi)
+cleaned_files <- lapply(raw_files, clean_eaton_mi)
 
 eaton_data20 <- read_csv(list.files(path = glue("{PATH_DROPBOX}/misc_precinct_historical"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()) |>
   select(-timestamp) |>
@@ -528,7 +548,8 @@ shp24 <- read_sf("data/shapefiles/MI_2024_Voting_Precincts/") |>
   st_make_valid() |> 
   drop_na(county)
 
-data20 <- bind_rows(oakland_data20, macomb_data20, ingham_data20, eaton_data20)
+data20 <- bind_rows(oakland_data20, macomb_data20, ingham_data20, eaton_data20) |>
+  fill_missing_mode(mi_vote_modes)
 
 # merge the shapes together so that we can compute an overlap score
 intersection <- st_intersection(shp24, shp20) |> filter(county == county.1)
@@ -568,6 +589,7 @@ data_history <- intersection |>
 write_csv(data_history, glue("{PATH_DROPBOX}/history/MI_history.csv"))
 
 # North Carolina ----------------------------------------------------------
+nc_vote_modes <- read_csv("data/clean/NC/NC_latest.csv") |> pull(vote_mode) |>
 # MEDSL 2020 precinct data, by mode
 ## Specifically, this gets Dem totals by vote mode, with column for total votes
 data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-nc-precinct-general.csv")) |> 
@@ -596,7 +618,8 @@ data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-nc-precinct-gen
     ),
   ) |> 
   select(-c(candidate, votes_20)) |>
-  distinct()
+  distinct() |>
+  fill_missing_mode(nc_vote_modes)
 
 # 2020 shapefiles, from VEST data
 shp20 <- read_sf("data/shapefiles/nc_20/") |> 
@@ -655,6 +678,12 @@ data_history <- intersection |>
 write_csv(data_history, glue("{PATH_DROPBOX}/history/NC_history.csv"))
 
 # Pennsylvania ------------------------------------------------------------
+pa_vote_modes <- c(
+  read_csv("data/clean/PA/PA_Allegheny_latest.csv") |> pull(vote_mode),
+  read_csv("data/clean/PA/PA_Delaware_latest.csv") |> pull(vote_mode),
+  read_csv("data/clean/PA/PA_Philadelphia_latest.csv") |> pull(vote_mode)
+) |> unique()
+
 #### Philadelphia ####
 philly_20 <- readxl::read_excel(glue("{PATH_DROPBOX}/misc_precinct_historical/PA_Philadelphia_2020.xlsx")) |>
   clean_names() |> 
@@ -695,7 +724,8 @@ philly_20 <- readxl::read_excel(glue("{PATH_DROPBOX}/misc_precinct_historical/PA
     .by = c(county, precinct_20, vote_mode)
   ) |> 
   select(-c(candidate, votes_20)) |>
-  distinct()
+  distinct() |>
+  fill_missing_mode(pa_vote_modes)
 
 # 2020 shapefiles, from PA Open Data
 shp20 <- read_sf("data/shapefiles/PhillyPlanning_Political_Divisions2020/") |> 
@@ -727,7 +757,7 @@ philly_data_history <- intersection |>
   # now full-join to ensure all county x precincts are represented in the data
   # so that we can fill in some missigness
   full_join(
-    expand(shp20, nesting(county, precinct_20), vote_mode = c("Absentee/Mail", "Early Voting", "Election Day", "Provisional")),
+    expand(shp20, nesting(county, precinct_20), vote_mode = pa_vote_modes),
     join_by(county, precinct_20),
     relationship = "many-to-many"
   ) |> 
@@ -772,7 +802,7 @@ delaware_20 <- read_csv(glue("{PATH_DROPBOX}/misc_precinct_historical/20201103__
       .default = "Other"
     ),
   ) |>
-  summarise(votes_20 = sum(votes_20), .by = c(county, precinct_20, candidate, vote_mode)) |>
+  summarise(votes_20 = sum(votes_20), .by = c(state, county, precinct_20, candidate, vote_mode)) |>
   mutate(
     votes_precFinal_20 = sum(votes_20),
     .by = c(county, precinct_20, vote_mode)
@@ -786,7 +816,8 @@ delaware_20 <- read_csv(glue("{PATH_DROPBOX}/misc_precinct_historical/20201103__
     .by = c(county, precinct_20, vote_mode)
   ) |> 
   select(-c(candidate, votes_20)) |>
-  distinct()
+  distinct() |>
+  fill_missing_mode(pa_vote_modes)
 
 # 2020 shapefiles, from PA Open Data
 shp20 <- read_sf("data/shapefiles/pa_2020/") |> 
@@ -819,7 +850,7 @@ delaware_data_history <- intersection |>
   # now full-join to ensure all county x precincts are represented in the data
   # so that we can fill in some missigness
   full_join(
-    expand(shp20, nesting(county, precinct_20), vote_mode = c("Absentee/Mail", "Early Voting", "Election Day", "Provisional")),
+    expand(shp20, nesting(county, precinct_20), vote_mode = pa_vote_modes),
     join_by(county, precinct_20),
     relationship = "many-to-many"
   ) |> 
@@ -861,7 +892,7 @@ source("scripts/scrapers.R")
 
 # Get 2020 from clarity
 # Download Clarity files
-#get_clarity(state, county, path)
+get_clarity(state, county, path)
 
 # Build list of Clarity files
 raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
@@ -901,7 +932,7 @@ clean_allegheny_pa <- function(file){
   write_csv(cleaned, file = glue("{PATH_DROPBOX}/misc_precinct_historical/{state}_{county}_{file_timestamp}.csv"))
 }
 
-#cleaned_files <- lapply(raw_files, clean_allegheny_pa)
+cleaned_files <- lapply(raw_files, clean_allegheny_pa)
 
 # Return latest timestamped version
 allegheny_20 <- read_csv(list.files(path = glue("{PATH_DROPBOX}/misc_precinct_historical"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()) |>
@@ -919,7 +950,8 @@ allegheny_20 <- read_csv(list.files(path = glue("{PATH_DROPBOX}/misc_precinct_hi
     .by = c(county, precinct_20, vote_mode)
   ) |>
   select(-c(candidate, votes_20)) |>
-  distinct()
+  distinct() |>
+  fill_missing_mode(pa_vote_modes)
 
 # 2020 shapefiles, from PA Open Data
 shp20 <- read_sf("data/shapefiles/pa_2020/") |> 
@@ -950,7 +982,7 @@ allegheny_data_history <- intersection |>
   # now full-join to ensure all county x precincts are represented in the data
   # so that we can fill in some missigness
   full_join(
-    expand(shp20, nesting(county, precinct_20), vote_mode = c("Absentee/Mail", "Early Voting", "Election Day", "Provisional")),
+    expand(shp20, nesting(county, precinct_20), vote_mode = pa_vote_modes),
     join_by(county, precinct_20),
     relationship = "many-to-many"
   ) |> 

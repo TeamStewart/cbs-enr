@@ -149,21 +149,6 @@ get_data <- function(state, county, timestamp, path = NULL) {
   return(d)
 }
 
-fill_missing_mode <- function(data) {
-  target_modes <- c("Election Day", "Early Voting", "Absentee/Mail", "Provisional")
-  
-  column_names <- colnames(data)
-  
-  data |>
-    complete(
-      vote_mode = target_modes, 
-      nesting(state, race_id, race_name, candidate_name, candidate_party,
-              jurisdiction, precinct_id, virtual_precinct, timestamp)) |>
-    fill(vote_mode, .direction = "down") |>
-    select(all_of(column_names)) |>
-    replace_na(list(precinct_total = 0))
-}
-
 create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   # Prepare lookups
   lookup_state <- lookup_state_name(state)

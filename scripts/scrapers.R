@@ -256,7 +256,8 @@ scrape_mi <- function(state, county, path, timestamp){
             "Absentee - County" ~ "Absentee/Mail",
             "Early Voting - Regional" ~ "Early Voting",
             "Early Voting - Central" ~ "Early Voting",
-            .default = "Other"
+            "Overvote/Undervote" ~ "Overvote/Undervote",
+            .default = "Provisional"
           )
         ) |>
         summarise(
@@ -421,10 +422,9 @@ scrape_mi <- function(state, county, path, timestamp){
           vote_mode = case_match(
             vote_mode,
             "Election" ~ "Election Day",
-            "Absentee - Local" ~ "Absentee/Mail",
-            "Absentee - County" ~ "Absentee/Mail",
-            "Early Voting - Regional" ~ "Early Voting",
-            "Early Voting - Central" ~ "Early Voting",
+            "Absentee" ~ "Absentee/Mail",
+            "Early Voting" ~ "Early Voting",
+            "Overvote/Undervote" ~ "Overvote/Undervote",
             .default = "Provisional"
           )
         ) |>
@@ -438,7 +438,7 @@ scrape_mi <- function(state, county, path, timestamp){
       write_csv(cleaned, file = glue("data/clean/{state}/{state}_{county}_{file_timestamp}.csv"))
     }
     
-    cleaned_files <- lapply(raw_files, clean_oakland_mi)
+    cleaned_files <- lapply(raw_files, clean_eaton_mi)
     
     # Return latest timestamped version
     return(read_csv(list.files(path = glue("data/clean/{state}"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
@@ -519,8 +519,7 @@ scrape_nc <- function(state, county, path, timestamp) {
         "election_day" ~ "Election Day",
         "early_voting" ~ "Early Voting",
         "absentee_by_mail" ~ "Absentee/Mail",
-        "provisional" ~ "Provisional",
-        .default = "Other"
+        "provisional" ~ "Provisional"
       )
     ) |>
     arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
@@ -580,8 +579,7 @@ scrape_pa <- function(state, county, path, timestamp){
             vote_mode,
             "Election Day" ~ "Election Day",
             "Absentee" ~ "Absentee/Mail",
-            "Provisional" ~ "Provisional",
-            .default = "Other"
+            "Provisional" ~ "Provisional"
           )
         ) |>
         summarise(
@@ -658,8 +656,7 @@ scrape_pa <- function(state, county, path, timestamp){
             "Mail Votes" ~ "Absentee/Mail",
             "Provisional Votes" ~ "Provisional",
             "Undervotes" ~ "Overvote/Undervote",
-            "Overvotes" ~ "Overvote/Undervote",
-            .default = "Other"
+            "Overvotes" ~ "Overvote/Undervote"
           )
         ) |>
         summarise(
