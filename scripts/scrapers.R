@@ -442,6 +442,92 @@ scrape_mi <- function(state, county, path, timestamp){
     
     # Return latest timestamped version
     return(read_csv(list.files(path = glue("data/clean/{state}"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
+  } else if(county == 'Macomb'){
+    # Download Clarity files
+    get_clarity(state, county, path)
+    
+    # Build list of Clarity files
+    raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    
+    clean_macomb_mi <- function(file){
+      cleaned <- read_csv(file) |>
+        filter(race_name %in% c("Electors of President and Vice-President of the United S", "United States Senator") & 
+                 vote_mode != 'regVotersCounty') |>
+        mutate(
+          timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+          state = "MI",
+          jurisdiction = "Macomb",
+          # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
+          race_name = case_match(
+            race_name,
+            "Electors of President and Vice-President of the United S" ~ "President",
+            "United States Senator" ~ "Senate"), 
+          # Recode candidate party: Democrat, Republican, Libertarian, US Taxpayers, Green, Natural Law, Justice for All
+          candidate_party = case_match(
+            candidate_party,
+            "DEM" ~ "Democrat",
+            "REP" ~ "Republican",
+            "LIB" ~ "Libertarian",
+            "UST" ~ "US Taxpayers",
+            "GRN" ~ "Green",
+            "NLP" ~ "Natural Law",
+            .default = "Other"),
+          # Recode candidate names
+          candidate_name = case_match(
+            candidate_name,
+            # Macomb, MI presidential candidates
+            "LIB Chase Oliver" ~ "Chase Oliver",
+            "NPA Cornel West" ~ "Cornel West",
+            "REP Donald J. Trump" ~ "Donald Trump",
+            "GRN Jill Stein" ~ "Jill Stein",
+            "DEM Kamala D. Harris" ~ "Kamala Harris",
+            "UST Randall Terry" ~ "Randall Terry",
+            "NPA Joseph Kishore" ~ "Joseph Kishore",
+            "NLP Robert F. Kennedy, Jr." ~ "Robert F. Kennedy Jr.",
+            "Write-in" ~ "Write-ins",
+            # Macomb, MI senate candidates
+            "DEM Elissa Slotkin" ~ "Elissa Slotkin",
+            "REP Mike Rogers" ~ "Mike Rogers",
+            "LIB Joseph Solis-Mullen" ~ "Joseph Solis-Mullen",
+            "UST Dave Stein" ~ "Dave Stein",
+            "GRN Douglas P. Marsh" ~ "Douglas Marsh",
+            "NLP Doug Dern" ~ "Doug Dern"
+          ), 
+          # Create virtual precinct column: real == TRUE, administrative == FALSE
+          virtual_precinct = F,
+          # Deal with under/overvotes
+          candidate_name = case_when(
+            vote_mode == "Undervotes" ~ "Undervotes",
+            vote_mode == "Overvotes" ~ "Overvotes",
+            TRUE ~ candidate_name
+          ),
+          candidate_party = ifelse(vote_mode %in% c("Undervotes", "Overvotes"), NA_character_, candidate_party),
+          vote_mode = ifelse(vote_mode %in% c("Undervotes", "Overvotes"), "Overvote/Undervote", vote_mode)
+        ) |>
+        mutate(
+          # Specify vote modes: Election Day, Provisional, Absentee/Mail, Early Voting, Other
+          vote_mode = case_match(
+            vote_mode,
+            "Election Day" ~ "Election Day",
+            "Absentee" ~ "Absentee/Mail",
+            "Early Voting" ~ "Early Voting",
+            .default = "Provisional"
+          )
+        ) |>
+        summarise(
+          precinct_total = sum(precinct_total, na.rm = T),
+          .by = c("state","race_id","race_name","candidate_name","candidate_party","jurisdiction","precinct_id","virtual_precinct","timestamp","vote_mode")) |>
+        arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
+      
+      file_timestamp <- cleaned |> pull(timestamp) |> unique() |> max() |> str_replace_all("-|:| ", "_")
+      
+      write_csv(cleaned, file = glue("data/clean/{state}/{state}_{county}_{file_timestamp}.csv"))
+    }
+    
+    cleaned_files <- lapply(raw_files, clean_macomb_mi)
+    
+    # Return latest timestamped version
+    return(read_csv(list.files(path = glue("data/clean/{state}"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
   }
 }
 

@@ -19,8 +19,8 @@ source("scripts/functions.R")
 
 #renv::use_python()
 
-state = 'PA'
-county = 'Philadelphia'
-path = 'https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?'
+state = 'MI'
+county = 'Macomb'
+path = 122434
 timestamp = get_timestamp(state, county, path)
 data = get_data(state, county, timestamp, path)
