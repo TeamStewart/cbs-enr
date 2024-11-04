@@ -35,7 +35,6 @@ fill_missing_mode <- function(data, target_modes) {
     mutate(across(where(is.numeric), ~ replace_na(., 0))) 
 }
 
-
 # Arizona -----------------------------------------------------------------
 az_vote_modes <- read_csv("data/clean/AZ/AZ_Maricopa_latest.csv") |> pull(vote_mode) |> unique()
 
@@ -583,10 +582,19 @@ data_history <- intersection |>
     votes_20_dem = sum(votes_20_dem * weight),
     votes_20_rep = sum(votes_20_rep * weight),
     .by = c(county, precinct_24, vote_mode)
+  ) |>
+  mutate(
+    # last fixes for getting data to join
+    precinct_24 = case_when(
+      county == 'Macomb' ~ str_replace_all(precinct_24, c("Township" = "Twp", "City of "="", "Precinct" = "Pct")) |>
+        str_trim() |> str_squish(),
+      TRUE ~ precinct_24
+    )
   )
 
 # Write csv
 write_csv(data_history, glue("{PATH_DROPBOX}/history/MI_history.csv"))
+
 
 # North Carolina ----------------------------------------------------------
 nc_vote_modes <- read_csv("data/clean/NC/NC_latest.csv") |> pull(vote_mode) |>
