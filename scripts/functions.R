@@ -119,8 +119,8 @@ get_timestamp <- function(state, county, path) {
 
 get_data <- function(state, county, timestamp, path = NULL) {
   
-  dir_create(glue("data/raw/{state}"))
-  dir_create(glue("data/input/{state}"))
+  dir_create(glue("{PATH_DROPBOX}/24_general/{state}/raw"))
+  dir_create(glue("{PATH_DROPBOX}/24_general/{state}/clean"))
   
   d <- switch(state,
     "AZ" = scrape_az(state, county, path, timestamp),
@@ -133,7 +133,6 @@ get_data <- function(state, county, timestamp, path = NULL) {
   # Upstream fix to precinct_total
   d$precinct_total <- as.integer(d$precinct_total)
 
-  dir_create(glue("data/clean/{state}"))
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
   clarity_counties <- list(
     "MI" = c("Oakland", "Macomb", "Eaton"),
@@ -141,12 +140,12 @@ get_data <- function(state, county, timestamp, path = NULL) {
   )
   if (state %in% names(clarity_counties) && county %in% clarity_counties[[state]]) {
     # save latest version; timestamped version already saved
-    write_csv(d, glue("data/clean/{state}/{local_file_name}_latest.csv"))
+    write_csv(d, glue("{PATH_DROPBOX}/24_general/{state}/clean/{local_file_name}_latest.csv"))
   } else{
     # save latest version
-    write_csv(d, glue("data/clean/{state}/{local_file_name}_latest.csv"))
+    write_csv(d, glue("{PATH_DROPBOX}/24_general/{state}/clean/{local_file_name}_latest.csv"))
     # save timestamped version
-    write_csv(d, glue("data/clean/{state}/{local_file_name}_{timestamp}.csv"))
+    write_csv(d, glue("{PATH_DROPBOX}/24_general/{state}/clean/{local_file_name}_{timestamp}.csv"))
   }
 
   return(d)
@@ -264,14 +263,14 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     
     #### Upload to Google Drive ####
     drive_put(
-      media = glue("data/clean/{state}/{local_file_name}_latest.csv"),
+      media = glue("{PATH_DROPBOX}/24_general/{state}/clean/{local_file_name}_latest.csv"),
       path = PATH_GDRIVE,
       name = glue("{local_file_name}_results.csv")
     )
     
     #### Write to shared Dropbox folder ####
-    write_csv(data, glue("{PATH_DROPBOX}/24_general/{state}/{local_file_name}_latest.csv"))
-    write_csv(data, glue("{PATH_DROPBOX}/24_general/{state}/{local_file_name}_{timestamp}.csv"))
+    write_csv(data, glue("{PATH_DROPBOX}/24_general/{state}/clean/{local_file_name}_latest.csv"))
+    write_csv(data, glue("{PATH_DROPBOX}/24_general/{state}/clean/{local_file_name}_{timestamp}.csv"))
   }
 
   return(formatted)
