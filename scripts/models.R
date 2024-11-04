@@ -14,7 +14,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       votes_24 = precinct_total,
       county = jurisdiction
     ) |>
-    distinct(state, county, precinct_24, timestamp)
+    distinct(state, county, precinct_24, vote_mode, timestamp)
   
   data_history = data |> 
     rename(
@@ -31,15 +31,14 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       votePct_rep_24 = votes_24_rep / votes_precTotal_24,
       .by = c(state, county, precinct_24, vote_mode)
     ) |>
-    drop_na(vote_mode) |> 
+    # drop_na(vote_mode) |> 
     left_join(history, by = join_by(county, precinct_24, vote_mode), relationship = "many-to-many") |> 
     # create some helper columns for what reporting status we're at in each precinct
     mutate(
-      reported_none = sum(votes_precTotal_24 > 0) == 0,
-      reported_all = sum(votes_precTotal_24 > 0) >= 3,
       reported_eday = max(vote_mode == "Election Day" & votes_precTotal_24 > 0) == 1,
       reported_mail = max(vote_mode == "Absentee/Mail" & votes_precTotal_24 > 0) == 1,
       reported_early = max(vote_mode == "Early Voting" & votes_precTotal_24 > 0) == 1,
+      reported_all = all(reported_eday, reported_mail, reported_early),
       .by = c(county, precinct_24)
     )
   
@@ -51,9 +50,9 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   quantile_upper = 1 - quantile_lower
   
   if (is.na(county)){
-    history_sets = expand(history, county, vote_mode) |> drop_na(vote_mode) |> mutate(state = .env$state)
+    history_sets = expand(history, county, vote_mode) |> mutate(state = .env$state)
   } else {
-    history_sets = expand(history, vote_mode) |> drop_na(vote_mode) |> mutate(county = str_to_upper(.env$county), state = .env$state)
+    history_sets = expand(history, vote_mode) |> mutate(county = .env$county, state = .env$state)
   }
   
   if (preelection_totals){
@@ -192,7 +191,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
     )
   
   summaries_byCounty_byMode = estimates |> 
-    left_join(timestamps, join_by(state, county, precinct_24)) |> 
+    left_join(timestamps, join_by(state, county, precinct_24, vote_mode)) |> 
     summarize(
       timestamp = max(timestamp),
       votes_total_20 = sum(votes_precFinal_20),
@@ -221,7 +220,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   
   summaries_byCounty = summaries_byCounty_byMode |> 
     summarise(
-      timestamp = max(timestamp),
+      timestamp = max(timestamp, na.rm = TRUE),
       across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
       across(votes_total_20:repVotes_upper, sum),
       .by = c(state, county)

@@ -224,6 +224,7 @@ make_tbl_countyMode <- function(m, state, county){
       )
     ) |> 
     select(county, vote_mode, timestamp, votes_total_20, votes_total_24:swing_24, tmp) |> 
+    drop_na(timestamp) |> 
     gt() |> 
     cols_hide(tmp) |>
     fmt_datetime(columns = timestamp, date_style = "MMMd", time_style = "h_m_s_p") |> 
