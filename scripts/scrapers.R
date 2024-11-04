@@ -533,13 +533,12 @@ scrape_mi <- function(state, county, path, timestamp){
 
 ## North Carolina
 scrape_nc <- function(state, county, path, timestamp) {
-  
-  raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/{state}_{timestamp}.zip')
-  
+  raw_file_path <- glue('{PATH_DROPBOX}/24_general/{state}/raw/{state}_{timestamp}.zip')
   download.file(path, destfile = raw_file_path)
+  raw_file_path <- unzip(raw_file_path, exdir = glue('{PATH_DROPBOX}/24_general/{state}/raw'))
   
   # read the data
-  fread(cmd = glue("unzip -p {raw_file_path}")) |>
+  fread(raw_file_path) |>
     # Clean raw file variable names
     clean_names() |>
     # Filter to target contests: President, Governor
