@@ -15,11 +15,11 @@ scrape_az <- function(state, county, path, timestamp){
     
     # Rename raw file to include identifiers and timestamp
     ## Get list of raw files
-    files <- list.files(path = "data/raw/AZ", full.names = TRUE)
+    files <- list.files(path = "{PATH_DROPBOX}/24_general/{state}/raw", pattern = paste0(county, ".*\\.txt$"), full.names = TRUE)
     ## Get file info and sort by modification time in descending order
     most_recent_file <- files[order(file.info(files)$mtime, decreasing = TRUE)][1]
     ## Rename file
-    raw_file_path = glue('data/raw/AZ/AZ_Maricopa_{timestamp}.txt')
+    raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/AZ_Maricopa_{timestamp}.txt')
     file.rename(most_recent_file, raw_file_path)
     
     cleaned <- fread(raw_file_path, header = TRUE, sep = "\t", quote = "") |>
