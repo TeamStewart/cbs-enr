@@ -65,7 +65,7 @@ get_timestamp <- function(state, county, path) {
   }
   
   mi_timestamp <- function(){
-    if(county == "Oakland"){
+    if(county %in% c("Eaton", "Oakland")){
       clarity_timestamp()
     } else if(county == "Ingham"){
       read_html("https://app.enhancedvoting.com/results/public/api/elections/ingham-county-mi/general11052024") |>
@@ -147,6 +147,21 @@ get_data <- function(state, county, timestamp, path = NULL) {
   }
 
   return(d)
+}
+
+fill_missing_mode <- function(data) {
+  target_modes <- c("Election Day", "Early Voting", "Absentee/Mail", "Provisional")
+  
+  column_names <- colnames(data)
+  
+  data |>
+    complete(
+      vote_mode = target_modes, 
+      nesting(state, race_id, race_name, candidate_name, candidate_party,
+              jurisdiction, precinct_id, virtual_precinct, timestamp)) |>
+    fill(vote_mode, .direction = "down") |>
+    select(column_names) |>
+    replace_na(list(precinct_total = 0))
 }
 
 create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
