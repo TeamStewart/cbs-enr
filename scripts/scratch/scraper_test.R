@@ -19,8 +19,8 @@ source("scripts/functions.R")
 
 #renv::use_python()
 
-state = 'PA'
-county = 'Allegheny'
-path = 122424
+state = 'MI'
+county = 'Macomb'
+path = 122434
 timestamp = get_timestamp(state, county, path)
 data = get_data(state, county, timestamp, path)

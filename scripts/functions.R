@@ -66,7 +66,7 @@ get_timestamp <- function(state, county, path) {
   }
   
   mi_timestamp <- function(){
-    if(county == "Oakland"){
+    if(county %in% c("Eaton", "Oakland", "Macomb")){
       clarity_timestamp()
     } else if(county == "Ingham"){
       read_html("https://app.enhancedvoting.com/results/public/api/elections/ingham-county-mi/general11052024") |>
@@ -131,11 +131,15 @@ get_data <- function(state, county, timestamp, path = NULL) {
     "NC" = scrape_nc(state, county, path, timestamp),
     "PA" = scrape_pa(state, county, path, timestamp),
   )
-  
+ 
+  # Upstream fix to precinct_total
+  d$precinct_total <- as.integer(d$precinct_total)
+
+  dir_create(glue("data/clean/{state}"))
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
   clarity_counties <- list(
-    "MI" = c("Oakland", "Macomb"),
-    "PA" = c("Delaware")
+    "MI" = c("Oakland", "Macomb", "Eaton"),
+    "PA" = c("Delaware", "Allegheny")
   )
   if (state %in% names(clarity_counties) && county %in% clarity_counties[[state]]) {
     # save latest version; timestamped version already saved
