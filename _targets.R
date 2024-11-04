@@ -55,10 +55,10 @@ list(
     metadata,
     tar_target(timestamp, get_timestamp(state, county, path), cue = tar_cue(mode = "always")),
     tar_target(data, get_data(state, county, timestamp, path), error = "continue"),
-    #tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
+    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
     #tar_target(model, run_models(data, state, county, timestamp, preelection_totals)),
     names = c(state, county)
-  )
-  #,tar_quarto(website, cache = FALSE, quiet = FALSE),
-  #tar_target(uploads, upload_html(website))
+  ),
+  tar_quarto(website, cache = FALSE, quiet = FALSE),
+  tar_target(uploads, upload_html(website))
 )
