@@ -1,7 +1,7 @@
 # ========================================
 ## MAIN TARGETS PIPELINE
 ## AUTHORS: Mason Reece and Joseph R. Loffredo
-## FIRST CREATED: Februrary 2024
+## FIRST CREATED: February 2024
 # ========================================
 ## SETUP
 # ========================================
