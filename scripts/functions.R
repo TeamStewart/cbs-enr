@@ -2,6 +2,7 @@ source("scripts/util/utils.R")
 source("scripts/util/globals.R")
 source("scripts/scrapers.R")
 source("scripts/models.R")
+source("scripts/plotters.R")
 
 get_timestamp <- function(state, county, path) {
   clarity_timestamp <- function() {
@@ -129,7 +130,7 @@ get_data <- function(state, county, timestamp, path = NULL) {
     "NC" = scrape_nc(state, county, path, timestamp),
     "PA" = scrape_pa(state, county, path, timestamp),
   )
-  
+ 
   # Upstream fix to precinct_total
   d$precinct_total <- as.integer(d$precinct_total)
 
@@ -276,7 +277,7 @@ upload_html <- function(website){
   
   upload_single <- function(path){
     
-    state = str_extract(path, "(docs/pages/)(.*?)\\.html", group = 2) |> str_extract("(.*)(?-)", group = 1)
+    state = str_extract(path, "(docs/pages/)(.*?)\\.html", group = 2) |> str_extract("^[^_]+")
     juris = str_extract(path, "(docs/pages/)(.*?)\\.html", group = 2)
     
     put_object(file = path, object = glue("20241105-{state}-P/model_{juris}.html"), bucket = PATH_CBS_S3, multipart = TRUE)
