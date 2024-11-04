@@ -59,6 +59,8 @@ def rename_file_with_timestamp(directory):
     return new_filename
 
 def get_file(path, county, state, dropbox_path):
+    # Ensure the provided path is expanded
+    dropbox_path = os.path.expanduser(dropbox_path)
     # Initialize the driver
     driver, download_directory = setup_driver(state, dropbox_path)
     

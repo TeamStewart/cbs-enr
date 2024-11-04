@@ -188,7 +188,7 @@ scrape_ga <- function(state, county, path, timestamp){
 scrape_mi <- function(state, county, path, timestamp){
   if(county == 'Oakland'){
     # Download Clarity files
-    get_clarity(state, county, path, PATH_DROPBOX)
+    get_clarity(state, county, path)
     
     # Build list of Clarity files
     raw_files <- list.files(path = glue('{PATH_DROPBOX}/24_general/{state}/raw'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
@@ -358,7 +358,7 @@ scrape_mi <- function(state, county, path, timestamp){
       arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
   } else if(county == 'Eaton'){
     # Download Clarity files
-    get_clarity(state, county, path, PATH_DROPBOX)
+    get_clarity(state, county, path)
     
     # Build list of Clarity files
     raw_files <- list.files(path = glue('{PATH_DROPBOX}/24_general/{state}/raw'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
@@ -444,7 +444,7 @@ scrape_mi <- function(state, county, path, timestamp){
     return(read_csv(list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
   } else if(county == 'Macomb'){
     # Download Clarity files
-    get_clarity(state, county, path, PATH_DROPBOX)
+    get_clarity(state, county, path)
     
     # Build list of Clarity files
     raw_files <- list.files(path = glue('{PATH_DROPBOX}/24_general/{state}/raw'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
@@ -615,7 +615,7 @@ scrape_nc <- function(state, county, path, timestamp) {
 scrape_pa <- function(state, county, path, timestamp){
   if (county == "Allegheny"){
     # Download Clarity files
-    get_clarity(state, county, path, PATH_DROPBOX)
+    get_clarity(state, county, path)
     
     # Build list of Clarity files
     raw_files <- list.files(path = glue('{PATH_DROPBOX}/24_general/{state}/raw'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
@@ -685,7 +685,7 @@ scrape_pa <- function(state, county, path, timestamp){
     
   } else if (county == "Delaware"){
     # Download Clarity files
-    get_clarity(state, county, path, PATH_DROPBOX)
+    get_clarity(state, county, path)
     
     # Build list of Clarity files
     raw_files <- list.files(path = glue('{PATH_DROPBOX}/24_general/{state}/raw'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
@@ -900,7 +900,7 @@ get_clarity <- function(state, county, path){
     
     source_python("scripts/util/clarity_scraper.py")
     
-    counties |> filter(!csv_downloaded) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x))
+    counties |> filter(!csv_downloaded) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x, PATH_DROPBOX))
   } else{
     # County level clarity site
     county = str_to_title(county) |> str_replace_all(" ", "_")
@@ -949,11 +949,11 @@ get_clarity <- function(state, county, path){
     # Check which versions already downloaded, omit from the list to scrape
     version_files <- version_files |> mutate(
       state = state,
-      csv_downloaded = file.exists(glue("{PATH_DROPBOX}/24_general/{state}/raw/{county}_{value}.csv")))
+      csv_downloaded = file.exists(glue("{county}_{value}.csv")))
     
     source_python("scripts/util/clarity_scraper.py")
     
-    version_files |> filter(!csv_downloaded) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x))
+    version_files |> filter(!csv_downloaded) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x, PATH_DROPBOX))
   }
   
 }
