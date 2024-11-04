@@ -279,7 +279,7 @@ upload_html <- function(website){
   
   upload_single <- function(path){
     
-    state = str_extract(path, "(docs/pages/)(.*?)\\.html", group = 2) |> str_extract("(.*)(?-)", group = 1)
+    state = str_extract(path, "(docs/pages/)(.*?)\\.html", group = 2) |> str_extract("^[^_]+")
     juris = str_extract(path, "(docs/pages/)(.*?)\\.html", group = 2)
     
     put_object(file = path, object = glue("20241105-{state}-P/model_{juris}.html"), bucket = PATH_CBS_S3, multipart = TRUE)

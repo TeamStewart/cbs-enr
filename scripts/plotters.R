@@ -4,10 +4,23 @@
 
 get_modelHist <- function(state, county){
   
-  read_csv(
+  d = read_csv(
     glue("{PATH_DROPBOX}/24_general/{state}/{state}_{county}_modeling.csv"), 
     locale = locale(tz="US/Eastern")
-  )
+  ) |> 
+    filter(timestamp < ymd("2023-01-01"))
+  
+  return(d)
+  
+  # tryCatch(
+  #   checkmate::test_tibble(d, min.rows = 1),
+  #   error = function(e) return(ggplot())
+  # )
+  # 
+  # if () return (d)
+  # 
+  # # fail safe return blank
+  # return(ggplot())
   
 }
 
@@ -15,13 +28,15 @@ make_plot_voteShare <- function(m, state, county){
   
   models_cumulative = get_modelHist(state, county) |> 
     summarise(
-      confidence = all(confidence),
       across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
-      across(votes_total_20:repVotes_upper, sum),
       .by = c(state, timestamp)
     ) |> 
     mutate(
-      across(where(is.double) & !timestamp, ~ na_if(.x, Inf))
+      across(where(is.double) & !timestamp, ~ na_if(.x, Inf)),
+      across(where(is.double) & !timestamp, ~ na_if(.x, -Inf))
+    ) |> 
+    mutate(
+      confidence = demShare_lower != demShare_estimate & demShare_upper != demShare_estimate & repShare_lower != repShare_estimate & repShare_upper != repShare_estimate
     )
   
   p = models_cumulative |> 
@@ -39,6 +54,12 @@ make_plot_voteShare <- function(m, state, county){
     geom_pointrange(
       data = filter(models_cumulative, !confidence),
       aes(y = repShare_estimate, ymin = repShare_lower, ymax = repShare_upper, x=timestamp),
+      color = "grey",
+      fatten = 1
+    ) +
+    geom_pointrange(
+      data = filter(models_cumulative, !confidence),
+      aes(y = demShare_estimate, ymin = demShare_lower, ymax = demShare_upper, x=timestamp),
       color = "grey",
       fatten = 1
     ) +
@@ -67,14 +88,20 @@ make_plot_margin2020 <- function(m, state, county){
   
   models_cumulative = get_modelHist(state, county) |> 
     summarise(
-      confidence = all(confidence),
       across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
-      across(votes_total_20:repVotes_upper, sum),
       .by = c(state, timestamp)
     ) |> 
     mutate(
-      across(where(is.double) & !timestamp, ~ na_if(.x, Inf))
+      across(where(is.double) & !timestamp, ~ na_if(.x, Inf)),
+      across(where(is.double) & !timestamp, ~ na_if(.x, -Inf))
+    ) |> 
+    mutate(
+      confidence = demShare_lower != demShare_estimate & demShare_upper != demShare_estimate & repShare_lower != repShare_estimate & repShare_upper != repShare_estimate
     )
+  
+  
+  
+  checkmate::check_tibble(get_modelHist("AZ", "Maricopa"), min.rows = 1)
   
   p = models_cumulative |> 
     ggplot() +
@@ -94,7 +121,7 @@ make_plot_margin2020 <- function(m, state, county){
     ) +
     geom_pointrange(
       data = filter(models_cumulative, !confidence),
-      aes(y = repShare_estimate, ymin = repShare_lower, ymax = repShare_upper, x=timestamp),
+      aes(y = swing_estimate, ymin = swing_lower, ymax = swing_upper, x=timestamp),
       color = "grey",
       fatten = 1
     ) +
@@ -123,7 +150,7 @@ make_plot_votesEDay <- function(m, state, county){
     filter(vote_mode == "Election Day") |> 
     summarize(
       across(starts_with("votes_total_24"), sum),
-      confidence = all(confidence),
+      confidence = demShare_lower != demShare_estimate & demShare_upper != demShare_estimate & repShare_lower != repShare_estimate & repShare_upper != repShare_estimate,
       .by = c(state, timestamp)
     ) |> 
     filter(
@@ -161,8 +188,8 @@ make_plot_votesAll <- function(m, state, county){
   
   p = get_modelHist(state, county) |> 
     summarize(
-      across(starts_with("votes_total_24"), sum),
-      confidence = all(confidence),
+      across(starts_with("votes_total_24"), ~ sum(.x, na.rm = TRUE)),
+      confidence = min(confidence, na.rm = TRUE) == 1,
       .by = c(state, timestamp)
     ) |> 
     mutate(
@@ -173,7 +200,7 @@ make_plot_votesAll <- function(m, state, county){
     ) |> 
     ggplot() +
     geom_pointrange(
-      aes(x = timestamp, y = votes_total_24_estimate, ymin = votes_total_24_lower, ymax = votes_total_24_upper, color = confidence), 
+      aes(x = timestamp, y = votes_total_24_estimate, ymin = votes_total_24_lower, ymax = votes_total_24_upper), 
       fatten = 1
     ) +
     labs(

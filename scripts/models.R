@@ -5,8 +5,8 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   
   history = read_csv(glue("{PATH_DROPBOX}/history/{state}_history.csv"))
   
-  dem_candidate_regex = regex("Harris|\\(Dem\\)", ignore_case = TRUE)
-  rep_candidate_regex = regex("Trump|\\(Rep\\)", ignore_case = TRUE)
+  dem_candidate_regex = regex("Warnock|\\(Dem\\)", ignore_case = TRUE)
+  rep_candidate_regex = regex("Walker|\\(Rep\\)", ignore_case = TRUE)
   
   timestamps = data |> 
     rename(
@@ -31,28 +31,29 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       votePct_rep_24 = votes_24_rep / votes_precTotal_24,
       .by = c(state, county, precinct_24, vote_mode)
     ) |>
-    # drop_na(vote_mode) |> 
+    # filter(vote_mode != "Overvote/Undervote") |>
+    drop_na(vote_mode) |>
     left_join(history, by = join_by(county, precinct_24, vote_mode), relationship = "many-to-many") |> 
     # create some helper columns for what reporting status we're at in each precinct
     mutate(
       reported_eday = max(vote_mode == "Election Day" & votes_precTotal_24 > 0) == 1,
       reported_mail = max(vote_mode == "Absentee/Mail" & votes_precTotal_24 > 0) == 1,
       reported_early = max(vote_mode == "Early Voting" & votes_precTotal_24 > 0) == 1,
-      reported_all = all(reported_eday, reported_mail, reported_early),
+      reported_all = reported_eday & reported_mail & reported_early,
       .by = c(county, precinct_24)
     )
   
   prec_total = data_history |> distinct(county, precinct_24) |> tally() |> pull()
-  prec_reported_all = data_history |> distinct(county, precinct_24, reported_all) |> pull(-1) |> sum()
-  prec_reported_eday = data_history |> distinct(county, precinct_24, reported_eday) |> pull(-1) |> sum()
+  prec_reported_all = data_history |> distinct(county, precinct_24, reported_all) |> pull(-1) |> sum(na.rm = TRUE)
+  prec_reported_eday = data_history |> distinct(county, precinct_24, reported_eday) |> pull(-1) |> sum(na.rm = TRUE)
   
   quantile_lower = (prec_reported_all / prec_total) / 2
   quantile_upper = 1 - quantile_lower
   
-  if (is.na(county)){
-    history_sets = expand(history, county, vote_mode) |> mutate(state = .env$state)
+  if (is.na(county) | county == "NA"){
+    history_sets = expand(history, county, vote_mode) |> drop_na(vote_mode) |> mutate(state = .env$state)
   } else {
-    history_sets = expand(history, vote_mode) |> mutate(county = .env$county, state = .env$state)
+    history_sets = expand(history, vote_mode) |> drop_na(vote_mode) |> mutate(county = .env$county, state = .env$state)
   }
   
   if (preelection_totals){
@@ -72,6 +73,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       right_join(
         history_sets, by = join_by(county, vote_mode)
       ) |>
+      mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode) |> 
       mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode)
     
   } else {
@@ -90,8 +92,11 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       ) |> 
       right_join(
         history_sets, by = join_by(county, vote_mode)
-      ) |>
-      mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode)
+      ) |> 
+      mutate(
+        across(where(is.double), ~ na_if(.x, Inf)),
+        across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), 
+        .by = vote_mode)
     
   }
   
@@ -144,8 +149,8 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
         .default = votes_precFinal_20 * turn_top
       ),
       votes_24_precTotalEst = replace_na(votes_24_precTotalEst, 0),
-      votes_24_precTotalBot = replace_na(votes_24_precTotalBot, 0),
-      votes_24_precTotalTop = replace_na(votes_24_precTotalTop, 0),
+      votes_24_precTotalBot = ifelse(is.na(votes_24_precTotalBot), votes_24_precTotalEst, votes_24_precTotalBot),
+      votes_24_precTotalTop = ifelse(is.na(votes_24_precTotalTop), votes_24_precTotalEst, votes_24_precTotalTop),
       votes_24_demEst = case_when(
         reported_all ~ votes_24_dem,
         # keep early or mail votes that are already in
@@ -165,8 +170,8 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
         .default = (votes_20_dem + (votes_20_dem * (dem_top - votePct_dem_20))) * turn_top
       ),
       votes_24_demEst = replace_na(votes_24_demEst, 0),
-      votes_24_demBot = replace_na(votes_24_demBot, 0),
-      votes_24_demTop = replace_na(votes_24_demTop, 0),
+      votes_24_demBot = ifelse(is.na(votes_24_demBot), votes_24_demEst, votes_24_demBot),
+      votes_24_demTop = ifelse(is.na(votes_24_demTop), votes_24_demEst, votes_24_demTop),
       votes_24_repEst = case_when(
         reported_all ~ votes_24_rep,
         # keep early or mail votes that are already in
@@ -186,32 +191,35 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
         .default = (votes_20_rep + (votes_20_rep * (rep_top - votePct_rep_20))) * turn_top
       ),
       votes_24_repEst = replace_na(votes_24_repEst, 0),
-      votes_24_repBot = replace_na(votes_24_repBot, 0),
-      votes_24_repTop = replace_na(votes_24_repTop, 0)
+      votes_24_repBot = ifelse(is.na(votes_24_repBot), votes_24_repEst, votes_24_repBot),
+      votes_24_repTop = ifelse(is.na(votes_24_repTop), votes_24_repEst, votes_24_repTop),
     )
   
   summaries_byCounty_byMode = estimates |> 
     left_join(timestamps, join_by(state, county, precinct_24, vote_mode)) |> 
+    mutate(
+      across(where(is.double) & !timestamp, ~ na_if(.x, Inf))
+    ) |> 
     summarize(
-      timestamp = max(timestamp),
-      votes_total_20 = sum(votes_precFinal_20),
-      votes_total_24_lower = sum(votes_24_precTotalBot),
-      votes_total_24_estimate = sum(votes_24_precTotalEst),
-      votes_total_24_upper = sum(votes_24_precTotalTop),
-      demVotes_lower = sum(votes_24_demBot),
-      demVotes_estimate = sum(votes_24_demEst),
-      demVotes_upper = sum(votes_24_demTop),
-      repVotes_lower = sum(votes_24_repBot),
-      repVotes_estimate = sum(votes_24_repEst),
-      repVotes_upper = sum(votes_24_repTop),
+      timestamp = max(timestamp, na.rm = TRUE),
+      votes_total_20 = sum(votes_precFinal_20, na.rm = TRUE),
+      votes_total_24_lower = sum(votes_24_precTotalBot, na.rm = TRUE),
+      votes_total_24_estimate = sum(votes_24_precTotalEst, na.rm = TRUE),
+      votes_total_24_upper = sum(votes_24_precTotalTop, na.rm = TRUE),
+      demVotes_lower = sum(votes_24_demBot, na.rm = TRUE),
+      demVotes_estimate = sum(votes_24_demEst, na.rm = TRUE),
+      demVotes_upper = sum(votes_24_demTop, na.rm = TRUE),
+      repVotes_lower = sum(votes_24_repBot, na.rm = TRUE),
+      repVotes_estimate = sum(votes_24_repEst, na.rm = TRUE),
+      repVotes_upper = sum(votes_24_repTop, na.rm = TRUE),
       demShare_20 = weighted.mean(votePct_dem_20, votes_precFinal_20),
       repShare_20 = weighted.mean(votePct_rep_20, votes_precFinal_20),
-      demShare_lower = demVotes_lower / (demVotes_lower + repVotes_lower),
-      demShare_estimate = demVotes_estimate / (demVotes_lower + repVotes_lower),
-      demShare_upper = demVotes_upper / (demVotes_lower + repVotes_lower),
-      repShare_lower = repVotes_lower / (demVotes_lower + repVotes_lower),
-      repShare_estimate = repVotes_estimate / (demVotes_lower + repVotes_lower),
-      repShare_upper = repVotes_upper / (demVotes_lower + repVotes_lower),
+      demShare_lower = demVotes_lower / (votes_total_24_estimate),
+      demShare_estimate = demVotes_estimate / (votes_total_24_estimate),
+      demShare_upper = demVotes_upper / (votes_total_24_estimate),
+      repShare_lower = repVotes_lower / (votes_total_24_estimate),
+      repShare_estimate = repVotes_estimate / (votes_total_24_estimate),
+      repShare_upper = repVotes_upper / (votes_total_24_estimate),
       swing_lower = (demShare_lower - repShare_upper) - (demShare_20 - repShare_20),
       swing_estimate = (demShare_estimate - repShare_estimate) - (demShare_20 - repShare_20),
       swing_upper = (demShare_upper - repShare_lower) - (demShare_20 - repShare_20),
@@ -220,27 +228,27 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   
   summaries_byCounty = summaries_byCounty_byMode |> 
     summarise(
-      timestamp = max(timestamp, na.rm = TRUE),
+      timestamp = max(timestamp),
       across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
-      across(votes_total_20:repVotes_upper, sum),
+      across(votes_total_20:repVotes_upper, ~ sum(.x, na.rm=TRUE)),
       .by = c(state, county)
     )
   
   summaries_byMode = summaries_byCounty_byMode |> 
     summarise(
       across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
-      across(votes_total_20:repVotes_upper, sum),
+      across(votes_total_20:repVotes_upper, ~ sum(.x, na.rm=TRUE)),
       .by = c(state, vote_mode)
     ) |> 
     mutate(
       timestamp = ymd_hms(.env$timestamp, tz="UTC") |> with_tz("US/Eastern"),
-      confidence = !((demShare_lower == demShare_estimate & demShare_estimate == demShare_upper) & (repShare_lower == repShare_estimate & repShare_estimate == repShare_upper))
+      confidence = demShare_lower != demShare_estimate & demShare_upper != demShare_estimate & repShare_lower != repShare_estimate & repShare_upper != repShare_estimate
     )
   
   summaries = summaries_byCounty_byMode |> 
     summarise(
       across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
-      across(votes_total_20:repVotes_upper, sum),
+      across(votes_total_20:repVotes_upper, ~ sum(.x, na.rm=TRUE)),
       .by = c(state)
     )
   
