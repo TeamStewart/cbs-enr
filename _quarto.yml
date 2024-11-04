@@ -5,6 +5,9 @@ project:
   render:
     - "pages/*.qmd"
     - "!archive/"
+    - "!pages/AZ_Pima.qmd"
+    - "!pages/MI_Macomb.qmd"
+    - "!pages/MI_Eaton.qmd"
 
 website:
   title: "2024 Election Results"
@@ -13,9 +16,17 @@ website:
     search: false
     pinned: true
     left: 
-      - pages/GA.qmd
-      # - pages/ga.qmd
-      # - pages/tx.qmd
+      - "pages/AZ_Maricopa.qmd"
+      # - "pages/AZ_Pima.qmd"
+      - "pages/GA.qmd"
+      # - "pages/MI_Eaton.qmd"
+      - "pages/MI_Ingham.qmd"
+      # - "pages/MI_Macomb.qmd"
+      - "pages/MI_Oakland.qmd"
+      - "pages/NC.qmd"
+      - "pages/PA_Allegheny.qmd"
+      - "pages/PA_Delaware.qmd"
+      - "pages/PA_Philadelphia.qmd"
       
 date: now
 date-format: "MMM D HH:mm:ss A z"

@@ -5,8 +5,8 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   
   history = read_csv(glue("{PATH_DROPBOX}/history/{state}_history.csv"))
   
-  dem_candidate_regex = regex("Warnock|\\(Dem\\)", ignore_case = TRUE)
-  rep_candidate_regex = regex("Walker|\\(Rep\\)", ignore_case = TRUE)
+  dem_candidate_regex = regex("Harris|\\(Dem\\)", ignore_case = TRUE)
+  rep_candidate_regex = regex("Trump|\\(Rep\\)", ignore_case = TRUE)
   
   timestamps = data |> 
     rename(
@@ -40,7 +40,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       reported_eday = max(vote_mode == "Election Day" & votes_precTotal_24 > 0) == 1,
       reported_mail = max(vote_mode == "Absentee/Mail" & votes_precTotal_24 > 0) == 1,
       reported_early = max(vote_mode == "Early Voting" & votes_precTotal_24 > 0) == 1,
-      .by = c(state, county, precinct_24)
+      .by = c(county, precinct_24)
     )
   
   prec_total = data_history |> distinct(county, precinct_24) |> tally() |> pull()
@@ -49,6 +49,12 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   
   quantile_lower = (prec_reported_all / prec_total) / 2
   quantile_upper = 1 - quantile_lower
+  
+  if (is.na(county)){
+    history_sets = expand(history, county, vote_mode) |> drop_na(vote_mode) |> mutate(state = .env$state)
+  } else {
+    history_sets = expand(history, vote_mode) |> drop_na(vote_mode) |> mutate(county = str_to_upper(.env$county), state = .env$state)
+  }
   
   if (preelection_totals){
     
@@ -65,7 +71,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
         .by = c(county, vote_mode)
       ) |> 
       right_join(
-        expand(data_history, county, vote_mode) |> drop_na(vote_mode), by = join_by(county, vote_mode)
+        history_sets, by = join_by(county, vote_mode)
       ) |>
       mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode)
     
@@ -84,7 +90,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
         .by = c(county, vote_mode)
       ) |> 
       right_join(
-        expand(history, county, vote_mode) |> drop_na(vote_mode), by = join_by(county, vote_mode)
+        history_sets, by = join_by(county, vote_mode)
       ) |>
       mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode)
     
@@ -93,7 +99,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   swing_summary <- data_history |> 
     filter(reported_all) |> 
     distinct(state, county, precinct_24, vote_mode, votePct_dem_24, votePct_rep_24, votes_precFinal_20) |> 
-    filter(!is.nan(votePct_dem_24)) |> 
+    filter(!(is.nan(votePct_dem_24) & is.nan(votePct_rep_24))) |> 
     summarise(
       dem_top = quantile(votePct_dem_24, quantile_upper),
       dem_bot = quantile(votePct_dem_24, quantile_lower),
@@ -104,13 +110,13 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       .by = c(county, vote_mode)
     ) |> 
     right_join(
-      expand(data_history, county, vote_mode) |> drop_na(vote_mode), by = join_by(county, vote_mode)
+      history_sets, by = join_by(county, vote_mode)
     ) |> 
     mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode)
   
   estimates <- data_history |> 
-    full_join(turnout_summary, join_by(county, vote_mode)) |> 
-    full_join(swing_summary, join_by(county, vote_mode)) |> 
+    full_join(turnout_summary, join_by(state, county, vote_mode)) |> 
+    full_join(swing_summary, join_by(state, county, vote_mode)) |> 
     mutate(
       votePct_dem_20 = replace_na(votePct_dem_20, mean(votePct_dem_20, na.rm = TRUE)),
       votePct_rep_20 = replace_na(votePct_rep_20, mean(votePct_rep_20, na.rm = TRUE)),
@@ -228,7 +234,8 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       .by = c(state, vote_mode)
     ) |> 
     mutate(
-      timestamp = ymd_hms(.env$timestamp, tz="UTC") |> with_tz("US/Eastern")
+      timestamp = ymd_hms(.env$timestamp, tz="UTC") |> with_tz("US/Eastern"),
+      confidence = !((demShare_lower == demShare_estimate & demShare_estimate == demShare_upper) & (repShare_lower == repShare_estimate & repShare_estimate == repShare_upper))
     )
   
   summaries = summaries_byCounty_byMode |> 

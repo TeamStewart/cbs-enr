@@ -2,6 +2,7 @@ source("scripts/util/utils.R")
 source("scripts/util/globals.R")
 source("scripts/scrapers.R")
 source("scripts/models.R")
+source("scripts/plotters.R")
 
 get_timestamp <- function(state, county, path) {
   clarity_timestamp <- function() {
@@ -121,6 +122,7 @@ get_data <- function(state, county, timestamp, path = NULL) {
   
   dir_create(glue("data/raw/{state}"))
   dir_create(glue("data/input/{state}"))
+  dir_create(glue("data/clean/{state}"))
   
   d <- switch(state,
     "AZ" = scrape_az(state, county, path, timestamp),
@@ -129,8 +131,7 @@ get_data <- function(state, county, timestamp, path = NULL) {
     "NC" = scrape_nc(state, county, path, timestamp),
     "PA" = scrape_pa(state, county, path, timestamp),
   )
-
-  dir_create(glue("data/clean/{state}"))
+  
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
   clarity_counties <- list(
     "MI" = c("Oakland", "Macomb"),
