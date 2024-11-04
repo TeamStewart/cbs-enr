@@ -19,8 +19,8 @@ source("scripts/functions.R")
 
 #renv::use_python()
 
-state = 'MI'
-county = 'Oakland'
-path = '122321'
+state = 'NC'
+county = NA
+path = 'http://dl.ncsbe.gov/ENRS/2024_11_05/results_pct_20241105.zip'
 timestamp = get_timestamp(state, county, path)
 data = get_data(state, county, timestamp, path)

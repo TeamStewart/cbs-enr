@@ -11,7 +11,7 @@ scrape_az <- function(state, county, path, timestamp){
     
     # Download file
     source_python("scripts/util/dynamic_download.py")
-    get_file(path, county, state)
+    get_file(path, county, state, PATH_DROPBOX)
     
     # Rename raw file to include identifiers and timestamp
     ## Get list of raw files
@@ -763,7 +763,7 @@ scrape_pa <- function(state, county, path, timestamp){
   } else if (county == "Philadelphia"){
     # dynamically retrieve file via python script
     source_python("scripts/util/dynamic_download.py")
-    get_file(path, county, state)
+    get_file(path, county, state, PATH_DROPBOX)
     
     # Rename latest file
     raw_file_path <- glue("{PATH_DROPBOX}/24_general/{state}/raw/{state}_{county}_{timestamp}.csv")

@@ -10,7 +10,7 @@ def setup_driver(state, dropbox_path):
     # Set up Chrome options
     chrome_options = Options()
     
-    download_directory = os.path.abspath("f'{dropbox_path}/data/{state}/raw'")
+    download_directory = os.path.abspath(f'{dropbox_path}/24_general/{state}/raw')
     
     # Specify the download directory and enable automatic downloads
     prefs = {"download.default_directory": download_directory,

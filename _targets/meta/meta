@@ -1,19 +1,19 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|1621b3d17741c114|||||||||||||||
+.Random.seed|object|e9e7f090960998c6|||||||||||||||
 create_table_cbs|function|6b6800b0ac32f2da|||||||||||||||
-data_AZ_Maricopa|stem||1246177af406de46|257429c4c04035d3|-120925747||t20031.8924692714s||0|qs|local|vector|||0.526||TypeError get_file missing 1 required positional argument dropbox_pathRun reticulatepy_last_error for details.
-data_GA_NA|stem|9e144fce8d1451ff|be6a3d224f3a771b|0e67dc298b650e65|-931803180||t20031.8992123112s|21bde8f600ff981e|12280|qs|local|vector|||4.96||
-data_MI_Eaton|stem||6c719395544f0ee6|b2edcb2b4a97766d|-1194529039||t20031.8924509197s||0|qs|local|vector|||1.063|no nonmissing arguments, returning NA|missing value where TRUEFALSE needed
-data_MI_Ingham|stem|eb9334e9e631321e|66b00feddd0960eb|601f665f397c17ee|57551775||t20031.8991188366s|688724c23b2c752d|1402|qs|local|vector|||0.834||
-data_MI_Macomb|stem||0bb23847cc73676c|b26e84495b9270c5|-818305503||t20031.8925471278s||0|qs|local|vector|||1.149|no nonmissing arguments, returning NA|missing value where TRUEFALSE needed
-data_MI_Oakland|stem||267b5d87e08ffd90|63309e4975036e3b|481620507||t20031.8925297079s||0|qs|local|vector|||0.483|no nonmissing arguments, returning NA|missing value where TRUEFALSE needed
-data_NC_NA|stem||3094de461a56d540|bbb510954d9bfa78|-220573991||t20031.8925429996s||0|qs|local|vector|||0.445||File varfoldershz4hrrpn9x42s952zfr0808mwh0000gnTRtmp8K7iEWfile33391d3e81b9 does not exist or is nonreadable. getwdUsersjosephloffredoDesktopGitHubcbsenr
-data_PA_Allegheny|stem||d5f7351853511f22|d373ad16a8d0b850|908748033||t20031.8925236914s||0|qs|local|vector|||0.988|no nonmissing arguments, returning NA|missing value where TRUEFALSE needed
-data_PA_Delaware|stem||697f98ba13d1f253|37d09e602fb79b0f|648836767||t20031.8925267911s||0|qs|local|vector|||0.748|no nonmissing arguments, returning NA|missing value where TRUEFALSE needed
-data_PA_Philadelphia|stem||31db8a19d0865366|fa794e968f50ff89|-626388640||t20031.8925536226s||0|qs|local|vector|||0.008||TypeError get_file missing 1 required positional argument dropbox_pathRun reticulatepy_last_error for details.
+data_AZ_Maricopa|stem||1246177af406de46|0f0b9eadeec77581|-120925747||t20031.8924692714s||0|qs|local|vector|||3.558||File varfoldershz4hrrpn9x42s952zfr0808mwh0000gnTRtmpvU7qijfile3b5d609780cc does not exist or is nonreadable. getwdUsersjosephloffredoDesktopGitHubcbsenr
+data_GA_NA|stem|9e144fce8d1451ff|be6a3d224f3a771b|2031907a519c50c6|-931803180||t20031.9376822781s|21bde8f600ff981e|12280|qs|local|vector|||5.624||
+data_MI_Eaton|stem|062bf6196875a8ec|6c719395544f0ee6|202ea197c67fa1ec|-1194529039||t20031.9375634805s|adefddf2a5d5ae08|1472|qs|local|vector|||4.26||
+data_MI_Ingham|stem|eb9334e9e631321e|66b00feddd0960eb|6957f2cd5425a1f9|57551775||t20031.9375109584s|688724c23b2c752d|1402|qs|local|vector|||0.968||
+data_MI_Macomb|stem|eb431d8681a91e48|0bb23847cc73676c|b4c1516fd4d46ec1|-818305503||t20031.9386342779s|38ef7101a48e6a9a|2221|qs|local|vector|||8.425||
+data_MI_Oakland|stem|24a19ed3349fad44|267b5d87e08ffd90|d0222632aad9b7ac|481620507||t20031.9385246155s|0c717537d97952c7|5831|qs|local|vector|||24.586||
+data_NC_NA|stem||3094de461a56d540|334a1322145d08a2|-220573991||t20031.8925429996s||0|qs|local|vector|||0.322||File varfoldershz4hrrpn9x42s952zfr0808mwh0000gnTRtmpvU7qijfile3b5d7a89029e does not exist or is nonreadable. getwdUsersjosephloffredoDesktopGitHubcbsenr
+data_PA_Allegheny|stem|13ad7d19e79eef75|d5f7351853511f22|614f58bd81d42737|908748033||t20031.9377956802s|c63867b491a5d4d1|12700|qs|local|vector|||9.371||
+data_PA_Delaware|stem|4922a182f53983ac|697f98ba13d1f253|7169bd7f799660a2|648836767||t20031.9382364431s|d2c4eb4231ca5257|5511|qs|local|vector|||37.794||
+data_PA_Philadelphia|stem||31db8a19d0865366|175e050da8ef7b29|-626388640||t20031.8925536226s||0|qs|local|vector|||18.12||from and to are of different lengths
 ELECTION_DATE|object|8570071620b95baa|||||||||||||||
-get_clarity|function|280933c571312533|||||||||||||||
-get_data|function|a007724f67bc95cd|||||||||||||||
+get_clarity|function|da4d726156d6acfb|||||||||||||||
+get_data|function|3cfad194ce9795d8|||||||||||||||
 get_gsheet|function|30c6084fdf85ad9a|||||||||||||||
 get_timestamp|function|48367c271c46380b|||||||||||||||
 lookup_state_name|function|3572d7f708158618|||||||||||||||
@@ -23,19 +23,19 @@ PATH_DROPBOX|object|b1e0f473de8c1bd9|||||||||||||||
 PATH_GDRIVE|object|2a36e4831ba1257a|||||||||||||||
 PATH_LOCAL|object|2c530c1562a7fbd1|||||||||||||||
 run_models|function|31f232475c764086|||||||||||||||
-scrape_az|function|229ecf7420634d79|||||||||||||||
+scrape_az|function|a2b985379529e8df|||||||||||||||
 scrape_ga|function|cd47ff614cb72540|||||||||||||||
-scrape_mi|function|dc8e9fcfc45db28a|||||||||||||||
+scrape_mi|function|a7e084fc776033f3|||||||||||||||
 scrape_nc|function|e7fa24754bda02fa|||||||||||||||
-scrape_pa|function|b59c23cd6719eb27|||||||||||||||
-timestamp_AZ_Maricopa|stem|5471ca68b5112a7b|811f19eacc390e49|1b75a234ab0e62c3|1242395665||t20031.9035978427s|86c36464e2e2a367|58|qs|local|vector|||5.938||
-timestamp_GA_NA|stem|c44ad8f88f6b5561|f1580ae86d2ca893|1b75a234ab0e62c3|828350109||t20031.9036084889s|86c36464e2e2a367|58|qs|local|vector|||0.084||
-timestamp_MI_Eaton|stem|c5c57bbfff35812d|620b22c465cb0556|1b75a234ab0e62c3|1149203977||t20031.9035144077s|86c36464e2e2a367|58|qs|local|vector|||0.116||
-timestamp_MI_Ingham|stem|ceac34813dc9c61a|a1e1c3cf419e783c|1b75a234ab0e62c3|-664073679||t20031.9035115252s|86c36464e2e2a367|58|qs|local|vector|||1.007||
-timestamp_MI_Macomb|stem|27eebd3f35fea536|a217ab827414868d|1b75a234ab0e62c3|378924614||t20031.9036579564s|86c36464e2e2a367|58|qs|local|vector|||0.043||
-timestamp_MI_Oakland|stem|c5f2f9b9b8c48bf3|4c230b3823d6c178|1b75a234ab0e62c3|-1127784139||t20031.9036385962s|86c36464e2e2a367|58|qs|local|vector|||0.043||
-timestamp_NC_NA|stem|d5b30562ee10cd56|f5925528f2966224|1b75a234ab0e62c3|-873101443||t20031.9036489769s|86c36464e2e2a367|58|qs|local|vector|||0.118||
-timestamp_PA_Allegheny|stem|e11556a5363f3436|3fb0b45422e2f801|1b75a234ab0e62c3|-577555289||t20031.9036104658s|86c36464e2e2a367|58|qs|local|vector|||0.044||
-timestamp_PA_Delaware|stem|0d23c3b56be906cf|db57cfc48abc4bbb|1b75a234ab0e62c3|-277826127||t20031.903625734s|86c36464e2e2a367|58|qs|local|vector|||0.046||
-timestamp_PA_Philadelphia|stem|3c2204894c2a34da|10aad69ff7afb69a|1b75a234ab0e62c3|-1536386861||t20031.9036788536s|86c36464e2e2a367|58|qs|local|vector|||0.335||
+scrape_pa|function|5a40956e1d09a43a|||||||||||||||
+timestamp_AZ_Maricopa|stem|5471ca68b5112a7b|811f19eacc390e49|1b75a234ab0e62c3|1242395665||t20031.9375693449s|86c36464e2e2a367|58|qs|local|vector|||0.403||
+timestamp_GA_NA|stem|c44ad8f88f6b5561|f1580ae86d2ca893|1b75a234ab0e62c3|828350109||t20031.9376152159s|86c36464e2e2a367|58|qs|local|vector|||0.081||
+timestamp_MI_Eaton|stem|c5c57bbfff35812d|620b22c465cb0556|1b75a234ab0e62c3|1149203977||t20031.9375130222s|86c36464e2e2a367|58|qs|local|vector|||0.079||
+timestamp_MI_Ingham|stem|ceac34813dc9c61a|a1e1c3cf419e783c|1b75a234ab0e62c3|-664073679||t20031.937498631s|86c36464e2e2a367|58|qs|local|vector|||0.904||
+timestamp_MI_Macomb|stem|27eebd3f35fea536|a217ab827414868d|1b75a234ab0e62c3|378924614||t20031.9385352822s|86c36464e2e2a367|58|qs|local|vector|||0.052||
+timestamp_MI_Oakland|stem|c5f2f9b9b8c48bf3|4c230b3823d6c178|1b75a234ab0e62c3|-1127784139||t20031.9382384401s|86c36464e2e2a367|58|qs|local|vector|||0.05||
+timestamp_NC_NA|stem|d5b30562ee10cd56|f5925528f2966224|1b75a234ab0e62c3|-873101443||t20031.9385273395s|86c36464e2e2a367|58|qs|local|vector|||0.126||
+timestamp_PA_Allegheny|stem|e11556a5363f3436|3fb0b45422e2f801|1b75a234ab0e62c3|-577555289||t20031.9376846656s|86c36464e2e2a367|58|qs|local|vector|||0.064||
+timestamp_PA_Delaware|stem|0d23c3b56be906cf|db57cfc48abc4bbb|1b75a234ab0e62c3|-277826127||t20031.9377974689s|86c36464e2e2a367|58|qs|local|vector|||0.053||
+timestamp_PA_Philadelphia|stem|3c2204894c2a34da|10aad69ff7afb69a|1b75a234ab0e62c3|-1536386861||t20031.9386396419s|86c36464e2e2a367|58|qs|local|vector|||0.338||
 upload_html|function|5371be9ddb693097|||||||||||||||
