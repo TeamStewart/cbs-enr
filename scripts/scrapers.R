@@ -936,7 +936,7 @@ get_clarity <- function(state, county, path){
           # Define the path with the `version` suffix for each file
           req_perform(
             path = str_c(
-              glue("data/raw/{state}/"),
+              glue("{PATH_DROPBOX}/24_general/{state}/raw/"),
               str_extract(url, glue("({state}/)(.*?)(/)"), group = 2),
               "_", version, ".zip")),
         # Handle 404 error silently
