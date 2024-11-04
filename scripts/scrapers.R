@@ -276,7 +276,7 @@ scrape_mi <- function(state, county, path, timestamp){
     return(read_csv(list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
   } else if(county == 'Ingham'){
     # Download the raw json
-    raw_file_path = glue('data/raw/{state}/{state}_{county}_{timestamp}.json')
+    raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/{state}_{county}_{timestamp}.json')
     download.file(path, destfile = raw_file_path)
     
     # Clean the raw json
