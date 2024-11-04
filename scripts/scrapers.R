@@ -256,7 +256,8 @@ scrape_mi <- function(state, county, path, timestamp){
             "Absentee - County" ~ "Absentee/Mail",
             "Early Voting - Regional" ~ "Early Voting",
             "Early Voting - Central" ~ "Early Voting",
-            .default = "Other"
+            "Overvote/Undervote" ~ "Overvote/Undervote",
+            .default = "Provisional"
           )
         ) |>
         summarise(
@@ -355,6 +356,92 @@ scrape_mi <- function(state, county, path, timestamp){
       select(state, race_id, race_name, candidate_name, candidate_party,
              jurisdiction, precinct_id, virtual_precinct, timestamp, vote_mode, precinct_total) |>
       arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
+  } else if(county == 'Eaton'){
+    # Download Clarity files
+    get_clarity(state, county, path)
+    
+    # Build list of Clarity files
+    raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    
+    clean_eaton_mi <- function(file){
+      cleaned <- read_csv(file) |>
+        filter(race_name %in% c("Electors of President and Vice-President of the United States", "United States Senator")) |>
+        mutate(
+          timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+          state = "MI",
+          jurisdiction = "Eaton",
+          # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
+          race_name = case_match(
+            race_name,
+            "Electors of President and Vice-President of the United States" ~ "President",
+            "United States Senator" ~ "Senate"), 
+          # Recode candidate party: Democrat, Republican, Libertarian, US Taxpayers, Green, Natural Law, Justice for All
+          candidate_party = case_match(
+            candidate_party,
+            "DEM" ~ "Democrat",
+            "REP" ~ "Republican",
+            "LIB" ~ "Libertarian",
+            "UST" ~ "US Taxpayers",
+            "GRN" ~ "Green",
+            "NLP" ~ "Natural Law",
+            .default = "Other"),
+          # Recode candidate names
+          candidate_name = case_match(
+            candidate_name,
+            # Oakland, MI presidential candidates
+            "Chase Oliver Mike ter Maat" ~ "Chase Oliver",
+            "Cornel West Melina Abdullah" ~ "Cornel West",
+            "Donald J. Trump JD Vance" ~ "Donald Trump",
+            "Jill Stein Rudolph Ware" ~ "Jill Stein",
+            "Kamala D. Harris Tim Walz" ~ "Kamala Harris",
+            "Randall Terry Stephen E. Broden" ~ "Randall Terry",
+            "Joseph Kishore Jerry White" ~ "Joseph Kishore",
+            "Robert F. Kennedy, Jr. Nicole Shanahan" ~ "Robert F. Kennedy Jr.",
+            "Unassigned write-ins" ~ "Write-ins",
+            # Oakland, MI senate candidates
+            "Elissa Slotkin" ~ "Elissa Slotkin",
+            "Mike Rogers" ~ "Mike Rogers",
+            "Joseph Solis-Mullen" ~ "Joseph Solis-Mullen",
+            "Dave Stein" ~ "Dave Stein",
+            "Douglas P. Marsh" ~ "Douglas Marsh",
+            "Doug Dern" ~ "Doug Dern"
+          ), 
+          # Create virtual precinct column: real == TRUE, administrative == FALSE
+          virtual_precinct = F,
+          # Deal with under/overvotes
+          candidate_name = case_when(
+            vote_mode == "Undervotes" ~ "Undervotes",
+            vote_mode == "Overvotes" ~ "Overvotes",
+            TRUE ~ candidate_name
+          ),
+          candidate_party = ifelse(vote_mode %in% c("Undervotes", "Overvotes"), NA_character_, candidate_party),
+          vote_mode = ifelse(vote_mode %in% c("Undervotes", "Overvotes"), "Overvote/Undervote", vote_mode)
+        ) |>
+        mutate(
+          # Specify vote modes: Election Day, Provisional, Absentee/Mail, Early Voting, Other
+          vote_mode = case_match(
+            vote_mode,
+            "Election" ~ "Election Day",
+            "Absentee" ~ "Absentee/Mail",
+            "Early Voting" ~ "Early Voting",
+            "Overvote/Undervote" ~ "Overvote/Undervote",
+            .default = "Provisional"
+          )
+        ) |>
+        summarise(
+          precinct_total = sum(precinct_total, na.rm = T),
+          .by = c("state","race_id","race_name","candidate_name","candidate_party","jurisdiction","precinct_id","virtual_precinct","timestamp","vote_mode")) |>
+        arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
+      
+      file_timestamp <- cleaned |> pull(timestamp) |> unique() |> max() |> str_replace_all("-|:| ", "_")
+      
+      write_csv(cleaned, file = glue("data/clean/{state}/{state}_{county}_{file_timestamp}.csv"))
+    }
+    
+    cleaned_files <- lapply(raw_files, clean_eaton_mi)
+    
+    # Return latest timestamped version
+    return(read_csv(list.files(path = glue("data/clean/{state}"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
   }
 }
 
@@ -432,8 +519,7 @@ scrape_nc <- function(state, county, path, timestamp) {
         "election_day" ~ "Election Day",
         "early_voting" ~ "Early Voting",
         "absentee_by_mail" ~ "Absentee/Mail",
-        "provisional" ~ "Provisional",
-        .default = "Other"
+        "provisional" ~ "Provisional"
       )
     ) |>
     arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
@@ -493,8 +579,7 @@ scrape_pa <- function(state, county, path, timestamp){
             vote_mode,
             "Election Day" ~ "Election Day",
             "Absentee" ~ "Absentee/Mail",
-            "Provisional" ~ "Provisional",
-            .default = "Other"
+            "Provisional" ~ "Provisional"
           )
         ) |>
         summarise(
@@ -571,8 +656,7 @@ scrape_pa <- function(state, county, path, timestamp){
             "Mail Votes" ~ "Absentee/Mail",
             "Provisional Votes" ~ "Provisional",
             "Undervotes" ~ "Overvote/Undervote",
-            "Overvotes" ~ "Overvote/Undervote",
-            .default = "Other"
+            "Overvotes" ~ "Overvote/Undervote"
           )
         ) |>
         summarise(
