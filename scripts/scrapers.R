@@ -615,10 +615,10 @@ scrape_nc <- function(state, county, path, timestamp) {
 scrape_pa <- function(state, county, path, timestamp){
   if (county == "Allegheny"){
     # Download Clarity files
-    get_clarity(state, county, path)
+    get_clarity(state, county, path, PATH_DROPBOX)
     
     # Build list of Clarity files
-    raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    raw_files <- list.files(path = glue('{PATH_DROPBOX}/24_general/{state}/raw'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
     
     clean_allegheny_pa <- function(file){
       cleaned <- read_csv(file) |>
@@ -675,20 +675,20 @@ scrape_pa <- function(state, county, path, timestamp){
       
       file_timestamp <- cleaned |> pull(timestamp) |> unique() |> max() |> str_replace_all("-|:| ", "_")
       
-      write_csv(cleaned, file = glue("data/clean/{state}/{state}_{county}_{file_timestamp}.csv"))
+      write_csv(cleaned, file = glue("{PATH_DROPBOX}/24_general/{state}/clean/{state}_{county}_{file_timestamp}.csv"))
     }
     
     cleaned_files <- lapply(raw_files, clean_allegheny_pa)
     
     # Return latest timestamped version
-    return(read_csv(list.files(path = glue("data/clean/{state}"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
+    return(read_csv(list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
     
   } else if (county == "Delaware"){
     # Download Clarity files
-    get_clarity(state, county, path)
+    get_clarity(state, county, path, PATH_DROPBOX)
     
     # Build list of Clarity files
-    raw_files <- list.files(path = glue('data/raw/{state}'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    raw_files <- list.files(path = glue('{PATH_DROPBOX}/24_general/{state}/raw'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
     
     clean_delaware_pa <- function(file){
       cleaned <- read_csv(file) |>
@@ -752,13 +752,13 @@ scrape_pa <- function(state, county, path, timestamp){
       
       file_timestamp <- cleaned |> pull(timestamp) |> unique() |> max() |> str_replace_all("-|:| ", "_")
       
-      write_csv(cleaned, file = glue("data/clean/{state}/{state}_{county}_{file_timestamp}.csv"))
+      write_csv(cleaned, file = glue("{PATH_DROPBOX}/24_general/{state}/clean/{state}_{county}_{file_timestamp}.csv"))
     }
     
     cleaned_files <- lapply(raw_files, clean_delaware_pa)
     
     # Return latest timestamped version
-    return(read_csv(list.files(path = glue("data/clean/{state}"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
+    return(read_csv(list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
     
   } else if (county == "Philadelphia"){
     # dynamically retrieve file via python script
@@ -766,8 +766,8 @@ scrape_pa <- function(state, county, path, timestamp){
     get_file(path, county, state)
     
     # Rename latest file
-    raw_file_path <- glue("data/raw/{state}/{state}_{county}_{timestamp}.csv")
-    most_recent_file <- dir_info(glue("data/raw/{state}")) |> filter(str_detect(path, glue("Philadelphia"))) |> arrange(desc(modification_time)) |> slice(1) |> pull(path)
+    raw_file_path <- glue("{PATH_DROPBOX}/24_general/{state}/raw/{state}_{county}_{timestamp}.csv")
+    most_recent_file <- dir_info(glue("{PATH_DROPBOX}/24_general/{state}/raw")) |> filter(str_detect(path, glue("Philadelphia"))) |> arrange(desc(modification_time)) |> slice(1) |> pull(path)
     file.rename(most_recent_file, raw_file_path)
     
     read_csv(raw_file_path) |>
@@ -871,7 +871,7 @@ get_clarity <- function(state, county, path){
       unnest_longer(col = version) |> 
       mutate(
         url = glue("https://results.enr.clarityelections.com/{state}/{county}/{sitenum}/{version}/reports/detailxml.zip"),
-        raw_file_path = glue("data/raw/{state}/{county}_{version}.zip"))
+        raw_file_path = glue("{PATH_DROPBOX}/24_general/{state}/raw/{county}_{version}.zip"))
     
     download_file <- function(url, version) {
       tryCatch(
@@ -882,7 +882,7 @@ get_clarity <- function(state, county, path){
           # Define the path with the `version` suffix for each file
           req_perform(
             path = str_c(
-              glue("data/raw/{state}/"),
+              glue("{PATH_DROPBOX}/24_general/{state}/raw/"),
               str_extract(url, glue("({state}/)(.*?)(/)"), group = 2),
               "_", version, ".zip")),
         # Handle 404 error silently
@@ -896,7 +896,7 @@ get_clarity <- function(state, county, path){
     # Check which versions already downloaded, omit from the list to scrape
     counties <- counties |> mutate(
       state = state,
-      csv_downloaded = file.exists(glue("data/raw/{state}/{county}_{version}.csv")))
+      csv_downloaded = file.exists(glue("{PATH_DROPBOX}/24_general/{state}/raw/{county}_{version}.csv")))
     
     source_python("scripts/util/clarity_scraper.py")
     
@@ -925,7 +925,7 @@ get_clarity <- function(state, county, path){
         state = state, 
         county = county,
         url = glue("https://results.enr.clarityelections.com/{state}/{county}/{path}/{value}/reports/detailxml.zip"),
-        raw_file_path = glue('data/raw/{state}/{county}_{value}.zip'))
+        raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/{county}_{value}.zip'))
     
     download_file <- function(url, version) {
       tryCatch(
@@ -949,7 +949,7 @@ get_clarity <- function(state, county, path){
     # Check which versions already downloaded, omit from the list to scrape
     version_files <- version_files |> mutate(
       state = state,
-      csv_downloaded = file.exists(glue("data/raw/{state}/{county}_{value}.csv")))
+      csv_downloaded = file.exists(glue("{PATH_DROPBOX}/24_general/{state}/raw/{county}_{value}.csv")))
     
     source_python("scripts/util/clarity_scraper.py")
     
