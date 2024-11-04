@@ -24,7 +24,13 @@ options(scipen = 999)
 
 # load two data sources, current results and historical modeling data
 tar_read(model_GA_NA) |> list2env(envir = .GlobalEnv) |> invisible()
-models_full = read_csv(glue("{PATH_DROPBOX}/24_general/GA/GA_NA_modeling.csv"))
+models_full = read_csv(
+  glue("{PATH_DROPBOX}/24_general/GA/GA_NA_modeling.csv"), 
+  locale = locale(tz="US/Eastern")
+) |> 
+  mutate(
+    confidence = !((demShare_lower == demShare_estimate & demShare_estimate == demShare_upper) & (repShare_lower == repShare_estimate & repShare_estimate == repShare_upper))
+  )
 
 ```
 
@@ -44,9 +50,9 @@ models_full = read_csv(glue("{PATH_DROPBOX}/24_general/GA/GA_NA_modeling.csv"))
 
 ## Vote Estimates
 
-**Swing**: `r 100*(summaries$demShare_estimate - summaries$repShare_estimate)`% with uncertainty bounds [`r 100*(summaries$demShare_lower - summaries$repShare_lower)`% to `r 100*(summaries$demShare_upper - summaries$repShare_upper)`%]
+**Margin (Harris - Trump)**: `r 100*(summaries$demShare_estimate - summaries$repShare_estimate)`pp with uncertainty bounds [`r 100*(summaries$demShare_lower - summaries$repShare_lower)`pp to `r 100*(summaries$demShare_upper - summaries$repShare_upper)`pp]
 
-**Swing vs 2020**: `r 100*(summaries$swing_estimate)`% with uncertainty bounds [`r 100*(summaries$swing_lower)`% to `r 100*(summaries$swing_upper)`%]
+**Change in Margin vs 2020**: `r 100*(summaries$swing_estimate)`pp with uncertainty bounds [`r 100*(summaries$swing_lower)`pp to `r 100*(summaries$swing_upper)`pp]
 
 ```{r tbl_mode}
 
@@ -65,7 +71,7 @@ summaries_byMode |>
   cols_align(align = "center") |> 
   cols_label(
     vote_mode = "Vote Mode",
-    swing_24 = "Swing vs 2020"
+    swing_24 = "Change in Margin vs 2020"
   )
 
 ```
@@ -79,25 +85,34 @@ summaries_byMode |>
 
 ```{r}
 
-models_full |> 
+models_cumulative = models_full |> 
   summarise(
+    confidence = all(confidence),
       across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
       across(votes_total_20:repVotes_upper, sum),
       .by = c(state, timestamp)
   ) |> 
   mutate(
     across(where(is.double) & !timestamp, ~ na_if(.x, Inf))
-  ) |>
+  )
+
+models_cumulative |> 
   ggplot(aes(x = timestamp)) +
   geom_pointrange(
     aes(y = demShare_estimate, ymin = demShare_lower, ymax = demShare_upper, color = "Dem"), 
     fatten = 1,
-    position = position_nudge(x = -100)
+    alpha = 0.7
   ) +
   geom_pointrange(
     aes(y = repShare_estimate, ymin = repShare_lower, ymax = repShare_upper, color = "Rep"), 
     fatten = 1,
-    position = position_nudge(x = 100)
+    alpha = 0.7
+  ) +
+  geom_pointrange(
+    data = filter(models_cumulative, !confidence),
+    aes(y = repShare_estimate, ymin = repShare_lower, ymax = repShare_upper, x=timestamp),
+    color = "grey",
+    fatten = 1
   ) +
   labs(
     x = "Time (EST)",
@@ -105,7 +120,12 @@ models_full |>
     color = ""
   ) +
   theme_bw() +
+    scale_y_continuous(
+    labels = scales::label_percent(accuracy = 1.1),
+    n.breaks = 7
+  ) + 
   scale_x_datetime(
+    date_breaks = "2 hour",
     labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
   ) +
   scale_color_manual(values = c("Dem" = "#3791FF", "Rep" = "#F6573E")) +
@@ -113,19 +133,11 @@ models_full |>
 
 ```
 
-### Cumulative Plot of Swing
+### Cumulative Plot of Margin vs 2020
 
 ```{r}
 
-models_full |>
-  summarise(
-      across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
-      across(votes_total_20:repVotes_upper, sum),
-      .by = c(state, timestamp)
-  ) |> 
-  mutate(
-    across(where(is.double) & !timestamp, ~ na_if(.x, Inf))
-  ) |> 
+models_cumulative |> 
   ggplot() +
   annotate(
     "rect",
@@ -141,12 +153,23 @@ models_full |>
     aes(x = timestamp, y = swing_estimate, ymin = swing_lower, ymax = swing_upper), 
     fatten = 1
   ) +
+    geom_pointrange(
+    data = filter(models_cumulative, !confidence),
+    aes(y = repShare_estimate, ymin = repShare_lower, ymax = repShare_upper, x=timestamp),
+    color = "grey",
+    fatten = 1
+  ) +
   labs(
     x = "Time (EST)",
-    y = "Swing",
+    y = "Margin vs 2020",
   ) +
   theme_bw() +
+  scale_y_continuous(
+    labels = scales::label_percent(accuracy = 1.1),
+    n.breaks = 7
+  ) +
   scale_x_datetime(
+    date_breaks = "2 hour",
     labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
   ) +
   geom_hline(yintercept = 0, linetype = "dashed")
@@ -163,14 +186,18 @@ models_full |>
   filter(vote_mode == "Election Day") |> 
   summarize(
     across(starts_with("votes_total_24"), sum),
+    confidence = all(confidence),
     .by = c(state, timestamp)
+  ) |> 
+  filter(
+    votes_total_24_lower > 0 & votes_total_24_estimate > 0, votes_total_24_upper > 0
   ) |> 
   mutate(
     across(where(is.double) & !timestamp, ~ na_if(.x, Inf))
   ) |> 
   ggplot() +
   geom_pointrange(
-    aes(x = timestamp, y = votes_total_24_estimate, ymin = votes_total_24_lower, ymax = votes_total_24_upper), 
+    aes(x = timestamp, y = votes_total_24_estimate, ymin = votes_total_24_lower, ymax = votes_total_24_upper, color = confidence), 
     fatten = 1
   ) +
   labs(
@@ -178,12 +205,15 @@ models_full |>
     y = "Projected Election Day Votes",
   ) +
   theme_bw() +
+  guides(color = "none") +
   scale_y_continuous(
     labels = scales::label_comma()
   ) +
   scale_x_datetime(
+    date_breaks = "2 hour",
     labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
   ) +
+  scale_color_manual(values = c("FALSE" = "grey", "TRUE" = "black")) +
   geom_hline(yintercept = 0, linetype = "dashed")
 
 ```
@@ -195,14 +225,18 @@ models_full |>
 models_full |> 
   summarize(
     across(starts_with("votes_total_24"), sum),
+    confidence = all(confidence),
     .by = c(state, timestamp)
   ) |> 
   mutate(
     across(where(is.double) & !timestamp, ~ na_if(.x, Inf))
   ) |> 
+  filter(
+    votes_total_24_lower > 0 & votes_total_24_estimate > 0, votes_total_24_upper > 0
+  ) |> 
   ggplot() +
   geom_pointrange(
-    aes(x = timestamp, y = votes_total_24_estimate, ymin = votes_total_24_lower, ymax = votes_total_24_upper), 
+    aes(x = timestamp, y = votes_total_24_estimate, ymin = votes_total_24_lower, ymax = votes_total_24_upper, color = confidence), 
     fatten = 1
   ) +
   labs(
@@ -210,12 +244,14 @@ models_full |>
     y = "Projected Total Votes",
   ) +
   theme_bw() +
+  guides(color = "none") +
   scale_y_continuous(
     labels = scales::label_comma()
   ) +
   scale_x_datetime(
     labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
   ) +
+  scale_color_manual(values = c("FALSE" = "grey90", "TRUE" = "black")) +
   geom_hline(yintercept = 0, linetype = "dashed")
 
 ```
@@ -281,7 +317,7 @@ summaries_byCounty_byMode |>
     votes_total_24 = "Votes",
     votes_dem_24 = "Dem Votes",
     votes_rep_24 = "Rep Votes",
-    swing_24 = "Swing vs 2020"
+    swing_24 = "Change in Margin vs 2020"
   )
 
 ```
@@ -345,7 +381,7 @@ summaries_byCounty |>
     votes_total_24 = "Votes",
     votes_dem_24 = "Dem Votes",
     votes_rep_24 = "Rep Votes",
-    swing_24 = "Swing vs 2020"
+    swing_24 = "Change in Margin vs 2020"
   )
 
 ```

@@ -13,7 +13,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       precinct_24 = precinct_id,
       votes_24 = precinct_total,
       county = jurisdiction
-    ) |> 
+    ) |>
     distinct(state, county, precinct_24, timestamp)
   
   data_history = data |> 
@@ -21,7 +21,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       precinct_24 = precinct_id,
       votes_24 = precinct_total,
       county = jurisdiction
-    ) |> 
+    ) |>
     # compute summary cols
     summarize(
       votes_precTotal_24 = sum(votes_24),
@@ -61,7 +61,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       summarise(
         turn_top = quantile(diff, quantile_upper, na.rm = TRUE),
         turn_bot = quantile(diff, quantile_lower, na.rm = TRUE),
-        turn_med = median(diff, na.rm = TRUE),
+        turn_med = weighted.mean(diff, votes_precFinal_20, na.rm = TRUE),
         .by = c(county, vote_mode)
       ) |> 
       right_join(
@@ -80,7 +80,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       summarise(
         turn_top = quantile(diff, quantile_upper, na.rm = TRUE),
         turn_bot = quantile(diff, quantile_lower, na.rm = TRUE),
-        turn_med = median(diff, na.rm = TRUE),
+        turn_med = weighted.mean(diff, votes_precFinal_20, na.rm = TRUE),
         .by = c(county, vote_mode)
       ) |> 
       right_join(
@@ -92,15 +92,15 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   
   swing_summary <- data_history |> 
     filter(reported_all) |> 
-    distinct(state, county, precinct_24, vote_mode, votePct_dem_24, votePct_rep_24) |> 
+    distinct(state, county, precinct_24, vote_mode, votePct_dem_24, votePct_rep_24, votes_precFinal_20) |> 
     filter(!is.nan(votePct_dem_24)) |> 
     summarise(
       dem_top = quantile(votePct_dem_24, quantile_upper),
       dem_bot = quantile(votePct_dem_24, quantile_lower),
-      dem_med = median(votePct_dem_24),
+      dem_med = weighted.mean(votePct_dem_24, votes_precFinal_20),
       rep_top = quantile(votePct_rep_24, quantile_upper),
       rep_bot = quantile(votePct_rep_24, quantile_lower),
-      rep_med = median(votePct_rep_24),
+      rep_med = weighted.mean(votePct_rep_24, votes_precFinal_20),
       .by = c(county, vote_mode)
     ) |> 
     right_join(
@@ -228,7 +228,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       .by = c(state, vote_mode)
     ) |> 
     mutate(
-      timestamp = ymd_hms(.env$timestamp, tz="US/Eastern")
+      timestamp = ymd_hms(.env$timestamp, tz="UTC") |> with_tz("US/Eastern")
     )
   
   summaries = summaries_byCounty_byMode |> 
