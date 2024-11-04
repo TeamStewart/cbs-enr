@@ -182,6 +182,7 @@ scrape_ga <- function(state, county, path, timestamp){
     ) |>
     select(state, race_id, race_name, candidate_name, candidate_party,
            jurisdiction, precinct_id, virtual_precinct, timestamp, vote_mode, precinct_total) |>
+    fill_missing_mode() |>
     arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
 }
 
