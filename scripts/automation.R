@@ -23,7 +23,7 @@ while (TRUE) {
   
   run_time <- format(Sys.time(), format="%Y-%m-%d %H:%M:%S") |> str_replace_all("-|:| ", "_")
   
-  dir_create("logs/")
+  fs::dir_create("logs/")
   
   con <- file(glue("logs/automation_{run_time}.log"))
   sink(con, append=TRUE)
