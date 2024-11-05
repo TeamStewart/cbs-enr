@@ -15,7 +15,7 @@ library(glue)
 execute_script <- function() {
   message(sprintf("%s: Running tar_make", format(Sys.time(), format="%Y-%m-%d %H:%M:%S")))
   # Use the system function to execute the R scrip
-  tar_make()
+  tar_make(reporter = "verbose_positives")
 }
 
 # Main loop to schedule and execute the script every 4 minutes
