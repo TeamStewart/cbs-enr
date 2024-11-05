@@ -48,9 +48,7 @@ get_timestamp <- function(state, county, path) {
         with_tz(tzone = "America/New_York") |>
         str_replace_all("-|:| ", "_")
     } else if (county == "PIMA") {
-      Sys.time() |>
-        str_extract("\\d{4}-\\d{2}-\\d{2} \\d{1,2}:\\d{2}:\\d{2}") |>
-        str_replace_all("-|:| ", "_")
+      now() |> format("%Y_%m_%d_%H_%M_%S", tz = "UTC")
     }
   }
   

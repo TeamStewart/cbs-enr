@@ -100,7 +100,74 @@ scrape_az <- function(state, county, path, timestamp){
   }
   # TODO: Update Pima for 2024 general election
   else if(county == 'PIMA'){
+    csv_link <- read_html(path) |>
+      html_nodes(xpath = "//a[contains(text(), '2024 General Election') and contains(text(), 'Excel')]") |>
+      html_attr('href')
     
+    raw_file <- read_csv(csv_link) |>
+      select(1:19) |>
+      write_csv(glue('{PATH_DROPBOX}/24_general/{state}/raw/AZ_Pima_{timestamp}.csv'))
+    
+    colnames(raw_file)[7:19] <- paste(raw_file[2, 7:19], names(raw_file)[7:19], sep = " - ")
+    
+    raw_file |>
+      clean_names() |>
+      slice(-1, -2) |>
+      select(-c(registered_voters_total, ballots_cast_total, precinct_name)) |>
+      # remove total row
+      filter(precinct_code != 'ZZZ') |>
+      pivot_longer(cols = harris_kamala_d_presidential_electors_7:under_votes_u_s_senator_19, names_to = "candidate_name", values_to = "precinct_total") |>
+      rename(
+        jurisdiction = county_number,
+        precinct_id = precinct_code,
+      ) |>
+      mutate(
+        state = state,
+        race_id = NA,
+        virtual_precinct = NA,
+        timestamp = timestamp |> ymd_hms(),
+        precinct_id = str_replace(precinct_id, "^0+", ""),
+        race_name = case_when(
+          str_detect(candidate_name, "presidential") ~ "President",
+          str_detect(candidate_name, "senator") ~ "Senate",
+          TRUE ~ NA_character_
+        ),
+        candidate_name = case_match(
+          candidate_name,
+          "harris_kamala_d_presidential_electors_7" ~ "Kamala Harris",
+          "trump_donald_j_presidential_electors_8" ~ "Donald Trump",
+          "oliver_chase_presidential_electors_9" ~ "Chase Oliver",
+          "stein_jill_presidential_electors_10" ~ "Jill Stein",
+          "write_in_presidential_electors_11" ~ "Write-ins",     
+          "over_votes_presidential_electors_12" ~ "Overvotes",
+          "under_votes_presidential_electors_13" ~ "Undervotes",
+          "gallego_ruben_u_s_senator_14" ~ "Ruben Gallego",           
+          "lake_kari_u_s_senator_15" ~ "Kari Lake",
+          "quintana_eduardo_u_s_senator_16" ~ "Eduardo Quintana",
+          "write_in_u_s_senator_17" ~ "Write-ins",                
+          "over_votes_u_s_senator_18" ~ "Overvotes",
+          "under_votes_u_s_senator_19" ~ "Undervotes",
+          .default = "Other"
+        ),
+        candidate_party = case_match(
+          candidate_name,
+          "Kamala Harris" ~ "Democrat",
+          "Donald Trump" ~ "Republican",
+          "Chase Oliver" ~ "Libertarian",
+          "Jill Stein" ~ "Green",
+          "Ruben Gallego" ~ "Democrat",
+          "Kari Lake" ~ "Republican",
+          "Eduardo Quintana" ~ "Green",
+          "Write-ins" ~ NA_character_,
+        ),
+        vote_mode = case_when(
+          str_detect("over_votes", candidate_name) ~ "Overvotes",
+          str_detect("under_votes", candidate_name) ~ "Undervotes",
+          TRUE ~ "Election Day"
+        )
+      ) |>
+      select(state,race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, timestamp, vote_mode, precinct_total) |>
+      arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
   }
 }
 
