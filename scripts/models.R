@@ -43,13 +43,19 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       reported_eday = max(vote_mode == "Election Day" & votes_precTotal_24 > 0) == 1,
       reported_mail = max(vote_mode == "Absentee/Mail" & votes_precTotal_24 > 0) == 1,
       reported_early = max(vote_mode == "Early Voting" & votes_precTotal_24 > 0) == 1,
+      reported_any = reported_eday | reported_mail | reported_early,
       reported_all = reported_eday & reported_mail & reported_early,
       .by = c(county, precinct_24)
     )
   
   prec_total = data_history |> distinct(county, precinct_24) |> tally() |> pull()
   prec_reported_all = data_history |> distinct(county, precinct_24, reported_all) |> pull(-1) |> sum(na.rm = TRUE)
+  prec_reported_any = data_history |> distinct(county, precinct_24, reported_any) |> pull(-1) |> sum(na.rm = TRUE)
   prec_reported_eday = data_history |> distinct(county, precinct_24, reported_eday) |> pull(-1) |> sum(na.rm = TRUE)
+  
+  if (!file_exists(glue("{PATH_DROPBOX}/24_general/{state}/prec_reported_any_{county}"))){
+    write_file(as.character(prec_reported_any), glue("{PATH_DROPBOX}/24_general/{state}/prec_reported_any_{county}"))
+  }
   
   quantile_lower = (prec_reported_all / prec_total) / 2
   quantile_upper = 1 - quantile_lower
@@ -269,11 +275,15 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   
   # return computed values for plotting
   m = list(
+    "state" = state,
+    "county" = county,
+    "timestamp" = timestamp,
     "data_history" = data_history,
     "quantile_upper" = quantile_upper,
     "quantile_lower" = quantile_lower,
     "prec_total" = prec_total,
     "prec_reported_all" = prec_reported_all,
+    "prec_reported_any" = prec_reported_any,
     "prec_reported_eday" = prec_reported_eday,
     "summaries" = summaries,
     "summaries_byCounty" = summaries_byCounty,

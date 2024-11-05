@@ -27,6 +27,17 @@ tar_read(model_AZ_Pima) |> list2env(envir = .GlobalEnv) |> invisible()
 
 ```
 
+## Recent Updates
+
+Last update: `r prec_reported_any - read_file(glue("{PATH_DROPBOX}/24_general/{state}/prec_reported_any_{county}")) |> as.numeric()` new precincts reported at `r ymd_hms(timestamp) |> with_tz("US/Eastern")`.
+
+```{r}
+
+# update historical file
+write_file(as.character(prec_reported_any), glue("{PATH_DROPBOX}/24_general/{state}/prec_reported_any_{county}"))
+
+```
+
 ## How Many Votes Are In?
 
 `r sum(pull(data_history, votes_precTotal_24))` **total** votes are in, `r 100*sum(pull(data_history, votes_precTotal_24)) / sum(pull(data_history, votes_precFinal_20), na.rm=TRUE)`% of the 2020 total
