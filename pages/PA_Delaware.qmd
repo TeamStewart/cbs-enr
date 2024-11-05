@@ -1,5 +1,28 @@
 ---
 title: "Pennsylvania -- Delaware"
+date: now
+date-format: "MMM D HH:mm:ss A z"
+author: 
+- Joseph R. Loffredo, Mason Reece, Charles Stewart III
+affiliation: Massachusetts Institute of Technology
+page-layout: full
+
+format:
+  html:
+    embed-resources: true
+    minimal: true
+    fig-format: jpeg
+    toc: true
+    toc-location: body
+    toc-title: Jump to
+    toc-depth: 1
+    fig-width: 12
+    echo: false
+    message: false
+    warning: false
+    keep-md: false
+    template-partials:
+      - metadata.html
 ---
 
 ```{r}
