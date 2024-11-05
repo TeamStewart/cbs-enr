@@ -12,6 +12,8 @@ local({
     PATH_DROPBOX <<- "~/Dropbox (MIT)/2024 Election Results"
   } else if (user == "mason") {
     PATH_DROPBOX <<- "~/Dropbox (MIT)/Research/2024 Election Results"
+  } else if (user == "Mason") {
+    PATH_DROPBOX <<- "C:/Users/Mason/Dropbox (MIT)/Research/2024 Election Results"
   }
   
 })

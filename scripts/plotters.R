@@ -4,23 +4,13 @@
 
 get_modelHist <- function(state, county){
   
-  d = read_csv(
+  read_csv(
     glue("{PATH_DROPBOX}/24_general/{state}/{state}_{county}_modeling.csv"), 
     locale = locale(tz="US/Eastern")
   ) |> 
-    filter(timestamp < ymd("2023-01-01"))
-  
-  return(d)
-  
-  # tryCatch(
-  #   checkmate::test_tibble(d, min.rows = 1),
-  #   error = function(e) return(ggplot())
-  # )
-  # 
-  # if () return (d)
-  # 
-  # # fail safe return blank
-  # return(ggplot())
+    mutate(
+      timestamp = ymd_hms(timestamp) |> with_tz("US/Eastern")
+    )
   
 }
 
@@ -227,6 +217,7 @@ make_tbl_countyMode <- function(m, state, county){
   
   t = m$summaries_byCounty_byMode |> 
     mutate(
+      timestamp = ymd_hms(timestamp) |> with_tz("US/Eastern"),
       tmp = swing_estimate,
       county = str_to_title(county),
       across(c(contains("swing"), contains("Share")), ~ scales::label_percent(accuracy = 0.01)(.x)),
@@ -293,6 +284,7 @@ make_tbl_county <- function(m, state, county){
   
   t = m$summaries_byCounty |> 
     mutate(
+      timestamp = ymd_hms(timestamp) |> with_tz("US/Eastern"),
       tmp = swing_estimate,
       county = str_to_title(county),
       across(c(contains("swing"), contains("Share")), ~ scales::label_percent(accuracy = 0.01)(.x)),

@@ -47,7 +47,7 @@ get_timestamp <- function(state, county, path) {
         mdy_hms(tz = "America/Phoenix") |>
         with_tz(tzone = "America/New_York") |>
         str_replace_all("-|:| ", "_")
-    } else if (county == "PIMA") {
+    } else if (county == "Pima") {
       now() |> format("%Y_%m_%d_%H_%M_%S", tz = "UTC")
     }
   }
@@ -210,7 +210,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     mutate(across(c(edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote), as.integer)) |> 
     mutate(
       cVote = rowSums(across(c(edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote), ~ replace_na(., 0))),
-      ts = ymd_hms(timestamp, tz = "America/New_York") |> with_tz(tzone = 'UTC') |> format("%Y-%m-%dT%H:%M:%SZ")) |>
+      ts = ymd_hms(timestamp) |> format("%Y-%m-%dT%H:%M:%SZ")) |>
     select(
       eDate, jType, real_precinct, st, eType, jCde, ofc, cnty, pcnt, pcntUUID, pcntName,
       cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote,ts) |>
@@ -230,8 +230,8 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     # Function to handle upload by office type
     upload_files <- function(state, office, local_file_name, formatted_data, raw_data, race_name, bucket) {
       # Define paths
-      json_file <- glue("data/cbs_format/{state}/{local_file_name}_{office}_latest.json")
-      csv_file <- glue("data/cbs_format/{state}/{local_file_name}_{office}_latest.csv")
+      json_file <- glue("data/cbs_format/{local_file_name}_{office}_latest.json")
+      csv_file <- glue("data/cbs_format/{local_file_name}_{office}_latest.csv")
       s3_json_path <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results.json")
       s3_csv_path <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results.csv")
       
@@ -271,17 +271,20 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   return(formatted)
 }
 
-upload_html <- function(website){
+upload_html <- function(){
   
   upload_single <- function(path){
     
-    state = str_extract(path, "(docs/pages/)(.*?)\\.html", group = 2) |> str_extract("^[^_]+")
-    juris = str_extract(path, "(docs/pages/)(.*?)\\.html", group = 2)
+    state = str_extract(path, "(pages/)(.*?)\\.html", group = 2) |> str_extract("^[^_]+")
+    juris = str_extract(path, "(pages/)(.*?)\\.html", group = 2)
     
     put_object(file = path, object = glue("20241105-{state}-P/model_{juris}.html"), bucket = PATH_CBS_S3, multipart = TRUE)
   }
   
-  files = list.files(path = "docs/pages", pattern = "*.html", full.names = TRUE, recursive = TRUE)
+  files = list.files(path = "pages", pattern = "*html$", full.names = TRUE, recursive = TRUE)
+  files = files[basename(files) != "metadata.html"]
+  
+  file.copy(from=files, to="docs/pages/", overwrite = FALSE, recursive = FALSE, copy.mode = TRUE) |> invisible()
   
   walk(files, upload_single)
 }

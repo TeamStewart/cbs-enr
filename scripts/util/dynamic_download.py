@@ -29,13 +29,12 @@ def setup_driver(state, dropbox_path):
 def download_wait(download_directory):
     seconds = 0
     dl_wait = True
-    while dl_wait and seconds < 30:
-        time.sleep(1)
+    while dl_wait and seconds < 60:
         dl_wait = False
         for fname in os.listdir(download_directory):
             if fname.endswith('.crdownload'):
                 dl_wait = True
-        seconds += 0.5
+        seconds += 1
     return seconds
 
 def rename_file_with_timestamp(directory):
