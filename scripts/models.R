@@ -3,6 +3,8 @@
 # ============================
 run_models <- function(data, state, county, timestamp, preelection_totals) {
   
+  dir_create(glue("{PATH_DROPBOX}/24_general/{state}/model_archive"))
+  
   history = read_csv(glue("{PATH_DROPBOX}/history/{state}_history.csv"))
   
   dem_candidate_regex = regex("Harris|\\(Dem\\)", ignore_case = TRUE)
@@ -266,7 +268,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
     write_csv(glue("{PATH_DROPBOX}/24_general/{state}/{state}_{county}_modeling.csv"))
   
   # return computed values for plotting
-  list(
+  m = list(
     "data_history" = data_history,
     "quantile_upper" = quantile_upper,
     "quantile_lower" = quantile_lower,
@@ -278,4 +280,9 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
     "summaries_byMode" = summaries_byMode,
     "summaries_byCounty_byMode" = summaries_byCounty_byMode
   )
+  
+  qd_save(m, glue("{PATH_DROPBOX}/24_general/{state}/model_archive/{state}_{county}_modeling_{timestamp}.qs2"))
+  
+  return(m)
+  
 }
