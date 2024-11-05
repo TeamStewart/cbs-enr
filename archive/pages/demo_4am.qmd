@@ -201,7 +201,7 @@ data_history <- intersection |>
   drop_na(precinct_20, precinct_22) |> 
   mutate(weight = as.numeric(area / sum(area)), .by = c(county, precinct_22)) |> 
   # now full-join to ensure all county x precincts are represented in the data
-  # so that we can fill in some missigness
+  # so that we can fill in some missingness
   full_join(
     expand(shp20, nesting(county, precinct_20), vote_mode = c("Absentee/Mail", "Early Voting", "Election Day", "Provisional")),
     join_by(county, precinct_20),
@@ -222,6 +222,12 @@ data_history <- intersection |>
     votePct_rep_20 = sum(votePct_rep_20 * weight),
     votes_precFinal_20 = sum(votes_precFinal_20 * weight),
     .by = c(county, precinct_22, vote_mode)
+  ) |> 
+  mutate(
+    precinct_22 = case_when(
+      county == "CHATHAM" ~ str_sub(precinct_22, end = 5),
+      .default = precinct_22
+    )
   )
 
 ```
