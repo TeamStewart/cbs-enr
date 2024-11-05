@@ -25,7 +25,7 @@ while (TRUE) {
   
   dir_create("logs/")
   
-  con <- file(glue("automation_{run_time}.log"))
+  con <- file(glue("logs/automation_{run_time}.log"))
   sink(con, append=TRUE)
   sink(con, append=TRUE, type="message")
   
@@ -43,5 +43,5 @@ while (TRUE) {
   git2r::commit(message = glue("latest pull {run_time}"))
   git2r::push(credentials = git2r::cred_token())
   
-  Sys.sleep(3600)  # Sleep for 60 minutes (3600 seconds)
+  # Sys.sleep(3600)  # Sleep for 60 minutes (3600 seconds)
 }
