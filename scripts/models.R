@@ -5,8 +5,8 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   
   history = read_csv(glue("{PATH_DROPBOX}/history/{state}_history.csv"))
   
-  dem_candidate_regex = regex("Warnock|\\(Dem\\)", ignore_case = TRUE)
-  rep_candidate_regex = regex("Walker|\\(Rep\\)", ignore_case = TRUE)
+  dem_candidate_regex = regex("Harris|\\(Dem\\)", ignore_case = TRUE)
+  rep_candidate_regex = regex("Trump|\\(Rep\\)", ignore_case = TRUE)
   
   timestamps = data |> 
     rename(
@@ -14,6 +14,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       votes_24 = precinct_total,
       county = jurisdiction
     ) |>
+    mutate(precinct_24 = na_if(precinct_24, "")) |> 
     distinct(state, county, precinct_24, vote_mode, timestamp)
   
   data_history = data |> 
@@ -22,6 +23,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       votes_24 = precinct_total,
       county = jurisdiction
     ) |>
+    mutate(precinct_24 = na_if(precinct_24, "")) |> 
     # compute summary cols
     summarize(
       votes_precTotal_24 = sum(votes_24),
@@ -241,7 +243,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       .by = c(state, vote_mode)
     ) |> 
     mutate(
-      timestamp = ymd_hms(.env$timestamp, tz="UTC") |> with_tz("US/Eastern"),
+      timestamp = ymd_hms(.env$timestamp),
       confidence = demShare_lower != demShare_estimate & demShare_upper != demShare_estimate & repShare_lower != repShare_estimate & repShare_upper != repShare_estimate
     )
   

@@ -99,10 +99,6 @@ make_plot_margin2020 <- function(m, state, county){
       confidence = demShare_lower != demShare_estimate & demShare_upper != demShare_estimate & repShare_lower != repShare_estimate & repShare_upper != repShare_estimate
     )
   
-  
-  
-  checkmate::check_tibble(get_modelHist("AZ", "Maricopa"), min.rows = 1)
-  
   p = models_cumulative |> 
     ggplot() +
     annotate(
@@ -134,11 +130,16 @@ make_plot_margin2020 <- function(m, state, county){
       labels = scales::label_percent(accuracy = 1.1),
       n.breaks = 7
     ) +
-    scale_x_datetime(
+    geom_hline(yintercept = 0, linetype = "dashed")
+  
+  if (nrow(models_cumulative) > 0){
+    
+    p = p + scale_x_datetime(
       date_breaks = "2 hour",
       labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
-    ) +
-    geom_hline(yintercept = 0, linetype = "dashed")
+    )
+    
+  }
   
   return(p)
   
