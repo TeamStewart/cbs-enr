@@ -301,7 +301,7 @@ scrape_mi <- function(state, county, path, timestamp){
       cleaned <- read_csv(file) |>
         filter(race_name %in% c("Electors of President and Vice-President of the United States", "United States Senator")) |>
         mutate(
-          timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+          timestamp = timestamp |> ymd_hms() ,
           state = "MI",
           jurisdiction = "Oakland",
           # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
@@ -474,7 +474,7 @@ scrape_mi <- function(state, county, path, timestamp){
       cleaned <- read_csv(file) |>
         filter(race_name %in% c("Electors of President and Vice-President of the United States", "United States Senator")) |>
         mutate(
-          timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+          timestamp = timestamp |> ymd_hms() ,
           state = "MI",
           jurisdiction = "Eaton",
           # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
@@ -565,7 +565,7 @@ scrape_mi <- function(state, county, path, timestamp){
         filter(race_name %in% c("Electors of President and Vice-President of the United S", "United States Senator") & 
                  vote_mode != 'regVotersCounty') |>
         mutate(
-          timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+          timestamp = timestamp |> ymd_hms() ,
           state = "MI",
           jurisdiction = "Macomb",
           # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
@@ -736,7 +736,7 @@ scrape_pa <- function(state, county, path, timestamp){
       cleaned <- read_csv(file) |>
         filter(race_name %in% c("Presidential Electors", "United States Senator") & vote_mode != 'regVotersCounty') |>
         mutate(
-          timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+          timestamp = timestamp |> ymd_hms(),
           state = "PA",
           jurisdiction = "Allegheny",
           # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
@@ -808,7 +808,7 @@ scrape_pa <- function(state, county, path, timestamp){
       cleaned <- read_csv(file) |>
         filter(race_name %in% c("Presidential Electors", "United States Senator")) |>
         mutate(
-          timestamp = timestamp |> ymd_hms() |> with_tz(tzone = "America/New_York"),
+          timestamp = timestamp |> ymd_hms(),
           state = "PA",
           jurisdiction = "Delaware",
           # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
