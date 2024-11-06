@@ -377,7 +377,10 @@ scrape_mi <- function(state, county, path, timestamp){
     cleaned_files <- lapply(raw_files, clean_oakland_mi)
     
     # Return latest timestamped version
-    return(read_csv(list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
+    f = list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    f[length(f)-1]
+    
+    return(read_csv(f[length(f)-1]))
   } else if(county == 'Ingham'){
     # Download the raw json
     raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/{state}_{county}_{timestamp}.json')
@@ -545,7 +548,10 @@ scrape_mi <- function(state, county, path, timestamp){
     cleaned_files <- lapply(raw_files, clean_eaton_mi)
     
     # Return latest timestamped version
-    return(read_csv(list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
+    f = list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    f[length(f)-1]
+    
+    return(read_csv(f[length(f)-1]))  
   } else if(county == 'Macomb'){
     # Download Clarity files
     get_clarity(state, county, path)
@@ -630,8 +636,10 @@ scrape_mi <- function(state, county, path, timestamp){
     
     cleaned_files <- lapply(raw_files, clean_macomb_mi)
     
-    # Return latest timestamped version
-    return(read_csv(list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
+    f = list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    f[length(f)-1]
+    
+    return(read_csv(f[length(f)-1]))
   }
 }
 
@@ -784,7 +792,10 @@ scrape_pa <- function(state, county, path, timestamp){
     cleaned_files <- lapply(raw_files, clean_allegheny_pa)
     
     # Return latest timestamped version
-    return(read_csv(list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
+    f = list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    f[length(f)-1]
+    
+    return(read_csv(f[length(f)-1]))
     
   } else if (county == "Delaware"){
     # Download Clarity files
@@ -861,7 +872,10 @@ scrape_pa <- function(state, county, path, timestamp){
     cleaned_files <- lapply(raw_files, clean_delaware_pa)
     
     # Return latest timestamped version
-    return(read_csv(list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE) |> max()))
+    f = list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
+    f[length(f)-1]
+    
+    return(read_csv(f[length(f)-1]))
     
   } else if (county == "Philadelphia"){
     # dynamically retrieve file via python script

@@ -273,7 +273,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
 
 upload_html <- function(){
   
-  upload_single <- function(path){
+upload_single <- function(path){
     
     state = str_extract(path, "(pages/)(.*?)\\.html", group = 2) |> str_extract("^[^_]+")
     juris = str_extract(path, "(pages/)(.*?)\\.html", group = 2)
