@@ -134,16 +134,16 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
     mutate(
       votePct_dem_20 = replace_na(votePct_dem_20, mean(votePct_dem_20, na.rm = TRUE)),
       votePct_rep_20 = replace_na(votePct_rep_20, mean(votePct_rep_20, na.rm = TRUE)),
-      votes_20_dem = replace_na(votes_20_dem, mean(votes_20_dem, na.rm = TRUE)),
-      votes_20_rep = replace_na(votes_20_rep, mean(votes_20_rep, na.rm = TRUE)),
+      # votes_20_dem = replace_na(votes_20_dem, mean(votes_20_dem, na.rm = TRUE)),
+      # votes_20_rep = replace_na(votes_20_rep, mean(votes_20_rep, na.rm = TRUE)),
       votes_precFinal_20 = replace_na(votes_precFinal_20, mean(votes_precFinal_20, na.rm = TRUE)),
       .by = c(county, vote_mode)
     ) |> 
     mutate(
       votePct_dem_20 = replace_na(votePct_dem_20, mean(votePct_dem_20, na.rm = TRUE)),
       votePct_rep_20 = replace_na(votePct_rep_20, mean(votePct_rep_20, na.rm = TRUE)),
-      votes_20_dem = replace_na(votes_20_dem, mean(votes_20_dem, na.rm = TRUE)),
-      votes_20_rep = replace_na(votes_20_rep, mean(votes_20_rep, na.rm = TRUE)),
+      # votes_20_dem = replace_na(votes_20_dem, mean(votes_20_dem, na.rm = TRUE)),
+      # votes_20_rep = replace_na(votes_20_rep, mean(votes_20_rep, na.rm = TRUE)),
       votes_precFinal_20 = replace_na(votes_precFinal_20, mean(votes_precFinal_20, na.rm = TRUE))
     ) |>
     mutate(
