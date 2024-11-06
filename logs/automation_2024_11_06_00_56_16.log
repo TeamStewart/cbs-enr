@@ -1,0 +1,115 @@
+2024-11-06 00:56:16: Running tar_make
+▶ dispatched target timestamp_MI_Eaton
+▶ dispatched target timestamp_AZ_Maricopa
+▶ dispatched target timestamp_GA_NA
+▶ dispatched target timestamp_PA_Philadelphia
+✔ skipped target page_AZ_Pima
+● completed target timestamp_AZ_Maricopa [2.984 seconds, 58 bytes]
+✔ skipped target data_AZ_Maricopa
+● completed target timestamp_MI_Eaton [3.015 seconds, 58 bytes]
+✔ skipped target data_MI_Eaton
+● completed target timestamp_GA_NA [2.969 seconds, 58 bytes]
+✔ skipped target tbl_cbs_MI_Eaton
+✔ skipped target data_GA_NA
+✔ skipped target model_GA_NA
+✔ skipped target tbl_county_GA_NA
+✔ skipped target tbl_cbs_GA_NA
+✔ skipped target model_MI_Eaton
+✔ skipped target tbl_county_MI_Eaton
+✔ skipped target plot_margin2020_MI_Eaton
+✔ skipped target model_AZ_Maricopa
+✔ skipped target tbl_countyMode_AZ_Maricopa
+✔ skipped target plot_margin2020_GA_NA
+✔ skipped target plot_votesEDay_GA_NA
+✔ skipped target plot_voteShare_GA_NA
+✔ skipped target plot_votesAll_MI_Eaton
+✔ skipped target plot_votesAll_GA_NA
+✔ skipped target tbl_countyMode_GA_NA
+✔ skipped target page_GA
+✔ skipped target plot_votesAll_AZ_Maricopa
+✔ skipped target plot_voteShare_MI_Eaton
+✔ skipped target plot_votesEDay_MI_Eaton
+✔ skipped target plot_votesEDay_AZ_Maricopa
+✔ skipped target tbl_countyMode_MI_Eaton
+✔ skipped target page_MI_Eaton
+✔ skipped target plot_margin2020_AZ_Maricopa
+✔ skipped target tbl_county_AZ_Maricopa
+✔ skipped target tbl_cbs_AZ_Maricopa
+✔ skipped target plot_voteShare_AZ_Maricopa
+✔ skipped target page_AZ_Maricopa
+▶ dispatched target timestamp_PA_Allegheny
+▶ dispatched target timestamp_PA_Delaware
+▶ dispatched target timestamp_NC_NA
+● completed target timestamp_PA_Allegheny [0.062 seconds, 58 bytes]
+✔ skipped target data_PA_Allegheny
+✔ skipped target tbl_cbs_PA_Allegheny
+✔ skipped target model_PA_Allegheny
+✔ skipped target plot_voteShare_PA_Allegheny
+✔ skipped target plot_margin2020_PA_Allegheny
+✔ skipped target plot_votesAll_PA_Allegheny
+✔ skipped target plot_votesEDay_PA_Allegheny
+✔ skipped target tbl_county_PA_Allegheny
+✔ skipped target tbl_countyMode_PA_Allegheny
+✔ skipped target page_PA_Allegheny
+▶ dispatched target timestamp_MI_Macomb
+● completed target timestamp_PA_Delaware [0.079 seconds, 58 bytes]
+✔ skipped target data_PA_Delaware
+✔ skipped target model_PA_Delaware
+✔ skipped target tbl_countyMode_PA_Delaware
+✔ skipped target tbl_cbs_PA_Delaware
+✔ skipped target plot_votesEDay_PA_Delaware
+✔ skipped target tbl_county_PA_Delaware
+✔ skipped target plot_votesAll_PA_Delaware
+✔ skipped target plot_voteShare_PA_Delaware
+✔ skipped target plot_margin2020_PA_Delaware
+✔ skipped target page_PA_Delaware
+▶ dispatched target timestamp_MI_Oakland
+● completed target timestamp_NC_NA [0.109 seconds, 58 bytes]
+✔ skipped target data_NC_NA
+✔ skipped target model_NC_NA
+✔ skipped target tbl_county_NC_NA
+✔ skipped target plot_votesAll_NC_NA
+✔ skipped target plot_margin2020_NC_NA
+✔ skipped target plot_votesEDay_NC_NA
+✔ skipped target plot_voteShare_NC_NA
+✔ skipped target tbl_countyMode_NC_NA
+✔ skipped target page_NC
+✔ skipped target tbl_cbs_NC_NA
+▶ dispatched target timestamp_MI_Ingham
+● completed target timestamp_MI_Macomb [0.062 seconds, 58 bytes]
+✔ skipped target data_MI_Macomb
+✔ skipped target model_MI_Macomb
+✔ skipped target plot_votesAll_MI_Macomb
+✔ skipped target tbl_countyMode_MI_Macomb
+✔ skipped target tbl_cbs_MI_Macomb
+✔ skipped target plot_margin2020_MI_Macomb
+✔ skipped target plot_votesEDay_MI_Macomb
+✔ skipped target plot_voteShare_MI_Macomb
+✔ skipped target tbl_county_MI_Macomb
+✔ skipped target page_MI_Macomb
+▶ dispatched target uploads
+● completed target timestamp_MI_Oakland [0.047 seconds, 58 bytes]
+▶ dispatched target data_MI_Oakland
+● completed target timestamp_MI_Ingham [0.11 seconds, 58 bytes]
+✔ skipped target data_MI_Ingham
+✔ skipped target model_MI_Ingham
+✔ skipped target plot_voteShare_MI_Ingham
+✔ skipped target plot_votesAll_MI_Ingham
+✔ skipped target plot_margin2020_MI_Ingham
+✔ skipped target plot_votesEDay_MI_Ingham
+✔ skipped target tbl_county_MI_Ingham
+✔ skipped target tbl_countyMode_MI_Ingham
+✔ skipped target page_MI_Ingham
+✔ skipped target tbl_cbs_MI_Ingham
+● completed target timestamp_PA_Philadelphia [3.969 seconds, 58 bytes]
+✔ skipped target data_PA_Philadelphia
+✔ skipped target tbl_cbs_PA_Philadelphia
+✔ skipped target model_PA_Philadelphia
+✔ skipped target plot_votesAll_PA_Philadelphia
+✔ skipped target plot_margin2020_PA_Philadelphia
+✔ skipped target plot_voteShare_PA_Philadelphia
+✔ skipped target tbl_countyMode_PA_Philadelphia
+✔ skipped target plot_votesEDay_PA_Philadelphia
+✔ skipped target tbl_county_PA_Philadelphia
+✔ skipped target page_PA_Philadelphia
+● completed target uploads [2.156 seconds, 182 bytes]
