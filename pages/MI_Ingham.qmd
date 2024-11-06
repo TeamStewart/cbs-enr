@@ -52,7 +52,7 @@ tar_read(model_MI_Ingham) |> list2env(envir = .GlobalEnv) |> invisible()
 
 ## Recent Updates
 
-Last update: `r prec_reported_any - read_file(glue("{PATH_DROPBOX}/24_general/{state}/prec_reported_any_{county}")) |> as.numeric()` new precincts reported at `r ymd_hms(timestamp) |> with_tz("US/Eastern")`.
+Last update: `r prec_reported_any - read_file(glue("{PATH_DROPBOX}/24_general/{state}/prec_reported_any_{county}")) |> as.numeric()` new precincts reported at `r ymd_hms(timestamp)`.
 
 ```{r}
 
@@ -85,7 +85,7 @@ write_file(as.character(prec_reported_any), glue("{PATH_DROPBOX}/24_general/{sta
 
 summaries_byMode |> 
   mutate(
-    across(c(contains("swing")), ~ scales::label_percent(accuracy = 0.01)(.x)),
+    across(c(contains("swing")), ~ scales::label_percent(accuracy = 0.01, suffix="pp")(.x)),
     swing_24 = glue("{swing_estimate} [{swing_lower} to {swing_upper}]")
   ) |> 
   filter(vote_mode != "Provisional") |> 

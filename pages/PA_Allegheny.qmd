@@ -85,7 +85,7 @@ write_file(as.character(prec_reported_any), glue("{PATH_DROPBOX}/24_general/{sta
 
 summaries_byMode |> 
   mutate(
-    across(c(contains("swing")), ~ scales::label_percent(accuracy = 0.01)(.x)),
+    across(c(contains("swing")), ~ scales::label_percent(accuracy = 0.01, suffix="pp")(.x)),
     swing_24 = glue("{swing_estimate} [{swing_lower} to {swing_upper}]")
   ) |> 
   filter(vote_mode != "Provisional") |> 
