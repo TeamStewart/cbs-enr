@@ -19,8 +19,8 @@ source("scripts/functions.R")
 
 #renv::use_python()
 
-state = 'AZ'
-county = 'Pima'
-path = 'https://www.pima.gov/2865/Election-Results'
+state = 'PA'
+county = 'Allegheny'
+path = 122424
 timestamp = get_timestamp(state, county, path)
 data = get_data(state, county, timestamp, path)

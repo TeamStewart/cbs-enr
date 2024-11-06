@@ -1035,7 +1035,7 @@ write_csv(data_history, glue("{PATH_DROPBOX}/history/PA_history.csv"))
 
 
 # Testing -----------------------------------------------------------------
-zero_file <- read_csv(glue("{PATH_DROPBOX}/24_general/MI/cl"))
-
-# test <- zero_file |> select(precinct_id) |> distinct() |> 
-#   anti_join(allegheny_data_history, by = c("precinct_id" = "precinct_24"))
+zero_file <- read_csv(glue("{PATH_DROPBOX}/24_general/NC/NC_latest.csv"))
+history <- read_csv(glue("{PATH_DROPBOX}/history/NC_history.csv"))
+zero_file |> select(precinct_id) |> distinct() |> 
+  anti_join(history, by = c("precinct_id" = "precinct_24"))
