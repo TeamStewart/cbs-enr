@@ -1187,3 +1187,12 @@ $summaries_byCounty_byMode
 # ℹ 8 more variables: votePct_dem_20 <dbl>, votePct_rep_20 <dbl>, votes_precFinal_20 <dbl>, reported_eday <lgl>, reported_mail <lgl>,
 #   reported_early <lgl>, reported_any <lgl>, reported_all <lgl>
 # ℹ Use `print(n = ...)` to see more rows
+Warning messages:
+1: Removed 1 row containing missing values or values outside the scale range (`geom_pointrange()`). 
+2: Removed 1 row containing missing values or values outside the scale range (`geom_pointrange()`). 
+Error:
+! target plot_voteMargin_GA_NA not found
+Error:
+! target plot_voteMargin20_GA_NA not found
+Warning message:
+Removed 1 row containing missing values or values outside the scale range (`geom_pointrange()`). 
