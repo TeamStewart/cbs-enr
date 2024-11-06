@@ -45,7 +45,12 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       reported_eday = max(vote_mode == "Election Day" & votes_precTotal_24 > 0) == 1,
       reported_mail = max(vote_mode == "Absentee/Mail" & votes_precTotal_24 > 0) == 1,
       reported_early = max(vote_mode == "Early Voting" & votes_precTotal_24 > 0) == 1,
-      reported_any = reported_eday | reported_mail | reported_early,
+      reported_any = case_when(
+        .default = reported_eday & reported_mail & reported_early,
+        county %in% c("Philadelphia", "Allegheny", "Delaware") ~ reported_eday & reported_mail,
+        
+      ),
+      # reported_any = reported_eday | reported_mail | reported_early,
       reported_all = reported_eday & reported_mail & reported_early,
       .by = c(county, precinct_24)
     ) |> 
