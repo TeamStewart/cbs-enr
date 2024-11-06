@@ -1,9 +1,9 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|ed8ea297221be21f|||||||||||||||
+.Random.seed|object|1699b7ada3eee53e|||||||||||||||
 create_table_cbs|function|ff8615c851919dd8|||||||||||||||
 data_AZ_Maricopa|stem|e326825b1f7ca087|1246177af406de46|199eba7a3ddede01|-120925747||t20033.0177006148s|0ba35f816ff6da18|24151|qs|local|vector|||9.609||
 data_AZ_Pima|stem|42bf2e4657c59077|f81e46c450c10852|bddc653a5fc4ba06|95377190||t20033.0405484428s|3fdf46811c771cae|1188|qs|local|vector|||1.375||
-data_GA_NA|stem|25f05319779b4298|be6a3d224f3a771b|a55616361218f892|-931803180||t20033.0354312167s||32095|qs|local|vector|||1.516|downloaded length 25165824  reported length 32960146. URL httpsapp.enhancedvoting.comcdnresultsGeorgiaexport2024NovGen.json status was Transferred a partial file|download from httpsapp.enhancedvoting.comcdnresultsGeorgiaexport2024NovGen.json failed
+data_GA_NA|stem|25f05319779b4298|be6a3d224f3a771b|d20a09a029475f05|-931803180||t20033.0354312167s||32095|qs|local|vector|||1.203|error 1 in extracting from zip file|invalid description argument
 data_MI_Eaton|stem|9b7b4ae5c0346b11|6c719395544f0ee6|fde9f3550efc8ba1|-1194529039||t20033.0174728296s|adefddf2a5d5ae08|1472|qs|local|vector|||6.953||
 data_MI_Ingham|stem|eb9334e9e631321e|66b00feddd0960eb|7e5086ce4040c9bd|57551775||t20033.0173865277s|688724c23b2c752d|1402|qs|local|vector|||1.719||
 data_MI_Macomb|stem|868266b01ec1f1b9|0bb23847cc73676c|c3f6f06f8d83f5f2|-818305503||t20033.0173774611s|4be4e2920654e4ab|2223|qs|local|vector|||4.516||
@@ -14,7 +14,7 @@ data_PA_Delaware|stem|cbdf5c1250a7eada|697f98ba13d1f253|c1e0ee649ccb1316|6488367
 data_PA_Philadelphia|stem|7de0c51ff1fc7881|31db8a19d0865366|f92e2c85d169aab1|-626388640||t20033.0447397226s|e117b02304c640ea|3875|qs|local|vector|||16.407|One or more parsing issues, call problems on your data frame for details,e.g.  dat  vroom...  problemsdat|
 ELECTION_DATE|object|8570071620b95baa|||||||||||||||
 get_clarity|function|110cdc97c7cf6660|||||||||||||||
-get_data|function|3d2d90550c4248ab|||||||||||||||
+get_data|function|5351575852513f86|||||||||||||||
 get_gsheet|function|30c6084fdf85ad9a|||||||||||||||
 get_modelHist|function|98d68c7ea298cf99|||||||||||||||
 get_timestamp|function|db6c3c654229faa3|||||||||||||||
@@ -98,7 +98,7 @@ plot_voteShare_PA_Delaware|stem|f35849d3565b6765|7aea2aa3e29ee55b|5342641ad717dc
 plot_voteShare_PA_Philadelphia|stem|c682b9d9ecd7815b|8156ef2bd164e119|a0aad832693e0086|-752375451||t20033.0447948153s|d20cdeef556fc334|359708|qs|local|vector|||0.5||
 run_models|function|7391da8999e062f7|||||||||||||||
 scrape_az|function|070ec57a9f5d17cc|||||||||||||||
-scrape_ga|function|3f3fd7f2dd5ec7ae|||||||||||||||
+scrape_ga|function|73dc728856150790|||||||||||||||
 scrape_mi|function|3b08094f2a758e61|||||||||||||||
 scrape_nc|function|0e0354420acb6c7f|||||||||||||||
 scrape_pa|function|6eb0207d88e9825c|||||||||||||||
@@ -137,7 +137,7 @@ tbl_countyMode_PA_Delaware|stem|f05a09668a03eaac|d3a2d40b7bd5abbd|d5df654573bb2b
 tbl_countyMode_PA_Philadelphia|stem|d8aac2e727f4f039|aefed96cc9aa0de6|bcadaeedf47842e6|-2094853167||t20033.0448176287s|84f29f4af1359faa|8018|qs|local|vector|||0.516|There was 1 warning in mutate.ℹ In argument timestamp  with_tzymd_hmstimestamp, USEastern.Caused by warning  1 failed to parse.|
 timestamp_AZ_Maricopa|stem|5471ca68b5112a7b|811f19eacc390e49|031a569b31db59c0|1242395665||t20033.0445468431s|86c36464e2e2a367|58|qs|local|vector|||3.094||
 timestamp_AZ_Pima|stem|2eb37dc91c83e8dd|d6a4fffa17da5470|031a569b31db59c0|-728260326||t20033.0405258197s|86c36464e2e2a367|58|qs|local|vector|||0||
-timestamp_GA_NA|stem|ddc180334f7a2a3c|f1580ae86d2ca893|031a569b31db59c0|828350109||t20033.0445422473s|86c36464e2e2a367|58|qs|local|vector|||2.656||
+timestamp_GA_NA|stem|0007f2d83a1dc634|f1580ae86d2ca893|031a569b31db59c0|828350109||t20033.0474628377s|86c36464e2e2a367|58|qs|local|vector|||1.86||
 timestamp_MI_Eaton|stem|e9697a533b892a7d|620b22c465cb0556|031a569b31db59c0|1149203977||t20033.0445419927s|86c36464e2e2a367|58|qs|local|vector|||2.719||
 timestamp_MI_Ingham|stem|ceac34813dc9c61a|a1e1c3cf419e783c|031a569b31db59c0|-664073679||t20033.0445766243s|86c36464e2e2a367|58|qs|local|vector|||0.109||
 timestamp_MI_Macomb|stem|27eebd3f35fea536|a217ab827414868d|031a569b31db59c0|378924614||t20033.0445702906s|86c36464e2e2a367|58|qs|local|vector|||0.062||
