@@ -168,7 +168,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   # Append CBS lookup info
   formatted <- data |>
     # For the purposes of CBS, remove undervote/overvotes
-    filter(vote_mode != "Overvote/Undervote" & !is.na(candidate_name)) |> 
+    filter(vote_mode != "Overvote/Undervote" & candidate_name!='Other') |> 
     mutate(
       jCde = "0",
       ofc = case_match(
