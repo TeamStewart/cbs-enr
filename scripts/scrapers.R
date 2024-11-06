@@ -511,7 +511,8 @@ scrape_mi <- function(state, county, path, timestamp){
             "Joseph Solis-Mullen" ~ "Joseph Solis-Mullen",
             "Dave Stein" ~ "Dave Stein",
             "Douglas P. Marsh" ~ "Douglas Marsh",
-            "Doug Dern" ~ "Doug Dern"
+            "Doug Dern" ~ "Doug Dern",
+            .default = "Other"
           ), 
           # Create virtual precinct column: real == TRUE, administrative == FALSE
           virtual_precinct = F,

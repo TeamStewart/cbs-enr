@@ -2,7 +2,7 @@ state,county,path,preelection_totals,upload
 GA,,https://app.enhancedvoting.com/cdn/results/Georgia/export-2024NovGen.zip,FALSE,TRUE
 NC,,http://dl.ncsbe.gov/ENRS/2024_11_05/results_pct_20241105.zip,FALSE,TRUE
 AZ,Maricopa,https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch,FALSE,TRUE
-AZ,Pima,,FALSE,TRUE
+AZ,Pima,https://www.pima.gov/2865/Election-Results,FALSE,TRUE
 MI,Oakland,122321,FALSE,TRUE
 MI,Macomb,122434,FALSE,TRUE
 MI,Ingham,https://app.enhancedvoting.com/cdn/results/ingham-county-mi/export-general11052024.json,FALSE,TRUE

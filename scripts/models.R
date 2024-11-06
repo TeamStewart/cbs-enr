@@ -223,7 +223,8 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
     ) |> 
     mutate(
       across(where(is.double) & !timestamp, ~ na_if(.x, Inf)),
-      across(where(is.double) & !timestamp, ~ na_if(.x, -Inf))
+      across(where(is.double) & !timestamp, ~ na_if(.x, -Inf)),
+      across(demShare_lower:swing_upper, ~ ifelse(vote_mode == "Provisional", NA, .x))
     )
   
   summaries_byCounty = summaries_byCounty_byMode |> 
