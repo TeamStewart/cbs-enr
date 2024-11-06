@@ -1,0 +1,1155 @@
+2024-11-05 19:24:22: Running tar_make
+-\|/-\|/-\|/-\|/-\|/-\|/-\|ℹ The googlesheets4 package is using a cached token for
+  'masonreece1317@gmail.com'.
+/-✔ Reading from "CBS Utils".
+\✔ Range ''metadata''.
+|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|▶ dispatched target timestamp_PA_Allegheny
+/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/▶ dispatched target timestamp_PA_Delaware
+▶ dispatched target timestamp_MI_Oakland
+▶ dispatched target timestamp_PA_Philadelphia
+● completed target timestamp_PA_Delaware [2.109 seconds, 58 bytes]
+-\|/-\|/-\|/-\|/-\|/-\|/-\▶ dispatched target data_PA_Delaware
+● completed target timestamp_PA_Allegheny [2.093 seconds, 58 bytes]
+▶ dispatched target data_PA_Allegheny
+● completed target timestamp_MI_Oakland [2.109 seconds, 58 bytes]
+▶ dispatched target data_MI_Oakland
+● completed target timestamp_PA_Philadelphia [2.343 seconds, 58 bytes]
+▶ dispatched target data_PA_Philadelphia
+● completed target data_PA_Allegheny [5.016 seconds, 12.697 kilobytes]
+|/-\|/-\|/-✔ skipped target model_PA_Allegheny
+✔ skipped target plot_margin2020_PA_Allegheny
+✔ skipped target tbl_cbs_PA_Allegheny
+✔ skipped target tbl_countyMode_PA_Allegheny
+✔ skipped target tbl_county_PA_Allegheny
+✔ skipped target plot_votesEDay_PA_Allegheny
+✔ skipped target plot_votesAll_PA_Allegheny
+✔ skipped target plot_voteShare_PA_Allegheny
+✔ skipped target page_PA_Allegheny
+▶ dispatched target uploads
+● completed target uploads [2.125 seconds, 182 bytes]
+\|/-\|/-\|/-\|/-▶ dispatched target timestamp_MI_Macomb
+● completed target timestamp_MI_Macomb [0.047 seconds, 58 bytes]
+▶ dispatched target data_MI_Macomb
+● completed target data_MI_Oakland [10.906 seconds, 5.831 kilobytes]
+\|/-\|✔ skipped target model_MI_Oakland
+✔ skipped target plot_margin2020_MI_Oakland
+✔ skipped target plot_votesEDay_MI_Oakland
+✔ skipped target tbl_county_MI_Oakland
+✔ skipped target tbl_cbs_MI_Oakland
+✔ skipped target plot_votesAll_MI_Oakland
+✔ skipped target plot_voteShare_MI_Oakland
+✔ skipped target tbl_countyMode_MI_Oakland
+✔ skipped target page_MI_Oakland
+▶ dispatched target timestamp_MI_Ingham
+● completed target timestamp_MI_Ingham [0.093 seconds, 58 bytes]
+▶ dispatched target data_MI_Ingham
+● completed target data_MI_Macomb [4.516 seconds, 2.223 kilobytes]
+/-\✔ skipped target model_MI_Macomb
+✔ skipped target plot_margin2020_MI_Macomb
+✔ skipped target plot_votesAll_MI_Macomb
+✔ skipped target plot_votesEDay_MI_Macomb
+✔ skipped target plot_voteShare_MI_Macomb
+✔ skipped target tbl_county_MI_Macomb
+✔ skipped target tbl_countyMode_MI_Macomb
+✔ skipped target page_MI_Macomb
+✔ skipped target tbl_cbs_MI_Macomb
+▶ dispatched target timestamp_GA_NA
+● completed target timestamp_GA_NA [0.062 seconds, 58 bytes]
+▶ dispatched target data_GA_NA
+● completed target data_MI_Ingham [1.719 seconds, 1.402 kilobytes]
+|/-\|/-\|/-\|/-\|/-✔ skipped target model_MI_Ingham
+✔ skipped target plot_margin2020_MI_Ingham
+✔ skipped target plot_votesAll_MI_Ingham
+✔ skipped target plot_votesEDay_MI_Ingham
+✔ skipped target plot_voteShare_MI_Ingham
+✔ skipped target tbl_county_MI_Ingham
+✔ skipped target tbl_countyMode_MI_Ingham
+✔ skipped target page_MI_Ingham
+✔ skipped target tbl_cbs_MI_Ingham
+▶ dispatched target timestamp_MI_Eaton
+● completed target timestamp_MI_Eaton [0.062 seconds, 58 bytes]
+▶ dispatched target data_MI_Eaton
+● completed target data_PA_Philadelphia [16.922 seconds, 3.875 kilobytes]
+\|/-\|/-\|/-\|/-✔ skipped target model_PA_Philadelphia
+✔ skipped target tbl_countyMode_PA_Philadelphia
+✔ skipped target plot_votesEDay_PA_Philadelphia
+✔ skipped target plot_votesAll_PA_Philadelphia
+✔ skipped target tbl_cbs_PA_Philadelphia
+✔ skipped target plot_margin2020_PA_Philadelphia
+✔ skipped target plot_voteShare_PA_Philadelphia
+✔ skipped target tbl_county_PA_Philadelphia
+✔ skipped target page_PA_Philadelphia
+▶ dispatched target timestamp_NC_NA
+● completed target timestamp_NC_NA [0.141 seconds, 58 bytes]
+▶ dispatched target data_NC_NA
+● completed target data_MI_Eaton [6.953 seconds, 1.472 kilobytes]
+\|/-\|/-✔ skipped target model_MI_Eaton
+✔ skipped target plot_voteShare_MI_Eaton
+✔ skipped target tbl_cbs_MI_Eaton
+✔ skipped target tbl_countyMode_MI_Eaton
+✔ skipped target plot_votesAll_MI_Eaton
+✔ skipped target plot_margin2020_MI_Eaton
+✔ skipped target plot_votesEDay_MI_Eaton
+✔ skipped target tbl_county_MI_Eaton
+✔ skipped target page_MI_Eaton
+▶ dispatched target timestamp_AZ_Pima
+● completed target timestamp_AZ_Pima [0 seconds, 58 bytes]
+▶ dispatched target data_AZ_Pima
+▶ dispatched target timestamp_AZ_Maricopa
+\|/-\|/-\● completed target data_NC_NA [4.344 seconds, 23.993 kilobytes]
+✔ skipped target model_NC_NA
+● completed target data_AZ_Pima [1.5 seconds, 1.188 kilobytes]
+▶ dispatched target model_AZ_Pima
+● completed target timestamp_AZ_Maricopa [0.172 seconds, 58 bytes]
+|/-✔ skipped target plot_margin2020_NC_NA
+✔ skipped target plot_votesAll_NC_NA
+✔ skipped target plot_votesEDay_NC_NA
+✔ skipped target plot_voteShare_NC_NA
+✔ skipped target tbl_county_NC_NA
+✔ skipped target tbl_countyMode_NC_NA
+✔ skipped target page_NC
+▶ dispatched target data_AZ_Maricopa
+✔ skipped target tbl_cbs_NC_NA
+● completed target data_PA_Delaware [25.094 seconds, 5.509 kilobytes]
+\|/-Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets\:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+|Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets/:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+-Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets\:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+|Error: object 'votes_total_24' not found
+/Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets-:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+\✔ skipped target model_PA_Delaware
+✔ skipped target tbl_cbs_PA_Delaware
+✔ skipped target plot_voteShare_PA_Delaware
+✔ skipped target tbl_countyMode_PA_Delaware
+✔ skipped target plot_votesAll_PA_Delaware
+✔ skipped target plot_margin2020_PA_Delaware
+✔ skipped target plot_votesEDay_PA_Delaware
+✔ skipped target tbl_county_PA_Delaware
+✔ skipped target page_PA_Delaware
+▶ dispatched target tbl_cbs_AZ_Pima
+● completed target data_GA_NA [12.218 seconds, 27.012 kilobytes]
+▶ dispatched target model_GA_NA
+● completed target model_AZ_Pima [0.766 seconds, 22.091 kilobytes]
+▶ dispatched target tbl_county_AZ_Pima
+● completed target tbl_county_AZ_Pima [0.172 seconds, 7.881 kilobytes]
+|/▶ dispatched target plot_margin2020_AZ_Pima
+● completed target plot_margin2020_AZ_Pima [0.296 seconds, 184.524 kilobytes]
+-\|▶ dispatched target plot_votesAll_AZ_Pima
+● completed target plot_votesAll_AZ_Pima [0.281 seconds, 192.703 kilobytes]
+/-\▶ dispatched target plot_votesEDay_AZ_Pima
+● completed target model_GA_NA [2.14 seconds, 32.771 kilobytes]
+▶ dispatched target plot_voteShare_GA_NA
+● completed target plot_votesEDay_AZ_Pima [0.188 seconds, 194.019 kilobytes]
+▶ dispatched target plot_voteShare_AZ_Pima
+● completed target plot_voteShare_GA_NA [0.203 seconds, 208.858 kilobytes]
+|/Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets-:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+\Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets|:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+/Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targetsError: object 'votes_total_24' not found
+-:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+\Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets|:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+/▶ dispatched target tbl_countyMode_AZ_Pima
+● completed target plot_voteShare_AZ_Pima [0.172 seconds, 196.273 kilobytes]
+▶ dispatched target tbl_cbs_GA_NA
+● completed target tbl_countyMode_AZ_Pima [0.344 seconds, 8.037 kilobytes]
+-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|▶ dispatched target page_AZ_Pima
+● completed target page_AZ_Pima [10.719 seconds, 210.542 kilobytes]
+/-● completed target data_AZ_Maricopa [9.609 seconds, 24.151 kilobytes]
+✔ skipped target model_AZ_Maricopa
+● completed target tbl_cbs_AZ_Pima [4.984 seconds, 2.439 kilobytes]
+✔ skipped target plot_margin2020_AZ_Maricopa
+● completed target tbl_cbs_GA_NA [8.578 seconds, 62.785 kilobytes]
+✔ skipped target plot_votesAll_AZ_Maricopa
+✔ skipped target plot_votesEDay_AZ_Maricopa
+✔ skipped target plot_voteShare_AZ_Maricopa
+✔ skipped target tbl_county_AZ_Maricopa
+✔ skipped target tbl_countyMode_AZ_Maricopa
+✔ skipped target page_AZ_Maricopa
+✔ skipped target tbl_cbs_AZ_Maricopa
+▶ dispatched target plot_margin2020_GA_NA
+▶ dispatched target plot_votesAll_GA_NA
+▶ dispatched target plot_votesEDay_GA_NA
+▶ dispatched target tbl_county_GA_NA
+● completed target plot_votesAll_GA_NA [0.156 seconds, 205.801 kilobytes]
+\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets\:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+|Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets/:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+-Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets\:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+|Error: object 'votes_total_24' not found
+/Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets▶ dispatched target tbl_countyMode_GA_NA
+● completed target plot_margin2020_GA_NA [0.219 seconds, 196.14 kilobytes]
+● completed target plot_votesEDay_GA_NA [0.187 seconds, 206.989 kilobytes]
+● completed target tbl_county_GA_NA [15.125 seconds, 12.331 kilobytes]
+-:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets\:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+|Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets/:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+-Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets\:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+|Error: object 'votes_total_24' not found
+/Error:
+! `everything()` must be used within a *selecting* function.
+ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
+  details.
+Backtrace:
+     ▆
+  1. ├─base::tryCatch(...)
+  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  3. │   ├─base (local) tryCatchOne(...)
+  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  8. ├─base::withCallingHandlers(...)
+  9. ├─base::saveRDS(...)
+ 10. ├─base::do.call(...)
+ 11. ├─base (local) `<fn>`(...)
+ 12. ├─global `<fn>`(...)
+ 13. │ ├─base::tryCatch(...)
+ 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 17. │ ├─base::withCallingHandlers(...)
+ 18. │ └─targets::tar_callr_inner_try(...)
+ 19. │   ├─base::do.call(targets_function, targets_arguments)
+ 20. │   └─targets (local) `<fn>`(...)
+ 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
+ 22. │       └─self$run_crew()
+ 23. │         └─self$iterate()
+ 24. │           └─self$conclude_worker_task()
+ 25. │             ├─targets:::target_conclude(...)
+ 26. │             └─targets:::target_conclude.tar_builder(...)
+ 27. │               └─targets:::builder_ensure_object(target, "main")
+ 28. │                 ├─base::tryCatch(...)
+ 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+ 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 32. │                 └─targets-:::builder_update_object(target)
+ 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
+ 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
+ 35. │                     ├─targets:::store_write_path(...)
+ 36. │                     └─targets:::store_write_path.tar_qs(...)
+ 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
+ 38. └─tidyselect::everything()
+ 39.   ├─vars %||% peek_vars(fn = "everything")
+ 40.   └─tidyselect::peek_vars(fn = "everything")
+ 41.     └─cli::cli_abort(...)
+ 42.       └─rlang::abort(...)
+\● completed target tbl_countyMode_GA_NA [31.516 seconds, 13.01 kilobytes]
+|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-
+$state
+[1] "GA"
+
+$county
+[1] NA
+
+$timestamp
+[1] "2024_11_05_19_06_50"
+
+$data_history
+# A tibble: 10,804 × 19
+   state county  precinct_24 vote_mode   votes_precTotal_24 votes_24_dem votes_24_rep votePct_dem_24 votePct_rep_24 votes_20_dem votes_20_rep
+   <chr> <chr>   <chr>       <chr>                    <int>        <int>        <int>          <dbl>          <dbl>        <dbl>        <dbl>
+ 1 GA    Appling 1B          Election D…                  0            0            0            NaN            NaN           NA           NA
+ 2 GA    Appling 1B          Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+ 3 GA    Appling 1B          Provisional                  0            0            0            NaN            NaN           NA           NA
+ 4 GA    Appling 1B          Early Voti…                  0            0            0            NaN            NaN           NA           NA
+ 5 GA    Appling 1C          Election D…                  0            0            0            NaN            NaN           NA           NA
+ 6 GA    Appling 1C          Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+ 7 GA    Appling 1C          Provisional                  0            0            0            NaN            NaN           NA           NA
+ 8 GA    Appling 1C          Early Voti…                  0            0            0            NaN            NaN           NA           NA
+ 9 GA    Appling 2           Election D…                  0            0            0            NaN            NaN           NA           NA
+10 GA    Appling 2           Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+# ℹ 10,794 more rows
+# ℹ 8 more variables: votePct_dem_20 <dbl>, votePct_rep_20 <dbl>, votes_precFinal_20 <dbl>, reported_eday <lgl>, reported_mail <lgl>,
+#   reported_early <lgl>, reported_any <lgl>, reported_all <lgl>
+# ℹ Use `print(n = ...)` to see more rows
+
+$quantile_upper
+[1] 1
+
+$quantile_lower
+[1] 0
+
+$prec_total
+[1] 2701
+
+$prec_reported_all
+[1] 0
+
+$prec_reported_any
+[1] 149
+
+$prec_reported_eday
+[1] 0
+
+$summaries
+# A tibble: 1 × 22
+  state swing_lower swing_estimate swing_upper demShare_20 repShare_20 demShare_lower demShare_estimate demShare_upper repShare_lower
+  <chr>       <dbl>          <dbl>       <dbl>       <dbl>       <dbl>          <dbl>             <dbl>          <dbl>          <dbl>
+1 GA            NaN            NaN         NaN         NaN         NaN            NaN               NaN            NaN            NaN
+# ℹ 12 more variables: repShare_estimate <dbl>, repShare_upper <dbl>, votes_total_20 <dbl>, votes_total_24_lower <dbl>,
+#   votes_total_24_estimate <dbl>, votes_total_24_upper <dbl>, demVotes_lower <dbl>, demVotes_estimate <dbl>, demVotes_upper <dbl>,
+#   repVotes_lower <dbl>, repVotes_estimate <dbl>, repVotes_upper <dbl>
+
+$summaries_byCounty
+# A tibble: 318 × 24
+   state county   timestamp           swing_lower swing_estimate swing_upper demShare_20 repShare_20 demShare_lower demShare_estimate
+   <chr> <chr>    <dttm>                    <dbl>          <dbl>       <dbl>       <dbl>       <dbl>          <dbl>             <dbl>
+ 1 GA    Appling  2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 2 GA    Atkinson 2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 3 GA    Bacon    2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 4 GA    Baker    2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 5 GA    Baldwin  2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 6 GA    Banks    2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 7 GA    Barrow   2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 8 GA    Bartow   2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 9 GA    Ben Hill 2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+10 GA    Berrien  2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+# ℹ 308 more rows
+# ℹ 14 more variables: demShare_upper <dbl>, repShare_lower <dbl>, repShare_estimate <dbl>, repShare_upper <dbl>, votes_total_20 <dbl>,
+#   votes_total_24_lower <dbl>, votes_total_24_estimate <dbl>, votes_total_24_upper <dbl>, demVotes_lower <dbl>, demVotes_estimate <dbl>,
+#   demVotes_upper <dbl>, repVotes_lower <dbl>, repVotes_estimate <dbl>, repVotes_upper <dbl>
+# ℹ Use `print(n = ...)` to see more rows
+
+$summaries_byMode
+# A tibble: 4 × 25
+  state vote_mode     swing_lower swing_estimate swing_upper demShare_20 repShare_20 demShare_lower demShare_estimate demShare_upper
+  <chr> <chr>               <dbl>          <dbl>       <dbl>       <dbl>       <dbl>          <dbl>             <dbl>          <dbl>
+1 GA    Election Day          NaN            NaN         NaN         NaN         NaN            NaN               NaN            NaN
+2 GA    Absentee/Mail         NaN            NaN         NaN         NaN         NaN            NaN               NaN            NaN
+3 GA    Provisional           NaN            NaN         NaN         NaN         NaN            NaN               NaN            NaN
+4 GA    Early Voting          NaN            NaN         NaN         NaN         NaN            NaN               NaN            NaN
+# ℹ 15 more variables: repShare_lower <dbl>, repShare_estimate <dbl>, repShare_upper <dbl>, votes_total_20 <dbl>,
+#   votes_total_24_lower <dbl>, votes_total_24_estimate <dbl>, votes_total_24_upper <dbl>, demVotes_lower <dbl>, demVotes_estimate <dbl>,
+#   demVotes_upper <dbl>, repVotes_lower <dbl>, repVotes_estimate <dbl>, repVotes_upper <dbl>, timestamp <dttm>, confidence <lgl>
+
+$summaries_byCounty_byMode
+# A tibble: 1,272 × 25
+   state county  vote_mode timestamp           votes_total_20 votes_total_24_lower votes_total_24_estim…¹ votes_total_24_upper demVotes_lower
+   <chr> <chr>   <chr>     <dttm>                       <dbl>                <dbl>                  <dbl>                <dbl>          <dbl>
+ 1 GA    Appling Election… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 2 GA    Appling Absentee… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 3 GA    Appling Provisio… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 4 GA    Appling Early Vo… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 5 GA    Atkins… Election… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 6 GA    Atkins… Absentee… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 7 GA    Atkins… Provisio… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 8 GA    Atkins… Early Vo… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 9 GA    Bacon   Election… 2024-11-05 19:06:50              0                    0                      0                    0              0
+10 GA    Bacon   Absentee… 2024-11-05 19:06:50              0                    0                      0                    0              0
+# ℹ 1,262 more rows
+# ℹ abbreviated name: ¹​votes_total_24_estimate
+# ℹ 16 more variables: demVotes_estimate <dbl>, demVotes_upper <dbl>, repVotes_lower <dbl>, repVotes_estimate <dbl>, repVotes_upper <dbl>,
+#   demShare_20 <dbl>, repShare_20 <dbl>, demShare_lower <dbl>, demShare_estimate <dbl>, demShare_upper <dbl>, repShare_lower <dbl>,
+#   repShare_estimate <dbl>, repShare_upper <dbl>, swing_lower <dbl>, swing_estimate <dbl>, swing_upper <dbl>
+# ℹ Use `print(n = ...)` to see more rows
+
+$state
+[1] "GA"
+
+$county
+[1] NA
+
+$timestamp
+[1] "2024_11_05_19_06_50"
+
+$data_history
+# A tibble: 10,804 × 19
+   state county  precinct_24 vote_mode   votes_precTotal_24 votes_24_dem votes_24_rep votePct_dem_24 votePct_rep_24 votes_20_dem votes_20_rep
+   <chr> <chr>   <chr>       <chr>                    <int>        <int>        <int>          <dbl>          <dbl>        <dbl>        <dbl>
+ 1 GA    Appling 1B          Election D…                  0            0            0            NaN            NaN           NA           NA
+ 2 GA    Appling 1B          Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+ 3 GA    Appling 1B          Provisional                  0            0            0            NaN            NaN           NA           NA
+ 4 GA    Appling 1B          Early Voti…                  0            0            0            NaN            NaN           NA           NA
+ 5 GA    Appling 1C          Election D…                  0            0            0            NaN            NaN           NA           NA
+ 6 GA    Appling 1C          Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+ 7 GA    Appling 1C          Provisional                  0            0            0            NaN            NaN           NA           NA
+ 8 GA    Appling 1C          Early Voti…                  0            0            0            NaN            NaN           NA           NA
+ 9 GA    Appling 2           Election D…                  0            0            0            NaN            NaN           NA           NA
+10 GA    Appling 2           Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+# ℹ 10,794 more rows
+# ℹ 8 more variables: votePct_dem_20 <dbl>, votePct_rep_20 <dbl>, votes_precFinal_20 <dbl>, reported_eday <lgl>, reported_mail <lgl>,
+#   reported_early <lgl>, reported_any <lgl>, reported_all <lgl>
+# ℹ Use `print(n = ...)` to see more rows
+
+$quantile_upper
+[1] 1
+
+$quantile_lower
+[1] 0
+
+$prec_total
+[1] 2701
+
+$prec_reported_all
+[1] 0
+
+$prec_reported_any
+[1] 149
+
+$prec_reported_eday
+[1] 0
+
+$summaries
+# A tibble: 1 × 22
+  state swing_lower swing_estimate swing_upper demShare_20 repShare_20 demShare_lower demShare_estimate demShare_upper repShare_lower
+  <chr>       <dbl>          <dbl>       <dbl>       <dbl>       <dbl>          <dbl>             <dbl>          <dbl>          <dbl>
+1 GA            NaN            NaN         NaN         NaN         NaN            NaN               NaN            NaN            NaN
+# ℹ 12 more variables: repShare_estimate <dbl>, repShare_upper <dbl>, votes_total_20 <dbl>, votes_total_24_lower <dbl>,
+#   votes_total_24_estimate <dbl>, votes_total_24_upper <dbl>, demVotes_lower <dbl>, demVotes_estimate <dbl>, demVotes_upper <dbl>,
+#   repVotes_lower <dbl>, repVotes_estimate <dbl>, repVotes_upper <dbl>
+
+$summaries_byCounty
+# A tibble: 318 × 24
+   state county   timestamp           swing_lower swing_estimate swing_upper demShare_20 repShare_20 demShare_lower demShare_estimate
+   <chr> <chr>    <dttm>                    <dbl>          <dbl>       <dbl>       <dbl>       <dbl>          <dbl>             <dbl>
+ 1 GA    Appling  2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 2 GA    Atkinson 2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 3 GA    Bacon    2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 4 GA    Baker    2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 5 GA    Baldwin  2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 6 GA    Banks    2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 7 GA    Barrow   2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 8 GA    Bartow   2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+ 9 GA    Ben Hill 2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+10 GA    Berrien  2024-11-05 19:06:50         NaN            NaN         NaN         NaN         NaN            NaN               NaN
+# ℹ 308 more rows
+# ℹ 14 more variables: demShare_upper <dbl>, repShare_lower <dbl>, repShare_estimate <dbl>, repShare_upper <dbl>, votes_total_20 <dbl>,
+#   votes_total_24_lower <dbl>, votes_total_24_estimate <dbl>, votes_total_24_upper <dbl>, demVotes_lower <dbl>, demVotes_estimate <dbl>,
+#   demVotes_upper <dbl>, repVotes_lower <dbl>, repVotes_estimate <dbl>, repVotes_upper <dbl>
+# ℹ Use `print(n = ...)` to see more rows
+
+$summaries_byMode
+# A tibble: 4 × 25
+  state vote_mode     swing_lower swing_estimate swing_upper demShare_20 repShare_20 demShare_lower demShare_estimate demShare_upper
+  <chr> <chr>               <dbl>          <dbl>       <dbl>       <dbl>       <dbl>          <dbl>             <dbl>          <dbl>
+1 GA    Election Day          NaN            NaN         NaN         NaN         NaN            NaN               NaN            NaN
+2 GA    Absentee/Mail         NaN            NaN         NaN         NaN         NaN            NaN               NaN            NaN
+3 GA    Provisional           NaN            NaN         NaN         NaN         NaN            NaN               NaN            NaN
+4 GA    Early Voting          NaN            NaN         NaN         NaN         NaN            NaN               NaN            NaN
+# ℹ 15 more variables: repShare_lower <dbl>, repShare_estimate <dbl>, repShare_upper <dbl>, votes_total_20 <dbl>,
+#   votes_total_24_lower <dbl>, votes_total_24_estimate <dbl>, votes_total_24_upper <dbl>, demVotes_lower <dbl>, demVotes_estimate <dbl>,
+#   demVotes_upper <dbl>, repVotes_lower <dbl>, repVotes_estimate <dbl>, repVotes_upper <dbl>, timestamp <dttm>, confidence <lgl>
+
+$summaries_byCounty_byMode
+# A tibble: 1,272 × 25
+   state county  vote_mode timestamp           votes_total_20 votes_total_24_lower votes_total_24_estim…¹ votes_total_24_upper demVotes_lower
+   <chr> <chr>   <chr>     <dttm>                       <dbl>                <dbl>                  <dbl>                <dbl>          <dbl>
+ 1 GA    Appling Election… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 2 GA    Appling Absentee… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 3 GA    Appling Provisio… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 4 GA    Appling Early Vo… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 5 GA    Atkins… Election… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 6 GA    Atkins… Absentee… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 7 GA    Atkins… Provisio… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 8 GA    Atkins… Early Vo… 2024-11-05 19:06:50              0                    0                      0                    0              0
+ 9 GA    Bacon   Election… 2024-11-05 19:06:50              0                    0                      0                    0              0
+10 GA    Bacon   Absentee… 2024-11-05 19:06:50              0                    0                      0                    0              0
+# ℹ 1,262 more rows
+# ℹ abbreviated name: ¹​votes_total_24_estimate
+# ℹ 16 more variables: demVotes_estimate <dbl>, demVotes_upper <dbl>, repVotes_lower <dbl>, repVotes_estimate <dbl>, repVotes_upper <dbl>,
+#   demShare_20 <dbl>, repShare_20 <dbl>, demShare_lower <dbl>, demShare_estimate <dbl>, demShare_upper <dbl>, repShare_lower <dbl>,
+#   repShare_estimate <dbl>, repShare_upper <dbl>, swing_lower <dbl>, swing_estimate <dbl>, swing_upper <dbl>
+# ℹ Use `print(n = ...)` to see more rows
+
