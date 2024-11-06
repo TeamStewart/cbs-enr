@@ -794,8 +794,7 @@ scrape_pa <- function(state, county, path, timestamp){
     
     # Return latest timestamped version
     f = list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
-    f[length(f)-1]
-    
+
     return(read_csv(f[length(f)-1]))
     
   } else if (county == "Delaware"){
