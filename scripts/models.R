@@ -11,7 +11,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   rep_candidate_regex = regex("Trump|\\(Rep\\)", ignore_case = TRUE)
   
   timestamps = data |> 
-    filter(office == "President") |> 
+    filter(race_name == "President") |> 
     rename(
       precinct_24 = precinct_id,
       votes_24 = precinct_total,
@@ -21,7 +21,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
     distinct(state, county, precinct_24, vote_mode, timestamp)
   
   data_history = data |> 
-    filter(office == "President") |> 
+    filter(race_name == "President") |> 
     rename(
       precinct_24 = precinct_id,
       votes_24 = precinct_total,

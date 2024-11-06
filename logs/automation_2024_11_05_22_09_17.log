@@ -1,0 +1,190 @@
+2024-11-05 22:09:17: Running tar_make
+▶ dispatched target timestamp_PA_Allegheny
+▶ dispatched target timestamp_PA_Delaware
+▶ dispatched target timestamp_MI_Oakland
+▶ dispatched target timestamp_PA_Philadelphia
+● completed target timestamp_PA_Allegheny [2.875 seconds, 58 bytes]
+✔ skipped target data_PA_Allegheny
+● completed target timestamp_MI_Oakland [2.859 seconds, 58 bytes]
+▶ dispatched target model_PA_Allegheny
+● completed target timestamp_PA_Delaware [2.922 seconds, 58 bytes]
+✔ skipped target data_PA_Delaware
+● completed target timestamp_PA_Philadelphia [3.125 seconds, 58 bytes]
+▶ dispatched target model_PA_Delaware
+▶ dispatched target data_MI_Oakland
+✔ skipped target tbl_cbs_PA_Delaware
+✔ skipped target tbl_cbs_PA_Allegheny
+✔ skipped target data_PA_Philadelphia
+▶ dispatched target model_PA_Philadelphia
+✔ skipped target tbl_cbs_PA_Philadelphia
+▶ recorded workspace model_PA_Allegheny
+Error: ℹ In argument: `office == "President"`.
+Caused by error:
+! object 'office' not found
+
+Error: ℹ In argument: `office == "President"`.
+Caused by error:
+! object 'office' not found
+
+Error: ℹ In argument: `office == "President"`.
+Caused by error:
+! object 'office' not found
+
+✖ errored target model_PA_Allegheny
+✔ skipped target plot_margin2020_PA_Allegheny
+▶ recorded workspace model_PA_Delaware
+✖ errored target model_PA_Delaware
+✔ skipped target plot_voteShare_PA_Delaware
+✔ skipped target tbl_countyMode_PA_Delaware
+✔ skipped target tbl_countyMode_PA_Allegheny
+✔ skipped target tbl_county_PA_Allegheny
+✔ skipped target plot_votesAll_PA_Delaware
+✔ skipped target plot_margin2020_PA_Delaware
+✔ skipped target plot_votesEDay_PA_Allegheny
+✔ skipped target plot_votesAll_PA_Allegheny
+✔ skipped target plot_voteShare_PA_Allegheny
+✔ skipped target page_PA_Allegheny
+▶ recorded workspace model_PA_Philadelphia
+✖ errored target model_PA_Philadelphia
+✔ skipped target tbl_countyMode_PA_Philadelphia
+✔ skipped target plot_votesEDay_PA_Philadelphia
+✔ skipped target plot_votesAll_PA_Philadelphia
+✔ skipped target plot_margin2020_PA_Philadelphia
+✔ skipped target plot_voteShare_PA_Philadelphia
+✔ skipped target tbl_county_PA_Philadelphia
+✔ skipped target page_PA_Philadelphia
+✔ skipped target plot_votesEDay_PA_Delaware
+✔ skipped target tbl_county_PA_Delaware
+✔ skipped target page_PA_Delaware
+▶ dispatched target uploads
+▶ dispatched target timestamp_MI_Macomb
+▶ dispatched target timestamp_MI_Ingham
+● completed target timestamp_MI_Ingham [0.079 seconds, 58 bytes]
+✔ skipped target data_MI_Ingham
+▶ dispatched target model_MI_Ingham
+✔ skipped target tbl_cbs_MI_Ingham
+● completed target timestamp_MI_Macomb [0.109 seconds, 58 bytes]
+✔ skipped target data_MI_Macomb
+▶ dispatched target model_MI_Macomb
+✔ skipped target tbl_cbs_MI_Macomb
+▶ recorded workspace model_MI_Ingham
+Error: ℹ In argument: `office == "President"`.
+Caused by error:
+! object 'office' not found
+
+Error: ℹ In argument: `office == "President"`.
+Caused by error:
+! object 'office' not found
+
+✖ errored target model_MI_Ingham
+✔ skipped target plot_margin2020_MI_Ingham
+✔ skipped target plot_votesAll_MI_Ingham
+✔ skipped target plot_votesEDay_MI_Ingham
+✔ skipped target plot_voteShare_MI_Ingham
+✔ skipped target tbl_county_MI_Ingham
+✔ skipped target tbl_countyMode_MI_Ingham
+✔ skipped target page_MI_Ingham
+▶ dispatched target timestamp_GA_NA
+▶ recorded workspace model_MI_Macomb
+✖ errored target model_MI_Macomb
+✔ skipped target plot_margin2020_MI_Macomb
+✔ skipped target plot_votesAll_MI_Macomb
+✔ skipped target plot_votesEDay_MI_Macomb
+✔ skipped target plot_voteShare_MI_Macomb
+✔ skipped target tbl_county_MI_Macomb
+✔ skipped target tbl_countyMode_MI_Macomb
+✔ skipped target page_MI_Macomb
+▶ dispatched target timestamp_MI_Eaton
+● completed target timestamp_GA_NA [0.047 seconds, 58 bytes]
+✔ skipped target data_GA_NA
+▶ dispatched target model_GA_NA
+✔ skipped target tbl_cbs_GA_NA
+● completed target timestamp_MI_Eaton [0.063 seconds, 58 bytes]
+✔ skipped target data_MI_Eaton
+▶ dispatched target model_MI_Eaton
+✔ skipped target tbl_cbs_MI_Eaton
+▶ recorded workspace model_GA_NA
+Error: ℹ In argument: `office == "President"`.
+Caused by error:
+! object 'office' not found
+
+Error: ℹ In argument: `office == "President"`.
+Caused by error:
+! object 'office' not found
+
+✖ errored target model_GA_NA
+✔ skipped target plot_voteShare_GA_NA
+▶ recorded workspace model_MI_Eaton
+✖ errored target model_MI_Eaton
+✔ skipped target plot_voteShare_MI_Eaton
+✔ skipped target tbl_countyMode_MI_Eaton
+✔ skipped target plot_votesAll_MI_Eaton
+✔ skipped target plot_margin2020_MI_Eaton
+✔ skipped target plot_votesEDay_MI_Eaton
+✔ skipped target tbl_county_MI_Eaton
+✔ skipped target page_MI_Eaton
+✔ skipped target plot_margin2020_GA_NA
+✔ skipped target plot_votesAll_GA_NA
+✔ skipped target plot_votesEDay_GA_NA
+✔ skipped target tbl_county_GA_NA
+✔ skipped target tbl_countyMode_GA_NA
+✔ skipped target page_GA
+▶ dispatched target timestamp_NC_NA
+▶ dispatched target timestamp_AZ_Pima
+● completed target timestamp_AZ_Pima [0 seconds, 58 bytes]
+▶ dispatched target data_AZ_Pima
+● completed target timestamp_NC_NA [0.141 seconds, 58 bytes]
+✔ skipped target data_NC_NA
+▶ dispatched target model_NC_NA
+✔ skipped target tbl_cbs_NC_NA
+● completed target uploads [2.657 seconds, 182 bytes]
+▶ dispatched target timestamp_AZ_Maricopa
+● completed target timestamp_AZ_Maricopa [0.187 seconds, 58 bytes]
+✔ skipped target data_AZ_Maricopa
+▶ dispatched target model_AZ_Maricopa
+✔ skipped target tbl_cbs_AZ_Maricopa
+▶ recorded workspace model_NC_NA
+Error: ℹ In argument: `office == "President"`.
+Caused by error:
+! object 'office' not found
+
+Error: ℹ In argument: `office == "President"`.
+Caused by error:
+! object 'office' not found
+
+✖ errored target model_NC_NA
+✔ skipped target plot_margin2020_NC_NA
+✔ skipped target plot_votesAll_NC_NA
+✔ skipped target plot_votesEDay_NC_NA
+✔ skipped target plot_voteShare_NC_NA
+✔ skipped target tbl_county_NC_NA
+✔ skipped target tbl_countyMode_NC_NA
+✔ skipped target page_NC
+● completed target data_AZ_Pima [1.312 seconds, 1.193 kilobytes]
+▶ dispatched target model_AZ_Pima
+▶ dispatched target tbl_cbs_AZ_Pima
+▶ recorded workspace model_AZ_Maricopa
+✖ errored target model_AZ_Maricopa
+✔ skipped target plot_margin2020_AZ_Maricopa
+✔ skipped target plot_votesAll_AZ_Maricopa
+✔ skipped target plot_votesEDay_AZ_Maricopa
+✔ skipped target plot_voteShare_AZ_Maricopa
+✔ skipped target tbl_county_AZ_Maricopa
+✔ skipped target tbl_countyMode_AZ_Maricopa
+✔ skipped target page_AZ_Maricopa
+▶ recorded workspace model_AZ_Pima
+Error: ℹ In argument: `office == "President"`.
+Caused by error:
+! object 'office' not found
+
+✖ errored target model_AZ_Pima
+✔ skipped target tbl_county_AZ_Pima
+✔ skipped target plot_margin2020_AZ_Pima
+✔ skipped target plot_votesAll_AZ_Pima
+✔ skipped target plot_votesEDay_AZ_Pima
+✔ skipped target plot_voteShare_AZ_Pima
+✔ skipped target tbl_countyMode_AZ_Pima
+✔ skipped target page_AZ_Pima
+● completed target tbl_cbs_AZ_Pima [6.219 seconds, 2.439 kilobytes]
+
+Execution halted
