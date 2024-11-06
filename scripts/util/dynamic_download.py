@@ -30,6 +30,7 @@ def download_wait(download_directory):
     seconds = 0
     dl_wait = True
     while dl_wait and seconds < 60:
+        time.sleep(15)
         dl_wait = False
         for fname in os.listdir(download_directory):
             if fname.endswith('.crdownload'):
@@ -72,7 +73,7 @@ def get_file(path, county, state, dropbox_path):
     # Wait for some time to ensure the file gets downloaded
     download_seconds = download_wait(download_directory)
     
-    if download_seconds == 30:
+    if download_seconds == 60:
         raise Exception("Download did not complete successfully")
         
     rename_file_with_timestamp(download_directory)

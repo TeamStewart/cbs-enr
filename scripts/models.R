@@ -102,9 +102,11 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       ) |> 
       right_join(
         history_sets, by = join_by(county, vote_mode)
-      ) |> 
+      ) |>
       mutate(
         across(where(is.double), ~ na_if(.x, Inf)),
+        across(where(is.double), ~ ifelse(.x > 50, NA, .x)),
+        across(where(is.double), ~ ifelse(.x < -50, NA, .x)),
         across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), 
         .by = vote_mode)
     
@@ -125,7 +127,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
     ) |> 
     right_join(
       history_sets, by = join_by(county, vote_mode)
-    ) |> 
+    ) |>
     mutate(across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), .by = vote_mode)
   
   estimates <- data_history |> 
