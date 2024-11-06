@@ -239,9 +239,8 @@ scrape_ga <- function(state, county, path, timestamp){
       virtual_precinct_pct = NULL,
       timestamp = .env$timestamp |> ymd_hms(),
       state = .env$state,
-      timestamp = timestamp |> ymd_hms(tz = "America/New_York"),
       state = state,
-      jurisdiction = jurisdiction |> str_remove(regex("County", ignore_case=TRUE)) |> str_squish() |> str_to_upper(),
+      jurisdiction = jurisdiction |> str_remove(regex("County", ignore_case=TRUE)) |> str_squish() |> str_to_title(),
       # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
       race_name = case_when(
         str_detect(race_name, regex("President|Presi", ignore_case=TRUE)) ~ "President",
