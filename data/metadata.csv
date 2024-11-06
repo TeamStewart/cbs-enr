@@ -1,5 +1,5 @@
 state,county,path,preelection_totals,upload
-GA,,https://app.enhancedvoting.com/cdn/results/Georgia/export-2024NovGen.json,FALSE,TRUE
+GA,,https://app.enhancedvoting.com/cdn/results/Georgia/export-2024NovGen.zip,FALSE,TRUE
 NC,,http://dl.ncsbe.gov/ENRS/2024_11_05/results_pct_20241105.zip,FALSE,TRUE
 AZ,Maricopa,https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch,FALSE,TRUE
 AZ,Pima,,FALSE,TRUE
