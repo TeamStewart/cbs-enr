@@ -19,7 +19,8 @@ source("scripts/functions.R")
 options(
   readr.show_col_types = FALSE,
   gargle_oauth_email = TRUE,
-  scipen = 999
+  scipen = 999,
+  timeout=60000
 )
 
 tar_option_set(
@@ -46,7 +47,7 @@ tar_config_set(
 # - path: (string) generic cell for path/number/ID used by custom scrapers to get file
 # - preelection_totals: (boolean) 
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
-metadata = get_gsheet(sheet = "metadata", col_types = "cccll") |> drop_na(path)
+metadata = read_csv("data/metadata.csv", col_types = "cccll") |> drop_na(path)
 
 # ========================================
 ## PIPELINE

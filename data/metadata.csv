@@ -1,0 +1,12 @@
+state,county,path,preelection_totals,upload
+GA,,https://app.enhancedvoting.com/cdn/results/Georgia/export-2024NovGen.json,FALSE,TRUE
+NC,,http://dl.ncsbe.gov/ENRS/2024_11_05/results_pct_20241105.zip,FALSE,TRUE
+AZ,Maricopa,https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch,FALSE,TRUE
+AZ,Pima,,FALSE,TRUE
+MI,Oakland,122321,FALSE,TRUE
+MI,Macomb,122434,FALSE,TRUE
+MI,Ingham,https://app.enhancedvoting.com/cdn/results/ingham-county-mi/export-general11052024.json,FALSE,TRUE
+MI,Eaton,122590,FALSE,TRUE
+PA,Philadelphia,https://philadelphiaresults.azurewebsites.us/ResultsExport.aspx?,FALSE,TRUE
+PA,Delaware,122488,FALSE,TRUE
+PA,Allegheny,122424,FALSE,TRUE
