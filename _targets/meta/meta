@@ -1,12 +1,12 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|edfa8c2fa83e5dff|||||||||||||||
+.Random.seed|object|bff7efcea20b1a4e|||||||||||||||
 create_table_cbs|function|b8e76b68de00f372|||||||||||||||
 data_AZ_Maricopa|stem|13a8779b07bb4a67|1246177af406de46|6fd0b0ab31abdbd8|-120925747||t20033.646017089s|ceed99e0a07e04ac|66825|qs|local|vector|||27.625||
-data_AZ_Pima|stem|530759b43ec9f1df|f81e46c450c10852|9ba8fc56dcb32db9|95377190||t20033.1372641608s||1194|qs|local|vector|||1.703||Column number 13 select13 is too large for this table, which only has 12 columns.
+data_AZ_Pima|stem|d738e0f5f1750ab6|f81e46c450c10852|9927079c3cb0a9ea|95377190||t20033.6634044331s|2c7738ee9c47cc6d|6898|qs|local|vector|||1.687||
 data_GA_NA|stem|3f67673228f4c1cd|cdcc308e5a01bb77|dec8ebf0edbb1175|-931803180||t20033.6450241988s|4fe2a74c753d4171|57179|qs|local|vector|||9.422||
 data_MI_Eaton|stem|1c597401e70da830|6c719395544f0ee6|8a5488baab118cac|-1194529039||t20033.646397427s|1357316340319631|3430|qs|local|vector|||11.531||
 data_MI_Ingham|stem|cbb473b7978d8283|66b00feddd0960eb|207bdd18cb85b0f0|57551775||t20033.6458330971s|9cceb3e5d261ccfd|4719|qs|local|vector|||2.047||
-data_MI_Macomb|stem|7d67b6d81ec4611a|0bb23847cc73676c|20b0dc8a8d2feb82|-818305503||t20033.6461803533s|54fb7ace98d85420|11926|qs|local|vector|||23.688||
+data_MI_Macomb|stem|7d67b6d81ec4611a|0bb23847cc73676c|1e715d725ec2e26e|-818305503||t20033.6637287681s|54fb7ace98d85420|11926|qs|local|vector|||29.344||
 data_MI_Oakland|stem|222ebe0ba1c5005e|267b5d87e08ffd90|017ce98bca6368bf|481620507||t20033.6465719001s|9e2b8f2ca0f60b76|22227|qs|local|vector|||122.547||
 data_NC_NA|stem|73a1e636735bf6b0|3094de461a56d540|329cad7cb78c7bfe|-220573991||t20033.6449640661s|a9cce43f1c82bb87|98247|qs|local|vector|||3.907||
 data_PA_Allegheny|stem|212083a166c9bdef|d5f7351853511f22|329a84fbcacd4838|908748033||t20033.6455422639s|4be1cd29caa8dfa4|35216|qs|local|vector|||53.922||
@@ -25,7 +25,7 @@ make_plot_votesEDay|function|843ed070b498a094|||||||||||||||
 make_plot_voteShare|function|5aba33e17c4de07d|||||||||||||||
 make_tbl_county|function|9f7776bf49451df2|||||||||||||||
 make_tbl_countyMode|function|327dbe14305e9414|||||||||||||||
-metadata|object|c0292a631b2e0d81|||||||||||||||
+metadata|object|c5af44045614f93a|||||||||||||||
 model_AZ_Maricopa|stem|fac99d2ab48d175c|40500373bff78b3a|7aa6faf318c083bc|-1491761832||t20033.5743602066s|b6adf4fb3fbc2bb7|117138|qs|local|vector|||0.448||
 model_AZ_Pima|stem|84418a011f8fa4a5|8f889a21ab577e2c|8c92c78b5f06cc97|984294514||t20033.1296426637s||22091|qs|local|vector|||0.015||could not load dependencies of target model_AZ_Pima. Expecting a single string value typecharacter extent0.
 model_GA_NA|stem|3b6e4d38820ef059|6db07ac519d30c17|cdf1e0c66ff3c1f0|-2042137403||t20033.5741051348s|65749cb18317c28d|505137|qs|local|vector|||1.073||
@@ -103,11 +103,11 @@ scrape_mi|function|c4fbce5f9b15add2|||||||||||||||
 scrape_nc|function|0e0354420acb6c7f|||||||||||||||
 scrape_pa|function|cae845723b690f42|||||||||||||||
 tbl_cbs_AZ_Maricopa|stem|50b74b0d8659783e|acb4d7e597c8a4ac|8adb9132c2590b93|-1904506548||t20033.6461661169s|7f7cad5d592f4129|67364|qs|local|vector|||11.859||
-tbl_cbs_AZ_Pima|stem|72711050a692711e|50ed2fc0ed5c3da5|6338db2ca75b2e69|119859960||t20033.1373840078s||2439|qs|local|vector|||0.032||could not load dependencies of target tbl_cbs_AZ_Pima. Expecting a single string value typecharacter extent0.
+tbl_cbs_AZ_Pima|stem|77a05270c6d3bf11|50ed2fc0ed5c3da5|87f79022134158c1|119859960||t20033.663492746s|2ea846888cdf2767|14912|qs|local|vector|||6.078||
 tbl_cbs_GA_NA|stem|ddf368e030001392|a62d2c1a55344585|2733b697dae6c8c9|-1915198637||t20033.6451454067s|ad0f87d4a0593635|125080|qs|local|vector|||10.016||
 tbl_cbs_MI_Eaton|stem|b9071a1ad61052d2|e9fd542a4c3e4b69|594e158afc43b519|-765121660||t20033.6464604594s|7edf990b20588b70|5263|qs|local|vector|||4.953||
 tbl_cbs_MI_Ingham|stem|83529535a53772c3|1993590d0cbdad21|62c28d48e34e2be0|641481856||t20033.6458999434s|889424c8826af934|10031|qs|local|vector|||5.313||
-tbl_cbs_MI_Macomb|stem|7b1baa704bd63060|59262cdcfda909ab|55e0d66486fea8b9|-1099907056||t20033.6462577031s|7044500b845f6eea|27649|qs|local|vector|||6.406||
+tbl_cbs_MI_Macomb|stem|7b1baa704bd63060|59262cdcfda909ab|89f9c608ca566c48|-1099907056||t20033.6638087554s|7044500b845f6eea|27649|qs|local|vector|||6.687||
 tbl_cbs_MI_Oakland|stem|a26014a91f3fcc39|c62c8559b253c44d|eb56e4d020549947|1385269304||t20033.6466549219s|940798cfbbd11f0e|42870|qs|local|vector|||6.875||
 tbl_cbs_NC_NA|stem|cc947fd8f03184e0|1d726c3cb04bd5cd|6e0afd8286cc0ac6|-570526909||t20033.6452305695s|49fa24d23b25135c|205223|qs|local|vector|||20.875||
 tbl_cbs_PA_Allegheny|stem|29861a5e9d89f92f|5581899a87c99a51|a98ed7cc6f7778f8|-145023305||t20033.6456824756s|1178d0c96ad3daaa|76417|qs|local|vector|||11.703||
@@ -135,17 +135,17 @@ tbl_countyMode_NC_NA|stem|cdc1cb7a41fdb970|8ec4d52ade035a54|ce89be0df9c2a707|-83
 tbl_countyMode_PA_Allegheny|stem|def33e32e79e2a93|1fdb1399eb4dc8a3|53558ab4a043fd7d|940974875||t20033.5785487384s|f7b9d594eb961f73|8200|qs|local|vector|||0.123|There was 1 warning in mutate.ℹ In argument timestamp  with_tzymd_hmstimestamp, USEastern.Caused by warning  1 failed to parse.. Some values were outside the color scale and will be treated as NA|
 tbl_countyMode_PA_Delaware|stem|db84939c6ef5df7a|d3a2d40b7bd5abbd|6b06ba4effd196dd|1606156159||t20033.5755516215s|67cdf205107eec03|8199|qs|local|vector|||0.097||
 tbl_countyMode_PA_Philadelphia|stem|7b63ebbc08a02a3d|aefed96cc9aa0de6|a76518b415416f96|-2094853167||t20033.5769535388s|87f276c9eeaf03f8|8203|qs|local|vector|||0.118|There was 1 warning in mutate.ℹ In argument timestamp  with_tzymd_hmstimestamp, USEastern.Caused by warning  1 failed to parse.|
-timestamp_AZ_Maricopa|stem|be181e8a6012d7ef|811f19eacc390e49|031a569b31db59c0|1242395665||t20033.6477052269s|86c36464e2e2a367|58|qs|local|vector|||0.188||
-timestamp_AZ_Pima|stem|fc85b6043530e933|d6a4fffa17da5470|031a569b31db59c0|-728260326||t20033.1395724138s|86c36464e2e2a367|58|qs|local|vector|||0||
-timestamp_GA_NA|stem|ffe047178924dade|c3d4bbe89a198ac6|031a569b31db59c0|828350109||t20033.647700171s|86c36464e2e2a367|58|qs|local|vector|||2.5||
-timestamp_MI_Eaton|stem|35e168d12a993ddd|620b22c465cb0556|031a569b31db59c0|1149203977||t20033.6477090695s|86c36464e2e2a367|58|qs|local|vector|||0.047||
-timestamp_MI_Ingham|stem|dcafed388da33a34|a1e1c3cf419e783c|031a569b31db59c0|-664073679||t20033.6477064422s|86c36464e2e2a367|58|qs|local|vector|||0.094||
-timestamp_MI_Macomb|stem|edde9131d11381ff|a217ab827414868d|031a569b31db59c0|378924614||t20033.6477080857s|86c36464e2e2a367|58|qs|local|vector|||0.079||
-timestamp_MI_Oakland|stem|f8e84a311818420d|4c230b3823d6c178|031a569b31db59c0|-1127784139||t20033.6477037107s|86c36464e2e2a367|58|qs|local|vector|||0.094||
-timestamp_NC_NA|stem|b2ffc2a7c1980e9d|f5925528f2966224|031a569b31db59c0|-873101443||t20033.6477007266s|86c36464e2e2a367|58|qs|local|vector|||2.578||
-timestamp_PA_Allegheny|stem|a5fffb3397e54ac9|3fb0b45422e2f801|031a569b31db59c0|-577555289||t20033.64770009s|86c36464e2e2a367|58|qs|local|vector|||2.485||
-timestamp_PA_Delaware|stem|9a60e24211f14f62|db57cfc48abc4bbb|031a569b31db59c0|-277826127||t20033.6477086644s|86c36464e2e2a367|58|qs|local|vector|||0.046||
-timestamp_PA_Philadelphia|stem|27530e9438ac6c0e|10aad69ff7afb69a|031a569b31db59c0|-1536386861||t20033.6477060024s|86c36464e2e2a367|58|qs|local|vector|||0.313||
+timestamp_AZ_Maricopa|stem|be181e8a6012d7ef|811f19eacc390e49|031a569b31db59c0|1242395665||t20033.6633980925s|86c36464e2e2a367|58|qs|local|vector|||0.547||
+timestamp_AZ_Pima|stem|5eef3267d1ee8ee1|d6a4fffa17da5470|031a569b31db59c0|-728260326||t20033.6633828203s|86c36464e2e2a367|58|qs|local|vector|||0||
+timestamp_GA_NA|stem|ffe047178924dade|c3d4bbe89a198ac6|031a569b31db59c0|828350109||t20033.6634012992s|86c36464e2e2a367|58|qs|local|vector|||0.094||
+timestamp_MI_Eaton|stem|35e168d12a993ddd|620b22c465cb0556|031a569b31db59c0|1149203977||t20033.6634039354s|86c36464e2e2a367|58|qs|local|vector|||0.063||
+timestamp_MI_Ingham|stem|dcafed388da33a34|a1e1c3cf419e783c|031a569b31db59c0|-664073679||t20033.6633900177s|86c36464e2e2a367|58|qs|local|vector|||0.125||
+timestamp_MI_Macomb|stem|a5efdf9c9ff3d90e|a217ab827414868d|031a569b31db59c0|378924614||t20033.6633867563s|86c36464e2e2a367|58|qs|local|vector|||0.047||
+timestamp_MI_Oakland|stem|f8e84a311818420d|4c230b3823d6c178|031a569b31db59c0|-1127784139||t20033.6633803683s|86c36464e2e2a367|58|qs|local|vector|||3.922||
+timestamp_NC_NA|stem|b2ffc2a7c1980e9d|f5925528f2966224|031a569b31db59c0|-873101443||t20033.6633843716s|86c36464e2e2a367|58|qs|local|vector|||0.141||
+timestamp_PA_Allegheny|stem|a5fffb3397e54ac9|3fb0b45422e2f801|031a569b31db59c0|-577555289||t20033.6633806578s|86c36464e2e2a367|58|qs|local|vector|||3.829||
+timestamp_PA_Delaware|stem|9a60e24211f14f62|db57cfc48abc4bbb|031a569b31db59c0|-277826127||t20033.6633805535s|86c36464e2e2a367|58|qs|local|vector|||3.907||
+timestamp_PA_Philadelphia|stem|27530e9438ac6c0e|10aad69ff7afb69a|031a569b31db59c0|-1536386861||t20033.6633866406s|86c36464e2e2a367|58|qs|local|vector|||0.329||
 upload_html|function|816a6968c15e8a3f|||||||||||||||
 uploads|stem|eb70b82668790459|aed38931c059b1cd|36efa198fd7e63f3|-1081307666||t20033.5975304844s|216fa2272502dc69|182|qs|local|vector|||5.457||
 website|stem|73fbd9e4f5c39f03|cdf41f2d773ab09a|de41aef5630ba687|-385122080|docs*pages/AZ_Maricopa.qmd*pages/GA.qmd*pages/MI_Ingham.qmd*pages/MI_Oakland.qmd*pages/NC.qmd*pages/PA_Allegheny.qmd*pages/PA_Delaware.qmd*pages/PA_Philadelphia.qmd*.nojekyll*_quarto.yml*metadata.html|t20032.9341235208s|66ac443dee63cbb4|2848613|file|local|vector|||106.703||
