@@ -1153,3 +1153,37 @@ $summaries_byCounty_byMode
 #   repShare_estimate <dbl>, repShare_upper <dbl>, swing_lower <dbl>, swing_estimate <dbl>, swing_upper <dbl>
 # ℹ Use `print(n = ...)` to see more rows
 
+# A tibble: 10,804 × 19
+   state county  precinct_24 vote_mode   votes_precTotal_24 votes_24_dem votes_24_rep votePct_dem_24 votePct_rep_24 votes_20_dem votes_20_rep
+   <chr> <chr>   <chr>       <chr>                    <int>        <int>        <int>          <dbl>          <dbl>        <dbl>        <dbl>
+ 1 GA    Appling 1B          Election D…                  0            0            0            NaN            NaN           NA           NA
+ 2 GA    Appling 1B          Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+ 3 GA    Appling 1B          Provisional                  0            0            0            NaN            NaN           NA           NA
+ 4 GA    Appling 1B          Early Voti…                  0            0            0            NaN            NaN           NA           NA
+ 5 GA    Appling 1C          Election D…                  0            0            0            NaN            NaN           NA           NA
+ 6 GA    Appling 1C          Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+ 7 GA    Appling 1C          Provisional                  0            0            0            NaN            NaN           NA           NA
+ 8 GA    Appling 1C          Early Voti…                  0            0            0            NaN            NaN           NA           NA
+ 9 GA    Appling 2           Election D…                  0            0            0            NaN            NaN           NA           NA
+10 GA    Appling 2           Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+# ℹ 10,794 more rows
+# ℹ 8 more variables: votePct_dem_20 <dbl>, votePct_rep_20 <dbl>, votes_precFinal_20 <dbl>, reported_eday <lgl>, reported_mail <lgl>,
+#   reported_early <lgl>, reported_any <lgl>, reported_all <lgl>
+# ℹ Use `print(n = ...)` to see more rows
+# A tibble: 10,804 × 19
+   state county  precinct_24 vote_mode   votes_precTotal_24 votes_24_dem votes_24_rep votePct_dem_24 votePct_rep_24 votes_20_dem votes_20_rep
+   <chr> <chr>   <chr>       <chr>                    <int>        <int>        <int>          <dbl>          <dbl>        <dbl>        <dbl>
+ 1 GA    Appling 1B          Election D…                  0            0            0            NaN            NaN           NA           NA
+ 2 GA    Appling 1B          Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+ 3 GA    Appling 1B          Provisional                  0            0            0            NaN            NaN           NA           NA
+ 4 GA    Appling 1B          Early Voti…                  0            0            0            NaN            NaN           NA           NA
+ 5 GA    Appling 1C          Election D…                  0            0            0            NaN            NaN           NA           NA
+ 6 GA    Appling 1C          Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+ 7 GA    Appling 1C          Provisional                  0            0            0            NaN            NaN           NA           NA
+ 8 GA    Appling 1C          Early Voti…                  0            0            0            NaN            NaN           NA           NA
+ 9 GA    Appling 2           Election D…                  0            0            0            NaN            NaN           NA           NA
+10 GA    Appling 2           Absentee/M…                  0            0            0            NaN            NaN           NA           NA
+# ℹ 10,794 more rows
+# ℹ 8 more variables: votePct_dem_20 <dbl>, votePct_rep_20 <dbl>, votes_precFinal_20 <dbl>, reported_eday <lgl>, reported_mail <lgl>,
+#   reported_early <lgl>, reported_any <lgl>, reported_all <lgl>
+# ℹ Use `print(n = ...)` to see more rows
