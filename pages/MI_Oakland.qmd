@@ -52,7 +52,7 @@ tar_read(model_MI_Oakland) |> list2env(envir = .GlobalEnv) |> invisible()
 
 ## Recent Updates
 
-Last update: `r prec_reported_any - read_file(glue("{PATH_DROPBOX}/24_general/{state}/prec_reported_any_{county}")) |> as.numeric()` new precincts reported at `r ymd_hms(timestamp) |> with_tz("US/Eastern")`.
+Last update: `r prec_reported_any - read_file(glue("{PATH_DROPBOX}/24_general/{state}/prec_reported_any_{county}")) |> as.numeric()` new precincts reported at `r ymd_hms(timestamp)`.
 
 ```{r}
 
@@ -63,11 +63,11 @@ write_file(as.character(prec_reported_any), glue("{PATH_DROPBOX}/24_general/{sta
 
 ## How Many Votes Are In?
 
-`r sum(pull(data_history, votes_precTotal_24))` **total** votes are in, `r 100*sum(pull(data_history, votes_precTotal_24)) / sum(pull(data_history, votes_precFinal_20), na.rm=TRUE)`% of the 2020 total
+`r sum(pull(data_history, votes_precTotal_24))` **total** votes are in, `r 100*sum(pull(data_history, votes_precTotal_24)) / 775379`% of the 2020 total
 
 - We estimate the **final total turnout** will be `r summaries$votes_total_24_estimate` with uncertainty bounds [`r summaries$votes_total_24_lower` to `r summaries$votes_total_24_upper`]
 
-`r sum(pull(filter(data_history, vote_mode=="Election Day"), votes_precTotal_24))` **Election Day** votes are in, `r 100*sum(pull(filter(data_history, vote_mode=="Election Day"), votes_precTotal_24)) / sum(pull(filter(data_history, vote_mode=="Election Day"), votes_precFinal_20), na.rm=TRUE)`% of the 2020 total
+`r sum(pull(filter(data_history, vote_mode=="Election Day"), votes_precTotal_24))` **Election Day** votes are in, `r 100*sum(pull(filter(data_history, vote_mode=="Election Day"), votes_precTotal_24)) / 260024`% of the 2020 total
 
 - We estimate the **final Election Day turnout** will be `r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_24_estimate)` with uncertainty bounds [`r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_24_lower)` to `r pull(filter(summaries_byMode, vote_mode == "Election Day"), votes_total_24_upper)`]
 
