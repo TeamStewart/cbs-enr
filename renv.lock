@@ -9,9 +9,9 @@
     ]
   },
   "Python": {
-    "Version": "3.13.0",
+    "Version": "3.8.16",
     "Type": "virtualenv",
-    "Name": "./renv/python/virtualenvs/renv-python-3.13"
+    "Name": "r-reticulate"
   },
   "Packages": {
     "BH": {
