@@ -45,13 +45,12 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       reported_eday = max(vote_mode == "Election Day" & votes_precTotal_24 > 0) == 1,
       reported_mail = max(vote_mode == "Absentee/Mail" & votes_precTotal_24 > 0) == 1,
       reported_early = max(vote_mode == "Early Voting" & votes_precTotal_24 > 0) == 1,
-      reported_any = case_when(
+      reported_all = case_when(
+        state == "PA" ~ reported_eday & reported_mail,
         .default = reported_eday & reported_mail & reported_early,
-        county %in% c("Philadelphia", "Allegheny", "Delaware") ~ reported_eday & reported_mail,
-        
       ),
-      # reported_any = reported_eday | reported_mail | reported_early,
-      reported_all = reported_eday & reported_mail & reported_early,
+      reported_any = reported_eday | reported_mail | reported_early,
+      # reported_all = reported_eday & reported_mail & reported_early,
       .by = c(county, precinct_24)
     ) |> 
     mutate(
@@ -215,8 +214,8 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       repVotes_lower = sum(votes_24_repBot, na.rm = TRUE),
       repVotes_estimate = sum(votes_24_repEst, na.rm = TRUE),
       repVotes_upper = sum(votes_24_repTop, na.rm = TRUE),
-      demShare_20 = weighted.mean(votePct_dem_20, votes_precFinal_20),
-      repShare_20 = weighted.mean(votePct_rep_20, votes_precFinal_20),
+      demShare_20 = weighted.mean(votePct_dem_20, votes_precFinal_20, na.rm=TRUE),
+      repShare_20 = weighted.mean(votePct_rep_20, votes_precFinal_20, na.rm=TRUE),
       demShare_lower = demVotes_lower / (demVotes_estimate + repVotes_estimate),
       demShare_estimate = demVotes_estimate / (demVotes_estimate + repVotes_estimate),
       demShare_upper = demVotes_upper / (demVotes_estimate + repVotes_estimate),
