@@ -115,12 +115,12 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
     distinct(state, county, precinct_24, vote_mode, votePct_dem_24, votePct_rep_24, votes_precFinal_20) |> 
     filter(!(is.nan(votePct_dem_24) & is.nan(votePct_rep_24))) |> 
     summarise(
-      dem_top = quantile(votePct_dem_24, quantile_upper),
-      dem_bot = quantile(votePct_dem_24, quantile_lower),
-      dem_med = weighted.mean(votePct_dem_24, votes_precFinal_20),
-      rep_top = quantile(votePct_rep_24, quantile_upper),
-      rep_bot = quantile(votePct_rep_24, quantile_lower),
-      rep_med = weighted.mean(votePct_rep_24, votes_precFinal_20),
+      dem_top = quantile(votePct_dem_24, quantile_upper, na.rm=TRUE),
+      dem_bot = quantile(votePct_dem_24, quantile_lower, na.rm=TRUE),
+      dem_med = weighted.mean(votePct_dem_24, votes_precFinal_20, na.rm=TRUE),
+      rep_top = quantile(votePct_rep_24, quantile_upper, na.rm=TRUE),
+      rep_bot = quantile(votePct_rep_24, quantile_lower, na.rm=TRUE),
+      rep_med = weighted.mean(votePct_rep_24, votes_precFinal_20, na.rm=TRUE),
       .by = c(county, vote_mode)
     ) |> 
     right_join(
