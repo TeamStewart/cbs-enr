@@ -261,7 +261,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   # something else happens
   bind_rows(
     summaries_byMode,
-    read_csv(glue("{PATH_DROPBOX}/24_general/{state}/{state}_{county}_modeling.csv", col_types = "ccnnnnnnnnnnnnnnnnnnnnnTl"))
+    read_csv(glue("{PATH_DROPBOX}/24_general/{state}/{state}_{county}_modeling.csv"), col_types = "ccnnnnnnnnnnnnnnnnnnnnnTl")
   ) |> 
     distinct() |> 
     write_csv(glue("{PATH_DROPBOX}/24_general/{state}/{state}_{county}_modeling.csv"))
