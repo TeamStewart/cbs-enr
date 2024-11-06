@@ -1,0 +1,85 @@
+2024-11-05 21:32:14: Running tar_make
+▶ dispatched target timestamp_MI_Eaton
+▶ dispatched target timestamp_AZ_Maricopa
+▶ dispatched target timestamp_GA_NA
+▶ dispatched target timestamp_PA_Philadelphia
+✔ skipped target page_AZ_Pima
+● completed target timestamp_GA_NA [2.922 seconds, 58 bytes]
+▶ dispatched target data_GA_NA
+● completed target timestamp_MI_Eaton [3.047 seconds, 58 bytes]
+▶ dispatched target data_MI_Eaton
+● completed target timestamp_AZ_Maricopa [3.203 seconds, 58 bytes]
+✔ skipped target data_AZ_Maricopa
+▶ dispatched target model_AZ_Maricopa
+● completed target timestamp_PA_Philadelphia [3.25 seconds, 58 bytes]
+▶ dispatched target data_PA_Philadelphia
+✔ skipped target tbl_cbs_AZ_Maricopa
+▶ recorded workspace model_AZ_Maricopa
+Error: ℹ In argument: `votePct_dem_24 = votes_24_dem/votes_twoParty`.
+ℹ In group 1: `state = "AZ"`, `county = "Maricopa"`, `precinct_24 = NA`,
+  `vote_mode = "Early Voting"`.
+Caused by error:
+! object 'votes_twoParty' not found
+
+✖ errored target model_AZ_Maricopa
+✔ skipped target tbl_countyMode_AZ_Maricopa
+✔ skipped target plot_votesAll_AZ_Maricopa
+✔ skipped target plot_votesEDay_AZ_Maricopa
+✔ skipped target plot_margin2020_AZ_Maricopa
+✔ skipped target tbl_county_AZ_Maricopa
+✔ skipped target plot_voteShare_AZ_Maricopa
+✔ skipped target page_AZ_Maricopa
+▶ dispatched target timestamp_PA_Allegheny
+● completed target timestamp_PA_Allegheny [0.094 seconds, 58 bytes]
+▶ dispatched target data_PA_Allegheny
+● completed target data_GA_NA [10.203 seconds, 58.803 kilobytes]
+▶ dispatched target model_GA_NA
+▶ recorded workspace model_GA_NA
+Error: ℹ In argument: `votePct_dem_24 = votes_24_dem/votes_twoParty`.
+ℹ In group 1: `state = "GA"`, `county = "Appling"`, `precinct_24 = "1B"`,
+  `vote_mode = "Election Day"`.
+Caused by error:
+! object 'votes_twoParty' not found
+
+Error: could not load dependencies of target tbl_county_GA_NA. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target model_GA_NA
+▶ dispatched target tbl_county_GA_NA
+▶ recorded workspace tbl_county_GA_NA
+✖ errored target tbl_county_GA_NA
+▶ dispatched target timestamp_PA_Delaware
+● completed target timestamp_PA_Delaware [0.11 seconds, 58 bytes]
+▶ dispatched target data_PA_Delaware
+● completed target data_MI_Eaton [17.829 seconds, 3.217 kilobytes]
+▶ dispatched target tbl_cbs_MI_Eaton
+▶ recorded workspace tbl_cbs_MI_Eaton
+Error: ℹ In argument: `key = map(key, jsonlite::unbox)`.
+Caused by error in `map()`:
+ℹ In index: 45.
+Caused by error:
+! Tried to unbox dataframe with 2 rows.
+
+✖ errored target tbl_cbs_MI_Eaton
+▶ dispatched target timestamp_NC_NA
+● completed target timestamp_NC_NA [0.141 seconds, 58 bytes]
+▶ dispatched target data_NC_NA
+● completed target data_NC_NA [4.157 seconds, 71.976 kilobytes]
+▶ dispatched target model_NC_NA
+▶ recorded workspace model_NC_NA
+Error: ℹ In argument: `votePct_dem_24 = votes_24_dem/votes_twoParty`.
+ℹ In group 1: `state = "NC"`, `county = "Alamance"`, `precinct_24 = "01"`,
+  `vote_mode = "Election Day"`.
+Caused by error:
+! object 'votes_twoParty' not found
+
+Error: could not load dependencies of target plot_votesAll_NC_NA. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target model_NC_NA
+✔ skipped target tbl_county_NC_NA
+▶ dispatched target plot_votesAll_NC_NA
+▶ recorded workspace plot_votesAll_NC_NA
+✖ errored target plot_votesAll_NC_NA
+▶ dispatched target timestamp_MI_Macomb
+● completed target timestamp_MI_Macomb [0.063 seconds, 58 bytes]
+
+Execution halted

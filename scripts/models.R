@@ -31,9 +31,8 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       votes_precTotal_24 = sum(votes_24),
       votes_24_dem = sum(votes_24 * str_detect(candidate_name, dem_candidate_regex)),
       votes_24_rep = sum(votes_24 * str_detect(candidate_name, rep_candidate_regex)),
-      votes_twoParty = votes_24_dem + votes_24_rep,
-      votePct_dem_24 = votes_24_dem / votes_twoParty,
-      votePct_rep_24 = votes_24_rep / votes_twoParty,
+      votePct_dem_24 = votes_24_dem / votes_precTotal_24,
+      votePct_rep_24 = votes_24_rep / votes_precTotal_24,
       .by = c(state, county, precinct_24, vote_mode)
     ) |>
     # filter(vote_mode != "Overvote/Undervote") |>
@@ -87,8 +86,8 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
     ) |>
     mutate(
       across(where(is.double), ~ na_if(.x, Inf)),
-      across(where(is.double), ~ ifelse(.x > 50, NA, .x)),
-      across(where(is.double), ~ ifelse(.x < -50, NA, .x)),
+      across(where(is.double), ~ ifelse(.x > 10, 10, .x)),
+      across(where(is.double), ~ ifelse(.x < -10, -10, .x)),
       across(where(is.double), ~ replace_na(.x, mean(.x, na.rm=TRUE))), 
       .by = vote_mode)
   
@@ -194,8 +193,9 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   summaries_byCounty_byMode = estimates |> 
     left_join(timestamps, join_by(state, county, precinct_24, vote_mode)) |> 
     mutate(
-      across(where(is.double) & !timestamp, ~ na_if(.x, Inf))
-    ) |> 
+      across(where(is.double) & !timestamp, ~ na_if(.x, Inf)),
+      across(where(is.double) & !timestamp, ~ na_if(.x, -Inf))
+    ) |>
     summarize(
       timestamp = max(timestamp, na.rm = TRUE),
       votes_total_20 = sum(votes_precFinal_20, na.rm = TRUE),
@@ -210,16 +210,20 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
       repVotes_upper = sum(votes_24_repTop, na.rm = TRUE),
       demShare_20 = weighted.mean(votePct_dem_20, votes_precFinal_20),
       repShare_20 = weighted.mean(votePct_rep_20, votes_precFinal_20),
-      demShare_lower = demVotes_lower / (votes_twoParty),
-      demShare_estimate = demVotes_estimate / (votes_twoParty),
-      demShare_upper = demVotes_upper / (votes_twoParty),
-      repShare_lower = repVotes_lower / (votes_twoParty),
-      repShare_estimate = repVotes_estimate / (votes_twoParty),
-      repShare_upper = repVotes_upper / (votes_twoParty),
+      demShare_lower = demVotes_lower / (demVotes_estimate + repVotes_estimate),
+      demShare_estimate = demVotes_estimate / (demVotes_estimate + repVotes_estimate),
+      demShare_upper = demVotes_upper / (demVotes_estimate + repVotes_estimate),
+      repShare_lower = repVotes_lower / (demVotes_estimate + repVotes_estimate),
+      repShare_estimate = repVotes_estimate / (demVotes_estimate + repVotes_estimate),
+      repShare_upper = repVotes_upper / (demVotes_estimate + repVotes_estimate),
       swing_lower = (demShare_lower - repShare_upper) - (demShare_20 - repShare_20),
       swing_estimate = (demShare_estimate - repShare_estimate) - (demShare_20 - repShare_20),
       swing_upper = (demShare_upper - repShare_lower) - (demShare_20 - repShare_20),
       .by = c(state, county, vote_mode)
+    ) |> 
+    mutate(
+      across(where(is.double) & !timestamp, ~ na_if(.x, Inf)),
+      across(where(is.double) & !timestamp, ~ na_if(.x, -Inf))
     )
   
   summaries_byCounty = summaries_byCounty_byMode |> 

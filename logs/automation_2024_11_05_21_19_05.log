@@ -1,0 +1,388 @@
+2024-11-05 21:19:05: Running tar_make
+▶ dispatched target timestamp_MI_Eaton
+▶ dispatched target timestamp_AZ_Maricopa
+▶ dispatched target timestamp_GA_NA
+▶ dispatched target timestamp_PA_Philadelphia
+✔ skipped target page_AZ_Pima
+● completed target timestamp_MI_Eaton [2.719 seconds, 58 bytes]
+▶ dispatched target data_MI_Eaton
+● completed target timestamp_GA_NA [2.734 seconds, 58 bytes]
+▶ dispatched target data_GA_NA
+● completed target timestamp_AZ_Maricopa [2.843 seconds, 58 bytes]
+▶ dispatched target data_AZ_Maricopa
+● completed target timestamp_PA_Philadelphia [2.984 seconds, 58 bytes]
+▶ dispatched target data_PA_Philadelphia
+● completed target data_GA_NA [9.75 seconds, 58.044 kilobytes]
+▶ dispatched target model_GA_NA
+● completed target data_MI_Eaton [14.937 seconds, 3.178 kilobytes]
+▶ dispatched target tbl_cbs_MI_Eaton
+▶ recorded workspace model_GA_NA
+Error: ℹ In argument: `across(...)`.
+ℹ In group 1: `state = "GA"` and `county = "Appling"`.
+Caused by error in `across()`:
+! Can't compute column `swing_lower`.
+Caused by error:
+! object 'votes_total_20' not found
+
+Error: could not load dependencies of target tbl_county_GA_NA. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target model_GA_NA
+▶ dispatched target tbl_county_GA_NA
+▶ recorded workspace tbl_county_GA_NA
+✖ errored target tbl_county_GA_NA
+▶ dispatched target timestamp_PA_Allegheny
+● completed target timestamp_PA_Allegheny [0.141 seconds, 58 bytes]
+▶ dispatched target data_PA_Allegheny
+▶ recorded workspace tbl_cbs_MI_Eaton
+Error: ℹ In argument: `key = map(key, jsonlite::unbox)`.
+Caused by error in `map()`:
+ℹ In index: 45.
+Caused by error:
+! Tried to unbox dataframe with 2 rows.
+
+✖ errored target tbl_cbs_MI_Eaton
+▶ dispatched target timestamp_PA_Delaware
+● completed target timestamp_PA_Delaware [0.062 seconds, 58 bytes]
+▶ dispatched target data_PA_Delaware
+▶ recorded workspace data_PA_Philadelphia
+Error: PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\Mason\\Dropbox (MIT)\\Research\\2024 Election Results\\24_general\\PA\\raw\\Delaware_347957.csv' -> 'C:\\Users\\Mason\\Dropbox (MIT)\\Research\\2024 Election Results\\24_general\\PA\\raw\\Delaware_347957_20241105_211956.csv'
+Run `reticulate::py_last_error()` for details.
+
+Error: could not load dependencies of target tbl_cbs_PA_Philadelphia. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target data_PA_Philadelphia
+▶ dispatched target tbl_cbs_PA_Philadelphia
+▶ recorded workspace tbl_cbs_PA_Philadelphia
+✖ errored target tbl_cbs_PA_Philadelphia
+▶ dispatched target timestamp_NC_NA
+● completed target timestamp_NC_NA [0.14 seconds, 58 bytes]
+▶ dispatched target data_NC_NA
+● completed target data_AZ_Maricopa [25.64 seconds, 24.151 kilobytes]
+▶ dispatched target model_AZ_Maricopa
+✔ skipped target tbl_cbs_AZ_Maricopa
+▶ recorded workspace model_AZ_Maricopa
+Error: ℹ In argument: `across(...)`.
+ℹ In group 1: `state = "AZ"` and `county = "Maricopa"`.
+Caused by error in `across()`:
+! Can't compute column `swing_lower`.
+Caused by error:
+! object 'votes_total_20' not found
+
+✖ errored target model_AZ_Maricopa
+✔ skipped target tbl_countyMode_AZ_Maricopa
+✔ skipped target plot_votesAll_AZ_Maricopa
+✔ skipped target plot_votesEDay_AZ_Maricopa
+✔ skipped target plot_margin2020_AZ_Maricopa
+✔ skipped target tbl_county_AZ_Maricopa
+✔ skipped target plot_voteShare_AZ_Maricopa
+✔ skipped target page_AZ_Maricopa
+▶ dispatched target timestamp_MI_Macomb
+● completed target data_NC_NA [4.875 seconds, 67.592 kilobytes]
+▶ dispatched target model_NC_NA
+● completed target timestamp_MI_Macomb [0.109 seconds, 58 bytes]
+▶ dispatched target data_MI_Macomb
+● completed target data_PA_Allegheny [18.031 seconds, 28.139 kilobytes]
+Error: ℹ In argument: `across(...)`.
+ℹ In group 1: `state = "NC"` and `county = "Alamance"`.
+Caused by error in `across()`:
+! Can't compute column `swing_lower`.
+Caused by error:
+! object 'votes_total_20' not found
+
+Error: could not load dependencies of target plot_votesAll_NC_NA. Expecting a single string value: [type=character; extent=0].
+
+▶ dispatched target tbl_cbs_PA_Allegheny
+▶ recorded workspace model_NC_NA
+✖ errored target model_NC_NA
+✔ skipped target tbl_county_NC_NA
+▶ dispatched target plot_votesAll_NC_NA
+▶ recorded workspace plot_votesAll_NC_NA
+✖ errored target plot_votesAll_NC_NA
+▶ dispatched target timestamp_MI_Oakland
+● completed target timestamp_MI_Oakland [0.109 seconds, 58 bytes]
+▶ dispatched target data_MI_Oakland
+● completed target data_MI_Macomb [6.594 seconds, 2.223 kilobytes]
+▶ dispatched target model_MI_Macomb
+▶ recorded workspace model_MI_Macomb
+Error: ℹ In argument: `across(...)`.
+ℹ In group 1: `state = "MI"` and `county = "Macomb"`.
+Caused by error in `across()`:
+! Can't compute column `swing_lower`.
+Caused by error:
+! object 'votes_total_20' not found
+
+Error: could not load dependencies of target tbl_countyMode_MI_Macomb. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target model_MI_Macomb
+✔ skipped target plot_votesAll_MI_Macomb
+▶ dispatched target tbl_countyMode_MI_Macomb
+▶ recorded workspace tbl_countyMode_MI_Macomb
+✖ errored target tbl_countyMode_MI_Macomb
+▶ dispatched target timestamp_MI_Ingham
+● completed target timestamp_MI_Ingham [0.125 seconds, 58 bytes]
+▶ dispatched target data_MI_Ingham
+● completed target data_MI_Ingham [2.641 seconds, 1.69 kilobytes]
+▶ dispatched target model_MI_Ingham
+▶ recorded workspace model_MI_Ingham
+Error: ℹ In argument: `across(...)`.
+ℹ In group 1: `state = "MI"` and `county = "Ingham"`.
+Caused by error in `across()`:
+! Can't compute column `swing_lower`.
+Caused by error:
+! object 'votes_total_20' not found
+
+Error: could not load dependencies of target plot_votesAll_MI_Ingham. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target model_MI_Ingham
+✔ skipped target plot_voteShare_MI_Ingham
+▶ dispatched target plot_votesAll_MI_Ingham
+▶ recorded workspace plot_votesAll_MI_Ingham
+✖ errored target plot_votesAll_MI_Ingham
+▶ dispatched target uploads
+● completed target uploads [2.407 seconds, 182 bytes]
+▶ dispatched target tbl_cbs_GA_NA
+● completed target tbl_cbs_PA_Allegheny [12.562 seconds, 58.375 kilobytes]
+▶ dispatched target model_MI_Eaton
+▶ recorded workspace model_MI_Eaton
+Error: ℹ In argument: `across(...)`.
+ℹ In group 1: `state = "MI"` and `county = "Eaton"`.
+Caused by error in `across()`:
+! Can't compute column `swing_lower`.
+Caused by error:
+! object 'votes_total_20' not found
+
+Error: could not load dependencies of target plot_margin2020_GA_NA. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target plot_votesEDay_GA_NA. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target model_MI_Eaton
+✔ skipped target tbl_county_MI_Eaton
+✔ skipped target plot_margin2020_MI_Eaton
+✔ skipped target plot_votesAll_MI_Eaton
+✔ skipped target plot_voteShare_MI_Eaton
+✔ skipped target plot_votesEDay_MI_Eaton
+✔ skipped target tbl_countyMode_MI_Eaton
+✔ skipped target page_MI_Eaton
+▶ dispatched target plot_margin2020_GA_NA
+▶ recorded workspace plot_margin2020_GA_NA
+✖ errored target plot_margin2020_GA_NA
+▶ dispatched target plot_votesEDay_GA_NA
+● completed target data_PA_Delaware [32.782 seconds, 9.431 kilobytes]
+▶ dispatched target model_PA_Delaware
+▶ recorded workspace plot_votesEDay_GA_NA
+✖ errored target plot_votesEDay_GA_NA
+▶ dispatched target tbl_cbs_PA_Delaware
+▶ recorded workspace model_PA_Delaware
+Error: ℹ In argument: `across(...)`.
+ℹ In group 1: `state = "PA"` and `county = "Delaware"`.
+Caused by error in `across()`:
+! Can't compute column `swing_lower`.
+Caused by error:
+! object 'votes_total_20' not found
+
+Error: could not load dependencies of target plot_voteShare_GA_NA. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target plot_votesAll_GA_NA. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target model_PA_Delaware
+✔ skipped target tbl_countyMode_PA_Delaware
+✔ skipped target plot_votesEDay_PA_Delaware
+✔ skipped target tbl_county_PA_Delaware
+✔ skipped target plot_votesAll_PA_Delaware
+✔ skipped target plot_voteShare_PA_Delaware
+✔ skipped target plot_margin2020_PA_Delaware
+✔ skipped target page_PA_Delaware
+▶ dispatched target plot_voteShare_GA_NA
+▶ recorded workspace plot_voteShare_GA_NA
+✖ errored target plot_voteShare_GA_NA
+▶ dispatched target plot_votesAll_GA_NA
+▶ recorded workspace plot_votesAll_GA_NA
+✖ errored target plot_votesAll_GA_NA
+▶ dispatched target tbl_countyMode_GA_NA
+▶ recorded workspace tbl_countyMode_GA_NA
+Error: could not load dependencies of target tbl_countyMode_GA_NA. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target page_GA. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target model_PA_Philadelphia. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target tbl_countyMode_GA_NA
+▶ dispatched target page_GA
+▶ recorded workspace page_GA
+✖ errored target page_GA
+▶ dispatched target model_PA_Philadelphia
+▶ recorded workspace model_PA_Philadelphia
+✖ errored target model_PA_Philadelphia
+✔ skipped target plot_votesAll_PA_Philadelphia
+✔ skipped target plot_margin2020_PA_Philadelphia
+✔ skipped target plot_voteShare_PA_Philadelphia
+▶ dispatched target tbl_countyMode_PA_Philadelphia
+▶ recorded workspace tbl_countyMode_PA_Philadelphia
+Error: could not load dependencies of target tbl_countyMode_PA_Philadelphia. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target tbl_countyMode_PA_Philadelphia
+▶ dispatched target tbl_cbs_NC_NA
+● completed target tbl_cbs_GA_NA [9.969 seconds, 112.344 kilobytes]
+▶ dispatched target model_PA_Allegheny
+● completed target tbl_cbs_PA_Delaware [7.594 seconds, 16.725 kilobytes]
+Error: could not load dependencies of target plot_margin2020_NC_NA. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target plot_votesEDay_NC_NA. Expecting a single string value: [type=character; extent=0].
+
+▶ dispatched target plot_margin2020_NC_NA
+▶ recorded workspace plot_margin2020_NC_NA
+✖ errored target plot_margin2020_NC_NA
+▶ dispatched target plot_votesEDay_NC_NA
+▶ recorded workspace plot_votesEDay_NC_NA
+✖ errored target plot_votesEDay_NC_NA
+▶ dispatched target plot_voteShare_NC_NA
+▶ recorded workspace plot_voteShare_NC_NA
+Error: could not load dependencies of target plot_voteShare_NC_NA. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target tbl_countyMode_NC_NA. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target page_NC. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target plot_voteShare_NC_NA
+▶ dispatched target tbl_countyMode_NC_NA
+▶ recorded workspace tbl_countyMode_NC_NA
+✖ errored target tbl_countyMode_NC_NA
+▶ dispatched target page_NC
+▶ recorded workspace page_NC
+✖ errored target page_NC
+▶ dispatched target tbl_cbs_MI_Macomb
+▶ recorded workspace model_PA_Allegheny
+Error: ℹ In argument: `across(...)`.
+ℹ In group 1: `state = "PA"` and `county = "Allegheny"`.
+Caused by error in `across()`:
+! Can't compute column `swing_lower`.
+Caused by error:
+! object 'votes_total_20' not found
+
+Error: could not load dependencies of target plot_margin2020_MI_Macomb. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target plot_votesEDay_MI_Macomb. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target model_PA_Allegheny
+✔ skipped target plot_voteShare_PA_Allegheny
+✔ skipped target plot_margin2020_PA_Allegheny
+✔ skipped target plot_votesAll_PA_Allegheny
+✔ skipped target plot_votesEDay_PA_Allegheny
+✔ skipped target tbl_county_PA_Allegheny
+✔ skipped target tbl_countyMode_PA_Allegheny
+✔ skipped target page_PA_Allegheny
+▶ dispatched target plot_margin2020_MI_Macomb
+▶ recorded workspace plot_margin2020_MI_Macomb
+✖ errored target plot_margin2020_MI_Macomb
+▶ dispatched target plot_votesEDay_MI_Macomb
+▶ recorded workspace plot_votesEDay_MI_Macomb
+✖ errored target plot_votesEDay_MI_Macomb
+▶ dispatched target plot_voteShare_MI_Macomb
+▶ recorded workspace plot_voteShare_MI_Macomb
+Error: could not load dependencies of target plot_voteShare_MI_Macomb. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target tbl_county_MI_Macomb. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target page_MI_Macomb. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target plot_voteShare_MI_Macomb
+▶ dispatched target tbl_county_MI_Macomb
+▶ recorded workspace tbl_county_MI_Macomb
+✖ errored target tbl_county_MI_Macomb
+▶ dispatched target page_MI_Macomb
+▶ recorded workspace page_MI_Macomb
+✖ errored target page_MI_Macomb
+▶ dispatched target tbl_cbs_MI_Ingham
+● completed target tbl_cbs_MI_Macomb [7.204 seconds, 4.046 kilobytes]
+Error: could not load dependencies of target plot_margin2020_MI_Ingham. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target plot_votesEDay_MI_Ingham. Expecting a single string value: [type=character; extent=0].
+
+▶ dispatched target plot_margin2020_MI_Ingham
+▶ recorded workspace plot_margin2020_MI_Ingham
+✖ errored target plot_margin2020_MI_Ingham
+▶ dispatched target plot_votesEDay_MI_Ingham
+▶ recorded workspace plot_votesEDay_MI_Ingham
+✖ errored target plot_votesEDay_MI_Ingham
+▶ dispatched target tbl_county_MI_Ingham
+▶ recorded workspace tbl_county_MI_Ingham
+Error: could not load dependencies of target tbl_county_MI_Ingham. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target tbl_countyMode_MI_Ingham. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target page_MI_Ingham. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target plot_votesEDay_PA_Philadelphia. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target tbl_county_MI_Ingham
+▶ dispatched target tbl_countyMode_MI_Ingham
+● completed target tbl_cbs_MI_Ingham [5.75 seconds, 2.63 kilobytes]
+▶ dispatched target plot_votesEDay_PA_Philadelphia
+▶ recorded workspace tbl_countyMode_MI_Ingham
+✖ errored target tbl_countyMode_MI_Ingham
+▶ dispatched target page_MI_Ingham
+▶ recorded workspace page_MI_Ingham
+✖ errored target page_MI_Ingham
+▶ recorded workspace plot_votesEDay_PA_Philadelphia
+✖ errored target plot_votesEDay_PA_Philadelphia
+▶ dispatched target tbl_county_PA_Philadelphia
+▶ recorded workspace tbl_county_PA_Philadelphia
+Error: could not load dependencies of target tbl_county_PA_Philadelphia. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target page_PA_Philadelphia. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target tbl_county_PA_Philadelphia
+▶ dispatched target page_PA_Philadelphia
+▶ recorded workspace page_PA_Philadelphia
+✖ errored target page_PA_Philadelphia
+● completed target tbl_cbs_NC_NA [18.609 seconds, 145.594 kilobytes]
+● completed target data_MI_Oakland [1.852 minutes, 16.714 kilobytes]
+▶ dispatched target model_MI_Oakland
+▶ dispatched target tbl_cbs_MI_Oakland
+▶ recorded workspace model_MI_Oakland
+Error: ℹ In argument: `across(...)`.
+ℹ In group 1: `state = "MI"` and `county = "Oakland"`.
+Caused by error in `across()`:
+! Can't compute column `swing_lower`.
+Caused by error:
+! object 'votes_total_20' not found
+
+Error: could not load dependencies of target plot_votesAll_MI_Oakland. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target plot_margin2020_MI_Oakland. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target plot_votesEDay_MI_Oakland. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target tbl_county_MI_Oakland. Expecting a single string value: [type=character; extent=0].
+
+Error: could not load dependencies of target tbl_countyMode_MI_Oakland. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target model_MI_Oakland
+✔ skipped target plot_voteShare_MI_Oakland
+▶ dispatched target plot_margin2020_MI_Oakland
+▶ dispatched target plot_votesAll_MI_Oakland
+▶ dispatched target plot_votesEDay_MI_Oakland
+▶ recorded workspace plot_votesAll_MI_Oakland
+✖ errored target plot_votesAll_MI_Oakland
+▶ dispatched target tbl_county_MI_Oakland
+▶ recorded workspace plot_margin2020_MI_Oakland
+✖ errored target plot_margin2020_MI_Oakland
+▶ dispatched target tbl_countyMode_MI_Oakland
+▶ recorded workspace plot_votesEDay_MI_Oakland
+✖ errored target plot_votesEDay_MI_Oakland
+▶ recorded workspace tbl_county_MI_Oakland
+✖ errored target tbl_county_MI_Oakland
+▶ recorded workspace tbl_countyMode_MI_Oakland
+✖ errored target tbl_countyMode_MI_Oakland
+▶ dispatched target page_MI_Oakland
+▶ recorded workspace page_MI_Oakland
+Error: could not load dependencies of target page_MI_Oakland. Expecting a single string value: [type=character; extent=0].
+
+✖ errored target page_MI_Oakland
+● completed target tbl_cbs_MI_Oakland [8.75 seconds, 38.678 kilobytes]
+✖ errored pipeline [2.768 minutes]
+Warning messages:
+1: 48 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
+2: 9 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
+
+Execution halted
