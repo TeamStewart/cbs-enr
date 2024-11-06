@@ -989,7 +989,9 @@ get_clarity <- function(state, county, path){
       unnest_longer(col = version) |> 
       mutate(
         url = glue("https://results.enr.clarityelections.com/{state}/{county}/{sitenum}/{version}/reports/detailxml.zip"),
-        raw_file_path = glue("{PATH_DROPBOX}/24_general/{state}/raw/{county}_{version}.zip"))
+        raw_file_path = glue("{PATH_DROPBOX}/24_general/{state}/raw/{county}_{version}.zip"),
+        downloaded = file_exists(raw_file_path) & file_size(raw_file_path) > 3000
+      )
     
     download_file <- function(url, version) {
       tryCatch(
@@ -1008,17 +1010,23 @@ get_clarity <- function(state, county, path){
       )
     }
     
+    counties |> 
+      filter(!downloaded) |> 
+      mutate(out = walk2(url, version, download_file))
+    
     # Apply the function using map2 on url and version columns from `counties`
-    map2(counties$url, counties$version, download_file)
+    # map2(counties$url, counties$version, download_file)
     
     # Check which versions already downloaded, omit from the list to scrape
     counties <- counties |> mutate(
       state = state,
-      csv_downloaded = file.exists(glue("{PATH_DROPBOX}/24_general/{state}/raw/{county}_{version}.csv")))
+      update_csv = !file_exists(glue("{PATH_DROPBOX}/24_general/{state}/raw/{county}_{value}.csv")) & file_size(raw_file_path) > 3000
+    )
     
     source_python("scripts/util/clarity_scraper.py")
     
-    counties |> filter(!csv_downloaded) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x, PATH_DROPBOX))
+    counties |> filter(update_csv) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x, PATH_DROPBOX))
+    
   } else{
     # County level clarity site
     county = str_to_title(county) |> str_replace_all(" ", "_")
@@ -1043,7 +1051,9 @@ get_clarity <- function(state, county, path){
         state = state, 
         county = county,
         url = glue("https://results.enr.clarityelections.com/{state}/{county}/{path}/{value}/reports/detailxml.zip"),
-        raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/{county}_{value}.zip'))
+        raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/{county}_{value}.zip'),
+        downloaded = file_exists(raw_file_path) & file_size(raw_file_path) > 3000
+      )
     
     download_file <- function(url, version) {
       tryCatch(
@@ -1062,16 +1072,19 @@ get_clarity <- function(state, county, path){
       )
     }
     
-    map2(version_files$url, version_files$value, download_file)
+    version_files |> 
+      filter(!downloaded) |> 
+      mutate(out = walk2(url, value, download_file))
     
     # Check which versions already downloaded, omit from the list to scrape
     version_files <- version_files |> mutate(
       state = state,
-      csv_downloaded = file.exists(glue("{county}_{value}.csv")))
+      update_csv = !file_exists(glue("{PATH_DROPBOX}/24_general/{state}/raw/{county}_{value}.csv")) & file_size(raw_file_path) > 3000
+    )
     
     source_python("scripts/util/clarity_scraper.py")
     
-    version_files |> filter(!csv_downloaded) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x, PATH_DROPBOX))
+    version_files |> filter(update_csv) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x, PATH_DROPBOX))
   }
   
 }
