@@ -43,5 +43,5 @@ while (TRUE) {
   git2r::commit(message = glue("latest pull {run_time}"))
   git2r::push(credentials = git2r::cred_token())
   
-  Sys.sleep(30)
+  Sys.sleep(15)
 }

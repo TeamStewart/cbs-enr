@@ -232,14 +232,14 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   summaries_byCounty = summaries_byCounty_byMode |> 
     summarise(
       timestamp = max(timestamp),
-      across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
+      across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_24_estimate, na.rm = TRUE)),
       across(votes_total_20:repVotes_upper, ~ sum(.x, na.rm=TRUE)),
       .by = c(state, county)
     )
   
   summaries_byMode = summaries_byCounty_byMode |> 
     summarise(
-      across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
+      across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_24_estimate, na.rm = TRUE)),
       across(votes_total_20:repVotes_upper, ~ sum(.x, na.rm=TRUE)),
       .by = c(state, vote_mode)
     ) |> 
@@ -250,7 +250,7 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   
   summaries = summaries_byCounty_byMode |> 
     summarise(
-      across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_20, na.rm = TRUE)),
+      across(c(contains("swing"), contains("Share")), ~ weighted.mean(.x, votes_total_24_estimate, na.rm = TRUE)),
       across(votes_total_20:repVotes_upper, ~ sum(.x, na.rm=TRUE)),
       .by = c(state)
     )
