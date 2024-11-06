@@ -259,12 +259,14 @@ run_models <- function(data, state, county, timestamp, preelection_totals) {
   
   # rather than append=TRUE, combine and distinct() in case we run the model twice or
   # something else happens
-  bind_rows(
-    summaries_byMode,
-    read_csv(glue("{PATH_DROPBOX}/24_general/{state}/{state}_{county}_modeling.csv"), col_types = "ccnnnnnnnnnnnnnnnnnnnnnTl")
-  ) |> 
-    distinct() |> 
-    write_csv(glue("{PATH_DROPBOX}/24_general/{state}/{state}_{county}_modeling.csv"))
+  write_csv(summaries_byMode, glue("{PATH_DROPBOX}/24_general/{state}/{state}_{county}_modeling.csv"), append = TRUE)
+  
+  # bind_rows(
+  #   summaries_byMode,
+  #   read_csv(, col_types = "ccnnnnnnnnnnnnnnnnnnnnnTl")
+  # ) |> 
+  #   distinct() |> 
+  #   write_csv(glue("{PATH_DROPBOX}/24_general/{state}/{state}_{county}_modeling.csv"))
   
   # return computed values for plotting
   m = list(

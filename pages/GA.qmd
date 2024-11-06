@@ -76,7 +76,7 @@ write_file(as.character(prec_reported_any), glue("{PATH_DROPBOX}/24_general/{sta
 
 ## Vote Estimates
 
-**Margin (Harris - Trump)**: `r 100*(summaries$demShare_estimate - summaries$repShare_estimate)`pp with uncertainty bounds [`r 100*(summaries$demShare_lower - summaries$repShare_upper)`pp to `r 100*(summaries$demShare_lower - summaries$repShare_upper)`pp]
+**Margin (Harris - Trump)**: `r 100*(summaries$demShare_estimate - summaries$repShare_estimate)`pp with uncertainty bounds [`r 100*(summaries$demShare_lower - summaries$repShare_lower)`pp to `r 100*(summaries$demShare_lower - summaries$repShare_lower)`pp]
 
 **Change in Margin vs 2020**: `r 100*(summaries$swing_estimate)`pp with uncertainty bounds [`r 100*(summaries$swing_lower)`pp to `r 100*(summaries$swing_upper)`pp]
 
