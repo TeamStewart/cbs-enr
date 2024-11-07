@@ -1,0 +1,52 @@
+2024-11-07 15:35:52: Running tar_make
+▶ dispatched target timestamp_MI_Oakland
+▶ dispatched target timestamp_PA_Delaware
+▶ dispatched target timestamp_PA_Allegheny
+● completed target timestamp_MI_Oakland [2.593 seconds, 58 bytes]
+✔ skipped target data_MI_Oakland
+● completed target timestamp_PA_Delaware [2.594 seconds, 58 bytes]
+✔ skipped target tbl_cbs_MI_Oakland
+✔ skipped target data_PA_Delaware
+✔ skipped target tbl_cbs_PA_Delaware
+▶ dispatched target timestamp_PA_Philadelphia
+▶ dispatched target timestamp_AZ_Pima
+● completed target timestamp_PA_Allegheny [2.61 seconds, 58 bytes]
+✔ skipped target data_PA_Allegheny
+✔ skipped target tbl_cbs_PA_Allegheny
+▶ dispatched target timestamp_NC_NA
+● completed target timestamp_AZ_Pima [0 seconds, 58 bytes]
+▶ dispatched target data_AZ_Pima
+● completed target timestamp_NC_NA [0.141 seconds, 58 bytes]
+▶ dispatched target data_NC_NA
+● completed target timestamp_PA_Philadelphia [0.375 seconds, 58 bytes]
+✔ skipped target data_PA_Philadelphia
+✔ skipped target tbl_cbs_PA_Philadelphia
+▶ dispatched target timestamp_MI_Macomb
+● completed target timestamp_MI_Macomb [0.063 seconds, 58 bytes]
+✔ skipped target data_MI_Macomb
+✔ skipped target tbl_cbs_MI_Macomb
+▶ dispatched target timestamp_MI_Ingham
+● completed target timestamp_MI_Ingham [0.093 seconds, 58 bytes]
+✔ skipped target data_MI_Ingham
+✔ skipped target tbl_cbs_MI_Ingham
+▶ dispatched target timestamp_AZ_Maricopa
+● completed target timestamp_AZ_Maricopa [0.422 seconds, 58 bytes]
+✔ skipped target data_AZ_Maricopa
+✔ skipped target tbl_cbs_AZ_Maricopa
+▶ dispatched target timestamp_GA_NA
+● completed target data_AZ_Pima [1.484 seconds, 7.391 kilobytes]
+▶ dispatched target tbl_cbs_AZ_Pima
+● completed target timestamp_GA_NA [0.093 seconds, 58 bytes]
+▶ dispatched target data_GA_NA
+● completed target data_NC_NA [3.922 seconds, 98.379 kilobytes]
+▶ dispatched target tbl_cbs_NC_NA
+● completed target tbl_cbs_AZ_Pima [6.828 seconds, 15.377 kilobytes]
+▶ dispatched target timestamp_MI_Eaton
+● completed target timestamp_MI_Eaton [0.062 seconds, 58 bytes]
+✔ skipped target data_MI_Eaton
+✔ skipped target tbl_cbs_MI_Eaton
+● completed target data_GA_NA [9.032 seconds, 65.966 kilobytes]
+▶ dispatched target tbl_cbs_GA_NA
+● completed target tbl_cbs_GA_NA [9.14 seconds, 125.332 kilobytes]
+● completed target tbl_cbs_NC_NA [21.187 seconds, 205.259 kilobytes]
+▶ ended pipeline [37.266 seconds]
