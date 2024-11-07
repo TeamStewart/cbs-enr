@@ -1,0 +1,52 @@
+2024-11-07 14:33:41: Running tar_make
+▶ dispatched target timestamp_MI_Oakland
+▶ dispatched target timestamp_PA_Delaware
+▶ dispatched target timestamp_PA_Allegheny
+● completed target timestamp_MI_Oakland [2.609 seconds, 58 bytes]
+✔ skipped target data_MI_Oakland
+● completed target timestamp_PA_Delaware [2.594 seconds, 58 bytes]
+✔ skipped target tbl_cbs_MI_Oakland
+✔ skipped target data_PA_Delaware
+✔ skipped target tbl_cbs_PA_Delaware
+▶ dispatched target timestamp_PA_Philadelphia
+▶ dispatched target timestamp_AZ_Pima
+● completed target timestamp_PA_Allegheny [2.453 seconds, 58 bytes]
+✔ skipped target data_PA_Allegheny
+✔ skipped target tbl_cbs_PA_Allegheny
+▶ dispatched target timestamp_NC_NA
+● completed target timestamp_AZ_Pima [0 seconds, 58 bytes]
+▶ dispatched target data_AZ_Pima
+● completed target timestamp_NC_NA [0.157 seconds, 58 bytes]
+✔ skipped target data_NC_NA
+✔ skipped target tbl_cbs_NC_NA
+▶ dispatched target timestamp_MI_Macomb
+● completed target timestamp_PA_Philadelphia [0.344 seconds, 58 bytes]
+▶ dispatched target data_PA_Philadelphia
+● completed target timestamp_MI_Macomb [0.047 seconds, 58 bytes]
+✔ skipped target data_MI_Macomb
+✔ skipped target tbl_cbs_MI_Macomb
+▶ dispatched target timestamp_MI_Ingham
+● completed target timestamp_MI_Ingham [0.094 seconds, 58 bytes]
+✔ skipped target data_MI_Ingham
+✔ skipped target tbl_cbs_MI_Ingham
+▶ dispatched target timestamp_AZ_Maricopa
+● completed target timestamp_AZ_Maricopa [0.453 seconds, 58 bytes]
+✔ skipped target data_AZ_Maricopa
+✔ skipped target tbl_cbs_AZ_Maricopa
+▶ dispatched target timestamp_GA_NA
+● completed target timestamp_GA_NA [0.078 seconds, 58 bytes]
+✔ skipped target data_GA_NA
+✔ skipped target tbl_cbs_GA_NA
+▶ dispatched target timestamp_MI_Eaton
+● completed target timestamp_MI_Eaton [0.047 seconds, 58 bytes]
+✔ skipped target data_MI_Eaton
+✔ skipped target tbl_cbs_MI_Eaton
+● completed target data_AZ_Pima [1.953 seconds, 7.398 kilobytes]
+▶ dispatched target tbl_cbs_AZ_Pima
+● completed target tbl_cbs_AZ_Pima [6.515 seconds, 15.377 kilobytes]
+● completed target data_PA_Philadelphia [31.094 seconds, 30.25 kilobytes]
+▶ dispatched target tbl_cbs_PA_Philadelphia
+● completed target tbl_cbs_PA_Philadelphia [14.344 seconds, 85.305 kilobytes]
+▶ ended pipeline [56.641 seconds]
+Warning message:
+1 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
