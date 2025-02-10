@@ -130,7 +130,7 @@ get_data <- function(state, county, timestamp, path = NULL) {
   )
  
   # Upstream fix to precinct_total
-  d$precinct_total <- as.integer(d$precinct_total)
+  d$precinct_total <- as.numeric(d$precinct_total)
 
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
   clarity_counties <- list(

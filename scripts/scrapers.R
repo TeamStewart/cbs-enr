@@ -235,7 +235,7 @@ scrape_ga <- function(state, county, path, timestamp){
         is.na(groupResults) ~ list(list(list(groupName = character(), voteCount = integer(), isFromVirtualPrecinct = logical()))),
         .default = groupResults
       )
-    ) |> 
+    ) |>
     select(-precinct_results) |> 
     unnest_longer(groupResults) |> 
     hoist(
@@ -245,13 +245,14 @@ scrape_ga <- function(state, county, path, timestamp){
       virtual_precinct = "isFromVirtualPrecinct"
     ) |> 
     mutate(
-      precinct_total = coalesce(precinct_total, precinct_total_pct),
-      virtual_precinct = coalesce(virtual_precinct, virtual_precinct_pct),
+      # divide by 4 since the precinct total column reports the same number for all modes, even tho it is divided up by modes
+      # there are 4 modes in GA, might not work for other places?
+      precinct_total = coalesce(precinct_total, precinct_total_pct/4),
+      virtual_precinct = coalesce(virtual_precinct, virtual_precinct_pct/4),
       precinct_total_pct = NULL,
       virtual_precinct_pct = NULL,
       timestamp = .env$timestamp |> ymd_hms(),
       state = .env$state,
-      state = state,
       jurisdiction = jurisdiction |> str_remove(regex("County", ignore_case=TRUE)) |> str_squish() |> str_to_title(),
       # Recode contest names: President, Senator, US House, Governor, State Legislature - [Upper/Lower] District
       race_name = case_when(
