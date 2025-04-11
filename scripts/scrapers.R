@@ -112,7 +112,7 @@ scrape_az <- function(state, county, path, timestamp){
     
     raw_file |>
       clean_names() |>
-      slice(-1, -2) |>
+      slice(-1) |>
       select(-c(registered_voters_total, ballots_cast_total)) |>
       # remove total row
       filter(precinct_code != 'ZZZ') |>
@@ -181,8 +181,11 @@ scrape_az <- function(state, county, path, timestamp){
 
 ## Georgia
 scrape_ga <- function(state, county, path, timestamp){
+  
+  fs::dir_create(glue("{PATH_DROPBOX}/24_general/{state}/raw/"))
+  
   # Download the raw json
-  raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/GA_{timestamp}.zip')
+  raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/{state}_{timestamp}.zip')
   download.file(path, destfile = raw_file_path)
   raw_file_path = unzip(raw_file_path, exdir = glue('{PATH_DROPBOX}/24_general/{state}/raw'))
   
@@ -1032,7 +1035,7 @@ get_clarity <- function(state, county, path){
     # Check which versions already downloaded, omit from the list to scrape
     counties <- counties |> mutate(
       state = state,
-      update_csv = !file_exists(glue("{PATH_DROPBOX}/24_general/{state}/raw/{county}_{value}.csv")) & file_size(raw_file_path) > 3000
+      update_csv = !file_exists(glue("{PATH_DROPBOX}/24_general/{state}/raw/{county}_{version}.csv")) & file_size(raw_file_path) > 3000
     )
     
     source_python("scripts/util/clarity_scraper.py")
