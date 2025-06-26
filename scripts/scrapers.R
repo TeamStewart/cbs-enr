@@ -820,6 +820,7 @@ scrape_pa <- function(state, county, path, timestamp){
     raw_files <- list.files(path = glue('{PATH_DROPBOX}/24_general/{state}/raw'), pattern = paste0(county, ".*\\.csv$"), full.names = TRUE)
     
     clean_delaware_pa <- function(file){
+      
       cleaned <- read_csv(file) |>
         filter(race_name %in% c("Presidential Electors", "United States Senator")) |>
         mutate(
@@ -1030,7 +1031,7 @@ get_clarity <- function(state, county, path){
       mutate(out = walk2(url, version, download_file))
     
     # Apply the function using map2 on url and version columns from `counties`
-    # map2(counties$url, counties$version, download_file)
+    map2(counties$url, counties$version, download_file)
     
     # Check which versions already downloaded, omit from the list to scrape
     counties <- counties |> mutate(

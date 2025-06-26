@@ -26,19 +26,14 @@ options(
 tar_option_set(
   packages = c(
     # tar_renv()
-    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", "gt",
+    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", "gt", "pak",
     "googledrive", "httr2", "rvest", "reticulate", "sf", "xml2", "jsonlite", "qs2"
   ),
   memory = "transient",
-  format = "qs",
   error = "continue",
+  format = "qs",
   garbage_collection = TRUE,
   controller = crew::crew_controller_local(workers = 3)
-)
-
-tar_config_set(
-  seconds_meta_append = 15,
-  seconds_reporter = 0.5
 )
 
 # get the metadata file, with the following structure
@@ -47,7 +42,9 @@ tar_config_set(
 # - path: (string) generic cell for path/number/ID used by custom scrapers to get file
 # - preelection_totals: (boolean) 
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
-metadata = read_csv("data/metadata.csv", col_types = "cccll") |> drop_na(path)
+metadata = read_csv("data/metadata.csv", col_types = "cccll") |> 
+  drop_na(path) |> 
+  mutate(upload = FALSE)
 
 # ========================================
 ## PIPELINE
