@@ -12,10 +12,9 @@ total_votes_time_mode <- function(state, county){
     files <- list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), paste0(county, ".*\\.csv$"), full.names = TRUE)
   }
   
-  all_results <- lapply(files, read_csv) |> bind_rows()
-  
-  all_results |>
-    summarise(total_votes = sum(precinct_total), .by = c("timestamp","vote_mode"))
+  lapply(files, fread) |> 
+    rbindlist() |>
+    summarise(total_votes = sum(precinct_total), .by = c("timestamp", "vote_mode"))
 }
   
 total_precincts <- function(){
@@ -25,7 +24,7 @@ total_precincts <- function(){
     files <- list.files(path = glue("{PATH_DROPBOX}/24_general/{state}/clean"), paste0(county, ".*\\.csv$"), full.names = TRUE)
   }
   
-  all_results <- lapply(files, read_csv) |> bind_rows()
+  all_results <- lapply(files, fread) |> rbindlist()
   
   all_results |>
     summarise(

@@ -26,12 +26,12 @@ options(
 tar_option_set(
   packages = c(
     # tar_renv()
-    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", "gt", "pak",
+    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", "gt", "pak", "qs",
     "googledrive", "httr2", "rvest", "reticulate", "sf", "xml2", "jsonlite", "qs2"
   ),
   memory = "transient",
   error = "continue",
-  format = "qs",
+  format = "auto",
   garbage_collection = TRUE,
   controller = crew::crew_controller_local(workers = 3)
 )
