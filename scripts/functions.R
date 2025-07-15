@@ -107,12 +107,22 @@ get_timestamp <- function(state, county, path) {
     }
   }
 
+  ny_timestamp <- function() {
+    
+    read_html(path) |> 
+      html_text() |> 
+      str_extract("Information As Of: (.*?)AD:", group=1) |> 
+      ymd_hms(tz = "America/New_York")
+    
+  }
+  
   switch(state,
     "AZ" = az_timestamp(),
     "GA" = ga_timestamp(),
     "MI" = mi_timestamp(),
     "NC" = nc_timestamp(),
     "PA" = pa_timestamp(),
+    "NY" = ny_timestamp(),
   )
 }
 
@@ -127,6 +137,7 @@ get_data <- function(state, county, timestamp, path = NULL) {
     "MI" = scrape_mi(state, county, path, timestamp),
     "NC" = scrape_nc(state, county, path, timestamp),
     "PA" = scrape_pa(state, county, path, timestamp),
+    "NY" = scrape_ny(state, county, path, timestamp)
   )
  
   # Upstream fix to precinct_total

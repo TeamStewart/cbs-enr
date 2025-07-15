@@ -182,8 +182,6 @@ scrape_az <- function(state, county, path, timestamp){
 ## Georgia
 scrape_ga <- function(state, county, path, timestamp){
   
-  fs::dir_create(glue("{PATH_DROPBOX}/24_general/{state}/raw/"))
-  
   # Download the raw json
   raw_file_path = glue('{PATH_DROPBOX}/24_general/{state}/raw/{state}_{timestamp}.zip')
   download.file(path, destfile = raw_file_path)
@@ -960,6 +958,80 @@ scrape_pa <- function(state, county, path, timestamp){
       select(state, race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, timestamp, vote_mode, precinct_total) |>
       arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
   }
+}
+
+## New York City (labeled as New York but get over it)
+scrape_ny <- function(path, ...){
+  
+  # start with the "Total" page
+  base = read_html(path)
+  
+  links = tibble(
+    link = base |> html_elements("a") |> html_attr("href"),
+    ad = base |> html_elements("a") |> html_attr("title")
+  ) |> 
+    filter(str_detect(ad, "^AD \\d+$")) |> 
+    mutate(
+      link = glue("https://enr.boenyc.gov/{link}")
+    )
+  
+  get_ad <- function(link){
+    
+    t = read_html(link) |> 
+      html_element(".underline") |> 
+      html_table(head=TRUE) |> 
+      janitor::clean_names(case = "title")
+    
+    t[-1,]
+    
+  }
+  
+  links |> 
+    mutate(
+      results = map(link, get_ad)
+    ) |> 
+    select(ad, results) |> 
+    unnest_longer(results) |> 
+    unnest_wider(results) |> 
+    rename(
+      precinct = X,
+      pct_reported = X_2
+    ) |> 
+    mutate(
+      pct_reported = str_remove(pct_reported, "%") |> as.numeric() / 100,
+      precinct = str_squish(precinct),
+    ) |> 
+    select(-matches("^X_\\d+$")) |> 
+    pivot_longer(
+      cols = -c(ad, precinct, pct_reported), 
+      names_to = "candidate_name", 
+      values_to = "precinct_total"
+    ) |> 
+    mutate(
+      candidate_name = case_when(
+        .default = candidate_name,
+        str_detect(candidate_name, regex("Mamdani", TRUE)) ~ "Zohran Kwame Mamdani",
+        str_detect(candidate_name, regex("Cuomo", TRUE)) ~ "Andrew Cuomo",
+        str_detect(candidate_name, regex("Adams", TRUE)) ~ "Eric Adams",
+        str_detect(candidate_name, regex("Walden", TRUE)) ~ "Jim Walden",
+        str_detect(candidate_name, regex("Sliwa", TRUE)) ~ "Curtis Sliwa",
+      ),
+      candidate_party = case_match(
+        candidate_name, 
+        "Zohran Kwame Mamdani" ~ "Democrat",
+        "Andrew Cuomo" ~ "Independent",
+        "Eric Adams" ~ "Independent",
+        "Jim Walden" ~ "Independent",
+        "Curtis Sliwa" ~ "Republican",
+      ),
+      state = "NY",
+      jurisdiction = "New York City",
+      office = "Mayor",
+      vote_mode = "Total"
+    )
+  
+  
+  
 }
 
 ## generic function to get clarity files
