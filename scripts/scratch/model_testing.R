@@ -26,7 +26,7 @@ hist = fread("~/Dropbox (MIT)/Research/2024 Election Results/history/GA_history.
 # now work with the 'incoming raw data'
 ########################################
 
-base = fread("~/Dropbox (MIT)/Research/2024 Election Results/24_general/GA/clean/GA_2024_11_05_20_29_15.csv")[
+base = fread("~/Dropbox (MIT)/Research/2024 Election Results/24_general/GA/clean/GA_2024_11_07_09_37_14.csv")[
   race_name == "President",
   list(jurisdiction, precinct_id, vote_mode, precinct_total, candidate_party)
 ] |> 
@@ -82,10 +82,10 @@ generate_predictions <- function(path) {
   
   tryCatch({
     
-    rf_fit <- 
-      rand_forest(trees = 500, mtry = .preds()) |> 
-      set_mode("regression") |> 
-      set_engine("ranger", keep.inbag = TRUE) |> 
+    rf_fit <-
+      rand_forest(trees = 400, mtry = .preds(), min_n = 10) |>
+      set_mode("regression") |>
+      set_engine("ranger", keep.inbag = TRUE) |>
       fit(
         precinct_total_enr ~ precinct_total_hist + vote_mode + candidate_party,
         data = base
@@ -97,9 +97,17 @@ generate_predictions <- function(path) {
       base
     ) |> 
       mutate(
+        across(starts_with(".pred"), ~ case_when(
+          .default = .x,
+          .x > quantile(.x, 0.99, na.rm = TRUE) ~ quantile(.x, 0.99, na.rm = TRUE),
+          .x < quantile(.x, 0.01, na.rm = TRUE) ~ quantile(.x, 0.01, na.rm = TRUE),
+        )),
         precinct_total_enr_lower = coalesce(precinct_total_enr, .pred_lower, precinct_total_hist),
         precinct_total_enr_upper = coalesce(precinct_total_enr, .pred_upper, precinct_total_hist),
-        precinct_total_enr = coalesce(precinct_total_enr, .pred, precinct_total_hist)
+        precinct_total_enr = coalesce(precinct_total_enr, .pred, precinct_total_hist),
+        # precinct_total_enr_lower = ifelse(precinct_total_enr_lower < quantile(precinct_total_enr_lower, 0.01), quantile(precinct_total_enr_lower, 0.01), precinct_total_enr_lower),
+        # precinct_total_enr_upper = ifelse(precinct_total_enr_upper > quantile(precinct_total_enr_upper, 0.99), quantile(precinct_total_enr_upper, 0.99), precinct_total_enr_upper),
+        # precinct_total_enr = ifelse(precinct_total_enr > quantile(precinct_total_enr, 0.99), quantile(precinct_total_enr, 0.99), precinct_total_enr_upper),
       ) |> 
       summarize(
         vote_est = sum(precinct_total_enr),
@@ -115,7 +123,7 @@ generate_predictions <- function(path) {
 }
 
 files = list.files("~/Dropbox (MIT)/Research/2024 Election Results/24_general/GA/clean", full.names = TRUE, pattern = "\\d\\.csv$")
-files = files[str_detect(files, "11_05|11_06")]
+files = files[str_detect(files, "11_05|11_06|11_07")]
 
 ts = tibble(
   path = files,
@@ -126,8 +134,8 @@ ts = tibble(
   )
 
 ts |> 
-  unnest_auto(col = out) |> 
-  unnest_wider(col = out) |> 
+  unnest_longer(col = out) |>
+  unnest_wider(col = out) |>
   drop_na(vote_est) |> 
   pivot_wider(names_from = candidate_party, values_from = c(vote_est, vote_low, vote_upp)) |> 
   mutate(
@@ -135,6 +143,7 @@ ts |>
     vote_low = vote_upp_Democrat - vote_low_Republican,
     vote_upp = vote_low_Democrat - vote_upp_Republican,
   ) |> 
+  filter(time < ymd("2024-11-08")) |> 
   ggplot(aes(x = time, y = vote_est, ymin = vote_low, ymax = vote_upp)) +
   annotate(
     "rect",
@@ -147,7 +156,61 @@ ts |>
     fill = "#F6573E", alpha = 0.4, color = NA
   ) +
   geom_pointrange(fatten=1) +
+  # geom_point() +
   # true vote total
   geom_hline(yintercept = -115100, color = "black", linetype = "dashed") +
+  scale_y_continuous(labels = scales::label_number(big.mark = ",")) +
   # scale_color_manual(values = c("Democrat" = "blue", "Republican" = "red")) +
   theme_bw()
+
+######
+# model tuning
+######
+
+noNA = drop_na(base, precinct_total_enr, precinct_total_hist)
+
+rf_recipe <- recipe(
+  precinct_total_enr ~ precinct_total_hist + vote_mode + candidate_party,
+  data = noNA
+) |> 
+  step_normalize(all_numeric_predictors())
+
+rf_spec <- rand_forest(
+  trees = tune(),           # Tune number of trees
+  mtry = .preds(),            # Tune mtry parameter
+  min_n = tune()            # Tune minimum node size
+) |> 
+  set_mode("regression") |> 
+  set_engine("ranger", keep.inbag = TRUE)
+
+# 3. Create a workflow combining recipe and model
+rf_workflow <- workflow() |> 
+  add_recipe(rf_recipe) |> 
+  add_model(rf_spec)
+
+# 4. Create resampling folds for cross-validation
+rf_folds <- vfold_cv(noNA, v = 5, strata = precinct_total_enr)
+
+# 5. Define the parameter grid for tuning
+rf_grid <- grid_random(
+  trees(range = c(100, 1000)),
+  min_n(range = c(2, 30)),
+  size = 30
+)
+
+rf_tune_results <- rf_workflow |> 
+  tune_grid(
+    resamples = rf_folds,
+    grid = rf_grid,
+    metrics = metric_set(rmse, rsq, mae),
+    control = control_grid(save_pred = TRUE, verbose = TRUE)
+  )
+
+# best results are ~500 trees, 18 min_n
+(best_rf <- show_best(rf_tune_results, metric = "rmse", n = 1))
+
+fit_final <- rf_workflow |> 
+  finalize_workflow(best_rf) |> 
+  fit(data = noNA) |> 
+  extract_fit_parsnip(final_rf_fit)
+
