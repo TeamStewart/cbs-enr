@@ -4,59 +4,95 @@ gc()
 {
   library(tidyverse)
   library(data.table)
-  library(tidymodels)
+  # library(tidymodels)
+  library(marginaleffects)
 }
 
 ########################################
 # setup history files
+# s
+# this creates a tibble with the following columns:
+# - `county`
+# - `precinct_24`, the name of the 2024 precinct
+# - `vote_mode`
+# - `candidate_party`, the party of the candidate used as the reference category for modeling.
+#   in most cases, this is just the same office as the one of interest
+# - `vote_hist`, the number of votes cast for this county x precinct_24 x vote_mode x candidate_party
+# - `tot_2party_hist`, the total votes cast in this precinct x vote_mode, for only Republicans & Democrats.
+#   often used for weighting
+# - `pct_2party_hist`, what percentage of `tot_2party_hist` was cast for the `candidate_party` in this county x precinct_24 x vote_mode unit
 ########################################
 
 hist = fread("~/Dropbox (MIT)/Research/2024 Election Results/history/GA_history.csv") |> 
-  mutate(precinct_24 = str_to_lower(precinct_24)) |> 
-  summarize(across(votes_20_dem:votes_precFinal_20, sum), .by = c(county, precinct_24, vote_mode)) |> 
+  mutate(
+    precinct_24 = str_to_lower(precinct_24),
+  ) |> 
+  summarize(
+    across(votes_20_dem:votes_precFinal_20, sum), 
+    .by = c(county, precinct_24, vote_mode)
+  ) |> 
   pivot_longer(cols = c(votes_20_dem, votes_20_rep), names_to = "candidate_party", values_to = "precinct_total") |> 
   mutate(
+    precinct_24 = ifelse(county == "Candler", "jack strickland community center", precinct_24),
     candidate_party = case_when(
       str_detect(candidate_party, "_dem") ~ "Democrat",
       str_detect(candidate_party, "_rep") ~ "Republican"
     )
-  )
+  ) |> 
+  select(-votePct_dem_20, -votePct_rep_20) |>
+  mutate(
+    tot_2party_hist = sum(precinct_total),
+    pct_2party_hist = precinct_total / sum(precinct_total),
+    .by = c(county, precinct_24, vote_mode)
+  ) |> 
+  select(
+    county, precinct_24, vote_mode, candidate_party, 
+    vote_hist = precinct_total, tot_2party_hist, pct_2party_hist
+  ) |> 
+  distinct()
 
 ########################################
 # now work with the 'incoming raw data'
 ########################################
 
-base = fread("~/Dropbox (MIT)/Research/2024 Election Results/24_general/GA/clean/GA_2024_11_07_09_37_14.csv")[
+base = fread("/Users/mason/Dropbox (MIT)/Research/2024 Election Results/24_general/GA/clean/GA_2024_11_05_19_24_56.csv")[
   race_name == "President",
-  list(jurisdiction, precinct_id, vote_mode, precinct_total, candidate_party)
+  list(jurisdiction, precinct_id, vote_mode, precinct_total, candidate_party, candidate_name)
 ] |> 
   summarize(
     precinct_total = sum(precinct_total, na.rm=TRUE),
     .by = c(jurisdiction, precinct_id, vote_mode, candidate_party)
-  ) |> 
-  mutate(
-    precinct_total = na_if(precinct_total, 0),
-    jurisdiction = as_factor(jurisdiction),
-    vote_mode = as_factor(vote_mode)
-  ) |> 
-  mutate(
-    total_votes = sum(precinct_total, na.rm=TRUE),
-    .by = c(jurisdiction, precinct_id)
   ) |>
   mutate(
-    total_votes_byMode = sum(precinct_total, na.rm=TRUE),
-    .by = c(jurisdiction, precinct_id, vote_mode)
-  ) |>
-  mutate(
-    vote_pct = precinct_total / total_votes_byMode,
-    precinct_id = str_to_lower(precinct_id)
+    precinct_id = str_to_lower(precinct_id),
+    vote_mode = as_factor(vote_mode),
+    precinct_total = ifelse(precinct_total == 0 & vote_mode != "Provisional", NA, precinct_total)
   ) |> 
+  # join the history files
   left_join(
     hist, 
     join_by(jurisdiction == county, precinct_id == precinct_24, vote_mode, candidate_party),
-    suffix = c("_enr", "_hist")
   ) |> 
-  filter(candidate_party %in% c("Democrat", "Republican"))
+  rename(
+    # rename to match the history file formatting
+    vote_enr = precinct_total
+  ) |> 
+  mutate(
+    # total votes cast in all modes for all candidates, used for weighting
+    tot_enr = sum(vote_enr),
+    .by = c(jurisdiction, precinct_id)
+  ) |>
+  # now, filter down to just Rs and Ds for two party calculations
+  filter(candidate_party %in% c("Democrat", "Republican")) |>
+  mutate(
+    tot_2party_enr = sum(vote_enr),
+    .by = c(jurisdiction, precinct_id, vote_mode)
+  ) |>
+  mutate(
+    pct_2party_enr = vote_enr / tot_2party_enr,
+  ) |>
+  # only do prediction on Democrats
+  filter(candidate_party == "Democrat")
 
 generate_predictions <- function(path) {
   
@@ -64,66 +100,111 @@ generate_predictions <- function(path) {
     race_name == "President",
     list(jurisdiction, precinct_id, vote_mode, precinct_total, candidate_party)
   ] |> 
+    # sometimes there are mixups, this unifies into the expected dataframe. mostly applies to third-party candidates
+    # who are grouped together in this step
     summarize(
       precinct_total = sum(precinct_total, na.rm=TRUE),
       .by = c(jurisdiction, precinct_id, vote_mode, candidate_party)
-    ) |> 
+    ) |>
     mutate(
-      precinct_total = na_if(precinct_total, 0),
       precinct_id = str_to_lower(precinct_id),
-      vote_mode = as_factor(vote_mode)
+      precinct_total = ifelse(precinct_total == 0 & vote_mode != "Provisional", NA, precinct_total)
     ) |> 
+    # join the history files
     left_join(
       hist, 
       join_by(jurisdiction == county, precinct_id == precinct_24, vote_mode, candidate_party),
-      suffix = c("_enr", "_hist")
     ) |> 
-    filter(candidate_party %in% c("Democrat", "Republican"))
+    rename(
+      # rename to match the history file formatting
+      vote_enr = precinct_total
+    ) |> 
+    mutate(
+      # total votes cast in all modes for all candidates, used for weighting
+      tot_enr = sum(vote_enr),
+      .by = c(jurisdiction, precinct_id)
+    ) |>
+    # now, filter down to just Rs and Ds for two party calculations
+    filter(candidate_party %in% c("Democrat", "Republican")) |>
+    mutate(
+      tot_2party_enr = sum(vote_enr),
+      .by = c(jurisdiction, precinct_id, vote_mode)
+    ) |>
+    mutate(
+      pct_2party_enr = vote_enr / tot_2party_enr,
+    )
   
-  tryCatch({
-    
-    rf_fit <-
-      rand_forest(trees = 400, mtry = .preds(), min_n = 10) |>
-      set_mode("regression") |>
-      set_engine("ranger", keep.inbag = TRUE) |>
-      fit(
-        precinct_total_enr ~ precinct_total_hist + vote_mode + candidate_party,
-        data = base
-      )
-    
-    bind_cols(
-      predict(rf_fit, new_data = base),
-      predict(rf_fit, new_data = base, type = "conf_int"),
-      base
+  modes = base |> 
+    drop_na(vote_enr) |> 
+    count(vote_mode) |> 
+    filter(n>1) |> 
+    pull() |> 
+    sort()
+  
+  all_modes = identical(modes, distinct(base, vote_mode) |> pull() |> sort())
+  
+  if (all_modes) {
+    lm_fit <- lm((pct_2party_enr-pct_2party_hist) ~ pct_2party_hist * vote_mode + candidate_party, data = base)
+  } else {
+    lm_fit <- lm((pct_2party_enr-pct_2party_hist) ~ pct_2party_hist + candidate_party, data = base)
+  }
+  
+  # lm_fit <- glm(vote_enr ~ vote_hist + vote_mode, data = base, family = "poisson")
+  
+  # rf_fit <-
+  # rand_forest(trees = 1000, mtry = .preds(), min_n = 10) |>
+  # set_mode("regression") |>
+  # set_engine("ranger", keep.inbag = TRUE) |> 
+  # linear_reg(mode = "regression") |>
+  # fit(
+  #   vote_enr ~ vote_hist + vote_mode,
+  #   data = base
+  # )
+  
+  meanFill = base |>
+    mutate(
+      across(
+        c(pct_2party_hist, vote_hist, tot_2party_hist),
+        ~ ifelse(is.na(.x), mean(.x, na.rm=TRUE), .x)
+      ),
+      .by = jurisdiction
     ) |> 
-      mutate(
-        across(starts_with(".pred"), ~ case_when(
-          .default = .x,
-          .x > quantile(.x, 0.99, na.rm = TRUE) ~ quantile(.x, 0.99, na.rm = TRUE),
-          .x < quantile(.x, 0.01, na.rm = TRUE) ~ quantile(.x, 0.01, na.rm = TRUE),
-        )),
-        precinct_total_enr_lower = coalesce(precinct_total_enr, .pred_lower, precinct_total_hist),
-        precinct_total_enr_upper = coalesce(precinct_total_enr, .pred_upper, precinct_total_hist),
-        precinct_total_enr = coalesce(precinct_total_enr, .pred, precinct_total_hist),
-        # precinct_total_enr_lower = ifelse(precinct_total_enr_lower < quantile(precinct_total_enr_lower, 0.01), quantile(precinct_total_enr_lower, 0.01), precinct_total_enr_lower),
-        # precinct_total_enr_upper = ifelse(precinct_total_enr_upper > quantile(precinct_total_enr_upper, 0.99), quantile(precinct_total_enr_upper, 0.99), precinct_total_enr_upper),
-        # precinct_total_enr = ifelse(precinct_total_enr > quantile(precinct_total_enr, 0.99), quantile(precinct_total_enr, 0.99), precinct_total_enr_upper),
-      ) |> 
-      summarize(
-        vote_est = sum(precinct_total_enr),
-        vote_low = sum(precinct_total_enr_lower, na.rm = TRUE),
-        vote_upp = sum(precinct_total_enr_upper, na.rm = TRUE),
-        .by = candidate_party
+    mutate(
+      across(
+        c(pct_2party_hist, vote_hist, tot_2party_hist),
+        ~ ifelse(is.na(.x), mean(.x, na.rm=TRUE), .x)
       )
-    
-  }, error = function(e){
-    return(NA)
-  })
+    )
+  
+  preds = predictions(lm_fit, newdata = meanFill) |> 
+    inferences(method = "boot", R = 100) |>
+    as_tibble()
+  
+  pred_missing = preds |> 
+    filter(is.na(vote_enr)) |> 
+    select(estimate, conf.low, conf.high, vote_mode, tot_2party_hist, pct_2party_hist, vote_hist, candidate_party) |> 
+    mutate(
+      vote_enr_lower = (pct_2party_hist + conf.low) * tot_2party_hist,
+      vote_enr_upper = (pct_2party_hist + conf.high) * tot_2party_hist,
+      vote_enr = (pct_2party_hist + estimate) * tot_2party_hist
+    )
+  
+  base |> 
+    filter(!is.na(vote_enr)) |> 
+    mutate(
+      vote_enr_lower = vote_enr,
+      vote_enr_upper = vote_enr
+    ) |> 
+    bind_rows(pred_missing) |>
+    summarize(
+      across(starts_with("vote_enr"), sum),
+      .by = candidate_party
+    )
   
 }
 
 files = list.files("~/Dropbox (MIT)/Research/2024 Election Results/24_general/GA/clean", full.names = TRUE, pattern = "\\d\\.csv$")
-files = files[str_detect(files, "11_05|11_06|11_07")]
+files = files[str_detect(files, "11_0")]
 
 ts = tibble(
   path = files,
@@ -136,81 +217,12 @@ ts = tibble(
 ts |> 
   unnest_longer(col = out) |>
   unnest_wider(col = out) |>
-  drop_na(vote_est) |> 
-  pivot_wider(names_from = candidate_party, values_from = c(vote_est, vote_low, vote_upp)) |> 
-  mutate(
-    vote_est = vote_est_Democrat - vote_est_Republican,
-    vote_low = vote_upp_Democrat - vote_low_Republican,
-    vote_upp = vote_low_Democrat - vote_upp_Republican,
-  ) |> 
-  filter(time < ymd("2024-11-08")) |> 
-  ggplot(aes(x = time, y = vote_est, ymin = vote_low, ymax = vote_upp)) +
-  annotate(
-    "rect",
-    ymin=0, xmin = as.POSIXct(-Inf, origin = '2014-10-15'), xmax=as.POSIXct(Inf, origin = '2014-10-15'), ymax = Inf,
-    fill = "#3791FF", alpha = 0.4, color = NA
-  ) +
-  annotate(
-    "rect",
-    ymin=-Inf, xmin = as.POSIXct(-Inf, origin = '2014-10-15'), xmax=as.POSIXct(Inf, origin = '2014-10-15'), ymax = 0,
-    fill = "#F6573E", alpha = 0.4, color = NA
-  ) +
+  drop_na(vote_enr) |> 
+  filter(time < ymd_hm("2024-11-07 13:00")) |>
+  ggplot(aes(x = time, y = vote_enr, ymin = vote_enr_lower, ymax = vote_enr_upper, color = candidate_party)) +
   geom_pointrange(fatten=1) +
-  # geom_point() +
-  # true vote total
-  geom_hline(yintercept = -115100, color = "black", linetype = "dashed") +
-  scale_y_continuous(labels = scales::label_number(big.mark = ",")) +
-  # scale_color_manual(values = c("Democrat" = "blue", "Republican" = "red")) +
+  ### truth lines
+  geom_hline(yintercept = 2548017, color = "#3791FF", linetype = "dashed") +
+  geom_hline(yintercept = 2663117, color = "#F6573E", linetype = "dashed") +
+  scale_color_manual(values = c("Democrat" = "#3791FF", "Republican" = "#F6573E")) +
   theme_bw()
-
-######
-# model tuning
-######
-
-noNA = drop_na(base, precinct_total_enr, precinct_total_hist)
-
-rf_recipe <- recipe(
-  precinct_total_enr ~ precinct_total_hist + vote_mode + candidate_party,
-  data = noNA
-) |> 
-  step_normalize(all_numeric_predictors())
-
-rf_spec <- rand_forest(
-  trees = tune(),           # Tune number of trees
-  mtry = .preds(),            # Tune mtry parameter
-  min_n = tune()            # Tune minimum node size
-) |> 
-  set_mode("regression") |> 
-  set_engine("ranger", keep.inbag = TRUE)
-
-# 3. Create a workflow combining recipe and model
-rf_workflow <- workflow() |> 
-  add_recipe(rf_recipe) |> 
-  add_model(rf_spec)
-
-# 4. Create resampling folds for cross-validation
-rf_folds <- vfold_cv(noNA, v = 5, strata = precinct_total_enr)
-
-# 5. Define the parameter grid for tuning
-rf_grid <- grid_random(
-  trees(range = c(100, 1000)),
-  min_n(range = c(2, 30)),
-  size = 30
-)
-
-rf_tune_results <- rf_workflow |> 
-  tune_grid(
-    resamples = rf_folds,
-    grid = rf_grid,
-    metrics = metric_set(rmse, rsq, mae),
-    control = control_grid(save_pred = TRUE, verbose = TRUE)
-  )
-
-# best results are ~500 trees, 18 min_n
-(best_rf <- show_best(rf_tune_results, metric = "rmse", n = 1))
-
-fit_final <- rf_workflow |> 
-  finalize_workflow(best_rf) |> 
-  fit(data = noNA) |> 
-  extract_fit_parsnip(final_rf_fit)
-
