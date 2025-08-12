@@ -108,12 +108,18 @@ generate_predictions <- function(path) {
     ) |>
     mutate(
       precinct_id = str_to_lower(precinct_id),
-      precinct_total = ifelse(precinct_total == 0 & vote_mode != "Provisional", NA, precinct_total)
     ) |> 
     # join the history files
     left_join(
       hist, 
       join_by(jurisdiction == county, precinct_id == precinct_24, vote_mode, candidate_party),
+    ) |> 
+    mutate(
+      precinct_total = case_when(
+        .default = precinct_total,
+        precinct_total == 0 & vote_mode != "Provisional" ~ NA,
+        (precinct_total / vote_hist) < 0.1 & vote_mode == "Absentee/Mail" ~ NA
+      )
     ) |> 
     rename(
       # rename to match the history file formatting
@@ -144,7 +150,7 @@ generate_predictions <- function(path) {
   all_modes = identical(modes, distinct(base, vote_mode) |> pull() |> sort())
   
   if (all_modes) {
-    lm_fit <- lm((pct_2party_enr-pct_2party_hist) ~ pct_2party_hist * vote_mode + candidate_party, data = base)
+    lm_fit <- lm((pct_2party_enr-pct_2party_hist) ~ pct_2party_hist + vote_mode + candidate_party, data = base)
   } else {
     lm_fit <- lm((pct_2party_enr-pct_2party_hist) ~ pct_2party_hist + candidate_party, data = base)
   }
@@ -165,19 +171,19 @@ generate_predictions <- function(path) {
     mutate(
       across(
         c(pct_2party_hist, vote_hist, tot_2party_hist),
-        ~ ifelse(is.na(.x), mean(.x, na.rm=TRUE), .x)
+        ~ ifelse(is.na(.x), median(.x, na.rm=TRUE), .x)
       ),
       .by = jurisdiction
     ) |> 
     mutate(
       across(
         c(pct_2party_hist, vote_hist, tot_2party_hist),
-        ~ ifelse(is.na(.x), mean(.x, na.rm=TRUE), .x)
+        ~ ifelse(is.na(.x), median(.x, na.rm=TRUE), .x)
       )
     )
   
-  preds = predictions(lm_fit, newdata = meanFill) |> 
-    inferences(method = "boot", R = 100) |>
+  preds = predictions(lm_fit, newdata = meanFill, vcov = ~ jurisdiction) |> 
+    inferences(method = "delta") |>
     as_tibble()
   
   pred_missing = preds |> 
@@ -218,7 +224,7 @@ ts |>
   unnest_longer(col = out) |>
   unnest_wider(col = out) |>
   drop_na(vote_enr) |> 
-  filter(time < ymd_hm("2024-11-07 13:00")) |>
+  filter(time < ymd_hm("2024-11-07 01:00")) |>
   ggplot(aes(x = time, y = vote_enr, ymin = vote_enr_lower, ymax = vote_enr_upper, color = candidate_party)) +
   geom_pointrange(fatten=1) +
   ### truth lines
@@ -226,3 +232,26 @@ ts |>
   geom_hline(yintercept = 2663117, color = "#F6573E", linetype = "dashed") +
   scale_color_manual(values = c("Democrat" = "#3791FF", "Republican" = "#F6573E")) +
   theme_bw()
+
+
+all = tibble(
+  path = files,
+  time = fs::path_file(path) |> str_remove("^GA_") |> ymd_hms()
+) |> 
+  mutate(
+    file = map(path, fread)
+  ) |> 
+  unnest(cols = file) |> 
+  filter(race_name == "President", candidate_name == "Kamala Harris") |> 
+  select(time, jurisdiction, precinct_id, vote_mode, precinct_total)
+
+all |> 
+  filter(
+    precinct_total != 0
+  ) |> 
+  filter(
+    max(precinct_total) != min(precinct_total),
+    .by = c(jurisdiction, precinct_id, vote_mode)
+  ) |> 
+  distinct(jurisdiction, precinct_id, vote_mode, precinct_total) |> 
+  arrange(jurisdiction, precinct_id, vote_mode)
