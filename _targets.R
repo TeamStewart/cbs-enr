@@ -19,8 +19,7 @@ source("scripts/functions.R")
 options(
   readr.show_col_types = FALSE,
   gargle_oauth_email = TRUE,
-  scipen = 999,
-  timeout=60000
+  scipen = 999
 )
 
 tar_option_set(
@@ -37,10 +36,9 @@ tar_option_set(
 )
 
 # get the metadata file, with the following structure
-# - state: (string) caps abbreviation of the state
+# - state: (string) all caps abbreviation of the state
 # - county: (string) lowercase county of interest in that state, if NA then statewide
 # - path: (string) generic cell for path/number/ID used by custom scrapers to get file
-# - preelection_totals: (boolean) 
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
 metadata = read_csv("data/metadata.csv", col_types = "cccll") |> 
   drop_na(path) |> 

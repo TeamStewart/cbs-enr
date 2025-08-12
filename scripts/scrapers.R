@@ -1,7 +1,6 @@
 ## Arizona
 scrape_az <- function(state, county, path, timestamp){
   
-  # TODO: Update Maricopa for 2024 general election
   if(county == 'Maricopa'){
     path <- read_html(path) |>
       html_nodes(xpath = "//a[contains(text(), '2024 November General Election Results.txt')]") |>
@@ -961,7 +960,7 @@ scrape_pa <- function(state, county, path, timestamp){
 }
 
 ## New York City (labeled as New York but get over it)
-scrape_ny <- function(path, ...){
+scrape_ny <- function(state, county, path, timestamp){
   
   # start with the "Total" page
   base = read_html(path)

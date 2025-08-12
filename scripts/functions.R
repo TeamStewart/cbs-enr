@@ -284,12 +284,12 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
 
 upload_html <- function(){
   
-upload_single <- function(path){
+  upload_single <- function(path){
     
     state = str_extract(path, "(pages/)(.*?)\\.html", group = 2) |> str_extract("^[^_]+")
     juris = str_extract(path, "(pages/)(.*?)\\.html", group = 2)
     
-    put_object(file = path, object = glue("20241105-{state}-P/model_{juris}.html"), bucket = PATH_CBS_S3, multipart = TRUE)
+    put_object(file = path, object = glue("{ELECTION_DATE}-{state}-P/model_{juris}.html"), bucket = PATH_CBS_S3, multipart = TRUE)
   }
   
   files = list.files(path = "pages", pattern = "*html$", full.names = TRUE, recursive = TRUE)
