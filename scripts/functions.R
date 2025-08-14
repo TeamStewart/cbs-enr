@@ -38,6 +38,7 @@ get_timestamp <- function(state, county, path) {
       str_replace_all("-|:| ", "_")
   }
 
+  ## ARCHIVED from 2024 general election
   az_timestamp <- function() {
     if (county == "Maricopa") {
       read_html("https://elections.maricopa.gov/results-and-data/election-results.html#ElectionResultsSearch") |>
@@ -52,6 +53,7 @@ get_timestamp <- function(state, county, path) {
     }
   }
   
+  ## ARCHIVED from 2024 general election
   ga_timestamp <- function(){
     read_html("https://app.enhancedvoting.com/results/public/api/elections/Georgia/2024NovGen") |>
       html_text() |>
@@ -63,6 +65,7 @@ get_timestamp <- function(state, county, path) {
       str_replace_all("-|:| ", "_")
   }
   
+  ## ARCHIVED from 2024 general election
   mi_timestamp <- function(){
     if(county %in% c("Eaton", "Oakland", "Macomb")){
       clarity_timestamp()
@@ -78,6 +81,7 @@ get_timestamp <- function(state, county, path) {
     }
   }
 
+  ## ARCHIVED from 2024 general election
   nc_timestamp <- function() {
     read_xml("https://s3.amazonaws.com/dl.ncsbe.gov?delimiter=/&prefix=ENRS/2024_11_05/") |>
       xml2::as_list() |>
@@ -95,6 +99,7 @@ get_timestamp <- function(state, county, path) {
       str_replace_all("-|:| ", "_")
   }
 
+  ## ARCHIVED from 2024 general election
   pa_timestamp <- function() {
     if (county %in% c("Allegheny","Delaware")) {
       clarity_timestamp()
@@ -116,29 +121,15 @@ get_timestamp <- function(state, county, path) {
     
   }
   
-  switch(state,
-    "AZ" = az_timestamp(),
-    "GA" = ga_timestamp(),
-    "MI" = mi_timestamp(),
-    "NC" = nc_timestamp(),
-    "PA" = pa_timestamp(),
-    "NY" = ny_timestamp(),
-  )
 }
 
 get_data <- function(state, county, timestamp, path = NULL) {
   
-  dir_create(glue("{PATH_DROPBOX}/24_general/{state}/raw"))
-  dir_create(glue("{PATH_DROPBOX}/24_general/{state}/clean"))
+  dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw"))
+  dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean"))
   
-  d <- switch(state,
-    "AZ" = scrape_az(state, county, path, timestamp),
-    "GA" = scrape_ga(state, county, path, timestamp),
-    "MI" = scrape_mi(state, county, path, timestamp),
-    "NC" = scrape_nc(state, county, path, timestamp),
-    "PA" = scrape_pa(state, county, path, timestamp),
-    "NY" = scrape_ny(state, county, path, timestamp)
-  )
+  f = get(paste0("scrape_", tolower(state)))
+  d = f(state, county, path, timestamp)
  
   # Upstream fix to precinct_total
   d$precinct_total <- as.numeric(d$precinct_total)
@@ -150,12 +141,12 @@ get_data <- function(state, county, timestamp, path = NULL) {
   )
   if (state %in% names(clarity_counties) && county %in% clarity_counties[[state]]) {
     # save latest version; timestamped version already saved
-    write_csv(d, glue("{PATH_DROPBOX}/24_general/{state}/clean/{local_file_name}_latest.csv"))
+    write_csv(d, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"))
   } else{
     # save latest version
-    write_csv(d, glue("{PATH_DROPBOX}/24_general/{state}/clean/{local_file_name}_latest.csv"))
+    write_csv(d, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"))
     # save timestamped version
-    write_csv(d, glue("{PATH_DROPBOX}/24_general/{state}/clean/{local_file_name}_{timestamp}.csv"))
+    write_csv(d, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_{timestamp}.csv"))
   }
 
   return(d)
@@ -165,13 +156,13 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   # Prepare lookups
   lookup_state <- lookup_state_name(state)
   
-  lookup_geo <- read_csv("data/input/cbs_lookups/All States and Counties.csv") |>
+  lookup_geo <- read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/cbs_lookups/All States and Counties.csv")) |>
     clean_names() |>
     rename(state_name = 1, jurisdiction = 5) |>
     filter(state_name == lookup_state) |>
     select(-state_fips)
 
-  lookup_cands <- read_csv("data/input/cbs_lookups/2024-11-05 General Election Candidates.csv") |>
+  lookup_cands <- read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/cbs_lookups/2024-11-05 General Election Candidates.csv")) |>
     clean_names() |>
     filter(state == lookup_state) |>
     mutate(jurisdiction_code = as.character(jurisdiction_code))
@@ -187,6 +178,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
         "President" ~ "P",
         "Senate" ~ "S",
         "Governor" ~ "G",
+        "Mayor" ~ "M",
         .default = NA_character_)) |>
     rename(office = race_name) |>
     mutate(
@@ -273,7 +265,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     
     #### Upload to Google Drive ####
     drive_put(
-      media = glue("{PATH_DROPBOX}/24_general/{state}/clean/{local_file_name}_latest.csv"),
+      media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"),
       path = PATH_GDRIVE,
       name = glue("{local_file_name}_results.csv")
     )
