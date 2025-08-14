@@ -1038,6 +1038,116 @@ scrape_ny <- function(state, county, path, timestamp){
   
 }
 
+## Virginia
+scrape_va <- function(state, county, path, timestamp){
+  
+  # Download the raw json
+  raw_file_path = glue('{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/{state}_{timestamp}.zip')
+  download.file(path, destfile = raw_file_path)
+  raw_file_path = unzip(raw_file_path, exdir = glue('{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw'))
+  
+  base = tibble(data = read_json(raw_file_path) |> pluck('localResults')) |> 
+    hoist(
+      data,
+      jurisdiction = "name",
+      items = "ballotItems"
+    ) |> 
+    select(-data) |> 
+    unnest_longer(items)
+  
+  base |>
+    hoist(
+      items, 
+      race_id = "id",
+      race_name = "name",
+      options = "ballotOptions",
+      ballotOrder = "ballotOrder"
+    ) |>
+    filter(str_detect(race_name, regex("President|Presi", ignore_case=TRUE))) |> 
+    filter(ballotOrder == min(ballotOrder)) |> 
+    select(-items, -ballotOrder) |> 
+    unnest_longer(options) |> 
+    hoist(
+      options,
+      candidate_name = "name",
+      candidate_party = "politicalParty",
+      precinct_results = "precinctResults"
+    ) |> 
+    select(-options) |> 
+    unnest_longer(precinct_results) |> 
+    hoist(
+      precinct_results,
+      precinct_id = "name",
+      groupResults = "groupResults",
+      virtual_precinct_pct = "isVirtual",
+      precinct_total_pct = "voteCount"
+    ) |> 
+    mutate(
+      groupResults = case_when(
+        is.na(groupResults) ~ list(list(list(groupName = character(), voteCount = integer(), isFromVirtualPrecinct = logical()))),
+        .default = groupResults
+      )
+    ) |>
+    select(-precinct_results) |> 
+    unnest_longer(groupResults) |> 
+    hoist(
+      groupResults,
+      vote_mode = "groupName",
+      precinct_total = "voteCount",
+      virtual_precinct = "isFromVirtualPrecinct"
+    ) |> 
+    mutate(
+      timestamp = .env$timestamp |> ymd_hms(),
+      state = .env$state,
+      jurisdiction = jurisdiction |> str_remove(regex("County", ignore_case=TRUE)) |> str_squish() |> str_to_title(),
+      race_name = case_when(
+        str_detect(race_name, regex("Governor|Gov", ignore_case=TRUE)) ~ "Governor",
+        .default = race_name
+      ),
+      # Recode candidate party: Democrat, Republican, Libertarian, Constitution, Green, Independent, Justice for All
+      ## Fix an issue from one county
+      candidate_party = ifelse(
+        candidate_party == 'DEM' | candidate_party == "",
+        str_extract(candidate_name, "\\(.*?\\)") |> str_remove_all("[()]"),
+        candidate_party),
+      ## Now recode after fix
+      candidate_party = case_when(
+        str_detect(candidate_party, regex("Democrat|Dem", ignore_case=TRUE)) ~ "Democrat",
+        str_detect(candidate_party, regex("Repub|Rep", ignore_case=TRUE)) ~ "Republican",
+        str_detect(candidate_party, regex("Liber|Lib", ignore_case=TRUE)) ~ "Libertarian",
+        str_detect(candidate_party, regex("Green|Grn", ignore_case=TRUE)) ~ "Green",
+        str_detect(candidate_party, regex("Ind|Independent", ignore_case=TRUE)) ~ "Independent",
+        .default = "Other"
+      ),
+      # Recode candidate names
+      candidate_name = case_when(
+        # candidate_name %in% c("Chase Oliver (Lib)", "Chase R. Oliver", "CHASE OLIVER / MIKE TER MAAT") ~ "Chase Oliver",
+        # candidate_name %in% c("Donald J. Trump (Rep)", "DONALD J. TRUMP / JD VANCE", "Donald J. Trump") ~ "Donald Trump",
+        # candidate_name %in% c("Jill Stein (Grn)", "Jill E. Stein", "JILL STEIN / RUDOLPH WARE") ~ "Jill Stein",
+        # candidate_name %in% c("Kamala D. Harris (Dem)", "KAMALA D. HARRIS / TIM WALZ", "Kamala D. Harris") ~ "Kamala Harris",
+        # candidate_name %in% c("Claudia De la Cruz (Ind)", "CLAUDIA DE LA CRUZ / KARINA ALEXANDRA GARCIA") ~ "Claudia De la Cruz",
+        # candidate_name %in% c("Cornel West (Ind)", "CORNEL RONALD WEST / MELINA ABDULLAH", "Cornel R. West") ~ "Cornel West",
+        candidate_name == "Write-in" ~ "Write-ins",
+        .default = candidate_name
+      ),
+      vote_mode = case_when(
+        str_detect(vote_mode, regex("Election Day", ignore_case = TRUE)) ~ "Election Day",
+        str_detect(vote_mode, regex("Early Voting|Advanced Voting", ignore_case = TRUE)) ~ "Early Voting",
+        str_detect(vote_mode, regex("Mail|Absentee", ignore_case = TRUE)) ~ "Absentee/Mail",
+        str_detect(vote_mode, regex("Provisional", ignore_case = TRUE)) ~ "Provisional",
+        .default = str_to_title(vote_mode)
+      )
+    ) |>
+    select(
+      state, race_id, race_name, candidate_name, candidate_party,
+      jurisdiction, precinct_id, virtual_precinct, timestamp, 
+      vote_mode, precinct_total
+    ) |>
+    arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
+  
+  
+}
+
 ## generic function to get clarity files
 get_clarity <- function(state, county, path){
   

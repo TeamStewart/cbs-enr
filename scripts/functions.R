@@ -117,10 +117,27 @@ get_timestamp <- function(state, county, path) {
     read_html(path) |> 
       html_text() |> 
       str_extract("Information As Of: (.*?)AD:", group=1) |> 
-      ymd_hms(tz = "America/New_York")
+      ymd_hms(tz = "America/New_York") |> 
+      str_replace_all("-|:| ", "_")
     
   }
   
+  va_timestamp <- function() {
+    
+    read_html("https://enr.elections.virginia.gov/results/public/api/elections/Virginia/2024NovemberGeneral") |>
+      html_text() |>
+      fromJSON() |>
+      pluck("lastUpdated") |>
+      ymd_hms() |>
+      floor_date(unit = "second") |>
+      with_tz(tzone = "America/New_York") |>
+      str_replace_all("-|:| ", "_")
+    
+  }
+  
+  f = get(paste0(tolower(state), "_timestamp"))
+  
+  f()
 }
 
 get_data <- function(state, county, timestamp, path = NULL) {
