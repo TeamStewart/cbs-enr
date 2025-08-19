@@ -1042,10 +1042,9 @@ scrape_ny <- function(state, county, path, timestamp){
 scrape_va <- function(state, county, path, timestamp){
   
   # Download the raw json
-  raw_file_path = glue('{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/{state}_{timestamp}.zip')
+  raw_file_path = glue('{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/{state}_{timestamp}.json')
   download.file(path, destfile = raw_file_path)
-  raw_file_path = unzip(raw_file_path, exdir = glue('{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw'))
-  
+
   base = tibble(data = read_json(raw_file_path) |> pluck('localResults')) |> 
     hoist(
       data,
@@ -1063,7 +1062,7 @@ scrape_va <- function(state, county, path, timestamp){
       options = "ballotOptions",
       ballotOrder = "ballotOrder"
     ) |>
-    filter(str_detect(race_name, regex("President|Presi", ignore_case=TRUE))) |> 
+    filter(str_detect(race_name, regex("Governor|Gov", ignore_case=TRUE))) |> 
     filter(ballotOrder == min(ballotOrder)) |> 
     select(-items, -ballotOrder) |> 
     unnest_longer(options) |> 

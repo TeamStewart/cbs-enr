@@ -1,8 +1,8 @@
 source("scripts/util/utils.R")
 source("scripts/util/globals.R")
 source("scripts/scrapers.R")
-source("scripts/models.R")
-source("scripts/plotters.R")
+# source("scripts/models.R")
+# source("scripts/plotters.R")
 
 get_timestamp <- function(state, county, path) {
   clarity_timestamp <- function() {
