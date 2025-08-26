@@ -990,6 +990,80 @@ scrape_ny <- function(state, county, path, timestamp){
     
   }
   
+  county_to_ad <- tribble(
+    ~jurisdiction,     ~ad,
+    "New York",       37,
+    "New York",       61,
+    "New York",       65,
+    "New York",       66,
+    "New York",       67,
+    "New York",       68,
+    "New York",       69,
+    "New York",       70,
+    "New York",       71,
+    "New York",       72,
+    "New York",       73,
+    "New York",       74,
+    "New York",       75,
+    "New York",       76,
+    "Bronx",           77,
+    "Bronx",           78,
+    "Bronx",           79,
+    "Bronx",           80,
+    "Bronx",           81,
+    "Bronx",           82,
+    "Bronx",           83,
+    "Bronx",           84,
+    "Bronx",           85,
+    "Bronx",           86,
+    "Bronx",           87,
+    "Kings",        41,
+    "Kings",        42,
+    "Kings",        43,
+    "Kings",        44,
+    "Kings",        45,
+    "Kings",        46,
+    "Kings",        47,
+    "Kings",        48,
+    "Kings",        49,
+    "Kings",        50,
+    "Kings",        51,
+    "Kings",        52,
+    "Kings",        53,
+    "Kings",        54,
+    "Kings",        55,
+    "Kings",        56,
+    "Kings",        57,
+    "Kings",        58,
+    "Kings",        59,
+    "Kings",        60,
+    "Kings",        61,
+    "Kings",        64,
+    "Queens",          23,
+    "Queens",          24,
+    "Queens",          25,
+    "Queens",          26,
+    "Queens",          27,
+    "Queens",          28,
+    "Queens",          29,
+    "Queens",          30,
+    "Queens",          31,
+    "Queens",          32,
+    "Queens",          33,
+    "Queens",          34,
+    "Queens",          35,
+    "Queens",          36,
+    "Queens",          37,
+    "Queens",          38,
+    "Queens",          39,
+    "Queens",          40,
+    "Richmond",   61,
+    "Richmond",   62,
+    "Richmond",   63,
+    "Richmond",   64
+  )
+  
+  
   links |> 
     mutate(
       results = map(link, get_ad)
@@ -1029,12 +1103,13 @@ scrape_ny <- function(state, county, path, timestamp){
         "Curtis Sliwa" ~ "Republican",
       ),
       state = "NY",
-      jurisdiction = "New York City",
       office = "Mayor",
       vote_mode = "Total"
+    ) |> 
+    left_join(
+      mutate(county_to_ad, ad=paste("AD ", ad)),
+      join_by(ad)
     )
-  
-  
   
 }
 

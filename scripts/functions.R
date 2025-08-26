@@ -152,19 +152,12 @@ get_data <- function(state, county, timestamp, path = NULL) {
   d$precinct_total <- as.numeric(d$precinct_total)
 
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
-  clarity_counties <- list(
-    "MI" = c("Oakland", "Macomb", "Eaton"),
-    "PA" = c("Delaware", "Allegheny")
-  )
-  if (state %in% names(clarity_counties) && county %in% clarity_counties[[state]]) {
-    # save latest version; timestamped version already saved
-    write_csv(d, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"))
-  } else{
-    # save latest version
-    write_csv(d, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"))
-    # save timestamped version
-    write_csv(d, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_{timestamp}.csv"))
-  }
+  
+  # save latest version
+  fwrite(d, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"))
+  
+  # save timestamped version
+  fwrite(d, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_{timestamp}.csv"))
 
   return(d)
 }
