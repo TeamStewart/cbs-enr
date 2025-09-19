@@ -179,10 +179,12 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
       put_object(file = json_file, object = s3_json_path, bucket = bucket, multipart = TRUE)
       
       # Write CSV and upload
+      ## TODO: Add function that pivots results wide before public CSV upload
       raw_data |> filter(race_name == race_name) |> write_csv(csv_file)
       put_object(file = csv_file, object = s3_csv_path, bucket = bucket, multipart = TRUE)
     }
     
+    # TODO: Update for NY/VA 2025
     # Conditional logic to determine which files to upload based on the state
     if (state %in% c('AZ', 'MI', 'PA')) {
       # Upload for President and Senate races
