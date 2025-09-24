@@ -45,7 +45,8 @@ va24 <- va24 |>
       jurisdiction
     ) |> str_to_upper(),
     precinct_id = str_remove_all(precinct_id, "\\s*\\([^()]*\\)"),
-    precinct_id = str_replace_all(precinct_id, " - ", "-")
+    precinct_id = str_replace_all(precinct_id, " - ", "-"),
+    virtual_precinct = ifelse(str_detect(precinct_id, "PROVISIONAL"), TRUE, FALSE)
   )
 
 l2_identifiers <- l2_identifiers |> 
@@ -216,4 +217,17 @@ write_csv(va24, glue("{DATA_DIR}/25_general/input_data/VA/VA_results_2024.csv"))
 write_csv(history_file, glue("{DATA_DIR}/25_general/input_data/VA/VA_history.csv"))
 write_csv(crosswalk, glue("{DATA_DIR}/25_general/input_data/VA/VA_xwalk.csv"))
 
-#### TODO: Code that shows wide va24 as example ####
+va24_wide <- va24 |>
+  mutate(
+    vote_mode = case_match(
+      vote_mode,
+      "Early Voting" ~ "early",
+      "Election Day" ~ "eday",
+      "Absentee/Mail" ~ "mail",
+      "Provisional" ~ "provisional",
+      .default = 'other'
+    )
+  ) |>
+  pivot_wider(
+    names_from = vote_mode, values_from = precinct_total, values_fill = 0, values_fn = sum)
+
