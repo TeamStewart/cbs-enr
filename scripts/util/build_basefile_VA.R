@@ -200,8 +200,8 @@ history_file <- crosswalk |>
   summarize(
     votes_24_dem = sum(votes_24_dem * weight),
     votes_24_rep = sum(votes_24_rep * weight),
-    votePct_dem_24 = sum(votePct_24_dem * weight),
-    votePct_rep_24 = sum(votePct_24_rep * weight),
+    votePct_24_dem = sum(votePct_24_dem * weight),
+    votePct_24_rep = sum(votePct_24_rep * weight),
     votes_precFinal_24 = sum(votes_precFinal_24 * weight),
     .by = c(county, precinct_25, vote_mode)
   )
