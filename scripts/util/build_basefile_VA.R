@@ -213,7 +213,7 @@ history_file <- crosswalk |>
   left_join(history_file, by = c("county", "precinct_25")) |>
   select(fips:precinct_cbs, precinct_25, vote_mode, starts_with("votes"), starts_with("votePct"))
 
-write_csv(va24, glue("{DATA_DIR}/25_general/input_data/VA/VA_results_2024.csv"))
+write_csv(va24, glue("{DATA_DIR}/25_general/input_data/VA/VA_results_2024_long.csv"))
 write_csv(history_file, glue("{DATA_DIR}/25_general/input_data/VA/VA_history.csv"))
 write_csv(crosswalk, glue("{DATA_DIR}/25_general/input_data/VA/VA_xwalk.csv"))
 
@@ -230,4 +230,6 @@ va24_wide <- va24 |>
   ) |>
   pivot_wider(
     names_from = vote_mode, values_from = precinct_total, values_fill = 0, values_fn = sum)
+
+write_csv(va24_wide, glue("{DATA_DIR}/25_general/input_data/VA/VA_results_2024_wide.csv"))
 
