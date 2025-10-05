@@ -111,9 +111,10 @@ create_precinct_identifiers <- function(shapefile){
 }
 
 shapefile_2024 <- create_precinct_identifiers(shapefile_2024) |> rename(precinct_24 = precinct_id)
-shapefile_2025 <- create_precinct_identifiers(shapefile_2025) |> rename(precinct_25 = precinct_id)
+shapefile_2025 <- create_precinct_identifiers(shapefile_2025) |> rename(precinct_25 = precinct_id) |>
+  mutate(precinct_25 = str_replace_all(precinct_25, "PRECINCT","WARD"))
 shapefile_2021 <- sf::st_transform(shapefile_2021, st_crs(shapefile_2024)) |>
-  mutate(precinct_21 = str_remove(precinct_n,"^0"))
+  mutate(precinct_21 = str_remove(precinct_n,"^0+"))
 
 #### Join precinct shapefiles ####
 intersection_24_25 <- st_intersection(shapefile_2024, shapefile_2025) |> filter(jurisdiction == jurisdiction.1)
@@ -175,7 +176,7 @@ dfB_matches <- matches_df$dfB.match
 
 # Create matched pairs by combining the matched rows
 matched_pairs <- dfA_matches |>
-  filter(posterior >= 0.98) |>
+  filter(posterior >= 0.85) |>
   mutate(match_id = row_number()) |>
   left_join(
     dfB_matches |> mutate(match_id = row_number()),
@@ -186,8 +187,6 @@ matched_pairs <- dfA_matches |>
     mismatches |> select(fips, county, precinct_l2, precinct_cbs),
     by = c("fips", "precinct_l2")
   ) |>
-  # Make sure first character of each precinct matches
-  filter(str_sub(precinct_A, 1, 1) == str_sub(precinct_B, 1, 1)) |>
   transmute(
     fips, county, precinct_l2, precinct_cbs,
     jurisdiction_lookup = jurisdiction_A,
