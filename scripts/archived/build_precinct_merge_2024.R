@@ -604,7 +604,7 @@ write_csv(data_history, glue("{PATH_DROPBOX}/history/MI_history.csv"))
 
 
 # North Carolina ----------------------------------------------------------
-nc_vote_modes <- read_csv("data/clean/NC/NC_latest.csv") |> pull(vote_mode) |>
+nc_vote_modes <- read_csv("data/clean/NC/NC_latest.csv") |> pull(vote_mode)
 # MEDSL 2020 precinct data, by mode
 ## Specifically, this gets Dem totals by vote mode, with column for total votes
 data20 <- read_csv(glue("{PATH_DROPBOX}/MEDSL_2020_precinct/2020-nc-precinct-general.csv")) |> 
