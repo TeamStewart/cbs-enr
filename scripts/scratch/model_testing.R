@@ -6,6 +6,7 @@ gc()
   library(data.table)
   # library(tidymodels)
   library(marginaleffects)
+  # library(ranger)
 }
 
 ########################################
@@ -61,7 +62,7 @@ hist = fread("~/Dropbox (MIT)/Research/CBS-MIT Election Data/24_general/history/
 files = list.files("~/Dropbox (MIT)/Research/CBS-MIT Election Data/24_general/GA/clean", full.names = TRUE, pattern = "\\d\\.csv$")
 files = files[str_detect(files, "11_0")]
 
-base = fread(files[6])[
+base = fread(files[8])[
   race_name == "President",
   list(jurisdiction, precinct_id, vote_mode, precinct_total, candidate_party, candidate_name)
 ] |> 
@@ -198,7 +199,7 @@ generate_predictions <- function(path) {
     pull(vote_mode) |> 
     sort()
   
-  all_modes = identical(modes, distinct(base, vote_mode) |> pull() |> sort())
+  all_modes <<- identical(modes, distinct(base, vote_mode) |> pull() |> sort())
   
   imputes = base |> 
     summarize(
@@ -220,7 +221,6 @@ generate_predictions <- function(path) {
   
   train <- base |> 
     drop_na(vote_enr) |> 
-    slice_sample(prop = 1, by = jurisdiction) |> 
     left_join(imputes, join_by(jurisdiction, candidate_party, vote_mode)) |> 
     mutate(
       pct_2party_hist = coalesce(pct_2party_hist.x, pct_2party_hist.y),
@@ -228,22 +228,6 @@ generate_predictions <- function(path) {
       vote_hist = coalesce(vote_hist.x, vote_hist.y)
     ) |> 
     select(-ends_with(".y"), -ends_with(".x"))
-  
-  calibration <- base |> 
-    drop_na(vote_enr) |> 
-    anti_join(train, by = join_by(jurisdiction, precinct_id, vote_mode, candidate_party)) |> 
-    left_join(imputes, join_by(jurisdiction, candidate_party, vote_mode)) |> 
-    mutate(
-      pct_2party_hist = coalesce(pct_2party_hist.x, pct_2party_hist.y),
-      tot_2party_hist = coalesce(tot_2party_hist.x, tot_2party_hist.y),
-      vote_hist = coalesce(vote_hist.x, vote_hist.y)
-    ) |> 
-    select(-ends_with(".y"), -ends_with(".x"))
-  
-  fit <- lm(
-    formula = as.formula(paste0("pct_2party_enr ~ pct_2party_hist + candidate_party", if (all_modes) "+vote_mode" else "")), 
-    data = train
-  )
   
   test = base |> 
     filter(is.na(vote_enr)) |> 
@@ -255,18 +239,43 @@ generate_predictions <- function(path) {
     ) |> 
     select(-ends_with(".y"), -ends_with(".x"))
   
+  form <<- paste0("pct_2party_enr ~ pct_2party_hist + candidate_party", if (isTRUE(all_modes)) "+vote_mode" else "")
+  
+  form_juris <<- paste0(form, "+jurisdiction")
+  
+  jurisdictions = distinct(train, jurisdiction) |> pull()
+  
+  fit <- lm(
+    formula = as.formula(form),
+    weights = tot_2party_enr,
+    data = train
+  )
+  
+  fit_juris <- lm(
+    formula = as.formula(form_juris),
+    weights = tot_2party_enr,
+    data = train
+  )
+  
   preds = predictions(fit, vcov = ~ jurisdiction, conf_level = 0.95) |> 
-    # inferences(method = "simulation", R=500) |>
     inferences(
       method = "conformal_cv+",
-      R=20,
-      conformal_test = test,
+      R=10,
+      conformal_test = filter(test, !(jurisdiction %in% jurisdictions)),
       conformal_score = "residual_abs"
     ) |>
     as_tibble()
   
-  pred_missing = preds |> 
-    filter(is.na(vote_enr)) |> 
+  preds_juris = predictions(fit_juris, vcov = ~ jurisdiction, conf_level = 0.95) |> 
+    inferences(
+      method = "conformal_cv+",
+      R=10,
+      conformal_test = filter(test, jurisdiction %in% jurisdictions),
+      conformal_score = "residual_abs"
+    ) |>
+    as_tibble()
+  
+  pred_missing = bind_rows(preds, preds_juris) |> 
     select(vote_mode, candidate_party, estimate, conf.low, conf.high, tot_2party_hist, pct_2party_hist, vote_hist) |> 
     mutate(
       vote_enr_lower = conf.low * tot_2party_hist,
@@ -300,7 +309,205 @@ ts |>
   unnest_longer(col = out) |>
   unnest_wider(col = out) |>
   drop_na(vote_enr) |> 
-  filter(time < ymd_hm("2024-11-06 01:00")) |>
+  # mutate(
+  #   across(starts_with("vote_enr"), ~ .x / (2548017 + 2663117))
+  # ) |> 
+  filter(time < ymd_hm("2024-11-06 01:00"), time > ymd_hm("2024-11-05 19:35")) |>
+  ggplot(aes(x = time, y = vote_enr, ymin = vote_enr_lower, ymax = vote_enr_upper, color = candidate_party, group = candidate_party)) +
+  geom_pointrange(fatten=1, position = position_dodge(width=100)) +
+  ### truth lines
+  geom_hline(yintercept = 2548017, color = "#3791FF", linetype = "dashed") +
+  geom_hline(yintercept = 2663117, color = "#F6573E", linetype = "dashed") +
+  # geom_hline(yintercept = 2548017/(2548017+2663117), color = "#3791FF", linetype = "dashed") +
+  # geom_hline(yintercept = 2663117/(2548017+2663117), color = "#F6573E", linetype = "dashed") +
+  scale_color_manual(values = c("Democrat" = "#3791FF", "Republican" = "#F6573E")) +
+  # scale_y_continuous(labels = scales::label_percent()) +
+  theme_bw()
+
+###
+# CQR
+###
+
+library("cfcausal")
+
+generate_predictions_cqr <- function(path) {
+  
+  base = fread(path)[
+    race_name == "President",
+    list(jurisdiction, precinct_id, vote_mode, precinct_total, candidate_party)
+  ] |> 
+    # sometimes there are mixups, this unifies into the expected dataframe. mostly applies to third-party candidates
+    # who are grouped together in this step
+    summarize(
+      precinct_total = sum(precinct_total, na.rm=TRUE),
+      .by = c(jurisdiction, precinct_id, vote_mode, candidate_party)
+    ) |>
+    mutate(
+      precinct_id = str_to_lower(precinct_id),
+      vote_mode = as_factor(vote_mode)
+    )
+  
+  reports = base |> 
+    summarize(
+      precinct_total = sum(precinct_total, na.rm=TRUE),
+      .by = c(jurisdiction, precinct_id, vote_mode)
+    ) |> 
+    filter(vote_mode != "Provisional") |> 
+    summarize(
+      reported = !any(precinct_total == 0),
+      .by = c(jurisdiction, precinct_id)
+    )
+  
+  base = base |> 
+    left_join(reports, join_by(jurisdiction, precinct_id)) |> 
+    mutate(
+      precinct_total = if_else(
+        reported,
+        precinct_total,
+        NA
+      )
+    ) |> 
+    # join the history files
+    left_join(
+      hist, 
+      join_by(jurisdiction == county, precinct_id == precinct_24, vote_mode, candidate_party),
+    ) |> 
+    rename(
+      # rename to match the history file formatting
+      vote_enr = precinct_total
+    ) |> 
+    mutate(
+      # total votes cast in all modes for all candidates, used for weighting
+      tot_enr = sum(vote_enr),
+      .by = c(jurisdiction, precinct_id)
+    ) |>
+    # now, filter down to just Rs and Ds for two party calculations
+    filter(candidate_party %in% c("Democrat", "Republican")) |>
+    mutate(
+      tot_2party_enr = sum(vote_enr),
+      .by = c(jurisdiction, precinct_id, vote_mode)
+    ) |>
+    mutate(
+      pct_2party_enr = case_when(
+        tot_2party_enr == 0 ~ 0,
+        .default = vote_enr / tot_2party_enr
+      )
+    )
+  
+  if (nrow(drop_na(base, vote_enr)) < 30) {
+    cli::cli_alert_info("Not enough completed precincts. Stopping")
+    return(NULL)
+  }
+  
+  modes = base |> 
+    drop_na(vote_enr) |>
+    filter(vote_enr > 0) |> 
+    count(vote_mode) |> 
+    filter(n>2) |> 
+    pull(vote_mode) |> 
+    sort()
+  
+  all_modes <<- identical(modes, distinct(base, vote_mode) |> pull() |> sort())
+  
+  imputes = base |> 
+    summarize(
+      vote_hist = median(vote_hist, na.rm=TRUE),
+      tot_2party_hist = median(tot_2party_hist, na.rm=TRUE),
+      .by = c(jurisdiction, candidate_party, vote_mode)
+    ) |> 
+    mutate(
+      vote_hist2 = median(vote_hist, TRUE),
+      tot_2party_hist2 = median(tot_2party_hist, TRUE),
+      .by = c(candidate_party, vote_mode)
+    ) |> 
+    mutate(
+      vote_hist = coalesce(vote_hist, vote_hist2),
+      tot_2party_hist = coalesce(tot_2party_hist, tot_2party_hist2),
+      pct_2party_hist = vote_hist / tot_2party_hist,
+      pct_2party_hist = ifelse(is.nan(pct_2party_hist), 0, pct_2party_hist)
+    )
+  
+  train <- base |> 
+    drop_na(vote_enr) |> 
+    left_join(imputes, join_by(jurisdiction, candidate_party, vote_mode)) |> 
+    mutate(
+      pct_2party_hist = coalesce(pct_2party_hist.x, pct_2party_hist.y),
+      tot_2party_hist = coalesce(tot_2party_hist.x, tot_2party_hist.y),
+      vote_hist = coalesce(vote_hist.x, vote_hist.y)
+    ) |> 
+    select(-ends_with(".y"), -ends_with(".x")) |> 
+    fastDummies::dummy_cols() |> 
+    janitor::clean_names()
+  
+  test <- base |> 
+    filter(is.na(vote_enr)) |> 
+    left_join(imputes, join_by(jurisdiction, candidate_party, vote_mode)) |> 
+    mutate(
+      pct_2party_hist = coalesce(pct_2party_hist.x, pct_2party_hist.y),
+      tot_2party_hist = coalesce(tot_2party_hist.x, tot_2party_hist.y),
+      vote_hist = coalesce(vote_hist.x, vote_hist.y)
+    ) |> 
+    select(-ends_with(".y"), -ends_with(".x")) |> 
+    fastDummies::dummy_cols() |> 
+    janitor::clean_names()
+  
+  form <<- paste0("pct_2party_enr ~ pct_2party_hist + candidate_party", if (isTRUE(all_modes)) "+vote_mode" else "")
+  
+  covars = c("pct_2party_hist", "candidate_party_democrat", "candidate_party_republican")
+  
+  if (all_modes) {
+    covars = c(covars, "vote_mode_absentee_mail", "vote_mode_early_voting", "vote_mode_election_day", "vote_mode_provisional")
+  } else {
+    covars = c(covars, "vote_mode_absentee_mail", "vote_mode_early_voting", "vote_mode_election_day")
+  }
+  
+  # Run weighted split CQR
+  obj <- conformalCf(
+    X=train[,covars], Y=train$pct_2party_enr, type = "mean", 
+    # quantiles = c(0.05, 0.95),
+    # outfun = "quantRF",
+    useCV = TRUE
+  )
+  
+  preds = predict(obj, test[,covars], alpha = 0.1)
+  
+  pred_missing = test |> 
+    mutate(
+      vote_enr_lower = preds[,1] * tot_2party_hist,
+      vote_enr_upper = preds[,2] * tot_2party_hist,
+      vote_enr = (vote_enr_lower + vote_enr_upper)/2
+    )
+  
+  base |> 
+    filter(!is.na(vote_enr)) |> 
+    mutate(
+      vote_enr_lower = vote_enr,
+      vote_enr_upper = vote_enr
+    ) |> 
+    bind_rows(pred_missing) |>
+    summarize(
+      across(starts_with("vote_enr"), sum),
+      .by = candidate_party
+    )
+  
+}
+
+ts2 = tibble(
+  path = files,
+  time = fs::path_file(path) |> str_remove("^GA_") |> ymd_hms()
+) |> 
+  mutate(
+    out = map(path, generate_predictions_cqr, .progress = TRUE)
+  )
+
+ts2 |> 
+  unnest_longer(col = out) |>
+  unnest_wider(col = out) |>
+  # mutate(
+  #   vote_enr = (vote_enr_lower + vote_enr_upper)/2
+  # ) |> 
+  # drop_na(vote_enr) |> 
+  filter(time < ymd_hm("2024-11-06 01:00"), time > ymd_hm("2024-11-05 19:35")) |>
   ggplot(aes(x = time, y = vote_enr, ymin = vote_enr_lower, ymax = vote_enr_upper, color = candidate_party)) +
   geom_pointrange(fatten=1) +
   ### truth lines
@@ -309,25 +516,58 @@ ts |>
   scale_color_manual(values = c("Democrat" = "#3791FF", "Republican" = "#F6573E")) +
   theme_bw()
 
-
-all = tibble(
-  path = files,
-  time = fs::path_file(path) |> str_remove("^GA_") |> ymd_hms()
-) |> 
+##### 
+imputes = base |> 
+  summarize(
+    vote_hist = median(vote_hist, na.rm=TRUE),
+    tot_2party_hist = median(tot_2party_hist, na.rm=TRUE),
+    .by = c(jurisdiction, candidate_party, vote_mode)
+  ) |> 
   mutate(
-    file = map(path, fread)
+    vote_hist2 = median(vote_hist, TRUE),
+    tot_2party_hist2 = median(tot_2party_hist, TRUE),
+    .by = c(candidate_party, vote_mode)
   ) |> 
-  unnest(cols = file) |> 
-  filter(race_name == "President", candidate_name == "Kamala Harris") |> 
-  select(time, jurisdiction, precinct_id, vote_mode, precinct_total)
+  mutate(
+    vote_hist = coalesce(vote_hist, vote_hist2),
+    tot_2party_hist = coalesce(tot_2party_hist, tot_2party_hist2),
+    pct_2party_hist = vote_hist / tot_2party_hist,
+    pct_2party_hist = ifelse(is.nan(pct_2party_hist), 0, pct_2party_hist)
+  )
 
-all |> 
-  filter(
-    precinct_total != 0
+train <- base |> 
+  left_join(imputes, join_by(jurisdiction, candidate_party, vote_mode)) |> 
+  mutate(
+    pct_2party_hist = coalesce(pct_2party_hist.x, pct_2party_hist.y),
+    tot_2party_hist = coalesce(tot_2party_hist.x, tot_2party_hist.y),
+    vote_hist = coalesce(vote_hist.x, vote_hist.y)
   ) |> 
-  filter(
-    max(precinct_total) != min(precinct_total),
-    .by = c(jurisdiction, precinct_id, vote_mode)
+  select(-ends_with(".y"), -ends_with(".x")) |>
+  select(pct_2party_enr, pct_2party_hist, candidate_party, vote_mode) |> 
+  fastDummies::dummy_cols() |> 
+  janitor::clean_names() |> 
+  select(-candidate_party, -vote_mode)
+
+test <- base |> 
+  filter(is.na(vote_enr)) |> 
+  left_join(imputes, join_by(jurisdiction, candidate_party, vote_mode)) |> 
+  mutate(
+    pct_2party_hist = coalesce(pct_2party_hist.x, pct_2party_hist.y),
+    tot_2party_hist = coalesce(tot_2party_hist.x, tot_2party_hist.y),
+    vote_hist = coalesce(vote_hist.x, vote_hist.y)
   ) |> 
-  distinct(jurisdiction, precinct_id, vote_mode, precinct_total) |> 
-  arrange(jurisdiction, precinct_id, vote_mode)
+  select(-ends_with(".y"), -ends_with(".x")) |> 
+  select(pct_2party_hist, candidate_party, vote_mode) |> 
+  fastDummies::dummy_cols() |> 
+  janitor::clean_names() |> 
+  select(-candidate_party, -vote_mode)
+
+# Run weighted split CQR
+obj <- conformalCf(
+  X=train[,-1], Y=train$pct_2party_enr, type = "CQR", 
+  estimand = "missing",
+  quantiles = c(0.05, 0.95),
+  outfun = "quantRF", useCV = FALSE
+)
+
+predict(obj, test, alpha = 0.1)
