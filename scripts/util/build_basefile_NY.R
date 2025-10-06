@@ -146,7 +146,10 @@ history_file_21 <- crosswalk_21_25 |>
 
 history_file <- history_file_24 |>
   full_join(history_file_21, by = c("ad", "ed", "precinct_cbs", "precinct_25")) |>
-  mutate(across(where(is.numeric), ~ replace_na(.x, 0))) |>
+  mutate(
+    across(where(is.numeric), ~ replace_na(.x, 0)),
+    vote_mode = 'Total') |>
+  relocate(vote_mode, .after = precinct_25) |>
   arrange(ad, ed) |>
   left_join(ny25_primary, by = c("ad", "ed", "precinct_cbs"))
 
