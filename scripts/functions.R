@@ -88,6 +88,12 @@ get_data <- function(state, county, timestamp, path = NULL) {
   return(d)
 }
 
+get_history <- function(state) {
+
+  read_csv(glue("{PATH_DROPBOX}/history/{state}_history.csv"))
+
+}
+
 create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   # Prepare lookups
   lookup_state <- lookup_state_name(state)
@@ -128,14 +134,16 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
       pcntName = str_c(county_fips, precinct_id, sep = "_"),
       pcnt = pcntName,
       pcntUUID = pcntName) |>
-    pivot_wider(names_from = vote_mode, values_from = precinct_total)
-  
-  # Verify if we have all target vote_modes; if not, add NA column
-  target_vote_modes <- c("Election Day", "Early Voting", "Absentee/Mail", "Provisional")
-  missing_cols <- setdiff(target_vote_modes, names(formatted))
-  formatted[missing_cols] <- NA
-   
-  formatted <- formatted |>
+    pivot_wider(names_from = vote_mode, values_from = precinct_total) |> 
+    # Verify if we have all target vote_modes; if not, add NA column
+    bind_rows(
+      tibble(
+        `Election Day` = numeric(),
+        `Early Voting` = numeric(),
+        `Absentee/Mail` = numeric(),
+        `Provisional` = numeric(),
+      )
+    ) |>
     rename(
       st = cbs_state_id,
       cnty = cbs_county_id,
@@ -184,20 +192,15 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     }
     
     # Conditional logic to determine which files to upload based on the state
-    if (state %in% c('AZ', 'MI', 'PA')) {
-      # Upload for President and Senate races
-      upload_files(state, "P", local_file_name, formatted, data, "President", PATH_CBS_S3)
-      upload_files(state, "S", local_file_name, formatted, data, "Senate", PATH_CBS_S3)
-      
-    } else if (state == 'NC') {
-      # Upload for President and Governor races
-      upload_files(state, "P", local_file_name, formatted, data, "President", PATH_CBS_S3)
+    if (state == "VA") {
+      # Upload for Governor and TBD?
+      # TODO: What other contests for VA?
       upload_files(state, "G", local_file_name, formatted, data, "Governor", PATH_CBS_S3)
       
-    } else {
-      # Upload for President race only
-      upload_files(state, "P", local_file_name, formatted, data, "President", PATH_CBS_S3)
-    }
+    } else if (state == 'NY') {
+      # Upload for President and Governor races
+      upload_files(state, "M", local_file_name, formatted, data, "Mayor", PATH_CBS_S3)
+    } 
     
     #### Upload to Google Drive ####
     drive_put(
@@ -217,6 +220,7 @@ upload_html <- function(){
     state = str_extract(path, "(pages/)(.*?)\\.html", group = 2) |> str_extract("^[^_]+")
     juris = str_extract(path, "(pages/)(.*?)\\.html", group = 2)
     
+    # TODO: Change file from -P to something else?
     put_object(file = path, object = glue("{ELECTION_DATE}-{state}-P/model_{juris}.html"), bucket = PATH_CBS_S3, multipart = TRUE)
   }
   
