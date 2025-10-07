@@ -34,8 +34,14 @@ va24 <- va24 |>
       glue("{jurisdiction} County"),
       jurisdiction
     ) |> str_to_upper(),
+    jurisdiction = if_else(jurisdiction == 'CHARLES CITY', 'CHARLES CITY COUNTY', jurisdiction),
+    jurisdiction = if_else(jurisdiction == 'JAMES CITY', 'JAMES CITY COUNTY', jurisdiction),
+    jurisdiction = str_replace_all(jurisdiction, 'KING & QUEEN COUNTY', 'KING AND QUEEN COUNTY'),
     precinct_id = str_remove_all(precinct_id, "\\s*\\([^()]*\\)"),
     precinct_id = str_replace_all(precinct_id, " - ", "-"),
+    precinct_id = if_else(jurisdiction %in% c('MANASSAS CITY','MANASSAS PARK CITY','RADFORD CITY'), str_remove(precinct_id, "^0+"), precinct_id),
+    precinct_id = if_else(jurisdiction == 'MARTINSVILLE CITY', str_remove(precinct_id, "#"), precinct_id),
+    precinct_id = if_else(jurisdiction == 'ROANOKE CITY', str_to_upper(precinct_id), precinct_id),
     virtual_precinct = ifelse(str_detect(precinct_id, "PROVISIONAL"), TRUE, FALSE)
   )
 VA_vote_modes <- va24 |> pull(vote_mode) |> unique() |> str_subset("Post", negate = T)
@@ -110,9 +116,180 @@ create_precinct_identifiers <- function(shapefile){
     select(jurisdiction, precinct_id, geometry)
 }
 
-shapefile_2024 <- create_precinct_identifiers(shapefile_2024) |> rename(precinct_24 = precinct_id)
+shapefile_2024 <- create_precinct_identifiers(shapefile_2024) |> rename(precinct_24 = precinct_id) |>
+  mutate(
+    precinct_24 = str_replace_all(precinct_24, "PRECINCT","WARD"), 
+    precinct_24 = if_else(
+      jurisdiction %in% c(
+        'ARLINGTON COUNTY','BRISTOL CITY','CHARLES CITY COUNTY','COVINGTON CITY',
+        'CUMBERLAND COUNTY','FAIRFAX CITY','FREDERICKSBURG CITY','FRANKLIN CITY',
+        'GREENSVILLE COUNTY','LANCASTER COUNTY','LYNCHBURG CITY',
+        'MANASSAS PARK CITY','MARTINSVILLE CITY','MONTGOMERY COUNTY',
+        'NORTHAMPTON COUNTY','NOTTOWAY COUNTY','RADFORD CITY',
+        'RICHMOND COUNTY','VIRGINIA BEACH CITY','WESTMORELAND COUNTY'
+      ),
+      str_replace_all(precinct_24,"WARD", "PRECINCT"),
+      precinct_24
+    ),
+    precinct_24 = str_replace_all(precinct_24,'PRECICNT','PRECINCT'),
+    precinct_24 = if_else(jurisdiction == 'FREDERICKSBURG CITY', str_replace_all(precinct_24, " - ", "-"), precinct_24),
+    precinct_24 = if_else(jurisdiction == 'CARROLL COUNTY', str_remove_all(precinct_24, "\\sWARD"), precinct_24),
+    precinct_24 = if_else(jurisdiction == 'ROANOKE CITY', str_replace_all(precinct_24, '#',"NO "), precinct_24),
+    precinct_24 = if_else(jurisdiction == 'STAUNTON CITY', str_replace_all(precinct_24, "-WARD ",'-WARD NO '), precinct_24),
+    precinct_24 = case_when(
+      jurisdiction %in% c(
+        'MARTINSVILLE CITY','BRISTOL CITY','BUENA VISTA CITY','CHESAPEAKE CITY',
+        'COLONIAL HEIGHTS CITY','DANVILLE CITY','FALLS CHURCH CITY','GALAX CITY',
+        'HIGHLAND COUNTY','LEXINGTON CITY','MADISON COUNTY','MATHEWS COUNTY',
+        'NORTON CITY','POQUOSON CITY','PORTSMOUTH CITY','ROANOKE CITY','SALEM CITY','WAYNESBORO CITY','WILLIAMSBURG CITY'
+        ) ~ glue("00{precinct_24}"),
+      jurisdiction == 'MANASSAS PARK CITY' & str_detect(precinct_24, "PRECINCT 1") ~ str_replace(precinct_24, "PRECINCT 1", "PRECINCT ONE"),
+      jurisdiction == 'MANASSAS PARK CITY' & str_detect(precinct_24, "PRECINCT 2") ~ str_replace(precinct_24, "PRECINCT 2", "PRECINCT TWO"),
+      jurisdiction == 'MANASSAS PARK CITY' & str_detect(precinct_24, "PRECINCT 3") ~ str_replace(precinct_24, "PRECINCT 3", "PRECINCT THREE"),
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '101-W1- P1' ~ '101-FIRST WARD FIRST PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '102-W1- P2' ~ '102-FIRST WARD SECOND PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '103-W1- P3' ~ '103-FIRST WARD THIRD PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '104-W1- P4' ~ '104-FIRST WARD FOURTH PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '105-W1- P5' ~ '105-FIRST WARD FIFTH PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '201-W2- P1' ~ '201-SECOND WARD FIRST PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '202-W2- P2' ~ '202-SECOND WARD SECOND PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '203-W2- P3' ~ '203-SECOND WARD THIRD PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '204-W2- P4' ~ '204-SECOND WARD FOURTH PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '301-W3- P1' ~ '301-THIRD WARD FIRST PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '302-W3- P2' ~ '302-THIRD WARD SECOND PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '303-W3- P3' ~ '303-THIRD WARD THIRD PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '304-W3- P4' ~ '304-THIRD WARD FOURTH PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '305-W3- P5' ~ '305-THIRD WARD FIFTH PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '401-W4- P1' ~ '401-FOURTH WARD FIRST PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '402-W4- P2' ~ '402-FOURTH WARD SECOND PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '403-W4- P3' ~ '403-FOURTH WARD THIRD PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & precinct_24 == '404-W4- P4' ~ '404-FOURTH WARD FOURTH PRECINCT',
+      jurisdiction == 'ORANGE COUNTY' & precinct_24 == '101-1 WEST' ~ '101-ONE WEST',
+      jurisdiction == 'ORANGE COUNTY' & precinct_24 == '102-1 EAST' ~ '102-ONE EAST',
+      jurisdiction == 'ORANGE COUNTY' & precinct_24 == '103-1 TOWN' ~ '103-ONE TOWN',
+      jurisdiction == 'ORANGE COUNTY' & precinct_24 == '202-2 EAST' ~ '202-TWO EAST',
+      jurisdiction == 'ORANGE COUNTY' & precinct_24 == '301-3 WEST' ~ '301-THREE WEST',
+      jurisdiction == 'ORANGE COUNTY' & precinct_24 == '302-3 EAST' ~ '302-THREE EAST',
+      jurisdiction == 'ORANGE COUNTY' & precinct_24 == '303-3 TOWN' ~ '303-THREE TOWN',
+      jurisdiction == 'ORANGE COUNTY' & precinct_24 == '401-4 WEST' ~ '401-FOUR WEST',
+      jurisdiction == 'ORANGE COUNTY' & precinct_24 == '402-4 EAST' ~ '402-FOUR EAST',
+      jurisdiction == 'ORANGE COUNTY' & precinct_24 == '501-5 SOUTH' ~ '501-FIVE SOUTH',
+      jurisdiction == 'ORANGE COUNTY' & precinct_24 == '502-5 NORTH' ~ '502-FIVE NORTH',
+      jurisdiction == 'PETERSBURG CITY' & str_detect(precinct_24, "^101") ~ '101-FIRST WARD FIRST PRECINCT',
+      jurisdiction == 'PETERSBURG CITY' & str_detect(precinct_24, "^201") ~ '201-SECOND WARD FIRST PRECINCT',
+      jurisdiction == 'PETERSBURG CITY' & str_detect(precinct_24, "^301") ~ '301-THIRD WARD FIRST PRECINCT',
+      jurisdiction == 'PETERSBURG CITY' & str_detect(precinct_24, "^401") ~ '401-FOURTH WARD FIRST PRECINCT',
+      jurisdiction == 'PETERSBURG CITY' & str_detect(precinct_24, "^501") ~ '501-FIFTH WARD FIRST PRECINCT',
+      jurisdiction == 'PETERSBURG CITY' & str_detect(precinct_24, "^601") ~ '601-SIXTH WARD FIRST PRECINCT',
+      jurisdiction == 'PETERSBURG CITY' & str_detect(precinct_24, "^701") ~ '701-SEVENTH WARD FIRST PRECINCT',
+      TRUE ~ precinct_24
+    )
+    )
+
 shapefile_2025 <- create_precinct_identifiers(shapefile_2025) |> rename(precinct_25 = precinct_id) |>
-  mutate(precinct_25 = str_replace_all(precinct_25, "PRECINCT","WARD"))
+  mutate(
+    precinct_25 = str_replace_all(precinct_25, "PRECINCT","WARD"),
+    # TODO: make wholesale changes to fix jurisdictions completely missing
+    # Make exceptions for the switch
+    precinct_25 = if_else(
+      jurisdiction %in% c(
+        'ARLINGTON COUNTY','CHARLES CITY COUNTY','COVINGTON CITY',
+        'CUMBERLAND COUNTY','FAIRFAX CITY','FREDERICKSBURG CITY',
+        'GREENSVILLE COUNTY','LANCASTER COUNTY','LYNCHBURG CITY',
+        'MANASSAS PARK CITY','MARTINSVILLE CITY','MONTGOMERY COUNTY',
+        'NORTHAMPTON COUNTY','NOTTOWAY COUNTY','RADFORD CITY',
+        'RICHMOND COUNTY','VIRGINIA BEACH CITY','WESTMORELAND COUNTY'
+        ),
+      str_replace_all(precinct_25,"WARD", "PRECINCT"),
+      precinct_25
+    ),
+    # Manual fixes to match voter file
+    precinct_25 = case_when(
+      jurisdiction == 'BRISTOL CITY' ~ str_remove_all(precinct_25, "^[1-9]-"),
+      jurisdiction == "GREENSVILLE COUNTY" ~ str_remove_all(precinct_25, "^[1-9]{3}-"),
+      jurisdiction == 'MARTINSVILLE CITY' ~ glue("00{precinct_25}"),
+      jurisdiction == 'MONTGOMERY COUNTY' ~ str_replace(precinct_25, "-", "-PRECINCT "),
+      jurisdiction == 'RADFORD CITY' ~ str_remove_all(precinct_25, "^0+"),
+      jurisdiction == 'VIRGINIA BEACH CITY' ~ str_remove_all(precinct_25, "^0+"),
+      jurisdiction == 'ALLEGHANY COUNTY' & str_detect(precinct_25, "^601") ~ '601-DISTRICT 1',
+      jurisdiction == 'ALLEGHANY COUNTY' & str_detect(precinct_25, "^701") ~ '701-DISTRICT 2',
+      jurisdiction == 'BEDFORD COUNTY' & str_detect(precinct_25, "^304") ~ '304-ONE IN CHRIST CHURCH',
+      jurisdiction == 'BEDFORD COUNTY' & str_detect(precinct_25, "^704") ~ '704-CHURCH OF GOD',
+      jurisdiction == 'BRUNSWICK COUNTY' & str_detect(precinct_25, "^501") ~ '501-TOTARO',
+      jurisdiction == 'FAIRFAX COUNTY' & str_detect(precinct_25, "^637") ~ '637-MONTEBELLO',
+      jurisdiction == 'FAUQUIER COUNTY' & str_detect(precinct_25, "^201") ~ '201-WARRENTON WARD 1',
+      jurisdiction == 'FAUQUIER COUNTY' & str_detect(precinct_25, "^202") ~ '202-WARRENTON WARD 2',
+      jurisdiction == 'FAUQUIER COUNTY' & str_detect(precinct_25, "^203") ~ '203-WARRENTON WARD 3',
+      jurisdiction == 'FAUQUIER COUNTY' & str_detect(precinct_25, "^204") ~ '204-WARRENTON WARD 4',
+      jurisdiction == 'FAUQUIER COUNTY' & str_detect(precinct_25, "^205") ~ '205-WARRENTON WARD 5',
+      jurisdiction == 'LOUISA COUNTY' & str_detect(precinct_25, "^101") ~ '101-GREEN SPRINGS 1',
+      jurisdiction == 'LOUISA COUNTY' & str_detect(precinct_25, "^102") ~ '102-GREEN SPRINGS 2',
+      jurisdiction == 'LOUISA COUNTY' & str_detect(precinct_25, "^501") ~ '501-CUCKOO 1',
+      jurisdiction == 'LOUISA COUNTY' & str_detect(precinct_25, "^601") ~ '501-JACKSON',
+      jurisdiction == 'LOUISA COUNTY' & str_detect(precinct_25, "^701") ~ '701-MOUNTAIN ROAD 1',
+      jurisdiction == 'LOUISA COUNTY' & str_detect(precinct_25, "^702") ~ '702-MOUNTAIN ROAD 2',
+      jurisdiction == 'LUNENBURG COUNTY' & str_detect(precinct_25, "^302") ~ '302-FLAT ROCK',
+      jurisdiction == 'LUNENBURG COUNTY' & str_detect(precinct_25, "^702") ~ '702-VICTORIA PUBLIC LIBRARY',
+      jurisdiction == 'MADISON COUNTY' & str_detect(precinct_25, "^4") ~ '4-GRAVES MILL/WOLFTOWN',
+      jurisdiction == 'MADISON COUNTY' & str_detect(precinct_25, "^6") ~ '6-ETLAN',
+      jurisdiction == 'MECKLENBURG COUNTY' & str_detect(precinct_25, "^103") ~ '103-SOUTH CLARKSVILLE',
+      jurisdiction == 'MECKLENBURG COUNTY' & str_detect(precinct_25, "^801") ~ '801-BOYDTON',
+      jurisdiction == 'MECKLENBURG COUNTY' & str_detect(precinct_25, "^802") ~ '802-CLARKSVILLE VFW',
+      jurisdiction == 'ORANGE COUNTY' & str_detect(precinct_25, "^103") ~ '103-ONE TOWN',
+      jurisdiction == 'ORANGE COUNTY' & str_detect(precinct_25, "^202") ~ '202-TWO EAST',
+      jurisdiction == 'ORANGE COUNTY' & str_detect(precinct_25, "^301") ~ '301-THREE WEST',
+      jurisdiction == 'ORANGE COUNTY' & str_detect(precinct_25, "^302") ~ '302-THREE EAST',
+      jurisdiction == 'PRINCE WILLIAM COUNTY' & str_detect(precinct_25, "^215") ~ '215-SAUNDERS',
+      jurisdiction == 'PRINCE WILLIAM COUNTY' & str_detect(precinct_25, "^508") ~ '508-PURCELL',
+      jurisdiction == 'PRINCE WILLIAM COUNTY' & str_detect(precinct_25, "^607") ~ '607-HILLENDALE',
+      jurisdiction == 'RAPPAHANNOCK COUNTY' & str_detect(precinct_25, "^401") ~ '401-SCRABBLE',
+      jurisdiction == 'SPOTSYLVANIA COUNTY' & str_detect(precinct_25, "^102") ~ '102-BLAYDES CORNER',
+      jurisdiction == 'ALEXANDRIA CITY' & str_detect(precinct_25, "^202") ~ '202-TRINITY',
+      jurisdiction == 'ALEXANDRIA CITY' & str_detect(precinct_25, "^304") ~ '304-TUCKER SCHOOL',
+      jurisdiction == 'CHARLOTTESVILLE CITY' & str_detect(precinct_25, "^102") ~ '102-SUMMIT',
+      jurisdiction == 'CHARLOTTESVILLE CITY' & str_detect(precinct_25, "^202") ~ '202-TRAILBLAZER',
+      jurisdiction == 'CHARLOTTESVILLE CITY' & str_detect(precinct_25, "^401") ~ '401-CHARLOTTESVILLE HIGH SCHOOL',
+      jurisdiction == 'EMPORIA CITY' & str_detect(precinct_25, "^101") ~ '101-PRECINCT 1-1',
+      jurisdiction == 'EMPORIA CITY' & str_detect(precinct_25, "^201") ~ '201-PRECINCT 2-1',
+      jurisdiction == 'EMPORIA CITY' & str_detect(precinct_25, "^301") ~ '301-PRECINCT 3-1',
+      jurisdiction == 'EMPORIA CITY' & str_detect(precinct_25, "^401") ~ '401-PRECINCT 4-1',
+      jurisdiction == 'EMPORIA CITY' & str_detect(precinct_25, "^501") ~ '501-PRECINCT 5-1',
+      jurisdiction == 'FRANKLIN CITY' & str_detect(precinct_25, "^101") ~ '101-PRECINCT 1-1',
+      jurisdiction == 'FRANKLIN CITY' & str_detect(precinct_25, "^201") ~ '201-PRECINCT 2-1',
+      jurisdiction == 'FRANKLIN CITY' & str_detect(precinct_25, "^401") ~ '401-PRECINCT 4-1',
+      jurisdiction == 'FRANKLIN CITY' & str_detect(precinct_25, "^501") ~ '501-PRECINCT 5-1',
+      jurisdiction == 'FRANKLIN CITY' & str_detect(precinct_25, "^601") ~ '601-PRECINCT 6-1',
+      jurisdiction == 'NORFOLK CITY' & str_detect(precinct_25, "^213") ~ '213-TAYLOR ELEMENTARY SCHOOL',
+      jurisdiction == 'PORTSMOUTH CITY' & str_detect(precinct_25, "HENDRICKS|KENDALL") ~ '021-HENDRICKS/KENDALL RECREATION CENTER',
+      jurisdiction == 'FREDERICKSBURG CITY' & str_detect(precinct_25, "^201") ~ '201-DOROTHY HART',
+      jurisdiction == 'FREDERICKSBURG CITY' & str_detect(precinct_25, "^101") ~ '101-HUGH MERCER',    
+      jurisdiction == 'FREDERICKSBURG CITY' & str_detect(precinct_25, "^301") ~ '301-GLADYS WEST',
+      jurisdiction == 'FREDERICKSBURG CITY' & str_detect(precinct_25, "^401") ~ '401-FCPS ADMINISTRATION',
+      jurisdiction == 'FREDERICKSBURG CITY' & str_detect(precinct_25, "^402") ~ '402-VFW 3103',
+      jurisdiction == 'MANASSAS PARK CITY' & str_detect(precinct_25, "PRECINCT 1") ~ str_replace(precinct_25, "PRECINCT 1", "PRECINCT ONE"),
+      jurisdiction == 'MANASSAS PARK CITY' & str_detect(precinct_25, "PRECINCT 2") ~ str_replace(precinct_25, "PRECINCT 2", "PRECINCT TWO"),
+      jurisdiction == 'MANASSAS PARK CITY' & str_detect(precinct_25, "PRECINCT 3") ~ str_replace(precinct_25, "PRECINCT 3", "PRECINCT THREE"),
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^101") ~ '101-FIRST WARD FIRST PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^102") ~ '102-FIRST WARD SECOND PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^103") ~ '103-FIRST WARD THIRD PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^104") ~ '104-FIRST WARD FOURTH PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^105") ~ '105-FIRST WARD FIFTH PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^201") ~ '201-SECOND WARD FIRST PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^202") ~ '202-SECOND WARD SECOND PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^203") ~ '203-SECOND WARD THIRD PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^204") ~ '204-SECOND WARD FOURTH PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^301") ~ '301-THIRD WARD FIRST PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^302") ~ '302-THIRD WARD SECOND PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^303") ~ '303-THIRD WARD THIRD PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^304") ~ '304-THIRD WARD FOURTH PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^305") ~ '305-THIRD WARD FIFTH PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^401") ~ '401-FOURTH WARD FIRST PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^402") ~ '402-FOURTH WARD SECOND PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^403") ~ '403-FOURTH WARD THIRD PRECINCT',
+      jurisdiction == 'LYNCHBURG CITY' & str_detect(precinct_25, "^404") ~ '404-FOURTH WARD FOURTH PRECINCT',
+      TRUE ~ precinct_25
+      )
+    )
 shapefile_2021 <- sf::st_transform(shapefile_2021, st_crs(shapefile_2024)) |>
   mutate(precinct_21 = str_remove(precinct_n,"^0+"))
 
@@ -423,4 +600,3 @@ va21_wide <- va21 |>
     names_from = vote_mode, values_from = precinct_total, values_fill = 0, values_fn = sum)
 
 write_csv(va21_wide, glue("{DATA_DIR}/25_general/input_data/VA/VA_results_2021_wide.csv"))
-
