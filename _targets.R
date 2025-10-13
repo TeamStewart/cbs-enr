@@ -24,8 +24,9 @@ options(
 tar_option_set(
   packages = c(
     # tar_renv()
-    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3",
-    "googledrive", "rvest", "reticulate", "xml2", "jsonlite"
+    "data.table", "tidyverse", "glue", "janitor", "fs", "aws.s3", "marginaleffects",
+    "googledrive", "rvest", "reticulate", "xml2", "jsonlite", "httr2",
+    "devtools", "pak"
   ),
   error = "continue",
   controller = crew::crew_controller_local(workers = 2)
@@ -45,7 +46,7 @@ list(
   tar_map(
     metadata,
     tar_target(timestamp, get_timestamp(state, county, path), cue = tar_cue(mode = "always")),
-    tar_target(history, get_history(state))),
+    tar_target(history, get_history(state)),
     tar_target(data, get_data(state, county, timestamp, path)),
     tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
     tar_target(model, run_models(data, state, county, timestamp, history)),

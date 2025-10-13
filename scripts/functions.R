@@ -177,6 +177,8 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     # Function to handle upload by office type
     upload_files <- function(state, office, local_file_name, formatted_data, raw_data, race_name, bucket) {
       # Define paths
+      fs::dir_create("data/cbs_format")
+
       json_file <- glue("data/cbs_format/{local_file_name}_{office}_latest.json")
       csv_file <- glue("data/cbs_format/{local_file_name}_{office}_latest.csv")
       s3_json_path <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results.json")
