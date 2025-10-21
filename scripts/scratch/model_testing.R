@@ -6,6 +6,7 @@ gc()
   library(data.table)
   # library(tidymodels)
   library(marginaleffects)
+  library(quantreg)
 }
 
 ########################################
@@ -61,7 +62,7 @@ hist = fread("~/Dropbox (MIT)/Research/CBS-MIT Election Data/24_general/history/
 files = list.files("~/Dropbox (MIT)/Research/CBS-MIT Election Data/24_general/GA/clean", full.names = TRUE, pattern = "\\d\\.csv$")
 files = files[str_detect(files, "11_0")]
 
-base = fread(files[6])[
+base = fread(files[8])[
   race_name == "President",
   list(jurisdiction, precinct_id, vote_mode, precinct_total, candidate_party, candidate_name)
 ] |> 
@@ -198,7 +199,7 @@ generate_predictions <- function(path) {
     pull(vote_mode) |> 
     sort()
   
-  all_modes = identical(modes, distinct(base, vote_mode) |> pull() |> sort())
+  all_modes <<- identical(modes, distinct(base, vote_mode) |> pull() |> sort())
   
   imputes = base |> 
     summarize(
@@ -220,7 +221,6 @@ generate_predictions <- function(path) {
   
   train <- base |> 
     drop_na(vote_enr) |> 
-    slice_sample(prop = 1, by = jurisdiction) |> 
     left_join(imputes, join_by(jurisdiction, candidate_party, vote_mode)) |> 
     mutate(
       pct_2party_hist = coalesce(pct_2party_hist.x, pct_2party_hist.y),
@@ -228,22 +228,6 @@ generate_predictions <- function(path) {
       vote_hist = coalesce(vote_hist.x, vote_hist.y)
     ) |> 
     select(-ends_with(".y"), -ends_with(".x"))
-  
-  calibration <- base |> 
-    drop_na(vote_enr) |> 
-    anti_join(train, by = join_by(jurisdiction, precinct_id, vote_mode, candidate_party)) |> 
-    left_join(imputes, join_by(jurisdiction, candidate_party, vote_mode)) |> 
-    mutate(
-      pct_2party_hist = coalesce(pct_2party_hist.x, pct_2party_hist.y),
-      tot_2party_hist = coalesce(tot_2party_hist.x, tot_2party_hist.y),
-      vote_hist = coalesce(vote_hist.x, vote_hist.y)
-    ) |> 
-    select(-ends_with(".y"), -ends_with(".x"))
-  
-  fit <- lm(
-    formula = as.formula(paste0("pct_2party_enr ~ pct_2party_hist + candidate_party", if (all_modes) "+vote_mode" else "")), 
-    data = train
-  )
   
   test = base |> 
     filter(is.na(vote_enr)) |> 
@@ -255,24 +239,84 @@ generate_predictions <- function(path) {
     ) |> 
     select(-ends_with(".y"), -ends_with(".x"))
   
-  preds = predictions(fit, vcov = ~ jurisdiction, conf_level = 0.95) |> 
-    # inferences(method = "simulation", R=500) |>
-    inferences(
-      method = "conformal_cv+",
-      R=20,
-      conformal_test = test,
-      conformal_score = "residual_abs"
-    ) |>
-    as_tibble()
+  form <<- paste0("pct_2party_enr ~ pct_2party_hist + candidate_party", if (isTRUE(all_modes)) "+vote_mode" else "")
   
-  pred_missing = preds |> 
-    filter(is.na(vote_enr)) |> 
-    select(vote_mode, candidate_party, estimate, conf.low, conf.high, tot_2party_hist, pct_2party_hist, vote_hist) |> 
+  # form_juris <<- paste0(form, "+jurisdiction")
+  
+  # jurisdictions = distinct(train, jurisdiction) |> pull()
+  
+  fit <- lm(
+    formula = as.formula(form),
+    weights = tot_2party_enr,
+    data = train
+  )
+  
+  # fit_juris <- lm(
+  #   formula = as.formula(form_juris),
+  #   weights = tot_2party_enr,
+  #   data = train
+  # )
+
+  alpha = 0.95
+
+  valid <- slice_sample(train, prop = 0.75)
+  train2 <- anti_join(train, valid, by = colnames(train))
+
+  # Extract model formula and data
+  formula <- insight::find_formula(fit)$conditional
+  data <- insight::get_data(fit)
+
+  # Fit quantile regression models
+  tau_lower <- quantreg::rq(formula, tau = alpha/2, data = train2)
+  tau_upper <- quantreg::rq(formula, tau = 1 - alpha/2, data = train2)
+
+  # Get predictions for the calibration data
+  pred_lower <- predict(tau_lower, newdata = valid) |> as.numeric()
+  pred_upper <- predict(tau_upper, newdata = valid) |> as.numeric()
+
+  # Compute CQR score: max{τ̂(x; α/2) - y, y - τ̂(x; 1-α/2)}
+  out <- pmax(pred_lower - valid$pct_2party_enr, valid$pct_2party_enr - pred_upper)
+
+  qt <- ceiling((1 + length(out) / 2) * (1 - alpha))
+
+  q = sort(out)[qt]
+
+  pred_missing = predictions(fit, vcov = ~ jurisdiction, newdata = test, conf_level = 0.95) |> 
+    as_tibble() |> 
+    select(vote_mode, candidate_party, estimate, tot_2party_hist, pct_2party_hist, vote_hist) |> 
     mutate(
+      conf.low = as.numeric(predict(tau_lower, newdata = test)) - q,
+      conf.high = as.numeric(predict(tau_upper, newdata = test)) + q,
       vote_enr_lower = conf.low * tot_2party_hist,
       vote_enr_upper = conf.high * tot_2party_hist,
       vote_enr = estimate * tot_2party_hist
     )
+  
+  # preds = predictions(fit, vcov = ~ jurisdiction, conf_level = 0.95) |> 
+  #   inferences(
+  #     method = "conformal_cv+",
+  #     R=10,
+  #     conformal_test = filter(test, !(jurisdiction %in% jurisdictions)),
+  #     conformal_score = "residual_abs"
+  #   ) |>
+  #   as_tibble()
+  
+  # preds_juris = predictions(fit_juris, vcov = ~ jurisdiction, conf_level = 0.95) |> 
+  #   inferences(
+  #     method = "conformal_cv+",
+  #     R=10,
+  #     conformal_test = filter(test, jurisdiction %in% jurisdictions),
+  #     conformal_score = "residual_abs"
+  #   ) |>
+  #   as_tibble()
+  
+  # pred_missing = bind_rows(preds, preds_juris) |> 
+  #   select(vote_mode, candidate_party, estimate, conf.low, conf.high, tot_2party_hist, pct_2party_hist, vote_hist) |> 
+  #   mutate(
+  #     vote_enr_lower = conf.low * tot_2party_hist,
+  #     vote_enr_upper = conf.high * tot_2party_hist,
+  #     vote_enr = estimate * tot_2party_hist
+  #   )
   
   base |> 
     filter(!is.na(vote_enr)) |> 
@@ -300,34 +344,73 @@ ts |>
   unnest_longer(col = out) |>
   unnest_wider(col = out) |>
   drop_na(vote_enr) |> 
-  filter(time < ymd_hm("2024-11-06 01:00")) |>
-  ggplot(aes(x = time, y = vote_enr, ymin = vote_enr_lower, ymax = vote_enr_upper, color = candidate_party)) +
-  geom_pointrange(fatten=1) +
+  # mutate(
+  #   across(starts_with("vote_enr"), ~ .x / (2548017 + 2663117))
+  # ) |> 
+  filter(time < ymd_hm("2024-11-06 01:00"), time > ymd_hm("2024-11-05 19:35")) |>
+  ggplot(aes(x = time)) +
+  # ggplot(aes(x = time, y = vote_enr, ymin = vote_enr_lower, ymax = vote_enr_upper, color = candidate_party, group = candidate_party)) +
+  geom_ribbon(aes(ymin = vote_enr_lower, ymax = vote_enr_upper, fill = candidate_party), alpha = 0.4) +
+  # geom_pointrange(fatten=1, position = position_dodge(width=100)) +
   ### truth lines
   geom_hline(yintercept = 2548017, color = "#3791FF", linetype = "dashed") +
   geom_hline(yintercept = 2663117, color = "#F6573E", linetype = "dashed") +
+  # geom_hline(yintercept = 2548017/(2548017+2663117), color = "#3791FF", linetype = "dashed") +
+  # geom_hline(yintercept = 2663117/(2548017+2663117), color = "#F6573E", linetype = "dashed") +
   scale_color_manual(values = c("Democrat" = "#3791FF", "Republican" = "#F6573E")) +
+  scale_fill_manual(values = c("Democrat" = "#3791FF", "Republican" = "#F6573E")) +
+  # scale_y_continuous(labels = scales::label_percent()) +
   theme_bw()
 
 
-all = tibble(
-  path = files,
-  time = fs::path_file(path) |> str_remove("^GA_") |> ymd_hms()
-) |> 
-  mutate(
-    file = map(path, fread)
-  ) |> 
-  unnest(cols = file) |> 
-  filter(race_name == "President", candidate_name == "Kamala Harris") |> 
-  select(time, jurisdiction, precinct_id, vote_mode, precinct_total)
+####
+# Conformalized Quantile Regression
+# Need to fit quantile regression models at α/2 and 1-α/2 quantiles
 
-all |> 
-  filter(
-    precinct_total != 0
-  ) |> 
-  filter(
-    max(precinct_total) != min(precinct_total),
-    .by = c(jurisdiction, precinct_id, vote_mode)
-  ) |> 
-  distinct(jurisdiction, precinct_id, vote_mode, precinct_total) |> 
-  arrange(jurisdiction, precinct_id, vote_mode)
+model <- fit
+alpha = 0.95
+
+valid <- slice_sample(train, prop = 0.75)
+train2 <- anti_join(train, valid, by = colnames(train))
+
+# Extract model formula and data
+formula <- insight::find_formula(model)$conditional
+data <- insight::get_data(model)
+
+# Fit quantile regression models
+tau_lower <- quantreg::rq(formula, tau = alpha/2, data = train2)
+tau_upper <- quantreg::rq(formula, tau = 1 - alpha/2, data = train2)
+
+# Get predictions for the calibration data
+pred_lower <- predict(tau_lower, newdata = valid) |> as.numeric()
+pred_upper <- predict(tau_upper, newdata = valid) |> as.numeric()
+
+# Compute CQR score: max{τ̂(x; α/2) - y, y - τ̂(x; 1-α/2)}
+out <- pmax(pred_lower - valid$pct_2party_enr, valid$pct_2party_enr - pred_upper)
+
+qt <- ceiling((1 + length(out) / 2) * (1 - alpha))
+
+q = sort(out)[qt]
+
+pred_missing = predictions(fit, vcov = ~ jurisdiction, newdata = test, conf_level = 0.95) |> 
+  as_tibble() |> 
+  select(vote_mode, candidate_party, estimate, tot_2party_hist, pct_2party_hist, vote_hist) |> 
+  mutate(
+    conf.low = as.numeric(predict(tau_lower, newdata = test)) - q,
+    conf.high = as.numeric(predict(tau_upper, newdata = test)) + q,
+    vote_enr_lower = conf.low * tot_2party_hist,
+    vote_enr_upper = conf.high * tot_2party_hist,
+    vote_enr = estimate * tot_2party_hist
+  )
+
+base |> 
+    filter(!is.na(vote_enr)) |> 
+    mutate(
+      vote_enr_lower = vote_enr,
+      vote_enr_upper = vote_enr,
+    ) |> 
+    bind_rows(pred_missing) |>
+    summarize(
+      across(starts_with("vote_enr"), sum),
+      .by = candidate_party
+    )
