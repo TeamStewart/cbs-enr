@@ -63,12 +63,26 @@ output <- ed_identifiers |>
       candidate_party == "Fight and Deliver" ~ (0.2 + runif(n(), min = -0.05, max = 0.05)) * votes_potus_24_dem + (0.1 + runif(n(), min = -0.05, max = 0.05)) * votes_potus_24_rep,
       candidate_party == "Republican" ~ (0.2 + runif(n(), min = -0.05, max = 0.05)) * votes_potus_24_rep,
       TRUE ~ (1 + runif(n(), min = -0.2, max = 0.2)) * votes_potus_24_other
-    ) |> round(0)
+    ) |> round(0),
+    precinct_id = glue("{ad}_{str_pad(ed, 3, 'left', '0')}"),
+    jurisdiction = case_when(
+      ad %in% c(37, 61, 65:76) ~ "New York",
+      ad %in% c(77:87) ~ "Bronx",
+      ad %in% c(41:61, 64) ~ "Kings",
+      ad %in% c(23:40) ~ "Queens",
+      ad %in% c(61:64) ~ "Richmond",
+      TRUE ~ NA_character_
+    )
   ) |>
   select(
     state, race_id, race_name, candidate_name, candidate_party,
-    jurisdiction, ad, ed, virtual_precinct, timestamp,
+    jurisdiction, ad, ed, precinct_id, virtual_precinct, timestamp,
     vote_mode, precinct_total
+  )
+
+output <- output |>
+  mutate(
+    precinct_total = if_else(ad %in% c(61,63,64), 0 , precinct_total)
   )
 
 write_csv(output, glue("{DATA_DIR}/25_general/input_data/NY/NY_test_file.csv"))
