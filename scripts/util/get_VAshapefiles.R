@@ -6,8 +6,9 @@ library(rvest)
 library(sf)
 sf_use_s2(FALSE)
 
-BASE_PATH = "~/Dropbox (MIT)/Research/cbs-enr"
-DOWNLOAD_PATH = glue::glue("{BASE_PATH}/data/shapefiles/va_2025")
+#BASE_PATH = "~/Dropbox (MIT)/Research/cbs-enr"
+BASE_PATH = "~/Dropbox (MIT)/CBS-MIT Election Data"
+DOWNLOAD_PATH = glue::glue("{BASE_PATH}/25_general/shapefiles/va_2025")
 
 base = "https://www.elections.virginia.gov"
 url = "https://www.elections.virginia.gov/casting-a-ballot/redistricting/gis/"
@@ -31,7 +32,7 @@ download.custom <- function(path){
 
 walk(links, download.custom)
 
-shapes = list.dirs(DOWNLOAD_PATH, recursive=FALSE, full.names = TRUE)
+shapes = list.files(path = DOWNLOAD_PATH, pattern = "shp$", recursive = TRUE, full.names = TRUE)
 
 fs::dir_create(glue::glue("{DOWNLOAD_PATH}/_statewide/"))
 

@@ -61,6 +61,22 @@ get_data <- function(state, county, timestamp, path = NULL) {
   return(d)
 }
 
+format_wide <- function(data){
+  data |>
+    mutate(
+      vote_mode = case_match(
+        vote_mode,
+        "Early Voting" ~ "early",
+        "Election Day" ~ "eday",
+        "Absentee/Mail" ~ "mail",
+        "Provisional" ~ "provisional",
+        .default = 'other'
+      )
+    ) |>
+    pivot_wider(
+      names_from = vote_mode, values_from = precinct_total, values_fill = 0, values_fn = sum)
+  }
+
 get_history <- function(state) {
 
   read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/history/{state}_history.csv"))
@@ -81,6 +97,11 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     clean_names() |>
     filter(state == lookup_state) |>
     mutate(jurisdiction_code = as.character(jurisdiction_code))
+  
+  # Create wide version
+  wide_data <- format_wide(data)
+  write_csv(wide_data, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_wide.csv"))
+  
   
   # Append CBS lookup info
   formatted <- data |>
@@ -156,41 +177,52 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     
     #### Upload to S3 ####
     # Function to handle upload by office type
-    upload_files <- function(state, office, local_file_name, formatted_data, raw_data, race_name, bucket) {
+    upload_files <- function(state, office, local_file_name, formatted_data, long_data, wide_data, race_name, bucket) {
       # Define paths
       fs::dir_create("data/cbs_format")
 
       json_file <- glue("data/cbs_format/{local_file_name}_{office}_latest.json")
-      csv_file <- glue("data/cbs_format/{local_file_name}_{office}_latest.csv")
+      csv_file_long <- glue("data/cbs_format/{local_file_name}_{office}_latest_long.csv")
+      csv_file_wide <- glue("data/cbs_format/{local_file_name}_{office}_latest_wide.csv")
       s3_json_path <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results.json")
-      s3_csv_path <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results.csv")
+      s3_csv_path_long <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results_long.csv")
+      s3_csv_path_wide <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results_wide.csv")
       
       # Write JSON and upload
       formatted_data |> filter(ofc == office) |> write_json(json_file)
       put_object(file = json_file, object = s3_json_path, bucket = bucket, multipart = TRUE)
       
       # Write CSV and upload
-      raw_data |> filter(race_name == race_name) |> write_csv(csv_file)
-      put_object(file = csv_file, object = s3_csv_path, bucket = bucket, multipart = TRUE)
+      ## Long
+      long_data |> filter(race_name == race_name) |> write_csv(csv_file_long)
+      put_object(file = csv_file_long, object = s3_csv_path_long, bucket = bucket, multipart = TRUE)
+      ## Wide
+      wide_data |> filter(race_name == race_name) |> write_csv(csv_file_wide)
+      put_object(file = csv_file_wide, object = s3_csv_path_wide, bucket = bucket, multipart = TRUE)
     }
     
-    # Conditional logic to determine which files to upload based on the state
-    if (state == "VA") {
-      # Upload for Governor and TBD?
-      # TODO: What other contests for VA?
-      upload_files(state, "G", local_file_name, formatted, data, "Governor", PATH_CBS_S3)
-      
+    if (state == 'VA') {
+      # Upload for Governor
+      upload_files(state, "G", local_file_name, formatted, data, wide_data, "Governor", PATH_CBS_S3)
     } else if (state == 'NY') {
-      # Upload for President and Governor races
-      upload_files(state, "M", local_file_name, formatted, data, "Mayor", PATH_CBS_S3)
-    } 
+      # Upload for Mayor
+      upload_files(state, "M", local_file_name, formatted, data, wide_data, "Mayor", PATH_CBS_S3)
+    }
     
     #### Upload to Google Drive ####
+    ## Long
     drive_put(
       media = "../CBS-MIT Election Data/25_general/input_data/NY/NY_test_file.csv",
       # media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"),
       path = PATH_GDRIVE,
       name = glue("{local_file_name}_results.csv")
+    )
+    ## Wide
+    
+    drive_put(
+      media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_wide.csv"),
+      path = PATH_GDRIVE,
+      name = glue("{local_file_name}_results_wide.csv")
     )
   }
 
