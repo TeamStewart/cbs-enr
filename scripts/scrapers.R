@@ -112,12 +112,8 @@ scrape_va <- function(state, county, path, timestamp) {
       items,
       race_id = "id",
       race_name = "name",
-      options = "ballotOptions",
-      # ballotOrder = "ballotOrder"
+      options = "ballotOptions"
     ) |>
-    # filter(str_detect(race_name, regex("Governor|Gov", ignore_case = TRUE))) |>
-    # filter(ballotOrder == min(ballotOrder)) |>
-    # select(-items, -ballotOrder) |>
     select(-items) |> 
     unnest_longer(options) |>
     hoist(
@@ -153,20 +149,12 @@ scrape_va <- function(state, county, path, timestamp) {
       timestamp = .env$timestamp |> ymd_hms(),
       state = .env$state,
       precinct_id = str_remove(precinct_id, "\\(.*?\\)$") |> str_replace(" - ", "-") |> str_squish(),
-      # jurisdiction = jurisdiction |> str_remove(regex("County", ignore_case = TRUE)) |> str_squish() |> str_to_title(),
+      jurisdiction = ifelse(jurisdiction == "KING & QUEEN COUNTY", "KING AND QUEEN COUNTY", jurisdiction),
+      # jurisdiction = jurisdiction |> str_remove(regex("County$", ignore_case = TRUE)) |> str_squish() |> str_to_title(),
       race_name = case_when(
         str_detect(race_name, regex("Lieutenant Governor", ignore_case = TRUE)) ~ "Lt Governor",
-        str_detect(race_name, regex("Governor|Gov", ignore_case = TRUE)) ~ "Governor",
         .default = race_name
       ),
-      # Recode candidate party: Democrat, Republican, Libertarian, Constitution, Green, Independent, Justice for All
-      ## Fix an issue from one county
-      candidate_party = ifelse(
-        candidate_party == 'DEM' | candidate_party == "",
-        str_extract(candidate_name, "\\(.*?\\)") |> str_remove_all("[()]"),
-        candidate_party
-      ),
-      ## Now recode after fix
       candidate_party = case_when(
         str_detect(candidate_party, regex("Democrat|Dem", ignore_case = TRUE)) ~ "Democrat",
         str_detect(candidate_party, regex("Repub|Rep", ignore_case = TRUE)) ~ "Republican",
@@ -177,19 +165,26 @@ scrape_va <- function(state, county, path, timestamp) {
       ),
       # Recode candidate names
       candidate_name = case_when(
-        str_detect(candidate_name, regex("Spanberger", TRUE)) ~ "Abigal Spanberger",
-        str_detect(candidate_name, regex("Winsome", TRUE)) ~ "Winsome Earle-Sears",
+        race_name == "Governor" & str_detect(candidate_name, regex("Spanberger", TRUE)) ~ "Abigal Spanberger",
+        race_name == "Governor" & str_detect(candidate_name, regex("Winsome", TRUE)) ~ "Winsome Earle-Sears",
+        race_name == "Attorney General" & str_detect(candidate_name, regex("Jones", TRUE)) ~ "Jay Jones",
+        race_name == "Attorney General" & str_detect(candidate_name, regex("Miyares", TRUE)) ~ "Jason Miyares",
         candidate_name == "Write-In" ~ "Write-ins",
         .default = candidate_name
       ),
       vote_mode = case_when(
         str_detect(vote_mode, regex("Election Day", ignore_case = TRUE)) ~ "Election Day",
         str_detect(vote_mode, regex("Early Voting|Advanced Voting", ignore_case = TRUE)) ~ "Early Voting",
-        str_detect(vote_mode, regex("Mail|Absentee", ignore_case = TRUE)) ~ "Absentee/Mail",
+        str_detect(vote_mode, regex("Mail|Absentee|Post-Election", ignore_case = TRUE)) ~ "Absentee/Mail",
         str_detect(vote_mode, regex("Provisional", ignore_case = TRUE)) ~ "Provisional",
         .default = str_to_title(vote_mode)
       )
     ) |>
+    # because of the combined vote modes between Mail and Post Voting
+    summarize(
+      precinct_total = sum(precinct_total, na.rm = TRUE),
+      .by = -precinct_total
+    ) |> 
     select(
       state,
       race_id,
@@ -204,164 +199,4 @@ scrape_va <- function(state, county, path, timestamp) {
       precinct_total
     ) |>
     arrange(race_name, candidate_party, candidate_name, jurisdiction, precinct_id)
-}
-
-## generic function to get clarity files
-get_clarity <- function(state, county, path) {
-  if (is.na(county)) {
-    # Statewide clarity site
-    version <- request(glue("https://results.enr.clarityelections.com/{state}/{path}/current_ver.txt")) |>
-      req_headers("Accept" = "application/txt") |>
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
-      req_retry(max_tries = 5) |>
-      req_perform() |>
-      resp_body_string()
-
-    counties <- request(glue("https://results.enr.clarityelections.com/{state}/{path}/{version}/json/en/electionsettings.json")) |>
-      req_headers("Accept" = "application/json") |>
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
-      req_retry(max_tries = 5) |>
-      req_perform() |>
-      resp_body_json() |>
-      pluck("settings", "electiondetails", "participatingcounties") |>
-      as_tibble_col() |>
-      unnest(cols = value) |>
-      separate_wider_delim(cols = value, delim = "|", names = c("county", "sitenum", "version", "timestamp", "unknown")) |>
-      mutate(county_url = glue("https://results.enr.clarityelections.com/{state}/{county}/{sitenum}/current_ver.txt")) |>
-      mutate(
-        version = map_chr(
-          county_url,
-          ~ request(.x) |>
-            req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
-            req_perform() |>
-            resp_body_string()
-        )
-      ) |>
-      mutate(url = glue("https://results.enr.clarityelections.com/{state}/{county}/{sitenum}/{version}/json/en/electionsettings.json")) |>
-      select(county, sitenum, timestamp, url) |>
-      mutate(
-        version = map(
-          url,
-          ~ request(.x) |>
-            req_headers("Accept" = "application/json") |>
-            req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
-            req_retry(max_tries = 5) |>
-            req_perform() |>
-            resp_body_json() |>
-            pluck("versions")
-        )
-      ) |>
-      unnest_longer(col = version) |>
-      mutate(
-        url = glue("https://results.enr.clarityelections.com/{state}/{county}/{sitenum}/{version}/reports/detailxml.zip"),
-        raw_file_path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/{county}_{version}.zip"),
-        downloaded = file_exists(raw_file_path) & file_size(raw_file_path) > 3000
-      )
-
-    download_file <- function(url, version) {
-      tryCatch(
-        # Send the request to download the file
-        request(url) |>
-          req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
-          req_retry(max_tries = 5) |>
-          # Define the path with the `version` suffix for each file
-          req_perform(
-            path = str_c(
-              glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/"),
-              str_extract(url, glue("({state}/)(.*?)(/)"), group = 2),
-              "_",
-              version,
-              ".zip"
-            )
-          ),
-        # Handle 404 error silently
-        httr2_http_404 = function(cnd) NULL
-      )
-    }
-
-    counties |>
-      filter(!downloaded) |>
-      mutate(out = walk2(url, version, download_file))
-
-    # Apply the function using map2 on url and version columns from `counties`
-    map2(counties$url, counties$version, download_file)
-
-    # Check which versions already downloaded, omit from the list to scrape
-    counties <- counties |>
-      mutate(
-        state = state,
-        update_csv = !file_exists(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/{county}_{version}.csv")) &
-          file_size(raw_file_path) > 3000
-      )
-
-    source_python("scripts/util/clarity_scraper.py")
-
-    counties |> filter(update_csv) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x, PATH_DROPBOX))
-  } else {
-    # County level clarity site
-    county = str_to_title(county) |> str_replace_all(" ", "_")
-
-    version <- request(glue("https://results.enr.clarityelections.com/{state}/{county}/{path}/current_ver.txt")) |>
-      req_headers("Accept" = "application/txt") |>
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
-      req_retry(max_tries = 5) |>
-      req_perform() |>
-      resp_body_string()
-
-    version_files <- request(glue(
-      "https://results.enr.clarityelections.com/{state}/{county}/{path}/{version}/json/en/electionsettings.json"
-    )) |>
-      req_headers("Accept" = "application/json") |>
-      req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
-      req_retry(max_tries = 5) |>
-      req_perform() |>
-      resp_body_json() |>
-      pluck("versions") |>
-      as_tibble_col() |>
-      unnest(cols = value) |>
-      mutate(
-        state = state,
-        county = county,
-        url = glue("https://results.enr.clarityelections.com/{state}/{county}/{path}/{value}/reports/detailxml.zip"),
-        raw_file_path = glue('{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/{county}_{value}.zip'),
-        downloaded = file_exists(raw_file_path) & file_size(raw_file_path) > 3000
-      )
-
-    download_file <- function(url, version) {
-      tryCatch(
-        # Send the request to download the file
-        request(url) |>
-          req_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0") |>
-          req_retry(max_tries = 5) |>
-          # Define the path with the `version` suffix for each file
-          req_perform(
-            path = str_c(
-              glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/"),
-              str_extract(url, glue("({state}/)(.*?)(/)"), group = 2),
-              "_",
-              version,
-              ".zip"
-            )
-          ),
-        # Handle 404 error silently
-        httr2_http_404 = function(cnd) NULL
-      )
-    }
-
-    version_files |>
-      filter(!downloaded) |>
-      mutate(out = walk2(url, value, download_file))
-
-    # Check which versions already downloaded, omit from the list to scrape
-    version_files <- version_files |>
-      mutate(
-        state = state,
-        update_csv = !file_exists(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/{county}_{value}.csv")) &
-          file_size(raw_file_path) > 3000
-      )
-
-    source_python("scripts/util/clarity_scraper.py")
-
-    version_files |> filter(update_csv) |> pull(raw_file_path) |> walk(.f = \(x) get_data_clarity(state, x, PATH_DROPBOX))
-  }
 }

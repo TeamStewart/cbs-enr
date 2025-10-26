@@ -1,7 +1,7 @@
 source("scripts/util/utils.R")
 source("scripts/util/globals.R")
 source("scripts/scrapers.R")
-# source("scripts/models.R")
+source("scripts/models.R")
 source("scripts/plotters.R")
 
 get_timestamp <- function(state, county, path) {
@@ -77,9 +77,28 @@ format_wide <- function(data){
       names_from = vote_mode, values_from = precinct_total, values_fill = 0, values_fn = sum)
   }
 
-get_history <- function(state) {
+get_history <- function(state, impute=FALSE) {
 
-  read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/history/{state}_history.csv"))
+  l2 = fread(
+    file = list.files(
+      path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/{state}"),
+      pattern = glue("{str_to_lower(state)}_2025.*?.csv"),
+      full.names = TRUE
+    ) |>
+      sort() |>
+      pluck(-1)
+  ) |>
+    select(-starts_with("p_"), -starts_with("precinct_l2"))
+
+  base = left_join(
+    read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/history/{state}_history.csv")), 
+    l2, 
+    join_by(county, fips, precinct_cbs)
+  )
+
+  if (impute) base = impute_missing(base)
+
+  return(base)
 
 }
 
@@ -102,7 +121,6 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   wide_data <- format_wide(data)
   write_csv(wide_data, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_wide.csv"))
   
-  
   # Append CBS lookup info
   formatted <- data |>
     # For the purposes of CBS, remove undervote/overvotes
@@ -115,19 +133,22 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
         "Senate" ~ "S",
         "Governor" ~ "G",
         "Mayor" ~ "M",
-        "Attorney General" ~ "AG",
-        "Lt Governor" ~ "LG",
-        .default = NA_character_)) |>
-    rename(office = race_name) |>
-    mutate(
+        "Attorney General" ~ "A",
+        "Lt Governor" ~ "L",
+        .default = NA_character_
+      ),
       eDate = ELECTION_DATE,
-      real_precinct = ifelse(virtual_precinct, "N", "Y")
+      real_precinct = ifelse(virtual_precinct, "N", "Y"),
+      jurisdiction = case_when(
+        state == "VA" & str_detect(jurisdiction, "COUNTY$") ~ str_remove(jurisdiction, "COUNTY$") |> str_squish() |> str_to_title(),
+        .default = jurisdiction
+      )
     ) |>
+    rename(office = race_name) |>
     left_join(lookup_geo, join_by(state == postal_code, jurisdiction == jurisdiction)) |>
     inner_join(lookup_cands, by = c("state_name" = "state", "office", "jCde" = "jurisdiction_code", "candidate_name" = "full_name")) |>
     mutate(
       jType = ifelse(jCde == "0", "SW", "CD"),
-      # precinct_id = ifelse(jurisdiction == 'Philadelphia', precinct_id |> str_remove_all("-") |> str_squish(), precinct_id),
       pcntName = str_c(county_fips, precinct_id, sep = "_"),
       pcnt = pcntName,
       pcntUUID = pcntName
@@ -202,8 +223,10 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     }
     
     if (state == 'VA') {
-      # Upload for Governor
+      # Upload for Governor, AG, Lt Governor
       upload_files(state, "G", local_file_name, formatted, data, wide_data, "Governor", PATH_CBS_S3)
+      upload_files(state, "A", local_file_name, formatted, data, wide_data, "Attorney General", PATH_CBS_S3)
+      upload_files(state, "L", local_file_name, formatted, data, wide_data, "Lt Governor", PATH_CBS_S3)
     } else if (state == 'NY') {
       # Upload for Mayor
       upload_files(state, "M", local_file_name, formatted, data, wide_data, "Mayor", PATH_CBS_S3)
@@ -212,13 +235,12 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     #### Upload to Google Drive ####
     ## Long
     drive_put(
-      media = "../CBS-MIT Election Data/25_general/input_data/NY/NY_test_file.csv",
-      # media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"),
+      # media = "../CBS-MIT Election Data/25_general/input_data/NY/NY_test_file.csv",
+      media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_long.csv"),
       path = PATH_GDRIVE,
       name = glue("{local_file_name}_results.csv")
     )
     ## Wide
-    
     drive_put(
       media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_wide.csv"),
       path = PATH_GDRIVE,
