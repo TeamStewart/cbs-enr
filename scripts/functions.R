@@ -6,17 +6,14 @@ source("scripts/plotters.R")
 
 get_timestamp <- function(state, county, path) {
   ny_timestamp <- function() {
-    
-    read_html(path) |> 
-      html_text() |> 
-      str_extract("Information As Of: (.*?)AD:", group=1) |> 
-      ymd_hms(tz = "America/New_York") |> 
+    read_html(path) |>
+      html_text() |>
+      str_extract("Information As Of: (.*?)AD:", group = 1) |>
+      ymd_hms(tz = "America/New_York") |>
       str_replace_all("-|:| ", "_")
-    
   }
-  
+
   va_timestamp <- function() {
-    
     read_html("https://enr.elections.virginia.gov/results/public/api/elections/Virginia/2025-November-General") |>
       html_text() |>
       fromJSON() |>
@@ -25,16 +22,14 @@ get_timestamp <- function(state, county, path) {
       floor_date(unit = "second") |>
       with_tz(tzone = "America/New_York") |>
       str_replace_all("-|:| ", "_")
-    
   }
-  
+
   f = get(paste0(tolower(state), "_timestamp"))
-  
+
   f()
 }
 
 get_data <- function(state, county, timestamp, path = NULL) {
-  
   dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw"))
   dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean"))
 
@@ -43,25 +38,25 @@ get_data <- function(state, county, timestamp, path = NULL) {
     "VA" = scrape_va(state, county, path, timestamp),
     "NY" = scrape_ny(state, county, path, timestamp)
   )
-  
+
   # f = get(paste0("scrape_", tolower(state)))
   # d = f(state, county, path, timestamp)
- 
+
   # Upstream fix to precinct_total
   d$precinct_total <- as.numeric(d$precinct_total)
 
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
-  
+
   # save latest version
   fwrite(d, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"))
-  
+
   # save timestamped version
   fwrite(d, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_{timestamp}.csv"))
 
   return(d)
 }
 
-format_wide <- function(data){
+format_wide <- function(data) {
   data |>
     mutate(
       vote_mode = case_match(
@@ -74,11 +69,14 @@ format_wide <- function(data){
       )
     ) |>
     pivot_wider(
-      names_from = vote_mode, values_from = precinct_total, values_fill = 0, values_fn = sum)
-  }
+      names_from = vote_mode,
+      values_from = precinct_total,
+      values_fill = 0,
+      values_fn = sum
+    )
+}
 
-get_history <- function(state, impute=FALSE) {
-
+get_history <- function(state, impute = FALSE, wide_mode = FALSE) {
   l2 = fread(
     file = list.files(
       path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/{state}"),
@@ -91,22 +89,37 @@ get_history <- function(state, impute=FALSE) {
     select(-starts_with("p_"), -starts_with("precinct_l2"))
 
   base = left_join(
-    read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/history/{state}_history.csv")), 
-    l2, 
+    read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/history/{state}_history.csv")),
+    l2,
     join_by(county, fips, precinct_cbs)
   )
 
-  if (impute) base = impute_missing(base)
+  if (impute) {
+    base = impute_missing(base)
+  }
+  if (!wide_mode) {
+    return(base)
+  }
 
-  return(base)
-
+  base |>
+    pivot_longer(
+      cols = votes_potus_24_dem:votePct_gov_21_rep
+    ) |>
+    pivot_wider(
+      names_from = c(name, vote_mode),
+      values_from = value,
+      names_glue = "{name}_{str_remove_all(str_to_lower(vote_mode), ' |/')}"
+    )
 }
 
 create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   # Prepare lookups
   lookup_state <- lookup_state_name(state)
-  
-  lookup_geo <- read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/cbs_lookups/All States and Counties.csv"), col_types = cols(.default = "c")) |>
+
+  lookup_geo <- read_csv(
+    glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/cbs_lookups/All States and Counties.csv"),
+    col_types = cols(.default = "c")
+  ) |>
     clean_names() |>
     rename(state_name = 1, jurisdiction = 5) |>
     filter(state_name == lookup_state) |>
@@ -116,15 +129,15 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     clean_names() |>
     filter(state == lookup_state) |>
     mutate(jurisdiction_code = as.character(jurisdiction_code))
-  
+
   # Create wide version
   wide_data <- format_wide(data)
   write_csv(wide_data, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_wide.csv"))
-  
+
   # Append CBS lookup info
   formatted <- data |>
     # For the purposes of CBS, remove undervote/overvotes
-    filter(vote_mode != "Overvote/Undervote" & candidate_name != 'Other') |> 
+    filter(vote_mode != "Overvote/Undervote" & candidate_name != 'Other') |>
     mutate(
       jCde = "0",
       ofc = case_match(
@@ -153,7 +166,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
       pcnt = pcntName,
       pcntUUID = pcntName
     ) |>
-    pivot_wider(names_from = vote_mode, values_from = precinct_total) |> 
+    pivot_wider(names_from = vote_mode, values_from = precinct_total) |>
     # Verify if we have all target vote_modes; if not, add NA column
     bind_rows(
       tibble(
@@ -175,14 +188,31 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
       eType = election_type_code,
       cId = candidate_id
     ) |>
-    mutate(across(c(edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote, Total), as.integer)) |> 
+    mutate(across(c(edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote, Total), as.integer)) |>
     mutate(
       cVote = rowSums(across(c(edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote, Total), ~ replace_na(., 0))),
       ts = ymd_hms(timestamp) |> format("%Y-%m-%dT%H:%M:%SZ")
     ) |>
     select(
-      eDate, jType, real_precinct, st, eType, jCde, ofc, cnty, pcnt, pcntUUID, pcntName,
-      cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote, ts
+      eDate,
+      jType,
+      real_precinct,
+      st,
+      eType,
+      jCde,
+      ofc,
+      cnty,
+      pcnt,
+      pcntUUID,
+      pcntName,
+      cId,
+      cName,
+      cVote,
+      edayVote,
+      earlyInPersonVote,
+      earlyByMailVote,
+      provisionalVote,
+      ts
     ) |>
     mutate(across(c(jCde, st, cnty, cId), as.numeric)) |>
     nest(candidates = c(cId, cName, cVote, edayVote, earlyInPersonVote, earlyByMailVote, provisionalVote)) |>
@@ -195,7 +225,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   if (upload) {
     # Define the file name
     local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
-    
+
     #### Upload to S3 ####
     # Function to handle upload by office type
     upload_files <- function(state, office, local_file_name, formatted_data, long_data, wide_data, race_name, bucket) {
@@ -208,11 +238,11 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
       s3_json_path <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results.json")
       s3_csv_path_long <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results_long.csv")
       s3_csv_path_wide <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results_wide.csv")
-      
+
       # Write JSON and upload
       formatted_data |> filter(ofc == office) |> write_json(json_file)
       put_object(file = json_file, object = s3_json_path, bucket = bucket, multipart = TRUE)
-      
+
       # Write CSV and upload
       ## Long
       long_data |> filter(race_name == race_name) |> write_csv(csv_file_long)
@@ -221,7 +251,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
       wide_data |> filter(race_name == race_name) |> write_csv(csv_file_wide)
       put_object(file = csv_file_wide, object = s3_csv_path_wide, bucket = bucket, multipart = TRUE)
     }
-    
+
     if (state == 'VA') {
       # Upload for Governor, AG, Lt Governor
       upload_files(state, "G", local_file_name, formatted, data, wide_data, "Governor", PATH_CBS_S3)
@@ -231,7 +261,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
       # Upload for Mayor
       upload_files(state, "M", local_file_name, formatted, data, wide_data, "Mayor", PATH_CBS_S3)
     }
-    
+
     #### Upload to Google Drive ####
     ## Long
     drive_put(
@@ -251,21 +281,19 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   return(formatted)
 }
 
-upload_html <- function(){
-  
-  upload_single <- function(path){
-    
+upload_html <- function() {
+  upload_single <- function(path) {
     state = str_extract(path, "(pages/)(.*?)\\.html", group = 2) |> str_extract("^[^_]+")
     juris = str_extract(path, "(pages/)(.*?)\\.html", group = 2)
-    
+
     # TODO: Change file from -P to something else?
     put_object(file = path, object = glue("{ELECTION_DATE}-{state}-P/model_{juris}.html"), bucket = PATH_CBS_S3, multipart = TRUE)
   }
-  
+
   files = list.files(path = "pages", pattern = "*html$", full.names = TRUE, recursive = TRUE)
   files = files[basename(files) != "metadata.html"]
-  
-  file.copy(from=files, to="docs/pages/", overwrite = FALSE, recursive = FALSE, copy.mode = TRUE) |> invisible()
-  
+
+  file.copy(from = files, to = "docs/pages/", overwrite = FALSE, recursive = FALSE, copy.mode = TRUE) |> invisible()
+
   walk(files, upload_single)
 }

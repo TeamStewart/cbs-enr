@@ -12,6 +12,7 @@ run_models <- function(
   uncertainty = "",
   outcome = "votes_Governor_25_dem",
   residualize = TRUE,
+  wide_mode = FALSE,
   covars,
   ...
 ) {
@@ -24,8 +25,14 @@ run_models <- function(
     history,
     state,
     office,
-    impute = TRUE
+    impute = TRUE,
+    wide_mode = wide_mode
   )
+
+  if (!(outcome %in% colnames(merged))) {
+    cli::cli_alert("Missing Vote Mode")
+    return(NULL)
+  }
 
   merged = add_obs(merged, outcome, covars, ...)
   if (residualize) {
@@ -50,9 +57,11 @@ run_models <- function(
   return(m)
 }
 
-merge_data <- function(data, history, state, office, impute = FALSE) {
+merge_data <- function(data, history, state, office, impute = FALSE, wide_mode = FALSE) {
   modes = filter(data, precinct_total > 0) |> distinct(vote_mode) |> pull()
-  if (length(office) == 1) office = c(office)
+  if (length(office) == 1) {
+    office = c(office)
+  }
 
   merged = data |>
     filter(
@@ -64,17 +73,33 @@ merge_data <- function(data, history, state, office, impute = FALSE) {
     mutate(
       turnout = sum(precinct_total),
       .by = c(jurisdiction, precinct_id, vote_mode, race_name)
-    ) |>
-    pivot_wider(
-      names_from = c(race_name, candidate_party),
-      values_from = precinct_total,
-      names_glue = "votes_{str_to_lower(str_remove_all(race_name, ' '))}_25_{str_sub(tolower(candidate_party), start=0, end=3)}"
-    ) |>
-    left_join(
-      history,
-      join_by(jurisdiction == county, precinct_id == precinct_25, vote_mode)
-    ) |>
-    select(-contains("21"))
+    )
+
+  if (wide_mode) {
+    merged = merged |>
+      pivot_wider(
+        names_from = c(race_name, candidate_party, vote_mode),
+        values_from = precinct_total,
+        names_glue = "votes_{str_to_lower(str_remove_all(race_name, ' '))}_25_{str_sub(tolower(candidate_party), start=0, end=3)}_{str_remove_all(str_to_lower(vote_mode), ' |/')}"
+      ) |>
+      left_join(
+        history,
+        join_by(jurisdiction == county, precinct_id == precinct_25)
+      ) |>
+      select(-contains("21"))
+  } else {
+    merged = merged |>
+      pivot_wider(
+        names_from = c(race_name, candidate_party),
+        values_from = precinct_total,
+        names_glue = "votes_{str_to_lower(str_remove_all(race_name, ' '))}_25_{str_sub(tolower(candidate_party), start=0, end=3)}"
+      ) |>
+      left_join(
+        history,
+        join_by(jurisdiction == county, precinct_id == precinct_25, vote_mode)
+      ) |>
+      select(-contains("21"))
+  }
 
   if (impute) merged = impute_missing(merged)
 }
@@ -91,7 +116,7 @@ run_model <- function(
   residualize
 ) {
   checkmate::assert_choice(method, c("lm", "log-lm", "xgboost", "bayes-lm", "quantreg"))
-  checkmate::assert_choice(uncertainty, c("naive", "conformal", "conformal-seq", "conformal-cqr", ""), null.ok = TRUE)
+  checkmate::assert_choice(uncertainty, c("naive", "conformal", ""), null.ok = TRUE)
 
   ## construct weights?
   if (!is.null(weight_var)) {
@@ -99,9 +124,9 @@ run_model <- function(
   }
 
   # construct train, test, and valid
-  if (uncertainty %in% c("conformal-cqr", "conformal")) {
+  if (method == "quantreg") {
     train = filter(merged, obs > obs_cutoff)
-    valid = slice_sample(train, prop = 0.2, by = vote_mode)
+    valid = slice_sample(train, prop = 0.2)
     train = anti_join(train, valid, by = colnames(train))
     test = filter(merged, obs <= obs_cutoff)
   } else {
@@ -111,7 +136,7 @@ run_model <- function(
   }
 
   if (nrow(train) < 50) {
-    cli::cli_alert_danger("Training data has less than 50 observations. Model results may be unreliable.")
+    cli::cli_abort("Training data has less than 50 observations. Model results may be unreliable.")
   }
 
   ## construct formula
@@ -143,12 +168,11 @@ run_model <- function(
     }
 
     fit <- workflow() |>
+      # additional blueprint recommended by `tidymodels` package
       add_recipe(rec_reg, blueprint = hardhat::default_recipe_blueprint(allow_novel_levels = TRUE)) |>
       add_model(model) |>
       fit(data = train)
   } else if (method == "quantreg") {
-    form <- as.formula(paste(outcome, "~", paste(covars[-1], collapse = "+")))
-
     rec <- recipe(formula = form, data = train) |>
       step_normalize(all_numeric_predictors()) |>
       step_impute_bag(all_numeric_predictors())
@@ -161,46 +185,6 @@ run_model <- function(
       add_recipe(rec) |>
       add_model(model) |>
       fit(data = train)
-
-    pred_valid = predict(fit, new_data = valid, level = level) |>
-      unnest_wider(col = .pred_quantile, names_sep = "_") |>
-      setNames(c(".pred_lower", ".pred", ".pred_upper"))
-
-    R_low <- pred_valid$.pred_lower - valid$resid
-    R_high <- valid$resid - pred_valid$.pred_upper
-    residuals <- pmax(R_low, R_high)
-
-    if (!is.null(weight_var)) {
-      ws = valid[[weight_var]]
-
-      # Compute normalized weights
-      weights_norm <- ws / sum(ws)
-
-      # Weighted 90(1 + 1/q)-th percentile
-      alpha_0 <- 1 - level
-      percentile_target <- (1 - alpha_0) * (1 + 1 / length(residuals))
-
-      # Compute q_val
-      q_val <- Hmisc::wtd.quantile(
-        x = residuals,
-        weights = weights_norm,
-        probs = percentile_target,
-        type = "quantile"
-      )
-    } else {
-      alpha_0 <- 1 - level
-      q_ind <- ceiling((1 - alpha_0) * (nrow(valid) + 1))
-      q_val <- valid$resid[q_ind]
-    }
-
-    # test predict
-    preds <- predict(fit, new_data = test, level = level) |>
-      unnest_wider(col = .pred_quantile, names_sep = "_") |>
-      setNames(c(".pred_lower", ".pred", ".pred_upper")) |>
-      mutate(
-        .pred_lower = .pred_lower - q_val,
-        .pred_upper = .pred_upper + q_val
-      )
   }
 
   # calculate uncertainty
@@ -220,9 +204,58 @@ run_model <- function(
         .pred_lower = conf.low,
         .pred_upper = conf.high
       )
-  } else if (uncertainty == "conformal" & method != "quantreg") {
-    con <- probably::int_conformal_split(fit, cal_data = valid)
-    preds = predict(con, test, level = level)
+  } else if (uncertainty == "conformal") {
+    if (method == "quantreg") {
+      pred_valid = predict(fit, new_data = valid, level = level) |>
+        unnest_wider(col = .pred_quantile, names_sep = "_") |>
+        setNames(c(".pred_lower", ".pred", ".pred_upper"))
+
+      R_low <- pred_valid$.pred_lower - valid$resid
+      R_high <- valid$resid - pred_valid$.pred_upper
+      residuals <- pmax(R_low, R_high)
+
+      if (!is.null(weight_var)) {
+        ws = valid[[weight_var]]
+
+        # Compute normalized weights
+        weights_norm <- ws / sum(ws)
+
+        # Weighted 90(1 + 1/q)-th percentile
+        alpha_0 <- 1 - level
+        percentile_target <- (1 - alpha_0) * (1 + 1 / length(residuals))
+
+        # Compute q_val
+        q_val <- Hmisc::wtd.quantile(
+          x = residuals,
+          weights = weights_norm,
+          probs = percentile_target,
+          type = "quantile"
+        )
+      } else {
+        alpha_0 <- 1 - level
+        q_ind <- ceiling((1 - alpha_0) * (nrow(valid) + 1))
+        q_val <- valid$resid[q_ind]
+      }
+
+      # test predict
+      preds <- predict(fit, new_data = test, level = level) |>
+        unnest_wider(col = .pred_quantile, names_sep = "_") |>
+        setNames(c(".pred_lower", ".pred", ".pred_upper")) |>
+        mutate(
+          .pred_lower = .pred_lower - q_val,
+          .pred_upper = .pred_upper + q_val
+        )
+    } else {
+      ctrl <- control_resamples(save_pred = TRUE, extract = I)
+      fit_resamples <- fit_resamples(
+        fit,
+        resamples = vfold_cv(train, v = 5),
+        control = ctrl
+      )
+
+      con <- probably::int_conformal_cv(fit_resamples)
+      preds = predict(con, test, level = level)
+    }
   }
 
   # construct `out`
@@ -245,13 +278,13 @@ run_model <- function(
   if (residualize) {
     out <- out |>
       mutate(
+        # scale estimates back up
         estimate = estimate * !!sym(covars[1]) + !!sym(covars[1]),
         lower = lower * !!sym(covars[1]) + !!sym(covars[1]),
         upper = upper * !!sym(covars[1]) + !!sym(covars[1])
       )
   }
 
-  # return many elements
   list(
     method = method,
     uncertainty = uncertainty,
@@ -267,8 +300,8 @@ run_model <- function(
       any_of(c("lower", "upper")),
       jurisdiction,
       precinct_id,
+      any_of(c("vote_mode")),
       timestamp,
-      vote_mode,
       obs,
       resid
     )

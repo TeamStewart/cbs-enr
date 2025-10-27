@@ -11,9 +11,6 @@ get_gsheet <- function(spreadsheet, sheet, ...) {
   )
 }
 
-# log_s <- \(x) log(x + 0.0001)
-# exp_s <- \(x) exp(x - 0.0001)
-
 #' Residualize a variable in a data frame
 #' 
 #' @param data A data frame
@@ -23,8 +20,11 @@ get_gsheet <- function(spreadsheet, sheet, ...) {
 add_resid <- function(data, left, right){
   mutate(
     data,
-    resid = ({{ left }} - {{ right }}) / {{ right }}
-  )
+    resid = ({{ left }} - {{ right }}) / {{ right }},
+    resid = if_else(is.infinite(resid), NA_real_, resid),
+    resid = pmax(-1, pmin(resid, 1))
+  ) |> 
+    drop_na(resid)
 }
 
 add_obs <- function(data, outcome, covars, obs_function="past", ...){

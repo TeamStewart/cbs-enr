@@ -344,3 +344,49 @@ make_tbl_county <- function(m, state, county){
   return(t)
   
 }
+
+pmargins_hist <- function(x) {
+  merged |> 
+    ggplot(
+      aes(x = ({{ x }}))
+    ) +
+      annotate(
+        "rect",
+        ymin=-Inf, xmin = 0, xmax=Inf, ymax = Inf,
+        fill = "#3791FF", alpha = 0.4, color = NA
+      ) +
+      annotate(
+        "rect",
+        ymin=-Inf, xmin = -Inf, xmax=0, ymax = Inf,
+        fill = "#F6573E", alpha = 0.4, color = NA
+      ) +
+      geom_histogram(bins = 50) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "red") +
+      facet_wrap(~ vote_mode, nrow=1) +
+      theme_bw() +
+      coord_equal() +
+      labs(
+        y = "Number of Precincts"
+      )
+}
+
+pmargins_scatter <- function(x, y) {
+  merged |> 
+    ggplot(
+      aes(x = ({{ x }}), y = ({{ y }}))
+    ) +
+      annotate(
+        "polygon", 
+        x = c(-Inf, Inf, Inf), y = c(-Inf, Inf, -Inf), 
+        fill = "#3791FF", alpha = 0.4, color = NA) +
+      annotate(
+        "polygon",
+        x = c(-Inf, Inf, -Inf), y = c(-Inf, Inf, Inf),
+        fill = "#F6573E", alpha = 0.4, color = NA
+      ) +
+      geom_point() +
+      geom_abline(linetype = "dashed", color = "red", slope = 1, intercept = 0) +
+      facet_wrap(~ vote_mode, nrow=1) +
+      theme_bw() +
+      coord_equal()
+}
