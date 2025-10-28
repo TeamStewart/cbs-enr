@@ -76,7 +76,7 @@ format_wide <- function(data) {
     )
 }
 
-get_history <- function(state, impute = FALSE, wide_mode = FALSE) {
+get_history <- function(state, impute = FALSE) {
   l2 = fread(
     file = list.files(
       path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/{state}"),
@@ -86,13 +86,14 @@ get_history <- function(state, impute = FALSE, wide_mode = FALSE) {
       sort() |>
       pluck(-1)
   ) |>
-    select(-starts_with("p_"), -starts_with("precinct_l2"))
+    select(-starts_with("p_"), -starts_with("precinct_l2"), -matches("^ad$|^ed$"))
 
   base = left_join(
     read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/history/{state}_history.csv")),
     l2,
     join_by(county, fips, precinct_cbs)
-  )
+  ) |> 
+    select(-matches("^ad$|^ed$"))
 
   if (impute) {
     base = impute_missing(base)
@@ -121,6 +122,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
 
   # Create wide version
   wide_data <- format_wide(data)
+  local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
   write_csv(wide_data, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_wide.csv"))
 
   # Append CBS lookup info
@@ -222,10 +224,10 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
       fs::dir_create("data/cbs_format")
 
       json_file <- glue("data/cbs_format/{local_file_name}_{office}_latest.json")
-      csv_file_long <- glue("data/cbs_format/{local_file_name}_{office}_latest_long.csv")
+      csv_file_long <- glue("data/cbs_format/{local_file_name}_{office}_latest.csv")
       csv_file_wide <- glue("data/cbs_format/{local_file_name}_{office}_latest_wide.csv")
       s3_json_path <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results.json")
-      s3_csv_path_long <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results_long.csv")
+      s3_csv_path_long <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results.csv")
       s3_csv_path_wide <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results_wide.csv")
 
       # Write JSON and upload
@@ -254,8 +256,8 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     #### Upload to Google Drive ####
     ## Long
     drive_put(
-      # media = "../CBS-MIT Election Data/25_general/input_data/NY/NY_test_file.csv",
-      media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_long.csv"),
+      media = "../CBS-MIT Election Data/25_general/input_data/NY/NY_test_file.csv",
+      # media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"),
       path = PATH_GDRIVE,
       name = glue("{local_file_name}_results.csv")
     )
