@@ -63,6 +63,8 @@ timestamp_VA = tar_read(timestamp_VA_NA)
 # model_VA = tar_read(model_VA_NA)
 # model_NY = tar_read(model_NY_NA)
 
+VA_summary = tar_read(summary_VA_NA) # read this to force `targets()` dependency
+
 VA_summaries = list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), full.names = TRUE) |> read_csv()
 
 ```

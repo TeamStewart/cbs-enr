@@ -29,7 +29,7 @@ plot_voteShare_byMode <- function(summaries, uncertainty = FALSE) {
       labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
     ) +
     scale_color_manual(
-      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "black"),
+      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "grey50"),
       labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
     )
 
@@ -67,8 +67,8 @@ plot_voteShare <- function(summaries, uncertainty = FALSE) {
       labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
     ) +
     scale_color_manual(
-      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008"),
-      labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican")
+      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "grey50"),
+      labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
     )
 
   return(p)
