@@ -10,7 +10,7 @@ run_models <- function(
   office = "Governor",
   method = "lm",
   uncertainty = "",
-  outcome = "votes_Governor_25_dem",
+  outcome = "votes_governor_25_dem",
   residualize = TRUE,
   subset = NULL,
   covars,
@@ -23,7 +23,6 @@ run_models <- function(
   merged = merge_data(
     data,
     history,
-    state,
     office,
     impute = TRUE
   )
@@ -56,7 +55,7 @@ run_models <- function(
   return(m)
 }
 
-merge_data <- function(data, history, state, office, impute = FALSE) {
+merge_data <- function(data, history, office, impute = FALSE) {
   modes = filter(data, precinct_total > 0) |> distinct(vote_mode) |> pull()
   if (length(office) == 1) {
     office = c(office)
@@ -70,7 +69,7 @@ merge_data <- function(data, history, state, office, impute = FALSE) {
     ) |>
     select(race_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total) |>
     mutate(
-      turnout = sum(precinct_total),
+      turnout = sum(precinct_total, na.rm=TRUE),
       .by = c(jurisdiction, precinct_id, vote_mode, race_name)
     )
 
@@ -83,10 +82,11 @@ merge_data <- function(data, history, state, office, impute = FALSE) {
     left_join(
       history,
       join_by(jurisdiction == county, precinct_id == precinct_25, vote_mode)
-    ) |>
-    select(-contains("21"))
+    )
 
   if (impute) merged = impute_missing(merged)
+  
+  return(merged)
 }
 
 run_model <- function(

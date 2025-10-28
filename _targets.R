@@ -65,9 +65,10 @@ list(
     tar_target(timestamp, get_timestamp(state, county, path), cue = tar_cue(mode = "always")),
     tar_target(history, get_history(state, impute = TRUE)),
     tar_target(data, get_data(state, county, timestamp, path)),
+    tar_target(summary, make_summary(data, state, county, timestamp, history)),
     tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
-    tar_target(model, run_models(data, state, county, timestamp, history)),
     names = c(state, county)
   ),
-  tar_quarto(dashboard, "pages/dashboard.qmd")
+  # tar_target(model_VA, run_models(data_VA_NA, "VA", NA, timestamp_VA_NA, history_VA_NA)),
+  tar_quarto(dashboard, "pages/dashboard.qmd", quiet = FALSE)
 )

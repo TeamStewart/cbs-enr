@@ -288,3 +288,21 @@ upload_html <- function() {
 
   walk(files, upload_single)
 }
+
+make_summary <- function(data, state, county, timestamp, history){
+  fs::dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries"))
+
+  merge_data(
+    data = data,
+    history = history,
+    office = c("Governor", "Attorney General", "Lt Governor"),
+    impute = FALSE
+  ) |> 
+    summarize(
+      across(c(turnout, matches("votes_.*?25_.*?$")), ~ sum(.x, na.rm=TRUE)),
+      .by = c(timestamp, vote_mode) 
+    ) |> 
+    write_csv(
+      glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries/{state}_{county}_{timestamp}_summary.csv")
+    )
+}

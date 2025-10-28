@@ -22,7 +22,7 @@ add_resid <- function(data, left, right){
     data,
     resid = ({{ left }} - {{ right }}) / {{ right }},
     resid = if_else(is.infinite(resid), NA_real_, resid),
-    resid = pmax(-1, pmin(resid, 1))
+    resid = pmax(-5, pmin(resid, 5))
   ) |> 
     drop_na(resid)
 }

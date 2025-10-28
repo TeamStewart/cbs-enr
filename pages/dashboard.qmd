@@ -1,0 +1,455 @@
+---
+title: "2025 CBS ENR Results"
+date: now
+date-format: "MMM D HH:mm:ss A z"
+format:
+  dashboard:
+    theme: 
+      - default
+      - custom.scss
+    embed-resources: true
+    fig-format: jpeg
+    echo: false
+    message: false
+    warning: false
+    keep-md: false
+    output-dir: docs
+---
+
+```{r setup}
+
+source("scripts/functions.R")
+
+suppressPackageStartupMessages({
+  library(targets)
+  library(tidyverse)
+  library(glue)
+  library(gt)
+  library(tidymodels)
+})
+
+inline_hook <- function(x) {
+  if (is.numeric(x)) {
+    format(x, digits = 2, nsmall = 0, big.mark = ",")
+  } else {
+    x
+  }
+}
+knitr::knit_hooks$set(inline = inline_hook)
+
+options(scipen = 999)
+
+# setup blank files if needed
+create_0file(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/NY/numbers/prec_reported"))
+create_0file(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/NY/numbers/prec_reported_eday"))
+create_0file(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/numbers/prec_reported"))
+create_0file(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/numbers/prec_reported_eday"))
+
+data_NY = merge_data(
+  # data = tar_read(data_NY_NA),
+  data = read_csv("~/Dropbox (MIT)/Research/CBS-MIT Election Data/25_general/input_data/NY/NY_test_file.csv"),
+  history = tar_read(history_NY_NA),
+  office = "Mayor",
+  impute = FALSE
+) |>
+  add_obs("votes_mayor_25_dem", "votes_potus_24_dem")
+
+data_VA = merge_data(
+  # data = tar_read(data_VA_NA),
+  data = read_csv("~/Dropbox (MIT)/Research/CBS-MIT Election Data/25_general/input_data/VA/test_files/VA_2025_11_03_23_58_00.csv"),
+  history = tar_read(history_VA_NA),
+  office = c("Governor", "Attorney General", "Lt Governor"),
+  impute = FALSE
+) |>
+  add_obs("votes_governor_25_dem", "votes_potus_24_dem")
+
+timestamp_NY = tar_read(timestamp_NY_NA)
+timestamp_VA = tar_read(timestamp_VA_NA)
+
+# model_VA = tar_read(model_VA_NA)
+# model_NY = tar_read(model_NY_NA)
+
+VA_summaries = list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), full.names = TRUE) |> read_csv()
+
+```
+
+```{r ny_summary}
+
+# Calculate some summary statistics for NY
+total_prec = distinct(data_NY, jurisdiction, precinct_id) |> tally() |> pull()
+prec_reported = filter(data_NY, obs > 0.25) |> distinct(jurisdiction, precinct_id) |> tally() |> pull()
+prec_reported_eday = filter(data_NY, obs > 0.25, vote_mode == "Election Day") |> distinct(jurisdiction, precinct_id) |> tally() |> pull()
+
+total_mamdami = pull(data_NY, votes_mayor_25_dem) |> sum(na.rm = TRUE)
+total_cuomo = pull(data_NY, votes_mayor_25_fig) |> sum(na.rm = TRUE)
+total_sliwa = pull(data_NY, votes_mayor_25_rep) |> sum(na.rm = TRUE)
+total = total_mamdami + total_cuomo + total_sliwa
+
+dem_2024 = pull(data_NY, votes_potus_24_dem) |> sum(na.rm = TRUE)
+rep_2024 = pull(data_NY, votes_potus_24_rep) |> sum(na.rm = TRUE)
+total24 = dem_2024 + rep_2024
+
+```
+
+# New York City
+
+
+```{r wrapup}
+# write out files for the next round
+
+write_file(as.character(prec_reported), glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/NY/numbers/prec_reported"))
+write_file(as.character(prec_reported_eday), glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/NY/numbers/prec_reported_eday"))
+
+```
+
+# Virginia
+
+```{r va_summary}
+# Calculate some summary statistics for VA
+
+total_prec = distinct(data_VA, jurisdiction, precinct_id) |> tally() |> pull()
+prec_reported = filter(data_VA, obs > 0.25) |> distinct(jurisdiction, precinct_id) |> tally() |> pull()
+prec_reported_eday = filter(data_VA, obs > 0.25, vote_mode == "Election Day") |> distinct(jurisdiction, precinct_id) |> tally() |> pull()
+
+total25_dem = pull(data_VA, votes_governor_25_dem) |> sum(na.rm = TRUE)
+total25_rep = pull(data_VA, votes_governor_25_rep) |> sum(na.rm = TRUE)
+total25_2p = total25_dem + total25_rep
+total25 = select(data_VA, starts_with("votes_governor_25")) |> as.matrix() |> sum(na.rm = TRUE)
+total25_eday = filter(data_VA, vote_mode == "Election Day") |> select(starts_with("votes_governor_25")) |> as.matrix() |> sum(na.rm = TRUE)
+
+total24_dem = pull(data_VA, votes_potus_24_dem) |> sum(na.rm = TRUE)
+total24_rep = pull(data_VA, votes_potus_24_rep) |> sum(na.rm = TRUE)
+total24 = select(data_VA, starts_with("votes_potus_24")) |> as.matrix() |> sum(na.rm = TRUE)
+total24_eday = filter(data_VA, vote_mode == "Election Day") |> select(starts_with("votes_potus_24")) |> as.matrix() |> sum(na.rm = TRUE)
+
+total21_dem = pull(data_VA, votes_gov_21_dem) |> sum(na.rm = TRUE)
+total21_rep = pull(data_VA, votes_gov_21_rep) |> sum(na.rm = TRUE)
+total21 = data_VA |> filter(vote_mode != "Absentee/Mail") |> select(starts_with("votes_gov_21")) |> as.matrix() |> sum(na.rm = TRUE)
+
+```
+
+```{r va_model}
+#| cache: true
+
+covars = c('vote_mode', 'age1', 'age2', 'age3', 'white', 'black', 'col')
+
+tests = list.files(
+  "~/Dropbox (MIT)/Research/CBS-MIT Election Data/25_general/input_data/VA/test_files",
+  pattern = "VA_.*?$",
+  full.names = TRUE
+)
+
+models = expand_grid(
+  method = "lm",
+  uncertainty = "conformal",
+  subset = c('vote_mode == "Early Voting"', 'vote_mode == "Absentee/Mail"', 'vote_mode == "Election Day"'),
+  outcome = c("turnout", "votes_governor_25_dem", "votes_governor_25_rep"),
+  c1 = list(NULL, c(covars))
+) |>
+  rowwise() |>
+  mutate(
+    c2 = case_when(
+      outcome == "votes_governor_25_dem" ~ "votes_potus_24_dem",
+      outcome == "votes_governor_25_rep" ~ "votes_potus_24_rep",
+      outcome == "turnout" ~ "votes_precFinal_21",
+      .default = NA_character_
+    ),
+    covars = list(c(c2, c1))
+  ) |>
+  expand_grid(paths = tests) |>
+  select(-c1, -c2) |>
+  mutate(
+    out = pmap(
+      list(paths, method, uncertainty, outcome, covars, subset),
+      \(data, method, uncertainty, outcome, covars, subset) {
+        run_models(
+          data = data,
+          state = "VA",
+          county = NA,
+          timestamp = tar_read(timestamp_VA_NA),
+          history = tar_read(history_VA_NA),
+          covars = covars,
+          method = method,
+          uncertainty = uncertainty,
+          outcome = outcome,
+          subset = subset,
+          obs_cutoff = 0.25,
+          weight_var = "reg24"
+        )
+      }
+    )
+  )
+
+summaries = models |>
+  mutate(
+    out = map(out, "out")
+  ) |>
+  unnest(cols = out) |>
+  summarize(
+    across(matches("^(estimate|lower|upper)$"), sum),
+    .by = c(method, uncertainty, subset, outcome, covars, vote_mode, timestamp)
+  )
+
+```
+
+## Overview {height="15%"}
+
+```{r}
+#| content: valuebox
+#| title: Last Updated
+list(
+  value = format(ymd_hms(timestamp_VA, tz = "US/Eastern"), "%b %d %I:%M %p")
+)
+```
+
+```{r}
+#| content: valuebox
+#| title: Precincts Reported
+list(
+  value = paste0(prec_reported, " (", round(100 * prec_reported / total_prec, 1), "%)")
+)
+```
+
+```{r}
+#| content: valuebox
+#| title: Total Votes
+list(
+  value = paste0(prettyNum(total25, big.mark = ","), " (", round(100 * total25 / total24, 1), "% of '24)")
+)
+```
+
+```{r}
+#| content: valuebox
+#| title: Total EDay Votes
+list(
+  value = paste0(prettyNum(total25_eday, big.mark = ","), " (", round(100 * total25_eday / total24_eday, 1), "% of '24)")
+)
+```
+
+```{r}
+#| content: valuebox
+#| title: Spanberger Votes
+list(
+  color = "#3791FF",
+  value = paste0(prettyNum(total25_dem, big.mark = ","), " (", round(100 * total25_dem / total25_2p, 1), "%)", sep = " ")
+)
+```
+
+```{r}
+#| content: valuebox
+#| title: Earle-Sears Votes
+list(
+  color = "#F6573E",
+  value = paste0(prettyNum(total25_rep, big.mark = ","), " (", round(100 * total25_rep / total25_2p, 1), "%)", sep = " ")
+)
+```
+
+## Row
+### Time Plots {.tabset}
+
+```{r}
+#| title: Turnout
+#| fig-width: 14
+
+VA_summaries |>
+  summarize(
+    turnout = sum(turnout, na.rm = TRUE),
+    .by = timestamp
+  ) |>
+  ggplot(aes(x = timestamp, y = turnout)) +
+  geom_point() +
+  geom_line() +
+  theme_bw(base_size = 24) +
+  scale_x_datetime(
+    date_breaks = "2 hour",
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
+  ) +
+  scale_y_continuous(
+    labels = scales::label_comma(),
+    n.breaks = 7
+  ) +
+  scale_color_manual(
+    values = c("votes_governor_25_dem" = "#3791FF", "votes_governor_25_rep" = "#F6573E", "turnout" = "black"),
+    labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
+  ) +
+  labs(
+    x = "Time (EST)",
+    y = "Votes"
+  )
+
+```
+
+```{r}
+#| title: Turnout by Mode
+#| fig-width: 14
+
+VA_summaries |>
+  ggplot(aes(x = timestamp, y = turnout)) +
+  geom_point() +
+  geom_line() +
+  facet_wrap(~vote_mode) +
+  theme_bw(base_size = 24) +
+  scale_x_datetime(
+    date_breaks = "2 hour",
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
+  ) +
+  scale_y_continuous(
+    labels = scales::label_comma(),
+    n.breaks = 7
+  ) +
+  scale_color_manual(
+    values = c("votes_governor_25_dem" = "#3791FF", "votes_governor_25_rep" = "#F6573E", "turnout" = "black"),
+    labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
+  ) +
+  labs(
+    x = "Time (EST)",
+    y = "Votes"
+  )
+
+```
+
+```{r}
+#| title: Gov Votes
+#| fig-width: 14
+
+VA_summaries |>
+  pivot_longer(
+    cols = starts_with("votes_governor_25_")
+  ) |>
+  ggplot(aes(x = timestamp, y = value, color = name)) +
+  geom_point() +
+  geom_line() +
+  facet_wrap(~vote_mode) +
+  theme_bw(base_size = 24) +
+  scale_x_datetime(
+    date_breaks = "2 hour",
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
+  ) +
+  scale_y_continuous(
+    labels = scales::label_comma(),
+    n.breaks = 7
+  ) +
+  scale_color_manual(
+    values = c("votes_governor_25_dem" = "#3791FF", "votes_governor_25_rep" = "#F6573E", "turnout" = "black"),
+    labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
+  ) +
+  labs(
+    x = "Time (EST)",
+    y = "Votes",
+    color = ""
+  )
+
+```
+
+```{r}
+#| title: Gov Vote Share
+#| fig-width: 14
+
+VA_summaries |>
+  pivot_longer(
+    cols = starts_with("votes_governor_25_")
+  ) |>
+  mutate(
+    share = value / sum(value, na.rm = TRUE),
+    .by = c(timestamp, vote_mode)
+  ) |>
+  ggplot(aes(x = timestamp, y = share, color = name)) +
+  geom_point() +
+  geom_line() +
+  facet_wrap(~vote_mode) +
+  theme_bw(base_size = 24) +
+  scale_y_continuous(
+    labels = scales::label_percent(accuracy = 1.0),
+    n.breaks = 5
+  ) +
+  scale_x_datetime(
+    date_breaks = "2 hour",
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
+  ) +
+  scale_color_manual(
+    values = c("votes_governor_25_dem" = "#3791FF", "votes_governor_25_rep" = "#F6573E", "turnout" = "black"),
+    labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
+  ) +
+  labs(
+    x = "Time (EST)",
+    y = "% of Votes",
+    color = ""
+  )
+
+```
+
+### Share Plots {.tabset}
+
+```{r}
+#| title: Margin
+#| fig-width: 14
+
+data_VA |>
+  filter(obs > 0.25) |>
+  mutate(
+    across(starts_with("votes_governor_25"), \(x) x / turnout)
+  ) |>
+  pmargins_hist(votes_governor_25_dem - votes_governor_25_rep) +
+  labs(
+    x = "Governor Vote Margin (Dem - Rep)"
+  )
+```
+
+```{r}
+#| title: Gov vs. 24
+#| fig-width: 14
+pmargins_scatter(filter(data_VA, obs > 0.25), votes_governor_25_dem - votes_governor_25_rep, votes_potus_24_dem - votes_potus_24_rep) +
+  labs(
+    x = "Governor Vote Margin (Dem - Rep)",
+    y = "2024 POTUS Vote Margin\n(Dem - Rep)"
+  )
+```
+
+```{r}
+#| title: Gov vs. AG
+#| fig-width: 14
+# pmargins_scatter(filter(data_VA, obs > 0.25), votes_governor_25_dem - votes_governor_25_rep, votes_attorneygeneral_25_dem - votes_attorneygeneral_25_rep) +
+#   labs(
+#     x = "Governor Vote Margin (Dem - Rep)",
+#     y = "AG Vote Margin<br>(Dem - Rep)",
+#   )
+
+pmargins_scatter(
+  filter(data_VA, obs > 0.25),
+  votes_governor_25_dem - votes_governor_25_rep,
+  votes_governor_25_dem - votes_governor_25_rep
+) +
+  labs(
+    x = "Governor Vote Margin (Dem - Rep)",
+    y = "AG Vote Margin\n(Dem - Rep)"
+  )
+```
+
+## Forecasting
+
+### VA Vote Share by Mode {.tabset}
+```{r}
+#| title: Estimates by Mode
+#| fig-width: 14
+plot_voteShare_byMode(filter(summaries, lengths(covars) == 1, method == "lm", subset != '', uncertainty == "conformal"))
+```
+
+```{r}
+#| title: w/ Uncertainty
+#| fig-width: 14
+plot_voteShare_byMode(filter(summaries, lengths(covars) == 1, method == "lm", subset != '', uncertainty == "conformal"), uncertainty = TRUE)
+```
+
+### VA Vote Share Overall {.tabset}
+```{r}
+#| title: Estimates
+#| fig-width: 14
+plot_voteShare(filter(summaries, lengths(covars) == 1, method == "lm", subset != '', uncertainty == "conformal"))
+```
+
+```{r}
+#| title: w/ Uncertainty
+#| fig-width: 14
+plot_voteShare(filter(summaries, lengths(covars) == 1, method == "lm", subset != '', uncertainty == "conformal"), uncertainty = TRUE)
+```
+
