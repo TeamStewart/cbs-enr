@@ -29,7 +29,7 @@ plot_voteShare_byMode <- function(summaries, uncertainty = FALSE) {
       labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
     ) +
     scale_color_manual(
-      values = c("votes_governor_25_dem" = "#3791FF", "votes_governor_25_rep" = "#F6573E", "turnout" = "black"),
+      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "black"),
       labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
     )
 
@@ -67,7 +67,7 @@ plot_voteShare <- function(summaries, uncertainty = FALSE) {
       labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
     ) +
     scale_color_manual(
-      values = c("votes_governor_25_dem" = "#3791FF", "votes_governor_25_rep" = "#F6573E"),
+      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008"),
       labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican")
     )
 
@@ -111,7 +111,7 @@ make_tbl_countyMode <- function(summaries, state) {
     data_color(
       columns = tmp,
       target_columns = swing_24,
-      palette = c("#F6573E", "white", "#3791FF"),
+      palette = c("#ce0008", "white", "#005599"),
       domain = c(-0.25, 0.25),
       na_color = "white"
     ) |>
@@ -175,7 +175,7 @@ make_tbl_county <- function(m, state, county) {
     data_color(
       columns = tmp,
       target_columns = swing_24,
-      palette = c("#F6573E", "white", "#3791FF"),
+      palette = c("#ce0008", "white", "#005599"),
       domain = c(-0.25, 0.25),
       na_color = "white"
     ) |>
@@ -212,7 +212,7 @@ pmargins_hist <- function(merged, x) {
       xmin = 0,
       xmax = Inf,
       ymax = Inf,
-      fill = "#3791FF",
+      fill = "#005599",
       alpha = 0.4,
       color = NA
     ) +
@@ -222,7 +222,7 @@ pmargins_hist <- function(merged, x) {
       xmin = -Inf,
       xmax = 0,
       ymax = Inf,
-      fill = "#F6573E",
+      fill = "#ce0008",
       alpha = 0.4,
       color = NA
     ) +
@@ -248,7 +248,7 @@ pmargins_scatter <- function(merged, x, y) {
       "polygon",
       x = c(-Inf, Inf, Inf),
       y = c(-Inf, Inf, -Inf),
-      fill = "#3791FF",
+      fill = "#005599",
       alpha = 0.4,
       color = NA
     ) +
@@ -256,7 +256,7 @@ pmargins_scatter <- function(merged, x, y) {
       "polygon",
       x = c(-Inf, Inf, -Inf),
       y = c(-Inf, Inf, Inf),
-      fill = "#F6573E",
+      fill = "#ce0008",
       alpha = 0.4,
       color = NA
     ) +
