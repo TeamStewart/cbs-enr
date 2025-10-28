@@ -12,7 +12,7 @@ run_models <- function(
   uncertainty = "",
   outcome = "votes_Governor_25_dem",
   residualize = TRUE,
-  wide_mode = FALSE,
+  subset = NULL,
   covars,
   ...
 ) {
@@ -25,13 +25,12 @@ run_models <- function(
     history,
     state,
     office,
-    impute = TRUE,
-    wide_mode = wide_mode
+    impute = TRUE
   )
 
-  if (!(outcome %in% colnames(merged))) {
-    cli::cli_alert("Missing Vote Mode")
-    return(NULL)
+  if (!is.null(subset) && subset != "") {
+    expr <- rlang::parse_expr(subset)
+    merged <- filter(merged, !!expr)
   }
 
   merged = add_obs(merged, outcome, covars, ...)
@@ -57,7 +56,7 @@ run_models <- function(
   return(m)
 }
 
-merge_data <- function(data, history, state, office, impute = FALSE, wide_mode = FALSE) {
+merge_data <- function(data, history, state, office, impute = FALSE) {
   modes = filter(data, precinct_total > 0) |> distinct(vote_mode) |> pull()
   if (length(office) == 1) {
     office = c(office)
@@ -75,31 +74,17 @@ merge_data <- function(data, history, state, office, impute = FALSE, wide_mode =
       .by = c(jurisdiction, precinct_id, vote_mode, race_name)
     )
 
-  if (wide_mode) {
-    merged = merged |>
-      pivot_wider(
-        names_from = c(race_name, candidate_party, vote_mode),
-        values_from = precinct_total,
-        names_glue = "votes_{str_to_lower(str_remove_all(race_name, ' '))}_25_{str_sub(tolower(candidate_party), start=0, end=3)}_{str_remove_all(str_to_lower(vote_mode), ' |/')}"
-      ) |>
-      left_join(
-        history,
-        join_by(jurisdiction == county, precinct_id == precinct_25)
-      ) |>
-      select(-contains("21"))
-  } else {
-    merged = merged |>
-      pivot_wider(
-        names_from = c(race_name, candidate_party),
-        values_from = precinct_total,
-        names_glue = "votes_{str_to_lower(str_remove_all(race_name, ' '))}_25_{str_sub(tolower(candidate_party), start=0, end=3)}"
-      ) |>
-      left_join(
-        history,
-        join_by(jurisdiction == county, precinct_id == precinct_25, vote_mode)
-      ) |>
-      select(-contains("21"))
-  }
+  merged = merged |>
+    pivot_wider(
+      names_from = c(race_name, candidate_party),
+      values_from = precinct_total,
+      names_glue = "votes_{str_to_lower(str_remove_all(race_name, ' '))}_25_{str_sub(tolower(candidate_party), start=0, end=3)}"
+    ) |>
+    left_join(
+      history,
+      join_by(jurisdiction == county, precinct_id == precinct_25, vote_mode)
+    ) |>
+    select(-contains("21"))
 
   if (impute) merged = impute_missing(merged)
 }

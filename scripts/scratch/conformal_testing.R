@@ -30,58 +30,11 @@ truth = read_csv(tests[length(tests)]) |>
   )
 
 # models with `vote_mode` separate outcomes
-models_wide = expand_grid(
+models = expand_grid(
   method = "lm",
   uncertainty = c("", "conformal"),
-  outcome = expand_grid(
-    party = c("dem", "rep"),
-    mode = c("electionday", "earlyvoting", "absenteemail")
-  ) |>
-    mutate(
-      o = glue({
-        "votes_governor_25_{party}_{mode}"
-      })
-    ) |>
-    pull(o),
-  covariates = list(NULL, c(covars))
-) |>
-  rowwise() |>
-  mutate(
-    covar = str_replace(outcome, "governor_25", "potus_24"),
-    covars = list(c(covar, covariates))
-  ) |>
-  expand_grid(
-    paths = tests
-  ) |>
-  select(-covar, -covariates) |>
-  mutate(
-    out = pmap(
-      list(paths, method, uncertainty, outcome, covars),
-      \(data, method, uncertainty, outcome, covars) {
-        run_models(
-          data = data,
-          state = "VA",
-          county = NA,
-          timestamp = tar_read(timestamp_VA_NA),
-          history = tar_read(historywide_VA_NA),
-          covars = covars,
-          method = method,
-          uncertainty = uncertainty,
-          outcome = outcome,
-          wide_mode = TRUE,
-          obs_cutoff = 0.1,
-          weight_var = "reg24"
-        )
-      }
-    )
-  )
-
-models_long = expand_grid(
-  method = c("lm", "xgboost"),
-  uncertainty = c("", "conformal"),
-  outcome = expand_grid(
-    party = c("dem", "rep")
-  ) |>
+  subset = c('vote_mode == "Early Voting"', 'vote_mode == "Absentee/Mail"', 'vote_mode == "Election Day"', ''),
+  outcome = expand_grid(party = c("dem", "rep")) |>
     mutate(
       o = glue({
         "votes_governor_25_{party}"
@@ -101,8 +54,8 @@ models_long = expand_grid(
   select(-covar, -covariates) |>
   mutate(
     out = pmap(
-      list(paths, method, uncertainty, outcome, covars),
-      \(data, method, uncertainty, outcome, covars) {
+      list(paths, method, uncertainty, outcome, covars, subset),
+      \(data, method, uncertainty, outcome, covars, subset) {
         run_models(
           data = data,
           state = "VA",
@@ -113,43 +66,22 @@ models_long = expand_grid(
           method = method,
           uncertainty = uncertainty,
           outcome = outcome,
-          weight_var = "reg24",
+          subset = subset,
           obs_cutoff = 0.1,
+          weight_var = "reg24"
         )
-      },
-      .progress = TRUE
+      }
     )
   )
 
-summaries_wide = models_wide |>
-  mutate(
-    out = map(out, "out")
-  ) |>
-  unnest(cols = out) |>
-  mutate(
-    vote_mode = str_extract(outcome, "_([^_]*)$", group = 1),
-    vote_mode = case_match(
-      vote_mode,
-      "absenteemail" ~ "Absentee/Mail",
-      "earlyvoting" ~ "Early Voting",
-      "electionday" ~ "Election Day"
-    ),
-    outcome = str_remove(outcome, "_[^_]*$")
-  ) |>
-  summarize(
-    across(matches("^(estimate|lower|upper)$"), sum),
-    .by = c(method, uncertainty, outcome, vote_mode, covars, timestamp)
-  )
-
-# models with `vote_mode` as a covariate
-summaries_long = models_long |>
+summaries = models |>
   mutate(
     out = map(out, "out")
   ) |>
   unnest(cols = out) |>
   summarize(
     across(matches("^(estimate|lower|upper)$"), sum),
-    .by = c(method, uncertainty, outcome, vote_mode, covars, timestamp)
+    .by = c(method, uncertainty, subset, outcome, vote_mode, covars, timestamp)
   )
 
 make_plot_voteShare_byMode <- function(d) {
@@ -191,12 +123,12 @@ make_plot_voteShare_byMode <- function(d) {
     )
 }
 
-make_plot_voteShare_byMode(summaries_wide)
-make_plot_voteShare_byMode(filter(summaries_long, method == "xgboost"))
+make_plot_voteShare_byMode(filter(summaries, subset == '')) # combined `vote_mode`
+make_plot_voteShare_byMode(filter(summaries, subset != '')) # separate `vote_mode`
 
 # total vote share plots, summed across modes
-summaries_wide |>
-  filter(outcome != "turnout", uncertainty != "conformal", lengths(covars) == 1) |>
+summaries |>
+  filter(outcome != "turnout", uncertainty != "conformal", lengths(covars) == 1, subset != '') |>
   summarize(
     across(matches("^(estimate|lower|upper)$"), sum),
     .by = c(outcome, timestamp)
@@ -229,8 +161,8 @@ summaries_wide |>
   )
 
 # plots with intervals
-summaries_long |>
-  filter(outcome != "turnout", uncertainty == "conformal", lengths(covars) == 1, method == "lm") |>
+summaries |>
+  filter(outcome != "turnout", uncertainty == "conformal", lengths(covars) == 1, method == "lm", subset != '') |>
   ggplot(aes(x = timestamp, y = estimate, color = outcome)) +
   geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width = 500)) +
   # geom_point(position = position_dodge(width = 0.1)) +

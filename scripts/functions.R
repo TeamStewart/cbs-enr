@@ -97,19 +97,8 @@ get_history <- function(state, impute = FALSE, wide_mode = FALSE) {
   if (impute) {
     base = impute_missing(base)
   }
-  if (!wide_mode) {
-    return(base)
-  }
 
-  base |>
-    pivot_longer(
-      cols = votes_potus_24_dem:votePct_gov_21_rep
-    ) |>
-    pivot_wider(
-      names_from = c(name, vote_mode),
-      values_from = value,
-      names_glue = "{name}_{str_remove_all(str_to_lower(vote_mode), ' |/')}"
-    )
+  return(base)
 }
 
 create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
