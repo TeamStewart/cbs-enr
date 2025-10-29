@@ -70,5 +70,6 @@ list(
     names = c(state, county)
   ),
   # tar_target(model_VA, run_models(data_VA_NA, "VA", NA, timestamp_VA_NA, history_VA_NA)),
-  tar_quarto(dashboard, "index.qmd", quiet = FALSE)
+  tar_quarto(dashboard, "index.qmd", quiet = FALSE),
+  tar_target(upload, upload_html("index.html", "VA"))
 )

@@ -291,21 +291,14 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
   return(formatted)
 }
 
-upload_html <- function() {
-  upload_single <- function(path) {
-    state = str_extract(path, "(pages/)(.*?)\\.html", group = 2) |> str_extract("^[^_]+")
-    juris = str_extract(path, "(pages/)(.*?)\\.html", group = 2)
-
-    # TODO: Change file from -P to something else?
-    put_object(file = path, object = glue("{ELECTION_DATE}-{state}-P/model_{juris}.html"), bucket = PATH_CBS_S3, multipart = TRUE)
-  }
-
-  files = list.files(path = "pages", pattern = "*html$", full.names = TRUE, recursive = TRUE)
-  files = files[basename(files) != "metadata.html"]
-
-  file.copy(from = files, to = "docs/pages/", overwrite = FALSE, recursive = FALSE, copy.mode = TRUE) |> invisible()
-
-  walk(files, upload_single)
+upload_html <- function(path, state) {
+  put_object(
+    file = path, 
+    object = glue("{ELECTION_DATE}-{state}-G/model_{state}_test.html"), 
+    bucket = PATH_CBS_S3, 
+    multipart = TRUE,
+    headers = list("Content-Type" = "text/html")
+  )
 }
 
 make_summary <- function(data, state, county, timestamp, history){
