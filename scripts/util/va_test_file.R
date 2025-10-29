@@ -11,7 +11,7 @@ library(glue)
 library(lubridate)
 
 DATA_DIR <- '/Users/josephloffredo/MIT Dropbox/Joseph Loffredo/CBS-MIT Election Data'
-test_files <- dir_ls(path = glue("{DATA_DIR}/25_general/input_data/VA/test_files"), glob = "*.csv")
+test_files <- dir_ls(path = glue("{DATA_DIR}/25_general/input_data/VA/test_files"), regexp = "gov2_")
 
 reformat_test <- function(df){
   df |> 
