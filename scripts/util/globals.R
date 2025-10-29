@@ -10,7 +10,7 @@ local({
   user = Sys.info()["user"]
   
   if (user == "josephloffredo"){
-    PATH_DROPBOX <<- "~/Dropbox (MIT)/CBS-MIT Election Data"
+    PATH_DROPBOX <<- "~/MIT Dropbox/Joseph Loffredo/CBS-MIT Election Data"
   } else if (user == "mason") {
     PATH_DROPBOX <<- "~/Dropbox (MIT)/Research/CBS-MIT Election Data"
   } else if (user == "Mason") {
