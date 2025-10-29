@@ -56,8 +56,11 @@ get_data <- function(state, county, timestamp, path = NULL) {
   return(d)
 }
 
-format_wide <- function(data) {
+format_wide <- function(data, state, office) {
+  if(state == 'VA'){prefix = "gov_25"}
+  
   data |>
+    filter(race_name == office) |>
     mutate(
       vote_mode = case_match(
         vote_mode,
@@ -73,6 +76,15 @@ format_wide <- function(data) {
       values_from = precinct_total,
       values_fill = 0,
       values_fn = sum
+    ) |>
+    mutate(
+      pivot_column = word(candidate_name, -1) |> str_replace("-","_"),
+      pivot_column = glue("{prefix}_{pivot_column}")) |>
+    pivot_wider(
+      id_cols = c(state, race_id, race_name, jurisdiction, precinct_id, virtual_precinct, timestamp),
+      names_from = c(pivot_column),
+      values_from = c(early, eday, mail, provisional),
+      names_sep = "_"
     )
 }
 
@@ -120,11 +132,14 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
     filter(state == lookup_state) |>
     mutate(jurisdiction_code = as.character(jurisdiction_code))
 
-  # Create wide version
-  wide_data <- format_wide(data)
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
-  write_csv(wide_data, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_wide.csv"))
-
+  
+  # Create wide version
+  if(state == 'VA'){
+    wide_data <- format_wide(data, state, 'Governor')
+    write_csv(wide_data, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_wide.csv"))
+  }
+  
   # Append CBS lookup info
   formatted <- data |>
     # For the purposes of CBS, remove undervote/overvotes
@@ -219,16 +234,14 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
 
     #### Upload to S3 ####
     # Function to handle upload by office type
-    upload_files <- function(state, office, local_file_name, formatted_data, long_data, wide_data, race_name, bucket) {
+    upload_files <- function(state, office, local_file_name, formatted_data, long_data, wide_data = NULL, race_name, bucket) {
       # Define paths
       fs::dir_create("data/cbs_format")
 
       json_file <- glue("data/cbs_format/{local_file_name}_{office}_latest.json")
       csv_file_long <- glue("data/cbs_format/{local_file_name}_{office}_latest.csv")
-      csv_file_wide <- glue("data/cbs_format/{local_file_name}_{office}_latest_wide.csv")
       s3_json_path <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results.json")
       s3_csv_path_long <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results.csv")
-      s3_csv_path_wide <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results_wide.csv")
 
       # Write JSON and upload
       formatted_data |> filter(ofc == office) |> write_json(json_file)
@@ -238,34 +251,40 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
       ## Long
       long_data |> filter(race_name == race_name) |> write_csv(csv_file_long)
       put_object(file = csv_file_long, object = s3_csv_path_long, bucket = bucket, multipart = TRUE)
+      
       ## Wide
-      wide_data |> filter(race_name == race_name) |> write_csv(csv_file_wide)
-      put_object(file = csv_file_wide, object = s3_csv_path_wide, bucket = bucket, multipart = TRUE)
+      if(!is_null(wide_data)){
+        csv_file_wide <- glue("data/cbs_format/{local_file_name}_{office}_latest_wide.csv")
+        s3_csv_path_wide <- glue("Precincts/{ELECTION_DATE}-{state}-{office}/{local_file_name}_{office}_results_wide.csv")
+        
+        wide_data |> write_csv(csv_file_wide)
+        put_object(file = csv_file_wide, object = s3_csv_path_wide, bucket = bucket, multipart = TRUE)
+      }
     }
 
     if (state == 'VA') {
       # Upload for Governor, AG, Lt Governor
       upload_files(state, "G", local_file_name, formatted, data, wide_data, "Governor", PATH_CBS_S3)
-      upload_files(state, "A", local_file_name, formatted, data, wide_data, "Attorney General", PATH_CBS_S3)
-      upload_files(state, "L", local_file_name, formatted, data, wide_data, "Lt Governor", PATH_CBS_S3)
+      upload_files(state, "A", local_file_name, formatted, data, NULL, "Attorney General", PATH_CBS_S3)
+      upload_files(state, "L", local_file_name, formatted, data, NULL, "Lt Governor", PATH_CBS_S3)
+      
+      drive_put(
+        media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_wide.csv"),
+        path = PATH_GDRIVE,
+        name = glue("{local_file_name}_results_wide.csv")
+      )
+      
     } else if (state == 'NY') {
       # Upload for Mayor
-      upload_files(state, "M", local_file_name, formatted, data, wide_data, "Mayor", PATH_CBS_S3)
+      upload_files(state, "M", local_file_name, formatted, data, NULL, "Mayor", PATH_CBS_S3)
     }
 
     #### Upload to Google Drive ####
-    ## Long
     drive_put(
       media = "../CBS-MIT Election Data/25_general/input_data/NY/NY_test_file.csv",
       # media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"),
       path = PATH_GDRIVE,
       name = glue("{local_file_name}_results.csv")
-    )
-    ## Wide
-    drive_put(
-      media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest_wide.csv"),
-      path = PATH_GDRIVE,
-      name = glue("{local_file_name}_results_wide.csv")
     )
   }
 
