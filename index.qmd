@@ -28,26 +28,6 @@ suppressPackageStartupMessages({
   library(tidymodels)
 })
 
-inline_hook <- function(x) {
-  if (is.numeric(x)) {
-    format(x, digits = 2, nsmall = 0, big.mark = ",")
-  } else {
-    x
-  }
-}
-knitr::knit_hooks$set(inline = inline_hook)
-
-options(scipen = 999)
-
-data_NY = merge_data(
-  # data = tar_read(data_NY_NA),
-  data = read_csv("~/Dropbox (MIT)/Research/CBS-MIT Election Data/25_general/input_data/NY/NY_test_file.csv"),
-  history = tar_read(history_NY_NA),
-  office = "Mayor",
-  impute = FALSE
-) |>
-  add_obs("votes_mayor_25_dem", "votes_potus_24_dem")
-
 data_VA = merge_data(
   # data = tar_read(data_VA_NA),
   data = read_csv("~/Dropbox (MIT)/Research/CBS-MIT Election Data/25_general/input_data/VA/test_files/VA_2025_11_03_23_58_00.csv"),
@@ -57,7 +37,6 @@ data_VA = merge_data(
 ) |>
   add_obs("votes_governor_25_dem", "votes_potus_24_dem")
 
-timestamp_NY = tar_read(timestamp_NY_NA)
 timestamp_VA = tar_read(timestamp_VA_NA)
 
 # model_VA = tar_read(model_VA_NA)
@@ -88,15 +67,6 @@ total24 = dem_2024 + rep_2024
 ```
 
 # New York City
-
-
-```{r wrapup}
-# write out files for the next round
-
-write_file(as.character(prec_reported), glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/NY/numbers/prec_reported"))
-write_file(as.character(prec_reported_eday), glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/NY/numbers/prec_reported_eday"))
-
-```
 
 # Virginia
 
@@ -419,6 +389,7 @@ pmargins_scatter(
     x = "Governor Vote Margin (Dem - Rep)",
     y = "AG Vote Margin\n(Dem - Rep)"
   )
+
 ```
 
 ## Forecasting

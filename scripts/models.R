@@ -64,13 +64,15 @@ merge_data <- function(data, history, office, impute = FALSE) {
   merged = data |>
     filter(
       race_name %in% office,
-      vote_mode %in% modes,
-      candidate_name != "Write-ins"
+      vote_mode %in% modes
     ) |>
     select(race_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total) |>
     mutate(
       turnout = sum(precinct_total, na.rm=TRUE),
       .by = c(jurisdiction, precinct_id, vote_mode, race_name)
+    ) |> 
+    filter(
+      candidate_name != "Write-ins"
     )
 
   merged = merged |>
@@ -124,16 +126,10 @@ run_model <- function(
     cli::cli_abort("Training data has less than 50 observations. Model results may be unreliable.")
   }
 
-  ## construct formula
-  if (method %in% c("log-lm", "bayes-lm")) {
-    outcome = paste0("log_s(", outcome, ")")
-    covars[1] = paste0("log_s(", covars[1], ")")
-  }
-
   form = as.formula(paste0(outcome, "~", paste(covars, collapse = "+")))
 
   # method selection
-  if (method %in% c("lm", "log-lm", "xgboost")) {
+  if (method %in% c("lm", "xgboost")) {
     rec_reg <- recipe(
       formula = form,
       data = train
@@ -144,7 +140,7 @@ run_model <- function(
       step_dummy(all_nominal_predictors())
 
     # fit model
-    if (method %in% c("lm", "log-lm")) {
+    if (method %in% c("lm")) {
       model <- linear_reg() |> set_engine("lm")
     } else if (method == "xgboost") {
       model <- boost_tree(trees = 1000) |>
@@ -159,8 +155,10 @@ run_model <- function(
       fit(data = train)
   } else if (method == "quantreg") {
     rec <- recipe(formula = form, data = train) |>
-      step_normalize(all_numeric_predictors()) |>
-      step_impute_bag(all_numeric_predictors())
+      step_novel(starts_with("jurisdiction")) |>
+      step_zv(all_predictors()) |>
+      step_log(all_numeric_predictors(), offset = 0.1) |>
+      step_dummy(all_nominal_predictors())
 
     model <- linear_reg() |>
       set_engine("quantreg") |>
