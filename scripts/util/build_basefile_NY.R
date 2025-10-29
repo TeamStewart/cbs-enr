@@ -21,14 +21,14 @@ DATA_DIR <- '/Users/josephloffredo/MIT Dropbox/Joseph Loffredo/CBS-MIT Election 
 shapefile_2021 <- sf::read_sf(glue('{DATA_DIR}/25_general/shapefiles/nyedwi_21d/nyedwi.shp'))
 shapefile_2024 <- sf::read_sf(glue('{DATA_DIR}/25_general/shapefiles/nyedwi_24d/nyedwi.shp'))
 shapefile_2025 <- sf::read_sf(glue('{DATA_DIR}/25_general/shapefiles/nyedwi_25c/nyedwi.shp'))
-l2_identifiers <- read_csv(glue("{DATA_DIR}/25_general/input_data/NY/NYC_20250809_demo_prec_20250812.csv"))
+l2_identifiers <- read_csv(glue("{DATA_DIR}/25_general/input_data/NY/ny_20250809_demo_prec_20250812.csv"))
 ny25_primary <- read_csv(glue("{DATA_DIR}/25_general/input_data/NY/nyc_prim_prec_cvr_summary.csv"))
 ny24_potus <- read_csv(glue("{DATA_DIR}/25_general/input_data/NY/00000100000Citywide President Vice President Citywide EDLevel.csv"), col_names = F)
 ny21_mayor <- read_csv(glue("{DATA_DIR}/25_general/input_data/NY/00000200000Citywide Mayor Citywide EDLevel.csv"), col_names = F)
 
 #### Clean up identifiers ####
 l2_identifiers <- l2_identifiers |> 
-  select(ad, ed, precinct_lookup = precinct.num, precinct_25 = precinct, precinct_cbs)
+  select(fips, county, ad, ed, precinct_lookup = precinct.num, precinct_25 = precinct, precinct_cbs)
 
 #### Shapefile merge ####
 shapefile_2021 <- shapefile_2021 |> rename(precinct_lookup_2021 = ElectDist)
@@ -58,11 +58,11 @@ shape_xwalk_24_25 <- intersection_24_25 |>
 
 crosswalk_24_25 <- l2_identifiers |>
   left_join(shape_xwalk_24_25, by = c("precinct_lookup" = "precinct_lookup_2025")) |>
-  select(ad, ed, precinct_cbs, precinct_25, precinct_24 = precinct_lookup_2024, weight_24_25)
+  select(fips, county, ad, ed, precinct_cbs, precinct_25, precinct_24 = precinct_lookup_2024, weight_24_25)
 
 crosswalk_21_25 <- l2_identifiers |>
   left_join(shape_xwalk_21_25, by = c("precinct_lookup" = "precinct_lookup_2025")) |>
-  select(ad, ed, precinct_cbs, precinct_25, precinct_21 = precinct_lookup_2021, weight_21_25)
+  select(fips, county, ad, ed, precinct_cbs, precinct_25, precinct_21 = precinct_lookup_2021, weight_21_25)
 
 #### Clean up old election results ####
 result_columns <- c('AD','ED','County','EDAD Status','Event','Party/Independent Body','Office/Position Title','District Key','VoteFor','Unit Name', 'Tally')
@@ -130,7 +130,7 @@ history_file_24 <- crosswalk_24_25 |>
     votes_precFinal_24 = sum(votes_precFinal_24 * weight_24_25, na.rm = T),
     votePct_potus_24_dem = votes_potus_24_dem / votes_precFinal_24,
     votePct_potus_24_rep = votes_potus_24_rep / votes_precFinal_24,
-    .by = c(ad,ed,precinct_cbs,precinct_25)
+    .by = c(fips, county, ad,ed,precinct_cbs,precinct_25)
   )
 
 history_file_21 <- crosswalk_21_25 |>
@@ -141,16 +141,16 @@ history_file_21 <- crosswalk_21_25 |>
     votes_precFinal_21 = sum(votes_precFinal_21 * weight_21_25, na.rm = T),
     votePct_mayor_21_dem = votes_mayor_21_dem / votes_precFinal_21,
     votePct_mayor_21_rep = votes_mayor_21_rep / votes_precFinal_21,
-    .by = c(ad,ed,precinct_cbs,precinct_25)
+    .by = c(fips, county, ad,ed,precinct_cbs,precinct_25)
   )
 
 history_file <- history_file_24 |>
-  full_join(history_file_21, by = c("ad", "ed", "precinct_cbs", "precinct_25")) |>
+  full_join(history_file_21, by = c("fips", "county", "ad", "ed", "precinct_cbs", "precinct_25")) |>
   mutate(
     across(where(is.numeric), ~ replace_na(.x, 0)),
     vote_mode = 'Total') |>
   relocate(vote_mode, .after = precinct_25) |>
-  arrange(ad, ed) |>
+  arrange(fips, county, ad, ed) |>
   left_join(ny25_primary, by = c("ad", "ed", "precinct_cbs"))
 
 #### Save files ####

@@ -27,6 +27,8 @@ l2_identifiers <- read_csv(glue("{DATA_DIR}/25_general/input_data/VA/va_20250917
 va25_zero <- read_csv(glue("{DATA_DIR}/25_general/VA/clean/VA_latest.csv")) |>
   select(jurisdiction, precinct_id) |>
   distinct()
+kabir_clusters <- read_csv(glue("{DATA_DIR}/25_general/input_data/VA/va_20251008_demo_prec_vote24_cd_cluster20251010.csv")) |>
+  select(county, precinct_cbs, precinct_l2, polstratumID, polstratum, geostratumID, geostratum)
 
 #### Cleanup results files ####
 va24 <- va24 |>
@@ -108,7 +110,8 @@ va21 <- va21 |>
 l2_identifiers <- l2_identifiers |> 
   select(fips, county, precinct_cbs, precinct_l2) |>
   mutate(precinct_lookup = str_replace_all(precinct_l2, " - ","-")) |>
-  drop_na(precinct_l2)
+  drop_na(precinct_l2) |>
+  left_join(kabir_clusters, by = c("county","precinct_cbs","precinct_l2"))
 
 #### Cleanup input files ####
 create_precinct_identifiers <- function(shapefile){
