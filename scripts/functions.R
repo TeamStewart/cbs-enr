@@ -57,10 +57,13 @@ get_data <- function(state, county, timestamp, path = NULL) {
 }
 
 format_wide <- function(data, state, office) {
-  if(state == 'VA'){prefix = "gov_25"}
+  prefix = "gov_25"
+  
+  cd_lookup <- read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/cbs_lookups/va_cd_lookup.csv"))
   
   data |>
     filter(race_name == office) |>
+    left_join(cd_lookup, by = c("jurisdiction" = "county", "precinct_id" = "precinct_25")) |>
     mutate(
       vote_mode = case_match(
         vote_mode,
@@ -81,11 +84,14 @@ format_wide <- function(data, state, office) {
       pivot_column = word(candidate_name, -1) |> str_replace("-","_"),
       pivot_column = glue("{prefix}_{pivot_column}")) |>
     pivot_wider(
-      id_cols = c(state, race_id, race_name, jurisdiction, precinct_id, virtual_precinct, timestamp),
+      id_cols = c(state, race_id, race_name, cd, miles, jurisdiction, precinct_id, virtual_precinct, timestamp),
       names_from = c(pivot_column),
       values_from = c(early, eday, mail, provisional),
       names_sep = "_"
-    )
+    ) |>
+    group_by(state, jurisdiction) |>
+    fill(cd, .direction = "downup")
+  
 }
 
 get_history <- function(state, impute = FALSE) {
