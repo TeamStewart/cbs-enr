@@ -40,33 +40,12 @@ data_VA = merge_data(
 timestamp_VA = tar_read(timestamp_VA_NA)
 
 # model_VA = tar_read(model_VA_NA)
-# model_NY = tar_read(model_NY_NA)
 
 VA_summary = tar_read(summary_VA_NA) # read this to force `targets()` dependency
 
 VA_summaries = list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), full.names = TRUE) |> read_csv()
 
 ```
-
-```{r ny_summary}
-
-# Calculate some summary statistics for NY
-total_prec = distinct(data_NY, jurisdiction, precinct_id) |> tally() |> pull()
-prec_reported = filter(data_NY, obs > 0.25) |> distinct(jurisdiction, precinct_id) |> tally() |> pull()
-prec_reported_eday = filter(data_NY, obs > 0.25, vote_mode == "Election Day") |> distinct(jurisdiction, precinct_id) |> tally() |> pull()
-
-total_mamdami = pull(data_NY, votes_mayor_25_dem) |> sum(na.rm = TRUE)
-total_cuomo = pull(data_NY, votes_mayor_25_fig) |> sum(na.rm = TRUE)
-total_sliwa = pull(data_NY, votes_mayor_25_rep) |> sum(na.rm = TRUE)
-total = total_mamdami + total_cuomo + total_sliwa
-
-dem_2024 = pull(data_NY, votes_potus_24_dem) |> sum(na.rm = TRUE)
-rep_2024 = pull(data_NY, votes_potus_24_rep) |> sum(na.rm = TRUE)
-total24 = dem_2024 + rep_2024
-
-```
-
-# New York City
 
 # Virginia
 

@@ -66,14 +66,14 @@ merge_data <- function(data, history, office, impute = FALSE) {
       race_name %in% office,
       vote_mode %in% modes
     ) |>
-    select(race_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total) |>
     mutate(
       turnout = sum(precinct_total, na.rm=TRUE),
       .by = c(jurisdiction, precinct_id, vote_mode, race_name)
     ) |> 
     filter(
       candidate_name != "Write-ins"
-    )
+    ) |>
+    select(race_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total, turnout)
 
   merged = merged |>
     pivot_wider(
