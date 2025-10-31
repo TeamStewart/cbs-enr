@@ -10,33 +10,29 @@ run_models <- function(
   office = "Governor",
   method = "lm",
   uncertainty = "",
-  outcome = "votes_governor_25_dem",
+  outcome,
   residualize = TRUE,
   subset = NULL,
   covars,
+  weight_var,
   ...
 ) {
   if (is.character(data)) {
-    data = read_csv(data)
+    data = read_csv(data) |> drop_na(precinct_total)
   }
 
   merged = merge_data(
     data,
     history,
     office,
-    impute = TRUE
+    covariates = c(covars, weight_var),
+    impute = TRUE,
+    impute_var = "polstratum"
   )
 
-  if (!is.null(subset) && subset != "") {
-    expr <- rlang::parse_expr(subset)
-    merged <- filter(merged, !!expr)
-  }
-
-  merged = add_obs(merged, outcome, covars, ...)
-  if (residualize) {
-    merged = add_resid(merged, !!sym(outcome), !!sym(covars[1]))
-    outcome = "resid"
-  }
+  if (!is.null(subset) && subset != "") merged <- filter(merged, !!rlang::parse_expr(subset))
+  merged = add_obs(merged, outcome, covars)
+  if (residualize) merged = add_resid(merged, !!sym(outcome), !!sym(covars[1]))
 
   m = run_model(
     merged,
@@ -45,6 +41,7 @@ run_models <- function(
     outcome = outcome,
     covars = covars,
     residualize = residualize,
+    weight_var = weight_var,
     ...
   )
 
@@ -55,7 +52,7 @@ run_models <- function(
   return(m)
 }
 
-merge_data <- function(data, history, office, impute = FALSE) {
+merge_data <- function(data, history, office, covariates, impute, impute_var) {
   modes = filter(data, precinct_total > 0) |> distinct(vote_mode) |> pull()
   if (length(office) == 1) {
     office = c(office)
@@ -66,29 +63,36 @@ merge_data <- function(data, history, office, impute = FALSE) {
       race_name %in% office,
       vote_mode %in% modes
     ) |>
+    select(race_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total) |>
     mutate(
       turnout = sum(precinct_total, na.rm=TRUE),
+      share = ifelse(turnout == 0, 0, precinct_total / turnout),
       .by = c(jurisdiction, precinct_id, vote_mode, race_name)
     ) |> 
     filter(
       candidate_name != "Write-ins"
+    )
     ) |>
-    select(race_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total, turnout)
+    select(race_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total, turnout, share)
 
   merged = merged |>
     pivot_wider(
       names_from = c(race_name, candidate_party),
-      values_from = precinct_total,
-      names_glue = "votes_{str_to_lower(str_remove_all(race_name, ' '))}_25_{str_sub(tolower(candidate_party), start=0, end=3)}"
+      values_from = c(precinct_total, share),
+      names_glue = "votes_{str_to_lower(str_remove_all(race_name, ' '))}_25_{str_sub(tolower(candidate_party), start=0, end=3)}_{.value}"
     ) |>
     left_join(
       history,
       join_by(jurisdiction == county, precinct_id == precinct_25, vote_mode)
     )
 
-  if (impute) merged = impute_missing(merged)
+  if (impute) merged = impute_missing(merged, impute_var, covariates)
   
-  return(merged)
+  merged |> 
+    mutate(
+      l_votes21 = log_s(votes_precFinal_21),
+      l_votes24 = log_s(votes_precFinal_24)
+    )
 }
 
 run_model <- function(
@@ -102,31 +106,24 @@ run_model <- function(
   weight_var = NULL,
   residualize
 ) {
-  checkmate::assert_choice(method, c("lm", "log-lm", "xgboost", "bayes-lm", "quantreg"))
+  checkmate::assert_choice(method, c("lm", "xgboost", "quantreg"))
   checkmate::assert_choice(uncertainty, c("naive", "conformal", ""), null.ok = TRUE)
 
   ## construct weights?
   if (!is.null(weight_var)) {
-    merged = mutate(merged, "{{ weight_var }}" := importance_weights(!!sym(weight_var)))
+    merged = mutate(merged, {{ weight_var }} := importance_weights(!!sym(weight_var)))
   }
 
-  # construct train, test, and valid
-  if (method == "quantreg") {
-    train = filter(merged, obs > obs_cutoff)
-    valid = slice_sample(train, prop = 0.2)
-    train = anti_join(train, valid, by = colnames(train))
-    test = filter(merged, obs <= obs_cutoff)
-  } else {
-    train = filter(merged, obs > obs_cutoff)
-    valid = tibble()
-    test = filter(merged, obs <= obs_cutoff)
-  }
+  # construct train, test
+  train = filter(merged, obs > obs_cutoff)
+  test = filter(merged, obs <= obs_cutoff)
+  valid = tibble()
 
   if (nrow(train) < 50) {
-    cli::cli_abort("Training data has less than 50 observations. Model results may be unreliable.")
+    cli::cli_warn("Training data has less than 50 observations. Model results may be unreliable.")
   }
 
-  form = as.formula(paste0(outcome, "~", paste(covars, collapse = "+")))
+  form = as.formula(paste0(if(residualize) "resid" else outcome, "~", paste(covars, collapse = "+")))
 
   # method selection
   if (method %in% c("lm", "xgboost")) {
@@ -134,9 +131,7 @@ run_model <- function(
       formula = form,
       data = train
     ) |>
-      step_novel(starts_with("jurisdiction")) |>
-      step_zv(all_predictors()) |>
-      step_log(all_numeric_predictors(), offset = 0.1) |>
+      # step_log(all_numeric_predictors(), offset = 0.01) |>
       step_dummy(all_nominal_predictors())
 
     # fit model
@@ -172,7 +167,7 @@ run_model <- function(
 
   # calculate uncertainty
   if (uncertainty == "") {
-    preds = predict(fit, test) |>
+    preds = predict(fit, new_data=test) |>
       bind_rows(
         tibble(.pred = numeric(), .pred_lower = numeric(), .pred_upper = numeric())
       )
@@ -189,6 +184,9 @@ run_model <- function(
       )
   } else if (uncertainty == "conformal") {
     if (method == "quantreg") {
+      valid = slice_sample(train, prop=0.2)
+      train = anti_join(train, valid, by = colnames(train))
+
       pred_valid = predict(fit, new_data = valid, level = level) |>
         unnest_wider(col = .pred_quantile, names_sep = "_") |>
         setNames(c(".pred_lower", ".pred", ".pred_upper"))
@@ -241,32 +239,24 @@ run_model <- function(
     }
   }
 
-  # construct `out`
-  out = bind_rows(
-    train,
-    valid,
-    test |>
+  if (residualize){
+    test = bind_cols(test, preds) |> 
       mutate(
-        estimate = preds$.pred,
-        lower = preds$.pred_lower,
-        upper = preds$.pred_upper
+        .pred = .pred * !!sym(covars[1]) + !!sym(covars[1]),
+        .pred_lower = .pred_lower * !!sym(covars[1]) + !!sym(covars[1]),
+        .pred_upper = .pred_upper * !!sym(covars[1]) + !!sym(covars[1])
       )
-  ) |>
-    mutate(
-      estimate = coalesce(estimate, !!sym(outcome)),
-      lower = coalesce(lower, !!sym(outcome)),
-      upper = coalesce(upper, !!sym(outcome))
-    )
-
-  if (residualize) {
-    out <- out |>
-      mutate(
-        # scale estimates back up
-        estimate = estimate * !!sym(covars[1]) + !!sym(covars[1]),
-        lower = lower * !!sym(covars[1]) + !!sym(covars[1]),
-        upper = upper * !!sym(covars[1]) + !!sym(covars[1])
-      )
+  } else {
+    test = bind_cols(test, preds)
   }
+
+  out = bind_rows(train, valid, test) |> 
+    mutate(
+      estimate = coalesce(.pred, as.numeric(!!sym(outcome)), median(!!sym(covars[1]), na.rm=TRUE)),
+      lower = coalesce(.pred_lower, as.numeric(!!sym(outcome)), median(!!sym(covars[1]), na.rm=TRUE)),
+      upper = coalesce(.pred_upper, as.numeric(!!sym(outcome)), median(!!sym(covars[1]), na.rm=TRUE)),
+      .by = c(polstratum, vote_mode)
+    )
 
   list(
     method = method,
@@ -277,16 +267,35 @@ run_model <- function(
     valid = valid,
     test = test,
     fit = fit,
+    residualize = residualize,
     out = select(
       out,
-      estimate,
-      any_of(c("lower", "upper")),
-      jurisdiction,
-      precinct_id,
-      any_of(c("vote_mode")),
+      estimate, lower, upper,
+      jurisdiction, precinct_id, vote_mode,
       timestamp,
       obs,
-      resid
+      any_of(c("resid")),
+      all_of(outcome), !!covars
     )
   )
+}
+
+get_model_summary <- function(model) {
+  if (str_detect(model$outcome[1], "share$")) {
+    f = mean
+  } else {
+    f = sum
+  }
+
+  summarize(
+    model$out,
+    across(matches("^(estimate|lower|upper)$"), f),
+    .by = c(vote_mode, timestamp)
+  ) |> 
+    mutate(
+      outcome = model$outcome,
+      method = model$method,
+      uncertainty = model$uncertainty,
+      covars = list(model$covars)
+    )
 }
