@@ -1,40 +1,47 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+history_VA_NA|stem|bc47187ef527b48b|b5017394b8bde785|8e04d9d8690aa0f1|1218332768||t20390.6096539784s|s1039703b|1039703|rds|local|vector|||1.837||
+history_NY_NA|stem|b2cf79457d8741c6|57735a99f8e8619d|8e04d9d8690aa0f1|953555266||t20390.6096540568s|s1169267b|1169267|rds|local|vector|||0.23||
+plot_voteShare_byMode|function|a10c961d6ca915ee|||||||||||||||
+tbl_cbs_NY_NA|stem||e6e285852ecd9e45|ea13e202bdbd3deb|-21894715||t20392.5018287835s||0|rds|local|vector|||0.002||could not load dependency timestamp_NY_NA of target tbl_cbs_NY_NA. invalid 'description' argument
+data_VA_NA|stem|ae99c7ee1289079b|f2857c088e5d305b|25ec03c39dd99f42|-255181940||t20392.5019453225s|s512727b|512727|rds|local|vector|||10.723||
+summary_VA_NA|stem|f7c30609d7a0fd65|46aa3dcac802f6d5|21c553342e78c7d7|-1307811157||t20392.5019484598s|s189b|189|rds|local|vector|||0.08||
+tbl_cbs_VA_NA|stem|bd6d6d1d6a4cdcc0|9d4cdd8a0a0f4cf3|b300a9d06c03a80f|1531629469||t20392.5019558068s|s137970b|137970|rds|local|vector|||0.687||
+timestamp_NY_NA|stem||2684d9249450fdc1|2b068e949a6b8a99|438131462||t20390.6096488109s||0|rds|local|vector|||1.404||`x` must be a single string, not a character `NA`.
+data_NY_NA|stem||2549c9ebd03eca4a|634250ac0db9242b|-1868622413||t20390.6096493325s||0|rds|local|vector|||0.002||could not load dependency timestamp_NY_NA of target data_NY_NA. invalid 'description' argument
+summary_NY_NA|stem||e2a03de7eb642363|c6e7f8d21507a23d|-1114145308||t20390.609654574s||0|rds|local|vector|||0.002||could not load dependency timestamp_NY_NA of target summary_NY_NA. invalid 'description' argument
+upload|stem||2f3112bbb7a9f790|2363969f38ef78d4|1202071109||t20392.5018276812s||0|rds|local|vector|||1.855||Forbidden (HTTP 403).
 impute_missing|function|8438f782f38ddadd
 lookup_state_name|function|3572d7f708158618
 PATH_CBS_S3|object|aea739ceef2eaf0b
-.Random.seed|object|db250c6d9ab80fec
+.Random.seed|object|263a7e5902813c22
 scrape_ny|function|3972f82861ee5dd6
 ELECTION_FOLDER|object|a6da583c76ad2ec5
-plot_voteShare|function|da7926e4d0a164bf
+plot_voteShare|function|6ca9ca9f7b43bcdb
 PATH_LOCAL|object|2c530c1562a7fbd1
 add_obs|function|b6940ef63dec673b
 add_resid|function|732904e0251fb84c
-run_model|function|07176a7ec6424e83
+run_model|function|4dc559ca3ab8996f
+plot_voteCount|function|1afb628209576122
 PATH_GDRIVE|object|404720d6ac99f370
 ELECTION_DATE|object|94bda8d4f060f8f3
-format_wide|function|cc1d43b74d1c3044
+format_wide|function|92f939e27785bf6d
 scrape_va|function|a482e634c0e5723a
+pmargins_scatter_minimal|function|286273c28a829eeb
 get_timestamp|function|fea1cdc4c053c36f
 get_gsheet|function|f539f0be0cbeb4bf
-pmargins_hist|function|7ddb170b6a28ecca
-plot_voteShare_byMode|function|89b7304e6ea8bd75
+pmargins_hist|function|e53a3cd65c65a09a
+plot_voteCount_byMode|function|f9c1e22e5490f265
 make_tbl_county|function|e7ff517e45148676
 PATH_DROPBOX|object|6109de2e33997987
 make_tbl_countyMode|function|018948d5a1a5c171
-metadata|object|7cedc3434ce3dfe5
+metadata|object|2ddd893cf946eec1
 pmargins_scatter|function|4022326d9ca6282a
-merge_data|function|923536ff5a1c204b
+merge_data|function|ec1c8163df4220fd
 get_history|function|fe9f9898ff0a2acb
-upload_html|function|1ed5967b4facfee4
-create_table_cbs|function|efe78c526d71b57b
+upload_html|function|5bae38fd7bdc08a2
+create_table_cbs|function|9adfb06bea6dbe5b
 get_data|function|34375e04261ba665
-run_models|function|81b17e1c79fcfd21
-make_summary|function|b09b4db0467ca732
-timestamp_NY_NA|stem||2684d9249450fdc1|2b068e949a6b8a99|438131462||t20390.6096488109s||0|rds|local|vector|||1.534||`x` must be a single string, not a character `NA`.
-data_NY_NA|stem||2549c9ebd03eca4a|634250ac0db9242b|-1868622413||t20390.6096493325s||0|rds|local|vector|||0.002||could not load dependency timestamp_NY_NA of target data_NY_NA. invalid 'description' argument
-history_VA_NA|stem|bc47187ef527b48b|b5017394b8bde785|8e04d9d8690aa0f1|1218332768||t20390.6096539784s|s1039703b|1039703|rds|local|vector|||1.837||
-history_NY_NA|stem|b2cf79457d8741c6|57735a99f8e8619d|8e04d9d8690aa0f1|953555266||t20390.6096540568s|s1169267b|1169267|rds|local|vector|||0.23||
-summary_NY_NA|stem||e2a03de7eb642363|a311b5daaeb14dbd|-1114145308||t20390.609654574s||0|rds|local|vector|||0.002||could not load dependency timestamp_NY_NA of target summary_NY_NA. invalid 'description' argument
-timestamp_VA_NA|stem|3a5c85210ca47855|51ff6cae3c13cf47|2b068e949a6b8a99|-180273558||t20390.6096558678s|s72b|72|rds|local|vector|||0.148||
-data_VA_NA|stem|2bca5b7310d4e0e8|f2857c088e5d305b|7c86b4ce32b35035|-255181940||t20390.6097838372s|s508963b|508963|rds|local|vector|||10.78||
-summary_VA_NA|stem|f7c30609d7a0fd65|46aa3dcac802f6d5|d05b890e77e866db|-1307811157||t20390.6097864539s|s189b|189|rds|local|vector|||0.022||
+run_models|function|c30329f5e9a5e694
+make_summary|function|35fd97214b12559a
+timestamp_VA_NA|stem|bbff037e411aee91|51ff6cae3c13cf47|2b068e949a6b8a99|-180273558||t20392.5062301091s|s72b|72|rds|local|vector|||1.596||
+dashboard|stem||4838c17116e0d3f8|2c530c1562a7fbd1|2016893827||t20392.5026164396s||0|file|local|vector|||4.814||! Error running quarto CLI from R. Caused by error: ✖ Error returned by quarto CLI.   -----------------------------   - The project is out-of-sync -- use `renv::status()` for details.         processing file: index.qmd      0%   ..   3%  ...   6% [setup]      Error:   ! Files must all have 3 columns:    File 2 has 5 columns   Backtrace:   ▆   1. └─readr::read_csv(...)   2.  └─vroom::vroom(...)   3.  └─vroom:::vroom_(...)      Quitting from index.qmd:20-52 [setup]      Execution halted    Caused by error: ! System command 'quarto' failed

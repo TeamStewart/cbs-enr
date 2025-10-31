@@ -1,13 +1,50 @@
 # ============================
 # File: Build Plots and Tables for Website
 # ============================
-
-plot_voteShare_byMode <- function(summaries, uncertainty = FALSE) {
-  p = ggplot(summaries, aes(x = timestamp, y = estimate, color = outcome))
+plot_voteShare <- function(summaries, uncertainty = F){
+  p = ggplot(summaries, aes(x = timestamp, y = estimate, color = party, fill = party))
 
   if (uncertainty) {
-    p = p +
-      geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width = 500), size = 1)
+    p = p + geom_point(size = 1) + geom_line() + 
+      geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
+  } else {
+    p = p + geom_point() + geom_line()
+  }
+
+  p = p +
+    facet_wrap(~vote_mode, nrow = 1) +
+    labs(
+      x = "Time (EST)",
+      y = "Vote Share",
+      color = "",
+      fill = ""
+    ) +
+    theme_bw(base_size = 24) +
+    theme(legend.position = 'bottom',axis.text = element_text(size = 16)) +
+    scale_x_datetime(
+      date_breaks = "2 hour",
+      labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
+    ) +
+    scale_y_continuous(labels = scales::label_percent(accuracy = 1)) +
+    scale_color_manual(
+      values = c("dem" = "#005599", "rep" = "#ce0008"),
+      labels = c("dem" = "Democrat", "rep" = "Republican")
+    ) +
+    scale_fill_manual(
+      values = c("dem" = "#005599", "rep" = "#ce0008"),
+      labels = c("dem" = "Democrat", "rep" = "Republican")
+    )
+    
+  return(p)
+}
+
+
+plot_voteCount_byMode <- function(summaries, uncertainty = FALSE) {
+  p = ggplot(summaries, aes(x = timestamp, y = estimate, color = outcome, fill = outcome))
+
+  if (uncertainty) {
+    p = p + geom_point(size = 1) + geom_line() + 
+      geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
   } else {
     p = p + geom_point() + geom_line()
   }
@@ -17,18 +54,15 @@ plot_voteShare_byMode <- function(summaries, uncertainty = FALSE) {
     labs(
       x = "Time (EST)",
       y = "Votes",
-      color = ""
+      color = "",
+      fill = ""
     ) +
     theme_bw(base_size = 24) +
-    scale_y_continuous(
-      labels = scales::label_comma(),
-      n.breaks = 7
-    ) +
-    scale_x_datetime(
-      date_breaks = "2 hour",
-      labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
-    ) +
     scale_color_manual(
+      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "grey50"),
+      labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
+    ) +
+    scale_fill_manual(
       values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "grey50"),
       labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
     )
@@ -36,17 +70,18 @@ plot_voteShare_byMode <- function(summaries, uncertainty = FALSE) {
   return(p)
 }
 
-plot_voteShare <- function(summaries, uncertainty = FALSE) {
+plot_voteCount <- function(summaries, uncertainty = FALSE) {
   p = summaries |>
     summarize(
       across(matches("^(estimate|lower|upper)$"), sum),
       .by = c(outcome, timestamp)
     ) |>
-    ggplot(aes(x = timestamp, y = estimate, color = outcome))
+    mutate(vote_mode = 'Total') |>
+    ggplot(aes(x = timestamp, y = estimate, color = outcome, fill = outcome))
 
   if (uncertainty) {
-    p = p +
-      geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width = 500), size = 1)
+    p = p + geom_point(size = 1) + geom_line() + 
+      geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
   } else {
     p = p + geom_point() + geom_line()
   }
@@ -55,18 +90,16 @@ plot_voteShare <- function(summaries, uncertainty = FALSE) {
     labs(
       x = "Time (EST)",
       y = "Votes",
-      color = ""
+      color = "",
+      fill = ""
     ) +
     theme_bw(base_size = 24) +
-    scale_y_continuous(
-      labels = scales::label_comma(),
-      n.breaks = 7
-    ) +
-    scale_x_datetime(
-      date_breaks = "2 hour",
-      labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
-    ) +
+    facet_wrap(~vote_mode) +
     scale_color_manual(
+      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "grey50"),
+      labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
+    ) +
+    scale_fill_manual(
       values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "grey50"),
       labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
     )
@@ -234,6 +267,9 @@ pmargins_hist <- function(merged, x) {
       labels = scales::label_percent(accuracy = 1, suffix = "pp", style_positive = "plus", )
     ) +
     theme_bw(base_size = 24) +
+    theme(
+      axis.text = element_text(size = 16),
+      panel.spacing = unit(2, "lines")) +
     labs(
       y = "Number of Precincts"
     )
@@ -259,6 +295,24 @@ pmargins_scatter <- function(merged, x, y) {
       fill = "#ce0008",
       alpha = 0.4,
       color = NA
+    ) +
+    geom_point(alpha = 0.3, size = 0.7) +
+    geom_abline(linetype = "dashed", color = "red", slope = 1, intercept = 0) +
+    facet_wrap(~vote_mode, nrow = 1) +
+    scale_x_continuous(
+      n.breaks = 5
+    ) +
+    theme_bw(base_size = 24) +
+    theme(
+      panel.spacing = unit(1, "lines")
+    ) +
+    tune::coord_obs_pred()
+}
+
+pmargins_scatter_minimal <- function(merged, x, y) {
+  merged |>
+    ggplot(
+      aes(x = ({{ x }}), y = ({{ y }}))
     ) +
     geom_point(alpha = 0.3, size = 0.7) +
     geom_abline(linetype = "dashed", color = "red", slope = 1, intercept = 0) +
