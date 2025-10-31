@@ -94,7 +94,7 @@ format_wide <- function(data, state, office) {
   
 }
 
-get_history <- function(state, impute = FALSE) {
+get_history <- function(state, impute, impute_group) {
   l2 = fread(
     file = list.files(
       path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/{state}"),
@@ -104,17 +104,23 @@ get_history <- function(state, impute = FALSE) {
       sort() |>
       pluck(-1)
   ) |>
-    select(-starts_with("p_"), -starts_with("precinct_l2"), -matches("^ad$|^ed$"))
+    select(-starts_with("precinct_cbs"), -matches("^ad$|^ed$"), -white:-other)
+
+  l2 = enightmodels::rename_demo_cbs(l2)
 
   base = left_join(
     read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/history/{state}_history.csv")),
     l2,
-    join_by(county, fips, precinct_cbs)
-  ) |> 
-    select(-matches("^ad$|^ed$"))
+    join_by(county, fips, precinct_l2)
+  ) |>
+    select(-matches("^ad$|^ed$")) |> 
+    mutate(
+      votes_turnout_21 = max((vote_mode == "Total") * votes_precFinal_21, na.rm = TRUE),
+      .by = c(county, precinct_25)
+    )
 
   if (impute) {
-    base = impute_missing(base)
+    base = impute_missing(base, impute_group, covars = select(base, where(is.numeric)) |> colnames())
   }
 
   return(base)

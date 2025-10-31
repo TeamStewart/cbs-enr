@@ -23,11 +23,10 @@ add_resid <- function(data, left, right){
     resid = ({{ left }} - {{ right }}) / {{ right }},
     resid = if_else(is.infinite(resid), NA_real_, resid),
     resid = pmax(-5, pmin(resid, 5))
-  ) |> 
-    drop_na(resid)
+  )
 }
 
-add_obs <- function(data, outcome, covars, obs_function="past", ...){
+add_obs <- function(data, outcome, covars, obs_function="past"){
   checkmate::assert_choice(obs_function, c("past", "any", "test_ind", "test_rank"))
 
   if (obs_function == "past") {
@@ -50,9 +49,14 @@ add_obs <- function(data, outcome, covars, obs_function="past", ...){
     )
 }
 
-impute_missing <- function(d){
-  rec <- recipe(1 ~ ., data = d) |> 
-    step_impute_median(all_numeric_predictors())
-
-  prep(rec) |> bake(new_data = d)
+impute_missing <- function(base, group = NULL, covars) {
+  base |>
+    group_by(!!sym(group)) |>
+    mutate(
+      across(where(is.numeric), ~ ifelse(is.na(.x), median(.x, na.rm = TRUE), .x))
+    ) |>
+    ungroup() |>
+    mutate(
+      across(where(is.numeric), ~ ifelse(is.na(.x), median(.x, na.rm = TRUE), .x))
+    )
 }
