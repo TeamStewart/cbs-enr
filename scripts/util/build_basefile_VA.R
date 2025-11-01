@@ -100,7 +100,9 @@ va21 <- va21 |>
   ) |>
   select(colnames(va24)) |>
   filter(!is.na(jurisdiction)) |>
-  mutate(precinct_total = as.numeric(precinct_total)) |>
+  mutate(
+    precinct_total = str_remove_all(precinct_total, ","),
+    precinct_total = as.numeric(precinct_total)) |>
   summarise(
     precinct_total = sum(precinct_total, na.rm = TRUE),
     .by = c(state, race_id, race_name, candidate_name, candidate_party, jurisdiction, precinct_id, virtual_precinct, vote_mode, timestamp)

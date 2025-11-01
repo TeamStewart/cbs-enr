@@ -63,7 +63,7 @@ merge_data <- function(data, history, office, covariates, impute, impute_var) {
       race_name %in% office,
       vote_mode %in% modes
     ) |>
-    select(race_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total) |>
+    select(race_name, candidate_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total) |>
     mutate(
       turnout = sum(precinct_total, na.rm=TRUE),
       share = ifelse(turnout == 0, 0, precinct_total / turnout),
@@ -71,7 +71,6 @@ merge_data <- function(data, history, office, covariates, impute, impute_var) {
     ) |> 
     filter(
       candidate_name != "Write-ins"
-    )
     ) |>
     select(race_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total, turnout, share)
 

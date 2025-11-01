@@ -11,6 +11,7 @@ gc()
 suppressPackageStartupMessages({
   library(targets)
   library(tarchetypes)
+  library(glue)
 })
 
 source("scripts/functions.R")
@@ -57,7 +58,7 @@ tar_option_set(
 metadata = readr::read_csv(glue::glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/metadata.csv"), col_types = "cccll")
 
 tests = list.files(
-  "~/Dropbox (MIT)/Research/CBS-MIT Election Data/25_general/input_data/VA/test_files",
+  glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/test_files"),
   pattern = "VA_.*?$",
   full.names = TRUE
 )
@@ -66,7 +67,7 @@ models = tidyr::expand_grid(
   method = c("lm", "xgboost"),
   uncertainty = "conformal",
   subset = c('vote_mode == "Election Day"', 'vote_mode == "Early Voting"', 'vote_mode == "Absentee/Mail"'),
-  outcome = c("turnout", "votes_governor_25_dem_precinct_total", "votes_governor_25_rep_precinct_total"),
+  outcome = c("turnout", "votes_governor_25_dem_precinct_total", "votes_governor_25_rep_precinct_total", "votes_governor_25_dem_share", "votes_governor_25_rep_share"),
   c1 = list(
     ## all combined with past vote/turnout
     NULL,
@@ -83,6 +84,8 @@ models = tidyr::expand_grid(
     c2 = dplyr::case_when(
       outcome == "votes_governor_25_dem_precinct_total" ~ "votes_potus_24_dem",
       outcome == "votes_governor_25_rep_precinct_total" ~ "votes_potus_24_rep",
+      outcome == "votes_governor_25_dem_share" ~ "votePct_potus_24_dem",
+      outcome == "votes_governor_25_rep_share" ~ "votePct_potus_24_rep",
       outcome == "turnout" ~ "votes_precFinal_24",
       .default = NA_character_
     ),
