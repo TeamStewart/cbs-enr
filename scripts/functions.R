@@ -323,10 +323,13 @@ make_summary <- function(data, state, county, timestamp, history){
     impute = FALSE
   ) |> 
     summarize(
-      across(c(turnout, matches("votes_.*?25_.*?$")), ~ sum(.x, na.rm=TRUE)),
+      across(c(turnout, matches("votes_.*?25_.*?precinct_total$")), ~ sum(.x, na.rm=TRUE)),
       .by = c(timestamp, vote_mode) 
     ) |> 
+    mutate(
+      across(matches("votes_.*?25_.*?precinct_total$"), ~ .x / turnout, .names = "{str_replace(.col, '_precinct_total$', '_share')}"),
+    ) |> 
     write_csv(
-      glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries/{state}_{county}_{timestamp}_summary.csv")
+      glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries/summarylive_{state}_{county}_{timestamp}.csv")
     )
 }

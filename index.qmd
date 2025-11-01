@@ -13,12 +13,11 @@ format:
     include-in-header:
             text: |
                 <link rel="shortcut icon mask-icon" type="image/svg+xml" href="https://www.cbsnews.com/fly/bundles/cbsnewscore/icons/icon.svg" color="#101010">
-    fig-format: jpeg
+    fig-format: svg
     echo: false
     message: false
     warning: false
     keep-md: false
-    output-dir: docs
 ---
 
 ```{r r-setup}
@@ -30,23 +29,29 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(glue)
   library(gt)
-  library(tidymodels)
   library(patchwork)
   library(enightmodels)
 })
 
 data_VA = merge_data(
-  #data = tar_read(data_VA_NA),
+  # data = tar_read(data_VA_NA),
   data = read_csv(glue("{PATH_DROPBOX}/25_general/input_data/VA/test_files/VA_2025_11_03_23_58_00.csv")),
-  history = tar_read(history_VA_NA),
+  history = tar_read(history_noimpute_VA_NA),
   office = c("Governor", "Attorney General", "Lt Governor"),
   impute = FALSE
 ) |>
   add_obs("votes_governor_25_dem_precinct_total", "votes_potus_24_dem")
 
 timestamp_VA = tar_read(timestamp_VA_NA)
+dummy = tar_read(models_summary)
+dummy = tar_read(save_summaries)
+dummy = tar_read(summary_VA_NA)
 
-model_summaries = tar_read(models_summary)
+model_summaries = map(
+  list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), pattern = "summarymodel.*?$", full.names = TRUE),
+  qs2::qs_read
+) |> 
+  bind_rows()
 
 VA_model_summaries = model_summaries |>
   filter(lengths(covars) == 1, method == "lm", uncertainty == "conformal") |>
@@ -56,19 +61,18 @@ VA_model_summaries = model_summaries |>
     values_from = estimate
   )
 
-#VA_result_summaries = list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), full.names = TRUE) |> read_csv() 
-VA_result_summaries = list.files(path = glue('{PATH_DROPBOX}/25_general/input_data/VA/test_files'), full.names = TRUE, recursive = T) |> 
-  str_subset("VA_2025") |> 
-  read_csv() |>
-  summarise(
-    turnout = sum(precinct_total, na.rm = TRUE),
-    votes_governor_25_dem_precinct_total = sum(precinct_total[candidate_party == 'Democrat'], na.rm = TRUE),
-    votes_governor_25_dem_share = votes_governor_25_dem_precinct_total / turnout,
-    votes_governor_25_rep_precinct_total = sum(precinct_total[candidate_party == 'Republican'], na.rm = TRUE),
-    votes_governor_25_rep_share = votes_governor_25_rep_precinct_total / turnout,
-    .by = c(timestamp, vote_mode)
-  ) |>
-  filter(vote_mode != 'Other')
+VA_result_summaries = read_csv(
+  list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), pattern = "summarylive_.*?$", full.names = TRUE)
+)
+  # summarise(
+  #   turnout = sum(precinct_total, na.rm = TRUE),
+  #   votes_governor_25_dem_precinct_total = sum(precinct_total[candidate_party == 'Democrat'], na.rm = TRUE),
+  #   votes_governor_25_dem_share = votes_governor_25_dem_precinct_total / turnout,
+  #   votes_governor_25_rep_precinct_total = sum(precinct_total[candidate_party == 'Republican'], na.rm = TRUE),
+  #   votes_governor_25_rep_share = votes_governor_25_rep_precinct_total / turnout,
+  #   .by = c(timestamp, vote_mode)
+  # ) |>
+  # filter(vote_mode != 'Other')
 
 VA_21 <- read_csv(glue("{PATH_DROPBOX}/25_general/input_data/VA/VA_results_2021_long.csv")) |>
   filter(jurisdiction != 'TOTALS')

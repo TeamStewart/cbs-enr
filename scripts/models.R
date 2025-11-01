@@ -60,8 +60,8 @@ merge_data <- function(data, history, office, covariates, impute, impute_var) {
 
   merged = data |>
     filter(
-      race_name %in% office,
-      vote_mode %in% modes
+      str_detect(race_name, paste0("^(", paste(office, collapse="|"), ")")),
+      # vote_mode %in% modes
     ) |>
     select(race_name, candidate_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total) |>
     mutate(
@@ -119,7 +119,7 @@ run_model <- function(
   valid = tibble()
 
   if (nrow(train) < 50) {
-    cli::cli_warn("Training data has less than 50 observations. Model results may be unreliable.")
+    cli::cli_abort("Training data has less than 50 observations")
   }
 
   form = as.formula(paste0(if(residualize) "resid" else outcome, "~", paste(covars, collapse = "+")))
@@ -297,4 +297,9 @@ get_model_summary <- function(model) {
       uncertainty = model$uncertainty,
       covars = list(model$covars)
     )
+}
+
+save_modelsummary <- function(summary, state, county, timestamp) {
+  dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries"))
+  qs_save(summary, glue::glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries/summarymodel_{state}_{county}_{timestamp}.qs2"))
 }

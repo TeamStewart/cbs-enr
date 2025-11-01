@@ -66,8 +66,12 @@ tests = list.files(
 models = tidyr::expand_grid(
   method = c("lm", "xgboost"),
   uncertainty = "conformal",
-  subset = c('vote_mode == "Election Day"', 'vote_mode == "Early Voting"', 'vote_mode == "Absentee/Mail"'),
-  outcome = c("turnout", "votes_governor_25_dem_precinct_total", "votes_governor_25_rep_precinct_total", "votes_governor_25_dem_share", "votes_governor_25_rep_share"),
+  subset = c(''),
+  outcome = c(
+    "turnout", 
+    "votes_governor_25_dem_precinct_total", "votes_governor_25_rep_precinct_total", 
+    "votes_governor_25_dem_share", "votes_governor_25_rep_share"
+  ),
   c1 = list(
     ## all combined with past vote/turnout
     NULL,
@@ -91,8 +95,8 @@ models = tidyr::expand_grid(
     ),
     covars = list(c(c2, c1))
   ) |> 
-  dplyr::select(-c1, -c2) |> 
-  tidyr::expand_grid(paths = tests)
+  dplyr::select(-c1, -c2)
+  # tidyr::expand_grid(paths = tests)
 
 # ========================================
 ## PIPELINE
@@ -100,7 +104,7 @@ models = tidyr::expand_grid(
 models <- tar_map(
     models,
     tar_target(model, run_models(
-      paths, "VA", NA, timestamp_VA_NA, history_VA_NA, office = "Governor", 
+      data_VA_NA, "VA", NA, timestamp_VA_NA, history_VA_NA, office = "Governor", 
       method = method, uncertainty = uncertainty, outcome = outcome, residualize = TRUE,
       subset = subset, covars = covars, weight_var = "turnout"
     )),
@@ -108,24 +112,24 @@ models <- tar_map(
     names = c(outcome, method, uncertainty, subset)
   )
 
-summaries <- tar_combine(
-  models_summary,
-  models[["summary"]],
-  command = dplyr::bind_rows(!!!.x)
-)
-
 list(
   tar_map(
     metadata,
     tar_target(timestamp, get_timestamp(state, county, path), cue = tar_cue(mode = "always")),
     tar_target(history, get_history(state, impute = TRUE, impute_group = "polstratum")),
+    tar_target(history_noimpute, get_history(state, impute = FALSE)),
     tar_target(data, get_data(state, county, timestamp, path)),
     tar_target(summary, make_summary(data, state, county, timestamp, history)),
     tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
     names = c(state, county)
   ),
   models,
-  summaries,
+  tar_combine(
+    models_summary,
+    models[["summary"]],
+    command = dplyr::bind_rows(!!!.x)
+  ),
   tar_quarto(dashboard, "index.qmd", quiet = FALSE),
+  tar_target(save_summaries, save_modelsummary(models_summary, "VA", NA, timestamp_VA_NA)),
   tar_target(upload, upload_html("index.html", "VA"))
 )
