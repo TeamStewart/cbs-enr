@@ -306,7 +306,7 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
 upload_html <- function(path, state) {
   put_object(
     file = path, 
-    object = glue("{ELECTION_DATE}-{state}-G/model_{state}_test.html"), 
+    object = glue("{ELECTION_DATE}-{state}-G/model_{state}.html"), 
     bucket = PATH_CBS_S3, 
     multipart = TRUE,
     headers = list("Content-Type" = "text/html")
