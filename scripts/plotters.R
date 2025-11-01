@@ -2,7 +2,16 @@
 # File: Build Plots and Tables for Website
 # ============================
 plot_voteShare <- function(summaries, uncertainty = F){
-  p = ggplot(summaries, aes(x = timestamp, y = estimate, color = party, fill = party))
+  
+  p = summaries |>
+    mutate(
+      party = case_when(
+        outcome == "votes_governor_25_dem_share" ~ "dem",
+        outcome == "votes_governor_25_rep_share" ~ "rep",
+        TRUE ~ NA_character_
+      )
+    ) |>
+    ggplot(aes(x = timestamp, y = estimate, color = party, fill = party))
 
   if (uncertainty) {
     p = p + geom_point(size = 1) + geom_line() + 
@@ -59,12 +68,12 @@ plot_voteCount_byMode <- function(summaries, uncertainty = FALSE) {
     ) +
     theme_bw(base_size = 24) +
     scale_color_manual(
-      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "grey50"),
-      labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
+      values = c("votes_governor_25_dem_precinct_total" = "#005599", "votes_governor_25_rep_precinct_total" = "#ce0008", "turnout" = "grey50"),
+      labels = c("votes_governor_25_dem_precinct_total" = "Democrat", "votes_governor_25_rep_precinct_total" = "Republican", "turnout" = "Turnout")
     ) +
     scale_fill_manual(
-      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "grey50"),
-      labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
+      values = c("votes_governor_25_dem_precinct_total" = "#005599", "votes_governor_25_rep_precinct_total" = "#ce0008", "turnout" = "grey50"),
+      labels = c("votes_governor_25_dem_precinct_total" = "Democrat", "votes_governor_25_rep_precinct_total" = "Republican", "turnout" = "Turnout")
     )
 
   return(p)
@@ -96,12 +105,12 @@ plot_voteCount <- function(summaries, uncertainty = FALSE) {
     theme_bw(base_size = 24) +
     facet_wrap(~vote_mode) +
     scale_color_manual(
-      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "grey50"),
-      labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
+      values = c("votes_governor_25_dem_precinct_total" = "#005599", "votes_governor_25_rep_precinct_total" = "#ce0008", "turnout" = "grey50"),
+      labels = c("votes_governor_25_dem_precinct_total" = "Democrat", "votes_governor_25_rep_precinct_total" = "Republican", "turnout" = "Turnout")
     ) +
     scale_fill_manual(
-      values = c("votes_governor_25_dem" = "#005599", "votes_governor_25_rep" = "#ce0008", "turnout" = "grey50"),
-      labels = c("votes_governor_25_dem" = "Democrat", "votes_governor_25_rep" = "Republican", "turnout" = "Turnout")
+      values = c("votes_governor_25_dem_precinct_total" = "#005599", "votes_governor_25_rep_precinct_total" = "#ce0008", "turnout" = "grey50"),
+      labels = c("votes_governor_25_dem_precinct_total" = "Democrat", "votes_governor_25_rep_precinct_total" = "Republican", "turnout" = "Turnout")
     )
 
   return(p)
@@ -318,9 +327,9 @@ pmargins_scatter_minimal <- function(merged, x, y) {
     geom_abline(linetype = "dashed", color = "red", slope = 1, intercept = 0) +
     facet_wrap(~vote_mode, nrow = 1) +
     scale_x_continuous(
-      n.breaks = 5
+      n.breaks = 3
     ) +
-    theme_bw(base_size = 24) +
+    theme_bw(base_size = 16) +
     theme(
       panel.spacing = unit(1, "lines")
     ) +
