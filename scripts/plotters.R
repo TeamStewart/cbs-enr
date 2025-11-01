@@ -14,8 +14,13 @@ plot_voteShare <- function(summaries, uncertainty = F){
     ggplot(aes(x = timestamp, y = estimate, color = party, fill = party))
 
   if (uncertainty) {
-    p = p + geom_point(size = 1) + geom_line() + 
-      geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
+    p = p + geom_point(size = 1, position = position_dodge(width = 500)) + geom_line()
+    if (pull(tally(distinct(summaries, timestamp))) == 1) {
+      p = p + geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width=500))
+    } else {
+      p = p + geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
+    }
+    
   } else {
     p = p + geom_point() + geom_line()
   }
@@ -52,8 +57,12 @@ plot_voteCount_byMode <- function(summaries, uncertainty = FALSE) {
   p = ggplot(summaries, aes(x = timestamp, y = estimate, color = outcome, fill = outcome))
 
   if (uncertainty) {
-    p = p + geom_point(size = 1) + geom_line() + 
-      geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
+    p = p + geom_point(size = 1, position = position_dodge(width = 500)) + geom_line()
+    if (pull(tally(distinct(summaries, timestamp))) == 1) {
+      p = p + geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width=500))
+    } else {
+      p = p + geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
+    }
   } else {
     p = p + geom_point() + geom_line()
   }
@@ -89,8 +98,12 @@ plot_voteCount <- function(summaries, uncertainty = FALSE) {
     ggplot(aes(x = timestamp, y = estimate, color = outcome, fill = outcome))
 
   if (uncertainty) {
-    p = p + geom_point(size = 1) + geom_line() + 
-      geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
+    p = p + geom_point(size = 1, position = position_dodge(width = 500)) + geom_line()
+    if (pull(tally(distinct(summaries, timestamp))) == 1) {
+      p = p + geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width=500))
+    } else {
+      p = p + geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
+    }
   } else {
     p = p + geom_point() + geom_line()
   }
@@ -244,6 +257,8 @@ make_tbl_county <- function(m, state, county) {
 }
 
 pmargins_hist <- function(merged, x) {
+  x_vals <- transmute(merged, x = {{ x }}) |> pull(x)
+
   merged |>
     ggplot(
       aes(x = ({{ x }}))
@@ -273,12 +288,14 @@ pmargins_hist <- function(merged, x) {
     facet_wrap(~vote_mode, nrow = 1) +
     scale_x_continuous(
       n.breaks = 5,
-      labels = scales::label_percent(accuracy = 1, suffix = "pp", style_positive = "plus", )
+      labels = scales::label_percent(accuracy = 1, suffix = "pp", style_positive = "plus"),
+      limits = c(max(-1, min(x_vals, na.rm = TRUE)), min(1, max(x_vals, na.rm = TRUE)))
     ) +
     theme_bw(base_size = 24) +
     theme(
       axis.text = element_text(size = 16),
-      panel.spacing = unit(2, "lines")) +
+      panel.spacing = unit(2, "lines")
+    ) +
     labs(
       y = "Number of Precincts"
     )

@@ -94,6 +94,8 @@ scrape_ny <- function(state, county, path, timestamp) {
 
 ## Virginia
 scrape_va <- function(state, county, path, timestamp) {
+  # return(read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/test_files/VA_2025_11_03_22_38_00.csv")))
+
   # Download the raw json
   raw_file_path = glue('{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/{state}_{timestamp}.json')
   download.file(path, destfile = raw_file_path)
@@ -153,6 +155,7 @@ scrape_va <- function(state, county, path, timestamp) {
       # jurisdiction = jurisdiction |> str_remove(regex("County$", ignore_case = TRUE)) |> str_squish() |> str_to_title(),
       race_name = case_when(
         str_detect(race_name, regex("Lieutenant Governor", ignore_case = TRUE)) ~ "Lt Governor",
+        str_detect(race_name, regex("House of Delegates", ignore_case = TRUE)) ~ paste("State House", str_extract(race_name, "\\d+")),
         .default = race_name
       ),
       candidate_party = case_when(

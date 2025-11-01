@@ -1,8 +1,6 @@
 ---
 title: "Virginia Election 2025"
 author: "[LOFFREDO & REECE]"
-date: now
-date-format: "MMM D HH:mm:ss A z"
 format:
   dashboard:
     theme: 
@@ -10,14 +8,10 @@ format:
       - custom.scss
     embed-resources: true
     logo: cbs_white.svg
+    code-copy: false
     include-in-header:
-            text: |
-                <link rel="shortcut icon mask-icon" type="image/svg+xml" href="https://www.cbsnews.com/fly/bundles/cbsnewscore/icons/icon.svg" color="#101010">
-    fig-format: svg
-    echo: false
-    message: false
-    warning: false
-    keep-md: false
+      text: |
+        <link rel="shortcut icon mask-icon" type="image/svg+xml" href="https://www.cbsnews.com/fly/bundles/cbsnewscore/icons/icon.svg" color="#101010">
 ---
 
 ```{r r-setup}
@@ -104,6 +98,7 @@ total21 = VA_21 |> summarise(total = sum(precinct_total)) |> pull(total)
 total21_eday = VA_21 |> filter(vote_mode == "Election Day") |> summarise(total = sum(precinct_total)) |> pull(total)
 ```
 
+# Main
 ## Overview {height="15%"}
 
 ```{r}
@@ -179,8 +174,8 @@ total = VA_result_summaries |>
     labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
   ) +
   scale_y_continuous(
-    labels = scales::label_comma(),
-    n.breaks = 7
+    labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
+    n.breaks = 5
   ) +
   labs(
     x = "Time (EST)",
@@ -199,8 +194,8 @@ mode = VA_result_summaries |>
     labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
   ) +
   scale_y_continuous(
-    labels = scales::label_comma(),
-    n.breaks = 7
+    labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
+    n.breaks = 5
   ) +
   scale_color_manual(
     values = c("votes_governor_25_dem_precinct_total" = "#005599", "votes_governor_25_rep_precinct_total" = "#ce0008", "turnout" = "black"),
@@ -213,10 +208,7 @@ mode = VA_result_summaries |>
 
 total + mode + 
   plot_layout(guides = 'collect', axis_titles = 'collect', widths = c(1, 3)) & 
-  theme(legend.position = 'bottom',axis.text = element_text(size = 16)) &
-  scale_y_continuous(
-    labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
-    n.breaks = 5)
+  theme(legend.position = 'bottom',axis.text = element_text(size = 16))
 ```
 
 ```{r}
@@ -308,9 +300,12 @@ total = VA_result_summaries |>
     values = c("votes_governor_25_dem_precinct_total" = "#005599", "votes_governor_25_rep_precinct_total" = "#ce0008", "turnout" = "black"),
     labels = c("votes_governor_25_dem_precinct_total" = "Democrat", "votes_governor_25_rep_precinct_total" = "Republican", "turnout" = "Turnout")
   ) +
+  scale_y_continuous(
+    labels = scales::label_percent(accuracy = 1.0),
+  ) +
   labs(
     x = "Time (EST)",
-    y = "% of Votes",
+    y = "Vote Share",
     color = ""
   )
 
@@ -333,9 +328,12 @@ mode = VA_result_summaries |>
     values = c("votes_governor_25_dem_share" = "#005599", "votes_governor_25_rep_share" = "#ce0008", "turnout" = "black"),
     labels = c("votes_governor_25_dem_share" = "Democrat", "votes_governor_25_rep_share" = "Republican", "turnout" = "Turnout")
   ) +
+  scale_y_continuous(
+    labels = scales::label_percent(accuracy = 1.0),
+  ) +
   labs(
     x = "Time (EST)",
-    y = "% of Votes",
+    y = "Vote Share",
     color = ""
   )
 
@@ -485,16 +483,11 @@ plot_voteShare(filter(model_summaries, lengths(covars) == 1, method == "lm", unc
 //| output: false
 
 Plot = import("https://cdn.jsdelivr.net/npm/@observablehq/plot/+esm")
-CAND_KEY = {return {
-    votes_governor_25_dem_precinct_total: { color: "#3D77BB" },
-    turnout: { color: "#CFC020" },
-    votes_governor_25_rep_precinct_total: { color: "#A0442C" },
-}};
 
 prec = transpose(data);
 
-plot_cols = Object.keys(prec[0]).filter(x => !["precinct_id", "jurisdiction", "timestamp"].includes(x));
-obs_cols = Object.keys(CAND_KEY);
+plot_cols = ['turnout','votes_governor_25_dem_precinct_total','votes_governor_25_rep_precinct_total','votes_potus_24_dem','votes_potus_24_rep','votes_precFinal_24','votePct_potus_24_dem','votes_governor_25_dem_share','votes_governor_25_rep_share','votePct_potus_24_rep','votes_gov_21_dem','votes_gov_21_rep','votes_precFinal_21','votePct_gov_21_dem','votePct_gov_21_rep','n','male','fem','age_18_29','age_30_44','age_45_64','age_65_up','white','black','hisp','other','ind','dem','rep','noncol','col','white_noncol','black_noncol','hisp_noncol','other_noncol','white_col','black_col','hisp_col','other_col','white_male','black_male','hisp_male','other_male','white_fem','black_fem','hisp_fem','other_fem','noncol_male','col_male','noncol_fem','col_fem','vote20','reg20','elig20','vote21','vote22','reg22','elig22','vote24','reg24','elig24','p_male','p_fem','p_age_18_29','p_age_30_44','p_age_45_64','p_age_65_up','p_white','p_black','p_hisp','p_other','p_ind','p_dem','p_rep','p_noncol','p_col','p_white_noncol','p_black_noncol','p_hisp_noncol','p_other_noncol','p_white_col','p_black_col','p_hisp_col','p_other_col','p_white_male','p_black_male','p_hisp_male','p_other_male','p_white_fem','p_black_fem','p_hisp_fem','p_other_fem','p_noncol_male','p_col_male','p_noncol_fem','p_col_fem','total24','mail24','early24','eday24','harris24','trump24','p_harris24','p_trump24','p_mail24','p_early24','p_eday24','votes_turnout_21','polstratumID','geostratumID','cluster','cd','obs'];
+obs_cols = ["votes_governor_25_dem_precinct_total", "turnout", "votes_governor_25_rep_precinct_total"];
 ```
 
 ```{ojs ctrl-prec}
@@ -530,7 +523,7 @@ viewof vote_mode = {
 {
     let prec_plot = prec;
     if (obs_cols.includes(prec_x) || obs_cols.includes(prec_y)) {
-        prec_plot = prec.filter(d => d.obs == 1);
+        prec_plot = prec.filter(d => d.obs > 0.25);
     }
     if (vote_mode != "All") {
       prec_plot = prec_plot.filter(d => d.vote_mode == vote_mode);
@@ -565,4 +558,252 @@ viewof vote_mode = {
         ]
     });
 }
+```
+
+# State House {orientation="columns"}
+
+```{r}
+contested_hod = read_rds(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/contested_hod_races.rds")) |> str_extract("\\d+")
+
+contested_hod_big = read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/contested_hod.csv")) |>
+  pull(dist_num) |>
+  str_extract("\\d+")
+
+contested_hod_small = read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/contested_hod.csv")) |>
+  filter(opp_primary == 1) |>
+  pull(dist_num) |>
+  str_extract("\\d+")
+
+data_hod_base = merge_data(
+  data = tar_read(data_VA_NA),
+  history = select(tar_read(history_noimpute_VA_NA), county:votePct_gov_21_rep),
+  office = c("Governor", "State House"),
+  impute = FALSE
+) |>
+  add_obs("votes_governor_25_dem_precinct_total", "votes_potus_24_dem") |>
+  select(-matches("votes_statehouse.*?_share$")) |>
+  filter(
+    vote_mode %in% c("Election Day", "Early Voting", "Absentee/Mail")
+  ) |>
+  pivot_longer(
+    cols = starts_with("votes_statehouse"),
+    names_pattern = "votes_statehouse(\\d+)_25_(.*)_precinct_total",
+    names_to = c("district", "party"),
+    values_to = "votes_statehouse_25",
+    values_drop_na = TRUE
+  ) |>
+  mutate(
+    ######
+    # !!! ADDS FAKE DATA FOR TESTING !!!
+    ######
+    turnout = votes_precFinal_24 * rnorm(n(), 0.7, 0.05) + rnorm(n(), 15, 50),
+    votes_statehouse_25 = case_when(
+      party == "dem" ~ votes_potus_24_dem * rnorm(n(), 0.7, 0.05) + rnorm(n(), 10, 50),
+      party == "rep" ~ votes_potus_24_rep * rnorm(n(), 0.7, 0.05) + rnorm(n(), 10, 50),
+      .default = abs(rnorm(n(), 10, 20))
+    )
+    ######
+  )
+
+data_hod = data_hod_base |>
+  summarize(
+    votes_statehouse_25 = sum(votes_statehouse_25, na.rm = TRUE),
+    share_potus_24_dem = weighted.mean(votePct_potus_24_dem, votes_potus_24_dem, na.rm = TRUE),
+    votes_potus_24 = sum(votes_precFinal_24, na.rm = TRUE),
+    votes_potus_24_dem = sum(votes_potus_24_dem, na.rm = TRUE),
+    .by = c(district, party)
+  ) |>
+  filter(district %in% contested_hod) |>
+  mutate(
+    party = recode(party, "dem" = "Democrat", "rep" = "Republican", .default = "Other"),
+    district = as.integer(district)
+  ) |>
+  mutate(
+    pct = votes_statehouse_25 / sum(votes_statehouse_25, na.rm = TRUE),
+    .by = district
+  ) |>
+  rename(
+    votes = votes_statehouse_25
+  ) |>
+  pivot_wider(
+    names_from = party,
+    values_from = c(votes, pct),
+    names_glue = "{.value}_{party}_25"
+  ) |>
+  left_join(
+    read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/contested_hod.csv")),
+    join_by(district == dist_num)
+  )
+
+```
+
+## State HOD (Reported)
+
+```{r}
+#| title: Contested State HOD Votes (Reported)
+
+data_hod |>
+  drop_na(district) |>
+  mutate(
+    dempct = coalesce(dempct, share_potus_24_dem)
+  ) |>
+  select(district, votes_Republican_25, votes_Democrat_25, dempct) |>
+  mutate(
+    big = district %in% contested_hod_big,
+    small = district %in% contested_hod_small,
+    dempct_25 = votes_Democrat_25 / (votes_Democrat_25 + votes_Republican_25)
+  ) |>
+  relocate(dempct_25, .before = dempct) |>
+  arrange(desc(small), desc(big), district) |>
+  gt() |>
+  sub_missing() |>
+  tab_style(
+    style = list(cell_fill(color = "#005599"), cell_text(color = "white")),
+    locations = cells_body(
+      columns = votes_Democrat_25,
+      rows = votes_Democrat_25 > votes_Republican_25
+    )
+  ) |>
+  tab_style(
+    style = list(cell_fill(color = "#ce0008"), cell_text(color = "white")),
+    locations = cells_body(
+      columns = votes_Republican_25,
+      rows = votes_Republican_25 > votes_Democrat_25
+    )
+  ) |>
+  cols_align(align = "center", columns = -district) |>
+  fmt_tf(
+    columns = c(big, small),
+    tf_style = 6
+  ) |>
+  fmt_percent(
+    columns = c(dempct, dempct_25)
+  ) |>
+  fmt_number(
+    columns = c(votes_Republican_25, votes_Democrat_25),
+    decimals = 0
+  ) |>
+  cols_label(
+    district = "District",
+    votes_Republican_25 = "Republican",
+    votes_Democrat_25 = "Democrat",
+    dempct = "'24 Dem %",
+    dempct_25 = "'25 Dem %",
+    big = "In 'Big'?",
+    small = "In 'Small'?"
+  ) |>
+  opt_interactive(
+    use_pagination = TRUE,
+    page_size_default = 15,
+    use_search = FALSE,
+    use_filters = TRUE,
+    use_compact_mode = TRUE
+  )
+
+```
+
+## Values + Tables
+### Values {height="15%"}
+
+```{r}
+get_margin <- function(d) {
+  dems = pull(d, votes_Democrat_25) |> sum(na.rm = TRUE)
+  reps = pull(d, votes_Republican_25) |> sum(na.rm = TRUE)
+  others = pull(d, votes_Other_25) |> sum(na.rm = TRUE)
+
+  dem24 = pull(d, votes_potus_24_dem) |> sum(na.rm = TRUE)
+  tot24 = pull(d, votes_potus_24) |> sum(na.rm = TRUE)
+
+  m = round((dems / (dems + reps + others) - dem24 / tot24) * 100, 2)
+
+  if (m > 0) {
+    paste0("+", m, "%")
+  } else {
+    paste0(m, "%")
+  }
+}
+
+```
+
+```{r}
+#| content: valuebox
+#| title: Dem Margin (All Contested HOD)
+list(value = get_margin(data_hod))
+```
+
+```{r}
+#| content: valuebox
+#| title: Dem Margin ('Big')
+list(value = get_margin(filter(data_hod, district %in% contested_hod_big)))
+```
+
+```{r}
+#| content: valuebox
+#| title: Dem Margin ('Small')
+list(value = get_margin(filter(data_hod, district %in% contested_hod_small)))
+```
+
+### Charts {height="60%" .tabset}
+
+```{r}
+#| title: Swing vs '24 (All Contested)
+
+data_hod_base |>
+  filter(district %in% contested_hod) |>
+  mutate(
+    share_25_statehouse = votes_statehouse_25 / turnout,
+    share_24_potus = votes_potus_24_dem / votes_precFinal_24
+  ) |>
+  filter(party == "dem") |>
+  pmargins_hist(share_25_statehouse - share_24_potus) +
+  labs(
+    x = "Democratic Swing (2025 HOD - 2024 POTUS)"
+  ) +
+  theme_bw(base_size = 16) +
+  theme(
+    panel.spacing = unit(2, "lines")
+  )
+
+```
+
+```{r}
+#| title: Swing vs '24 ('Big')
+
+data_hod_base |>
+  filter(district %in% contested_hod_big) |>
+  mutate(
+    share_25_statehouse = votes_statehouse_25 / turnout,
+    share_24_potus = votes_potus_24_dem / votes_precFinal_24
+  ) |>
+  filter(party == "dem") |>
+  pmargins_hist(share_25_statehouse - share_24_potus) +
+  labs(
+    x = "Democratic Swing (2025 HOD - 2024 POTUS)"
+  ) +
+  theme_bw(base_size = 16) +
+  theme(
+    panel.spacing = unit(2, "lines")
+  )
+
+```
+
+```{r}
+#| title: Swing vs '24 ('Small')
+
+data_hod_base |>
+  filter(district %in% contested_hod_small) |>
+  mutate(
+    share_25_statehouse = votes_statehouse_25 / turnout,
+    share_24_potus = votes_potus_24_dem / votes_precFinal_24
+  ) |>
+  filter(party == "dem") |>
+  pmargins_hist(share_25_statehouse - share_24_potus) +
+  labs(
+    x = "Democratic Swing (2025 HOD - 2024 POTUS)"
+  ) +
+  theme_bw(base_size = 16) +
+  theme(
+    panel.spacing = unit(2, "lines")
+  )
+
 ```

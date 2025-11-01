@@ -309,7 +309,7 @@ upload_html <- function(path, state) {
     object = glue("{ELECTION_DATE}-{state}-G/model_{state}.html"), 
     bucket = PATH_CBS_S3, 
     multipart = TRUE,
-    headers = list("Content-Type" = "text/html")
+    headers = list("Content-Type" = "text/html", "Cache-Control" = "no-cache, max-age=0")
   )
 }
 
