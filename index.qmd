@@ -368,7 +368,7 @@ data_VA |>
 ```
 
 ```{r}
-#| title: Histogram-Margin
+#| title: Histogram-Gov Margin
 #| fig-width: 14
 
 data_VA |>
@@ -378,7 +378,23 @@ data_VA |>
   ) |>
   pmargins_hist(votes_governor_25_dem_precinct_total - votes_governor_25_rep_precinct_total) +
   labs(
-    x = "Governor Vote Margin (Dem - Rep)"
+    x = "Governor Vote Share Margin (Dem - Rep)"
+  )
+```
+
+```{r}
+#| title: Histogram-Gov vs. AG
+#| fig-width: 14
+
+data_VA |>
+  filter(obs > 0.25) |>
+  mutate(
+    gov_2p_demshare = votes_governor_25_dem_precinct_total / (votes_governor_25_dem_precinct_total + votes_governor_25_rep_precinct_total),
+    ag_2p_demshare = votes_attorneygeneral_25_dem_precinct_total / (votes_attorneygeneral_25_dem_precinct_total + votes_attorneygeneral_25_rep_precinct_total)
+  ) |>
+  pmargins_hist(gov_2p_demshare - ag_2p_demshare) +
+  labs(
+    x = "Spanberger−Jones Vote Share Difference"
   )
 ```
 
