@@ -11,7 +11,6 @@ suppressPackageStartupMessages({
   library(tarchetypes)
 })
 
-
 # Function to execute the R script
 execute_script <- function() {
   message(sprintf("%s: Running tar_make", format(Sys.time(), format="%Y-%m-%d %H:%M:%S")))
@@ -42,7 +41,7 @@ while (TRUE) {
   # (3) run git config --global http.followRedirects true
   git2r::add(path = "*")
   git2r::commit(message = glue::glue("latest pull {run_time}"))
-  git2r::push(credentials = git2r::cred_token())
+  git2r::push()
   
   Sys.sleep(60*5)
 }
