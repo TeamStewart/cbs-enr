@@ -28,8 +28,8 @@ suppressPackageStartupMessages({
 })
 
 data_VA = merge_data(
-  # data = tar_read(data_VA_NA),
-  data = read_csv(glue("{PATH_DROPBOX}/25_general/input_data/VA/test_files/VA_2025_11_03_23_58_00.csv")),
+  data = tar_read(data_VA_NA),
+  # data = read_csv(glue("{PATH_DROPBOX}/25_general/input_data/VA/test_files/VA_2025_11_03_23_58_00.csv")),
   history = tar_read(history_noimpute_VA_NA),
   office = c("Governor", "Attorney General", "Lt Governor"),
   impute = FALSE
@@ -37,8 +37,8 @@ data_VA = merge_data(
   add_obs("votes_governor_25_dem_precinct_total", "votes_potus_24_dem")
 
 timestamp_VA = tar_read(timestamp_VA_NA)
-dummy = tar_read(models_summary)
-dummy = tar_read(save_summaries)
+# dummy = tar_read(models_summary)
+# dummy = tar_read(save_summaries)
 dummy = tar_read(summary_VA_NA)
 
 model_summaries = map(
@@ -598,18 +598,6 @@ data_hod_base = merge_data(
     names_to = c("district", "party"),
     values_to = "votes_statehouse_25",
     values_drop_na = TRUE
-  ) |>
-  mutate(
-    ######
-    # !!! ADDS FAKE DATA FOR TESTING !!!
-    ######
-    turnout = votes_precFinal_24 * rnorm(n(), 0.7, 0.05) + rnorm(n(), 15, 50),
-    votes_statehouse_25 = case_when(
-      party == "dem" ~ votes_potus_24_dem * rnorm(n(), 0.7, 0.05) + rnorm(n(), 10, 50),
-      party == "rep" ~ votes_potus_24_rep * rnorm(n(), 0.7, 0.05) + rnorm(n(), 10, 50),
-      .default = abs(rnorm(n(), 10, 20))
-    )
-    ######
   )
 
 data_hod = data_hod_base |>
