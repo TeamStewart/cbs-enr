@@ -20,6 +20,8 @@ execute_script <- function() {
 
 # Main loop to schedule and execute the script every 4 minutes
 while (TRUE) {
+
+  start_time <- Sys.time()
   
   run_time <- format(Sys.time(), format="%Y-%m-%d %H:%M:%S") |> str_replace_all("-|:| ", "_")
   
@@ -42,6 +44,11 @@ while (TRUE) {
   git2r::add(path = "*")
   git2r::commit(message = glue::glue("latest pull {run_time}"))
   git2r::push()
+
+  print("Finished, waiting...")
   
-  Sys.sleep(60*5)
+  elapsed <- as.numeric(Sys.time() - start_time, units = "secs")
+  sleep_time <- max(0, 60*5 - elapsed)
+  
+  Sys.sleep(sleep_time)
 }
