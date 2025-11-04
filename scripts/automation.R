@@ -5,11 +5,12 @@
 ## Author:
 ##################################################
 
-library(tidyverse)
-library(targets)
-library(tarchetypes)
-library(lubridate)
-library(glue)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(targets)
+  library(tarchetypes)
+})
+
 
 # Function to execute the R script
 execute_script <- function() {
@@ -25,7 +26,7 @@ while (TRUE) {
   
   fs::dir_create("logs/")
   
-  con <- file(glue("logs/automation_{run_time}.log"))
+  con <- file(glue::glue("logs/automation_{run_time}.log"))
   sink(con, append=TRUE)
   sink(con, append=TRUE, type="message")
   
@@ -40,7 +41,7 @@ while (TRUE) {
   # (2) https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
   # (3) run git config --global http.followRedirects true
   git2r::add(path = "*")
-  git2r::commit(message = glue("latest pull {run_time}"))
+  git2r::commit(message = glue::glue("latest pull {run_time}"))
   git2r::push(credentials = git2r::cred_token())
   
   Sys.sleep(60*5)
