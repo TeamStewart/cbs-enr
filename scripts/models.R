@@ -303,3 +303,114 @@ save_modelsummary <- function(summary, state, county, timestamp) {
   dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries"))
   qs_save(summary, glue::glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries/summarymodel_{state}_{county}_{timestamp}.qs2"))
 }
+
+cory_modeling <- function(data, history, timestamp) {
+
+  cands = c(
+    spanberger = "Abigal Spanberger",
+    sears = "Winsome Earle-Sears"
+  )
+  level = 0.9999
+
+  # load data ------
+  d_live = fmt_wide(
+    data,
+    vote_col = precinct_total,
+    cand_col = candidate_name,
+    cand_spec = cands,
+    id_cols = c(jurisdiction, precinct_id, virtual_precinct, vote_mode)
+  )
+
+  stopifnot(nrow(d_live) == distinct(data, jurisdiction, precinct_id, vote_mode) |> tally())
+  stopifnot(all(names(cands) %in% names(d_live)))
+  stopifnot(all(d_live[c("spanberger", "sears")] >= 0))
+  stopifnot(all(d_live[c("spanberger", "sears")] <= 1))
+
+  d = enightmodels:::add_obs_any(d_live, total)
+  d = d |>
+    mutate(total = coalesce(total, 0)) |>
+    left_join(history, by = join_by(jurisdiction == county, precinct_id == precinct_25, vote_mode)) |> 
+    drop_na(votes_precFinal_24, votes_precFinal_21)
+
+  d_rep = d |>
+    mutate(n_obs = sum(obs == 1), n_total = n()) |>
+    filter(obs == 1) |>
+    summarize(
+      turn = sum(total),
+      n_obs = n_obs[1],
+      n_total = n_total[1],
+      across(all_of(names(cands)), ~ sum(.x * total) / turn)
+    )
+
+  # forecasting ---------
+  fit_forecast_nyc = function(data, formula, prior_n_turn = 0.5, prior_n_cands = 1.5, ...) {
+    forecast_prec(
+      data = data,
+      cands = names(cands),
+      turn = total,
+      obs = obs == 1,
+      ctrl_form = formula,
+      prior_turn = prior_turn,
+      prior_cands = c(prior_spanberger, prior_sears),
+      prior_n_turn = prior_n_turn,
+      prior_n_cands = prior_n_cands,
+      ...
+    )
+  }
+
+  m_simple_pres = d |>
+    mutate(
+      prior_turn = votes_precFinal_21,
+      prior_spanberger = votePct_potus_24_dem * 0.8,
+      prior_sears = votePct_potus_24_rep * 0.8
+    ) |>
+    fit_forecast_nyc(~ log_s(prior_turn) + votePct_potus_24_dem, draws = 500)
+
+  m_full = d |>
+    mutate(
+      prior_turn = votes_precFinal_21,
+      prior_spanberger = votePct_potus_24_dem * 0.8,
+      prior_sears = votePct_potus_24_rep * 0.8
+    ) |>
+    fit_forecast_nyc(
+      ~ log_s(votes_precFinal_21) +
+        log_s(votes_precFinal_24) +
+        log_s(n) +
+        p_age_18_29 +
+        p_age_65_up +
+        p_white_col +
+        p_white_noncol +
+        p_black_col +
+        p_black_noncol +
+        p_hisp +
+        p_noncol_male +
+        p_noncol_fem +
+        p_ind +
+        p_dem +
+        votePct_potus_24_dem,
+      draws = 500
+    )
+  forecasts = list(
+    simple_pres = forecast_package(m_simple_pres),
+    full = forecast_package(m_full),
+    level = level
+  )
+
+  to_prec_ct = function(x) {
+    x = round(mean(x$post_turn))
+    if_else(x == 0, 1, x)
+  }
+  forecast_prec = tibble(
+    jurisdiction = d$jurisdiction,
+    precinct_id = d$precinct_id,
+    vote_mode = d$vote_mode,
+    simple_pres = to_prec_ct(m_simple_pres),
+    full = to_prec_ct(m_full)
+  )
+
+  qs_save(forecast_prec, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries/corymodel_prec_{timestamp}.qs2"))
+  qs_save(forecasts, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries/corymodel_{timestamp}.qs2"))
+
+  return(forecasts$full$pred)
+
+}

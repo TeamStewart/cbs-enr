@@ -107,7 +107,7 @@ models <- tar_map(
       data_VA_NA, "VA", NA, timestamp_VA_NA, history_VA_NA, office = "Governor", 
       method = method, uncertainty = uncertainty, outcome = outcome, residualize = TRUE,
       subset = subset, covars = covars, weight_var = "turnout"
-    )),
+    ), error = "trim"),
     tar_target(summary, get_model_summary(model)),
     names = c(outcome, method, uncertainty, subset)
   )
@@ -131,5 +131,6 @@ list(
   ),
   tar_quarto(dashboard, "index.qmd", quiet = FALSE),
   tar_target(save_summaries, save_modelsummary(models_summary, "VA", NA, timestamp_VA_NA)),
+  tar_target(corymodel, cory_modeling(data_VA_NA, history_VA_NA, timestamp_VA_NA)),
   tar_target(upload, upload_html(dashboard[1], "VA"))
 )
