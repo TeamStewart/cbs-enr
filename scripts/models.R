@@ -130,7 +130,6 @@ run_model <- function(
       formula = form,
       data = train
     ) |>
-      # step_log(all_numeric_predictors(), offset = 0.01) |>
       step_dummy(all_nominal_predictors())
 
     # fit model

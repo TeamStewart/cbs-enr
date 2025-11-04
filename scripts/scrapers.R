@@ -94,7 +94,7 @@ scrape_ny <- function(state, county, path, timestamp) {
 
 ## Virginia
 scrape_va <- function(state, county, path, timestamp) {
-  return(read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/test_files/VA_2025_11_03_22_38_00.csv")))
+  # return(read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/test_files/VA_2025_11_03_22_38_00.csv")))
 
   # Download the raw json
   raw_file_path = glue('{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/{state}_{timestamp}.json')

@@ -96,7 +96,6 @@ models = tidyr::expand_grid(
     covars = list(c(c2, c1))
   ) |> 
   dplyr::select(-c1, -c2)
-  # tidyr::expand_grid(paths = tests)
 
 # ========================================
 ## PIPELINE
@@ -107,7 +106,7 @@ models <- tar_map(
       data_VA_NA, "VA", NA, timestamp_VA_NA, history_VA_NA, office = "Governor", 
       method = method, uncertainty = uncertainty, outcome = outcome, residualize = TRUE,
       subset = subset, covars = covars, weight_var = "turnout"
-    ), error = "trim"),
+    )),
     tar_target(summary, get_model_summary(model)),
     names = c(outcome, method, uncertainty, subset)
   )

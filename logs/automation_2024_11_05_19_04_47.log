@@ -1,439 +1,0 @@
-2024-11-05 19:04:47: Running tar_make
--\|/-\|/-\|/-\|/-\|/-\|/-\|/ℹ The googlesheets4 package is using a cached token for
-  'masonreece1317@gmail.com'.
--\✔ Reading from "CBS Utils".
-|✔ Range ''metadata''.
-/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|▶ dispatched target timestamp_PA_Allegheny
-/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|▶ dispatched target timestamp_PA_Delaware
-▶ dispatched target timestamp_MI_Oakland
-▶ dispatched target timestamp_PA_Philadelphia
-● completed target timestamp_PA_Allegheny [2.046 seconds, 58 bytes]
-/-\● completed target timestamp_PA_Delaware [2.078 seconds, 58 bytes]
-● completed target timestamp_MI_Oakland [2.078 seconds, 58 bytes]
-▶ dispatched target uploads
-▶ dispatched target timestamp_MI_Macomb
-▶ dispatched target timestamp_MI_Ingham
-● completed target timestamp_PA_Philadelphia [2.328 seconds, 58 bytes]
-● completed target timestamp_MI_Macomb [0.062 seconds, 58 bytes]
-▶ dispatched target timestamp_GA_NA
-▶ dispatched target timestamp_MI_Eaton
-● completed target timestamp_MI_Ingham [0.14 seconds, 58 bytes]
-▶ dispatched target timestamp_NC_NA
-● completed target timestamp_GA_NA [0.078 seconds, 58 bytes]
-|/-\|/-● completed target timestamp_MI_Eaton [0.078 seconds, 58 bytes]
-▶ dispatched target timestamp_AZ_Pima
-▶ dispatched target timestamp_AZ_Maricopa
-● completed target timestamp_NC_NA [0.125 seconds, 58 bytes]
-● completed target timestamp_AZ_Pima [0 seconds, 58 bytes]
-▶ dispatched target data_AZ_Pima
-● completed target timestamp_AZ_Maricopa [0.187 seconds, 58 bytes]
-● completed target data_AZ_Pima [1.203 seconds, 1.188 kilobytes]
-\|/-\|▶ dispatched target model_AZ_Pima
-● completed target uploads [1.984 seconds, 182 bytes]
-/-\|/▶ dispatched target tbl_cbs_AZ_Pima
-● completed target model_AZ_Pima [0.766 seconds, 22.094 kilobytes]
--\Error:
-! `everything()` must be used within a *selecting* function.
-ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
-  details.
-Backtrace:
-     ▆
-  1. ├─base::tryCatch(...)
-  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
-  3. │   ├─base (local) tryCatchOne(...)
-  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
-  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
-  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  8. ├─base::withCallingHandlers(...)
-  9. ├─base::saveRDS(...)
- 10. ├─base::do.call(...)
- 11. ├─base (local) `<fn>`(...)
- 12. ├─global `<fn>`(...)
- 13. │ ├─base::tryCatch(...)
- 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 17. │ ├─base::withCallingHandlers(...)
- 18. │ └─targets::tar_callr_inner_try(...)
- 19. │   ├─base::do.call(targets_function, targets_arguments)
- 20. │   └─targets (local) `<fn>`(...)
- 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
- 22. │       └─self$run_crew()
- 23. │         └─self$iterate()
- 24. │           └─self$conclude_worker_task()
- 25. │             ├─targets:::target_conclude(...)
- 26. │             └─targets:::target_conclude.tar_builder(...)
- 27. │               └─targets:::builder_ensure_object(target, "main")
- 28. │                 ├─base::tryCatch(...)
- 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 32. │                 └─targets|:::builder_update_object(target)
- 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
- 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
- 35. │                     ├─targets:::store_write_path(...)
- 36. │                     └─targets:::store_write_path.tar_qs(...)
- 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
- 38. └─tidyselect::everything()
- 39.   ├─vars %||% peek_vars(fn = "everything")
- 40.   └─tidyselect::peek_vars(fn = "everything")
- 41.     └─cli::cli_abort(...)
- 42.       └─rlang::abort(...)
-/Error:
-! `everything()` must be used within a *selecting* function.
-ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
-  details.
-Backtrace:
-     ▆
-  1. ├─base::tryCatch(...)
-  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
-  3. │   ├─base (local) tryCatchOne(...)
-  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
-  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
-  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  8. ├─base::withCallingHandlers(...)
-  9. ├─base::saveRDS(...)
- 10. ├─base::do.call(...)
- 11. ├─base (local) `<fn>`(...)
- 12. ├─global `<fn>`(...)
- 13. │ ├─base::tryCatch(...)
- 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 17. │ ├─base::withCallingHandlers(...)
- 18. │ └─targets::tar_callr_inner_try(...)
- 19. │   ├─base::do.call(targets_function, targets_arguments)
- 20. │   └─targets (local) `<fn>`(...)
- 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
- 22. │       └─self$run_crew()
- 23. │         └─self$iterate()
- 24. │           └─self$conclude_worker_task()
- 25. │             ├─targets:::target_conclude(...)
- 26. │             └─targets:::target_conclude.tar_builder(...)
- 27. │               └─targets:::builder_ensure_object(target, "main")
- 28. │                 ├─base::tryCatch(...)
- 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 32. │                 └─targets-:::builder_update_object(target)
- 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
- 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
- 35. │                     ├─targets:::store_write_path(...)
- 36. │                     └─targets:::store_write_path.tar_qs(...)
- 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
- 38. └─tidyselect::everything()
- 39.   ├─vars %||% peek_vars(fn = "everything")
- 40.   └─tidyselect::peek_vars(fn = "everything")
- 41.     └─cli::cli_abort(...)
- 42.       └─rlang::abort(...)
-\Error:
-! `everything()` must be used within a *selecting* function.
-ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
-  details.
-Backtrace:
-     ▆
-  1. ├─base::tryCatch(...)
-  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
-  3. │   ├─base (local) tryCatchOne(...)
-  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
-  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
-  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  8. ├─base::withCallingHandlers(...)
-  9. ├─base::saveRDS(...)
- 10. ├─base::do.call(...)
- 11. ├─base (local) `<fn>`(...)
- 12. ├─global `<fn>`(...)
- 13. │ ├─base::tryCatch(...)
- 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 17. │ ├─base::withCallingHandlers(...)
- 18. │ └─targets::tar_callr_inner_try(...)
- 19. │   ├─base::do.call(targets_function, targets_arguments)
- 20. │   └─targets (local) `<fn>`(...)
- 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
- 22. │       └─self$run_crew()
- 23. │         └─self$iterate()
- 24. │           └─self$conclude_worker_task()
- 25. │             ├─targets:::target_conclude(...)
- 26. │             └─targets:::target_conclude.tar_builder(...)
- 27. │               └─targets:::builder_ensure_object(target, "main")
- 28. │                 ├─base::tryCatch(...)
- 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 32. │                 └─targetsError: object 'votes_total_24' not found
-|:::builder_update_object(target)
- 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
- 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
- 35. │                     ├─targets:::store_write_path(...)
- 36. │                     └─targets:::store_write_path.tar_qs(...)
- 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
- 38. └─tidyselect::everything()
- 39.   ├─vars %||% peek_vars(fn = "everything")
- 40.   └─tidyselect::peek_vars(fn = "everything")
- 41.     └─cli::cli_abort(...)
- 42.       └─rlang::abort(...)
-/Error:
-! `everything()` must be used within a *selecting* function.
-ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
-  details.
-Backtrace:
-     ▆
-  1. ├─base::tryCatch(...)
-  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
-  3. │   ├─base (local) tryCatchOne(...)
-  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
-  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
-  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  8. ├─base::withCallingHandlers(...)
-  9. ├─base::saveRDS(...)
- 10. ├─base::do.call(...)
- 11. ├─base (local) `<fn>`(...)
- 12. ├─global `<fn>`(...)
- 13. │ ├─base::tryCatch(...)
- 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 17. │ ├─base::withCallingHandlers(...)
- 18. │ └─targets::tar_callr_inner_try(...)
- 19. │   ├─base::do.call(targets_function, targets_arguments)
- 20. │   └─targets (local) `<fn>`(...)
- 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
- 22. │       └─self$run_crew()
- 23. │         └─self$iterate()
- 24. │           └─self$conclude_worker_task()
- 25. │             ├─targets:::target_conclude(...)
- 26. │             └─targets:::target_conclude.tar_builder(...)
- 27. │               └─targets:::builder_ensure_object(target, "main")
- 28. │                 ├─base::tryCatch(...)
- 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 32. │                 └─targets-:::builder_update_object(target)
- 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
- 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
- 35. │                     ├─targets:::store_write_path(...)
- 36. │                     └─targets:::store_write_path.tar_qs(...)
- 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
- 38. └─tidyselect::everything()
- 39.   ├─vars %||% peek_vars(fn = "everything")
- 40.   └─tidyselect::peek_vars(fn = "everything")
- 41.     └─cli::cli_abort(...)
- 42.       └─rlang::abort(...)
-\▶ dispatched target tbl_county_AZ_Pima
-▶ dispatched target plot_margin2020_AZ_Pima
-▶ dispatched target plot_votesAll_AZ_Pima
-● completed target tbl_county_AZ_Pima [0.156 seconds, 7.882 kilobytes]
-|/▶ dispatched target plot_votesEDay_AZ_Pima
-● completed target plot_margin2020_AZ_Pima [0.422 seconds, 184.703 kilobytes]
-▶ dispatched target plot_voteShare_AZ_Pima
-● completed target plot_votesAll_AZ_Pima [0.531 seconds, 192.705 kilobytes]
-▶ dispatched target tbl_countyMode_AZ_Pima
-● completed target plot_votesEDay_AZ_Pima [0.172 seconds, 194.019 kilobytes]
-● completed target plot_voteShare_AZ_Pima [0.172 seconds, 196.245 kilobytes]
--Error:
-! `everything()` must be used within a *selecting* function.
-ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
-  details.
-Backtrace:
-     ▆
-  1. ├─base::tryCatch(...)
-  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
-  3. │   ├─base (local) tryCatchOne(...)
-  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
-  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
-  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  8. ├─base::withCallingHandlers(...)
-  9. ├─base::saveRDS(...)
- 10. ├─base::do.call(...)
- 11. ├─base (local) `<fn>`(...)
- 12. ├─global `<fn>`(...)
- 13. │ ├─base::tryCatch(...)
- 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 17. │ ├─base::withCallingHandlers(...)
- 18. │ └─targets::tar_callr_inner_try(...)
- 19. │   ├─base::do.call(targets_function, targets_arguments)
- 20. │   └─targets (local) `<fn>`(...)
- 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
- 22. │       └─self$run_crew()
- 23. │         └─self$iterate()
- 24. │           └─self$conclude_worker_task()
- 25. │             ├─targets:::target_conclude(...)
- 26. │             └─targets:::target_conclude.tar_builder(...)
- 27. │               └─targets:::builder_ensure_object(target, "main")
- 28. │                 ├─base::tryCatch(...)
- 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 32. │                 └─targets\:::builder_update_object(target)
- 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
- 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
- 35. │                     ├─targets:::store_write_path(...)
- 36. │                     └─targets:::store_write_path.tar_qs(...)
- 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
- 38. └─tidyselect::everything()
- 39.   ├─vars %||% peek_vars(fn = "everything")
- 40.   └─tidyselect::peek_vars(fn = "everything")
- 41.     └─cli::cli_abort(...)
- 42.       └─rlang::abort(...)
-|Error:
-! `everything()` must be used within a *selecting* function.
-ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
-  details.
-Backtrace:
-     ▆
-  1. ├─base::tryCatch(...)
-  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
-  3. │   ├─base (local) tryCatchOne(...)
-  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
-  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
-  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  8. ├─base::withCallingHandlers(...)
-  9. ├─base::saveRDS(...)
- 10. ├─base::do.call(...)
- 11. ├─base (local) `<fn>`(...)
- 12. ├─global `<fn>`(...)
- 13. │ ├─base::tryCatch(...)
- 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 17. │ ├─base::withCallingHandlers(...)
- 18. │ └─targets::tar_callr_inner_try(...)
- 19. │   ├─base::do.call(targets_function, targets_arguments)
- 20. │   └─targets (local) `<fn>`(...)
- 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
- 22. │       └─self$run_crew()
- 23. │         └─self$iterate()
- 24. │           └─self$conclude_worker_task()
- 25. │             ├─targets:::target_conclude(...)
- 26. │             └─targets:::target_conclude.tar_builder(...)
- 27. │               └─targets:::builder_ensure_object(target, "main")
- 28. │                 ├─base::tryCatch(...)
- 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 32. │                 └─targets/:::builder_update_object(target)
- 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
- 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
- 35. │                     ├─targets:::store_write_path(...)
- 36. │                     └─targets:::store_write_path.tar_qs(...)
- 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
- 38. └─tidyselect::everything()
- 39.   ├─vars %||% peek_vars(fn = "everything")
- 40.   └─tidyselect::peek_vars(fn = "everything")
- 41.     └─cli::cli_abort(...)
- 42.       └─rlang::abort(...)
--Error:
-! `everything()` must be used within a *selecting* function.
-ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
-  details.
-Backtrace:
-     ▆
-  1. ├─base::tryCatch(...)
-  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
-  3. │   ├─base (local) tryCatchOne(...)
-  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
-  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
-  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  8. ├─base::withCallingHandlers(...)
-  9. ├─base::saveRDS(...)
- 10. ├─base::do.call(...)
- 11. ├─base (local) `<fn>`(...)
- 12. ├─global `<fn>`(...)
- 13. │ ├─base::tryCatch(...)
- 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 17. │ ├─base::withCallingHandlers(...)
- 18. │ └─targets::tar_callr_inner_try(...)
- 19. │   ├─base::do.call(targets_function, targets_arguments)
- 20. │   └─targets (local) `<fn>`(...)
- 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
- 22. │       └─self$run_crew()
- 23. │         └─self$iterate()
- 24. │           └─self$conclude_worker_task()
- 25. │             ├─targets:::target_conclude(...)
- 26. │             └─targets:::target_conclude.tar_builder(...)
- 27. │               └─targets:::builder_ensure_object(target, "main")
- 28. │                 ├─base::tryCatch(...)
- 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 32. │                 └─targets\:::builder_update_object(target)
- 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
- 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
- 35. │                     ├─targets:::store_write_path(...)
- 36. │                     └─targets:::store_write_path.tar_qs(...)
- 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
- 38. └─tidyselect::everything()
- 39.   ├─vars %||% peek_vars(fn = "everything")
- 40.   └─tidyselect::peek_vars(fn = "everything")
- 41.     └─cli::cli_abort(...)
- 42.       └─rlang::abort(...)
-|Error: object 'votes_total_24' not found
-/Error:
-! `everything()` must be used within a *selecting* function.
-ℹ See <https://tidyselect.r-lib.org/reference/faq-selection-context.html> for
-  details.
-Backtrace:
-     ▆
-  1. ├─base::tryCatch(...)
-  2. │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
-  3. │   ├─base (local) tryCatchOne(...)
-  4. │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  5. │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
-  6. │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
-  7. │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
-  8. ├─base::withCallingHandlers(...)
-  9. ├─base::saveRDS(...)
- 10. ├─base::do.call(...)
- 11. ├─base (local) `<fn>`(...)
- 12. ├─global `<fn>`(...)
- 13. │ ├─base::tryCatch(...)
- 14. │ │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 15. │ │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 16. │ │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 17. │ ├─base::withCallingHandlers(...)
- 18. │ └─targets::tar_callr_inner_try(...)
- 19. │   ├─base::do.call(targets_function, targets_arguments)
- 20. │   └─targets (local) `<fn>`(...)
- 21. │     └─crew_init(pipeline = pipeline, meta = meta_init(path_store = path_store), ...
- 22. │       └─self$run_crew()
- 23. │         └─self$iterate()
- 24. │           └─self$conclude_worker_task()
- 25. │             ├─targets:::target_conclude(...)
- 26. │             └─targets:::target_conclude.tar_builder(...)
- 27. │               └─targets:::builder_ensure_object(target, "main")
- 28. │                 ├─base::tryCatch(...)
- 29. │                 │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
- 30. │                 │   └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
- 31. │                 │     └─base (local) doTryCatch(return(expr), name, parentenv, handler)
- 32. │                 └─targets-:::builder_update_object(target)
- 33. │                   ├─targets:::store_write_object(target$store, target$value$object)
- 34. │                   └─targets:::store_write_object.default(target$store, target$value$object)
- 35. │                     ├─targets:::store_write_path(...)
- 36. │                     └─targets:::store_write_path.tar_qs(...)
- 37. │                       └─qs::qsave(x = object, file = path, preset = preset)
- 38. └─tidyselect::everything()
- 39.   ├─vars %||% peek_vars(fn = "everything")
- 40.   └─tidyselect::peek_vars(fn = "everything")
- 41.     └─cli::cli_abort(...)
- 42.       └─rlang::abort(...)
-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/● completed target tbl_countyMode_AZ_Pima [0.297 seconds, 8.039 kilobytes]
-▶ dispatched target page_AZ_Pima
-● completed target page_AZ_Pima [9.875 seconds, 214.914 kilobytes]
--\● completed target tbl_cbs_AZ_Pima [4.797 seconds, 2.439 kilobytes]
-▶ ended pipeline [25.453 seconds]
-Warning message:
-1 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
- 

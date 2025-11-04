@@ -1,13 +1,0 @@
-2024-11-05 20:03:32: Running tar_make
--\|/-\|/-\|
--\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/▶ dispatched target timestamp_GA_NA
--\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/● completed target timestamp_GA_NA [1.922 seconds, 58 bytes]
--\|/▶ dispatched target data_GA_NA
-▶ recorded workspace data_GA_NA
--Error: invalid 'description' argument
-
-\|/✖ errored target data_GA_NA
--✖ errored pipeline [9.938 seconds]
-\Warning message:
-|1 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
-/- 

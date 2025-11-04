@@ -14,7 +14,7 @@ library(glue)
 # Function to execute the R script
 execute_script <- function() {
   message(sprintf("%s: Running tar_make", format(Sys.time(), format="%Y-%m-%d %H:%M:%S")))
-  # Use the system function to execute the R scrip
+  # Use the system function to execute the R script
   tar_make()
 }
 
@@ -43,5 +43,5 @@ while (TRUE) {
   git2r::commit(message = glue("latest pull {run_time}"))
   git2r::push(credentials = git2r::cred_token())
   
-  Sys.sleep(60*60)
+  Sys.sleep(60*5)
 }

@@ -1,9 +1,0 @@
-2024-11-05 20:06:06: Running tar_make
-▶ dispatched target timestamp_MI_Eaton
-▶ dispatched target timestamp_AZ_Maricopa
-▶ dispatched target timestamp_GA_NA
-▶ dispatched target timestamp_PA_Philadelphia
-✔ skipped target page_AZ_Pima
-● completed target timestamp_MI_Eaton [2.75 seconds, 58 bytes]
-
-Execution halted
