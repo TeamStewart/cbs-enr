@@ -39,9 +39,6 @@ get_data <- function(state, county, timestamp, path = NULL) {
     "NY" = scrape_ny(state, county, path, timestamp)
   )
 
-  # f = get(paste0("scrape_", tolower(state)))
-  # d = f(state, county, path, timestamp)
-
   # Upstream fix to precinct_total
   d$precinct_total <- as.numeric(d$precinct_total)
 
@@ -293,8 +290,8 @@ create_table_cbs <- function(data, state, county, timestamp, upload = FALSE) {
 
     #### Upload to Google Drive ####
     drive_put(
-      media = "../CBS-MIT Election Data/25_general/input_data/NY/NY_test_file.csv",
-      # media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"),
+      # media = "../CBS-MIT Election Data/25_general/input_data/NY/NY_test_file.csv",
+      media = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean/{local_file_name}_latest.csv"),
       path = PATH_GDRIVE,
       name = glue("{local_file_name}_results.csv")
     )

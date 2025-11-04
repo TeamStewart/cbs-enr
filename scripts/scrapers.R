@@ -94,7 +94,7 @@ scrape_ny <- function(state, county, path, timestamp) {
 
 ## Virginia
 scrape_va <- function(state, county, path, timestamp) {
-  # return(read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/test_files/VA_2025_11_03_22_38_00.csv")))
+  return(read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/test_files/VA_2025_11_03_22_38_00.csv")))
 
   # Download the raw json
   raw_file_path = glue('{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw/{state}_{timestamp}.json')
@@ -114,7 +114,8 @@ scrape_va <- function(state, county, path, timestamp) {
       items,
       race_id = "id",
       race_name = "name",
-      options = "ballotOptions"
+      options = "ballotOptions",
+      magnitude = "voteFor"
     ) |>
     select(-items) |> 
     unnest_longer(options) |>
@@ -131,7 +132,13 @@ scrape_va <- function(state, county, path, timestamp) {
       precinct_id = "name",
       groupResults = "groupResults",
       virtual_precinct_pct = "isVirtual",
-      precinct_total_pct = "voteCount"
+      precinct_total_pct = "voteCount",
+      # progress, from the 2024 Georgia file, can take on the following values:
+      # Not Reported
+      # Fully Reported
+      # Election Night Complete
+      # Partially Reported
+      progress = "reportingStatus"
     ) |>
     mutate(
       groupResults = case_when(
@@ -194,8 +201,10 @@ scrape_va <- function(state, county, path, timestamp) {
       race_name,
       candidate_name,
       candidate_party,
+      magnitude,
       jurisdiction,
       precinct_id,
+      progress,
       virtual_precinct,
       timestamp,
       vote_mode,

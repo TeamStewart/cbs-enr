@@ -58,15 +58,6 @@ VA_model_summaries = model_summaries |>
 VA_result_summaries = read_csv(
   list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), pattern = "summarylive_.*?$", full.names = TRUE)
 )
-  # summarise(
-  #   turnout = sum(precinct_total, na.rm = TRUE),
-  #   votes_governor_25_dem_precinct_total = sum(precinct_total[candidate_party == 'Democrat'], na.rm = TRUE),
-  #   votes_governor_25_dem_share = votes_governor_25_dem_precinct_total / turnout,
-  #   votes_governor_25_rep_precinct_total = sum(precinct_total[candidate_party == 'Republican'], na.rm = TRUE),
-  #   votes_governor_25_rep_share = votes_governor_25_rep_precinct_total / turnout,
-  #   .by = c(timestamp, vote_mode)
-  # ) |>
-  # filter(vote_mode != 'Other')
 
 VA_21 <- read_csv(glue("{PATH_DROPBOX}/25_general/input_data/VA/VA_results_2021_long.csv")) |>
   filter(jurisdiction != 'TOTALS')
@@ -502,8 +493,8 @@ Plot = import("https://cdn.jsdelivr.net/npm/@observablehq/plot/+esm")
 
 prec = transpose(data);
 
-plot_cols = ['turnout','votes_governor_25_dem_precinct_total','votes_governor_25_rep_precinct_total','votes_potus_24_dem','votes_potus_24_rep','votes_precFinal_24','votePct_potus_24_dem','votes_governor_25_dem_share','votes_governor_25_rep_share','votePct_potus_24_rep','votes_gov_21_dem','votes_gov_21_rep','votes_precFinal_21','votePct_gov_21_dem','votePct_gov_21_rep','n','male','fem','age_18_29','age_30_44','age_45_64','age_65_up','white','black','hisp','other','ind','dem','rep','noncol','col','white_noncol','black_noncol','hisp_noncol','other_noncol','white_col','black_col','hisp_col','other_col','white_male','black_male','hisp_male','other_male','white_fem','black_fem','hisp_fem','other_fem','noncol_male','col_male','noncol_fem','col_fem','vote20','reg20','elig20','vote21','vote22','reg22','elig22','vote24','reg24','elig24','p_male','p_fem','p_age_18_29','p_age_30_44','p_age_45_64','p_age_65_up','p_white','p_black','p_hisp','p_other','p_ind','p_dem','p_rep','p_noncol','p_col','p_white_noncol','p_black_noncol','p_hisp_noncol','p_other_noncol','p_white_col','p_black_col','p_hisp_col','p_other_col','p_white_male','p_black_male','p_hisp_male','p_other_male','p_white_fem','p_black_fem','p_hisp_fem','p_other_fem','p_noncol_male','p_col_male','p_noncol_fem','p_col_fem','total24','mail24','early24','eday24','harris24','trump24','p_harris24','p_trump24','p_mail24','p_early24','p_eday24','votes_turnout_21','polstratumID','geostratumID','cluster','cd','obs'];
-obs_cols = ["votes_governor_25_dem_precinct_total", "turnout", "votes_governor_25_rep_precinct_total"];
+plot_cols = ['turnout','votes_governor_25_dem_precinct_total','votes_governor_25_rep_precinct_total','votes_governor_25_dem_share','votes_governor_25_rep_share','votes_potus_24_dem','votes_potus_24_rep','votes_precFinal_24','votePct_potus_24_dem','votePct_potus_24_rep','votes_gov_21_dem','votes_gov_21_rep','votes_precFinal_21','votePct_gov_21_dem','votePct_gov_21_rep','n','male','fem','age_18_29','age_30_44','age_45_64','age_65_up','white','black','hisp','other','ind','dem','rep','noncol','col','white_noncol','black_noncol','hisp_noncol','other_noncol','white_col','black_col','hisp_col','other_col','white_male','black_male','hisp_male','other_male','white_fem','black_fem','hisp_fem','other_fem','noncol_male','col_male','noncol_fem','col_fem','vote20','reg20','elig20','vote21','vote22','reg22','elig22','vote24','reg24','elig24','p_male','p_fem','p_age_18_29','p_age_30_44','p_age_45_64','p_age_65_up','p_white','p_black','p_hisp','p_other','p_ind','p_dem','p_rep','p_noncol','p_col','p_white_noncol','p_black_noncol','p_hisp_noncol','p_other_noncol','p_white_col','p_black_col','p_hisp_col','p_other_col','p_white_male','p_black_male','p_hisp_male','p_other_male','p_white_fem','p_black_fem','p_hisp_fem','p_other_fem','p_noncol_male','p_col_male','p_noncol_fem','p_col_fem','total24','mail24','early24','eday24','harris24','trump24','p_harris24','p_trump24','p_mail24','p_early24','p_eday24','votes_turnout_21'];
+obs_cols = ["votes_governor_25_dem_precinct_total", "turnout", "votes_governor_25_rep_precinct_total",'votes_governor_25_dem_share','votes_governor_25_rep_share'];
 ```
 
 ```{ojs ctrl-prec}
