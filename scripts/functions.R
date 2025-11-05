@@ -317,10 +317,6 @@ upload_html <- function(path, state) {
 make_summary <- function(data, state, county, timestamp, history){
   fs::dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries"))
 
-  if (is.character(data)) {
-    data <- read_csv(data)
-  }
-
   merge_data(
     data = data,
     history = history,

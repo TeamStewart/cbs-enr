@@ -95,6 +95,9 @@ scrape_ny <- function(state, county, path, timestamp) {
       precinct_total = sum(precinct_total, na.rm=TRUE),
       .by = c(state, jurisdiction, precinct_id, ad, ed, race_name, candidate_name, candidate_party, vote_mode, pct_reported)
     ) |> 
+    filter(
+      ed != "Total"
+    ) |> 
     mutate(
       virtual_precinct = FALSE,
       timestamp = ymd_hms(.env$timestamp),

@@ -53,7 +53,7 @@ run_models <- function(
 }
 
 merge_data <- function(data, history, office, covariates, impute, impute_var) {
-  modes = filter(data, precinct_total > 0) |> distinct(vote_mode) |> pull()
+  # modes = filter(data, precinct_total > 0) |> distinct(vote_mode) |> pull()
   if (length(office) == 1) {
     office = c(office)
   }
