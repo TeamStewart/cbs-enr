@@ -53,11 +53,14 @@ plot_voteShare <- function(summaries, uncertainty = F){
 }
 
 plot_voteCount_byMode <- function(summaries, uncertainty = FALSE) {
-  p = summaries(
+  p = summaries |> 
     mutate(
-      outcome = ifelse(outcome == "Provisional", "Absentee/Mail", outcome)
-    )
-  ) |> 
+      vote_mode = ifelse(vote_mode == "Provisional", "Absentee/Mail", vote_mode)
+    ) |> 
+    summarize(
+      across(matches("^(estimate|lower|upper)$"), sum),
+      .by = c(outcome, timestamp, vote_mode)
+    ) |> 
     ggplot(aes(x = timestamp, y = estimate, color = outcome, fill = outcome))
 
   if (uncertainty) {
