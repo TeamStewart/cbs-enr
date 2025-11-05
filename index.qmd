@@ -157,19 +157,21 @@ list(
 #| title: Total Votes
 #| fig-width: 14
 
-total = VA_result_summaries |>
+d1 = VA_result_summaries |>
   summarize(
     turnout = sum(turnout, na.rm = TRUE),
     .by = timestamp
   ) |>
-  mutate(vote_mode = 'Total') |>
+  mutate(vote_mode = 'Total')
+
+total = d1 |>
   ggplot(aes(x = timestamp, y = turnout)) +
   geom_point(alpha = 0.6, size = 0.95) +
   geom_line() +
   facet_wrap(~vote_mode) +
   theme_bw(base_size = 24) +
   scale_x_datetime(
-    date_breaks = smart_datetime_axis(d$timestamp),
+    date_breaks = smart_datetime_axis(d1$timestamp),
     labels = minimal_datetime_labels
   ) +
   scale_y_continuous(
@@ -181,15 +183,17 @@ total = VA_result_summaries |>
     y = "Votes"
   )
 
-mode = VA_result_summaries |>
-  filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day")) |>
+d2 = VA_result_summaries |>
+  filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day"))
+
+mode = d2 |>
   ggplot(aes(x = timestamp, y = turnout)) +
   geom_point(alpha = 0.6, size = 0.95) +
   geom_line() +
   facet_wrap(~vote_mode) +
   theme_bw(base_size = 24) +
   scale_x_datetime(
-    date_breaks = smart_datetime_axis(d$timestamp),
+    date_breaks = smart_datetime_axis(d2$timestamp),
     labels = minimal_datetime_labels
   ) +
   scale_y_continuous(
