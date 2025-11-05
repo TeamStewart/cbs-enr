@@ -11,6 +11,7 @@ plot_voteShare <- function(summaries, uncertainty = F){
         TRUE ~ NA_character_
       )
     ) |>
+    filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day")) |> 
     ggplot(aes(x = timestamp, y = estimate, color = party, fill = party))
 
   if (uncertainty) {
