@@ -21,6 +21,8 @@ execute_script <- function() {
 # Main loop to schedule and execute the script every 4 minutes
 while (TRUE) {
 
+  print("Running...")
+
   start_time <- Sys.time()
   
   run_time <- format(Sys.time(), format="%Y-%m-%d %H:%M:%S") |> str_replace_all("-|:| ", "_")
