@@ -37,23 +37,6 @@ corymodel|stem||7f8beedb0a334cd9|e6716f49cb64b4d2|-1238459702||t20396.898427109s
 data_NY_NA|stem|a69c3e82af7f1270|951747bce37b82c6|458746a7cacc6760|-1868622413||t20397.2345954986s|s79726b|79726|rds|local|vector|||13.709|Detected an unexpected many-to-many relationship between `x` and `y`. ℹ Row 9261 of `x` matches multiple rows in `y`. ℹ Row 48 of `y` matches multiple rows in `x`. ℹ If a many-to-many relationship is expected, set `relationship =   'many-to-many'` to silence this warning.|
 summary_NY_NA|stem|d7634d342810459c|e2a03de7eb642363|caefdd71c4ad9ea4|-1114145308||t20397.2345970674s|s186b|186|rds|local|vector|||0.07||
 tbl_cbs_NY_NA|stem|b6b1f73504e03767|893d61f3d742493b|a78cb493863d5c11|-21894715||t20397.2363403541s|s142715b|142715|rds|local|vector|||13.752||
-summary_votes_governor_25_dem_share_lm_conformal_|stem|6c40d79610f5f79f|0d38ef38f0484d88|fb53a74c2e600ebe|1783442526||t20397.5819844054s|s505b|505|rds|local|vector|||0.003||
-summary_votes_governor_25_rep_share_lm_conformal_|stem|b3567275c63f1d8d|7a0b56a770b58ed6|4e9a0127ec610a84|-214377343||t20397.5820340378s|s505b|505|rds|local|vector|||0.003||
-summary_votes_governor_25_dem_precinct_total_lm_conformal_|stem|177460248e1e9374|f81d9bf2a211c02c|b0720f00197a73f8|-1487425619||t20397.5820809848s|s507b|507|rds|local|vector|||0.003||
-summary_votes_governor_25_rep_precinct_total_lm_conformal_|stem|e71f59abd3a1385e|d3644b0642641648|450b0f16db4bbd87|1259632763||t20397.5821277586s|s509b|509|rds|local|vector|||0.003||
-summary_votes_governor_25_rep_precinct_total_lm_conformal__1|stem|49e33e59e7177c5f|0e16c861a8477e1a|23236cf915c820c9|-1488307391||t20397.5821878062s|s613b|613|rds|local|vector|||0.002||
-summary_votes_governor_25_dem_precinct_total_lm_conformal__1|stem|a2e763e2078d9706|1e7add056b0ea414|b56244fb281afd66|-697658990||t20397.5822496892s|s607b|607|rds|local|vector|||0.003||
-summary_votes_governor_25_rep_share_lm_conformal__1|stem|f686aac71092f836|7d6fedc2cdc3cb1e|8435ee27d0b7a432|-169527301||t20397.5823045519s|s609b|609|rds|local|vector|||0.002||
-summary_votes_governor_25_rep_precinct_total_lm_conformal__2|stem|65be987a1d5d7e34|a64ba9fe8a7b291b|c403f09c7ac762d3|-1636712180||t20397.5830216303s|s517b|517|rds|local|vector|||0.036||
-summary_votes_governor_25_dem_precinct_total_lm_conformal__2|stem|54ed8b00acdad475|596b2ffe9d8773be|f8cf6c09bfe73fcc|131917924||t20397.583069189s|s512b|512|rds|local|vector|||0.003||
-summary_votes_governor_25_rep_share_lm_conformal__2|stem|2887ad999acbf19b|5b2a709fca6decfd|1a7d2b2e8078780c|1385482085||t20397.5831146344s|s513b|513|rds|local|vector|||0.003||
-summary_turnout_lm_conformal__1|stem|177a841cb5335d16|3a1833ddd5b9ab8f|cd45a18b43cbe265|181908449||t20397.5831681198s|s579b|579|rds|local|vector|||0.002||
-summary_turnout_lm_conformal__2|stem|76d06b5d23fb5390|c785529624311c9e|017f9a7cbb3be938|574722896||t20397.5832123393s|s490b|490|rds|local|vector|||0.003||
-summary_votes_governor_25_dem_share_lm_conformal__1|stem|4f12d0d1d55cd43d|5187caf94f5db945|7a52001b61e85f51|-1101580879||t20397.5832694387s|s599b|599|rds|local|vector|||0.003||
-summary_votes_governor_25_dem_share_lm_conformal__2|stem|83011e5697922457|85888ae7ee8f3431|932f54f3f11b22ec|-981228370||t20397.5833165284s|s514b|514|rds|local|vector|||0.003||
-summary_turnout_lm_conformal_|stem|18ed47d8e0b1f992|c01c05bb66c67fb4|eff092e00d9fec36|935931155||t20397.5833605621s|s483b|483|rds|local|vector|||0.003||
-models_summary|stem|66a544bf10179ed7|7a15781699e47f81|f88256dfdf1f61b1|642717855||t20397.5833607291s|s2207b|2207|rds|local|vector|||0||
-upload|stem|b41efa4c1ba9a3e7|657d1abb898f01fe|f0a6e751baf68449|1202071109||t20397.5836872212s|s46b|46|rds|local|vector|||8.564||
 plot_voteCount_byMode|function|d3b6af191b6660db
 get_timestamp|function|fea1cdc4c053c36f
 impute_missing|function|d41e78fb145b142a
@@ -63,7 +46,7 @@ pmargins_hist|function|1ea92405d01fe2e4
 add_obs|function|8e243daf83ff77cc
 add_resid|function|8c34556aafe3cb01
 run_model|function|24a35972d15b2de3
-.Random.seed|object|d62f4360a73bae06
+.Random.seed|object|71ddc5130bc1b338
 scrape_va|function|ceabb58b1c38a219
 tests|object|7a6570e0655ea87f
 cory_modeling|function|d3680d4d0b7112c5
@@ -91,25 +74,42 @@ create_table_cbs|function|4c8da834a7292c56
 get_data|function|fa7d549b28055e5f
 run_models|function|dcffb0a1a7f42456
 make_summary|function|d270cfb6e2bb8c9e
-timestamp_VA_NA|stem|eb867785f3e6c4bc|51ff6cae3c13cf47|2b068e949a6b8a99|-180273558||t20397.5887161848s|s68b|68|rds|local|vector|||1.751||
-data_VA_NA|stem|458c7b7afbed7c0c|f2857c088e5d305b|f62f04ac014c8ab6|-255181940||t20397.581933477s||672415|rds|local|vector|||6.461||parse error: premature EOF                                                              (right here) ------^
-model_votes_governor_25_dem_share_lm_conformal_|stem|0227200f9df53e85|dc8d3d604ad97758|df73fe31d6fbf4f9|-690582729||t20397.5819801153s||22548012|rds|local|vector|||0.003||could not load dependency data_VA_NA of target model_votes_governor_25_dem_share_lm_conformal_. invalid 'description' argument
-timestamp_NY_NA|stem|35296bf563e74057|fb6c6e0423986fe3|2b068e949a6b8a99|438131462||t20397.5887936275s|s71b|71|rds|local|vector|||0.125||
-model_votes_governor_25_rep_share_lm_conformal_|stem|8aec361eccababbb|c365739803a6f460|df73fe31d6fbf4f9|1436304784||t20397.5820313606s||22404636|rds|local|vector|||0.003||could not load dependency data_VA_NA of target model_votes_governor_25_rep_share_lm_conformal_. invalid 'description' argument
-model_votes_governor_25_dem_precinct_total_lm_conformal_|stem|f498d29e38bcb51d|5954619c702c126e|df73fe31d6fbf4f9|2090559164||t20397.5820766829s||21560109|rds|local|vector|||0.003||could not load dependency data_VA_NA of target model_votes_governor_25_dem_precinct_total_lm_conformal_. invalid 'description' argument
-model_votes_governor_25_rep_precinct_total_lm_conformal_|stem|54d2317f3e46a826|8bdafa348cd841d4|df73fe31d6fbf4f9|1772301382||t20397.5821248588s||21361389|rds|local|vector|||0.003||could not load dependency data_VA_NA of target model_votes_governor_25_rep_precinct_total_lm_conformal_. invalid 'description' argument
-model_votes_governor_25_rep_precinct_total_lm_conformal__1|stem|40ecbcba9d0ac3ff|c1b7d751d97911e0|df73fe31d6fbf4f9|-2005422353||t20397.5821828141s||33935588|rds|local|vector|||0.003||could not load dependency data_VA_NA of target model_votes_governor_25_rep_precinct_total_lm_conformal__1. invalid 'description' argument
-summary_VA_NA|stem|94f63398b305ce98|46aa3dcac802f6d5|fbf06a7f45301c20|-1307811157||t20397.5821940201s||656|rds|local|vector|||0.003||could not load dependency data_VA_NA of target summary_VA_NA. invalid 'description' argument
-model_votes_governor_25_dem_precinct_total_lm_conformal__1|stem|d064ca5ce1007bc1|56a233300b017a06|df73fe31d6fbf4f9|1200387463||t20397.5822463244s||34228662|rds|local|vector|||0.003||could not load dependency data_VA_NA of target model_votes_governor_25_dem_precinct_total_lm_conformal__1. invalid 'description' argument
-model_votes_governor_25_rep_share_lm_conformal__1|stem|ce129ae3c91187e7|3d0540775a4504d3|df73fe31d6fbf4f9|-1131571894||t20397.5823010617s||34912648|rds|local|vector|||0.002||could not load dependency data_VA_NA of target model_votes_governor_25_rep_share_lm_conformal__1. invalid 'description' argument
-tbl_cbs_VA_NA|stem|5751ef40ff952c81|ef9939d26a44ae6e|a6807d59874dd6e4|1531629469||t20397.5829745676s||186502|rds|local|vector|||0.002||could not load dependency data_VA_NA of target tbl_cbs_VA_NA. invalid 'description' argument
-model_votes_governor_25_rep_precinct_total_lm_conformal__2|stem|4018a84bcc42b8ab|99f69ef3f052b9e8|df73fe31d6fbf4f9|1067943428||t20397.5830184242s||22685733|rds|local|vector|||0.002||could not load dependency data_VA_NA of target model_votes_governor_25_rep_precinct_total_lm_conformal__2. invalid 'description' argument
-model_votes_governor_25_dem_precinct_total_lm_conformal__2|stem|4630c082b48e2e34|b4e81f64c6ce673b|df73fe31d6fbf4f9|-1480420415||t20397.5830663819s||22909511|rds|local|vector|||0.003||could not load dependency data_VA_NA of target model_votes_governor_25_dem_precinct_total_lm_conformal__2. invalid 'description' argument
-model_votes_governor_25_rep_share_lm_conformal__2|stem|eaeb85e0a0a96abc|02599f4bf6f227b9|df73fe31d6fbf4f9|901339269||t20397.5831118376s||23607094|rds|local|vector|||0.002||could not load dependency data_VA_NA of target model_votes_governor_25_rep_share_lm_conformal__2. invalid 'description' argument
-model_turnout_lm_conformal__1|stem|1fb0cda0acfdced2|4d04dce807ef6423|df73fe31d6fbf4f9|-603419581||t20397.5831647759s||34250052|rds|local|vector|||0.003||could not load dependency data_VA_NA of target model_turnout_lm_conformal__1. invalid 'description' argument
-model_turnout_lm_conformal__2|stem|ea240ae691bd7ca0|bff2b506d2cbc641|df73fe31d6fbf4f9|419144925||t20397.5832095548s||22807611|rds|local|vector|||0.002||could not load dependency data_VA_NA of target model_turnout_lm_conformal__2. invalid 'description' argument
-model_votes_governor_25_dem_share_lm_conformal__1|stem|de078ccba4777ea6|bab691ded530db78|df73fe31d6fbf4f9|1314156408||t20397.5832637573s||35078238|rds|local|vector|||0.002||could not load dependency data_VA_NA of target model_votes_governor_25_dem_share_lm_conformal__1. invalid 'description' argument
-model_votes_governor_25_dem_share_lm_conformal__2|stem|ee7f6fb259b4e931|03c47c96e65d33fe|df73fe31d6fbf4f9|1074378172||t20397.5833117703s||23764787|rds|local|vector|||0.002||could not load dependency data_VA_NA of target model_votes_governor_25_dem_share_lm_conformal__2. invalid 'description' argument
-model_turnout_lm_conformal_|stem|04d085390811e5cd|9f80fa4ec321ca5e|df73fe31d6fbf4f9|123680153||t20397.5833578253s||21662847|rds|local|vector|||0.003||could not load dependency data_VA_NA of target model_turnout_lm_conformal_. invalid 'description' argument
-save_summaries|stem|86bb0c9a7a8b25a0|c0dc2a65ea8a4713|e69f2a7345127015|-834957807||t20397.5888033994s|s43b|43|rds|local|vector|||0.001||
-dashboard|stem|c36092058f985ba9|3520596f225c7319|ecfe9f4867d28ae1|2016893827|index.html*index.qmd|t20397.5835862872s||16790803|file|local|vector|||0.025||could not load dependency summary_VA_NA of target dashboard. invalid 'description' argument
+timestamp_VA_NA|stem|54ffc21264409ca0|51ff6cae3c13cf47|2b068e949a6b8a99|-180273558||t20397.6054184076s|s71b|71|rds|local|vector|||3.126||
+data_VA_NA|stem|3a90d1f29c85982b|f2857c088e5d305b|dfe736e46ce9b91b|-255181940||t20397.6056969911s|s673197b|673197|rds|local|vector|||23.702||
+model_votes_governor_25_dem_share_lm_conformal_|stem|c19f15b218f7e1d7|dc8d3d604ad97758|24d8ced787d5d0d9|-690582729||t20397.6057457375s|s22581691b|22581691|rds|local|vector|||2.338||
+summary_votes_governor_25_dem_share_lm_conformal_|stem|caaf0e46bb8fbe00|0d38ef38f0484d88|319ccb00fa903386|1783442526||t20397.6057502224s|s505b|505|rds|local|vector|||0.003||
+timestamp_NY_NA|stem|35296bf563e74057|fb6c6e0423986fe3|2b068e949a6b8a99|438131462||t20397.6057523418s|s71b|71|rds|local|vector|||0.173||
+model_votes_governor_25_rep_share_lm_conformal_|stem|9f67f46371654699|c365739803a6f460|24d8ced787d5d0d9|1436304784||t20397.6058011777s|s22453525b|22453525|rds|local|vector|||2.349||
+summary_votes_governor_25_rep_share_lm_conformal_|stem|1ced9a196fd21b4f|7a0b56a770b58ed6|9a69042eee141e53|-214377343||t20397.6058041029s|s506b|506|rds|local|vector|||0.003||
+model_votes_governor_25_dem_precinct_total_lm_conformal_|stem|26e0cedf8cf37f75|5954619c702c126e|24d8ced787d5d0d9|2090559164||t20397.6058500129s|s21627108b|21627108|rds|local|vector|||1.924||
+summary_votes_governor_25_dem_precinct_total_lm_conformal_|stem|2ff50f4fc1931240|f81d9bf2a211c02c|7abfc41beaa472e9|-1487425619||t20397.605854396s|s510b|510|rds|local|vector|||0.003||
+model_votes_governor_25_rep_precinct_total_lm_conformal_|stem|6c79137ea1094d64|8bdafa348cd841d4|24d8ced787d5d0d9|1772301382||t20397.6059049143s|s21389595b|21389595|rds|local|vector|||2.559||
+summary_votes_governor_25_rep_precinct_total_lm_conformal_|stem|924d830753828d0c|d3644b0642641648|afd812db7ff6276a|1259632763||t20397.6059076203s|s510b|510|rds|local|vector|||0.003||
+model_votes_governor_25_rep_precinct_total_lm_conformal__1|stem|ef9930c37cd0f91c|c1b7d751d97911e0|24d8ced787d5d0d9|-2005422353||t20397.6059601011s|s34001296b|34001296|rds|local|vector|||2.194||
+summary_votes_governor_25_rep_precinct_total_lm_conformal__1|stem|04a3825da4315a1c|0e16c861a8477e1a|4aa77c2d6a75e857|-1488307391||t20397.6059653524s|s612b|612|rds|local|vector|||0.003||
+summary_VA_NA|stem|0ea671ed4e9dd07b|46aa3dcac802f6d5|947d25c796c3af3e|-1307811157||t20397.6059715851s|s658b|658|rds|local|vector|||0.293||
+model_votes_governor_25_dem_precinct_total_lm_conformal__1|stem|a2539122677a227f|56a233300b017a06|24d8ced787d5d0d9|1200387463||t20397.6060230208s|s34289872b|34289872|rds|local|vector|||2.228||
+summary_votes_governor_25_dem_precinct_total_lm_conformal__1|stem|7234349b3e77d96a|1e7add056b0ea414|bc8a95ad8d1d4fcd|-697658990||t20397.6060264389s|s610b|610|rds|local|vector|||0.003||
+model_votes_governor_25_rep_share_lm_conformal__1|stem|be9953b8110746d0|3d0540775a4504d3|24d8ced787d5d0d9|-1131571894||t20397.6060776839s|s34998364b|34998364|rds|local|vector|||2.257||
+summary_votes_governor_25_rep_share_lm_conformal__1|stem|87d04cbeaa061bea|7d6fedc2cdc3cb1e|005842abc8c240e8|-169527301||t20397.606081133s|s600b|600|rds|local|vector|||0.003||
+tbl_cbs_VA_NA|stem|216a23feaed1e20f|ef9939d26a44ae6e|fb38f9f78e916b12|1531629469||t20397.6063256148s|s186755b|186755|rds|local|vector|||20.832||
+model_votes_governor_25_rep_precinct_total_lm_conformal__2|stem|909f0d04eaa648a0|99f69ef3f052b9e8|24d8ced787d5d0d9|1067943428||t20397.6063753251s|s22733359b|22733359|rds|local|vector|||2.453||
+summary_votes_governor_25_rep_precinct_total_lm_conformal__2|stem|78e825cb25d63849|a64ba9fe8a7b291b|7eda32ba2f234954|-1636712180||t20397.6063783487s|s518b|518|rds|local|vector|||0.011||
+model_votes_governor_25_dem_precinct_total_lm_conformal__2|stem|b3af199c8d3060ab|b4e81f64c6ce673b|24d8ced787d5d0d9|-1480420415||t20397.6064265343s|s22969428b|22969428|rds|local|vector|||2.062||
+summary_votes_governor_25_dem_precinct_total_lm_conformal__2|stem|7aacd8ec55a9a05c|596b2ffe9d8773be|e9c96392c6b2cebb|131917924||t20397.6064294072s|s517b|517|rds|local|vector|||0.003||
+model_votes_governor_25_rep_share_lm_conformal__2|stem|91b0020cbb5bb950|02599f4bf6f227b9|24d8ced787d5d0d9|901339269||t20397.6064726729s|s23659888b|23659888|rds|local|vector|||1.932||
+summary_votes_governor_25_rep_share_lm_conformal__2|stem|225fa5fdce6ef207|5b2a709fca6decfd|9698dd4d5554b030|1385482085||t20397.60647766s|s513b|513|rds|local|vector|||0.003||
+model_turnout_lm_conformal__1|stem|95858b7f7993bed8|4d04dce807ef6423|24d8ced787d5d0d9|-603419581||t20397.6065287468s|s34339959b|34339959|rds|local|vector|||2.242||
+summary_turnout_lm_conformal__1|stem|dfa0a3204a04a51f|3a1833ddd5b9ab8f|0a2538b51e09243c|181908449||t20397.6065341801s|s584b|584|rds|local|vector|||0.003||
+model_turnout_lm_conformal__2|stem|37a8197cbbdbe476|bff2b506d2cbc641|24d8ced787d5d0d9|419144925||t20397.6065780564s|s22846277b|22846277|rds|local|vector|||2.02||
+summary_turnout_lm_conformal__2|stem|4394151756cd5212|c785529624311c9e|8e1ed1c99eecee5f|574722896||t20397.6065807848s|s492b|492|rds|local|vector|||0.002||
+model_votes_governor_25_dem_share_lm_conformal__1|stem|1282b7029afdafc5|bab691ded530db78|24d8ced787d5d0d9|1314156408||t20397.6066290805s|s35157110b|35157110|rds|local|vector|||2.006||
+summary_votes_governor_25_dem_share_lm_conformal__1|stem|0ad198ee99c6c298|5187caf94f5db945|12da3a119eb1e064|-1101580879||t20397.6066326154s|s603b|603|rds|local|vector|||0.003||
+model_votes_governor_25_dem_share_lm_conformal__2|stem|77a798602cff478a|03c47c96e65d33fe|24d8ced787d5d0d9|1074378172||t20397.6066749564s|s23807272b|23807272|rds|local|vector|||1.818||
+summary_votes_governor_25_dem_share_lm_conformal__2|stem|148f57788efff3de|85888ae7ee8f3431|0eb24b48442cfa8b|-981228370||t20397.6066778781s|s514b|514|rds|local|vector|||0.003||
+model_turnout_lm_conformal_|stem|e5143a79e83ed3e6|9f80fa4ec321ca5e|24d8ced787d5d0d9|123680153||t20397.6067202987s|s21697238b|21697238|rds|local|vector|||1.935||
+summary_turnout_lm_conformal_|stem|c0ef292f4ea3f9bb|c01c05bb66c67fb4|2efd61846a2ca5e3|935931155||t20397.606723083s|s484b|484|rds|local|vector|||0.003||
+models_summary|stem|1740814219510e70|7a15781699e47f81|b7d38cb0c4e81dad|642717855||t20397.6067232483s|s2203b|2203|rds|local|vector|||0.001||
+save_summaries|stem|86bb0c9a7a8b25a0|c0dc2a65ea8a4713|e402677e87374513|-834957807||t20397.6067233701s|s43b|43|rds|local|vector|||0.001||
+dashboard|stem|b1353198810ac8a7|3520596f225c7319|8f02ef64a4d53655|2016893827|index.html*index.qmd|t20397.6069596172s|s16823814b|16823814|file|local|vector|||20.307||
+upload|stem|b41efa4c1ba9a3e7|657d1abb898f01fe|649c9f048776c4c7|1202071109||t20397.6069726826s|s46b|46|rds|local|vector|||0.968||
