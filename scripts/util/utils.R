@@ -62,6 +62,14 @@ impute_missing <- function(base, group = NULL, covars) {
 }
 
 minimal_datetime_labels <- function(breaks) {
+  print(breaks)
+  # Remove NA values
+  breaks <- breaks[!is.na(breaks)]
+  
+  if (length(breaks) == 0) {
+    return(character(0))
+  }
+
   labels <- character(length(breaks))
   prev_date <- as.Date("1900-01-01")
   prev_ampm <- ""
