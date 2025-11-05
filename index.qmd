@@ -62,7 +62,10 @@ VA_model_summaries = model_summaries |>
 VA_result_summaries = read_csv(
   list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), pattern = "summarylive_.*?$", full.names = TRUE)
 ) |> 
-  filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day"))
+  filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day")) |> 
+  mutate(
+    timestamp = with_tz(timestamp, tzone = "US/Eastern")
+  )
 
 VA_21 <- read_csv(glue("{PATH_DROPBOX}/25_general/input_data/VA/VA_results_2021_long.csv")) |>
   filter(jurisdiction != 'TOTALS')
