@@ -64,7 +64,7 @@ tests = list.files(
 )
 
 models = tidyr::expand_grid(
-  method = c("lm", "xgboost"),
+  method = c("lm"),
   uncertainty = "conformal",
   subset = c(''),
   outcome = c(
