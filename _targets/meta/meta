@@ -83,7 +83,7 @@ pmargins_hist|function|1ea92405d01fe2e4
 add_obs|function|8e243daf83ff77cc
 add_resid|function|8c34556aafe3cb01
 run_model|function|24a35972d15b2de3
-.Random.seed|object|cf9066cb8ee33322
+.Random.seed|object|a0da39af5b50f82e
 scrape_va|function|ceabb58b1c38a219
 tests|object|7a6570e0655ea87f
 cory_modeling|function|d3680d4d0b7112c5
@@ -111,5 +111,5 @@ create_table_cbs|function|4c8da834a7292c56
 get_data|function|fa7d549b28055e5f
 run_models|function|dcffb0a1a7f42456
 make_summary|function|d270cfb6e2bb8c9e
-timestamp_VA_NA|stem|e29eeba30698c3dc|51ff6cae3c13cf47|2b068e949a6b8a99|-180273558||t20397.5155190187s|s69b|69|rds|local|vector|||2.499||
-timestamp_NY_NA|stem|35296bf563e74057|fb6c6e0423986fe3|2b068e949a6b8a99|438131462||t20397.5155218076s|s71b|71|rds|local|vector|||0.198||
+timestamp_VA_NA|stem|e29eeba30698c3dc|51ff6cae3c13cf47|2b068e949a6b8a99|-180273558||t20397.5189728459s|s69b|69|rds|local|vector|||1.861||
+timestamp_NY_NA|stem|35296bf563e74057|fb6c6e0423986fe3|2b068e949a6b8a99|438131462||t20397.5189747385s|s71b|71|rds|local|vector|||0.118||
