@@ -47,7 +47,7 @@ tar_option_set(
     "enightmodels" # cory package
   ),
   error = "continue",
-  controller = crew::crew_controller_local(workers = 4)
+  controller = crew::crew_controller_local(workers = 1)
 )
 
 # get the metadata file, with the following structure

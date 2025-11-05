@@ -755,6 +755,7 @@ list(value = get_margin(filter(data_hod, district %in% contested_hod_small)))
 
 ```{r}
 #| title: Swing vs '24 (All Contested)
+#| fig-width: 14
 
 data_hod_base |>
   filter(district %in% contested_hod) |>
@@ -776,6 +777,7 @@ data_hod_base |>
 
 ```{r}
 #| title: Swing vs '24 ('Big')
+#| fig-width: 14
 
 data_hod_base |>
   filter(district %in% contested_hod_big) |>
@@ -797,6 +799,7 @@ data_hod_base |>
 
 ```{r}
 #| title: Swing vs '24 ('Small')
+#| fig-width: 14
 
 data_hod_base |>
   filter(district %in% contested_hod_small) |>
