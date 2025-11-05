@@ -130,6 +130,6 @@ list(
   ),
   tar_quarto(dashboard, "index.qmd", quiet = FALSE),
   tar_target(save_summaries, save_modelsummary(models_summary, "VA", NA, timestamp_VA_NA)),
-  tar_target(corymodel, cory_modeling(data_VA_NA, history_VA_NA, timestamp_VA_NA)),
+  # tar_target(corymodel, cory_modeling(data_VA_NA, history_VA_NA, timestamp_VA_NA)),
   tar_target(upload, upload_html(dashboard[1], "VA"))
 )
