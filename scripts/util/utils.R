@@ -84,7 +84,7 @@ minimal_datetime_labels <- function(breaks) {
   
   for (i in seq_along(valid_breaks)) {
     current_date <- as.Date(valid_breaks[i])
-    current_hour <- format(valid_breaks[i], "%I")
+    current_hour <- format(valid_breaks[i], "%I") |> as.numeric() |> as.character()
     current_ampm <- str_to_lower(format(valid_breaks[i], "%p"))
     
     parts <- c(character())
