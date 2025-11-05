@@ -1,0 +1,21 @@
+2025-11-04 21:18:40: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
++ timestamp_VA_NA dispatched
++ timestamp_NY_NA dispatched
+✔ timestamp_VA_NA completed [2.1s, 71 B]
++ data_VA_NA dispatched
+✔ timestamp_NY_NA completed [1.9s, 71 B]
++ data_NY_NA dispatched
+✖ data_NY_NA errored
+Error: When using the `~name` syntax, subsequent values must not have names.
+
++ summary_NY_NA dispatched
++ tbl_cbs_NY_NA dispatched
+✖ summary_NY_NA errored
+Error: could not load dependency data_NY_NA of target summary_NY_NA. invalid 'description' argument
+
+✖ tbl_cbs_NY_NA errored
+Error: could not load dependency data_NY_NA of target tbl_cbs_NY_NA. invalid 'description' argument
+
+
+Execution halted
