@@ -45,7 +45,7 @@ while (TRUE) {
   git2r::commit(message = glue::glue("latest pull {run_time}"))
   git2r::push()
 
-  print("Finished, waiting...")
+  print(glue::glue("Finished at {format(Sys.time(), format='%Y-%m-%d %H:%M:%S')}, waiting..."))
   
   elapsed <- as.numeric(Sys.time() - start_time, units = "secs")
   sleep_time <- max(0, 60*5 - elapsed)
