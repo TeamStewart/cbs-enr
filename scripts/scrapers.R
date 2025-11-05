@@ -94,6 +94,10 @@ scrape_ny <- function(state, county, path, timestamp) {
     summarize(
       precinct_total = sum(precinct_total, na.rm=TRUE),
       .by = c(state, jurisdiction, precinct_id, race_name, candidate_name, candidate_party, vote_mode)
+    ) |> 
+    mutate(
+      virtual_precinct = FALSE,
+      timestamp = .env$timestamp
     )
 }
 
