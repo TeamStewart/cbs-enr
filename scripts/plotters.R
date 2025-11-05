@@ -287,12 +287,12 @@ pmargins_hist <- function(merged, x) {
     ) +
     geom_histogram(bins = 30) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "red") +
-    geom_vline(xintercept = mean(x_vals), linetype = "dashed", color = "black") +
+    geom_vline(xintercept = mean(x_vals,na.rm=TRUE), linetype = "dashed", color = "black") +
     annotate(
       "label",
       x = mean(x_vals),
       y = Inf,
-      label = paste0("Mean: ", scales::label_percent(accuracy = 0.1, suffix = "pp")(mean(x_vals))),
+      label = paste0("Mean: ", scales::label_percent(accuracy = 0.1, suffix = "pp")(mean(x_vals,na.rm=TRUE))),
       vjust = 1.5,
       hjust = -0.08,
       fill = "#D9D9D9FF",

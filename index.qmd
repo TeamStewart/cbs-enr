@@ -601,7 +601,7 @@ data_hod_base = merge_data(
   impute = FALSE
 ) |>
   add_obs("votes_governor_25_dem_precinct_total", "votes_potus_24_dem") |>
-  select(-matches("votes_statehouse.*?_share$")) |>
+  select(-matches("votes_statehouse.*?_share$"), -starts_with("l_")) |>
   filter(
     vote_mode %in% c("Election Day", "Early Voting", "Absentee/Mail")
   ) |>
