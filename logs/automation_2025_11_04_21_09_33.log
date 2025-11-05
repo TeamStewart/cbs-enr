@@ -1,0 +1,90 @@
+2025-11-04 21:09:33: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
++ timestamp_VA_NA dispatched
++ timestamp_NY_NA dispatched
+✔ timestamp_VA_NA completed [1.9s, 69 B]
++ data_VA_NA dispatched
+✔ timestamp_NY_NA completed [2.1s, 69 B]
++ data_NY_NA dispatched
+✔ data_NY_NA completed [9.1s, 78.81 kB]
++ summary_NY_NA dispatched
++ tbl_cbs_NY_NA dispatched
+✔ summary_NY_NA completed [104ms, 186 B]
+✔ data_VA_NA completed [12.9s, 659.44 kB]
++ model_votes_governor_25_dem_share_lm_conformal_ dispatched
++ model_votes_governor_25_rep_share_lm_conformal_ dispatched
++ model_votes_governor_25_dem_precinct_total_lm_conformal_ dispatched
+✔ tbl_cbs_NY_NA completed [6.7s, 132.49 kB]
++ model_votes_governor_25_rep_precinct_total_lm_conformal_ dispatched
+✔ model_votes_governor_25_dem_share_lm_conformal_ completed [2.6s, 19.85 MB]
++ summary_votes_governor_25_dem_share_lm_conformal_ dispatched
++ model_votes_governor_25_rep_share_lm_conformal_ dispatched
+✔ summary_votes_governor_25_dem_share_lm_conformal_ completed [3ms, 507 B]
++ model_votes_governor_25_rep_precinct_total_lm_conformal__1 dispatched
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal_ completed [2.9s, 18.94 MB]
++ summary_votes_governor_25_rep_precinct_total_lm_conformal_ dispatched
+✔ summary_votes_governor_25_rep_precinct_total_lm_conformal_ completed [5ms, 511 B]
++ summary_VA_NA dispatched
+✔ model_votes_governor_25_rep_share_lm_conformal_ completed [2.5s, 19.64 MB]
++ summary_votes_governor_25_rep_share_lm_conformal_ dispatched
+✔ summary_VA_NA completed [435ms, 657 B]
++ model_votes_governor_25_dem_precinct_total_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_rep_share_lm_conformal_ completed [3ms, 506 B]
++ model_votes_governor_25_rep_share_lm_conformal__1 dispatched
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal_ completed [3s, 19.18 MB]
++ summary_votes_governor_25_dem_precinct_total_lm_conformal_ dispatched
+✔ summary_votes_governor_25_dem_precinct_total_lm_conformal_ completed [4ms, 511 B]
++ tbl_cbs_VA_NA dispatched
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal__1 completed [2.9s, 29.75 MB]
++ summary_votes_governor_25_dem_precinct_total_lm_conformal__1 dispatched
+✔ model_votes_governor_25_rep_share_lm_conformal__1 completed [2.8s, 30.18 MB]
++ summary_votes_governor_25_rep_share_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_rep_share_lm_conformal__1 completed [4ms, 613 B]
++ model_votes_governor_25_rep_precinct_total_lm_conformal__2 dispatched
+✔ summary_votes_governor_25_dem_precinct_total_lm_conformal__1 completed [4ms, 610 B]
++ model_votes_governor_25_dem_precinct_total_lm_conformal__2 dispatched
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal__1 completed [3.2s, 29.51 MB]
++ summary_votes_governor_25_rep_precinct_total_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_rep_precinct_total_lm_conformal__1 completed [4ms, 605 B]
++ model_votes_governor_25_rep_share_lm_conformal__2 dispatched
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal__2 completed [2.4s, 20.16 MB]
++ summary_votes_governor_25_rep_precinct_total_lm_conformal__2 dispatched
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal__2 completed [2.4s, 20.34 MB]
++ summary_votes_governor_25_dem_precinct_total_lm_conformal__2 dispatched
+✔ summary_votes_governor_25_rep_precinct_total_lm_conformal__2 completed [4ms, 518 B]
++ model_turnout_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_dem_precinct_total_lm_conformal__2 completed [3ms, 518 B]
++ model_turnout_lm_conformal__2 dispatched
+✔ model_votes_governor_25_rep_share_lm_conformal__2 completed [2.4s, 20.76 MB]
++ summary_votes_governor_25_rep_share_lm_conformal__2 dispatched
+✔ summary_votes_governor_25_rep_share_lm_conformal__2 completed [4ms, 516 B]
++ model_votes_governor_25_dem_share_lm_conformal__1 dispatched
+✔ model_turnout_lm_conformal__2 completed [2.5s, 20.20 MB]
++ summary_turnout_lm_conformal__2 dispatched
+✔ summary_turnout_lm_conformal__2 completed [3ms, 493 B]
++ model_votes_governor_25_dem_share_lm_conformal__2 dispatched
+✔ model_turnout_lm_conformal__1 completed [2.8s, 29.75 MB]
++ summary_turnout_lm_conformal__1 dispatched
+✔ summary_turnout_lm_conformal__1 completed [3ms, 585 B]
++ model_turnout_lm_conformal_ dispatched
+✔ model_votes_governor_25_dem_share_lm_conformal__1 completed [2.7s, 30.31 MB]
++ summary_votes_governor_25_dem_share_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_dem_share_lm_conformal__1 completed [3ms, 610 B]
+✔ tbl_cbs_VA_NA completed [16.4s, 180.51 kB]
+✔ model_votes_governor_25_dem_share_lm_conformal__2 completed [2.2s, 20.89 MB]
++ summary_votes_governor_25_dem_share_lm_conformal__2 dispatched
+✔ summary_votes_governor_25_dem_share_lm_conformal__2 completed [3ms, 514 B]
+✔ model_turnout_lm_conformal_ completed [2.5s, 19.17 MB]
++ summary_turnout_lm_conformal_ dispatched
+✔ summary_turnout_lm_conformal_ completed [5ms, 485 B]
++ models_summary dispatched
+✔ models_summary completed [1ms, 2.21 kB]
++ save_summaries dispatched
+✔ save_summaries completed [2ms, 43 B]
++ dashboard dispatched
+✔ dashboard completed [23s, 16.39 MB]
++ upload dispatched
+✔ upload completed [3.7s, 46 B]
+✔ ended pipeline [1m 14.3s, 42 completed, 4 skipped]
+Warning message:
+1 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 

@@ -93,11 +93,11 @@ scrape_ny <- function(state, county, path, timestamp) {
     # amend fusion voting issues
     summarize(
       precinct_total = sum(precinct_total, na.rm=TRUE),
-      .by = c(state, jurisdiction, precinct_id, race_name, candidate_name, candidate_party, vote_mode, pct_reported)
+      .by = c(state, jurisdiction, precinct_id, ad, ed, race_name, candidate_name, candidate_party, vote_mode, pct_reported)
     ) |> 
     mutate(
       virtual_precinct = FALSE,
-      timestamp = .env$timestamp,
+      timestamp = ymd_hms(.env$timestamp),
       race_id = NA,
       magnitude = 1,
       pct_reported
