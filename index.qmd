@@ -77,8 +77,8 @@ prec_reported_eday = filter(data_VA, obs > 0.25, vote_mode == "Election Day") |>
 total25_dem = pull(data_VA, votes_governor_25_dem_precinct_total) |> sum(na.rm = TRUE)
 total25_rep = pull(data_VA, votes_governor_25_rep_precinct_total) |> sum(na.rm = TRUE)
 total25_2p = total25_dem + total25_rep
-total25 = select(data_VA, starts_with("votes_governor_25")) |> as.matrix() |> sum(na.rm = TRUE)
-total25_eday = filter(data_VA, vote_mode == "Election Day") |> select(starts_with("votes_governor_25")) |> as.matrix() |> sum(na.rm = TRUE)
+total25 = pull(data_VA, turnout) |> sum(na.rm = TRUE)
+total25_eday = filter(data_VA, vote_mode == "Election Day") |> pull(turnout) |> sum(na.rm = TRUE)
 
 total24_dem = pull(data_VA, votes_potus_24_dem) |> sum(na.rm = TRUE)
 total24_rep = pull(data_VA, votes_potus_24_rep) |> sum(na.rm = TRUE)
