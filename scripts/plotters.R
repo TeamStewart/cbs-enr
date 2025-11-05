@@ -52,17 +52,19 @@ plot_voteShare <- function(summaries, uncertainty = F){
   return(p)
 }
 
-
 plot_voteCount_byMode <- function(summaries, uncertainty = FALSE) {
-  p = ggplot(summaries, aes(x = timestamp, y = estimate, color = outcome, fill = outcome))
+  p = summaries(
+    mutate(
+      outcome = ifelse(outcome == "Provisional", "Absentee/Mail", outcome)
+    )
+  ) |> 
+    ggplot(aes(x = timestamp, y = estimate, color = outcome, fill = outcome))
 
   if (uncertainty) {
-    p = p + geom_point(size = 1, position = position_dodge(width = 500)) + geom_line()
-    if (pull(tally(distinct(summaries, timestamp))) == 1) {
-      p = p + geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width=500))
-    } else {
-      p = p + geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
-    }
+    p = p + 
+      geom_point(size = 1) + 
+      geom_line() +
+      geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2)
   } else {
     p = p + geom_point() + geom_line()
   }
@@ -98,8 +100,10 @@ plot_voteCount <- function(summaries, uncertainty = FALSE) {
     ggplot(aes(x = timestamp, y = estimate, color = outcome, fill = outcome))
 
   if (uncertainty) {
-    p = p + geom_point(size = 1, position = position_dodge(width = 500)) + geom_line() +
-      geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
+    p = p + 
+      geom_point(size = 1) + 
+      geom_line() +
+      geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2)
     # if (pull(tally(distinct(summaries, timestamp))) == 1) {
     #   p = p + geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width=500))
     # } else {
