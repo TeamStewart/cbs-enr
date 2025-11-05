@@ -101,14 +101,14 @@ get_history <- function(state, impute, impute_group) {
       sort() |>
       pluck(-1)
   ) |>
-    select(-starts_with("precinct_cbs"), -matches("^ad$|^ed$"), -matches("white|black|hispanic|asian|other"))
+    select(-starts_with("precinct_l2"), -matches("^ad$|^ed$"), -matches("white|black|hispanic|asian|other"))
 
   l2 = enightmodels::rename_demo_cbs(l2)
 
   base = left_join(
     read_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/history/{state}_history.csv")),
     l2,
-    join_by(county, fips, precinct_l2)
+    join_by(county, fips, precinct_cbs)
   ) |>
     select(-matches("^ad$|^ed$")) |> 
     mutate(
