@@ -260,6 +260,11 @@ make_tbl_county <- function(m, state, county) {
 
 pmargins_hist <- function(merged, x) {
   x_vals <- transmute(merged, x = {{ x }}) |> pull(x)
+  x_vals_mode <- transmute(merged, x = {{ x }}) |> 
+    summarize(x = mean(x, na.rm=TRUE), .by = vote_mode) |> 
+    mutate(
+      label = paste0("Mean: ", scales::label_percent(accuracy = 0.1, suffix = "pp")(x))
+    )
 
   merged |>
     ggplot(
@@ -287,18 +292,26 @@ pmargins_hist <- function(merged, x) {
     ) +
     geom_histogram(bins = 30) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "red") +
-    geom_vline(xintercept = mean(x_vals,na.rm=TRUE), linetype = "dashed", color = "black") +
-    annotate(
-      "label",
-      x = mean(x_vals),
-      y = Inf,
-      label = paste0("Mean: ", scales::label_percent(accuracy = 0.1, suffix = "pp")(mean(x_vals,na.rm=TRUE))),
-      vjust = 1.5,
-      hjust = -0.08,
+    geom_vline(data = x_vals_mode, aes(xintercept = x), linetype = "dashed", color = "black") +
+    geom_label(
+      data = x_vals_mode,
+      aes(x = x, label=label), y = Inf,
+      vjust = 1.5, hjust = -0.08,
       fill = "#D9D9D9FF",
       color = "black",
       size = 6
     ) +
+    # annotate(
+    #   "label",
+    #   x = mean(x_vals),
+    #   y = Inf,
+    #   label = paste0("Mean: ", scales::label_percent(accuracy = 0.1, suffix = "pp")(mean(x_vals,na.rm=TRUE))),
+    #   vjust = 1.5,
+    #   hjust = -0.08,
+    #   fill = "#D9D9D9FF",
+    #   color = "black",
+    #   size = 6
+    # ) +
     facet_wrap(~vote_mode, nrow = 1) +
     scale_x_continuous(
       n.breaks = 5,
