@@ -37,8 +37,8 @@ data_VA = merge_data(
   add_obs("votes_governor_25_dem_precinct_total", "votes_potus_24_dem")
 
 timestamp_VA = tar_read(timestamp_VA_NA)
-# dummy = tar_read(models_summary)
-# dummy = tar_read(save_summaries)
+dummy = tar_read(models_summary)
+dummy = tar_read(save_summaries)
 dummy = tar_read(summary_VA_NA)
 
 model_summaries = map(
@@ -53,11 +53,13 @@ VA_model_summaries = model_summaries |>
   pivot_wider(
     names_from = outcome,
     values_from = estimate
-  )
+  ) |> 
+    filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day"))
 
 VA_result_summaries = read_csv(
   list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), pattern = "summarylive_.*?$", full.names = TRUE)
-)
+) |> 
+  filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day"))
 
 VA_21 <- read_csv(glue("{PATH_DROPBOX}/25_general/input_data/VA/VA_results_2021_long.csv")) |>
   filter(jurisdiction != 'TOTALS')
