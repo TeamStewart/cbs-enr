@@ -101,7 +101,7 @@ get_history <- function(state, impute, impute_group) {
       sort() |>
       pluck(-1)
   ) |>
-    select(-starts_with("precinct_cbs"), -matches("^ad$|^ed$"), -white:-other)
+    select(-starts_with("precinct_cbs"), -matches("^ad$|^ed$"), -matches("white|black|hispanic|asian|other"))
 
   l2 = enightmodels::rename_demo_cbs(l2)
 

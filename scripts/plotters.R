@@ -297,7 +297,7 @@ pmargins_hist <- function(merged, x) {
     scale_x_continuous(
       n.breaks = 5,
       labels = scales::label_percent(accuracy = 1, suffix = "pp", style_positive = "plus"),
-      limits = c(max(-1, min(x_vals, na.rm = TRUE)), min(1, max(x_vals, na.rm = TRUE)))
+      limits = c(max(-0.4, min(x_vals, na.rm = TRUE)), min(0.4, max(x_vals, na.rm = TRUE)))
     ) +
     theme_bw(base_size = 24) +
     theme(
