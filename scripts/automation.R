@@ -48,7 +48,7 @@ while (TRUE) {
   git2r::push()
   
   elapsed <- as.numeric(Sys.time() - start_time, units = "secs")
-  sleep_time <- max(0, 60*5 - elapsed)
+  sleep_time <- max(0, 60*10 - elapsed)
 
   print("Finished... Zzzzz")
   
