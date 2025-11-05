@@ -36,7 +36,7 @@ plot_voteShare <- function(summaries, uncertainty = F){
     theme(legend.position = 'bottom',axis.text = element_text(size = 16)) +
     scale_x_datetime(
       date_breaks = "2 hour",
-      labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
+      labels = scales::label_date(format = "%m-%d \n %I:%M %p")
     ) +
     scale_y_continuous(labels = scales::label_percent(accuracy = 1)) +
     scale_color_manual(
@@ -106,11 +106,6 @@ plot_voteCount <- function(summaries, uncertainty = FALSE) {
       geom_point(size = 1) + 
       geom_line() +
       geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2)
-    # if (pull(tally(distinct(summaries, timestamp))) == 1) {
-    #   p = p + geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width=500))
-    # } else {
-    #   p = p + 
-    # }
   } else {
     p = p + geom_point() + geom_line()
   }
@@ -292,6 +287,16 @@ pmargins_hist <- function(merged, x) {
     ) +
     geom_histogram(bins = 30) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "red") +
+    geom_vline(xintercept = mean(x_vals), linetype = "dashed", color = "black") +
+    annotate(
+      "text",
+      x = mean(x_vals),
+      y = Inf,
+      label = paste0("Mean: ", scales::label_percent(accuracy = 0.1, suffix = "pp")(mean(x_vals))),
+      vjust = -1,
+      color = "white",
+      size = 6
+    ) +
     facet_wrap(~vote_mode, nrow = 1) +
     scale_x_continuous(
       n.breaks = 5,
