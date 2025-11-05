@@ -402,6 +402,7 @@ cory_modeling <- function(data, history, timestamp) {
     x = round(mean(x$post_turn))
     if_else(x == 0, 1, x)
   }
+  
   forecast_prec = tibble(
     jurisdiction = d$jurisdiction,
     precinct_id = d$precinct_id,
