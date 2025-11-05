@@ -169,9 +169,8 @@ total = VA_result_summaries |>
   facet_wrap(~vote_mode) +
   theme_bw(base_size = 24) +
   scale_x_datetime(
-    date_breaks = "2 hour",
-    date_minor_breaks = "1 hour",
-    labels = scales::label_date(format = "%m-%d \n %I:%M %p")
+    date_breaks = smart_datetime_axis(d$timestamp),
+    labels = minimal_datetime_labels
   ) +
   scale_y_continuous(
     labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
@@ -190,9 +189,8 @@ mode = VA_result_summaries |>
   facet_wrap(~vote_mode) +
   theme_bw(base_size = 24) +
   scale_x_datetime(
-    date_breaks = "2 hour",
-    date_minor_breaks = "1 hour",
-    labels = scales::label_date(format = "%m-%d \n %I:%M %p")
+    date_breaks = smart_datetime_axis(d$timestamp),
+    labels = minimal_datetime_labels
   ) +
   scale_y_continuous(
     labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
@@ -216,7 +214,7 @@ total + mode +
 #| title: Gov Vote Count
 #| fig-width: 14
 
-totald = VA_result_summaries |>
+d1 = VA_result_summaries |>
   pivot_longer(
     cols = starts_with("votes_governor_25_") & ends_with("precinct_total")
   ) |>
@@ -227,7 +225,7 @@ totald = VA_result_summaries |>
   ) |>
   mutate(vote_mode = 'Total')
 
-total 
+total <- d1 |> 
   ggplot(aes(x = timestamp, y = value, color = name)) +
   geom_point(alpha = 0.6, size = 0.95) +
   geom_line() +
@@ -238,20 +236,22 @@ total
     labels = c("votes_governor_25_dem_precinct_total" = "Democrat", "votes_governor_25_rep_precinct_total" = "Republican", "turnout" = "Turnout")
   ) +
   scale_x_datetime(
-    date_breaks = smart_datetime_axis(d$timestamp),
+    date_breaks = smart_datetime_axis(d1$timestamp),
     labels = minimal_datetime_labels
-  )
+  ) +
   labs(
     x = "Time (EST)",
     y = "Votes",
     color = ""
   )
 
-mode = VA_result_summaries |>
+d2 = VA_result_summaries |>
   pivot_longer(
     cols = starts_with("votes_governor_25_") & ends_with("precinct_total")
   ) |>
-  filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day")) |>
+  filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day"))
+
+mode = d2 |>
   ggplot(aes(x = timestamp, y = value, color = name)) +
   geom_point(alpha = 0.6, size = 0.95) +
   geom_line() +
@@ -260,6 +260,10 @@ mode = VA_result_summaries |>
   scale_color_manual(
     values = c("votes_governor_25_dem_precinct_total" = "#005599", "votes_governor_25_rep_precinct_total" = "#ce0008", "turnout" = "black"),
     labels = c("votes_governor_25_dem_precinct_total" = "Democrat", "votes_governor_25_rep_precinct_total" = "Republican", "turnout" = "Turnout")
+  ) +
+  scale_x_datetime(
+    date_breaks = smart_datetime_axis(d2$timestamp),
+    labels = minimal_datetime_labels
   ) +
   labs(
     x = "Time (EST)",
@@ -270,11 +274,6 @@ mode = VA_result_summaries |>
 total + mode + 
   plot_layout(guides = 'collect', axis_titles = 'collect', widths = c(1, 3)) & 
   theme(legend.position = 'bottom',axis.text = element_text(size = 16)) &
-  scale_x_datetime(
-    date_breaks = "2 hour",
-    date_minor_breaks = "1 hour",
-    labels = scales::label_date(format = "%m-%d \n %I:%M %p")
-  ) &
   scale_y_continuous(
     labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
     n.breaks = 5)
@@ -285,7 +284,7 @@ total + mode +
 #| title: Gov Vote Share
 #| fig-width: 14
 
-total = VA_result_summaries |>
+d1 = VA_result_summaries |>
   select(-contains("_share")) |>
   pivot_longer(
     cols = starts_with("votes_governor_25_") & ends_with("precinct_total")
@@ -298,7 +297,9 @@ total = VA_result_summaries |>
   ) |>
   mutate(
     vote_mode = 'Total',
-    ) |>
+    )
+
+total = d1 |>
   ggplot(aes(x = timestamp, y = share, color = name)) +
   geom_point(alpha = 0.6, size = 0.95) +
   geom_line() +
@@ -311,13 +312,17 @@ total = VA_result_summaries |>
   scale_y_continuous(
     labels = scales::label_percent(accuracy = 1.0),
   ) +
+  scale_x_datetime(
+    date_breaks = smart_datetime_axis(d1$timestamp),
+    labels = minimal_datetime_labels
+  ) +
   labs(
     x = "Time (EST)",
     y = "Vote Share",
     color = ""
   )
 
-mode = VA_result_summaries |>
+d2 = VA_result_summaries |>
   select(-contains('precinct_total')) |>
   pivot_longer(
     cols = starts_with("votes_governor_25_")
@@ -326,7 +331,9 @@ mode = VA_result_summaries |>
   mutate(
     share = value / sum(value, na.rm = TRUE),
     .by = c(timestamp, vote_mode)
-  ) |>
+  )
+
+mode = d2 |>
   ggplot(aes(x = timestamp, y = share, color = name)) +
   geom_point(alpha = 0.6, size = 0.95) +
   geom_line() +
@@ -335,6 +342,10 @@ mode = VA_result_summaries |>
   scale_color_manual(
     values = c("votes_governor_25_dem_share" = "#005599", "votes_governor_25_rep_share" = "#ce0008", "turnout" = "black"),
     labels = c("votes_governor_25_dem_share" = "Democrat", "votes_governor_25_rep_share" = "Republican", "turnout" = "Turnout")
+  ) +
+  scale_x_datetime(
+    date_breaks = smart_datetime_axis(d2$timestamp),
+    labels = minimal_datetime_labels
   ) +
   scale_y_continuous(
     labels = scales::label_percent(accuracy = 1.0),
@@ -348,11 +359,6 @@ mode = VA_result_summaries |>
 total + mode + 
   plot_layout(guides = 'collect', axis_titles = 'collect', widths = c(1, 3)) & 
   theme(legend.position = 'bottom',axis.text = element_text(size = 16)) &
-  scale_x_datetime(
-    date_breaks = "2 hour",
-    date_minor_breaks = "1 hour",
-    labels = scales::label_date(format = "%m-%d \n %I:%M %p")
-  ) &
   scale_y_continuous(
     labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
     n.breaks = 5)
