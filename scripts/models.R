@@ -70,6 +70,9 @@ merge_data <- function(data, history, office, covariates, impute, impute_var) {
       .by = c(jurisdiction, precinct_id, vote_mode, race_name)
     ) |> 
     filter(
+      jurisdiction == "RICHMOND CITY", str_detect(precinct_id, "503")
+    ) |> 
+    filter(
       candidate_name != "Write-ins"
     ) |>
     select(race_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total, turnout, share)

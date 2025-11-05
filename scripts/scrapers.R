@@ -29,7 +29,10 @@ scrape_ny <- function(state, county, path, timestamp) {
     "Queens", c(23:40),
     "Richmond", c(61:64)
   ) |>
-    unnest_longer(ad)
+    unnest_longer(ad) |> 
+    mutate(
+      ad = as.character(ad)
+    )
 
   links |>
     mutate(
@@ -79,6 +82,8 @@ scrape_ny <- function(state, county, path, timestamp) {
       vote_mode = "Total",
       ad = str_remove(ad, "AD "),
       ed = str_remove(ed, "ED "),
+      precinct_total = as.numeric(precinct_total),
+      precinct_total = ifelse(is.na(precinct_total), 0, precinct_total),
       precinct_id = paste(ad, str_pad(ed, side = "left", width = 3, pad = "0"), sep = "_")
     ) |>
     left_join(

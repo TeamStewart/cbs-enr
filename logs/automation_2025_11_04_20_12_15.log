@@ -1,0 +1,248 @@
+2025-11-04 20:12:15: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
++ timestamp_VA_NA dispatched
++ timestamp_NY_NA dispatched
++ history_NY_NA dispatched
++ history_noimpute_NY_NA dispatched
+✔ timestamp_VA_NA completed [2.1s, 71 B]
++ data_VA_NA dispatched
+✔ timestamp_NY_NA completed [2s, 69 B]
++ data_NY_NA dispatched
+✖ history_NY_NA errored
+Error: Can't select columns that don't exist.
+✖ Column `white` doesn't exist.
+
+✖ history_noimpute_NY_NA errored
+Error: Can't select columns that don't exist.
+✖ Column `white` doesn't exist.
+
+✔ data_NY_NA completed [7.2s, 21.76 kB]
++ tbl_cbs_NY_NA dispatched
++ summary_NY_NA dispatched
+✖ summary_NY_NA errored
+Error: could not load dependency history_NY_NA of target summary_NY_NA. invalid 'description' argument
+
+✖ tbl_cbs_NY_NA errored
+Error: ℹ In argument: `vote_mode != "Overvote/Undervote" & candidate_name !=
+  "Other"`.
+Caused by error:
+! object 'vote_mode' not found
+
+✔ data_VA_NA completed [13.7s, 619.78 kB]
++ model_votes_governor_25_rep_share_lm_conformal_ dispatched
++ model_votes_governor_25_rep_precinct_total_lm_conformal_ dispatched
++ model_votes_governor_25_dem_precinct_total_lm_conformal_ dispatched
++ model_turnout_xgboost_conformal_ dispatched
+✖ model_votes_governor_25_rep_precinct_total_lm_conformal_ errored
+Error: Training data has less than 50 observations
+
++ model_turnout_lm_conformal__1 dispatched
+✖ model_votes_governor_25_dem_precinct_total_lm_conformal_ errored
+Error: Training data has less than 50 observations
+
++ model_turnout_xgboost_conformal__1 dispatched
+✖ model_votes_governor_25_rep_share_lm_conformal_ errored
+Error: Training data has less than 50 observations
+
++ model_turnout_lm_conformal__2 dispatched
+✖ model_turnout_xgboost_conformal_ errored
+Error: Training data has less than 50 observations
+
++ model_turnout_xgboost_conformal__2 dispatched
+✖ model_turnout_lm_conformal__1 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_dem_share_xgboost_conformal_ dispatched
+✖ model_turnout_lm_conformal__2 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_dem_share_xgboost_conformal__1 dispatched
+✖ model_turnout_xgboost_conformal__2 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_rep_precinct_total_xgboost_conformal_ dispatched
+✖ model_turnout_xgboost_conformal__1 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_dem_share_xgboost_conformal__2 dispatched
+✖ model_votes_governor_25_dem_share_xgboost_conformal__1 errored
+Error: Training data has less than 50 observations
+
++ model_turnout_lm_conformal_ dispatched
+✖ model_votes_governor_25_dem_share_xgboost_conformal_ errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_rep_share_xgboost_conformal_ dispatched
+✖ model_votes_governor_25_rep_precinct_total_xgboost_conformal_ errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_rep_precinct_total_lm_conformal__1 dispatched
+✖ model_votes_governor_25_dem_share_xgboost_conformal__2 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_rep_precinct_total_lm_conformal__2 dispatched
+✖ model_turnout_lm_conformal_ errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_dem_share_lm_conformal_ dispatched
+✖ model_votes_governor_25_rep_share_xgboost_conformal_ errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_dem_share_lm_conformal__1 dispatched
+✖ model_votes_governor_25_rep_precinct_total_lm_conformal__2 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_dem_share_lm_conformal__2 dispatched
+✖ model_votes_governor_25_rep_precinct_total_lm_conformal__1 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_rep_share_lm_conformal__1 dispatched
+✖ model_votes_governor_25_dem_share_lm_conformal_ errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_rep_share_lm_conformal__2 dispatched
+✖ model_votes_governor_25_dem_share_lm_conformal__1 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_rep_precinct_total_xgboost_conformal__1 dispatched
+✖ model_votes_governor_25_dem_share_lm_conformal__2 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_rep_precinct_total_xgboost_conformal__2 dispatched
+✖ model_votes_governor_25_rep_share_lm_conformal__1 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_rep_share_xgboost_conformal__1 dispatched
+✖ model_votes_governor_25_rep_share_lm_conformal__2 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_rep_share_xgboost_conformal__2 dispatched
+✖ model_votes_governor_25_rep_precinct_total_xgboost_conformal__1 errored
+Error: Training data has less than 50 observations
+
++ tbl_cbs_VA_NA dispatched
+✖ model_votes_governor_25_rep_precinct_total_xgboost_conformal__2 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_dem_precinct_total_lm_conformal__1 dispatched
+✖ model_votes_governor_25_rep_share_xgboost_conformal__1 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_dem_precinct_total_lm_conformal__2 dispatched
+✖ model_votes_governor_25_rep_share_xgboost_conformal__2 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_dem_precinct_total_xgboost_conformal__1 dispatched
+✖ model_votes_governor_25_dem_precinct_total_lm_conformal__1 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_dem_precinct_total_xgboost_conformal__2 dispatched
+✖ model_votes_governor_25_dem_precinct_total_xgboost_conformal__1 errored
+Error: Training data has less than 50 observations
+
++ summary_VA_NA dispatched
+✖ model_votes_governor_25_dem_precinct_total_lm_conformal__2 errored
+Error: Training data has less than 50 observations
+
++ corymodel dispatched
+✖ model_votes_governor_25_dem_precinct_total_xgboost_conformal__2 errored
+Error: Training data has less than 50 observations
+
++ model_votes_governor_25_dem_precinct_total_xgboost_conformal_ dispatched
+✔ summary_VA_NA completed [327ms, 482 B]
+✖ model_votes_governor_25_dem_precinct_total_xgboost_conformal_ errored
+Error: Training data has less than 50 observations
+
++ save_summaries dispatched
+✔ save_summaries completed [2ms, 43 B]
++ dashboard dispatched
+✖ corymodel errored
+Error: object 'm_simple_pres' not found
+
+✔ tbl_cbs_VA_NA completed [13.9s, 166.73 kB]
+✖ dashboard errored
+Error: ! Error running quarto CLI from R.
+Caused by error:
+✖ Error returned by quarto CLI.
+  -----------------------------
+  - The project is out-of-sync -- use `renv::status()` for details.
+  
+  
+  processing file: index.qmd
+  1/60
+  2/60 [r-setup]
+  3/60
+  4/60 [va_summary]
+  5/60
+  6/60 [unnamed-chunk-1]
+  7/60
+  8/60 [unnamed-chunk-2]
+  9/60
+  10/60 [unnamed-chunk-3]
+  11/60
+  12/60 [unnamed-chunk-4]
+  13/60
+  14/60 [unnamed-chunk-5]
+  15/60
+  16/60 [unnamed-chunk-6]
+  17/60
+  18/60 [unnamed-chunk-7]
+  19/60
+  20/60 [unnamed-chunk-8]
+  21/60
+  22/60 [unnamed-chunk-9]
+  23/60
+  24/60 [unnamed-chunk-10]
+  25/60
+  26/60 [unnamed-chunk-11]
+  27/60
+  28/60 [unnamed-chunk-12]
+  29/60
+  30/60 [unnamed-chunk-13]
+  31/60
+  32/60 [unnamed-chunk-14]
+  33/60
+  34/60 [unnamed-chunk-15]
+  35/60
+  36/60 [unnamed-chunk-16]
+  37/60
+  38/60 [setup]
+  39/60
+  40/60 [ctrl-prec]
+  41/60
+  42/60 [prec1]
+  43/60
+  44/60 [unnamed-chunk-17]
+  45/60
+  46/60 [unnamed-chunk-18]
+  47/60
+  48/60 [unnamed-chunk-19]
+  49/60
+  50/60 [unnamed-chunk-20]
+  [31mError in `pull()`:[39m
+  Caused by error:
+  ! object 'votes_Other_25' not found
+  Backtrace:
+  ▆
+  1. ├─global get_margin(data_hod)
+  2. │ ├─dplyr::pull(d, votes_Other_25)
+  3. │ └─dplyr:::pull.data.frame(d, votes_Other_25)
+  4. │ └─tidyselect::vars_pull(names(.data), !!enquo(var))
+  5. │ ├─tidyselect:::with_chained_errors(...)
+  6. │ │ └─base::withCallingHandlers(...)
+  7. │ └─rlang::eval_tidy(expr, set_names(seq_along(vars), vars))
+  8. └─base::.handleSimpleError(...)
+  9.  └─tidyselect (local) h(simpleError(msg, call))
+  10.  └─cli::cli_abort(c(i = msg), call = call, parent = cnd)
+  11.  └─rlang::abort(...)
+  
+  Quitting from index.qmd:725-729 [unnamed-chunk-20]
+  [31mExecution halted[39m
+  
+Caused by error:
+! System command 'quarto' failed
+
+✖ errored pipeline [37.9s, 7 completed, 34 skipped]
+Warning messages:
+1: 36 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
+2: 1 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 

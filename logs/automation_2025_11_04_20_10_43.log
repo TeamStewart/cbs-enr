@@ -1,0 +1,10 @@
+2025-11-04 20:10:43: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
+Error:
+! Error in tar_make():
+  scripts/scrapers.R:3:1: unexpected input
+2: scrape_ny <- function(state, county, path, timestamp) {
+3:  
+   ^
+  See https://books.ropensci.org/targets/debugging.html
+Execution halted
