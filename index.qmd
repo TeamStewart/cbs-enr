@@ -49,11 +49,15 @@ model_summaries = map(
 VA_model_summaries = model_summaries |>
   filter(lengths(covars) == 1, method == "lm", uncertainty == "conformal") |>
   select(timestamp, vote_mode, outcome, estimate) |>
+  arrange(desc(estimate))
   pivot_wider(
     names_from = outcome,
     values_from = estimate
   ) |> 
-    filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day"))
+    filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day")) |> 
+    mutate(
+      timestamp = with_tz(timestamp, tzone = "US/Eastern")
+    )
 
 VA_result_summaries = read_csv(
   list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), pattern = "summarylive_.*?$", full.names = TRUE)
@@ -97,7 +101,7 @@ total21_eday = VA_21 |> filter(vote_mode == "Election Day") |> summarise(total =
 #| content: valuebox
 #| title: Last Updated
 list(
-  value = format(ymd_hms(timestamp_VA, tz = "US/Eastern"), "%b %d %I:%M %p")
+  value = format(ymd_hms(timestamp_VA), "%b %d %I:%M %p")
 )
 ```
 
@@ -163,7 +167,7 @@ total = VA_result_summaries |>
   theme_bw(base_size = 24) +
   scale_x_datetime(
     date_breaks = "2 hour",
-    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p")
   ) +
   scale_y_continuous(
     labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
@@ -183,7 +187,7 @@ mode = VA_result_summaries |>
   theme_bw(base_size = 24) +
   scale_x_datetime(
     date_breaks = "2 hour",
-    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p")
   ) +
   scale_y_continuous(
     labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
@@ -257,7 +261,7 @@ total + mode +
   theme(legend.position = 'bottom',axis.text = element_text(size = 16)) &
   scale_x_datetime(
     date_breaks = "2 hour",
-    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p")
   ) &
   scale_y_continuous(
     labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
@@ -334,7 +338,7 @@ total + mode +
   theme(legend.position = 'bottom',axis.text = element_text(size = 16)) &
   scale_x_datetime(
     date_breaks = "2 hour",
-    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p")
   ) &
   scale_y_continuous(
     labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
@@ -473,7 +477,7 @@ total + mode +
   theme(legend.position = 'bottom',axis.text = element_text(size = 16)) &
   scale_x_datetime(
     date_breaks = "2 hour",
-    labels = scales::label_date(format = "%m-%d \n %I:%M %p", tz = "US/Eastern")
+    labels = scales::label_date(format = "%m-%d \n %I:%M %p")
   ) &
   scale_y_continuous(
     labels = scales::label_comma(scale_cut = scales::cut_short_scale()),
