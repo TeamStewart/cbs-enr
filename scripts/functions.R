@@ -91,7 +91,7 @@ format_wide <- function(data, state, office) {
   
 }
 
-get_history <- function(state, impute, impute_group) {
+get_history <- function(state, impute, impute_group=NULL) {
   l2 = fread(
     file = list.files(
       path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/{state}"),
