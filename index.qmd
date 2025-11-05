@@ -44,11 +44,12 @@ model_summaries = map(
   list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), pattern = "summarymodel.*?$", full.names = TRUE),
   qs2::qs_read
 ) |> 
-  bind_rows()
+  bind_rows() |> 
+  distinct()
 
 VA_model_summaries = model_summaries |>
   filter(lengths(covars) == 1, method == "lm", uncertainty == "conformal") |>
-  select(timestamp, vote_mode, outcome, estimate) |>
+  select(timestamp, vote_mode, outcome, estimate) |> 
   pivot_wider(
     names_from = outcome,
     values_from = estimate

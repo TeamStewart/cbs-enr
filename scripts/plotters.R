@@ -14,12 +14,10 @@ plot_voteShare <- function(summaries, uncertainty = F){
     ggplot(aes(x = timestamp, y = estimate, color = party, fill = party))
 
   if (uncertainty) {
-    p = p + geom_point(size = 1, position = position_dodge(width = 500)) + geom_line()
-    if (pull(tally(distinct(summaries, timestamp))) == 1) {
-      p = p + geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width=500))
-    } else {
-      p = p + geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2, position = position_dodge(width = 500))
-    }
+    p = p + 
+      geom_point(size = 1) + 
+      geom_line() +
+      geom_ribbon(aes(ymin = lower, ymax = upper, color = NULL), alpha = 0.2)
     
   } else {
     p = p + geom_point() + geom_line()
