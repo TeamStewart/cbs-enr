@@ -289,12 +289,14 @@ pmargins_hist <- function(merged, x) {
     geom_vline(xintercept = 0, linetype = "dashed", color = "red") +
     geom_vline(xintercept = mean(x_vals), linetype = "dashed", color = "black") +
     annotate(
-      "text",
+      "label",
       x = mean(x_vals),
       y = Inf,
       label = paste0("Mean: ", scales::label_percent(accuracy = 0.1, suffix = "pp")(mean(x_vals))),
       vjust = 1.5,
-      color = "white",
+      hjust = -0.08,
+      fill = "#D9D9D9FF",
+      color = "black",
       size = 6
     ) +
     facet_wrap(~vote_mode, nrow = 1) +
