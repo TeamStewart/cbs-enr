@@ -42,8 +42,7 @@ add_obs <- function(data, outcome, covars, obs_function="past"){
   obsf(data, !!sym(outcome), !!sym(covars[1])) |>
     mutate(
       obs = case_when(
-        is.nan(obs) ~ 0,
-        is.na(obs) ~ if_else(.data[[outcome]] > 0, 1, 0),
+        is.na(obs) | is.nan(obs) ~ if_else(.data[[outcome]] > 0, 1, 0),
         .default = obs
       )
     )
@@ -86,28 +85,27 @@ minimal_datetime_labels <- function(breaks) {
   for (i in seq_along(valid_breaks)) {
     current_date <- as.Date(valid_breaks[i])
     current_hour <- format(valid_breaks[i], "%I")
-    current_ampm <- format(valid_breaks[i], "%p")
+    current_ampm <- str_to_lower(format(valid_breaks[i], "%p"))
     
-    parts <- character(0)
+    parts <- c(character())
     
     # Add date if it's a new day
     if (!is.na(current_date) && current_date != prev_date) {
-      parts <- c(parts, format(valid_breaks[i], "%b %d"))
+      parts <- c(format(valid_breaks[i], "%a"), parts)
       prev_date <- current_date
       prev_ampm <- ""
     }
-    
-    # Add time
-    parts <- c(parts, current_hour)
-    
+
     # Add AM/PM only if it changed
     if (current_ampm != prev_ampm) {
-      parts <- c(parts, current_ampm)
+      parts <- c(parts, paste0(current_hour, current_ampm))
       prev_ampm <- current_ampm
+    } else {
+      parts <- c(parts, current_hour)
     }
     
     # Find the position in the original breaks vector
-    labels[valid_idx][i] <- str_replace(paste(parts, collapse = "\n"), "\\nAM|\\nPM", "\\1")
+    labels[valid_idx][i] <- paste(parts, collapse = "\n")
   }
   
   return(labels)

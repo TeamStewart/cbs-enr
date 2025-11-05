@@ -1,0 +1,137 @@
+2025-11-05 14:32:32: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
+Warning messages:
+1: In file(con, "r") :
+  cannot open file '/Users/mason/MIT Dropbox/Mason Reece/Research/cbs-enr/.vdoc.2f7e462b-f8c7-42c5-8b2b-5602e00247dc.r': No such file or directory
+2: In file(con, "r") : cannot open the connection
++ timestamp_VA_NA dispatched
+✔ timestamp_VA_NA completed [1.8s, 69 B]
++ data_VA_NA dispatched
+✔ data_VA_NA completed [13.7s, 681.80 kB]
++ model_votes_governor_25_rep_share_lm_conformal__2 dispatched
+✔ model_votes_governor_25_rep_share_lm_conformal__2 completed [2.4s, 24.31 MB]
++ summary_votes_governor_25_rep_share_lm_conformal__2 dispatched
+✔ summary_votes_governor_25_rep_share_lm_conformal__2 completed [3ms, 513 B]
++ timestamp_NY_NA dispatched
+✔ timestamp_NY_NA completed [54ms, 71 B]
++ model_votes_governor_25_dem_precinct_total_lm_conformal_ dispatched
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal_ completed [2s, 22.13 MB]
++ summary_votes_governor_25_dem_precinct_total_lm_conformal_ dispatched
+✔ summary_votes_governor_25_dem_precinct_total_lm_conformal_ completed [3ms, 509 B]
++ summary_VA_NA dispatched
+✔ summary_VA_NA completed [280ms, 706 B]
++ model_turnout_lm_conformal_ dispatched
+✔ model_turnout_lm_conformal_ completed [1.9s, 22.24 MB]
++ summary_turnout_lm_conformal_ dispatched
+✔ summary_turnout_lm_conformal_ completed [3ms, 482 B]
++ model_votes_governor_25_rep_share_lm_conformal_ dispatched
+✔ model_votes_governor_25_rep_share_lm_conformal_ completed [2s, 23.01 MB]
++ summary_votes_governor_25_rep_share_lm_conformal_ dispatched
+✔ summary_votes_governor_25_rep_share_lm_conformal_ completed [3ms, 506 B]
++ model_turnout_lm_conformal__1 dispatched
+✔ model_turnout_lm_conformal__1 completed [2.3s, 35.44 MB]
++ summary_turnout_lm_conformal__1 dispatched
+✔ summary_turnout_lm_conformal__1 completed [3ms, 587 B]
++ model_turnout_lm_conformal__2 dispatched
+✔ model_turnout_lm_conformal__2 completed [1.9s, 23.46 MB]
++ summary_turnout_lm_conformal__2 dispatched
+✔ summary_turnout_lm_conformal__2 completed [3ms, 491 B]
++ tbl_cbs_VA_NA dispatched
+✔ tbl_cbs_VA_NA completed [11.1s, 189.58 kB]
++ corymodel dispatched
+✖ corymodel errored
+Error: object 'm_simple_pres' not found
+
++ model_votes_governor_25_dem_precinct_total_lm_conformal__1 dispatched
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal__1 completed [2.2s, 35.38 MB]
++ summary_votes_governor_25_dem_precinct_total_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_dem_precinct_total_lm_conformal__1 completed [3ms, 606 B]
++ model_votes_governor_25_dem_precinct_total_lm_conformal__2 dispatched
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal__2 completed [1.8s, 23.55 MB]
++ summary_votes_governor_25_dem_precinct_total_lm_conformal__2 dispatched
+✔ summary_votes_governor_25_dem_precinct_total_lm_conformal__2 completed [3ms, 517 B]
++ model_votes_governor_25_dem_share_lm_conformal__1 dispatched
+✔ model_votes_governor_25_dem_share_lm_conformal__1 completed [2s, 36.37 MB]
++ summary_votes_governor_25_dem_share_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_dem_share_lm_conformal__1 completed [3ms, 605 B]
++ model_votes_governor_25_dem_share_lm_conformal_ dispatched
+✔ model_votes_governor_25_dem_share_lm_conformal_ completed [2.1s, 23.20 MB]
++ summary_votes_governor_25_dem_share_lm_conformal_ dispatched
+✔ summary_votes_governor_25_dem_share_lm_conformal_ completed [3ms, 506 B]
++ model_votes_governor_25_dem_share_lm_conformal__2 dispatched
+✔ model_votes_governor_25_dem_share_lm_conformal__2 completed [2.1s, 24.49 MB]
++ summary_votes_governor_25_dem_share_lm_conformal__2 dispatched
+✔ summary_votes_governor_25_dem_share_lm_conformal__2 completed [3ms, 514 B]
++ model_votes_governor_25_rep_precinct_total_lm_conformal__1 dispatched
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal__1 completed [2.1s, 34.99 MB]
++ summary_votes_governor_25_rep_precinct_total_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_rep_precinct_total_lm_conformal__1 completed [3ms, 611 B]
++ model_votes_governor_25_rep_precinct_total_lm_conformal__2 dispatched
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal__2 completed [1.9s, 23.31 MB]
++ summary_votes_governor_25_rep_precinct_total_lm_conformal__2 dispatched
+✔ summary_votes_governor_25_rep_precinct_total_lm_conformal__2 completed [3ms, 517 B]
++ model_votes_governor_25_rep_precinct_total_lm_conformal_ dispatched
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal_ completed [1.9s, 21.89 MB]
++ summary_votes_governor_25_rep_precinct_total_lm_conformal_ dispatched
+✔ summary_votes_governor_25_rep_precinct_total_lm_conformal_ completed [3ms, 511 B]
++ model_votes_governor_25_rep_share_lm_conformal__1 dispatched
+✔ model_votes_governor_25_rep_share_lm_conformal__1 completed [2.2s, 36.18 MB]
++ summary_votes_governor_25_rep_share_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_rep_share_lm_conformal__1 completed [3ms, 612 B]
++ models_summary dispatched
+✔ models_summary completed [0ms, 2.20 kB]
++ save_summaries dispatched
+✔ save_summaries completed [3ms, 43 B]
++ dashboard dispatched
+✖ dashboard errored
+Error: ! Error running quarto CLI from R.
+Caused by error:
+✖ Error returned by quarto CLI.
+  -----------------------------
+  - The project is out-of-sync -- use `renv::status()` for details.
+  
+  
+  processing file: index.qmd
+  1/60
+  2/60 [r-setup]
+  3/60
+  4/60 [va_summary]
+  5/60
+  6/60 [unnamed-chunk-1]
+  7/60
+  8/60 [unnamed-chunk-2]
+  9/60
+  10/60 [unnamed-chunk-3]
+  11/60
+  12/60 [unnamed-chunk-4]
+  13/60
+  14/60 [unnamed-chunk-5]
+  15/60
+  16/60 [unnamed-chunk-6]
+  17/60
+  18/60 [unnamed-chunk-7]
+  19/60
+  20/60 [unnamed-chunk-8]
+  [31mError in `fortify()`:[39m
+  ! `data` must be a <data.frame>, or an object coercible by `fortify()`,
+  or a valid <data.frame>-like object coercible by `as.data.frame()`, not a
+  <ggplot2::mapping> object.
+  ℹ Did you accidentally pass `aes()` to the `data` argument?
+  Backtrace:
+  ▆
+  1. ├─ggplot2::ggplot(aes(x = timestamp, y = value, color = name))
+  2. └─ggplot2:::ggplot.default(aes(x = timestamp, y = value, color = name))
+  3.  ├─ggplot2::fortify(data, ...)
+  4.  └─ggplot2:::fortify.default(data, ...)
+  5.  └─cli::cli_abort(msg)
+  6.  └─rlang::abort(...)
+  
+  Quitting from index.qmd:215-282 [unnamed-chunk-8]
+  [31mExecution halted[39m
+  
+Caused by error:
+! System command 'quarto' failed
+
+✖ errored pipeline [1m 50.4s, 37 completed, 8 skipped]
+Warning message:
+2 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 

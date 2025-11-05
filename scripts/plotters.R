@@ -3,7 +3,7 @@
 # ============================
 plot_voteShare <- function(summaries, uncertainty = F){
   
-  p = summaries |>
+  d = summaries |>
     mutate(
       party = case_when(
         outcome == "votes_governor_25_dem_share" ~ "dem",
@@ -11,8 +11,9 @@ plot_voteShare <- function(summaries, uncertainty = F){
         TRUE ~ NA_character_
       )
     ) |>
-    filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day")) |> 
-    ggplot(aes(x = timestamp, y = estimate, color = party, fill = party))
+    filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day"))
+
+  p = ggplot(d, aes(x = timestamp, y = estimate, color = party, fill = party))
 
   if (uncertainty) {
     p = p + 
@@ -46,6 +47,10 @@ plot_voteShare <- function(summaries, uncertainty = F){
     scale_fill_manual(
       values = c("dem" = "#005599", "rep" = "#ce0008"),
       labels = c("dem" = "Democrat", "rep" = "Republican")
+    ) +
+    scale_x_datetime(
+      date_breaks = smart_datetime_axis(d$timestamp),
+      labels = minimal_datetime_labels
     )
     
   return(p)
