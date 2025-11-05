@@ -98,13 +98,14 @@ plot_voteCount_byMode <- function(summaries, uncertainty = FALSE) {
 }
 
 plot_voteCount <- function(summaries, uncertainty = FALSE) {
-  p = summaries |>
+  d = summaries |>
     summarize(
       across(matches("^(estimate|lower|upper)$"), sum),
       .by = c(outcome, timestamp)
     ) |>
-    mutate(vote_mode = 'Total') |>
-    ggplot(aes(x = timestamp, y = estimate, color = outcome, fill = outcome))
+    mutate(vote_mode = 'Total')
+
+  p = ggplot(d, aes(x = timestamp, y = estimate, color = outcome, fill = outcome))
 
   if (uncertainty) {
     p = p + 
@@ -131,6 +132,10 @@ plot_voteCount <- function(summaries, uncertainty = FALSE) {
     scale_fill_manual(
       values = c("votes_governor_25_dem_precinct_total" = "#005599", "votes_governor_25_rep_precinct_total" = "#ce0008", "turnout" = "grey50"),
       labels = c("votes_governor_25_dem_precinct_total" = "Democrat", "votes_governor_25_rep_precinct_total" = "Republican", "turnout" = "Turnout")
+    ) +
+    scale_x_datetime(
+      date_breaks = smart_datetime_axis(d$timestamp),
+      labels = minimal_datetime_labels
     )
 
   return(p)
