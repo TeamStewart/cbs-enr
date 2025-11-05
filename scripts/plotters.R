@@ -260,7 +260,7 @@ make_tbl_county <- function(m, state, county) {
 
 pmargins_hist <- function(merged, x) {
   x_vals <- transmute(merged, x = {{ x }}) |> pull(x)
-  x_vals_mode <- transmute(merged, x = {{ x }}) |> 
+  x_vals_mode <- mutate(merged, x = {{ x }}) |> 
     summarize(x = mean(x, na.rm=TRUE), .by = vote_mode) |> 
     mutate(
       label = paste0("Mean: ", scales::label_percent(accuracy = 0.1, suffix = "pp")(x))
@@ -301,17 +301,6 @@ pmargins_hist <- function(merged, x) {
       color = "black",
       size = 6
     ) +
-    # annotate(
-    #   "label",
-    #   x = mean(x_vals),
-    #   y = Inf,
-    #   label = paste0("Mean: ", scales::label_percent(accuracy = 0.1, suffix = "pp")(mean(x_vals,na.rm=TRUE))),
-    #   vjust = 1.5,
-    #   hjust = -0.08,
-    #   fill = "#D9D9D9FF",
-    #   color = "black",
-    #   size = 6
-    # ) +
     facet_wrap(~vote_mode, nrow = 1) +
     scale_x_continuous(
       n.breaks = 5,
