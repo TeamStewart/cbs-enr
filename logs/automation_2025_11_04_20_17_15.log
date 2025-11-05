@@ -1,0 +1,7 @@
+2025-11-04 20:17:15: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
+Error:
+! Error in tar_make():
+  Process ID 39523 is already running a {targets} pipeline with the _targets folder as the local data store for data and metadata files. Please do not attempt to run more than one pipeline on the same data store because it will mangle those important local files. Before trying again, check that process 39523 is really a {targets} pipeline and not a false positive, then terminate it manually. In case of a false positive, run targets::tar_unblock_process(store = "_targets") (or manually remove '_targets/meta/process' ) and try again. False positives may happen if you run different calls to tar_make() in quick succession or if you run tar_make(callr_function = NULL) in a different R process and keep that process running.
+  See https://books.ropensci.org/targets/debugging.html
+Execution halted

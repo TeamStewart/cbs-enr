@@ -29,7 +29,6 @@ suppressPackageStartupMessages({
 
 data_VA = merge_data(
   data = tar_read(data_VA_NA),
-  # data = read_csv(glue("{PATH_DROPBOX}/25_general/input_data/VA/test_files/VA_2025_11_03_23_58_00.csv")),
   history = tar_read(history_noimpute_VA_NA),
   office = c("Governor", "Attorney General", "Lt Governor"),
   impute = FALSE

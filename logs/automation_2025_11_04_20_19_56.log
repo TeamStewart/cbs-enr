@@ -1,0 +1,222 @@
+2025-11-04 20:19:56: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
++ timestamp_VA_NA dispatched
++ timestamp_NY_NA dispatched
++ history_NY_NA dispatched
++ history_noimpute_NY_NA dispatched
+✔ timestamp_NY_NA completed [2s, 69 B]
++ tbl_cbs_NY_NA dispatched
+✔ timestamp_VA_NA completed [2.2s, 71 B]
++ data_VA_NA dispatched
+✖ tbl_cbs_NY_NA errored
+Error: ℹ In argument: `vote_mode != "Overvote/Undervote" & candidate_name !=
+  "Other"`.
+Caused by error:
+! object 'vote_mode' not found
+
+✖ history_NY_NA errored
+Error: Can't select columns that don't exist.
+✖ Column `white` doesn't exist.
+
++ summary_NY_NA dispatched
+✖ summary_NY_NA errored
+Error: could not load dependency history_NY_NA of target summary_NY_NA. invalid 'description' argument
+
+✖ history_noimpute_NY_NA errored
+Error: Can't select columns that don't exist.
+✖ Column `white` doesn't exist.
+
+✔ data_VA_NA completed [12.7s, 630.32 kB]
++ model_votes_governor_25_rep_share_lm_conformal_ dispatched
++ model_votes_governor_25_rep_precinct_total_lm_conformal_ dispatched
++ model_votes_governor_25_dem_precinct_total_lm_conformal_ dispatched
++ model_turnout_xgboost_conformal_ dispatched
+✔ model_votes_governor_25_rep_share_lm_conformal_ completed [2.5s, 22.75 MB]
++ summary_votes_governor_25_rep_share_lm_conformal_ dispatched
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal_ completed [3.3s, 15.32 MB]
++ summary_votes_governor_25_dem_precinct_total_lm_conformal_ dispatched
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal_ completed [3.5s, 15.24 MB]
++ summary_votes_governor_25_rep_precinct_total_lm_conformal_ dispatched
+✔ summary_votes_governor_25_dem_precinct_total_lm_conformal_ completed [3ms, 512 B]
++ model_turnout_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_rep_precinct_total_lm_conformal_ completed [4ms, 512 B]
++ model_turnout_xgboost_conformal__1 dispatched
+✔ summary_votes_governor_25_rep_share_lm_conformal_ completed [4ms, 492 B]
++ model_turnout_lm_conformal__2 dispatched
+✔ model_turnout_xgboost_conformal_ completed [6.2s, 21.09 MB]
++ summary_turnout_xgboost_conformal_ dispatched
+✔ summary_turnout_xgboost_conformal_ completed [4ms, 489 B]
++ model_turnout_xgboost_conformal__2 dispatched
+✔ model_turnout_lm_conformal__2 completed [2.4s, 16.51 MB]
++ summary_turnout_lm_conformal__2 dispatched
+✔ summary_turnout_lm_conformal__2 completed [4ms, 494 B]
++ model_votes_governor_25_dem_share_xgboost_conformal_ dispatched
+✔ model_turnout_lm_conformal__1 completed [2.9s, 23.43 MB]
++ summary_turnout_lm_conformal__1 dispatched
+✔ summary_turnout_lm_conformal__1 completed [3ms, 591 B]
++ model_votes_governor_25_dem_share_xgboost_conformal__1 dispatched
+✖ model_votes_governor_25_dem_share_xgboost_conformal_ errored
+Error: [20:20:29] src/data/data.cc:461: Check failed: valid: Label contains NaN, infinity or a value too large.
+Stack trace:
+  [bt] (0) 1   xgboost.so                          0x000000016200ef7c dmlc::LogMessageFatal::~LogMessageFatal() + 124
+  [bt] (1) 2   xgboost.so                          0x00000001620add60 xgboost::MetaInfo::SetInfoFromHost(xgboost::GenericParameter const&, xgboost::StringView, xgboost::Json) + 3616
+  [bt] (2) 3   xgboost.so                          0x00000001620aefe8 xgboost::MetaInfo::SetInfo(xgboost::GenericParameter const&, char const*, void const*, xgboost::DataType, unsigned long) + 168
+  [bt] (3) 4   xgboost.so                          0x00000001621d8444 XGDMatrixSetFloatInfo + 132
+  [bt] (4) 5   xgboost.so                          0x000000016200a16c XGDMatrixSetInfo_R + 620
+  [bt] (5) 6   libR.dylib                          0x000000010528f3b4 R_doDotCall + 1588
+  [bt] (6) 7   libR.dylib                          0x00000001052e1e98 bcEval_loop + 86104
+  [bt] (7) 8
+
++ model_votes_governor_25_rep_precinct_total_xgboost_conformal_ dispatched
+✖ model_votes_governor_25_dem_share_xgboost_conformal__1 errored
+Error: [20:20:29] src/data/data.cc:461: Check failed: valid: Label contains NaN, infinity or a value too large.
+Stack trace:
+  [bt] (0) 1   xgboost.so                          0x000000013880af7c dmlc::LogMessageFatal::~LogMessageFatal() + 124
+  [bt] (1) 2   xgboost.so                          0x00000001388a9d60 xgboost::MetaInfo::SetInfoFromHost(xgboost::GenericParameter const&, xgboost::StringView, xgboost::Json) + 3616
+  [bt] (2) 3   xgboost.so                          0x00000001388aafe8 xgboost::MetaInfo::SetInfo(xgboost::GenericParameter const&, char const*, void const*, xgboost::DataType, unsigned long) + 168
+  [bt] (3) 4   xgboost.so                          0x00000001389d4444 XGDMatrixSetFloatInfo + 132
+  [bt] (4) 5   xgboost.so                          0x000000013880616c XGDMatrixSetInfo_R + 620
+  [bt] (5) 6   libR.dylib                          0x000000010568b3b4 R_doDotCall + 1588
+  [bt] (6) 7   libR.dylib                          0x00000001056dde98 bcEval_loop + 86104
+  [bt] (7) 8
+
++ model_votes_governor_25_dem_share_xgboost_conformal__2 dispatched
+✖ model_votes_governor_25_dem_share_xgboost_conformal__2 errored
+Error: [20:20:30] src/data/data.cc:461: Check failed: valid: Label contains NaN, infinity or a value too large.
+Stack trace:
+  [bt] (0) 1   xgboost.so                          0x000000013880af7c dmlc::LogMessageFatal::~LogMessageFatal() + 124
+  [bt] (1) 2   xgboost.so                          0x00000001388a9d60 xgboost::MetaInfo::SetInfoFromHost(xgboost::GenericParameter const&, xgboost::StringView, xgboost::Json) + 3616
+  [bt] (2) 3   xgboost.so                          0x00000001388aafe8 xgboost::MetaInfo::SetInfo(xgboost::GenericParameter const&, char const*, void const*, xgboost::DataType, unsigned long) + 168
+  [bt] (3) 4   xgboost.so                          0x00000001389d4444 XGDMatrixSetFloatInfo + 132
+  [bt] (4) 5   xgboost.so                          0x000000013880616c XGDMatrixSetInfo_R + 620
+  [bt] (5) 6   libR.dylib                          0x000000010568b3b4 R_doDotCall + 1588
+  [bt] (6) 7   libR.dylib                          0x00000001056dde98 bcEval_loop + 86104
+  [bt] (7) 8
+
++ model_turnout_lm_conformal_ dispatched
+✔ model_turnout_xgboost_conformal__1 completed [7.9s, 21.34 MB]
++ summary_turnout_xgboost_conformal__1 dispatched
+✔ summary_turnout_xgboost_conformal__1 completed [3ms, 591 B]
++ model_votes_governor_25_rep_share_xgboost_conformal_ dispatched
+✔ model_turnout_lm_conformal_ completed [2.4s, 15.52 MB]
++ summary_turnout_lm_conformal_ dispatched
+✔ summary_turnout_lm_conformal_ completed [4ms, 485 B]
++ model_votes_governor_25_rep_precinct_total_lm_conformal__1 dispatched
+✖ model_votes_governor_25_rep_share_xgboost_conformal_ errored
+Error: [20:20:35] src/data/data.cc:461: Check failed: valid: Label contains NaN, infinity or a value too large.
+Stack trace:
+  [bt] (0) 1   xgboost.so                          0x000000013d80af7c dmlc::LogMessageFatal::~LogMessageFatal() + 124
+  [bt] (1) 2   xgboost.so                          0x000000013d8a9d60 xgboost::MetaInfo::SetInfoFromHost(xgboost::GenericParameter const&, xgboost::StringView, xgboost::Json) + 3616
+  [bt] (2) 3   xgboost.so                          0x000000013d8aafe8 xgboost::MetaInfo::SetInfo(xgboost::GenericParameter const&, char const*, void const*, xgboost::DataType, unsigned long) + 168
+  [bt] (3) 4   xgboost.so                          0x000000013d9d4444 XGDMatrixSetFloatInfo + 132
+  [bt] (4) 5   xgboost.so                          0x000000013d80616c XGDMatrixSetInfo_R + 620
+  [bt] (5) 6   libR.dylib                          0x00000001030873b4 R_doDotCall + 1588
+  [bt] (6) 7   libR.dylib                          0x00000001030d9e98 bcEval_loop + 86104
+  [bt] (7) 8
+
++ model_votes_governor_25_rep_precinct_total_lm_conformal__2 dispatched
+✔ model_turnout_xgboost_conformal__2 completed [6.4s, 21.49 MB]
++ summary_turnout_xgboost_conformal__2 dispatched
+✔ model_votes_governor_25_rep_precinct_total_xgboost_conformal_ completed [4.9s, 20.39 MB]
++ summary_votes_governor_25_rep_precinct_total_xgboost_conformal_ dispatched
+✔ summary_turnout_xgboost_conformal__2 completed [3ms, 498 B]
++ model_votes_governor_25_dem_share_lm_conformal_ dispatched
+✔ summary_votes_governor_25_rep_precinct_total_xgboost_conformal_ completed [4ms, 516 B]
++ model_votes_governor_25_dem_share_lm_conformal__1 dispatched
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal__2 completed [2.5s, 16.37 MB]
++ summary_votes_governor_25_rep_precinct_total_lm_conformal__2 dispatched
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal__1 completed [2.6s, 23.03 MB]
++ summary_votes_governor_25_rep_precinct_total_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_rep_precinct_total_lm_conformal__2 completed [3ms, 520 B]
++ model_votes_governor_25_dem_share_lm_conformal__2 dispatched
+✔ summary_votes_governor_25_rep_precinct_total_lm_conformal__1 completed [4ms, 610 B]
++ model_votes_governor_25_rep_share_lm_conformal__1 dispatched
+✔ model_votes_governor_25_dem_share_lm_conformal_ completed [1.7s, 22.67 MB]
++ summary_votes_governor_25_dem_share_lm_conformal_ dispatched
+✔ summary_votes_governor_25_dem_share_lm_conformal_ completed [4ms, 473 B]
++ model_votes_governor_25_rep_share_lm_conformal__2 dispatched
+✔ model_votes_governor_25_dem_share_lm_conformal__1 completed [1.8s, 39.11 MB]
++ summary_votes_governor_25_dem_share_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_dem_share_lm_conformal__1 completed [9ms, 568 B]
++ model_votes_governor_25_rep_precinct_total_xgboost_conformal__1 dispatched
+✔ model_votes_governor_25_dem_share_lm_conformal__2 completed [1.6s, 24.69 MB]
++ summary_votes_governor_25_dem_share_lm_conformal__2 dispatched
+✔ summary_votes_governor_25_dem_share_lm_conformal__2 completed [3ms, 482 B]
++ model_votes_governor_25_rep_precinct_total_xgboost_conformal__2 dispatched
+✔ model_votes_governor_25_rep_share_lm_conformal__2 completed [1.7s, 24.75 MB]
++ summary_votes_governor_25_rep_share_lm_conformal__2 dispatched
+✔ model_votes_governor_25_rep_share_lm_conformal__1 completed [2.2s, 39.21 MB]
++ summary_votes_governor_25_rep_share_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_rep_share_lm_conformal__2 completed [4ms, 499 B]
++ model_votes_governor_25_rep_share_xgboost_conformal__1 dispatched
+✔ summary_votes_governor_25_rep_share_lm_conformal__1 completed [4ms, 586 B]
++ model_votes_governor_25_rep_share_xgboost_conformal__2 dispatched
+✖ model_votes_governor_25_rep_share_xgboost_conformal__1 errored
+Error: [20:20:45] src/data/data.cc:461: Check failed: valid: Label contains NaN, infinity or a value too large.
+Stack trace:
+  [bt] (0) 1   xgboost.so                          0x000000013b00af7c dmlc::LogMessageFatal::~LogMessageFatal() + 124
+  [bt] (1) 2   xgboost.so                          0x000000013b0a9d60 xgboost::MetaInfo::SetInfoFromHost(xgboost::GenericParameter const&, xgboost::StringView, xgboost::Json) + 3616
+  [bt] (2) 3   xgboost.so                          0x000000013b0aafe8 xgboost::MetaInfo::SetInfo(xgboost::GenericParameter const&, char const*, void const*, xgboost::DataType, unsigned long) + 168
+  [bt] (3) 4   xgboost.so                          0x000000013b1d4444 XGDMatrixSetFloatInfo + 132
+  [bt] (4) 5   xgboost.so                          0x000000013b00616c XGDMatrixSetInfo_R + 620
+  [bt] (5) 6   libR.dylib                          0x00000001058df3b4 R_doDotCall + 1588
+  [bt] (6) 7   libR.dylib                          0x0000000105931e98 bcEval_loop + 86104
+  [bt] (7) 8
+
++ tbl_cbs_VA_NA dispatched
+✖ model_votes_governor_25_rep_share_xgboost_conformal__2 errored
+Error: [20:20:46] src/data/data.cc:461: Check failed: valid: Label contains NaN, infinity or a value too large.
+Stack trace:
+  [bt] (0) 1   xgboost.so                          0x000000013880af7c dmlc::LogMessageFatal::~LogMessageFatal() + 124
+  [bt] (1) 2   xgboost.so                          0x00000001388a9d60 xgboost::MetaInfo::SetInfoFromHost(xgboost::GenericParameter const&, xgboost::StringView, xgboost::Json) + 3616
+  [bt] (2) 3   xgboost.so                          0x00000001388aafe8 xgboost::MetaInfo::SetInfo(xgboost::GenericParameter const&, char const*, void const*, xgboost::DataType, unsigned long) + 168
+  [bt] (3) 4   xgboost.so                          0x00000001389d4444 XGDMatrixSetFloatInfo + 132
+  [bt] (4) 5   xgboost.so                          0x000000013880616c XGDMatrixSetInfo_R + 620
+  [bt] (5) 6   libR.dylib                          0x000000010568b3b4 R_doDotCall + 1588
+  [bt] (6) 7   libR.dylib                          0x00000001056dde98 bcEval_loop + 86104
+  [bt] (7) 8
+
++ model_votes_governor_25_dem_precinct_total_lm_conformal__1 dispatched
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal__1 completed [2.4s, 23.27 MB]
++ summary_votes_governor_25_dem_precinct_total_lm_conformal__1 dispatched
+✔ summary_votes_governor_25_dem_precinct_total_lm_conformal__1 completed [4ms, 611 B]
++ model_votes_governor_25_dem_precinct_total_lm_conformal__2 dispatched
+✔ model_votes_governor_25_rep_precinct_total_xgboost_conformal__2 completed [5s, 20.19 MB]
++ summary_votes_governor_25_rep_precinct_total_xgboost_conformal__2 dispatched
+✔ summary_votes_governor_25_rep_precinct_total_xgboost_conformal__2 completed [4ms, 524 B]
++ model_votes_governor_25_dem_precinct_total_xgboost_conformal__1 dispatched
+✔ model_votes_governor_25_rep_precinct_total_xgboost_conformal__1 completed [7.6s, 20.97 MB]
++ summary_votes_governor_25_rep_precinct_total_xgboost_conformal__1 dispatched
+✔ summary_votes_governor_25_rep_precinct_total_xgboost_conformal__1 completed [5ms, 613 B]
++ model_votes_governor_25_dem_precinct_total_xgboost_conformal__2 dispatched
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal__2 completed [2.7s, 16.48 MB]
++ summary_votes_governor_25_dem_precinct_total_lm_conformal__2 dispatched
+✔ summary_votes_governor_25_dem_precinct_total_lm_conformal__2 completed [4ms, 518 B]
++ summary_VA_NA dispatched
+✔ summary_VA_NA completed [838ms, 662 B]
++ corymodel dispatched
+✔ model_votes_governor_25_dem_precinct_total_xgboost_conformal__2 completed [5.2s, 20.91 MB]
++ summary_votes_governor_25_dem_precinct_total_xgboost_conformal__2 dispatched
+✔ tbl_cbs_VA_NA completed [13s, 170.32 kB]
++ model_votes_governor_25_dem_precinct_total_xgboost_conformal_ dispatched
+✔ summary_votes_governor_25_dem_precinct_total_xgboost_conformal__2 completed [4ms, 525 B]
+✖ corymodel errored
+Error: object 'm_simple_pres' not found
+
+✔ model_votes_governor_25_dem_precinct_total_xgboost_conformal__1 completed [8.2s, 21.33 MB]
++ summary_votes_governor_25_dem_precinct_total_xgboost_conformal__1 dispatched
+✔ summary_votes_governor_25_dem_precinct_total_xgboost_conformal__1 completed [4ms, 615 B]
+✔ model_votes_governor_25_dem_precinct_total_xgboost_conformal_ completed [5.4s, 20.94 MB]
++ summary_votes_governor_25_dem_precinct_total_xgboost_conformal_ dispatched
+✔ summary_votes_governor_25_dem_precinct_total_xgboost_conformal_ completed [4ms, 516 B]
++ models_summary dispatched
+✔ models_summary completed [1ms, 3.60 kB]
++ save_summaries dispatched
+✔ save_summaries completed [2ms, 43 B]
++ dashboard dispatched
+✔ dashboard completed [35.5s, 16.40 MB]
++ upload dispatched
+✔ upload completed [1s, 46 B]
+✖ errored pipeline [1m 43.4s, 57 completed, 9 skipped]
+Warning message:
+11 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 

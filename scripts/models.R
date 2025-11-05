@@ -65,12 +65,9 @@ merge_data <- function(data, history, office, covariates, impute, impute_var) {
     ) |>
     select(race_name, candidate_name, candidate_party, jurisdiction, precinct_id, timestamp, vote_mode, precinct_total) |>
     mutate(
-      turnout = sum(precinct_total, na.rm=TRUE),
+      turnout = max(sum(precinct_total, na.rm=TRUE), na.rm=TRUE),
       share = ifelse(turnout == 0, 0, precinct_total / turnout),
       .by = c(jurisdiction, precinct_id, vote_mode, race_name)
-    ) |> 
-    filter(
-      jurisdiction == "RICHMOND CITY", str_detect(precinct_id, "503")
     ) |> 
     filter(
       candidate_name != "Write-ins"
@@ -81,8 +78,16 @@ merge_data <- function(data, history, office, covariates, impute, impute_var) {
     pivot_wider(
       names_from = c(race_name, candidate_party),
       values_from = c(precinct_total, share),
-      names_glue = "votes_{str_to_lower(str_remove_all(race_name, ' '))}_25_{str_sub(tolower(candidate_party), start=0, end=3)}_{.value}"
+      names_glue = "votes_{str_to_lower(str_remove_all(race_name, ' '))}_25_{str_sub(tolower(candidate_party), start=0, end=3)}_{.value}",
+      values_fn = ~ max(.x, na.rm=TRUE)
     ) |>
+    # fix error with weird merging with multiple turnouts since we calculate due to the 
+    summarize(
+      across(matches("votes_.*?_precinct_total$"), \(x) sum(x, na.rm=TRUE)),
+      across(matches("votes_.*?_share$"), \(x) weighted.mean(x, turnout, na.rm=TRUE)),
+      turnout = max(turnout, na.rm=TRUE),
+      .by = c(jurisdiction, precinct_id, timestamp, vote_mode)
+    ) |> 
     left_join(
       history,
       join_by(jurisdiction == county, precinct_id == precinct_25, vote_mode)
