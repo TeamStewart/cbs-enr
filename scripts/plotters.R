@@ -293,7 +293,7 @@ pmargins_hist <- function(merged, x) {
       x = mean(x_vals),
       y = Inf,
       label = paste0("Mean: ", scales::label_percent(accuracy = 0.1, suffix = "pp")(mean(x_vals))),
-      vjust = -1,
+      vjust = 1.5,
       color = "white",
       size = 6
     ) +
