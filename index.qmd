@@ -532,7 +532,7 @@ viewof vote_mode = {
 {
     let prec_plot = prec;
     if (obs_cols.includes(prec_x) || obs_cols.includes(prec_y)) {
-        prec_plot = prec.filter(d => d.obs > 0.25);
+        prec_plot = prec.filter(d => d.obs > 0.1);
     }
     if (vote_mode != "All") {
       prec_plot = prec_plot.filter(d => d.vote_mode == vote_mode);
