@@ -1,0 +1,168 @@
+2025-11-04 20:44:05: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
++ timestamp_VA_NA dispatched
++ timestamp_NY_NA dispatched
++ history_NY_NA dispatched
++ history_noimpute_NY_NA dispatched
+✔ timestamp_NY_NA completed [2s, 69 B]
+✔ timestamp_VA_NA completed [2.2s, 71 B]
++ data_VA_NA dispatched
+✖ history_NY_NA errored
+Error: Join columns in `x` must be present in the data.
+✖ Problem with `precinct_l2`.
+
++ summary_NY_NA dispatched
+✖ summary_NY_NA errored
+Error: could not load dependency history_NY_NA of target summary_NY_NA. invalid 'description' argument
+
+✖ history_noimpute_NY_NA errored
+Error: Join columns in `x` must be present in the data.
+✖ Problem with `precinct_l2`.
+
+✖ data_VA_NA errored
+Error: parse error: premature EOF
+                                       
+                     (right here) ------^
+
+
++ model_votes_governor_25_rep_share_lm_conformal_ dispatched
++ model_votes_governor_25_rep_precinct_total_lm_conformal_ dispatched
++ model_votes_governor_25_dem_precinct_total_lm_conformal_ dispatched
++ model_turnout_xgboost_conformal_ dispatched
+✖ model_votes_governor_25_rep_precinct_total_lm_conformal_ errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_precinct_total_lm_conformal_. invalid 'description' argument
+
+✖ model_votes_governor_25_rep_share_lm_conformal_ errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_share_lm_conformal_. invalid 'description' argument
+
+✖ model_turnout_xgboost_conformal_ errored
+Error: could not load dependency data_VA_NA of target model_turnout_xgboost_conformal_. invalid 'description' argument
+
+✖ model_votes_governor_25_dem_precinct_total_lm_conformal_ errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_precinct_total_lm_conformal_. invalid 'description' argument
+
++ model_turnout_lm_conformal__1 dispatched
++ model_turnout_xgboost_conformal__1 dispatched
++ model_turnout_lm_conformal__2 dispatched
++ model_turnout_xgboost_conformal__2 dispatched
+✖ model_turnout_lm_conformal__1 errored
+Error: could not load dependency data_VA_NA of target model_turnout_lm_conformal__1. invalid 'description' argument
+
+✖ model_turnout_lm_conformal__2 errored
+Error: could not load dependency data_VA_NA of target model_turnout_lm_conformal__2. invalid 'description' argument
+
+✖ model_turnout_xgboost_conformal__1 errored
+Error: could not load dependency data_VA_NA of target model_turnout_xgboost_conformal__1. invalid 'description' argument
+
+✖ model_turnout_xgboost_conformal__2 errored
+Error: could not load dependency data_VA_NA of target model_turnout_xgboost_conformal__2. invalid 'description' argument
+
++ model_votes_governor_25_dem_share_xgboost_conformal_ dispatched
++ model_votes_governor_25_dem_share_xgboost_conformal__1 dispatched
++ model_votes_governor_25_rep_precinct_total_xgboost_conformal_ dispatched
++ model_votes_governor_25_dem_share_xgboost_conformal__2 dispatched
+✖ model_votes_governor_25_dem_share_xgboost_conformal_ errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_share_xgboost_conformal_. invalid 'description' argument
+
+✖ model_votes_governor_25_dem_share_xgboost_conformal__1 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_share_xgboost_conformal__1. invalid 'description' argument
+
+✖ model_votes_governor_25_dem_share_xgboost_conformal__2 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_share_xgboost_conformal__2. invalid 'description' argument
+
+✖ model_votes_governor_25_rep_precinct_total_xgboost_conformal_ errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_precinct_total_xgboost_conformal_. invalid 'description' argument
+
++ model_turnout_lm_conformal_ dispatched
++ model_votes_governor_25_rep_share_xgboost_conformal_ dispatched
++ model_votes_governor_25_rep_precinct_total_lm_conformal__1 dispatched
++ model_votes_governor_25_rep_precinct_total_lm_conformal__2 dispatched
+✖ model_votes_governor_25_rep_share_xgboost_conformal_ errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_share_xgboost_conformal_. invalid 'description' argument
+
+✖ model_votes_governor_25_rep_precinct_total_lm_conformal__1 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_precinct_total_lm_conformal__1. invalid 'description' argument
+
++ model_votes_governor_25_dem_share_lm_conformal_ dispatched
++ model_votes_governor_25_dem_share_lm_conformal__1 dispatched
+✖ model_votes_governor_25_rep_precinct_total_lm_conformal__2 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_precinct_total_lm_conformal__2. invalid 'description' argument
+
++ model_votes_governor_25_dem_share_lm_conformal__2 dispatched
+✖ model_turnout_lm_conformal_ errored
+Error: could not load dependency data_VA_NA of target model_turnout_lm_conformal_. invalid 'description' argument
+
++ model_votes_governor_25_rep_share_lm_conformal__1 dispatched
+✖ model_votes_governor_25_dem_share_lm_conformal_ errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_share_lm_conformal_. invalid 'description' argument
+
+✖ model_votes_governor_25_dem_share_lm_conformal__1 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_share_lm_conformal__1. invalid 'description' argument
+
++ model_votes_governor_25_rep_share_lm_conformal__2 dispatched
++ model_votes_governor_25_rep_precinct_total_xgboost_conformal__1 dispatched
+✖ model_votes_governor_25_dem_share_lm_conformal__2 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_share_lm_conformal__2. invalid 'description' argument
+
++ model_votes_governor_25_rep_precinct_total_xgboost_conformal__2 dispatched
+✖ model_votes_governor_25_rep_share_lm_conformal__1 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_share_lm_conformal__1. invalid 'description' argument
+
++ model_votes_governor_25_rep_share_xgboost_conformal__1 dispatched
+✖ model_votes_governor_25_rep_share_lm_conformal__2 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_share_lm_conformal__2. invalid 'description' argument
+
+✖ model_votes_governor_25_rep_precinct_total_xgboost_conformal__1 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_precinct_total_xgboost_conformal__1. invalid 'description' argument
+
++ model_votes_governor_25_rep_share_xgboost_conformal__2 dispatched
+✖ model_votes_governor_25_rep_precinct_total_xgboost_conformal__2 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_precinct_total_xgboost_conformal__2. invalid 'description' argument
+
++ tbl_cbs_VA_NA dispatched
++ model_votes_governor_25_dem_precinct_total_lm_conformal__1 dispatched
+✖ model_votes_governor_25_rep_share_xgboost_conformal__1 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_share_xgboost_conformal__1. invalid 'description' argument
+
+✖ tbl_cbs_VA_NA errored
+Error: could not load dependency data_VA_NA of target tbl_cbs_VA_NA. invalid 'description' argument
+
++ model_votes_governor_25_dem_precinct_total_lm_conformal__2 dispatched
++ model_votes_governor_25_dem_precinct_total_xgboost_conformal__1 dispatched
+✖ model_votes_governor_25_rep_share_xgboost_conformal__2 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_rep_share_xgboost_conformal__2. invalid 'description' argument
+
++ model_votes_governor_25_dem_precinct_total_xgboost_conformal__2 dispatched
+✖ model_votes_governor_25_dem_precinct_total_lm_conformal__2 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_precinct_total_lm_conformal__2. invalid 'description' argument
+
+✖ model_votes_governor_25_dem_precinct_total_xgboost_conformal__1 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_precinct_total_xgboost_conformal__1. invalid 'description' argument
+
++ summary_VA_NA dispatched
++ corymodel dispatched
+✖ model_votes_governor_25_dem_precinct_total_xgboost_conformal__2 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_precinct_total_xgboost_conformal__2. invalid 'description' argument
+
+✖ model_votes_governor_25_dem_precinct_total_lm_conformal__1 errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_precinct_total_lm_conformal__1. invalid 'description' argument
+
++ model_votes_governor_25_dem_precinct_total_xgboost_conformal_ dispatched
+✖ summary_VA_NA errored
+Error: could not load dependency data_VA_NA of target summary_VA_NA. invalid 'description' argument
+
+✖ corymodel errored
+Error: could not load dependency data_VA_NA of target corymodel. invalid 'description' argument
+
+✖ model_votes_governor_25_dem_precinct_total_xgboost_conformal_ errored
+Error: could not load dependency data_VA_NA of target model_votes_governor_25_dem_precinct_total_xgboost_conformal_. invalid 'description' argument
+
++ save_summaries dispatched
+✔ save_summaries completed [2ms, 43 B]
++ dashboard dispatched
+✖ dashboard errored
+Error: could not load dependency summary_VA_NA of target dashboard. invalid 'description' argument
+
+✖ errored pipeline [7.4s, 3 completed, 36 skipped]
+Warning message:
+38 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
