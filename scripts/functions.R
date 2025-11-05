@@ -117,7 +117,11 @@ get_history <- function(state, impute, impute_group=NULL) {
     )
 
   if (impute) {
-    base = impute_missing(base, impute_group, covars = select(base, where(is.numeric)) |> colnames())
+    if (state == "NY") {
+      return(base)
+    } else {
+      base = impute_missing(base, impute_group, covars = select(base, where(is.numeric)) |> colnames())
+    }
   }
 
   return(base)
@@ -312,6 +316,10 @@ upload_html <- function(path, state) {
 
 make_summary <- function(data, state, county, timestamp, history){
   fs::dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries"))
+
+  if (is.character(data)) {
+    data <- read_csv(data)
+  }
 
   merge_data(
     data = data,
