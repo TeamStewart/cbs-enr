@@ -164,7 +164,7 @@ total = VA_result_summaries |>
   ) |>
   mutate(vote_mode = 'Total') |>
   ggplot(aes(x = timestamp, y = turnout)) +
-  geom_point() +
+  geom_point(alpha = 0.6, size = 0.85) +
   geom_line() +
   facet_wrap(~vote_mode) +
   theme_bw(base_size = 24) +
@@ -185,7 +185,7 @@ total = VA_result_summaries |>
 mode = VA_result_summaries |>
   filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day")) |>
   ggplot(aes(x = timestamp, y = turnout)) +
-  geom_point() +
+  geom_point(alpha = 0.6, size = 0.85) +
   geom_line() +
   facet_wrap(~vote_mode) +
   theme_bw(base_size = 24) +
@@ -227,7 +227,7 @@ total = VA_result_summaries |>
   ) |>
   mutate(vote_mode = 'Total') |>
   ggplot(aes(x = timestamp, y = value, color = name)) +
-  geom_point() +
+  geom_point(alpha = 0.6, size = 0.85) +
   geom_line() +
   facet_wrap(~vote_mode) +
   theme_bw(base_size = 24) +
@@ -247,7 +247,7 @@ mode = VA_result_summaries |>
   ) |>
   filter(vote_mode %in% c("Absentee/Mail", "Early Voting", "Election Day")) |>
   ggplot(aes(x = timestamp, y = value, color = name)) +
-  geom_point() +
+  geom_point(alpha = 0.6, size = 0.85) +
   geom_line() +
   facet_wrap(~vote_mode) +
   theme_bw(base_size = 24) +
@@ -294,7 +294,7 @@ total = VA_result_summaries |>
     vote_mode = 'Total',
     ) |>
   ggplot(aes(x = timestamp, y = share, color = name)) +
-  geom_point() +
+  geom_point(alpha = 0.6, size = 0.85) +
   geom_line() +
   facet_wrap(~vote_mode) +
   theme_bw(base_size = 24) +
