@@ -78,7 +78,7 @@ scrape_ny <- function(state, county, path, timestamp) {
         "Curtis Sliwa" ~ "Republican"
       ),
       state = "NY",
-      office = "Mayor",
+      race_name = "Mayor",
       vote_mode = "Total",
       ad = str_remove(ad, "AD "),
       ed = str_remove(ed, "ED "),
@@ -93,7 +93,7 @@ scrape_ny <- function(state, county, path, timestamp) {
     # amend fusion voting issues
     summarize(
       precinct_total = sum(precinct_total, na.rm=TRUE),
-      .by = c(state, jurisdiction, precinct_id, office, candidate_name, candidate_party, vote_mode)
+      .by = c(state, jurisdiction, precinct_id, race_name, candidate_name, candidate_party, vote_mode)
     )
 }
 
