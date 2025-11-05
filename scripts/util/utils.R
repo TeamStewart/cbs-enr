@@ -60,3 +60,56 @@ impute_missing <- function(base, group = NULL, covars) {
       across(where(is.numeric), ~ ifelse(is.na(.x), median(.x, na.rm = TRUE), .x))
     )
 }
+
+minimal_datetime_labels <- function(breaks) {
+  labels <- character(length(breaks))
+  prev_date <- as.Date("1900-01-01")
+  prev_ampm <- ""
+  
+  for (i in seq_along(breaks)) {
+    current_date <- as.Date(breaks[i])
+    current_hour <- format(breaks[i], "%I:%M")
+    current_ampm <- format(breaks[i], "%p")
+    
+    # Build label components
+    parts <- character(0)
+    
+    # Add date if it's a new day
+    if (current_date != prev_date) {
+      parts <- c(parts, format(breaks[i], "%b %d"))
+      prev_date <- current_date
+      prev_ampm <- ""  # Reset AM/PM on new day
+    }
+    
+    # Add time
+    parts <- c(parts, current_hour)
+    
+    # Add AM/PM only if it changed
+    if (current_ampm != prev_ampm) {
+      parts <- c(parts, current_ampm)
+      prev_ampm <- current_ampm
+    }
+    
+    labels[i] <- paste(parts, collapse = "\n")
+  }
+  
+  return(labels)
+}
+
+smart_datetime_axis <- function(date_range) {
+  time_span <- as.numeric(difftime(max(date_range), min(date_range), units = "hours"))
+  
+  if (time_span <= 6) {
+    breaks <- "1 hour"
+  } else if (time_span <= 24) {
+    breaks <- "3 hours"
+  } else if (time_span <= 72) {
+    breaks <- "6 hours"
+  } else if (time_span <= 168) {
+    breaks <- "12 hours"
+  } else {
+    breaks <- "1 day"
+  }
+  
+  return(breaks)
+}
