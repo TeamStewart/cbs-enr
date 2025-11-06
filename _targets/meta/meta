@@ -82,7 +82,7 @@ pmargins_hist|function|1ea92405d01fe2e4
 add_obs|function|1476ee8ffb02ee5f
 add_resid|function|8c34556aafe3cb01
 run_model|function|24a35972d15b2de3
-.Random.seed|object|7af6de10d75aa8a7
+.Random.seed|object|8b76bd0bfb1f9166
 scrape_va|function|ceabb58b1c38a219
 tests|object|24f340bcb896e050
 cory_modeling|function|d3680d4d0b7112c5
@@ -111,7 +111,7 @@ create_table_cbs|function|4c8da834a7292c56
 get_data|function|fa7d549b28055e5f
 run_models|function|bce40605662800b7
 make_summary|function|d270cfb6e2bb8c9e
-timestamp_VA_NA|stem|21656ade73cc6a2f|51ff6cae3c13cf47|2b068e949a6b8a99|-180273558||t20398.2755754109s|s68b|68|rds|local|vector|||1.384||
-corymodel|stem||7f8beedb0a334cd9|7330fe9b5d80d745|-1238459702||t20396.898427109s||0|rds|local|vector|||3.334||object 'm_simple_pres' not found
-timestamp_NY_NA|stem|34632f75f337174a|fb6c6e0423986fe3|2b068e949a6b8a99|438131462||t20398.2756191104s|s72b|72|rds|local|vector|||0.086||
-upload|stem|b41efa4c1ba9a3e7|657d1abb898f01fe|e00ec1710a94e5c1|1202071109||t20398.0062346158s||46|rds|local|vector|||0.003|cannot open file 'index_files': it is a directory|cannot open the connection
+timestamp_VA_NA|stem|21656ade73cc6a2f|51ff6cae3c13cf47|2b068e949a6b8a99|-180273558||t20398.2964055508s|s68b|68|rds|local|vector|||1.445||
+corymodel|stem||7f8beedb0a334cd9|7330fe9b5d80d745|-1238459702||t20396.898427109s||0|rds|local|vector|||3.307||object 'm_simple_pres' not found
+timestamp_NY_NA|stem|34632f75f337174a|fb6c6e0423986fe3|2b068e949a6b8a99|438131462||t20398.2964491182s|s72b|72|rds|local|vector|||0.09||
+upload|stem|b41efa4c1ba9a3e7|657d1abb898f01fe|e00ec1710a94e5c1|1202071109||t20398.0062346158s||46|rds|local|vector|||0.002|cannot open file 'index_files': it is a directory|cannot open the connection
