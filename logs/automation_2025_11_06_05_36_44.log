@@ -1,0 +1,18 @@
+2025-11-06 05:36:44: Running tar_make
+- The project is out-of-sync -- use `]8;;x-r-run:renv::status()renv::status()]8;;` for details.
++ timestamp_VA_NA dispatched
+✔ timestamp_VA_NA completed [1.4s, 68 B]
++ corymodel dispatched
+✖ corymodel errored
+Error: object 'm_simple_pres' not found
+
++ timestamp_NY_NA dispatched
+✔ timestamp_NY_NA completed [83ms, 72 B]
++ upload dispatched
+✖ upload errored
+Error: cannot open the connection
+
+✖ errored pipeline [7.2s, 2 completed, 43 skipped]
+Warning messages:
+1: 2 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
+2: 1 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
