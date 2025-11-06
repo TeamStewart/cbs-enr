@@ -83,7 +83,7 @@ pmargins_hist|function|1ea92405d01fe2e4
 add_obs|function|1476ee8ffb02ee5f
 add_resid|function|8c34556aafe3cb01
 run_model|function|24a35972d15b2de3
-.Random.seed|object|65ff92285efce0a9
+.Random.seed|object|dc13d257bb442784
 scrape_va|function|ceabb58b1c38a219
 tests|object|7a6570e0655ea87f
 cory_modeling|function|d3680d4d0b7112c5
@@ -112,6 +112,6 @@ create_table_cbs|function|4c8da834a7292c56
 get_data|function|fa7d549b28055e5f
 run_models|function|bce40605662800b7
 make_summary|function|d270cfb6e2bb8c9e
-timestamp_VA_NA|stem|0623f78dadaed49c|51ff6cae3c13cf47|2b068e949a6b8a99|-180273558||t20398.0111974889s|s69b|69|rds|local|vector|||2.266||
-corymodel|stem||7f8beedb0a334cd9|03b9f314636eab5f|-1238459702||t20396.898427109s||0|rds|local|vector|||4.87||object 'm_simple_pres' not found
-timestamp_NY_NA|stem|35296bf563e74057|fb6c6e0423986fe3|2b068e949a6b8a99|438131462||t20398.0112611188s|s71b|71|rds|local|vector|||0.156||
+timestamp_VA_NA|stem|0623f78dadaed49c|51ff6cae3c13cf47|2b068e949a6b8a99|-180273558||t20398.0181316023s|s69b|69|rds|local|vector|||1.959||
+corymodel|stem||7f8beedb0a334cd9|03b9f314636eab5f|-1238459702||t20396.898427109s||0|rds|local|vector|||4.67||object 'm_simple_pres' not found
+timestamp_NY_NA|stem|35296bf563e74057|fb6c6e0423986fe3|2b068e949a6b8a99|438131462||t20398.0181926128s|s71b|71|rds|local|vector|||0.143||
