@@ -18,7 +18,7 @@ execute_script <- function() {
   tar_make()
 }
 
-# Main loop to schedule and execute the script every 4 minutes
+# Main loop to schedule and execute the script every 30 minutes
 while (TRUE) {
 
   print(glue::glue("Started at {format(Sys.time(), format='%Y-%m-%d %H:%M:%S')}, waiting..."))
@@ -48,7 +48,7 @@ while (TRUE) {
   git2r::push()
   
   elapsed <- as.numeric(Sys.time() - start_time, units = "secs")
-  sleep_time <- max(0, 60*10 - elapsed)
+  sleep_time <- max(0, 60*30 - elapsed)
 
   print("Finished... Zzzzz")
   
