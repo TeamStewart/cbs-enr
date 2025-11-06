@@ -1,0 +1,120 @@
+G3;2025-11-05 19:58:19: Running tar_make
+g- The project is out-of-sync -- use `]8;;x-r-run:renv::status()renv::status()]8;;` for details.
+→ de-duplicating _targets/meta/meta
+→ reading _targets/meta/meta
+→ parsing _targets/meta/meta
+→ noting builders and branches
+→ parsing _targets/meta/meta
+→ restricting metadata records
+→ querying 77 local files in _targets/objects
+→ reading _targets/meta/process
+→ parsing _targets/meta/process
++ timestamp_VA_NA dispatched
+→ 47 targets ■■■■■                            [3.4s, 1+, 5-]
+✔ timestamp_VA_NA completed [1.4s, 71 B]
+→ 47 targets ■■■■■                            [3.4s, 1+, 5-]+ data_VA_NA dispatched
+→ 47 targets ■■■■■                            [3.4s, 1+, 5-]→ 47 targets ■■■■■                            [14.5s, 2+, 5-]
+✔ data_VA_NA completed [10.8s, 701.34 kB]
+→ 47 targets ■■■■■                            [14.5s, 2+, 5-]+ model_votes_governor_25_rep_share_lm_conformal__2 dispatched
+→ 47 targets ■■■■■                            [14.5s, 2+, 5-]→ 47 targets ■■■■■■                           [18.2s, 3+, 5-]
+✔ model_votes_governor_25_rep_share_lm_conformal__2 completed [2s, 25.66 MB]
+→ 47 targets ■■■■■■                           [18.2s, 3+, 5-]+ summary_votes_governor_25_rep_share_lm_conformal__2 dispatched
+→ 47 targets ■■■■■■                           [18.2s, 3+, 5-]✔ summary_votes_governor_25_rep_share_lm_conformal__2 completed [2ms, 516 B]
+→ 47 targets ■■■■■■                           [18.2s, 3+, 5-]+ timestamp_NY_NA dispatched
+→ 47 targets ■■■■■■                           [18.2s, 3+, 5-]✔ timestamp_NY_NA completed [73ms, 72 B]
+→ 47 targets ■■■■■■                           [18.2s, 3+, 5-]+ upload dispatched
+→ 47 targets ■■■■■■                           [18.2s, 3+, 5-]✖ upload errored
+→ 47 targets ■■■■■■                           [18.2s, 3+, 5-]Error: cannot open the connection
+
++ model_votes_governor_25_dem_precinct_total_lm_conformal_ dispatched
+→ 47 targets ■■■■■■                           [18.2s, 3+, 5-]→ 47 targets ■■■■■■■■■■■                      [21.9s, 6+, 8-]
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal_ completed [1.6s, 23.14 MB]
+→ 47 targets ■■■■■■■■■■■                      [21.9s, 6+, 8-]+ summary_votes_governor_25_dem_precinct_total_lm_conformal_ dispatched
+→ 47 targets ■■■■■■■■■■■                      [21.9s, 6+, 8-]✔ summary_votes_governor_25_dem_precinct_total_lm_conformal_ completed [3ms, 507 B]
+→ 47 targets ■■■■■■■■■■■                      [21.9s, 6+, 8-]+ summary_VA_NA dispatched
+→ 47 targets ■■■■■■■■■■■                      [21.9s, 6+, 8-]✔ summary_VA_NA completed [268ms, 699 B]
+→ 47 targets ■■■■■■■■■■■                      [21.9s, 6+, 8-]+ model_turnout_lm_conformal_ dispatched
+→ 47 targets ■■■■■■■■■■■                      [21.9s, 6+, 8-]→ 47 targets ■■■■■■■■■■■■                     [26.2s, 9+, 8-]
+✔ model_turnout_lm_conformal_ completed [1.6s, 23.30 MB]
+→ 47 targets ■■■■■■■■■■■■                     [26.2s, 9+, 8-]+ summary_turnout_lm_conformal_ dispatched
+→ 47 targets ■■■■■■■■■■■■                     [26.2s, 9+, 8-]✔ summary_turnout_lm_conformal_ completed [3ms, 487 B]
+→ 47 targets ■■■■■■■■■■■■                     [26.2s, 9+, 8-]+ model_votes_governor_25_rep_share_lm_conformal_ dispatched
+→ 47 targets ■■■■■■■■■■■■                     [26.2s, 9+, 8-]→ 47 targets ■■■■■■■■■■■■■■                   [29.7s, 11+, 8-]
+✔ model_votes_governor_25_rep_share_lm_conformal_ completed [1.7s, 24.19 MB]
+→ 47 targets ■■■■■■■■■■■■■■                   [29.7s, 11+, 8-]+ summary_votes_governor_25_rep_share_lm_conformal_ dispatched
+→ 47 targets ■■■■■■■■■■■■■■                   [29.7s, 11+, 8-]✔ summary_votes_governor_25_rep_share_lm_conformal_ completed [2ms, 510 B]
+→ 47 targets ■■■■■■■■■■■■■■                   [29.7s, 11+, 8-]+ model_turnout_lm_conformal__1 dispatched
+→ 47 targets ■■■■■■■■■■■■■■                   [29.7s, 11+, 8-]→ 47 targets ■■■■■■■■■■■■■■■                  [34s, 13+, 8-]
+✔ model_turnout_lm_conformal__1 completed [1.9s, 37.22 MB]
+→ 47 targets ■■■■■■■■■■■■■■■                  [34s, 13+, 8-]+ summary_turnout_lm_conformal__1 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■                  [34s, 13+, 8-]✔ summary_turnout_lm_conformal__1 completed [2ms, 587 B]
+→ 47 targets ■■■■■■■■■■■■■■■                  [34s, 13+, 8-]+ model_turnout_lm_conformal__2 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■                  [34s, 13+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■                 [37.7s, 15+, 8-]
+✔ model_turnout_lm_conformal__2 completed [1.7s, 24.68 MB]
+→ 47 targets ■■■■■■■■■■■■■■■■                 [37.7s, 15+, 8-]+ summary_turnout_lm_conformal__2 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■                 [37.7s, 15+, 8-]✔ summary_turnout_lm_conformal__2 completed [3ms, 495 B]
+→ 47 targets ■■■■■■■■■■■■■■■■                 [37.7s, 15+, 8-]+ tbl_cbs_VA_NA dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■                 [37.7s, 15+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■               [57s, 17+, 8-]
+✔ tbl_cbs_VA_NA completed [18.8s, 194.26 kB]
+→ 47 targets ■■■■■■■■■■■■■■■■■■               [57s, 17+, 8-]+ corymodel dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■               [57s, 17+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■               [1m 0.9s, 17+, 8-]
+✖ corymodel errored
+→ 47 targets ■■■■■■■■■■■■■■■■■■               [1m 0.9s, 17+, 8-]Error: object 'm_simple_pres' not found
+
++ model_votes_governor_25_dem_precinct_total_lm_conformal__1 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■               [1m 0.9s, 17+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■              [1m 5s, 18+, 8-]
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal__1 completed [1.8s, 37.15 MB]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■              [1m 5s, 18+, 8-]+ summary_votes_governor_25_dem_precinct_total_lm_conformal__1 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■              [1m 5s, 18+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■■             [1m 5.3s, 19+, 8-]
+✔ summary_votes_governor_25_dem_precinct_total_lm_conformal__1 completed [3ms, 606 B]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■             [1m 5.3s, 19+, 8-]+ model_votes_governor_25_dem_precinct_total_lm_conformal__2 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■             [1m 5.3s, 19+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■■             [1m 8.7s, 20+, 8-]
+✔ model_votes_governor_25_dem_precinct_total_lm_conformal__2 completed [1.6s, 24.74 MB]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■             [1m 8.7s, 20+, 8-]+ summary_votes_governor_25_dem_precinct_total_lm_conformal__2 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■             [1m 8.7s, 20+, 8-]✔ summary_votes_governor_25_dem_precinct_total_lm_conformal__2 completed [2ms, 520 B]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■             [1m 8.7s, 20+, 8-]+ model_votes_governor_25_dem_share_lm_conformal__1 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■             [1m 8.7s, 20+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■■■            [1m 12.8s, 22+, 8-]
+✔ model_votes_governor_25_dem_share_lm_conformal__1 completed [1.8s, 38.30 MB]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■            [1m 12.8s, 22+, 8-]+ summary_votes_governor_25_dem_share_lm_conformal__1 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■            [1m 12.8s, 22+, 8-]✔ summary_votes_governor_25_dem_share_lm_conformal__1 completed [2ms, 605 B]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■            [1m 12.8s, 22+, 8-]+ model_votes_governor_25_dem_share_lm_conformal_ dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■            [1m 12.8s, 22+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■          [1m 16.3s, 24+, 8-]
+✔ model_votes_governor_25_dem_share_lm_conformal_ completed [1.5s, 24.38 MB]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■          [1m 16.3s, 24+, 8-]+ summary_votes_governor_25_dem_share_lm_conformal_ dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■          [1m 16.3s, 24+, 8-]✔ summary_votes_governor_25_dem_share_lm_conformal_ completed [3ms, 511 B]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■          [1m 16.3s, 24+, 8-]+ model_votes_governor_25_dem_share_lm_conformal__2 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■          [1m 16.3s, 24+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■         [1m 19.9s, 26+, 8-]
+✔ model_votes_governor_25_dem_share_lm_conformal__2 completed [1.5s, 25.86 MB]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■         [1m 19.9s, 26+, 8-]+ summary_votes_governor_25_dem_share_lm_conformal__2 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■         [1m 19.9s, 26+, 8-]✔ summary_votes_governor_25_dem_share_lm_conformal__2 completed [3ms, 520 B]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■         [1m 19.9s, 26+, 8-]+ model_votes_governor_25_rep_precinct_total_lm_conformal__1 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■         [1m 19.9s, 26+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■        [1m 24s, 28+, 8-]
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal__1 completed [1.7s, 36.70 MB]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■        [1m 24s, 28+, 8-]+ summary_votes_governor_25_rep_precinct_total_lm_conformal__1 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■        [1m 24s, 28+, 8-]✔ summary_votes_governor_25_rep_precinct_total_lm_conformal__1 completed [5ms, 617 B]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■        [1m 24s, 28+, 8-]+ model_votes_governor_25_rep_precinct_total_lm_conformal__2 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■        [1m 24s, 28+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■      [1m 29s, 30+, 8-]
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal__2 completed [2.9s, 24.36 MB]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■      [1m 29s, 30+, 8-]+ summary_votes_governor_25_rep_precinct_total_lm_conformal__2 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■      [1m 29s, 30+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■      [1m 29.2s, 31+, 8-]
+✔ summary_votes_governor_25_rep_precinct_total_lm_conformal__2 completed [4ms, 518 B]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■      [1m 29.2s, 31+, 8-]+ model_votes_governor_25_rep_precinct_total_lm_conformal_ dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■      [1m 29.2s, 31+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [1m 32.5s, 32+, 8-]
+✔ model_votes_governor_25_rep_precinct_total_lm_conformal_ completed [1.6s, 22.77 MB]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [1m 32.5s, 32+, 8-]+ summary_votes_governor_25_rep_precinct_total_lm_conformal_ dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [1m 32.5s, 32+, 8-]✔ summary_votes_governor_25_rep_precinct_total_lm_conformal_ completed [3ms, 514 B]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [1m 32.5s, 32+, 8-]+ model_votes_governor_25_rep_share_lm_conformal__1 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [1m 32.5s, 32+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [1m 36.7s, 34+, 8-]
+✔ model_votes_governor_25_rep_share_lm_conformal__1 completed [1.8s, 38.08 MB]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [1m 36.7s, 34+, 8-]+ summary_votes_governor_25_rep_share_lm_conformal__1 dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [1m 36.7s, 34+, 8-]✔ summary_votes_governor_25_rep_share_lm_conformal__1 completed [3ms, 606 B]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [1m 36.7s, 34+, 8-]+ models_summary dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [1m 36.7s, 34+, 8-]✔ models_summary completed [1ms, 2.20 kB]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [1m 36.7s, 34+, 8-]+ save_summaries dispatched
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [1m 36.7s, 34+, 8-]✔ save_summaries completed [2ms, 44 B]
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [1m 36.7s, 34+, 8-]→ de-duplicating _targets/meta/meta
+→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [1m 36.7s, 34+, 8-]→ 47 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [1m 37.1s, 37+, 8-]
+✖ errored pipeline [1m 37.2s, 37 completed, 8 skipped]
+Warning messages:
+1: 2 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
+2: 1 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
