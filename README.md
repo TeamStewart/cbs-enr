@@ -10,7 +10,11 @@ The repository contains several distinct sections. Although the structure of the
 
 ### Pipeline Management
 
-This repository uses a makefile style pipeline, controlled by the R package `targets`. In short, this helps us by reducing the number of full updates of data/estimates/figures/pages we produce to only occur when a new batch of votes is released. - `_targets.R` is the main script file, which sets up the structure of the pipeline and imports all relevant functions - `/_targets` and `_targets.yaml` are generated automatically, and should never be modified
+This repository uses a makefile style pipeline, controlled by the R package `targets`. In short, this helps us by reducing the number of full updates of data/estimates/figures/pages we produce to only occur when a new batch of votes is released. 
+
+- `_targets.R` is the main script file, which sets up the structure of the pipeline and imports all relevant functions
+  
+- `/_targets` and `_targets.yaml` are generated automatically, and should never be modified
 
 ### Scripts
 
