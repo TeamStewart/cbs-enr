@@ -63,13 +63,13 @@ tests = list.files(
   full.names = TRUE
 )
 
-models = tidyr::expand_grid(
+model_meta = tidyr::expand_grid(
   method = c("lm"),
   uncertainty = "conformal",
   subset = c(''),
   outcome = c(
     "turnout", 
-    "votes_governor_25_dem_precinct_total", "votes_governor_25_rep_precinct_total", 
+    "votes_governor_25_dem_precinct_total", "votes_governor_25_rep_precinct_total",
     "votes_governor_25_dem_share", "votes_governor_25_rep_share"
   ),
   c1 = list(
@@ -78,7 +78,7 @@ models = tidyr::expand_grid(
     # cory's full model
     c("l_votes21", "l_votes24", "p_age_18_29", "p_age_65_up", "p_white_col", "p_white_noncol", "p_black_col", "p_black_noncol", "p_hisp", "p_noncol_male", "p_noncol_fem", "p_dem", "p_ind"),
     # simplified
-    # c("l_votes21", "l_votes24", "votePct_gov_21_dem", "votePct_potus_24_dem"),
+    c("l_votes21", "l_votes24", "votePct_gov_21_dem", "votePct_potus_24_dem"),
     # minimal
     c("l_votes24")
   )
@@ -95,13 +95,14 @@ models = tidyr::expand_grid(
     ),
     covars = list(c(c2, c1))
   ) |> 
-  dplyr::select(-c1, -c2)
+  dplyr::select(-c1, -c2) |> 
+  dplyr::ungroup()
 
 # ========================================
 ## PIPELINE
 # ========================================
 models <- tar_map(
-    models,
+    model_meta,
     tar_target(model, run_models(
       data_VA_NA, "VA", NA, timestamp_VA_NA, history_VA_NA, office = "Governor", 
       method = method, uncertainty = uncertainty, outcome = outcome, residualize = TRUE,

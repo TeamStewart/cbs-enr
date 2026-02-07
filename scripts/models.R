@@ -103,7 +103,7 @@ run_model <- function(
   uncertainty,
   outcome,
   covars,
-  obs_cutoff = 0.25,
+  obs_cutoff = 0.05,
   level = 0.9,
   weight_var = NULL,
   residualize
@@ -303,7 +303,7 @@ get_model_summary <- function(model) {
 
 save_modelsummary <- function(summary, state, county, timestamp) {
   dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries"))
-  qs_save(summary, glue::glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries/summarymodel_{state}_{county}_{timestamp}.qs2"))
+  qs_save(summary, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries/summarymodel_{state}_{county}_{timestamp}.qs2"))
 }
 
 cory_modeling <- function(data, history, timestamp) {
@@ -328,15 +328,17 @@ cory_modeling <- function(data, history, timestamp) {
   stopifnot(all(d_live[c("spanberger", "sears")] >= 0))
   stopifnot(all(d_live[c("spanberger", "sears")] <= 1))
 
-  d = enightmodels:::add_obs_any(d_live, total)
-  d = d |>
-    mutate(total = coalesce(total, 0)) |>
+  d_live = d_live |> 
+    mutate(total = coalesce(total, 0)) |> 
     left_join(history, by = join_by(jurisdiction == county, precinct_id == precinct_25, vote_mode)) |> 
-    drop_na(votes_precFinal_24, votes_precFinal_21)
+    drop_na(votes_precFinal_24, votes_precFinal_21) |> 
+    filter(vote_mode == "Election Day")
+
+  d = enightmodels:::add_obs_past(d_live, total, votes_precFinal_21)
 
   d_rep = d |>
-    mutate(n_obs = sum(obs == 1), n_total = n()) |>
-    filter(obs == 1) |>
+    mutate(n_obs = sum(obs > 0.6), n_total = n()) |>
+    filter(obs > 0.6) |>
     summarize(
       turn = sum(total),
       n_obs = n_obs[1],
@@ -350,7 +352,7 @@ cory_modeling <- function(data, history, timestamp) {
       data = data,
       cands = names(cands),
       turn = total,
-      obs = obs == 1,
+      obs = obs > 0.6,
       ctrl_form = formula,
       prior_turn = prior_turn,
       prior_cands = c(prior_spanberger, prior_sears),
@@ -411,8 +413,8 @@ cory_modeling <- function(data, history, timestamp) {
     full = to_prec_ct(m_full)
   )
 
-  qs_save(forecast_prec, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries/corymodel_prec_{timestamp}.qs2"))
-  qs_save(forecasts, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries/corymodel_{timestamp}.qs2"))
+  qs_save(forecast_prec, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/models/corymodel_prec_{timestamp}.qs2"))
+  qs_save(forecasts, glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/models/corymodel_{timestamp}.qs2"))
 
   return(forecasts$full$pred)
 

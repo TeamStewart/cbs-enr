@@ -128,3 +128,205 @@ smart_datetime_axis <- function(date_range) {
   
   return(breaks)
 }
+
+# # ========================================
+# Re-run models
+# # ========================================
+
+manual_runmodels <- function(){
+
+  files = list.files(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/clean"), pattern = "VA_2025_11.*?\\d+\\.csv$", full.names = TRUE)
+
+  model_meta = tidyr::expand_grid(
+    method = c("lm", "xgboost"),
+    uncertainty = "conformal",
+    subset = c('vote_mode == "Election Day"'),
+    outcome = c(
+      # "turnout",
+      "votes_governor_25_dem_share",
+      "votes_governor_25_rep_share"
+    ),
+    c1 = list(
+      ## all combined with past vote/turnout
+      NULL,
+      # cory's full model
+      c(
+        "l_votes21",
+        "l_votes24",
+        "p_age_18_29",
+        "p_age_65_up",
+        "p_white_col",
+        "p_white_noncol",
+        "p_black_col",
+        "p_black_noncol",
+        "p_hisp",
+        "p_noncol_male",
+        "p_noncol_fem",
+        "p_dem",
+        "p_ind"
+      )
+    )
+  ) |>
+    dplyr::rowwise() |>
+    dplyr::mutate(
+      c2 = dplyr::case_when(
+        outcome == "votes_governor_25_dem_precinct_total" ~ "votes_potus_24_dem",
+        outcome == "votes_governor_25_rep_precinct_total" ~ "votes_potus_24_rep",
+        outcome == "votes_governor_25_dem_share" ~ "votePct_potus_24_dem",
+        outcome == "votes_governor_25_rep_share" ~ "votePct_potus_24_rep",
+        outcome == "turnout" ~ "votes_precFinal_24",
+        .default = NA_character_
+      ),
+      covars = list(c(c2, c1))
+    ) |>
+    dplyr::select(-c1, -c2) |>
+    dplyr::ungroup()
+
+  HISTORY = tar_read(history_VA_NA)
+  
+  run_singlemodel <- function(data, method, uncertainty, outcome, subset, covars, timestamp){
+    run_models(
+      data, "VA", NA, timestamp, history=HISTORY, office = "Governor", 
+      method = method, uncertainty = uncertainty, outcome = outcome, residualize = TRUE,
+      subset = subset, covars = covars, weight_var = "turnout"
+    ) |> 
+      get_model_summary()
+  }
+
+  precs = map(files, fread) |> rbindlist(fill=TRUE) |> 
+    filter(timestamp > ymd_hm("2025-11-04 14:00"), race_name == "Governor") |> 
+    mutate(file = timestamp) |> 
+    nest(data = -file)
+
+  ci_new = precs |>
+    expand_grid(model_meta) |>
+    filter(file > ymd_hm("2025-11-04 19:20"), file < ymd("2025-11-05")) |>
+    mutate(
+      out = pmap(
+        list(data, method, uncertainty, outcome, subset, covars, file),
+        run_singlemodel,
+        .progress = TRUE
+      ),
+      # out = pmap(
+      #   list(data, method, uncertainty, outcome, subset, covars, file),
+      #   .f = in_parallel(
+      #     \(d, m, y, o, s, c, f) f(d, m, y, o, s, c, f),
+      #     f = run_singlemodel,
+      #     run_models = run_models,
+      #     get_model_summary = get_model_summary,
+      #     history = HISTORY
+      #   ),
+      #   .progress = TRUE
+      # )
+    ) |> 
+    select(out) |> unnest(cols = out) |> 
+    mutate(covars = lengths(covars)) |> 
+    mutate(
+      type = case_when(
+        covars == 1 ~ paste(method, "No Covars"),
+        covars == 2 ~ paste(method, "Minimal Covars"),
+        covars > 2 ~ paste(method, "Full Covars"),
+        .default = NA_character_
+      ),
+      cand = case_when(
+        outcome == "votes_governor_25_dem_share" ~ "spanberger",
+        outcome == "votes_governor_25_rep_share" ~ "sears",
+        .default = NA
+      )
+    ) |> 
+    rename(
+      est = estimate,
+      file = timestamp
+    )
+  
+  results = precs |> 
+    filter(file > ymd_hm("2025-11-04 19:20")) |>
+    mutate(
+      cory = map2(data, file, \(x, t) cory_modeling(x, history, t), .progress = TRUE)
+    )
+  
+  # ci = map(
+  #   list.files(path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/VA/summaries"), pattern = "summarymodel.*?/\\d+\\.qs2$", full.names = TRUE),
+  #   qs2::qs_read
+  # ) |>
+  #   bind_rows() |>
+  #   distinct() |>
+  #   filter(outcome != "turnout", !str_detect(outcome, "precinct_total$"), vote_mode == "Election Day") |>
+  #   mutate(covars = lengths(covars)) |>
+  #   mutate(
+  #     type = case_when(
+  #       covars == 1 ~ paste(method, "No Covars"),
+  #       covars == 2 ~ paste(method, "Minimal Covars"),
+  #       covars > 2 ~ paste(method, "Full Covars"),
+  #       .default = NA_character_
+  #     ),
+  #     cand = case_when(
+  #       outcome == "votes_governor_25_dem_share" ~ "spanberger",
+  #       outcome == "votes_governor_25_rep_share" ~ "sears",
+  #       .default = NA
+  #     )
+  #   ) |>
+  #   rename(
+  #     est = estimate,
+  #     file = timestamp
+  #   )
+
+  results |>
+    select(-data) |>
+    unnest(cols = cory) |>
+    unnest_longer(col = cory) |>
+    unnest_wider(col = cory) |>
+    drop_na(cand) |>
+    bind_rows(ci_new) |>
+    filter(
+      lower > 0,
+      file < ymd("2025-11-05"),
+      !str_detect(type, "Minimal")
+    ) |>
+    mutate(
+      type = case_match(
+        type,
+        .default = type,
+        "conf_seq" ~ "Bayes-lm Conformal Seq",
+        "cred_int" ~ "Bayes-lm Credible Int"
+      )
+    ) |> 
+    ggplot(aes(x = file, y = est, ymin = lower, ymax = upper, fill = cand, color = cand)) +
+    geom_ribbon(alpha = 0.5) +
+    geom_point() +
+    geom_line() +
+    geom_hline(
+      yintercept = 0.537,
+      linetype = "dashed",
+      color = "#3791FF"
+    ) +
+    geom_hline(
+      yintercept = 0.460,
+      linetype = "dashed",
+      color = "#F6573E"
+    ) +
+    facet_wrap(~type) +
+    scale_discrete_manual(
+      aesthetics = c("fill", "color"),
+      values = c("spanberger" = "#3791FF", "sears" = "#F6573E")
+    ) +
+    scale_y_continuous(
+      labels = scales::label_percent(accuracy = 1)
+    ) +
+    labs(
+      x = "",
+      y = "Vote Share Estimate",
+      title = "Election Day Only"
+    ) +
+    theme_bw(base_size = 18) +
+    theme(
+      legend.position = "none",
+      panel.grid.major = element_line(linetype = "dashed", color = "grey90", linewidth = 0.3),
+      panel.grid.minor = element_line(linetype = "dashed", color = "grey90", linewidth = 0.3),
+      strip.background = element_rect(fill = NA, color = NA),
+      strip.text = element_text(face = "bold")
+    )
+  
+  ggsave("~/Dropbox (MIT)/Research/CBS-MIT Election Data/25_general/_post_analysis/models.png", width = 12, height = 8, dpi = 300)
+
+}
