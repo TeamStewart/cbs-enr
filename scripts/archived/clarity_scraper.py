@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import zipfile
 import os
@@ -9,7 +8,6 @@ import re
 
 import dateutil.parser
 from lxml import etree
-import sys
 
 
 class Parser(object):

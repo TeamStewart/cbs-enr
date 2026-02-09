@@ -2,30 +2,26 @@
 ## Project: CBS ENR
 ## Script purpose: Automate tar_make()
 ## Date: March 2024
-## Author:
+## Author: Joseph R. Loffredo and Mason Reece
 ##################################################
 
-suppressPackageStartupMessages({
-  library(tidyverse)
-  library(targets)
-  library(tarchetypes)
-})
+INTERVAL = 30 # minutes
 
 # Function to execute the R script
 execute_script <- function() {
   message(sprintf("%s: Running tar_make", format(Sys.time(), format="%Y-%m-%d %H:%M:%S")))
   # Use the system function to execute the R script
-  tar_make()
+  targets::tar_make()
 }
 
-# Main loop to schedule and execute the script every 30 minutes
+# Main loop to schedule and execute the script every INTERVAL minutes
 while (TRUE) {
 
   print(glue::glue("Started at {format(Sys.time(), format='%Y-%m-%d %H:%M:%S')}, waiting..."))
 
   start_time <- Sys.time()
   
-  run_time <- format(Sys.time(), format="%Y-%m-%d %H:%M:%S") |> str_replace_all("-|:| ", "_")
+  run_time <- format(Sys.time(), format="%Y-%m-%d %H:%M:%S") |> stringr::str_replace_all("-|:| ", "_")
   
   fs::dir_create("logs/")
   
@@ -54,7 +50,7 @@ while (TRUE) {
   #             credentials = cred)
   
   elapsed <- as.numeric(Sys.time() - start_time, units = "secs")
-  sleep_time <- max(0, 60*30 - elapsed)
+  sleep_time <- max(0, 60*INTERVAL - elapsed)
 
   print("Finished... Zzzzz")
   

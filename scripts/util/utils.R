@@ -1,8 +1,12 @@
-# Convert a state abbreviation to its full name
-lookup_state_name <- function(abbreviation) {
-  state.name[match(abbreviation, state.abb)]
-}
-
+#' Get a Google Sheet as a data frame
+#'
+#' @param spreadsheet The ID or URL of the Google Sheet
+#' @param sheet The name or index of the sheet within the Google Sheet
+#' @param ...
+#'
+#' @returns A dataframe
+#'
+#' @export
 get_gsheet <- function(spreadsheet, sheet, ...) {
   googlesheets4::read_sheet(
     ss = spreadsheet,
@@ -25,6 +29,7 @@ add_resid <- function(data, left, right){
     resid = pmax(-5, pmin(resid, 5))
   )
 }
+
 
 add_obs <- function(data, outcome, covars, obs_function="past"){
   checkmate::assert_choice(obs_function, c("past", "any", "test_ind", "test_rank"))
@@ -128,10 +133,6 @@ smart_datetime_axis <- function(date_range) {
   
   return(breaks)
 }
-
-# # ========================================
-# Re-run models
-# # ========================================
 
 manual_runmodels <- function(){
 
@@ -329,4 +330,20 @@ manual_runmodels <- function(){
   
   ggsave("~/Dropbox (MIT)/Research/CBS-MIT Election Data/25_general/_post_analysis/models.png", width = 12, height = 8, dpi = 300)
 
+}
+
+create_dirs <- function(meta) {
+  # general dirs
+  dir_create("data/cbs_format")
+
+  # state dirs
+  create_dir <- function(state) {
+    dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw"))
+    dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean"))
+    dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries"))
+  }
+
+  walk(unique(meta$state), create_dir)
+
+  return(NULL)
 }

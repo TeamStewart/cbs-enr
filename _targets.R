@@ -12,6 +12,9 @@ suppressPackageStartupMessages({
   library(targets)
   library(tarchetypes)
   library(glue)
+  if (Sys.info["user"] == "mason") {
+    devtools::load_all("~/Documents/github/enightdata")
+  }
 })
 
 source("scripts/functions.R")
@@ -50,12 +53,21 @@ tar_option_set(
   controller = crew::crew_controller_local(workers = 1)
 )
 
+set_dropbox(PATH_DROPBOX)
+set_gdrive(PATH_GDRIVE)
+set_election_folder(ELECTION_FOLDER)
+set_s3_bucket(PATH_CBS_S3)
+
 # get the metadata file, with the following structure
 # - state: (string) all caps abbreviation of the state
 # - county: (string) lowercase county of interest in that state, if NA then statewide
-# - path: (string) generic cell for path/number/ID used by custom scrapers to get file
+# - path: (string) generic cell for url path used to scrape data
+# - path_timestamp: (string) optional cell for timestamp, if NA then use `path`
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
-metadata = readr::read_csv(glue::glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/metadata.csv"), col_types = "cccll")
+metadata = read_local("metadata.csv", colClasses=list(character=1:4, logical=4)) |> 
+  mutate(
+    path_timestamp = dplyr::coalesce(path_timestamp, path)
+  )
 
 tests = list.files(
   glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/test_files"),
