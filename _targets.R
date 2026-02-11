@@ -47,16 +47,20 @@ tar_option_set(
     "gt",
     "patchwork",
     "tidymodels",
-    "enightmodels" # cory package
+    "enightmodels", # cory package
+    "enightdata" # internal package for scrapers and timestamps
   ),
   error = "continue",
   controller = crew::crew_controller_local(workers = 1)
 )
 
-set_dropbox(PATH_DROPBOX)
-set_gdrive(PATH_GDRIVE)
-set_election_folder(ELECTION_FOLDER)
-set_s3_bucket(PATH_CBS_S3)
+set_all(
+  dropbox = PATH_DROPBOX,
+  gdrive = PATH_GDRIVE,
+  election_folder = ELECTION_FOLDER,
+  s3_bucket = PATH_CBS_S3,
+  election_date = ELECTION_DATE
+)
 
 # get the metadata file, with the following structure
 # - state: (string) all caps abbreviation of the state
@@ -69,80 +73,80 @@ metadata = read_local("metadata.csv", colClasses=list(character=1:4, logical=4))
     path_timestamp = dplyr::coalesce(path_timestamp, path)
   )
 
-tests = list.files(
-  glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/test_files"),
-  pattern = "VA_.*?$",
-  full.names = TRUE
-)
+# tests = list.files(
+#   glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/test_files"),
+#   pattern = "VA_.*?$",
+#   full.names = TRUE
+# )
 
-model_meta = tidyr::expand_grid(
-  method = c("lm"),
-  uncertainty = "conformal",
-  subset = c(''),
-  outcome = c(
-    "turnout", 
-    "votes_governor_25_dem_precinct_total", "votes_governor_25_rep_precinct_total",
-    "votes_governor_25_dem_share", "votes_governor_25_rep_share"
-  ),
-  c1 = list(
-    ## all combined with past vote/turnout
-    NULL,
-    # cory's full model
-    c("l_votes21", "l_votes24", "p_age_18_29", "p_age_65_up", "p_white_col", "p_white_noncol", "p_black_col", "p_black_noncol", "p_hisp", "p_noncol_male", "p_noncol_fem", "p_dem", "p_ind"),
-    # simplified
-    c("l_votes21", "l_votes24", "votePct_gov_21_dem", "votePct_potus_24_dem"),
-    # minimal
-    c("l_votes24")
-  )
-) |>
-  dplyr::rowwise() |>
-  dplyr::mutate(
-    c2 = dplyr::case_when(
-      outcome == "votes_governor_25_dem_precinct_total" ~ "votes_potus_24_dem",
-      outcome == "votes_governor_25_rep_precinct_total" ~ "votes_potus_24_rep",
-      outcome == "votes_governor_25_dem_share" ~ "votePct_potus_24_dem",
-      outcome == "votes_governor_25_rep_share" ~ "votePct_potus_24_rep",
-      outcome == "turnout" ~ "votes_precFinal_24",
-      .default = NA_character_
-    ),
-    covars = list(c(c2, c1))
-  ) |> 
-  dplyr::select(-c1, -c2) |> 
-  dplyr::ungroup()
+# model_meta = tidyr::expand_grid(
+#   method = c("lm"),
+#   uncertainty = "conformal",
+#   subset = c(''),
+#   outcome = c(
+#     "turnout", 
+#     "votes_governor_25_dem_precinct_total", "votes_governor_25_rep_precinct_total",
+#     "votes_governor_25_dem_share", "votes_governor_25_rep_share"
+#   ),
+#   c1 = list(
+#     ## all combined with past vote/turnout
+#     NULL,
+#     # cory's full model
+#     c("l_votes21", "l_votes24", "p_age_18_29", "p_age_65_up", "p_white_col", "p_white_noncol", "p_black_col", "p_black_noncol", "p_hisp", "p_noncol_male", "p_noncol_fem", "p_dem", "p_ind"),
+#     # simplified
+#     c("l_votes21", "l_votes24", "votePct_gov_21_dem", "votePct_potus_24_dem"),
+#     # minimal
+#     c("l_votes24")
+#   )
+# ) |>
+#   dplyr::rowwise() |>
+#   dplyr::mutate(
+#     c2 = dplyr::case_when(
+#       outcome == "votes_governor_25_dem_precinct_total" ~ "votes_potus_24_dem",
+#       outcome == "votes_governor_25_rep_precinct_total" ~ "votes_potus_24_rep",
+#       outcome == "votes_governor_25_dem_share" ~ "votePct_potus_24_dem",
+#       outcome == "votes_governor_25_rep_share" ~ "votePct_potus_24_rep",
+#       outcome == "turnout" ~ "votes_precFinal_24",
+#       .default = NA_character_
+#     ),
+#     covars = list(c(c2, c1))
+#   ) |> 
+#   dplyr::select(-c1, -c2) |> 
+#   dplyr::ungroup()
 
 # ========================================
 ## PIPELINE
 # ========================================
-models <- tar_map(
-    model_meta,
-    tar_target(model, run_models(
-      data_VA_NA, "VA", NA, timestamp_VA_NA, history_VA_NA, office = "Governor", 
-      method = method, uncertainty = uncertainty, outcome = outcome, residualize = TRUE,
-      subset = subset, covars = covars, weight_var = "turnout"
-    )),
-    tar_target(summary, get_model_summary(model)),
-    names = c(outcome, method, uncertainty, subset)
-  )
+# models <- tar_map(
+#     model_meta,
+#     tar_target(model, run_models(
+#       data_VA_NA, "VA", NA, timestamp_VA_NA, history_VA_NA, office = "Governor", 
+#       method = method, uncertainty = uncertainty, outcome = outcome, residualize = TRUE,
+#       subset = subset, covars = covars, weight_var = "turnout"
+#     )),
+#     tar_target(summary, get_model_summary(model)),
+#     names = c(outcome, method, uncertainty, subset)
+#   )
 
 list(
   tar_map(
     metadata,
     tar_target(timestamp, get_timestamp(state, county, path), cue = tar_cue(mode = "always")),
-    tar_target(history, get_history(state, impute = TRUE, impute_group = "polstratum")),
+    # tar_target(history, get_history(state, impute = TRUE, impute_group = "polstratum")),
     tar_target(history_noimpute, get_history(state, impute = FALSE)),
     tar_target(data, get_data(state, county, timestamp, path)),
     tar_target(summary, make_summary(data, state, county, timestamp, history)),
     tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
     names = c(state, county)
   ),
-  models,
-  tar_combine(
-    models_summary,
-    models[["summary"]],
-    command = dplyr::bind_rows(!!!.x)
-  ),
+  # models,
+  # tar_combine(
+  #   models_summary,
+  #   models[["summary"]],
+  #   command = dplyr::bind_rows(!!!.x)
+  # ),
   tar_quarto(dashboard, "index.qmd", quiet = FALSE),
-  tar_target(save_summaries, save_modelsummary(models_summary, "VA", NA, timestamp_VA_NA)),
-  tar_target(corymodel, cory_modeling(data_VA_NA, history_VA_NA, timestamp_VA_NA)),
-  tar_target(upload, upload_html(dashboard[1], "VA"))
+  # tar_target(save_summaries, save_modelsummary(models_summary, "VA", NA, timestamp_VA_NA)),
+  # tar_target(corymodel, cory_modeling(data_VA_NA, history_VA_NA, timestamp_VA_NA)),
+  tar_target(upload, upload_html(dashboard[1]))
 )

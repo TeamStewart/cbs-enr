@@ -30,7 +30,6 @@ add_resid <- function(data, left, right){
   )
 }
 
-
 add_obs <- function(data, outcome, covars, obs_function="past"){
   checkmate::assert_choice(obs_function, c("past", "any", "test_ind", "test_rank"))
 

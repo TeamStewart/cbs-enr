@@ -1,6 +1,6 @@
 ---
-title: "Virginia Election 2025"
-author: "[LOFFREDO & REECE]"
+title: "2026 Primaries"
+author: "[MIT]"
 format:
   dashboard:
     theme: 

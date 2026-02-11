@@ -62,7 +62,6 @@ upload_html <- function(path, state) {
   )
 }
 
-# TODO: update for 2026 and on
 make_summary <- function(data, state, county, timestamp, history){
   merge_data(
     data = data,
@@ -71,11 +70,11 @@ make_summary <- function(data, state, county, timestamp, history){
     impute = FALSE
   ) |> 
     summarize(
-      across(c(turnout, matches("votes_.*?25_.*?precinct_total$")), ~ sum(.x, na.rm=TRUE)),
+      across(c(turnout, matches("votes_.*?2\\d_.*?precinct_total$")), ~ sum(.x, na.rm=TRUE)),
       .by = c(timestamp, vote_mode) 
     ) |> 
     mutate(
-      across(matches("votes_.*?25_.*?precinct_total$"), ~ .x / turnout, .names = "{str_replace(.col, '_precinct_total$', '_share')}"),
+      across(matches("votes_.*?2\\d_.*?precinct_total$"), ~ .x / turnout, .names = "{str_replace(.col, '_precinct_total$', '_share')}"),
     ) |> 
     write_csv(
       glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries/summarylive_{state}_{county}_{timestamp}.csv")
