@@ -61,6 +61,7 @@ set_all(
   s3_bucket = PATH_CBS_S3,
   election_date = ELECTION_DATE
 )
+create_dirs()
 
 # get the metadata file, with the following structure
 # - state: (string) all caps abbreviation of the state
