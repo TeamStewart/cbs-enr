@@ -12,7 +12,7 @@ suppressPackageStartupMessages({
   library(targets)
   library(tarchetypes)
   library(glue)
-  if (Sys.info["user"] == "mason") {
+  if (Sys.info()["user"] == "mason") {
     devtools::load_all("~/Documents/github/enightdata")
   }
 })
@@ -34,7 +34,7 @@ tar_option_set(
     "janitor",
     "fs",
     "aws.s3",
-    "marginaleffects",
+    # "marginaleffects",
     "googledrive",
     "rvest",
     "reticulate",
@@ -46,7 +46,7 @@ tar_option_set(
     "pak",
     "gt",
     "patchwork",
-    "tidymodels",
+    # "tidymodels",
     "enightmodels", # cory package
     "enightdata" # internal package for scrapers and timestamps
   ),
@@ -61,7 +61,6 @@ set_all(
   s3_bucket = PATH_CBS_S3,
   election_date = ELECTION_DATE
 )
-create_dirs()
 
 # get the metadata file, with the following structure
 # - state: (string) all caps abbreviation of the state
@@ -69,10 +68,11 @@ create_dirs()
 # - path: (string) generic cell for url path used to scrape data
 # - path_timestamp: (string) optional cell for timestamp, if NA then use `path`
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
-metadata = read_local("metadata.csv", colClasses=list(character=1:4, logical=4)) |> 
+metadata = read_local("metadata.csv", colClasses=list(character=1:4, logical=5)) |> 
   mutate(
     path_timestamp = dplyr::coalesce(path_timestamp, path)
   )
+create_dirs(metadata)
 
 # tests = list.files(
 #   glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/VA/test_files"),
@@ -139,15 +139,15 @@ list(
     tar_target(summary, make_summary(data, state, county, timestamp, history)),
     tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
     names = c(state, county)
-  ),
+  )
   # models,
   # tar_combine(
   #   models_summary,
   #   models[["summary"]],
   #   command = dplyr::bind_rows(!!!.x)
   # ),
-  tar_quarto(dashboard, "index.qmd", quiet = FALSE),
+  # tar_quarto(dashboard, "index.qmd", quiet = FALSE),
   # tar_target(save_summaries, save_modelsummary(models_summary, "VA", NA, timestamp_VA_NA)),
   # tar_target(corymodel, cory_modeling(data_VA_NA, history_VA_NA, timestamp_VA_NA)),
-  tar_target(upload, upload_html(dashboard[1]))
+  # tar_target(upload, upload_html(dashboard[1]))
 )

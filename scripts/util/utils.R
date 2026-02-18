@@ -333,16 +333,16 @@ manual_runmodels <- function(){
 
 create_dirs <- function(meta) {
   # general dirs
-  dir_create("data/cbs_format")
+  fs::dir_create("data/cbs_format")
 
   # state dirs
   create_dir <- function(state) {
-    dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw"))
-    dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean"))
-    dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries"))
+    fs::dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw"))
+    fs::dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean"))
+    fs::dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries"))
   }
 
-  walk(unique(meta$state), create_dir)
+  purrr::walk(unique(meta$state), create_dir)
 
   return(NULL)
 }

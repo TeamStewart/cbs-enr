@@ -6,7 +6,6 @@ ELECTION_FOLDER = "26_primaries"
 PATH_DROPBOX = ""
 
 local({
-  
   user = Sys.info()["user"]
   
   if (user == "josephloffredo"){
