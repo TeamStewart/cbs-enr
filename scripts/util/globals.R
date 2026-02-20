@@ -12,6 +12,8 @@ local({
     PATH_DROPBOX <<- "~/MIT Dropbox/Joseph Loffredo/CBS-MIT Election Data"
   } else if (user == "mason") {
     PATH_DROPBOX <<- "~/Dropbox (MIT)/Research/CBS-MIT Election Data"
+  } else {
+    cli::cli_abort("User {user} not recognized, cannot set PATH_DROPBOX")
   }
   
 })

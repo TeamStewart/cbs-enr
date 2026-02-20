@@ -4,16 +4,28 @@ source("scripts/models.R")
 source("scripts/plotters.R")
 
 get_timestamp <- function(state, county, path) {
-  f = getFromNamespace(paste(tolower(state), "timestamp", sep="_"), ns = "enightdata")
-  f()
+
+  fn_name <- paste(tolower(state), "timestamp", sep = "_")
+
+  rlang::exec(
+    getExportedValue("enightdata", fn_name),
+    state = state,
+    county = county,
+    path = path
+  )
 }
 
 get_data <- function(state, county, timestamp, path = NULL) {
-  f = getFromNamespace(paste("scrape", tolower(state), sep = "_"), ns = "enightdata")
-  d = f(state, county, path, timestamp)
 
-  # Upstream fix to precinct_total
-  d$precinct_total <- as.numeric(d$precinct_total)
+  fn_name <- paste("scrape", tolower(state), sep = "_")
+
+  d = rlang::exec(
+    getExportedValue("enightdata", fn_name),
+    state = state,
+    county = county,
+    path = path,
+    timestamp = timestamp
+  )
 
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
 
@@ -23,7 +35,7 @@ get_data <- function(state, county, timestamp, path = NULL) {
   return(d)
 }
 
-get_history <- function(state, impute, impute_group=NULL) {
+get_history <- function(state, impute, county=NULL, impute_group=NULL) {
   l2 = fread(
     file = list.files(
       path = glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/input_data/{state}"),
