@@ -2357,15 +2357,16 @@
     "enightdata": {
       "Package": "enightdata",
       "Version": "0.0.0.9000",
-      "Source": "unknown",
+      "Source": "GitHub",
       "Title": "Election Night Data Tools",
-      "Authors@R": "person(given = \"Mason\", family = \"Reece\", email = \"masonreece1317@gmail.com\", role = c(\"aut\", \"cre\")) person(given = \"Joseph\", family = \"Loffredo\", email = \"loffredo@mit.edu\", role = c(\"aut\", \"cre\"))",
+      "Authors@R": "c( person(given = \"Mason\", family = \"Reece\", email = \"masonreece1317@gmail.com\", role = c(\"aut\", \"cre\")), person(given = \"Joseph\", family = \"Loffredo\", role = c(\"aut\")))",
       "Description": "Tools for scraping, cleaning, and uploading election night data.",
       "License": "MIT + file LICENSE",
       "Encoding": "UTF-8",
       "Roxygen": "list(markdown = TRUE)",
       "RoxygenNote": "7.3.2",
       "Imports": [
+        "cli",
         "data.table",
         "dplyr",
         "enightmodels",
@@ -2380,15 +2381,25 @@
         "purrr",
         "readr",
         "reticulate",
+        "rlang",
         "rvest",
         "stringr",
         "tibble",
         "tidyr",
+        "utils",
         "xml2"
       ],
+      "Remotes": "CoryMcCartan/enightmodels",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "enightdata",
+      "RemoteUsername": "TeamStewart",
+      "RemotePkgRef": "TeamStewart/enightdata",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "184a38fabc2f1748b02cba986e3e7debce6d4508",
       "NeedsCompilation": "no",
-      "Author": "Joseph Loffredo [aut, cre]",
-      "Maintainer": "Joseph Loffredo <loffredo@mit.edu>",
+      "Author": "Mason Reece [aut, cre], Joseph Loffredo [aut]",
+      "Maintainer": "Mason Reece <masonreece1317@gmail.com>",
       "Depends": [
         "R (>= 4.1.0)"
       ]
@@ -2401,7 +2412,7 @@
       "Authors@R": "c( person(\"Cory\", \"McCartan\", email = \"mccartan@psu.edu\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-6251-669X\")), person(\"Christopher T.\", \"Kenny\", email = \"ctkenny@proton.me\", role = \"aut\", comment = c(ORCID = \"0000-0002-9386-6860\")) )",
       "Description": "Functionality to forecast turnout and vote share based on partial election returns.",
       "Depends": [
-        "R (>= 3.5)"
+        "R (>= 4.2.0)"
       ],
       "Imports": [
         "rlang",
@@ -2428,14 +2439,16 @@
       "Roxygen": "list(markdown = TRUE)",
       "RoxygenNote": "7.3.3",
       "LazyData": "true",
-      "Author": "Cory McCartan [aut, cre] (ORCID: <https://orcid.org/0000-0002-6251-669X>), Christopher T. Kenny [aut] (ORCID: <https://orcid.org/0000-0002-9386-6860>)",
-      "Maintainer": "Cory McCartan <mccartan@psu.edu>",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteUsername": "CoryMcCartan",
       "RemoteRepo": "enightmodels",
-      "RemoteRef": "main",
-      "RemoteSha": "24730f05faf08c4aba68fa509690f0dab9dbe02c"
+      "RemoteUsername": "CoryMcCartan",
+      "RemotePkgRef": "CoryMcCartan/enightmodels",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "f3edb6e8f5896890435942ed424c3b1c0c804fe4",
+      "NeedsCompilation": "no",
+      "Author": "Cory McCartan [aut, cre] (ORCID: <https://orcid.org/0000-0002-6251-669X>), Christopher T. Kenny [aut] (ORCID: <https://orcid.org/0000-0002-9386-6860>)",
+      "Maintainer": "Cory McCartan <mccartan@psu.edu>"
     },
     "evaluate": {
       "Package": "evaluate",
