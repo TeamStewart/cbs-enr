@@ -4,6 +4,11 @@ A place for storing our resources for CBS Election Night Reporting software.
 
 Maintained by: Joe Loffredo, Mason Reece, and Charles Stewart III
 
+## Setup
+
+- `install.packages("pak")`; then `pak::pak("CoryMcCartan/enightmodels")` and `pak::pak("TeamStewart/enightdata")`
+- Clone this repo, open it in Positron or RStudio, then `install.packages("renv")` and `renv::install()` to get all the packages needed. Double-check you are on the correct R version
+
 ## Repository Overview
 
 The repository contains several distinct sections. Although the structure of the repository blends them all together, we internally treat them as separate sections. Additionally, this repository and the code within relies on an external folder, set by the global variable `DROPBOX_PATH` for storing data -- the size of which can be quite substantial depending on the scale and detailed required for the election in question (e.g., the 2020 election in \~5 states was 11GB). Below we overview each section in turn.
