@@ -340,6 +340,7 @@ create_dirs <- function(meta) {
     fs::dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/raw"))
     fs::dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/clean"))
     fs::dir_create(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries"))
+    aws.s3::put_folder(glue("Precincts/{ELECTION_DATE}-{state}"), bucket = PATH_CBS_S3)
   }
 
   purrr::walk(unique(meta$state), create_dir)

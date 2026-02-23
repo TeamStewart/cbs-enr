@@ -56,22 +56,32 @@ enightdata::set_all(
 metadata = enightdata::read_local("metadata.csv", colClasses=list(character=1:4, logical=5)) |> 
   dplyr::mutate(
     path_timestamp = dplyr::coalesce(path_timestamp, path)
-  )
+  ) |> 
+  dplyr::filter(updated)
 create_dirs(metadata)
 
 # ========================================
 ## PIPELINE
 # ========================================
-list(
-  tar_map(
+data_map <- tar_map(
     metadata,
+    unlist = FALSE,
     tar_target(timestamp, get_timestamp(state, county, path), cue = tar_cue(mode = "always")),
     # tar_target(history, get_history(state, impute = FALSE)),
-    tar_target(data, get_data(state, county, timestamp, path)),
+    tar_target(datac, get_data(state, county, timestamp, path)),
     # tar_target(summary, make_summary(data, state, county, timestamp, history)),
-    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
+    # tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
     names = c(state, county)
   )
+
+list(
+  data_map,
+  tar_combine(
+    data,
+    data_map[["datac"]],
+    command = vctrs::vec_rbind(!!!.x)
+  ),
+  tar_target(upload_s, upload_state(data, state = "TX"))
   # tar_quarto(dashboard, "index.qmd", quiet = FALSE),
-  # tar_target(upload, upload_html(dashboard[1]))
+  # tar_target(upload_h, upload_html(dashboard[1]))
 )

@@ -25,7 +25,8 @@ get_data <- function(state, county, timestamp, path = NULL) {
     county = county,
     path = path,
     timestamp = timestamp
-  )
+  ) |> 
+    enightmodels::coerce_elec_data()
 
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
 
@@ -64,6 +65,26 @@ get_history <- function(state, impute, county=NULL, impute_group=NULL) {
   }
 
   return(base)
+}
+
+#' Upload a single state to S3 and write it locally
+#'
+#' @param d data
+#' @param st state abbreviation, all caps
+upload_state <- function(d, st){
+
+  write_local(filter(d, state == st), glue("{st}/clean/{st}_latest.csv"))
+  write_local(filter(d, state == st), glue("{st}/clean/{st}_{timestamp}.csv"))
+
+  # temporarily add this to write to S3 for Cory, skipping the CBS table for Mar 3
+  write_s3(
+    path_local = glue("{st}/clean/{st}_latest.csv"),
+    path_s3 = glue("Precincts/{ELECTION_DATE}-{st}/{st}_results.csv"), 
+    multipart = TRUE,
+    parquet = TRUE
+  )
+
+  return(NULL)
 }
 
 upload_html <- function(path, state) {
