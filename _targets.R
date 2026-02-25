@@ -12,6 +12,7 @@ suppressPackageStartupMessages({
   library(targets)
   library(tarchetypes)
   library(glue)
+  library(enightdata)
 })
 
 source("scripts/functions.R")
@@ -55,33 +56,40 @@ enightdata::set_all(
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
 metadata = enightdata::read_local("metadata.csv", colClasses=list(character=1:4, logical=5)) |> 
   dplyr::mutate(
+    path_timestamp = dplyr::na_if(path_timestamp, ""),
     path_timestamp = dplyr::coalesce(path_timestamp, path)
   ) |> 
   dplyr::filter(updated)
+
 create_dirs(metadata)
+
+office_filter = tibble::tribble(
+  ~state, ~jurisdiction, ~contest, ~district,
+  "TX", "tx", "sen_dem", NA,
+  "TX", "tx", "sen_rep", NA,
+  "TX", "tx", "gov_dem", NA,
+  "TX", "tx", "gov_rep", NA,
+  "TX", "tx", "ag_dem", NA,
+  "TX", "tx", "ag_rep", NA,
+  "TX", "tx", "house_dem", 30,
+  "TX", "tx", "house_rep", 30,
+  "TX", "tx", "house_dem", 33,
+  "TX", "tx", "house_rep", 33,
+)
 
 # ========================================
 ## PIPELINE
 # ========================================
-data_map <- tar_map(
+list(
+  tar_map(
     metadata,
-    unlist = FALSE,
-    tar_target(timestamp, get_timestamp(state, county, path), cue = tar_cue(mode = "always")),
+    tar_target(timestamp, get_timestamp(state, county, path_timestamp), cue = tar_cue(mode = "always")),
     # tar_target(history, get_history(state, impute = FALSE)),
-    tar_target(datac, get_data(state, county, timestamp, path)),
+    tar_target(data, get_data(state, county, timestamp, path)),
     # tar_target(summary, make_summary(data, state, county, timestamp, history)),
-    # tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload)),
+    tar_target(tbl_cbs, enightdata::create_table_cbs(data, state, county, timestamp, upload = TRUE, do_cbs = FALSE, office_filter = office_filter)),
     names = c(state, county)
   )
-
-list(
-  data_map,
-  tar_combine(
-    data,
-    data_map[["datac"]],
-    command = vctrs::vec_rbind(!!!.x)
-  ),
-  tar_target(upload_s, upload_state(data, state = "TX"))
   # tar_quarto(dashboard, "index.qmd", quiet = FALSE),
   # tar_target(upload_h, upload_html(dashboard[1]))
 )
