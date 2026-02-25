@@ -152,10 +152,8 @@ def probe_all(jurisdictions, target_date):
         label = f"{state}/{county}" if county else f"{state} (statewide)"
         slug, elections = get_elections_for_county(state, county)
         matches = filter_elections(elections, target_date)
-
-        if not matches and (i % 25 == 0 or i == total):
-            print(f"  [{i:4d}/{total}] {label}: no match (of {len(elections)} elections)")
-        elif matches:
+        
+        if matches:
             for m in matches:
                 url = (
                     f"{BASE_URL}/{state}/{slug}/{m['eid']}/"
