@@ -8,6 +8,11 @@
       }
     ]
   },
+  "Python": {
+    "Version": "3.12.4",
+    "Type": "virtualenv",
+    "Name": "cbs-enr"
+  },
   "Packages": {
     "DBI": {
       "Package": "DBI",
