@@ -83,13 +83,27 @@ office_filter = tibble::tribble(
 ## PIPELINE
 # ========================================
 list(
+  # first, parse jurisdictions with multiple URLs (e.g., for Dem/Rep primary)
   tar_map(
-    metadata,
+    dplyr::filter(metadata, dplyr::n() > 1, .by = c(state, county)) |>
+      dplyr::summarise(
+        paths = list(path),
+        path_timestamps = list(path_timestamp),
+        .by = c(state, county, upload)
+      ),
+    tar_target(timestamp, purrr::map2(path_timestamps, paths, \(pt, p) get_timestamp(state, county, pt)), cue = tar_cue(mode = "always")),
+    tar_target(data, purrr::map2(paths, timestamp, \(p, ts) get_data(state, county, ts, p)) |> dplyr::bind_rows()),
+    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp[[1]], upload, do_cbs = FALSE, office_filter = office_filter)),
+    names = c(state, county)
+  ),
+  # parse remaining, normal jurisdictions
+  tar_map(
+    dplyr::filter(metadata, dplyr::n() == 1, .by = c(state, county)),
     tar_target(timestamp, get_timestamp(state, county, path_timestamp), cue = tar_cue(mode = "always")),
     # tar_target(history, get_history(state, impute = FALSE)),
     tar_target(data, get_data(state, county, timestamp, path)),
     # tar_target(summary, make_summary(data, state, county, timestamp, history)),
-    tar_target(tbl_cbs, enightdata::create_table_cbs(data, state, county, timestamp, upload = TRUE, do_cbs = FALSE, office_filter = office_filter)),
+    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
     names = c(state, county)
   )
   # tar_quarto(dashboard, "index.qmd", quiet = FALSE),
