@@ -12,10 +12,11 @@ suppressPackageStartupMessages({
   library(targets)
   library(tarchetypes)
   library(glue)
-  library(enightdata)
 })
 
 source("scripts/functions.R")
+
+pak::local_install(PATH_ENIGHTDATA, upgrade = FALSE)
 
 options(
   readr.show_col_types = FALSE,
@@ -36,6 +37,7 @@ tar_option_set(
     "enightmodels", # cory package
     "enightdata" # internal package for scrapers and timestamps
   ),
+  imports = c("enightdata"),
   error = "continue",
   controller = crew::crew_controller_local(workers = 3)
 )

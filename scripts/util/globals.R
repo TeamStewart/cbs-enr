@@ -4,6 +4,7 @@ PATH_LOCAL = ""
 ELECTION_DATE = "20260303"
 ELECTION_FOLDER = "26_primaries"
 PATH_DROPBOX = ""
+PATH_ENIGHTDATA = ""
 
 local({
   user = Sys.info()["user"]
@@ -12,8 +13,9 @@ local({
     PATH_DROPBOX <<- "~/MIT Dropbox/Joseph Loffredo/CBS-MIT Election Data"
   } else if (user == "mason") {
     PATH_DROPBOX <<- "~/Dropbox (MIT)/Research/CBS-MIT Election Data"
+    PATH_ENIGHTDATA <<- "~/Documents/github/enightdata"
   } else {
-    cli::cli_abort("User {user} not recognized, cannot set PATH_DROPBOX")
+    cli::cli_abort("User {user} not recognized, cannot set PATH_DROPBOX or PATH_ENIGHTDATA")
   }
   
 })
