@@ -16,18 +16,24 @@ get_timestamp <- function(state, county, path) {
   )
 }
 
-get_data <- function(state, county, timestamp, path = NULL) {
+get_data <- function(state, county, timestamp, path = NULL, trust_stage = FALSE) {
 
   fn_name <- paste("scrape", tolower(state), sep = "_")
 
   d = rlang::exec(
     get(fn_name),
-    # getExportedValue("enightdata", fn_name),
     state = state,
     county = county,
     path = path,
     timestamp = timestamp
   ) |> 
+    mutate(
+      stage = case_when(
+        .default = NA,
+        stage == 6 & isFALSE(trust_stage) ~ 5,
+        !is.na(stage) ~ stage
+      )
+    ) |> 
     enightmodels::coerce_elec_data()
 
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))

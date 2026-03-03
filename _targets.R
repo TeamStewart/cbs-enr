@@ -16,7 +16,7 @@ suppressPackageStartupMessages({
 
 source("scripts/functions.R")
 
-pak::local_install(PATH_ENIGHTDATA, upgrade = FALSE)
+pak::local_install(PATH_ENIGHTDATA, upgrade = FALSE, ask = FALSE)
 
 options(
   readr.show_col_types = FALSE,
@@ -56,10 +56,12 @@ enightdata::set_all(
 # - path: (string) generic cell for url path used to scrape data
 # - path_timestamp: (string) optional cell for timestamp, if NA then use `path`
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
-metadata = enightdata::read_local("metadata.csv", colClasses=list(character=1:4, logical=5)) |> 
+# - trust_stage: (boolean) whether we trust this county's stage variable
+metadata = enightdata::read_local("metadata.csv", colClasses=list(character=1:4, logical=5:6)) |> 
   dplyr::mutate(
     path_timestamp = dplyr::na_if(path_timestamp, ""),
-    path_timestamp = dplyr::coalesce(path_timestamp, path)
+    path_timestamp = dplyr::coalesce(path_timestamp, path),
+    county = dplyr::na_if(county, "")
   ) |> 
   dplyr::filter(updated)
 
@@ -89,10 +91,10 @@ list(
       dplyr::summarise(
         paths = list(path),
         path_timestamps = list(path_timestamp),
-        .by = c(state, county, upload)
+        .by = c(state, county, upload, trust_stage)
       ),
     tar_target(timestamp, purrr::map2(path_timestamps, paths, \(pt, p) get_timestamp(state, county, pt)), cue = tar_cue(mode = "always")),
-    tar_target(data, purrr::map2(paths, timestamp, \(p, ts) get_data(state, county, ts, p)) |> dplyr::bind_rows()),
+    tar_target(data, purrr::pmap(list(paths, timestamp, trust_stage), \(p, ts, tr) get_data(state, county, ts, p, tr)) |> dplyr::bind_rows()),
     tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp[[1]], upload, do_cbs = FALSE, office_filter = office_filter)),
     names = c(state, county)
   ),
@@ -101,7 +103,7 @@ list(
     dplyr::filter(metadata, dplyr::n() == 1, .by = c(state, county)),
     tar_target(timestamp, get_timestamp(state, county, path_timestamp), cue = tar_cue(mode = "always")),
     # tar_target(history, get_history(state, impute = FALSE)),
-    tar_target(data, get_data(state, county, timestamp, path)),
+    tar_target(data, get_data(state, county, timestamp, path, trust_stage)),
     # tar_target(summary, make_summary(data, state, county, timestamp, history)),
     tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
     names = c(state, county)
