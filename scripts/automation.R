@@ -5,7 +5,7 @@
 ## Author: Joseph R. Loffredo and Mason Reece
 ##################################################
 
-INTERVAL = 30 # minutes
+INTERVAL = 5 # minutes
 
 # Function to execute the R script
 execute_script <- function() {
