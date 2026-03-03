@@ -11,6 +11,7 @@ local({
   
   if (user == "josephloffredo"){
     PATH_DROPBOX <<- "~/MIT Dropbox/Joseph Loffredo/CBS-MIT Election Data"
+    PATH_ENIGHTDATA <<- "/Users/josephloffredo/Desktop/GitHub/enightdata"
   } else if (user == "mason") {
     PATH_DROPBOX <<- "~/Dropbox (MIT)/Research/CBS-MIT Election Data"
     PATH_ENIGHTDATA <<- "~/Documents/github/enightdata"
