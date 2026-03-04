@@ -54,7 +54,7 @@ l2 = fread("../CBS-MIT Election Data/26_primaries/input_data/TX/TX_20251124_prec
   mutate(
     precinct = case_when(
       .default = precinct,
-      county == "ROCKWALL" ~ str_remove_all(county, "^0")
+      county == "ROCKWALL" ~ str_remove_all(precinct, "^0") |> str_to_lower()
     )
   )
 
