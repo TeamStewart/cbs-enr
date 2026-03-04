@@ -1,5 +1,3 @@
-
-
 files = enightmodels:::list_bucket(prefix = "Precincts/20260303") |> 
   filter(type == "parquet") |> 
   pull(path)
