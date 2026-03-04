@@ -1,0 +1,92 @@
+2026-03-04 15:59:11: Running tar_make
+- The project is out-of-sync -- use `]8;;x-r-run:renv::status()renv::status()]8;;` for details.
+ℹ Loading metadata database✔ Loading metadata database ... done
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏾
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (434ms)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (1.7s)
+✔ Installed enightdata 0.0.0.9000 (local) (12ms)
+✔ 1 pkg + 64 deps: kept 63, upd 1, dld 1 (NA B) [6.9s]
++ timestamp_TX_lubbock dispatched
++ timestamp_TX_harris dispatched
++ timestamp_TX_travis dispatched
+✔ timestamp_TX_lubbock completed [1.3s, 80 B]
++ timestamp_TX_fort.bend dispatched
+✔ timestamp_TX_travis completed [1.1s, 72 B]
++ timestamp_TX_rockwall dispatched
+✔ timestamp_TX_fort.bend completed [64ms, 72 B]
++ timestamp_TX_victoria dispatched
+✔ timestamp_TX_rockwall completed [54ms, 70 B]
++ timestamp_TX_hood dispatched
+✔ timestamp_TX_victoria completed [65ms, 70 B]
+✔ timestamp_TX_hood completed [54ms, 70 B]
++ timestamp_TX_el.paso dispatched
++ timestamp_TX_dallas dispatched
+✔ timestamp_TX_el.paso completed [45ms, 72 B]
++ timestamp_TX_lamar dispatched
+✔ timestamp_TX_lamar completed [55ms, 69 B]
++ timestamp_TX_rusk dispatched
+✔ timestamp_TX_dallas completed [125ms, 87 B]
++ timestamp_TX_wood dispatched
+✔ timestamp_TX_rusk completed [57ms, 70 B]
+✔ timestamp_TX_wood completed [52ms, 68 B]
++ timestamp_TX_kendall dispatched
++ timestamp_TX_comal dispatched
+✔ timestamp_TX_harris completed [1.7s, 72 B]
++ data_TX_harris dispatched
+✔ timestamp_TX_kendall completed [56ms, 70 B]
++ timestamp_TX_hunt dispatched
+✔ timestamp_TX_hunt completed [50ms, 72 B]
++ timestamp_TX_galveston dispatched
+✔ timestamp_TX_galveston completed [52ms, 70 B]
++ timestamp_TX_gregg dispatched
+✔ timestamp_TX_gregg completed [90ms, 70 B]
++ timestamp_TX_nueces dispatched
+✔ timestamp_TX_nueces completed [63ms, 70 B]
++ timestamp_TX_bastrop dispatched
+✔ timestamp_TX_bastrop completed [63ms, 68 B]
++ timestamp_TX_denton dispatched
+✔ timestamp_TX_denton completed [107ms, 85 B]
++ timestamp_TX_jefferson dispatched
+✔ timestamp_TX_jefferson completed [57ms, 70 B]
++ timestamp_TX_hidalgo dispatched
+✔ timestamp_TX_hidalgo completed [52ms, 70 B]
++ timestamp_TX_midland dispatched
+✔ timestamp_TX_midland completed [55ms, 70 B]
++ timestamp_TX_robertson dispatched
+✔ timestamp_TX_comal completed [746ms, 72 B]
++ timestamp_TX_williamson dispatched
+✔ timestamp_TX_robertson completed [87ms, 70 B]
++ timestamp_TX_tarrant dispatched
+✔ timestamp_TX_tarrant completed [54ms, 72 B]
++ timestamp_TX_kaufman dispatched
+✔ timestamp_TX_kaufman completed [57ms, 70 B]
++ timestamp_NC_NA dispatched
+✔ timestamp_NC_NA completed [170ms, 72 B]
++ timestamp_TX_bell dispatched
+✔ timestamp_TX_bell completed [62ms, 69 B]
++ timestamp_TX_parker dispatched
+✔ timestamp_TX_parker completed [118ms, 68 B]
++ timestamp_TX_bexar dispatched
+✔ timestamp_TX_bexar completed [92ms, 72 B]
++ timestamp_TX_montague dispatched
+✔ timestamp_TX_montague completed [96ms, 70 B]
+✔ timestamp_TX_williamson completed [1.7s, 72 B]
++ data_TX_williamson dispatched
+✔ data_TX_harris completed [4.4s, 143.33 kB]
++ tbl_cbs_TX_harris dispatched
+✔ data_TX_williamson completed [2.8s, 15.35 kB]
++ tbl_cbs_TX_williamson dispatched
+✔ tbl_cbs_TX_williamson completed [3s, 44 B]
+✔ tbl_cbs_TX_harris completed [6.4s, 44 B]
+✔ ended pipeline [15.6s, 36 completed, 60 skipped]
+Warning messages:
+1: package ‘targets’ was built under R version 4.5.2 
+2: package ‘tarchetypes’ was built under R version 4.5.2 
+3: 4 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
