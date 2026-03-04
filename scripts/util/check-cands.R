@@ -9,11 +9,11 @@ base |>
   filter(votes > 0) |>
   select(geo, time) |> 
   separate_wider_delim(cols = geo, delim = "_", names = c("state", "county", "precinct_id")) |> 
-  filter(time == max(time)) |> 
+  filter(time == max(time), .by = county) |> 
   distinct(state, county, time) |> 
   mutate(county = as.integer(county)) |> 
   left_join(filter(enightmodels::cbs_counties, state == "TX"), join_by(county == county_cbs)) |> 
-  arrange(county.y) |> 
+  arrange(desc(time)) |> 
   print(n=Inf)
 
 important_cands = tribble(
