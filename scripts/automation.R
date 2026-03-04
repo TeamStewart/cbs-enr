@@ -43,7 +43,7 @@ while (TRUE) {
   repo <- git2r::repository(".")
   git2r::add(path = "*")
   git2r::commit(message = glue::glue("latest pull {run_time}"))
-  git2r::push()
+  git2r::push(repo, credentials = cred)
   # git2r::push(repo, 
   #             name = "origin", 
   #             refspec = "refs/heads/main:refs/heads/main", 
