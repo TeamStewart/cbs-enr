@@ -1,0 +1,85 @@
+2026-03-03 19:51:58: Running tar_make
+ℹ Loading metadata database✔ Loading metadata database ... done
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷‍♀️
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (1.2s)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (2.2s)
+✔ Installed enightdata 0.0.0.9000 (local) (31ms)
+✔ 1 pkg + 64 deps: kept 63, upd 1, dld 1 (NA B) [9.7s]
++ timestamp_TX_galveston dispatched
++ timestamp_TX_harris dispatched
++ timestamp_TX_rusk dispatched
+✔ timestamp_TX_galveston completed [1.2s, 72 B]
++ timestamp_NC_NA dispatched
+✔ timestamp_NC_NA completed [163ms, 70 B]
++ timestamp_TX_victoria dispatched
+✔ timestamp_TX_rusk completed [1.3s, 71 B]
++ timestamp_TX_gregg dispatched
+✔ timestamp_TX_victoria completed [67ms, 72 B]
++ timestamp_TX_fort.bend dispatched
+✔ timestamp_TX_gregg completed [52ms, 70 B]
++ data_TX_gregg dispatched
+✔ timestamp_TX_fort.bend completed [51ms, 72 B]
++ timestamp_TX_hood dispatched
+✔ timestamp_TX_hood completed [54ms, 67 B]
++ timestamp_TX_comal dispatched
+✔ timestamp_TX_harris completed [2s, 72 B]
++ tbl_cbs_TX_harris dispatched
+✔ timestamp_TX_comal completed [856ms, 68 B]
++ timestamp_TX_el.paso dispatched
+✔ timestamp_TX_el.paso completed [254ms, 71 B]
++ timestamp_TX_hidalgo dispatched
+✔ timestamp_TX_hidalgo completed [320ms, 69 B]
++ timestamp_TX_bexar dispatched
+✔ timestamp_TX_bexar completed [245ms, 70 B]
++ timestamp_TX_bell dispatched
+✔ timestamp_TX_bell completed [54ms, 72 B]
++ timestamp_TX_kendall dispatched
+✔ timestamp_TX_kendall completed [49ms, 72 B]
++ timestamp_TX_hunt dispatched
+✔ timestamp_TX_hunt completed [49ms, 71 B]
++ timestamp_TX_nueces dispatched
+✔ timestamp_TX_nueces completed [54ms, 72 B]
++ timestamp_TX_parker dispatched
+✔ timestamp_TX_parker completed [53ms, 69 B]
++ timestamp_TX_denton dispatched
+✔ timestamp_TX_denton completed [97ms, 83 B]
++ timestamp_TX_kaufman dispatched
+✔ timestamp_TX_kaufman completed [47ms, 70 B]
++ timestamp_TX_jefferson dispatched
+✔ timestamp_TX_jefferson completed [45ms, 70 B]
++ data_TX_jefferson dispatched
+✔ data_TX_gregg completed [2.5s, 1.94 kB]
++ tbl_cbs_TX_gregg dispatched
+✔ data_TX_jefferson completed [2.4s, 4.14 kB]
++ tbl_cbs_TX_jefferson dispatched
+✔ tbl_cbs_TX_gregg completed [2.6s, 44 B]
++ timestamp_TX_tarrant dispatched
+✔ timestamp_TX_tarrant completed [59ms, 72 B]
++ timestamp_TX_wood dispatched
+✔ timestamp_TX_wood completed [48ms, 72 B]
++ timestamp_TX_midland dispatched
+✔ timestamp_TX_midland completed [47ms, 70 B]
++ timestamp_TX_dallas dispatched
+✔ tbl_cbs_TX_harris completed [4.9s, 44 B]
++ timestamp_TX_bastrop dispatched
+✔ timestamp_TX_dallas completed [110ms, 86 B]
++ timestamp_TX_travis dispatched
+✔ timestamp_TX_bastrop completed [77ms, 72 B]
++ timestamp_TX_montague dispatched
+✔ timestamp_TX_travis completed [56ms, 69 B]
++ timestamp_TX_lamar dispatched
+✔ timestamp_TX_montague completed [55ms, 72 B]
+✔ timestamp_TX_lamar completed [48ms, 68 B]
++ data_TX_lamar dispatched
+✔ data_TX_lamar completed [1.8s, 2.42 kB]
++ tbl_cbs_TX_lamar dispatched
+✔ tbl_cbs_TX_jefferson completed [3.4s, 44 B]
+✔ tbl_cbs_TX_lamar completed [2.1s, 44 B]
+✔ ended pipeline [14.7s, 35 completed, 49 skipped]
