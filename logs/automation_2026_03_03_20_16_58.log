@@ -1,0 +1,99 @@
+2026-03-03 20:16:58: Running tar_make
+ℹ Loading metadata database✔ Loading metadata database ... done
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (1.2s)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (2.2s)
+✔ Installed enightdata 0.0.0.9000 (local) (21ms)
+✔ 1 pkg + 64 deps: kept 63, upd 1, dld 1 (NA B) [9.8s]
++ timestamp_TX_hunt dispatched
++ timestamp_TX_bastrop dispatched
++ timestamp_TX_comal dispatched
+✔ timestamp_TX_hunt completed [1.2s, 70 B]
++ data_TX_hunt dispatched
+✔ timestamp_TX_bastrop completed [1.3s, 72 B]
++ timestamp_TX_parker dispatched
+✔ timestamp_TX_parker completed [73ms, 69 B]
++ timestamp_TX_gregg dispatched
+✔ timestamp_TX_gregg completed [58ms, 70 B]
++ timestamp_TX_jefferson dispatched
+✔ timestamp_TX_jefferson completed [49ms, 70 B]
++ timestamp_TX_williamson dispatched
+✖ timestamp_TX_williamson errored
+Error: could not find function "tx_williamson"
+
++ data_TX_williamson dispatched
+✖ data_TX_williamson errored
+Error: could not load dependency timestamp_TX_williamson of target data_TX_williamson. invalid 'description' argument
+
++ tbl_cbs_TX_williamson dispatched
+✖ tbl_cbs_TX_williamson errored
+Error: could not load dependency timestamp_TX_williamson of target tbl_cbs_TX_williamson. invalid 'description' argument
+
++ timestamp_TX_dallas dispatched
+✔ timestamp_TX_dallas completed [146ms, 87 B]
++ timestamp_TX_bell dispatched
+✔ timestamp_TX_bell completed [52ms, 72 B]
++ timestamp_TX_hidalgo dispatched
+✔ timestamp_TX_hidalgo completed [57ms, 69 B]
++ timestamp_TX_fort.bend dispatched
+✔ timestamp_TX_fort.bend completed [74ms, 70 B]
++ data_TX_fort.bend dispatched
+✔ timestamp_TX_comal completed [1.9s, 68 B]
++ timestamp_TX_rockwall dispatched
+✔ timestamp_TX_rockwall completed [235ms, 70 B]
++ timestamp_TX_bexar dispatched
+✔ timestamp_TX_bexar completed [53ms, 70 B]
++ timestamp_TX_kendall dispatched
+✔ timestamp_TX_kendall completed [47ms, 72 B]
++ timestamp_TX_victoria dispatched
+✔ timestamp_TX_victoria completed [50ms, 72 B]
++ timestamp_TX_wood dispatched
+✔ timestamp_TX_wood completed [57ms, 72 B]
++ timestamp_TX_el.paso dispatched
+✔ timestamp_TX_el.paso completed [48ms, 71 B]
++ timestamp_TX_hood dispatched
+✔ timestamp_TX_hood completed [56ms, 67 B]
++ timestamp_TX_denton dispatched
+✔ timestamp_TX_denton completed [105ms, 79 B]
++ timestamp_TX_midland dispatched
+✔ timestamp_TX_midland completed [48ms, 70 B]
++ timestamp_TX_montague dispatched
+✔ timestamp_TX_montague completed [52ms, 70 B]
++ timestamp_TX_kaufman dispatched
+✔ timestamp_TX_kaufman completed [45ms, 70 B]
++ timestamp_TX_tarrant dispatched
+✔ timestamp_TX_tarrant completed [50ms, 70 B]
++ timestamp_TX_galveston dispatched
+✔ timestamp_TX_galveston completed [73ms, 70 B]
++ data_TX_galveston dispatched
+✔ data_TX_hunt completed [2.5s, 5.25 kB]
++ tbl_cbs_TX_hunt dispatched
+✔ data_TX_fort.bend completed [3.9s, 22.52 kB]
++ tbl_cbs_TX_fort.bend dispatched
+✔ tbl_cbs_TX_hunt completed [2.9s, 44 B]
++ timestamp_TX_lamar dispatched
+✔ data_TX_galveston completed [3.3s, 9.60 kB]
++ tbl_cbs_TX_galveston dispatched
+✔ timestamp_TX_lamar completed [51ms, 70 B]
++ timestamp_TX_harris dispatched
+✔ timestamp_TX_harris completed [742ms, 72 B]
++ timestamp_TX_travis dispatched
+✔ timestamp_TX_travis completed [57ms, 69 B]
++ timestamp_TX_rusk dispatched
+✔ timestamp_TX_rusk completed [58ms, 70 B]
++ timestamp_NC_NA dispatched
+✔ timestamp_NC_NA completed [128ms, 70 B]
++ timestamp_TX_nueces dispatched
+✔ timestamp_TX_nueces completed [49ms, 68 B]
+✔ tbl_cbs_TX_galveston completed [2.5s, 44 B]
+✔ tbl_cbs_TX_fort.bend completed [3.3s, 44 B]
+✖ errored pipeline [13.1s, 35 completed, 52 skipped]
+Warning message:
+3 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
