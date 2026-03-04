@@ -11,7 +11,7 @@ base |>
   filter(votes > 0) |>
   select(geo) |> 
   separate_wider_delim(cols = geo, delim = "_", names = c("state", "county", "precinct_id")) |> 
-  distinct(county)
+  distinct(state, county)
 
 important_cands = tribble(
   ~contest, ~district, ~candidate,
