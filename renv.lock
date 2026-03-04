@@ -9,9 +9,9 @@
     ]
   },
   "Python": {
-    "Version": "3.8.16",
+    "Version": "3.12.4",
     "Type": "virtualenv",
-    "Name": "/Users/mason/.virtualenvs/cbs-enr"
+    "Name": "cbs-enr"
   },
   "Packages": {
     "DBI": {
