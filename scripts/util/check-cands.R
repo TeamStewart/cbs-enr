@@ -11,7 +11,9 @@ base |>
   separate_wider_delim(cols = geo, delim = "_", names = c("state", "county", "precinct_id")) |> 
   distinct(state, county) |> 
   mutate(county = as.integer(county)) |> 
-  left_join(filter(enightmodels::cbs_counties, state == "TX"), join_by(county == county_cbs))
+  left_join(filter(enightmodels::cbs_counties, state == "TX"), join_by(county == county_cbs)) |> 
+  arrange(county.y) |> 
+  print(n=Inf)
 
 important_cands = tribble(
   ~contest, ~district, ~candidate,
