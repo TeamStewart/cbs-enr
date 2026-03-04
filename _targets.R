@@ -94,7 +94,7 @@ list(
         .by = c(state, county, upload, trust_stage)
       ),
     tar_target(timestamp, purrr::map2(path_timestamps, paths, \(pt, p) get_timestamp(state, county, pt)), cue = tar_cue(mode = "always")),
-    tar_target(data, purrr::pmap(list(paths, timestamp, trust_stage), \(p, ts, tr) get_data(state, county, ts, p, tr)) |> dplyr::bind_rows()),
+    tar_target(data, purrr::pmap(list(paths, timestamp, trust_stage), \(p, ts, tr) get_data(state, county, ts, p, tr, multi=TRUE)) |> dplyr::bind_rows()),
     tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp[[1]], upload, do_cbs = FALSE, office_filter = office_filter)),
     names = c(state, county)
   ),

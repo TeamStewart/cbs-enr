@@ -16,7 +16,7 @@ get_timestamp <- function(state, county, path) {
   )
 }
 
-get_data <- function(state, county, timestamp, path = NULL, trust_stage = FALSE) {
+get_data <- function(state, county, timestamp, path = NULL, trust_stage = FALSE, multi = FALSE) {
 
   fn_name <- paste("scrape", tolower(state), sep = "_")
 
@@ -37,6 +37,11 @@ get_data <- function(state, county, timestamp, path = NULL, trust_stage = FALSE)
     enightmodels::coerce_elec_data()
 
   local_file_name <- ifelse(is.na(county), state, glue("{state}_{county}"))
+
+  if (multi) {
+    party = d |> drop_na(party) |> distinct(party) |> pull()
+    local_file_name <- glue("{local_file_name}_{party}")
+  }
 
   write_local(d, glue("{state}/clean/{local_file_name}_latest.csv"))
   write_local(d, glue("{state}/clean/{local_file_name}_{timestamp}.csv"))
