@@ -47,5 +47,22 @@ base |>
   filter(str_detect(geo, "tx_057"), contest == "house_rep", district == 33) |> 
   distinct(contest, candidate)
 
+l2 = fread("../CBS-MIT Election Data/26_primaries/input_data/TX/TX_20251124_precincts_cd.csv") |> 
+  left_join(
+    filter(enightmodels::cbs_counties, state == "TX") |> mutate(county = toupper(county))
+  ) |> 
+  mutate(
+    precinct = case_when(
+      .default = precinct,
+      county == "ROCKWALL" ~ str_remove_all(county, "^0")
+    )
+  )
+
 base |> 
-  distinct(geo)
+  select(-state) |> 
+  separate_wider_delim(cols = geo, delim = "_", names = c("state", "county_cbs", "precinct")) |> 
+  distinct(state, county_cbs, precinct) |> 
+  mutate(
+    county_cbs = as.integer(county_cbs)
+  ) |> 
+  left_join(l2, join_by(county_cbs, precinct))
