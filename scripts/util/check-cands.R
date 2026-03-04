@@ -7,9 +7,10 @@ base = lapply(files, enightmodels::read_parquet_bucket) |> rbindlist()
 # what counties have votes
 base |> 
   filter(votes > 0) |>
-  select(geo) |> 
+  select(geo, time) |> 
   separate_wider_delim(cols = geo, delim = "_", names = c("state", "county", "precinct_id")) |> 
-  distinct(state, county) |> 
+  filter(time == max(time)) |> 
+  distinct(state, county, time) |> 
   mutate(county = as.integer(county)) |> 
   left_join(filter(enightmodels::cbs_counties, state == "TX"), join_by(county == county_cbs)) |> 
   arrange(county.y) |> 
