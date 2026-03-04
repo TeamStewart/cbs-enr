@@ -46,3 +46,6 @@ base |>
 base |> 
   filter(str_detect(geo, "tx_057"), contest == "house_rep", district == 33) |> 
   distinct(contest, candidate)
+
+base |> 
+  distinct(geo)
