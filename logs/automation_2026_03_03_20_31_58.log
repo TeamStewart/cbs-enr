@@ -1,0 +1,87 @@
+2026-03-03 20:31:58: Running tar_make
+ℹ Loading metadata database✔ Loading metadata database ... done
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏾‍♀️
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (1.2s)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (2.2s)
+✔ Installed enightdata 0.0.0.9000 (local) (22ms)
+✔ 1 pkg + 64 deps: kept 63, upd 1, dld 1 (NA B) [9.6s]
++ timestamp_NC_NA dispatched
++ timestamp_TX_parker dispatched
++ timestamp_TX_travis dispatched
+✔ timestamp_NC_NA completed [1.3s, 70 B]
++ timestamp_TX_hunt dispatched
+✔ timestamp_TX_parker completed [1.4s, 70 B]
+✔ timestamp_TX_hunt completed [68ms, 70 B]
++ timestamp_TX_midland dispatched
++ timestamp_TX_wood dispatched
+✔ timestamp_TX_midland completed [47ms, 70 B]
++ timestamp_TX_montague dispatched
+✔ timestamp_TX_travis completed [1.3s, 69 B]
+✔ timestamp_TX_wood completed [55ms, 70 B]
++ timestamp_TX_gregg dispatched
++ timestamp_TX_kendall dispatched
+✔ timestamp_TX_montague completed [49ms, 70 B]
++ timestamp_TX_galveston dispatched
+✔ timestamp_TX_kendall completed [49ms, 70 B]
+✔ timestamp_TX_gregg completed [52ms, 70 B]
++ timestamp_TX_bexar dispatched
++ timestamp_TX_harris dispatched
+✔ timestamp_TX_galveston completed [46ms, 66 B]
++ timestamp_TX_fort.bend dispatched
+✔ timestamp_TX_bexar completed [67ms, 70 B]
++ timestamp_TX_hood dispatched
+✔ timestamp_TX_fort.bend completed [48ms, 70 B]
++ timestamp_TX_bell dispatched
+✔ timestamp_TX_hood completed [51ms, 70 B]
++ timestamp_TX_williamson dispatched
+✔ timestamp_TX_bell completed [48ms, 72 B]
++ timestamp_TX_denton dispatched
+✔ timestamp_TX_denton completed [97ms, 79 B]
++ timestamp_TX_hidalgo dispatched
+✔ timestamp_TX_hidalgo completed [48ms, 69 B]
++ timestamp_TX_lamar dispatched
+✔ timestamp_TX_lamar completed [227ms, 68 B]
++ timestamp_TX_dallas dispatched
+✔ timestamp_TX_dallas completed [132ms, 87 B]
++ timestamp_TX_tarrant dispatched
+✔ timestamp_TX_harris completed [749ms, 72 B]
++ timestamp_TX_rusk dispatched
+✔ timestamp_TX_tarrant completed [81ms, 70 B]
++ timestamp_TX_comal dispatched
+✔ timestamp_TX_rusk completed [79ms, 70 B]
++ timestamp_TX_kaufman dispatched
+✔ timestamp_TX_kaufman completed [101ms, 70 B]
++ timestamp_TX_el.paso dispatched
+✔ timestamp_TX_el.paso completed [100ms, 71 B]
++ timestamp_TX_victoria dispatched
+✔ timestamp_TX_victoria completed [62ms, 72 B]
++ timestamp_TX_nueces dispatched
+✔ timestamp_TX_nueces completed [87ms, 70 B]
++ timestamp_TX_jefferson dispatched
+✔ timestamp_TX_jefferson completed [71ms, 70 B]
++ timestamp_TX_bastrop dispatched
+✔ timestamp_TX_bastrop completed [65ms, 72 B]
++ timestamp_TX_rockwall dispatched
+✔ timestamp_TX_rockwall completed [77ms, 70 B]
++ timestamp_TX_robertson dispatched
+✔ timestamp_TX_robertson completed [81ms, 67 B]
++ data_TX_robertson dispatched
+✔ timestamp_TX_williamson completed [3.1s, 70 B]
++ data_TX_williamson dispatched
+✔ data_TX_robertson completed [2.6s, 3.01 kB]
++ tbl_cbs_TX_robertson dispatched
+✔ timestamp_TX_comal completed [3.9s, 68 B]
+✔ tbl_cbs_TX_robertson completed [2.1s, 44 B]
+✔ data_TX_williamson completed [8.1s, 3.70 kB]
++ tbl_cbs_TX_williamson dispatched
+✖ tbl_cbs_TX_williamson errored
+Error: wrong sign in 'by' argument
+
+✖ errored pipeline [16.8s, 34 completed, 58 skipped]
