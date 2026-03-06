@@ -61,10 +61,6 @@ tbl_cbs_TX_denton|stem|e83a1276e13561d6|35765771bab07fc1|1e4bc6135dda6ad6|859153
 tbl_cbs_TX_travis|stem|e83a1276e13561d6|db4a41759ed0a65a|3631ca507518c21d|-1376204672||t20517.6028014921s|s44b|44|rds|local|vector|||5.051||
 data_TX_bell|stem|82acebcaebb84dab|04802f578779bea2|56cd0b2d7d85bf7c|1490216562||t20517.6028142146s|s13289b|13289|rds|local|vector|||0.981||
 tbl_cbs_TX_bell|stem|e83a1276e13561d6|dabe5b5e90998ea1|7cc5891bdcb9bc27|2038793504||t20517.602846703s|s44b|44|rds|local|vector|||2.798||
-data_TX_wood|stem|b5b389e87a6e2b22|c20f7c14dcd3b9e9|73f316093da50c8f|-798652939||t20517.7441951358s|s3812b|3812|rds|local|vector|||2.875||
-tbl_cbs_TX_wood|stem|e83a1276e13561d6|c262ccaea08da1c9|2ab2db96a8c6c7e8|-1761390555||t20517.7442272677s|s44b|44|rds|local|vector|||2.765||
-data_NC_NA|stem|6cb734a28231631b|76cacf9f9afbef04|da36f36cc72fca67|-220573991||t20517.9951959797s|s267073b|267073|rds|local|vector|||1.09||
-tbl_cbs_NC_NA|stem|e83a1276e13561d6|e042563c5040e4d8|f68424e8114977a5|-570526909||t20517.9951962617s|s44b|44|rds|local|vector|||0.006||
 data_TX_hidalgo|stem|09f05fdf33ca6188|bbcead53233a28cf|3226d427299b79c4|698886757||t20518.0160608823s|s30810b|30810|rds|local|vector|||4.028||
 tbl_cbs_TX_hidalgo|stem|e83a1276e13561d6|e674dcf3c15b5910|eed183027686b231|567874165||t20518.0161232035s|s44b|44|rds|local|vector|||5.371||
 find_tx_candidate|function|f7c3f074f0a751b7
@@ -101,7 +97,7 @@ PATH_CBS_S3|object|aea739ceef2eaf0b
 pmargins_scatter|function|4022326d9ca6282a
 clarity_timestamp|function|21eeff070fbc17fc
 ev_timestamp|function|b38ae58820ab5b08
-.Random.seed|object|e1e49afdffbe8e0e
+.Random.seed|object|825a3ad65e0afee9
 stateabb_to_name|function|75a42cc1ebb835d3
 get_gsheet|function|f539f0be0cbeb4bf
 cory_modeling|function|6ddb47e3bd15185f
@@ -170,35 +166,39 @@ scrape_fl|function|cf2180599649635e
 .load_config|function|7bb7946d80de7a3e
 manual_runmodels|function|286a601e37b89705
 .onLoad|function|4e4b8cabcd98f736
-timestamp_TX_lubbock|stem|273e3e08493c6522|b4e6ac4e827d3524|ad1f612c29aec41f|-1267598222||t20518.1584159793s|s80b|80|rds|local|vector|||1.149|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
-timestamp_TX_fort.bend|stem|c812b3b6db3ba4d3|a1fc98ba0159757c|ad1f612c29aec41f|-1805516279||t20518.1584169319s|s72b|72|rds|local|vector|||0.059||
-timestamp_TX_travis|stem|e360076901a01046|56947c2afbbd4ffc|ad1f612c29aec41f|2126221176||t20518.1584170629s|s72b|72|rds|local|vector|||0.947|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
-timestamp_TX_rockwall|stem|ae49ba8ae05b7260|f1e37b81b685c699|ad1f612c29aec41f|-1672000356||t20518.1584178869s|s70b|70|rds|local|vector|||0.054||
-timestamp_TX_victoria|stem|a48fae59b31ce9d2|7ec3970886dd43ba|ad1f612c29aec41f|-1171405619||t20518.1584179807s|s70b|70|rds|local|vector|||0.055||
-timestamp_TX_el.paso|stem|3fa23171c1f9a8da|e5fbef52369d6f08|ad1f612c29aec41f|2082910792||t20518.1584187556s|s72b|72|rds|local|vector|||0.059||
-timestamp_TX_hood|stem|a2e107cfd5f28960|4f2040438bbac9c7|ad1f612c29aec41f|1535660683||t20518.1584188053s|s70b|70|rds|local|vector|||0.071||
-timestamp_TX_lamar|stem|ae540188e89ff755|d153b64c4b81a800|ad1f612c29aec41f|-46419316||t20518.1584200648s|s69b|69|rds|local|vector|||0.101||
-timestamp_TX_dallas|stem|94500229a63e66b4|4b63635fcca783ea|ad1f612c29aec41f|1583266993||t20518.1584202575s|s87b|87|rds|local|vector|||0.122||
-timestamp_TX_rusk|stem|5671ff02e3b9ac91|c0ddb0c1dc604d9d|ad1f612c29aec41f|-527726731||t20518.1584208792s|s70b|70|rds|local|vector|||0.061||
-timestamp_TX_harris|stem|529a00dbd50a6546|52eac58ae4bcc5bb|ad1f612c29aec41f|984703190||t20518.1584208807s|s72b|72|rds|local|vector|||1.455|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
-timestamp_TX_wood|stem|6c8f51c44ca55103|0b3d6a64eef37039|ad1f612c29aec41f|797511059||t20518.1584209953s|s72b|72|rds|local|vector|||0.055||
-timestamp_TX_hunt|stem|ccf4299a38744d5b|e59cc64bca3a11b2|ad1f612c29aec41f|1264160749||t20518.1584217337s|s72b|72|rds|local|vector|||0.055||
-timestamp_TX_kendall|stem|109c823cee1727cb|e7a3d8d1ecc6b377|ad1f612c29aec41f|-1157120478||t20518.1584221814s|s70b|70|rds|local|vector|||0.101||
-timestamp_TX_galveston|stem|5659055a58ff90ad|56ac4ec5f33a3994|ad1f612c29aec41f|-1977902827||t20518.1584225649s|s70b|70|rds|local|vector|||0.058||
-timestamp_TX_gregg|stem|002e6999a92b5f50|c9bcfd2d25a2ab9c|ad1f612c29aec41f|-4554194||t20518.1584232357s|s70b|70|rds|local|vector|||0.083||
-timestamp_TX_nueces|stem|b7a489ca8b7dd556|0b5d90f771478e41|ad1f612c29aec41f|-230113614||t20518.1584232942s|s70b|70|rds|local|vector|||0.055||
-timestamp_TX_bastrop|stem|ebd7bd14ab08e358|2d747c833c47930d|ad1f612c29aec41f|-291440169||t20518.158423947s|s68b|68|rds|local|vector|||0.052||
-timestamp_TX_denton|stem|3db27d20d55de5f5|35376baf0b95909c|ad1f612c29aec41f|1193712040||t20518.1584246809s|s86b|86|rds|local|vector|||0.11||
-timestamp_TX_jefferson|stem|0a197f4219e4039e|ae4cb96a531afdf1|ad1f612c29aec41f|676700373||t20518.1584246956s|s70b|70|rds|local|vector|||0.056||
-timestamp_TX_hidalgo|stem|6aff3c0f2eeabfd3|fa8d282c35abb1f4|ad1f612c29aec41f|-1408312070||t20518.1584255934s|s72b|72|rds|local|vector|||0.065||
-timestamp_TX_midland|stem|e87bfd3182fe290f|e417debc6eb0984e|ad1f612c29aec41f|-590365771||t20518.1584258649s|s70b|70|rds|local|vector|||0.087||
-timestamp_TX_robertson|stem|f8f88f709285a615|2d627e65cf147356|ad1f612c29aec41f|1033310637||t20518.1584270915s|s70b|70|rds|local|vector|||0.117||
-timestamp_TX_tarrant|stem|4f4411f1cf9a9db1|380199d09784f8b1|ad1f612c29aec41f|-1338999025||t20518.1584282055s|s72b|72|rds|local|vector|||0.085||
-timestamp_TX_kaufman|stem|c7cd286a218b004c|b742403baa6c0236|ad1f612c29aec41f|1547070942||t20518.1584291581s|s68b|68|rds|local|vector|||0.075||
-timestamp_TX_comal|stem|3acde12f7f06b6eb|ee23dabe2cd6691b|ad1f612c29aec41f|1339661534||t20518.1584291712s|s72b|72|rds|local|vector|||0.703||
-timestamp_TX_bell|stem|90c6135cde30f707|6ef8df063213f46c|ad1f612c29aec41f|138422954||t20518.1584301409s|s70b|70|rds|local|vector|||0.073||
-timestamp_NC_NA|stem|5e3e8d9c68156413|051ec99e9886571f|ad1f612c29aec41f|-873101443||t20518.1584311254s|s72b|72|rds|local|vector|||0.16||
-timestamp_TX_parker|stem|56a324490f5400bd|796a4c75d92cfb31|ad1f612c29aec41f|-1412391558||t20518.1584315548s|s68b|68|rds|local|vector|||0.115||
-timestamp_TX_bexar|stem|25078072c1811087|7eeac0e81594c32d|ad1f612c29aec41f|948869460||t20518.1584321039s|s72b|72|rds|local|vector|||0.077||
-timestamp_TX_montague|stem|a5c2430330eaee0d|a03d94eb16c1693d|ad1f612c29aec41f|1597456689||t20518.1584330659s|s70b|70|rds|local|vector|||0.123||
-timestamp_TX_williamson|stem|14885a641a0caf52|dc883767d62aa927|ad1f612c29aec41f|1855751707||t20518.1584443871s|s72b|72|rds|local|vector|||1.592||
+timestamp_TX_travis|stem|e360076901a01046|56947c2afbbd4ffc|ad1f612c29aec41f|2126221176||t20518.6637899969s|s72b|72|rds|local|vector|||0.945|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
+timestamp_TX_lubbock|stem|273e3e08493c6522|b4e6ac4e827d3524|ad1f612c29aec41f|-1267598222||t20518.6637901881s|s80b|80|rds|local|vector|||1.223|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
+timestamp_TX_fort.bend|stem|c812b3b6db3ba4d3|a1fc98ba0159757c|ad1f612c29aec41f|-1805516279||t20518.6637910317s|s72b|72|rds|local|vector|||0.07||
+timestamp_TX_rockwall|stem|ae49ba8ae05b7260|f1e37b81b685c699|ad1f612c29aec41f|-1672000356||t20518.663791622s|s70b|70|rds|local|vector|||0.097||
+timestamp_TX_victoria|stem|a48fae59b31ce9d2|7ec3970886dd43ba|ad1f612c29aec41f|-1171405619||t20518.663792284s|s70b|70|rds|local|vector|||0.1||
+timestamp_TX_hood|stem|a2e107cfd5f28960|4f2040438bbac9c7|ad1f612c29aec41f|1535660683||t20518.6637924807s|s70b|70|rds|local|vector|||0.066||
+timestamp_TX_el.paso|stem|3fa23171c1f9a8da|e5fbef52369d6f08|ad1f612c29aec41f|2082910792||t20518.663793227s|s72b|72|rds|local|vector|||0.072||
+timestamp_TX_dallas|stem|94500229a63e66b4|4b63635fcca783ea|ad1f612c29aec41f|1583266993||t20518.6637939316s|s87b|87|rds|local|vector|||0.117||
+timestamp_TX_lamar|stem|ae540188e89ff755|d153b64c4b81a800|ad1f612c29aec41f|-46419316||t20518.6637940771s|s69b|69|rds|local|vector|||0.064||
+timestamp_TX_rusk|stem|5671ff02e3b9ac91|c0ddb0c1dc604d9d|ad1f612c29aec41f|-527726731||t20518.663794956s|s70b|70|rds|local|vector|||0.077||
+timestamp_TX_wood|stem|abc057ea848311bf|0b3d6a64eef37039|ad1f612c29aec41f|797511059||t20518.6637949577s|s71b|71|rds|local|vector|||0.066||
+timestamp_TX_kendall|stem|109c823cee1727cb|e7a3d8d1ecc6b377|ad1f612c29aec41f|-1157120478||t20518.6637959548s|s70b|70|rds|local|vector|||0.069||
+timestamp_TX_harris|stem|529a00dbd50a6546|52eac58ae4bcc5bb|ad1f612c29aec41f|984703190||t20518.6638026866s|s72b|72|rds|local|vector|||2.217|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
+timestamp_TX_hunt|stem|ccf4299a38744d5b|e59cc64bca3a11b2|ad1f612c29aec41f|1264160749||t20518.6638039668s|s72b|72|rds|local|vector|||0.099||
+timestamp_TX_galveston|stem|5659055a58ff90ad|56ac4ec5f33a3994|ad1f612c29aec41f|-1977902827||t20518.663804889s|s70b|70|rds|local|vector|||0.069||
+timestamp_TX_gregg|stem|002e6999a92b5f50|c9bcfd2d25a2ab9c|ad1f612c29aec41f|-4554194||t20518.663806015s|s70b|70|rds|local|vector|||0.068||
+timestamp_TX_nueces|stem|b7a489ca8b7dd556|0b5d90f771478e41|ad1f612c29aec41f|-230113614||t20518.6638069875s|s70b|70|rds|local|vector|||0.075||
+timestamp_TX_bastrop|stem|ebd7bd14ab08e358|2d747c833c47930d|ad1f612c29aec41f|-291440169||t20518.6638078415s|s68b|68|rds|local|vector|||0.065||
+timestamp_TX_denton|stem|3db27d20d55de5f5|35376baf0b95909c|ad1f612c29aec41f|1193712040||t20518.6638099935s|s86b|86|rds|local|vector|||0.178||
+timestamp_TX_jefferson|stem|0a197f4219e4039e|ae4cb96a531afdf1|ad1f612c29aec41f|676700373||t20518.6638108984s|s70b|70|rds|local|vector|||0.067||
+timestamp_TX_hidalgo|stem|6aff3c0f2eeabfd3|fa8d282c35abb1f4|ad1f612c29aec41f|-1408312070||t20518.6638116056s|s72b|72|rds|local|vector|||0.053||
+timestamp_TX_midland|stem|e87bfd3182fe290f|e417debc6eb0984e|ad1f612c29aec41f|-590365771||t20518.6638123663s|s70b|70|rds|local|vector|||0.058||
+timestamp_TX_robertson|stem|f8f88f709285a615|2d627e65cf147356|ad1f612c29aec41f|1033310637||t20518.6638132211s|s70b|70|rds|local|vector|||0.065||
+timestamp_TX_comal|stem|3acde12f7f06b6eb|ee23dabe2cd6691b|ad1f612c29aec41f|1339661534||t20518.6638138852s|s72b|72|rds|local|vector|||1.539||
+timestamp_TX_tarrant|stem|4f4411f1cf9a9db1|380199d09784f8b1|ad1f612c29aec41f|-1338999025||t20518.6638148043s|s72b|72|rds|local|vector|||0.071||
+timestamp_TX_kaufman|stem|c7cd286a218b004c|b742403baa6c0236|ad1f612c29aec41f|1547070942||t20518.6638157089s|s68b|68|rds|local|vector|||0.07||
+timestamp_NC_NA|stem|887680f91b728f7f|051ec99e9886571f|ad1f612c29aec41f|-873101443||t20518.6638179885s|s72b|72|rds|local|vector|||0.188||
+data_TX_wood|stem|b65864e1eb056386|c20f7c14dcd3b9e9|6954ab9a728531e5|-798652939||t20518.6638228708s|s3814b|3814|rds|local|vector|||2.396||
+data_NC_NA|stem|b6987fbecc57a18d|76cacf9f9afbef04|bc2eec21721ca19c|-220573991||t20518.6638329262s|s267271b|267271|rds|local|vector|||1.204||
+tbl_cbs_NC_NA|stem|e83a1276e13561d6|e042563c5040e4d8|c7265a1ce3092df8|-570526909||t20518.6638332304s|s44b|44|rds|local|vector|||0.009||
+timestamp_TX_bell|stem|90c6135cde30f707|6ef8df063213f46c|ad1f612c29aec41f|138422954||t20518.6638352211s|s70b|70|rds|local|vector|||0.164||
+timestamp_TX_parker|stem|56a324490f5400bd|796a4c75d92cfb31|ad1f612c29aec41f|-1412391558||t20518.6638366133s|s68b|68|rds|local|vector|||0.107||
+timestamp_TX_bexar|stem|25078072c1811087|7eeac0e81594c32d|ad1f612c29aec41f|948869460||t20518.6638377659s|s72b|72|rds|local|vector|||0.086||
+timestamp_TX_montague|stem|a5c2430330eaee0d|a03d94eb16c1693d|ad1f612c29aec41f|1597456689||t20518.6638387172s|s70b|70|rds|local|vector|||0.069||
+timestamp_TX_williamson|stem|14885a641a0caf52|dc883767d62aa927|ad1f612c29aec41f|1855751707||t20518.6638470493s|s72b|72|rds|local|vector|||2.915||
+tbl_cbs_TX_wood|stem|e83a1276e13561d6|c262ccaea08da1c9|afdca33336c16bca|-1761390555||t20518.663862359s|s44b|44|rds|local|vector|||3.402||
