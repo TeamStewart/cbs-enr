@@ -1,0 +1,84 @@
+2026-03-05 22:47:53: Running tar_make
+- The project is out-of-sync -- use `]8;;x-r-run:renv::status()renv::status()]8;;` for details.
+ℹ Loading metadata database✔ Loading metadata database ... done
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏽‍♂️
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (449ms)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (1.5s)
+✔ Installed enightdata 0.0.0.9000 (local) (13ms)
+✔ 1 pkg + 64 deps: kept 63, upd 1, dld 1 (NA B) [6.7s]
++ timestamp_TX_lubbock dispatched
++ timestamp_TX_harris dispatched
++ timestamp_TX_travis dispatched
+✔ timestamp_TX_lubbock completed [1.1s, 80 B]
++ timestamp_TX_fort.bend dispatched
+✔ timestamp_TX_fort.bend completed [59ms, 72 B]
+✔ timestamp_TX_travis completed [947ms, 72 B]
++ timestamp_TX_rockwall dispatched
++ timestamp_TX_victoria dispatched
+✔ timestamp_TX_rockwall completed [54ms, 70 B]
++ timestamp_TX_hood dispatched
+✔ timestamp_TX_victoria completed [55ms, 70 B]
++ timestamp_TX_el.paso dispatched
+✔ timestamp_TX_el.paso completed [59ms, 72 B]
++ timestamp_TX_dallas dispatched
+✔ timestamp_TX_hood completed [71ms, 70 B]
++ timestamp_TX_lamar dispatched
+✔ timestamp_TX_lamar completed [101ms, 69 B]
++ timestamp_TX_rusk dispatched
+✔ timestamp_TX_dallas completed [122ms, 87 B]
++ timestamp_TX_wood dispatched
+✔ timestamp_TX_rusk completed [61ms, 70 B]
+✔ timestamp_TX_harris completed [1.5s, 72 B]
++ timestamp_TX_kendall dispatched
++ timestamp_TX_comal dispatched
+✔ timestamp_TX_wood completed [55ms, 72 B]
++ timestamp_TX_hunt dispatched
+✔ timestamp_TX_hunt completed [55ms, 72 B]
++ timestamp_TX_galveston dispatched
+✔ timestamp_TX_kendall completed [101ms, 70 B]
++ timestamp_TX_gregg dispatched
+✔ timestamp_TX_galveston completed [58ms, 70 B]
++ timestamp_TX_nueces dispatched
+✔ timestamp_TX_gregg completed [83ms, 70 B]
++ timestamp_TX_bastrop dispatched
+✔ timestamp_TX_nueces completed [55ms, 70 B]
++ timestamp_TX_denton dispatched
+✔ timestamp_TX_bastrop completed [52ms, 68 B]
++ timestamp_TX_jefferson dispatched
+✔ timestamp_TX_denton completed [110ms, 86 B]
+✔ timestamp_TX_jefferson completed [56ms, 70 B]
++ timestamp_TX_hidalgo dispatched
++ timestamp_TX_midland dispatched
+✔ timestamp_TX_hidalgo completed [65ms, 72 B]
++ timestamp_TX_robertson dispatched
+✔ timestamp_TX_midland completed [87ms, 70 B]
++ timestamp_TX_williamson dispatched
+✔ timestamp_TX_robertson completed [117ms, 70 B]
++ timestamp_TX_tarrant dispatched
+✔ timestamp_TX_tarrant completed [85ms, 72 B]
++ timestamp_TX_kaufman dispatched
+✔ timestamp_TX_kaufman completed [75ms, 68 B]
+✔ timestamp_TX_comal completed [703ms, 72 B]
++ timestamp_NC_NA dispatched
++ timestamp_TX_bell dispatched
+✔ timestamp_TX_bell completed [73ms, 70 B]
++ timestamp_TX_parker dispatched
+✔ timestamp_NC_NA completed [160ms, 72 B]
++ timestamp_TX_bexar dispatched
+✔ timestamp_TX_parker completed [115ms, 68 B]
++ timestamp_TX_montague dispatched
+✔ timestamp_TX_bexar completed [77ms, 72 B]
+✔ timestamp_TX_montague completed [123ms, 70 B]
+✔ timestamp_TX_williamson completed [1.6s, 72 B]
+✔ ended pipeline [6.5s, 32 completed, 64 skipped]
+Warning messages:
+1: package ‘targets’ was built under R version 4.5.2 
+2: package ‘tarchetypes’ was built under R version 4.5.2 
+3: 3 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
