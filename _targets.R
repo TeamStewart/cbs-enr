@@ -57,13 +57,13 @@ enightdata::set_all(
 # - path_timestamp: (string) optional cell for timestamp, if NA then use `path`
 # - upload: (boolean) whether to upload this jurisdiction to CBS AWS
 # - trust_stage: (boolean) whether we trust this county's stage variable
-metadata = enightdata::read_local("metadata.csv", colClasses=list(character=1:4, logical=5:6)) |> 
+metadata = enightdata::read_local("metadata.csv", colClasses=list(character=1:4, logical=5:8)) |> 
   dplyr::mutate(
     path_timestamp = dplyr::na_if(path_timestamp, ""),
     path_timestamp = dplyr::coalesce(path_timestamp, path),
     county = dplyr::na_if(county, "")
   ) |> 
-  dplyr::filter(updated)
+  dplyr::filter(build)
 
 create_dirs(metadata)
 

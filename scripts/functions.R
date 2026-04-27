@@ -9,7 +9,6 @@ get_timestamp <- function(state, county, path) {
 
   rlang::exec(
     get(fn_name),
-    # getExportedValue("enightdata", fn_name),
     state = state,
     county = county,
     path = path
