@@ -16,7 +16,8 @@ suppressPackageStartupMessages({
 
 source("scripts/functions.R")
 
-pak::local_install(PATH_ENIGHTDATA, upgrade = FALSE, ask = FALSE)
+devtools::document(PATH_ENIGHTDATA)
+pak::local_install(PATH_ENIGHTDATA, upgrade = TRUE, ask = FALSE)
 
 options(
   readr.show_col_types = FALSE,
@@ -63,23 +64,23 @@ metadata = enightdata::read_local("metadata.csv", colClasses=list(character=1:4,
     path_timestamp = dplyr::coalesce(path_timestamp, path),
     county = dplyr::na_if(county, "")
   ) |> 
-  dplyr::filter(build)
+  dplyr::filter(build, updated)
 
 create_dirs(metadata)
 
-office_filter = tibble::tribble(
-  ~state, ~jurisdiction, ~contest, ~district,
-  "TX", "tx", "sen_dem", NA,
-  "TX", "tx", "sen_rep", NA,
-  "TX", "tx", "gov_dem", NA,
-  "TX", "tx", "gov_rep", NA,
-  "TX", "tx", "ag_dem", NA,
-  "TX", "tx", "ag_rep", NA,
-  "TX", "tx", "house_dem", 30,
-  "TX", "tx", "house_rep", 30,
-  "TX", "tx", "house_dem", 33,
-  "TX", "tx", "house_rep", 33,
-)
+# office_filter = tibble::tribble(
+#   ~state, ~jurisdiction, ~contest, ~district,
+#   "TX", "tx", "sen_dem", NA,
+#   "TX", "tx", "sen_rep", NA,
+#   "TX", "tx", "gov_dem", NA,
+#   "TX", "tx", "gov_rep", NA,
+#   "TX", "tx", "ag_dem", NA,
+#   "TX", "tx", "ag_rep", NA,
+#   "TX", "tx", "house_dem", 30,
+#   "TX", "tx", "house_rep", 30,
+#   "TX", "tx", "house_dem", 33,
+#   "TX", "tx", "house_rep", 33,
+# )
 
 # ========================================
 ## PIPELINE
@@ -105,7 +106,7 @@ list(
     # tar_target(history, get_history(state, impute = FALSE)),
     tar_target(data, get_data(state, county, timestamp, path, trust_stage)),
     # tar_target(summary, make_summary(data, state, county, timestamp, history)),
-    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
+    # tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
     names = c(state, county)
   )
   # tar_quarto(dashboard, "index.qmd", quiet = FALSE),
