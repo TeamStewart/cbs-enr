@@ -7,6 +7,7 @@ data_OH_franklin|stem|8aa2e421119ec3f1|e76bcd5276b7c8a7|dab94c56ac3a8533|-890529
 data_OH_summit|stem|c1c81109c460d10e|b28412eac22eaff0|2f63b5ffe47e85d6|27758045||t20578.9784704936s|s20108b|20108|rds|local|vector|||10.028||
 data_OH_cuyahoga|stem|fe3b66e10414e324|b26932aaae9bf68e|75f747f8dda772bc|-236945641||t20578.9787195381s|s36982b|36982|rds|local|vector|||26.583||
 data_OH_stark|stem|80bcfb0bcbe44d76|798c6127b02a925a|967da4dc714db747|1826060653||t20578.982096605s|s8348b|8348|rds|local|vector|||10.325||
+data_OH_warren|stem|7e118752bc022814|53c81169b5b86f9b|15e58275c6cd6e75|1793877568||t20578.9855193691s|s6666b|6666|rds|local|vector|||8.206||
 find_tx_candidate|function|f7c3f074f0a751b7
 find_tx_contest|function|d9346c135127117c
 find_tx_district|function|d8cb125d65b6b767
@@ -47,7 +48,7 @@ pmargins_scatter|function|4022326d9ca6282a
 .oh_sftp_exec|function|bdc67cc2bb1e36a4
 clarity_timestamp|function|21eeff070fbc17fc
 ev_timestamp|function|b38ae58820ab5b08
-.Random.seed|object|c3931eb6348ca2f8
+.Random.seed|object|342559af003ae5f0
 stateabb_to_name|function|75a42cc1ebb835d3
 get_gsheet|function|f539f0be0cbeb4bf
 cory_modeling|function|6ddb47e3bd15185f
@@ -124,13 +125,12 @@ scrape_fl|function|15fa5454c3740b85
 tx_timestamp|function|2009a08cbabcc1ed
 manual_runmodels|function|286a601e37b89705
 .onLoad|function|7eb2dd16b765efc6
-timestamp_OH_hamilton|stem|3f872a0820750a98|a1e5e3b1f82407f0|ad1f612c29aec41f|1443764292||t20578.9852770652s|s71b|71|rds|local|vector|||1.176|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘glue’ was built under R version 4.5.2. package ‘fs’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
-timestamp_OH_summit|stem|48c1893d350b09bb|1601a70b766e0766|ad1f612c29aec41f|-513362737||t20578.9853219457s|s70b|70|rds|local|vector|||3.854||
-timestamp_OH_cuyahoga|stem|32ef9684b9010efe|c1f3f5a0c2b18998|ad1f612c29aec41f|-764801780||t20578.9853646275s|s70b|70|rds|local|vector|||8.658|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘glue’ was built under R version 4.5.2. package ‘fs’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
-timestamp_OH_clark|stem|f1275c29c61b5486|845b5d26171b6a4d|ad1f612c29aec41f|627946235||t20578.9853732586s|s72b|72|rds|local|vector|||9.223|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘glue’ was built under R version 4.5.2. package ‘fs’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
-timestamp_OH_warren|stem|6fcc9b05a367101b|1cdc3039cae9fdc9|ad1f612c29aec41f|-1905155101||t20578.9854239981s|s70b|70|rds|local|vector|||8.767||
-timestamp_OH_carroll|stem|9890ae6fbe0ae05f|a1b013bf84fbed91|ad1f612c29aec41f|-235547864||t20578.9854397757s|s72b|72|rds|local|vector|||5.72||
-timestamp_OH_fulton|stem|83a109c9ce807859|2aee5990d36b4de2|ad1f612c29aec41f|-657695369||t20578.9854423535s|s71b|71|rds|local|vector|||0.201||
-timestamp_OH_franklin|stem|d604fe81e9bc229b|fa5ebd5ed1f5b5f7|ad1f612c29aec41f|-33885191||t20578.9854554545s|s72b|72|rds|local|vector|||1.116||
-timestamp_OH_stark|stem|fcb99eedcd1d88a9|0e1199fe5e90e4e4|ad1f612c29aec41f|-2124153324||t20578.985478295s|s70b|70|rds|local|vector|||9.8||
-data_OH_warren|stem|7e118752bc022814|53c81169b5b86f9b|15e58275c6cd6e75|1793877568||t20578.9855193691s|s6666b|6666|rds|local|vector|||8.206||
+timestamp_OH_hamilton|stem|3f872a0820750a98|a1e5e3b1f82407f0|ad1f612c29aec41f|1443764292||t20578.9887340383s|s71b|71|rds|local|vector|||1.12|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘glue’ was built under R version 4.5.2. package ‘fs’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
+timestamp_OH_summit|stem|48c1893d350b09bb|1601a70b766e0766|ad1f612c29aec41f|-513362737||t20578.9887692222s|s70b|70|rds|local|vector|||3.016||
+timestamp_OH_cuyahoga|stem|32ef9684b9010efe|c1f3f5a0c2b18998|ad1f612c29aec41f|-764801780||t20578.988812893s|s70b|70|rds|local|vector|||7.825|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘glue’ was built under R version 4.5.2. package ‘fs’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
+timestamp_OH_clark|stem|f1275c29c61b5486|845b5d26171b6a4d|ad1f612c29aec41f|627946235||t20578.9888249271s|s72b|72|rds|local|vector|||8.644|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘glue’ was built under R version 4.5.2. package ‘fs’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
+timestamp_OH_warren|stem|6fcc9b05a367101b|1cdc3039cae9fdc9|ad1f612c29aec41f|-1905155101||t20578.9888704096s|s70b|70|rds|local|vector|||8.647||
+timestamp_OH_fulton|stem|83a109c9ce807859|2aee5990d36b4de2|ad1f612c29aec41f|-657695369||t20578.988871575s|s71b|71|rds|local|vector|||0.066||
+timestamp_OH_franklin|stem|d604fe81e9bc229b|fa5ebd5ed1f5b5f7|ad1f612c29aec41f|-33885191||t20578.9888836615s|s72b|72|rds|local|vector|||1.033||
+timestamp_OH_carroll|stem|9890ae6fbe0ae05f|a1b013bf84fbed91|ad1f612c29aec41f|-235547864||t20578.9888913366s|s72b|72|rds|local|vector|||5.721||
+timestamp_OH_stark|stem|fcb99eedcd1d88a9|0e1199fe5e90e4e4|ad1f612c29aec41f|-2124153324||t20578.9889252402s|s70b|70|rds|local|vector|||9.697||
