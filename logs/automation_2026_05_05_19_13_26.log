@@ -1,0 +1,60 @@
+2026-05-05 19:13:26: Running tar_make
+- The project is out-of-sync -- use `]8;;x-r-run:renv::status()renv::status()]8;;` for details.
+ℹ Updating enightdata documentation
+ℹ Loading enightdata
+Writing 'scrapers.Rd'
+ℹ Loading metadata database✔ Loading metadata database ... done
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏼
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (572ms)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (1.8s)
+✔ Installed enightdata 0.0.0.9000 (local) (15ms)
+✔ 1 pkg + 73 deps: kept 73, upd 1, dld 1 (NA B) [8.2s]
++ timestamp_OH_hamilton dispatched
++ timestamp_OH_cuyahoga dispatched
++ timestamp_OH_clark dispatched
+✔ timestamp_OH_hamilton completed [1.5s, 71 B]
++ data_OH_hamilton dispatched
+✔ data_OH_hamilton completed [4.2s, 9.57 kB]
++ timestamp_OH_summit dispatched
+✔ timestamp_OH_summit completed [1.9s, 72 B]
++ data_OH_summit dispatched
+✔ timestamp_OH_cuyahoga completed [7.7s, 68 B]
++ data_OH_cuyahoga dispatched
+✔ timestamp_OH_clark completed [9.2s, 72 B]
++ data_OH_clark dispatched
+✔ data_OH_summit completed [8.1s, 20.01 kB]
++ timestamp_OH_warren dispatched
+✔ data_OH_clark completed [7s, 1.87 kB]
++ timestamp_OH_stark dispatched
+✔ timestamp_OH_warren completed [9.7s, 70 B]
++ data_OH_warren dispatched
+✔ timestamp_OH_stark completed [9.2s, 71 B]
++ data_OH_stark dispatched
+✔ data_OH_cuyahoga completed [24.3s, 36.78 kB]
++ timestamp_OH_carroll dispatched
+✔ data_OH_warren completed [9.4s, 3.20 kB]
++ timestamp_OH_fulton dispatched
+✔ timestamp_OH_fulton completed [63ms, 71 B]
++ data_OH_fulton dispatched
+✔ data_OH_fulton completed [263ms, 1.66 kB]
++ timestamp_OH_franklin dispatched
+✔ data_OH_stark completed [10.8s, 3.82 kB]
+✔ timestamp_OH_franklin completed [1.4s, 72 B]
++ data_OH_franklin dispatched
+✔ timestamp_OH_carroll completed [7.4s, 72 B]
++ data_OH_carroll dispatched
+✔ data_OH_carroll completed [5.7s, 1.34 kB]
+✔ data_OH_franklin completed [25.2s, 14.36 kB]
+✔ ended pipeline [1m 5.1s, 18 completed, 0 skipped]
+Warning messages:
+1: package ‘targets’ was built under R version 4.5.2 
+2: package ‘tarchetypes’ was built under R version 4.5.2 
+3: package ‘glue’ was built under R version 4.5.2 
+4: 3 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
