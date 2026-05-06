@@ -1,0 +1,49 @@
+2026-05-05 22:14:57: Running tar_make
+- The project is out-of-sync -- use `]8;;x-r-run:renv::status()renv::status()]8;;` for details.
+ℹ Updating enightdata documentation
+ℹ Loading enightdata
+ℹ Loading metadata database✔ Loading metadata database ... done
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏽‍♂️
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (548ms)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (1.8s)
+✔ Installed enightdata 0.0.0.9000 (local) (15ms)
+✔ 1 pkg + 73 deps: kept 73, upd 1, dld 1 (NA B) [7.9s]
++ timestamp_OH_hamilton dispatched
++ timestamp_OH_cuyahoga dispatched
++ timestamp_OH_clark dispatched
+✔ timestamp_OH_hamilton completed [1.1s, 70 B]
++ timestamp_OH_summit dispatched
+✔ timestamp_OH_summit completed [2.6s, 70 B]
++ timestamp_OH_warren dispatched
+✔ timestamp_OH_cuyahoga completed [7.7s, 70 B]
++ timestamp_OH_stark dispatched
+✔ timestamp_OH_clark completed [8.2s, 67 B]
++ data_OH_clark dispatched
+✔ timestamp_OH_warren completed [7.4s, 70 B]
++ timestamp_OH_carroll dispatched
+✔ data_OH_clark completed [6s, 3.56 kB]
++ timestamp_OH_lucas dispatched
+✔ timestamp_OH_stark completed [7.3s, 70 B]
++ timestamp_OH_fulton dispatched
+✔ timestamp_OH_fulton completed [92ms, 69 B]
++ timestamp_OH_franklin dispatched
+✔ timestamp_OH_franklin completed [1ms, 68 B]
++ data_OH_franklin dispatched
+✔ data_OH_franklin completed [1.3s, 32.51 kB]
+✔ timestamp_OH_carroll completed [5.5s, 70 B]
+✔ timestamp_OH_lucas completed [6.7s, 70 B]
++ data_OH_lucas dispatched
+✔ data_OH_lucas completed [7s, 8.50 kB]
+✔ ended pipeline [31.6s, 13 completed, 7 skipped]
+Warning messages:
+1: package ‘targets’ was built under R version 4.5.2 
+2: package ‘tarchetypes’ was built under R version 4.5.2 
+3: package ‘glue’ was built under R version 4.5.2 
+4: 3 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
