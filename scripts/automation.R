@@ -5,7 +5,7 @@
 ## Author: Joseph R. Loffredo and Mason Reece
 ##################################################
 
-INTERVAL = 10 # minutes
+INTERVAL = 15 # minutes
 googlesheets4::gs4_auth(
   email = TRUE
 )
