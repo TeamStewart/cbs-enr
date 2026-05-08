@@ -1,7 +1,7 @@
 PATH_GDRIVE = "https://drive.google.com/drive/u/0/folders/1ByjqU2Cq-qnBR8NYpC6r_JOE8CB1hJnL"
 PATH_CBS_S3 = "cbsn-elections-external-models"
 PATH_LOCAL = ""
-ELECTION_DATE = "20260505"
+ELECTION_DATE = "20260512"
 ELECTION_FOLDER = "26_primaries"
 PATH_DROPBOX = ""
 PATH_ENIGHTDATA = ""
