@@ -41,7 +41,7 @@ while (TRUE) {
   # push and commit to git
   # to get this to work, (1) https://docs.ropensci.org/git2r/reference/cred_token.html
   # (2) https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
-  # (3) run git config --global http.followRedirects true
+  # (3) run git config --global http.followRedirects true making some changes here
   cred <- git2r::cred_token()
   repo <- git2r::repository(".")
   git2r::add(path = "*")
