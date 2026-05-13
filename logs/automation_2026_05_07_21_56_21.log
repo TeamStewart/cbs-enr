@@ -1,107 +1,0 @@
-G3;2026-05-07 21:56:21: Running tar_make
-g- The project is out-of-sync -- use `]8;;x-r-run:renv::status()renv::status()]8;;` for details.
-ℹ Updating enightdata documentation
-ℹ Loading enightdata
-
-✔ Updated metadata database: 4.58 MB in 2 files.
-
-ℹ Updating metadata database
-✔ Updating metadata database ... done
-
- 
-→ Will update 1 package.
-→ The package (0 B) is cached.
-+ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏽‍♂️
-ℹ No downloads are needed, 1 pkg is cached
-✔ Got enightdata 0.0.0.9000 (source) (96 B)
-ℹ Packaging enightdata 0.0.0.9000
-✔ Packaged enightdata 0.0.0.9000 (983ms)
-ℹ Building enightdata 0.0.0.9000
-✔ Built enightdata 0.0.0.9000 (2.2s)
-✔ Installed enightdata 0.0.0.9000 (local) (23ms)
-✔ 1 pkg + 73 deps: kept 73, upd 1, dld 1 (NA B) [18.2s]
-→ de-duplicating _targets/meta/meta
-→ reading _targets/meta/meta
-→ parsing _targets/meta/meta
-→ noting builders and branches
-→ parsing _targets/meta/meta
-→ restricting metadata records
-→ querying 20 local files in _targets/objects
-→ reading _targets/meta/process
-→ parsing _targets/meta/process
-+ timestamp_OH_hamilton dispatched
-+ timestamp_OH_cuyahoga dispatched
-+ timestamp_OH_clark dispatched
-→ 20 targets ■■■                              [4.7s, 1+, 0-]
-✔ timestamp_OH_hamilton completed [1.3s, 70 B]
-→ 20 targets ■■■                              [4.7s, 1+, 0-]+ data_OH_hamilton dispatched
-→ 20 targets ■■■                              [4.7s, 1+, 0-]→ 20 targets ■■■■                             [9.2s, 1+, 0-]
-✖ data_OH_hamilton errored
-→ 20 targets ■■■■                             [9.2s, 1+, 0-]Error: ℹ In argument: `!str_detect(method, "Under|Over|regVoters")`.
-Caused by error:
-! object 'method' not found
-
-+ timestamp_OH_summit dispatched
-→ 20 targets ■■■■                             [9.2s, 1+, 0-]→ 20 targets ■■■■■                            [11.3s, 2+, 0-]
-✔ timestamp_OH_summit completed [2.1s, 71 B]
-→ 20 targets ■■■■■                            [11.3s, 2+, 0-]+ data_OH_summit dispatched
-→ 20 targets ■■■■■                            [11.3s, 2+, 0-]✔ timestamp_OH_cuyahoga completed [8.1s, 71 B]
-→ 20 targets ■■■■■                            [11.3s, 2+, 0-]+ data_OH_cuyahoga dispatched
-→ 20 targets ■■■■■                            [11.3s, 2+, 0-]✖ data_OH_summit errored
-→ 20 targets ■■■■■                            [11.3s, 2+, 0-]Error: parse error: premature EOF
-                                       
-                     (right here) ------^
-
-
-+ timestamp_OH_warren dispatched
-→ 20 targets ■■■■■                            [11.3s, 2+, 0-]→ 20 targets ■■■■■■■■■■                       [13.4s, 4+, 0-]
-✔ timestamp_OH_clark completed [9.9s, 67 B]
-→ 20 targets ■■■■■■■■■■                       [13.4s, 4+, 0-]+ data_OH_clark dispatched
-→ 20 targets ■■■■■■■■■■                       [13.4s, 4+, 0-]→ 20 targets ■■■■■■■■■■■                      [16.2s, 4+, 0-]
-✖ data_OH_cuyahoga errored
-→ 20 targets ■■■■■■■■■■■                      [16.2s, 4+, 0-]Error: parse error: premature EOF
-                                       
-                     (right here) ------^
-
-
-+ timestamp_OH_stark dispatched
-→ 20 targets ■■■■■■■■■■■                      [16.2s, 4+, 0-]→ 20 targets ■■■■■■■■■■■■■                    [19.4s, 5+, 0-]
-✔ timestamp_OH_warren completed [7.4s, 72 B]
-→ 20 targets ■■■■■■■■■■■■■                    [19.4s, 5+, 0-]+ data_OH_warren dispatched
-→ 20 targets ■■■■■■■■■■■■■                    [19.4s, 5+, 0-]✔ data_OH_clark completed [6.2s, 3.56 kB]
-→ 20 targets ■■■■■■■■■■■■■                    [19.4s, 5+, 0-]+ timestamp_OH_carroll dispatched
-→ 20 targets ■■■■■■■■■■■■■                    [19.4s, 5+, 0-]→ 20 targets ■■■■■■■■■■■■■■■■                 [23.7s, 7+, 0-]
-✔ timestamp_OH_stark completed [7.5s, 72 B]
-→ 20 targets ■■■■■■■■■■■■■■■■                 [23.7s, 7+, 0-]+ data_OH_stark dispatched
-→ 20 targets ■■■■■■■■■■■■■■■■                 [23.7s, 7+, 0-]→ 20 targets ■■■■■■■■■■■■■■■■■                [25.3s, 8+, 0-]
-✔ timestamp_OH_carroll completed [5.6s, 70 B]
-→ 20 targets ■■■■■■■■■■■■■■■■■                [25.3s, 8+, 0-]+ data_OH_carroll dispatched
-→ 20 targets ■■■■■■■■■■■■■■■■■                [25.3s, 8+, 0-]✔ data_OH_warren completed [6.8s, 7.20 kB]
-→ 20 targets ■■■■■■■■■■■■■■■■■                [25.3s, 8+, 0-]+ timestamp_OH_lucas dispatched
-→ 20 targets ■■■■■■■■■■■■■■■■■                [25.3s, 8+, 0-]→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]
-✔ data_OH_stark completed [6.9s, 10.56 kB]
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]+ timestamp_OH_fulton dispatched
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]✔ timestamp_OH_fulton completed [104ms, 69 B]
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]+ data_OH_fulton dispatched
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]✔ data_OH_carroll completed [5.6s, 1.82 kB]
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]+ timestamp_OH_franklin dispatched
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]✔ timestamp_OH_franklin completed [0ms, 72 B]
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]+ data_OH_franklin dispatched
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]✖ data_OH_fulton errored
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]Error: ℹ In argument: `!str_detect(method, "Under|Over|regVoters")`.
-Caused by error:
-! object 'method' not found
-
-✔ data_OH_franklin completed [1.3s, 34.73 kB]
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]✔ timestamp_OH_lucas completed [6.7s, 70 B]
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]+ data_OH_lucas dispatched
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■            [30.7s, 10+, 0-]→ 20 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39.9s, 16+, 0-]
-✔ data_OH_lucas completed [6.9s, 9.32 kB]
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39.9s, 16+, 0-]→ de-duplicating _targets/meta/meta
-→ 20 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39.9s, 16+, 0-]✖ errored pipeline [40.4s, 16 completed, 0 skipped]
-Warning messages:
-1: package ‘targets’ was built under R version 4.5.2 
-2: package ‘tarchetypes’ was built under R version 4.5.2 
-3: package ‘glue’ was built under R version 4.5.2 
-4: 4 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
-5: 3 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
