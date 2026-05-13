@@ -1,4 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+data_NE_NA|stem|01c096b1c73dfb64|2772f4224b35db10|a7d68b47f14cb0a7|-483526848||t20586.5137204526s|s22572b|22572|rds|local|vector|||73.771||
 find_tx_candidate|function|f7c3f074f0a751b7
 find_tx_contest|function|d9346c135127117c
 find_tx_district|function|d8cb125d65b6b767
@@ -40,7 +41,7 @@ PATH_CBS_S3|object|aea739ceef2eaf0b
 pmargins_scatter|function|4022326d9ca6282a
 clarity_timestamp|function|21eeff070fbc17fc
 ev_timestamp|function|b38ae58820ab5b08
-.Random.seed|object|25d133e78ba79d70
+.Random.seed|object|ccd1ae4b2d57edf5
 stateabb_to_name|function|75a42cc1ebb835d3
 .oh_sftp_exec|function|bdc67cc2bb1e36a4
 get_gsheet|function|f539f0be0cbeb4bf
@@ -120,5 +121,4 @@ scrape_fl|function|7e395e54b5c0d852
 tx_timestamp|function|e449df2a59f0ce04
 manual_runmodels|function|286a601e37b89705
 .onLoad|function|defad1dba14b78b8
-timestamp_NE_NA|stem|695b9061830123e9|30888dd5d87a8ce7|ad1f612c29aec41f|1572543473||t20586.51286613s|s72b|72|rds|local|vector|||1.139|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘glue’ was built under R version 4.5.2. package ‘fs’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
-data_NE_NA|stem|01c096b1c73dfb64|2772f4224b35db10|a7d68b47f14cb0a7|-483526848||t20586.5137204526s|s22572b|22572|rds|local|vector|||73.771||
+timestamp_NE_NA|stem|695b9061830123e9|30888dd5d87a8ce7|ad1f612c29aec41f|1572543473||t20586.5233005978s|s72b|72|rds|local|vector|||1.151|package ‘data.table’ was built under R version 4.5.2. package ‘ggplot2’ was built under R version 4.5.2. package ‘tibble’ was built under R version 4.5.2. package ‘tidyr’ was built under R version 4.5.2. package ‘readr’ was built under R version 4.5.2. package ‘purrr’ was built under R version 4.5.2. package ‘dplyr’ was built under R version 4.5.2. package ‘lubridate’ was built under R version 4.5.2. package ‘glue’ was built under R version 4.5.2. package ‘fs’ was built under R version 4.5.2. package ‘reticulate’ was built under R version 4.5.2. package ‘gt’ was built under R version 4.5.2|
