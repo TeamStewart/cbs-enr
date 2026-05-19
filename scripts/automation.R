@@ -46,10 +46,9 @@ while (TRUE) {
   # to get this to work, (1) https://docs.ropensci.org/git2r/reference/cred_token.html
   # (2) https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
   # (3) run git config --global http.followRedirects true making some changes here
-  repo <- git2r::repository(".")
   git2r::add(path = "*")
   git2r::commit(message = glue::glue("latest pull {run_time}"))
-  git2r::push(repo, credentials = cred)
+  git2r::push(".")
   # git2r::push(repo, 
   #             name = "origin", 
   #             refspec = "refs/heads/main:refs/heads/main", 
