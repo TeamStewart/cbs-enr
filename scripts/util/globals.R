@@ -15,6 +15,9 @@ local({
   } else if (user == "mason") {
     PATH_DROPBOX <<- "~/Dropbox (MIT)/Research/CBS-MIT Election Data"
     PATH_ENIGHTDATA <<- "~/Documents/github/enightdata"
+  } else if (user == "stewart") {
+    PATH_DROPBOX <<- "/Users/stewart/MIT Dropbox/Mason Reece/Research/CBS-MIT Election Data"
+    PATH_ENIGHTDATA <<- "~/Documents/enightdata"
   } else {
     cli::cli_abort("User {user} not recognized, cannot set PATH_DROPBOX or PATH_ENIGHTDATA")
   }
