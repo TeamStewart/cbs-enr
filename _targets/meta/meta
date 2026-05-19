@@ -66,7 +66,7 @@ find_ga_candidate|function|8d94e11705bbdf41
 scrape_wi_milwaukee|function|f49ab0d032ad3d3c
 read_html_live_cf|function|39c4bcab0b10f26e
 statename_to_abb|function|0209bce62db9dda1
-.Random.seed|object|fd13d8d09c6f73a3
+.Random.seed|object|60275938b2611aec
 PATH_ENIGHTDATA|object|0cb918180a86ef27
 scrape_tx|function|685358a6552a064d
 .onAttach|function|26335bdda585bf36
@@ -144,21 +144,21 @@ scrape_mi_eaton|function|e3ddff974f456d22
 manual_runmodels|function|286a601e37b89705
 tx_timestamp|function|e449df2a59f0ce04
 .onLoad|function|75cccdbc524fd9f4
-timestamp_PA_york|stem|a0c70056bde5e338|1d0e2d5a36e5d763|ad1f612c29aec41f|631688603||t20592.9692779931s|s71b|71|rds|local|vector|||1.106||
-timestamp_PA_westmoreland|stem|ab719c5a9dfe9d19|e3d68b2b98b19d70|ad1f612c29aec41f|-549353456||t20592.9692787542s|s71b|71|rds|local|vector|||0.061||
-timestamp_PA_northhampton|stem|64914dcd6edcf50f|192f6be72cbf5b74|ad1f612c29aec41f|1165022553||t20592.9692792217s|s71b|71|rds|local|vector|||1.362||
-timestamp_PA_washington|stem|297c8c1d9817a780|bcc2b864a850d10a|ad1f612c29aec41f|978834635||t20592.969281444s|s66b|66|rds|local|vector|||0.188||
-timestamp_PA_delaware|stem|ec06f8a6bdf3fc69|ba10d637e9f16745|ad1f612c29aec41f|2078165313||t20592.9692818953s|s71b|71|rds|local|vector|||1.233||
-timestamp_PA_pike|stem|810a3d7bbd5fb976|c81e015442bcf955|ad1f612c29aec41f|-1740129955||t20592.969282561s|s71b|71|rds|local|vector|||0.094||
-timestamp_PA_erie|stem|5e762153b25dfd14|96ffc15eb4fa42b1|ad1f612c29aec41f|-1490338439||t20592.969283005s|s71b|71|rds|local|vector|||1.101||
-timestamp_PA_crawford|stem|45e9ae44de0b3703|62fc560582c14ae6|ad1f612c29aec41f|-875728198||t20592.9692850948s|s71b|71|rds|local|vector|||1.123||
-timestamp_PA_allegheny|stem|ee2d7628bc278982|379b203b4718c1d3|ad1f612c29aec41f|-541099268||t20592.9692861511s|s71b|71|rds|local|vector|||1.099||
-timestamp_PA_philadelphia|stem|c89ffa0bdf1a867d|e0f9fabe6121c32d|ad1f612c29aec41f|-1573692003||t20592.9692875812s|s71b|71|rds|local|vector|||0.487||
-timestamp_PA_chester|stem|775afc45b8a5b39b|561438b089dcf448|ad1f612c29aec41f|554576659||t20592.969288994s|s70b|70|rds|local|vector|||1.996||
-timestamp_PA_montgomery|stem|a7e77512f9e90903|7630ecb8689d2250|ad1f612c29aec41f|-882135918||t20592.9692891088s|s69b|69|rds|local|vector|||0.869||
-timestamp_PA_fayette|stem|314d35f1f633de74|dfe7a7415bc77154|ad1f612c29aec41f|288277967||t20592.9692901045s|s71b|71|rds|local|vector|||0.779||
-timestamp_PA_luzerne|stem|7db97a0514ec1a38|f855d384ecf88430|ad1f612c29aec41f|-1975766409||t20592.9692912601s|s70b|70|rds|local|vector|||0.788||
-data_PA_fayette|stem||bdf5d62075fbe2e9|420fb8c3dc32850a|560432610||t20592.9588763529s||0|rds|local|vector|||0.801||ℹ In argument: `when_any(...)`. Caused by error: ! object 'method' not found
-timestamp_PA_lancaster|stem|62f35216be48fe8d|3c7618027d0d949f|ad1f612c29aec41f|-1021455929||t20592.9693148958s|s69b|69|rds|local|vector|||3.353||
-timestamp_GA_NA|stem|03ca29aa3f60d4e1|327f68dfde4e4050|ad1f612c29aec41f|828350109||t20592.9695682578s|s65b|65|rds|local|vector|||25.009||
-data_GA_NA|stem|fc0f31419089990a|a6c35cdda7bd6c9f|2b653737369ec96b|-931803180||t20592.9598851333s||193958|rds|local|vector|||0.626|downloaded length 8246680 != reported length 157102207. URL 'https://results.sos.ga.gov/cdn/results/Georgia/export-GeneralPrimary51926.json': status was 'Stream error in the HTTP/2 framing layer'|download from 'https://results.sos.ga.gov/cdn/results/Georgia/export-GeneralPrimary51926.json' failed
+timestamp_PA_york|stem|a0c70056bde5e338|1d0e2d5a36e5d763|ad1f612c29aec41f|631688603||t20592.9727616026s|s71b|71|rds|local|vector|||1.132||
+timestamp_PA_northhampton|stem|64914dcd6edcf50f|192f6be72cbf5b74|ad1f612c29aec41f|1165022553||t20592.9727632183s|s71b|71|rds|local|vector|||1.425||
+timestamp_PA_delaware|stem|ec06f8a6bdf3fc69|ba10d637e9f16745|ad1f612c29aec41f|2078165313||t20592.9727642176s|s71b|71|rds|local|vector|||1.082||
+timestamp_PA_washington|stem|297c8c1d9817a780|bcc2b864a850d10a|ad1f612c29aec41f|978834635||t20592.9727653104s|s66b|66|rds|local|vector|||0.091||
+timestamp_PA_erie|stem|5e762153b25dfd14|96ffc15eb4fa42b1|ad1f612c29aec41f|-1490338439||t20592.972765578s|s71b|71|rds|local|vector|||1.075||
+timestamp_PA_luzerne|stem|7db97a0514ec1a38|f855d384ecf88430|ad1f612c29aec41f|-1975766409||t20592.972766576s|s70b|70|rds|local|vector|||0.106||
+timestamp_PA_montgomery|stem|a7e77512f9e90903|7630ecb8689d2250|ad1f612c29aec41f|-882135918||t20592.9727671295s|s69b|69|rds|local|vector|||0.472||
+timestamp_PA_crawford|stem|45e9ae44de0b3703|62fc560582c14ae6|ad1f612c29aec41f|-875728198||t20592.9727681829s|s71b|71|rds|local|vector|||1.076||
+timestamp_PA_allegheny|stem|ee2d7628bc278982|379b203b4718c1d3|ad1f612c29aec41f|-541099268||t20592.972769928s|s71b|71|rds|local|vector|||1.032||
+timestamp_PA_chester|stem|775afc45b8a5b39b|561438b089dcf448|ad1f612c29aec41f|554576659||t20592.9727712644s|s70b|70|rds|local|vector|||1.842||
+timestamp_PA_philadelphia|stem|c89ffa0bdf1a867d|e0f9fabe6121c32d|ad1f612c29aec41f|-1573692003||t20592.9727718296s|s71b|71|rds|local|vector|||0.536||
+timestamp_PA_westmoreland|stem|ab719c5a9dfe9d19|e3d68b2b98b19d70|ad1f612c29aec41f|-549353456||t20592.972774056s|s71b|71|rds|local|vector|||0.904||
+timestamp_PA_fayette|stem|314d35f1f633de74|dfe7a7415bc77154|ad1f612c29aec41f|288277967||t20592.9727761516s|s71b|71|rds|local|vector|||0.878||
+timestamp_PA_pike|stem|810a3d7bbd5fb976|c81e015442bcf955|ad1f612c29aec41f|-1740129955||t20592.9727777004s|s71b|71|rds|local|vector|||0.964||
+data_PA_fayette|stem||bdf5d62075fbe2e9|420fb8c3dc32850a|560432610||t20592.9588763529s||0|rds|local|vector|||0.701||ℹ In argument: `when_any(...)`. Caused by error: ! object 'method' not found
+timestamp_PA_lancaster|stem|62f35216be48fe8d|3c7618027d0d949f|ad1f612c29aec41f|-1021455929||t20592.9727894664s|s69b|69|rds|local|vector|||2.556||
+timestamp_GA_NA|stem|7a1741b0adda2332|327f68dfde4e4050|ad1f612c29aec41f|828350109||t20592.9730311715s|s65b|65|rds|local|vector|||23.146||
+data_GA_NA|stem|e465ea7176d72711|a6c35cdda7bd6c9f|dc486ca4254f43a5|-931803180||t20592.973674477s|s204387b|204387|rds|local|vector|||55.499||
