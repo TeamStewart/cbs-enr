@@ -5,7 +5,7 @@
 ## Author: Joseph R. Loffredo and Mason Reece
 ##################################################
 
-INTERVAL = 15 # minutes
+INTERVAL = 5 # minutes
 googlesheets4::gs4_auth(
   email = TRUE
 )
@@ -27,6 +27,10 @@ while (TRUE) {
   run_time <- format(Sys.time(), format="%Y-%m-%d %H:%M:%S") |> stringr::str_replace_all("-|:| ", "_")
   
   fs::dir_create("logs/")
+
+  # pull down latest `enightdata`
+  cred <- git2r::cred_token()
+  git2r::pull("../enightdata/", credentials = cred)
   
   con <- file(glue::glue("logs/automation_{run_time}.log"))
   sink(con, append=TRUE)
@@ -42,7 +46,6 @@ while (TRUE) {
   # to get this to work, (1) https://docs.ropensci.org/git2r/reference/cred_token.html
   # (2) https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
   # (3) run git config --global http.followRedirects true making some changes here
-  cred <- git2r::cred_token()
   repo <- git2r::repository(".")
   git2r::add(path = "*")
   git2r::commit(message = glue::glue("latest pull {run_time}"))
