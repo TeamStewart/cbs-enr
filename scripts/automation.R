@@ -56,9 +56,6 @@ while (TRUE) {
   #             refspec = "refs/heads/main:refs/heads/main",
   #             credentials = cred)
 
-  elapsed <- as.numeric(Sys.time() - start_time, units = "secs")
-  sleep_time <- max(0, 60 * INTERVAL - elapsed)
-
   googlesheets4::read_sheet(
     ss = "https://docs.google.com/spreadsheets/d/1zWKr_cXeDHnw6sbxzAPpGG92E-Di6nmB4Q4fa-OWuic/edit?gid=0#gid=0",
     sheet = "Sheet1",
@@ -66,6 +63,9 @@ while (TRUE) {
   ) |>
     enightdata::write_local("metadata.csv") |>
     invisible()
+
+  elapsed <- as.numeric(Sys.time() - start_time, units = "secs")
+  sleep_time <- max(0, 60 * INTERVAL - elapsed)
 
   print("Finished... Zzzzz")
 
