@@ -40,7 +40,7 @@ tar_option_set(
   ),
   imports = c("enightdata"),
   error = "continue",
-  controller = crew::crew_controller_local(workers = 8)
+  controller = crew::crew_controller_local(workers = 12)
 )
 
 enightdata::set_all(
