@@ -14,6 +14,8 @@ data_PA_montgomery|stem|8faed715dc20c63d|783744be89759e69|bdebb12bb6c8a2ae|12255
 data_PA_york|stem|94565f4d35b78e18|161217d4d3576d76|fe571a15cb31a445|-1780955589||t20593.0354175771s|s5878b|5878|rds|local|vector|||2.455||
 data_PA_allegheny|stem|4fdd17d6a645860f|40af87546ed602c7|79f5727fa53e70b7|-1813938338||t20593.0355079762s|s34502b|34502|rds|local|vector|||11.11||
 data_GA_NA|stem|48808694ccf56c48|a6c35cdda7bd6c9f|274dba5450865d68|-931803180||t20593.03634312s|s275701b|275701|rds|local|vector|||58.602||
+data_PA_washington|stem|2ced4100167afb49|288e3e4f19550d58|e45abf3ad19dc5fc|1614171511||t20593.0388911722s|s4759b|4759|rds|local|vector|||2.234||
+data_PA_philadelphia|stem|2121f863772f390a|be0ae807fde60c1c|8d7c3ecb396d36ec|-1234571175||t20593.0391329656s|s33382b|33382|rds|local|vector|||23.746|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat). There was 1 warning in `mutate()`. ℹ In argument: `prov = as.integer(Provisional)`. Caused by warning: ! NAs introduced by coercion|
 clarity_timestamp|function|21eeff070fbc17fc
 the|object|7ca7b7ff9ca536f9
 .config_path|function|9359da2be8920401
@@ -67,7 +69,7 @@ find_ga_candidate|function|8d94e11705bbdf41
 scrape_wi_milwaukee|function|f49ab0d032ad3d3c
 read_html_live_cf|function|39c4bcab0b10f26e
 statename_to_abb|function|0209bce62db9dda1
-.Random.seed|object|566b01f5f11a0b19
+.Random.seed|object|ff0f00057e859dc0
 PATH_ENIGHTDATA|object|0cb918180a86ef27
 scrape_tx|function|685358a6552a064d
 .onAttach|function|26335bdda585bf36
@@ -145,26 +147,24 @@ scrape_mi_eaton|function|e3ddff974f456d22
 manual_runmodels|function|286a601e37b89705
 tx_timestamp|function|e449df2a59f0ce04
 .onLoad|function|75cccdbc524fd9f4
-timestamp_PA_montgomery|stem|c4a7cf963dd61dc1|7630ecb8689d2250|ad1f612c29aec41f|-882135918||t20593.0388496133s|s71b|71|rds|local|vector|||1.316||
-timestamp_PA_pike|stem|94bdd4b7fae5d4d7|c81e015442bcf955|ad1f612c29aec41f|-1740129955||t20593.0388510201s|s70b|70|rds|local|vector|||1.188||
-timestamp_PA_luzerne|stem|7b20afe4130409f9|f855d384ecf88430|ad1f612c29aec41f|-1975766409||t20593.0388518144s|s71b|71|rds|local|vector|||0.065||
-timestamp_PA_cambria|stem|f0385576c615394a|5fdbcea87a4dc29b|ad1f612c29aec41f|735610955||t20593.0388527246s|s67b|67|rds|local|vector|||0.076||
-timestamp_PA_washington|stem|289f434261c2554b|bcc2b864a850d10a|ad1f612c29aec41f|978834635||t20593.0388534864s|s71b|71|rds|local|vector|||0.33||
-timestamp_PA_philadelphia|stem|7066e061e151a7ef|e0f9fabe6121c32d|ad1f612c29aec41f|-1573692003||t20593.0388579554s|s71b|71|rds|local|vector|||0.449||
-timestamp_PA_northhampton|stem|73bec1f00d96dd7c|192f6be72cbf5b74|ad1f612c29aec41f|1165022553||t20593.0388610365s|s71b|71|rds|local|vector|||1.554||
-timestamp_PA_crawford|stem|45e9ae44de0b3703|62fc560582c14ae6|ad1f612c29aec41f|-875728198||t20593.0388645436s|s71b|71|rds|local|vector|||0.293||
-timestamp_PA_westmoreland|stem|ab719c5a9dfe9d19|e3d68b2b98b19d70|ad1f612c29aec41f|-549353456||t20593.0388652186s|s71b|71|rds|local|vector|||1.36||
-timestamp_PA_fayette|stem|7a4c9313c6939835|dfe7a7415bc77154|ad1f612c29aec41f|288277967||t20593.0388654581s|s71b|71|rds|local|vector|||1.022||
-timestamp_PA_erie|stem|301e4a4c1cd369d1|96ffc15eb4fa42b1|ad1f612c29aec41f|-1490338439||t20593.0388665771s|s71b|71|rds|local|vector|||0.168||
-timestamp_PA_delaware|stem|5a92e6d27d4eba72|ba10d637e9f16745|ad1f612c29aec41f|2078165313||t20593.0388673983s|s71b|71|rds|local|vector|||0.18||
-timestamp_PA_allegheny|stem|c3756b7a47e6bb10|379b203b4718c1d3|ad1f612c29aec41f|-541099268||t20593.0388674316s|s71b|71|rds|local|vector|||1.048||
-timestamp_PA_lehigh|stem|8f6b746f673d9c80|3129b80c8db7fd9b|ad1f612c29aec41f|-1219638184||t20593.0388681173s|s70b|70|rds|local|vector|||1.42||
-timestamp_PA_york|stem|23a72d06be408a1b|1d0e2d5a36e5d763|ad1f612c29aec41f|631688603||t20593.0388682271s|s71b|71|rds|local|vector|||0.136||
-timestamp_PA_chester|stem|775afc45b8a5b39b|561438b089dcf448|ad1f612c29aec41f|554576659||t20593.0388691238s|s70b|70|rds|local|vector|||2.511||
-data_PA_fayette|stem||bdf5d62075fbe2e9|4acf95ed1935bfe8|560432610||t20592.9588763529s||0|rds|local|vector|||0.844||ℹ In argument: `when_any(...)`. Caused by error: ! object 'method' not found
-timestamp_PA_bucks|stem|7775568babc39e48|171d493adb09ea64|ad1f612c29aec41f|-331673079||t20593.0388793244s|s71b|71|rds|local|vector|||3.774||
-data_PA_washington|stem|2ced4100167afb49|288e3e4f19550d58|e45abf3ad19dc5fc|1614171511||t20593.0388911722s|s4759b|4759|rds|local|vector|||2.234||
-timestamp_PA_lancaster|stem|13894b90516f9c25|3c7618027d0d949f|ad1f612c29aec41f|-1021455929||t20593.038892142s|s71b|71|rds|local|vector|||3.945||
-data_PA_luzerne|stem|0623d942516ecf35|7fb909eb12fb1c2c|1e1688f365e40720|-423206192||t20593.0388968309s|s6048b|6048|rds|local|vector|||3.74||
-data_PA_philadelphia|stem|2121f863772f390a|be0ae807fde60c1c|8d7c3ecb396d36ec|-1234571175||t20593.0391329656s|s33382b|33382|rds|local|vector|||23.746|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat). There was 1 warning in `mutate()`. ℹ In argument: `prov = as.integer(Provisional)`. Caused by warning: ! NAs introduced by coercion|
-timestamp_GA_NA|stem|0df87abee7d62d7b|327f68dfde4e4050|ad1f612c29aec41f|828350109||t20593.0391743274s|s70b|70|rds|local|vector|||28.534||
+timestamp_PA_montgomery|stem|c4a7cf963dd61dc1|7630ecb8689d2250|ad1f612c29aec41f|-882135918||t20593.0423203388s|s71b|71|rds|local|vector|||1.154||
+timestamp_PA_washington|stem|289f434261c2554b|bcc2b864a850d10a|ad1f612c29aec41f|978834635||t20593.0423215167s|s71b|71|rds|local|vector|||0.097||
+timestamp_PA_pike|stem|94bdd4b7fae5d4d7|c81e015442bcf955|ad1f612c29aec41f|-1740129955||t20593.042322762s|s70b|70|rds|local|vector|||1.051||
+timestamp_PA_cambria|stem|f0385576c615394a|5fdbcea87a4dc29b|ad1f612c29aec41f|735610955||t20593.0423238066s|s67b|67|rds|local|vector|||0.085||
+timestamp_PA_lehigh|stem|8f6b746f673d9c80|3129b80c8db7fd9b|ad1f612c29aec41f|-1219638184||t20593.0423249323s|s70b|70|rds|local|vector|||0.291||
+timestamp_PA_fayette|stem|7a4c9313c6939835|dfe7a7415bc77154|ad1f612c29aec41f|288277967||t20593.0423254919s|s71b|71|rds|local|vector|||0.143||
+timestamp_PA_allegheny|stem|c3756b7a47e6bb10|379b203b4718c1d3|ad1f612c29aec41f|-541099268||t20593.0423257822s|s71b|71|rds|local|vector|||0.071||
+timestamp_PA_crawford|stem|45e9ae44de0b3703|62fc560582c14ae6|ad1f612c29aec41f|-875728198||t20593.0423266531s|s71b|71|rds|local|vector|||0.097||
+timestamp_PA_erie|stem|301e4a4c1cd369d1|96ffc15eb4fa42b1|ad1f612c29aec41f|-1490338439||t20593.0423276621s|s71b|71|rds|local|vector|||0.159||
+timestamp_PA_delaware|stem|5a92e6d27d4eba72|ba10d637e9f16745|ad1f612c29aec41f|2078165313||t20593.0423285324s|s71b|71|rds|local|vector|||0.159||
+timestamp_PA_northhampton|stem|73bec1f00d96dd7c|192f6be72cbf5b74|ad1f612c29aec41f|1165022553||t20593.0423313803s|s71b|71|rds|local|vector|||1.504||
+timestamp_PA_york|stem|23a72d06be408a1b|1d0e2d5a36e5d763|ad1f612c29aec41f|631688603||t20593.0423313834s|s71b|71|rds|local|vector|||0.32||
+timestamp_PA_westmoreland|stem|ab719c5a9dfe9d19|e3d68b2b98b19d70|ad1f612c29aec41f|-549353456||t20593.0423339459s|s71b|71|rds|local|vector|||1.147||
+timestamp_PA_luzerne|stem|4919b5e51b975a4f|f855d384ecf88430|ad1f612c29aec41f|-1975766409||t20593.0423351899s|s71b|71|rds|local|vector|||0.951||
+timestamp_PA_philadelphia|stem|7066e061e151a7ef|e0f9fabe6121c32d|ad1f612c29aec41f|-1573692003||t20593.0423414383s|s71b|71|rds|local|vector|||1.354||
+timestamp_PA_bucks|stem|7775568babc39e48|171d493adb09ea64|ad1f612c29aec41f|-331673079||t20593.0423473696s|s71b|71|rds|local|vector|||3.306||
+data_PA_fayette|stem||bdf5d62075fbe2e9|4acf95ed1935bfe8|560432610||t20592.9588763529s||0|rds|local|vector|||1.136||ℹ In argument: `when_any(...)`. Caused by error: ! object 'method' not found
+timestamp_PA_lancaster|stem|13894b90516f9c25|3c7618027d0d949f|ad1f612c29aec41f|-1021455929||t20593.0423628316s|s71b|71|rds|local|vector|||3.758||
+timestamp_PA_chester|stem|775afc45b8a5b39b|561438b089dcf448|ad1f612c29aec41f|554576659||t20593.0423729125s|s70b|70|rds|local|vector|||5.185||
+data_PA_luzerne|stem|b8be5dbce142b54e|7fb909eb12fb1c2c|f10c5c81fb5ca588|-423206192||t20593.042375521s|s6472b|6472|rds|local|vector|||3.476||
+timestamp_GA_NA|stem|0df87abee7d62d7b|327f68dfde4e4050|ad1f612c29aec41f|828350109||t20593.0426165553s|s70b|70|rds|local|vector|||25.904||
