@@ -1,0 +1,74 @@
+2026-05-19 21:15:45: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
+ℹ Updating enightdata documentation
+ℹ Loading enightdata
+ℹ Loading metadata database✔ Loading metadata database ... done
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏻‍♂️
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (346ms)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (1.5s)
+✔ Installed enightdata 0.0.0.9000 (local) (12ms)
+✔ 1 pkg + 74 deps: kept 74, upd 1, dld 1 (NA B) [6.2s]
++ timestamp_PA_montgomery dispatched
++ timestamp_PA_bucks dispatched
++ timestamp_PA_pike dispatched
++ timestamp_PA_chester dispatched
++ timestamp_PA_northhampton dispatched
++ timestamp_GA_NA dispatched
++ timestamp_PA_lancaster dispatched
++ timestamp_PA_westmoreland dispatched
++ timestamp_PA_washington dispatched
++ timestamp_PA_lehigh dispatched
++ timestamp_PA_luzerne dispatched
++ timestamp_PA_cambria dispatched
+✔ timestamp_PA_montgomery completed [1.2s, 71 B]
++ timestamp_PA_fayette dispatched
+✔ timestamp_PA_washington completed [377ms, 70 B]
++ data_PA_washington dispatched
+✔ timestamp_PA_cambria completed [115ms, 71 B]
++ timestamp_PA_philadelphia dispatched
+✔ timestamp_PA_pike completed [1.5s, 71 B]
++ timestamp_PA_allegheny dispatched
+✔ timestamp_PA_allegheny completed [244ms, 71 B]
++ data_PA_allegheny dispatched
+✔ timestamp_PA_northhampton completed [1.7s, 71 B]
++ data_PA_northhampton dispatched
+✔ timestamp_PA_westmoreland completed [1.2s, 71 B]
++ timestamp_PA_crawford dispatched
+✔ timestamp_PA_crawford completed [161ms, 71 B]
++ timestamp_PA_erie dispatched
+✔ timestamp_PA_luzerne completed [1s, 71 B]
++ timestamp_PA_delaware dispatched
+✔ timestamp_PA_erie completed [261ms, 70 B]
++ timestamp_PA_york dispatched
+✔ timestamp_PA_delaware completed [239ms, 69 B]
++ data_PA_delaware dispatched
+✔ timestamp_PA_fayette completed [1.3s, 69 B]
++ data_PA_fayette dispatched
+✔ timestamp_PA_york completed [255ms, 71 B]
+✔ timestamp_PA_lehigh completed [1.9s, 71 B]
+✔ timestamp_PA_philadelphia completed [1.5s, 71 B]
++ data_PA_philadelphia dispatched
+✔ data_PA_northhampton completed [2s, 4.18 kB]
+✔ timestamp_PA_bucks completed [4.2s, 71 B]
+✖ data_PA_fayette errored
+Error: ℹ In argument: `when_any(...)`.
+Caused by error:
+! object 'method' not found
+
+✔ data_PA_washington completed [3.4s, 5.12 kB]
+✔ timestamp_PA_chester completed [5.7s, 71 B]
+✔ timestamp_PA_lancaster completed [6.3s, 71 B]
+✔ data_PA_delaware completed [4.7s, 9.34 kB]
+✔ data_PA_allegheny completed [13.5s, 45.69 kB]
+✔ data_PA_philadelphia completed [26.5s, 34.51 kB]
+✔ timestamp_GA_NA completed [29.6s, 71 B]
+✖ errored pipeline [33.7s, 24 completed, 13 skipped]
+Warning message:
+1 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
