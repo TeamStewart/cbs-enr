@@ -13,7 +13,6 @@ data_PA_allegheny|stem|63da7f3eb9a018ba|40af87546ed602c7|06c770c84f77df94|-18139
 data_PA_montgomery|stem|88ca84f5a66b92c1|783744be89759e69|1c8251e23c82d652|1225544167||t20593.1432858841s|s13554b|13554|rds|local|vector|||3.609||
 data_PA_philadelphia|stem|72d947754493ac8e|be0ae807fde60c1c|21bc7584edf790f1|-1234571175||t20593.1435180771s|s49820b|49820|rds|local|vector|||22.705|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat). There was 1 warning in `mutate()`. ℹ In argument: `prov = as.integer(Provisional)`. Caused by warning: ! NAs introduced by coercion|
 data_PA_bucks|stem|7613c033a03aa94b|107817d97dfdcd0e|734adf24527a6313|113527572||t20593.1468080155s|s6858b|6858|rds|local|vector|||5.175||
-data_GA_NA|stem|0f93da6dc1b8e283|a6c35cdda7bd6c9f|25ae53eb27d829bd|-931803180||t20593.1511416549s|s441561b|441561|rds|local|vector|||56.765||
 data_PA_northhampton|stem|50bb4f1cc5826f73|3909563a738e541e|341fc0171eeac35c|-1153405927||t20593.1571790263s|s4298b|4298|rds|local|vector|||1.135||
 data_PA_westmoreland|stem|5ea58178a1401db9|b9753f21a56f4188|06b773598de143d9|-536568496||t20593.1572260275s|s11054b|11054|rds|local|vector|||4.695||
 data_PA_delaware|stem|713e0f74a655baf4|d9ea0187d9817ddf|cd9978f67c9793a4|2064555782||t20593.1572329511s|s13517b|13517|rds|local|vector|||5.827||
@@ -70,7 +69,7 @@ find_ga_candidate|function|e1a2198548f41064
 scrape_wi_milwaukee|function|f49ab0d032ad3d3c
 read_html_live_cf|function|39c4bcab0b10f26e
 statename_to_abb|function|0209bce62db9dda1
-.Random.seed|object|1c345e80874ad541
+.Random.seed|object|5aad65e874609334
 PATH_ENIGHTDATA|object|0cb918180a86ef27
 scrape_tx|function|685358a6552a064d
 .onAttach|function|26335bdda585bf36
@@ -148,23 +147,24 @@ scrape_mi_eaton|function|e3ddff974f456d22
 manual_runmodels|function|286a601e37b89705
 tx_timestamp|function|e449df2a59f0ce04
 .onLoad|function|75cccdbc524fd9f4
-timestamp_PA_montgomery|stem|cbe423d8b70498c3|7630ecb8689d2250|ad1f612c29aec41f|-882135918||t20593.1606339355s|s71b|71|rds|local|vector|||1.177||
-timestamp_PA_washington|stem|8f0903bc701f7a19|bcc2b864a850d10a|ad1f612c29aec41f|978834635||t20593.1606350248s|s71b|71|rds|local|vector|||0.089||
-timestamp_PA_pike|stem|29bd30ecaa20ca45|c81e015442bcf955|ad1f612c29aec41f|-1740129955||t20593.1606363572s|s71b|71|rds|local|vector|||1.071||
-timestamp_PA_cambria|stem|b13f2df4a43c407c|5fdbcea87a4dc29b|ad1f612c29aec41f|735610955||t20593.160637939s|s70b|70|rds|local|vector|||0.132||
-timestamp_PA_lehigh|stem|3eaae8e27b3e7634|3129b80c8db7fd9b|ad1f612c29aec41f|-1219638184||t20593.1606399503s|s71b|71|rds|local|vector|||0.422||
-timestamp_PA_crawford|stem|899b072d35aeb09a|62fc560582c14ae6|ad1f612c29aec41f|-875728198||t20593.1606410155s|s71b|71|rds|local|vector|||0.089||
-timestamp_PA_delaware|stem|727c9c386ab03743|ba10d637e9f16745|ad1f612c29aec41f|2078165313||t20593.1606422798s|s71b|71|rds|local|vector|||0.101||
-timestamp_PA_philadelphia|stem|fbf38c3338fa78c9|e0f9fabe6121c32d|ad1f612c29aec41f|-1573692003||t20593.1606431033s|s67b|67|rds|local|vector|||0.442||
-timestamp_PA_york|stem|84be1ac9efb1330c|1d0e2d5a36e5d763|ad1f612c29aec41f|631688603||t20593.1606436865s|s71b|71|rds|local|vector|||0.114||
-timestamp_PA_northhampton|stem|8554e3184a171230|192f6be72cbf5b74|ad1f612c29aec41f|1165022553||t20593.1606443844s|s71b|71|rds|local|vector|||1.485||
-timestamp_PA_westmoreland|stem|dbf412cec5e48b0b|e3d68b2b98b19d70|ad1f612c29aec41f|-549353456||t20593.1606457176s|s71b|71|rds|local|vector|||0.912||
-timestamp_PA_luzerne|stem|cc45417f436dc54b|f855d384ecf88430|ad1f612c29aec41f|-1975766409||t20593.1606470562s|s71b|71|rds|local|vector|||0.887||
-timestamp_PA_fayette|stem|5f755688f537362b|dfe7a7415bc77154|ad1f612c29aec41f|288277967||t20593.1606498708s|s71b|71|rds|local|vector|||0.936||
-timestamp_PA_allegheny|stem|afb90740f8873448|379b203b4718c1d3|ad1f612c29aec41f|-541099268||t20593.1606520628s|s71b|71|rds|local|vector|||1.006||
-timestamp_PA_erie|stem|6da74c2fa457a7ad|96ffc15eb4fa42b1|ad1f612c29aec41f|-1490338439||t20593.1606530527s|s71b|71|rds|local|vector|||0.956||
-timestamp_PA_bucks|stem|bdad4772f13a9f0e|171d493adb09ea64|ad1f612c29aec41f|-331673079||t20593.1606606799s|s71b|71|rds|local|vector|||3.338||
-data_PA_fayette|stem||bdf5d62075fbe2e9|f410cbf0cd00be8d|560432610||t20592.9588763529s||0|rds|local|vector|||1.007||ℹ In argument: `when_any(...)`. Caused by error: ! object 'method' not found
-timestamp_PA_chester|stem|4b92995999509048|561438b089dcf448|ad1f612c29aec41f|554576659||t20593.1606651508s|s71b|71|rds|local|vector|||3.384||
-timestamp_PA_lancaster|stem|ba03cc61b7d3ea79|3c7618027d0d949f|ad1f612c29aec41f|-1021455929||t20593.1606773583s|s71b|71|rds|local|vector|||3.88||
-timestamp_GA_NA|stem|cf4cfc4f760fb3c6|327f68dfde4e4050|ad1f612c29aec41f|828350109||t20593.1609152379s|s70b|70|rds|local|vector|||24.636||
+timestamp_PA_montgomery|stem|cbe423d8b70498c3|7630ecb8689d2250|ad1f612c29aec41f|-882135918||t20593.1641178898s|s71b|71|rds|local|vector|||1.123||
+timestamp_PA_washington|stem|8f0903bc701f7a19|bcc2b864a850d10a|ad1f612c29aec41f|978834635||t20593.1641191101s|s71b|71|rds|local|vector|||0.101||
+timestamp_PA_pike|stem|29bd30ecaa20ca45|c81e015442bcf955|ad1f612c29aec41f|-1740129955||t20593.1641208345s|s71b|71|rds|local|vector|||0.989||
+timestamp_PA_cambria|stem|b13f2df4a43c407c|5fdbcea87a4dc29b|ad1f612c29aec41f|735610955||t20593.1641214876s|s70b|70|rds|local|vector|||0.052||
+timestamp_PA_lehigh|stem|3eaae8e27b3e7634|3129b80c8db7fd9b|ad1f612c29aec41f|-1219638184||t20593.1641227758s|s71b|71|rds|local|vector|||0.313||
+timestamp_PA_fayette|stem|5f755688f537362b|dfe7a7415bc77154|ad1f612c29aec41f|288277967||t20593.1641232607s|s71b|71|rds|local|vector|||0.148||
+timestamp_PA_allegheny|stem|afb90740f8873448|379b203b4718c1d3|ad1f612c29aec41f|-541099268||t20593.1641235581s|s71b|71|rds|local|vector|||0.065||
+timestamp_PA_crawford|stem|899b072d35aeb09a|62fc560582c14ae6|ad1f612c29aec41f|-875728198||t20593.1641240281s|s71b|71|rds|local|vector|||0.063||
+timestamp_PA_erie|stem|6da74c2fa457a7ad|96ffc15eb4fa42b1|ad1f612c29aec41f|-1490338439||t20593.1641244619s|s71b|71|rds|local|vector|||0.075||
+timestamp_PA_delaware|stem|727c9c386ab03743|ba10d637e9f16745|ad1f612c29aec41f|2078165313||t20593.1641247723s|s71b|71|rds|local|vector|||0.062||
+timestamp_PA_york|stem|84be1ac9efb1330c|1d0e2d5a36e5d763|ad1f612c29aec41f|631688603||t20593.1641253693s|s71b|71|rds|local|vector|||0.076||
+timestamp_PA_northhampton|stem|8554e3184a171230|192f6be72cbf5b74|ad1f612c29aec41f|1165022553||t20593.1641295928s|s71b|71|rds|local|vector|||1.401||
+timestamp_PA_westmoreland|stem|dbf412cec5e48b0b|e3d68b2b98b19d70|ad1f612c29aec41f|-549353456||t20593.1641306158s|s71b|71|rds|local|vector|||0.958||
+timestamp_PA_luzerne|stem|cc45417f436dc54b|f855d384ecf88430|ad1f612c29aec41f|-1975766409||t20593.1641323642s|s71b|71|rds|local|vector|||0.991||
+timestamp_PA_philadelphia|stem|fbf38c3338fa78c9|e0f9fabe6121c32d|ad1f612c29aec41f|-1573692003||t20593.1641377393s|s67b|67|rds|local|vector|||1.22||
+timestamp_PA_chester|stem|4b92995999509048|561438b089dcf448|ad1f612c29aec41f|554576659||t20593.1641394415s|s71b|71|rds|local|vector|||2.505||
+data_PA_fayette|stem||bdf5d62075fbe2e9|f410cbf0cd00be8d|560432610||t20592.9588763529s||0|rds|local|vector|||1.239||ℹ In argument: `when_any(...)`. Caused by error: ! object 'method' not found
+timestamp_PA_bucks|stem|bdad4772f13a9f0e|171d493adb09ea64|ad1f612c29aec41f|-331673079||t20593.1641605573s|s71b|71|rds|local|vector|||4.675||
+timestamp_PA_lancaster|stem|ba03cc61b7d3ea79|3c7618027d0d949f|ad1f612c29aec41f|-1021455929||t20593.16416159s|s71b|71|rds|local|vector|||3.881||
+timestamp_GA_NA|stem|64cd64c50da5ef77|327f68dfde4e4050|ad1f612c29aec41f|828350109||t20593.1643901926s|s71b|71|rds|local|vector|||23.66||
+data_GA_NA|stem|e8fe83ccb1d50f44|a6c35cdda7bd6c9f|a47bbdf132b6dd0a|-931803180||t20593.1650764278s|s442069b|442069|rds|local|vector|||59.162||
