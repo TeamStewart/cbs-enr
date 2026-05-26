@@ -1,0 +1,56 @@
+2026-05-26 16:43:28: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
+ℹ Updating enightdata documentation
+ℹ Loading enightdata
+ℹ Loading metadata database✔ Loading metadata database ... done
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷‍♂️
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (344ms)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (1.5s)
+✔ Installed enightdata 0.0.0.9000 (local) (13ms)
+✔ 1 pkg + 74 deps: kept 74, upd 1, dld 1 (NA B) [6.1s]
++ timestamp_TX_victoria dispatched
++ timestamp_TX_hidalgo dispatched
++ timestamp_TX_el.paso dispatched
++ timestamp_TX_travis dispatched
++ timestamp_TX_robertson dispatched
++ timestamp_TX_montague dispatched
++ timestamp_TX_fort.bend dispatched
++ timestamp_TX_parker dispatched
++ timestamp_TX_rusk dispatched
++ timestamp_TX_jefferson dispatched
++ timestamp_TX_tarrant dispatched
++ timestamp_TX_denton dispatched
+✔ timestamp_TX_victoria completed [1.1s, 71 B]
++ timestamp_TX_rockwall dispatched
+✔ timestamp_TX_parker completed [47ms, 71 B]
++ timestamp_TX_lamar dispatched
+✔ timestamp_TX_jefferson completed [49ms, 68 B]
++ timestamp_TX_wood dispatched
+✔ timestamp_TX_hidalgo completed [1.1s, 67 B]
++ timestamp_TX_kaufman dispatched
+✔ timestamp_TX_tarrant completed [50ms, 70 B]
++ timestamp_TX_bexar dispatched
+✔ timestamp_TX_denton completed [51ms, 69 B]
+✔ timestamp_TX_rockwall completed [47ms, 71 B]
++ timestamp_TX_kendall dispatched
++ timestamp_TX_hunt dispatched
+✔ timestamp_TX_el.paso completed [1s, 71 B]
+✔ timestamp_TX_wood completed [55ms, 71 B]
+✔ timestamp_TX_kaufman completed [61ms, 71 B]
+✔ timestamp_TX_bexar completed [52ms, 69 B]
+✔ timestamp_TX_kendall completed [52ms, 71 B]
+✔ timestamp_TX_hunt completed [54ms, 67 B]
+✔ timestamp_TX_travis completed [1.1s, 71 B]
+✔ timestamp_TX_robertson completed [1.1s, 70 B]
+✔ timestamp_TX_montague completed [931ms, 69 B]
+✔ timestamp_TX_fort.bend completed [956ms, 71 B]
+✔ timestamp_TX_rusk completed [807ms, 71 B]
+✔ timestamp_TX_lamar completed [743ms, 71 B]
+✔ ended pipeline [5.3s, 19 completed, 38 skipped]
