@@ -1,4 +1,23 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+data_TX_robertson|stem|f24a620f935177b2|1a5141ae6786694d|86874281d1fd8f7e|-282922642||t20599.8239918753s|s1138b|1138|rds|local|vector|||1.29||
+data_TX_parker|stem|6589a48b9c9b1751|36a45d84c848f891|8d3b168a7de09853|-1905446523||t20599.8239920915s|s1308b|1308|rds|local|vector|||1.205||
+data_TX_hidalgo|stem|bb9790db7c073aca|4782294501ce0b91|a88c4e4a0f31c561|698886757||t20599.8239932168s|s760b|760|rds|local|vector|||1.405|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
+data_TX_victoria|stem|14f14b7f00310c2d|b822510f44b37d62|961d108d023f7a7d|-1549427944||t20599.8239954952s|s1179b|1179|rds|local|vector|||1.254||
+data_TX_kaufman|stem|72c5109b5400b8f3|9882438603827430|7b0d56ed5b5d17b2|-1336242709||t20599.8239972305s|s1296b|1296|rds|local|vector|||1.354||
+data_TX_rockwall|stem|0e33cc0b87756c78|9bc8735786bcc887|14da371ff7157f1c|1943105709||t20599.8239973291s|s1123b|1123|rds|local|vector|||0.276||
+data_TX_wood|stem|0c68644706fd6a1e|e52d2046773a3f2d|beebeb4719df4b99|-798652939||t20599.8239986527s|s1027b|1027|rds|local|vector|||0.187||
+data_TX_denton|stem|bb9790db7c073aca|ff59330efcce13dd|b9e69adb392d024d|642851590||t20599.8239988445s|s760b|760|rds|local|vector|||0.507|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
+data_TX_montague|stem|2611273a8b920b7a|a17b6d15052246b4|6d34d8ff1b68f65f|1654160506||t20599.823999181s|s1027b|1027|rds|local|vector|||0.078||
+data_TX_el.paso|stem|52327930695d7c07|b22a5bf6df6da419|f7003f0b5a1e845f|55451957||t20599.8240004298s|s2432b|2432|rds|local|vector|||1.332||
+data_TX_lamar|stem|d3c58ff0b64f7b1b|ffe36df308235181|8349b297cf527d27|-623941018||t20599.824000853s|s955b|955|rds|local|vector|||0.242||
+data_TX_travis|stem|bb9790db7c073aca|1cf82b94c6492c12|b530c250aa25193f|7732808||t20599.8240008936s|s760b|760|rds|local|vector|||0.711|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
+data_TX_jefferson|stem|73e4907a3e48f245|ad7e878f3e6fb2da|e0b21c6212f7fe74|-1630103424||t20599.824002174s|s1622b|1622|rds|local|vector|||0.223||
+data_TX_hunt|stem|3d6db6a6d97eeb95|0f4127689bef7ca1|d6f4e94104ad81b3|1019823283||t20599.8240034675s|s1153b|1153|rds|local|vector|||1.089||
+data_TX_bexar|stem|b3ad2a26ac2b9e98|acb703697815a25e|d9b96341096bd3e1|8595088||t20599.8240059447s|s6828b|6828|rds|local|vector|||1.749||
+data_TX_kendall|stem|c1a6e65a17ca8c4b|e0012ac120da366c|ddec712976c6a98d|-2075844664||t20599.824006603s|s1060b|1060|rds|local|vector|||1.285||
+data_TX_fort.bend|stem|07fe42d57e057049|3f56515f0aa43c79|6acea2d0debba6ec|744259261||t20599.8240076296s|s2441b|2441|rds|local|vector|||1.217||
+data_TX_tarrant|stem|2208616b04e95fd8|f83cd6bf16ec5895|28eb60402e7426e6|1982935283||t20599.8240079122s|s15875b|15875|rds|local|vector|||1.634||
+data_TX_rusk|stem|90e450c70265304f|cc838e283b10eb63|4d85c90f4af5d11e|2083324082||t20599.8240083705s|s1091b|1091|rds|local|vector|||1.124||
 clarity_timestamp|function|21eeff070fbc17fc
 the|object|7ca7b7ff9ca536f9
 .config_path|function|9359da2be8920401
@@ -52,7 +71,7 @@ find_ga_candidate|function|e1a2198548f41064
 scrape_wi_milwaukee|function|f49ab0d032ad3d3c
 read_html_live_cf|function|39c4bcab0b10f26e
 statename_to_abb|function|0209bce62db9dda1
-.Random.seed|object|660ea9f94c452e5f
+.Random.seed|object|d6debcaa39faf4c6
 PATH_ENIGHTDATA|object|0cb918180a86ef27
 scrape_tx|function|685358a6552a064d
 .onAttach|function|26335bdda585bf36
@@ -130,41 +149,41 @@ scrape_mi_eaton|function|5abf55fddd2ddd6f
 manual_runmodels|function|286a601e37b89705
 tx_timestamp|function|e449df2a59f0ce04
 .onLoad|function|75cccdbc524fd9f4
-timestamp_TX_robertson|stem|7b32c1be08f106d2|bddeba35922e6353|ad1f612c29aec41f|1033310637||t20599.8239752774s|s70b|70|rds|local|vector|||1.172||
-timestamp_TX_hidalgo|stem|bd515999bdbc02ce|05460bc89b7917bb|ad1f612c29aec41f|-1408312070||t20599.8239761806s|s67b|67|rds|local|vector|||0.074||
-timestamp_TX_parker|stem|3d7cbe48715747d0|6e62a90f00272bc0|ad1f612c29aec41f|-1412391558||t20599.8239762233s|s71b|71|rds|local|vector|||1.055||
-timestamp_TX_kendall|stem|9dca7f79de432272|d019c1afe9d9a548|ad1f612c29aec41f|-1157120478||t20599.8239768708s|s71b|71|rds|local|vector|||0.053||
-timestamp_TX_victoria|stem|e130935b64c5eb88|fae381499fca87b2|ad1f612c29aec41f|-1171405619||t20599.8239769074s|s71b|71|rds|local|vector|||0.052||
-timestamp_TX_fort.bend|stem|8f78a024ee223173|fd11d5ebe653a7fe|ad1f612c29aec41f|-1805516279||t20599.8239780852s|s71b|71|rds|local|vector|||1.052||
-timestamp_TX_kaufman|stem|23080bfe5718ba50|1b3978021680f4b9|ad1f612c29aec41f|1547070942||t20599.8239809207s|s71b|71|rds|local|vector|||1.097||
-timestamp_TX_rusk|stem|822a5bfa2998c0bd|790819c8384ef5b8|ad1f612c29aec41f|-527726731||t20599.8239814829s|s71b|71|rds|local|vector|||1.04||
-timestamp_TX_el.paso|stem|4833b7151ae4b8f6|4db013850d6d0cae|ad1f612c29aec41f|2082910792||t20599.8239848652s|s71b|71|rds|local|vector|||1.139||
-timestamp_TX_bexar|stem|ddc283eeaf992194|d931b467e08278d7|ad1f612c29aec41f|948869460||t20599.8239854151s|s69b|69|rds|local|vector|||1.004||
-timestamp_TX_tarrant|stem|c9bc5d235999a74b|63f0a472515b9ce7|ad1f612c29aec41f|-1338999025||t20599.8239883958s|s70b|70|rds|local|vector|||1.017||
-timestamp_TX_hunt|stem|078e319f534a3643|5f9a3c1794ae89a2|ad1f612c29aec41f|1264160749||t20599.8239906192s|s67b|67|rds|local|vector|||1.064||
-data_TX_robertson|stem|f24a620f935177b2|1a5141ae6786694d|86874281d1fd8f7e|-282922642||t20599.8239918753s|s1138b|1138|rds|local|vector|||1.29||
-data_TX_parker|stem|6589a48b9c9b1751|36a45d84c848f891|8d3b168a7de09853|-1905446523||t20599.8239920915s|s1308b|1308|rds|local|vector|||1.205||
-timestamp_TX_travis|stem|b4481e607db5b12f|e2cc99a9df23590a|ad1f612c29aec41f|2126221176||t20599.8239925534s|s71b|71|rds|local|vector|||0.049||
-timestamp_TX_denton|stem|025615ca5bc8dc33|22c2c8ff566c9858|ad1f612c29aec41f|1193712040||t20599.823992682s|s69b|69|rds|local|vector|||0.043||
-data_TX_hidalgo|stem|bb9790db7c073aca|4782294501ce0b91|a88c4e4a0f31c561|698886757||t20599.8239932168s|s760b|760|rds|local|vector|||1.405|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
-timestamp_TX_rockwall|stem|92a52885070e7a13|d0753dfad92bc083|ad1f612c29aec41f|-1672000356||t20599.8239940451s|s71b|71|rds|local|vector|||0.046||
-data_TX_victoria|stem|14f14b7f00310c2d|b822510f44b37d62|961d108d023f7a7d|-1549427944||t20599.8239954952s|s1179b|1179|rds|local|vector|||1.254||
-timestamp_TX_wood|stem|af5fc384790db68f|8eec616d25bc1566|ad1f612c29aec41f|797511059||t20599.8239962944s|s71b|71|rds|local|vector|||0.062||
-data_TX_kaufman|stem|72c5109b5400b8f3|9882438603827430|7b0d56ed5b5d17b2|-1336242709||t20599.8239972305s|s1296b|1296|rds|local|vector|||1.354||
-data_TX_rockwall|stem|0e33cc0b87756c78|9bc8735786bcc887|14da371ff7157f1c|1943105709||t20599.8239973291s|s1123b|1123|rds|local|vector|||0.276||
-timestamp_TX_lamar|stem|db7a65db4db8c072|3fdb0e4a6fdae966|ad1f612c29aec41f|-46419316||t20599.8239979312s|s71b|71|rds|local|vector|||0.053||
-timestamp_TX_montague|stem|9a0ff0744567df2b|2dbc006b0fb39541|ad1f612c29aec41f|1597456689||t20599.8239981718s|s69b|69|rds|local|vector|||0.057||
-data_TX_wood|stem|0c68644706fd6a1e|e52d2046773a3f2d|beebeb4719df4b99|-798652939||t20599.8239986527s|s1027b|1027|rds|local|vector|||0.187||
-data_TX_denton|stem|bb9790db7c073aca|ff59330efcce13dd|b9e69adb392d024d|642851590||t20599.8239988445s|s760b|760|rds|local|vector|||0.507|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
-data_TX_montague|stem|2611273a8b920b7a|a17b6d15052246b4|6d34d8ff1b68f65f|1654160506||t20599.823999181s|s1027b|1027|rds|local|vector|||0.078||
-timestamp_TX_jefferson|stem|27d78e19b9359c37|8a184e6986f13891|ad1f612c29aec41f|676700373||t20599.8239995002s|s68b|68|rds|local|vector|||0.058||
-data_TX_el.paso|stem|52327930695d7c07|b22a5bf6df6da419|f7003f0b5a1e845f|55451957||t20599.8240004298s|s2432b|2432|rds|local|vector|||1.332||
-data_TX_lamar|stem|d3c58ff0b64f7b1b|ffe36df308235181|8349b297cf527d27|-623941018||t20599.824000853s|s955b|955|rds|local|vector|||0.242||
-data_TX_travis|stem|bb9790db7c073aca|1cf82b94c6492c12|b530c250aa25193f|7732808||t20599.8240008936s|s760b|760|rds|local|vector|||0.711|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
-data_TX_jefferson|stem|73e4907a3e48f245|ad7e878f3e6fb2da|e0b21c6212f7fe74|-1630103424||t20599.824002174s|s1622b|1622|rds|local|vector|||0.223||
-data_TX_hunt|stem|3d6db6a6d97eeb95|0f4127689bef7ca1|d6f4e94104ad81b3|1019823283||t20599.8240034675s|s1153b|1153|rds|local|vector|||1.089||
-data_TX_bexar|stem|b3ad2a26ac2b9e98|acb703697815a25e|d9b96341096bd3e1|8595088||t20599.8240059447s|s6828b|6828|rds|local|vector|||1.749||
-data_TX_kendall|stem|c1a6e65a17ca8c4b|e0012ac120da366c|ddec712976c6a98d|-2075844664||t20599.824006603s|s1060b|1060|rds|local|vector|||1.285||
-data_TX_fort.bend|stem|07fe42d57e057049|3f56515f0aa43c79|6acea2d0debba6ec|744259261||t20599.8240076296s|s2441b|2441|rds|local|vector|||1.217||
-data_TX_tarrant|stem|2208616b04e95fd8|f83cd6bf16ec5895|28eb60402e7426e6|1982935283||t20599.8240079122s|s15875b|15875|rds|local|vector|||1.634||
-data_TX_rusk|stem|90e450c70265304f|cc838e283b10eb63|4d85c90f4af5d11e|2083324082||t20599.8240083705s|s1091b|1091|rds|local|vector|||1.124||
+timestamp_TX_victoria|stem|e130935b64c5eb88|fae381499fca87b2|ad1f612c29aec41f|-1171405619||t20599.8249429801s|s71b|71|rds|local|vector|||1.115||
+timestamp_TX_rusk|stem|822a5bfa2998c0bd|790819c8384ef5b8|ad1f612c29aec41f|-527726731||t20599.8249438391s|s71b|71|rds|local|vector|||0.07||
+timestamp_TX_jefferson|stem|27d78e19b9359c37|8a184e6986f13891|ad1f612c29aec41f|676700373||t20599.8249446956s|s68b|68|rds|local|vector|||0.064||
+timestamp_TX_hidalgo|stem|bd515999bdbc02ce|05460bc89b7917bb|ad1f612c29aec41f|-1408312070||t20599.8249453453s|s67b|67|rds|local|vector|||1.063||
+timestamp_TX_tarrant|stem|c9bc5d235999a74b|63f0a472515b9ce7|ad1f612c29aec41f|-1338999025||t20599.8249456424s|s70b|70|rds|local|vector|||0.077||
+tbl_cbs_TX_victoria|stem||d7bb57618c42179e|ed78538b34779839|27082419||t20599.82494578s||0|rds|local|vector|||0.003||object 'office_filter' not found
+tbl_cbs_TX_rusk|stem||1623a9c7214ed1ad|ac24d9b6f844496d|-337437212||t20599.8249459118s||0|rds|local|vector|||0.004||object 'office_filter' not found
+tbl_cbs_TX_hidalgo|stem||e674dcf3c15b5910|0a85747755f9b120|567874165||t20599.8249460735s||0|rds|local|vector|||0.003||object 'office_filter' not found
+tbl_cbs_TX_jefferson|stem||53ef4c54be32b7f0|5a98fa24a8d2832d|496129676||t20599.8249461331s||0|rds|local|vector|||0.004||object 'office_filter' not found
+timestamp_TX_denton|stem|025615ca5bc8dc33|22c2c8ff566c9858|ad1f612c29aec41f|1193712040||t20599.8249461278s|s69b|69|rds|local|vector|||0.061||
+timestamp_TX_el.paso|stem|4833b7151ae4b8f6|4db013850d6d0cae|ad1f612c29aec41f|2082910792||t20599.8249465648s|s71b|71|rds|local|vector|||1.037||
+timestamp_TX_rockwall|stem|92a52885070e7a13|d0753dfad92bc083|ad1f612c29aec41f|-1672000356||t20599.8249467475s|s71b|71|rds|local|vector|||0.056||
+timestamp_TX_lamar|stem|db7a65db4db8c072|3fdb0e4a6fdae966|ad1f612c29aec41f|-46419316||t20599.8249467914s|s71b|71|rds|local|vector|||0.053||
+tbl_cbs_TX_denton|stem||cd35450a66c904f3|f999c10991cd1da3|859153252||t20599.8249469378s||0|rds|local|vector|||0.002||object 'office_filter' not found
+tbl_cbs_TX_el.paso|stem||adf786541a6c3d6f|d9040cbc799c5e51|1452990042||t20599.8249469994s||0|rds|local|vector|||0.004||object 'office_filter' not found
+tbl_cbs_TX_rockwall|stem||36b1259e329d6b47|c49f3faab17a115e|-303710363||t20599.8249470829s||0|rds|local|vector|||0.004||object 'office_filter' not found
+tbl_cbs_TX_lamar|stem||df8b6788b090f329|362d97ad0cc48693|1384460719||t20599.8249472284s||0|rds|local|vector|||0.004||object 'office_filter' not found
+timestamp_TX_wood|stem|af5fc384790db68f|8eec616d25bc1566|ad1f612c29aec41f|797511059||t20599.8249472529s|s71b|71|rds|local|vector|||0.056||
+timestamp_TX_kaufman|stem|23080bfe5718ba50|1b3978021680f4b9|ad1f612c29aec41f|1547070942||t20599.8249475074s|s71b|71|rds|local|vector|||0.061||
+timestamp_TX_kendall|stem|9dca7f79de432272|d019c1afe9d9a548|ad1f612c29aec41f|-1157120478||t20599.8249479193s|s71b|71|rds|local|vector|||0.054||
+timestamp_TX_bexar|stem|ddc283eeaf992194|d931b467e08278d7|ad1f612c29aec41f|948869460||t20599.8249479414s|s69b|69|rds|local|vector|||0.061||
+tbl_cbs_TX_wood|stem||c262ccaea08da1c9|02fd0775693e0466|-1761390555||t20599.8249480683s||0|rds|local|vector|||0.003||object 'office_filter' not found
+tbl_cbs_TX_kaufman|stem||269455eba54633e5|ee84f38eb86dcdf1|705603523||t20599.8249481052s||0|rds|local|vector|||0.002||object 'office_filter' not found
+tbl_cbs_TX_kendall|stem||3dc76dc6616dd492|e4ac4499c0cf2236|1811571451||t20599.8249481652s||0|rds|local|vector|||0.005||object 'office_filter' not found
+tbl_cbs_TX_bexar|stem||69146d8bab870821|0ffb7a42e2b1d1fa|390230815||t20599.8249482255s||0|rds|local|vector|||0.002||object 'office_filter' not found
+timestamp_TX_hunt|stem|078e319f534a3643|5f9a3c1794ae89a2|ad1f612c29aec41f|1264160749||t20599.8249483857s|s67b|67|rds|local|vector|||0.074||
+tbl_cbs_TX_hunt|stem||0de5836d2ad4ece0|622b6e7a44a1a190|1511039281||t20599.8249485653s||0|rds|local|vector|||0.002||object 'office_filter' not found
+timestamp_TX_robertson|stem|7b32c1be08f106d2|bddeba35922e6353|ad1f612c29aec41f|1033310637||t20599.8249492294s|s70b|70|rds|local|vector|||0.971||
+tbl_cbs_TX_robertson|stem||99528614e8f0aa45|2ccffacdd285c32d|400562896||t20599.8249493517s||0|rds|local|vector|||0.002||object 'office_filter' not found
+timestamp_TX_travis|stem|b4481e607db5b12f|e2cc99a9df23590a|ad1f612c29aec41f|2126221176||t20599.8249494243s|s71b|71|rds|local|vector|||1.144||
+tbl_cbs_TX_travis|stem||db4a41759ed0a65a|240093932e5b9662|-1376204672||t20599.8249495472s||0|rds|local|vector|||0.002||object 'office_filter' not found
+timestamp_TX_montague|stem|9a0ff0744567df2b|2dbc006b0fb39541|ad1f612c29aec41f|1597456689||t20599.8249509464s|s69b|69|rds|local|vector|||0.953||
+tbl_cbs_TX_montague|stem||1c36db01ddde5ed5|1bd08ac96f680ba1|395711353||t20599.8249510588s||0|rds|local|vector|||0.002||object 'office_filter' not found
+timestamp_TX_fort.bend|stem|8f78a024ee223173|fd11d5ebe653a7fe|ad1f612c29aec41f|-1805516279||t20599.8249540546s|s71b|71|rds|local|vector|||0.999||
+timestamp_TX_parker|stem|3d7cbe48715747d0|6e62a90f00272bc0|ad1f612c29aec41f|-1412391558||t20599.8249541459s|s71b|71|rds|local|vector|||0.842||
+tbl_cbs_TX_fort.bend|stem||0e08497b3a87e055|eaacb247870fc942|-429455495||t20599.8249541896s||0|rds|local|vector|||0.002||object 'office_filter' not found
+tbl_cbs_TX_parker|stem||15d8b1f6ff6f002b|0d70997499fe424c|-510424153||t20599.8249542927s||0|rds|local|vector|||0.002||object 'office_filter' not found
+tbl_cbs_TX_tarrant|stem||41efbdd219373240|ffa3372c8849655b|236801926||t20599.8249557239s||0|rds|local|vector|||0.002||object 'office_filter' not found

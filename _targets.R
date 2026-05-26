@@ -106,7 +106,7 @@ list(
     # tar_target(history, get_history(state, impute = FALSE)),
     tar_target(data, get_data(state, county, timestamp, path, trust_stage)),
     # tar_target(summary, make_summary(data, state, county, timestamp, history)),
-    # tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
+    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
     names = c(state, county)
   )
   # tar_quarto(dashboard, "index.qmd", quiet = FALSE),
