@@ -1,25 +1,6 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-data_TX_robertson|stem|f24a620f935177b2|1a5141ae6786694d|86874281d1fd8f7e|-282922642||t20599.8239918753s|s1138b|1138|rds|local|vector|||1.29||
-data_TX_parker|stem|6589a48b9c9b1751|36a45d84c848f891|8d3b168a7de09853|-1905446523||t20599.8239920915s|s1308b|1308|rds|local|vector|||1.205||
-data_TX_hidalgo|stem|bb9790db7c073aca|4782294501ce0b91|a88c4e4a0f31c561|698886757||t20599.8239932168s|s760b|760|rds|local|vector|||1.405|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
-data_TX_victoria|stem|14f14b7f00310c2d|b822510f44b37d62|961d108d023f7a7d|-1549427944||t20599.8239954952s|s1179b|1179|rds|local|vector|||1.254||
-data_TX_kaufman|stem|72c5109b5400b8f3|9882438603827430|7b0d56ed5b5d17b2|-1336242709||t20599.8239972305s|s1296b|1296|rds|local|vector|||1.354||
-data_TX_rockwall|stem|0e33cc0b87756c78|9bc8735786bcc887|14da371ff7157f1c|1943105709||t20599.8239973291s|s1123b|1123|rds|local|vector|||0.276||
-data_TX_wood|stem|0c68644706fd6a1e|e52d2046773a3f2d|beebeb4719df4b99|-798652939||t20599.8239986527s|s1027b|1027|rds|local|vector|||0.187||
-data_TX_denton|stem|bb9790db7c073aca|ff59330efcce13dd|b9e69adb392d024d|642851590||t20599.8239988445s|s760b|760|rds|local|vector|||0.507|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
-data_TX_montague|stem|2611273a8b920b7a|a17b6d15052246b4|6d34d8ff1b68f65f|1654160506||t20599.823999181s|s1027b|1027|rds|local|vector|||0.078||
-data_TX_el.paso|stem|52327930695d7c07|b22a5bf6df6da419|f7003f0b5a1e845f|55451957||t20599.8240004298s|s2432b|2432|rds|local|vector|||1.332||
-data_TX_lamar|stem|d3c58ff0b64f7b1b|ffe36df308235181|8349b297cf527d27|-623941018||t20599.824000853s|s955b|955|rds|local|vector|||0.242||
-data_TX_travis|stem|bb9790db7c073aca|1cf82b94c6492c12|b530c250aa25193f|7732808||t20599.8240008936s|s760b|760|rds|local|vector|||0.711|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
-data_TX_jefferson|stem|73e4907a3e48f245|ad7e878f3e6fb2da|e0b21c6212f7fe74|-1630103424||t20599.824002174s|s1622b|1622|rds|local|vector|||0.223||
-data_TX_hunt|stem|3d6db6a6d97eeb95|0f4127689bef7ca1|d6f4e94104ad81b3|1019823283||t20599.8240034675s|s1153b|1153|rds|local|vector|||1.089||
-data_TX_bexar|stem|b3ad2a26ac2b9e98|acb703697815a25e|d9b96341096bd3e1|8595088||t20599.8240059447s|s6828b|6828|rds|local|vector|||1.749||
-data_TX_kendall|stem|c1a6e65a17ca8c4b|e0012ac120da366c|ddec712976c6a98d|-2075844664||t20599.824006603s|s1060b|1060|rds|local|vector|||1.285||
-data_TX_fort.bend|stem|07fe42d57e057049|3f56515f0aa43c79|6acea2d0debba6ec|744259261||t20599.8240076296s|s2441b|2441|rds|local|vector|||1.217||
-data_TX_tarrant|stem|2208616b04e95fd8|f83cd6bf16ec5895|28eb60402e7426e6|1982935283||t20599.8240079122s|s15875b|15875|rds|local|vector|||1.634||
-data_TX_rusk|stem|90e450c70265304f|cc838e283b10eb63|4d85c90f4af5d11e|2083324082||t20599.8240083705s|s1091b|1091|rds|local|vector|||1.124||
 clarity_timestamp|function|21eeff070fbc17fc
-the|object|7ca7b7ff9ca536f9
+the|object|eeecdad4777ba547
 .config_path|function|9359da2be8920401
 add_resid|function|8c34556aafe3cb01
 tx_harris_timestamp|function|5b3a177bcee9511b
@@ -37,7 +18,7 @@ scrape_ny|function|07e6ac867df9cbda
 PATH_CBS_S3|object|aea739ceef2eaf0b
 ne_county_lookup|function|f2522b7077b1ef0c
 install_packages|function|1ea1d14b3436db9d
-ELECTION_DATE|object|5339e9bc0fe306eb
+ELECTION_DATE|object|b74cd10fa9b26a33
 ne_timestamp|function|da0d91bafa57eaa2
 metadata|object|35350f364b4de2e1
 scrape_pa|function|0d09d32e3212490e
@@ -71,7 +52,7 @@ find_ga_candidate|function|e1a2198548f41064
 scrape_wi_milwaukee|function|f49ab0d032ad3d3c
 read_html_live_cf|function|39c4bcab0b10f26e
 statename_to_abb|function|0209bce62db9dda1
-.Random.seed|object|a8542df3f2bbe56d
+.Random.seed|object|cb6d2282ee8ef95f
 PATH_ENIGHTDATA|object|0cb918180a86ef27
 scrape_tx|function|685358a6552a064d
 office_filter|object|08d5f59e833de599
@@ -85,106 +66,125 @@ pmargins_hist|function|1ea92405d01fe2e4
 scrape_az|function|925d868d3c09254e
 make_tbl_countyMode|function|018948d5a1a5c171
 PATH_GDRIVE|object|404720d6ac99f370
-nc_timestamp|function|1b7d9a346b6b4c23
-write_s3|function|9b72ebf2d6b63768
-write_gdrive|function|13588aeeecae45bd
-get_data_clarity|function|41b54b5db97f0dfc
-scrape_az_maricopa|function|37117ad2c5aedd2d
-scrape_ev|function|0eea1bf913efa5cf
-format_wide|function|f9a1e67b7ae41344
-scrape_lvt|function|563ab6e66fa4c2f7
-read_local|function|b3770cc1e423f873
-format_table|function|f21e40f02178f307
-write_local|function|f940c920078af119
-get_selenium|function|fa560be530f1a6f9
-scrape_nc|function|5e49be49f4419556
-.save_config|function|85152da9bdae256f
-get_all|function|64b95fe6bae699c6
+nc_timestamp|function|8f1d40aa288625c8
+write_s3|function|c96ef933fd228548
+write_gdrive|function|0b8befa3273e2063
+get_data_clarity|function|c95ad76498b55627
+scrape_az_maricopa|function|0d4dd5aa743af5d2
+scrape_ev|function|4e87f14d175bce9a
+format_wide|function|0c77dc5e1a9b8f47
+scrape_lvt|function|90fdf45ba7d9135e
+read_local|function|428faf7a53a5ae5b
+format_table|function|0f3d4966b3e5e33b
+write_local|function|00396ff9bbface63
+get_selenium|function|9c8f554ca2fbe03d
+scrape_nc|function|b494aed6d5d0c363
+.save_config|function|c61f91feb8a9a5d8
+get_all|function|2261fde22c207650
 va_timestamp|function|d0057377e7122244
 ga_timestamp|function|d0057377e7122244
-scrape_tx_harris|function|7a09c8b10b779d4b
+scrape_tx_harris|function|d388b7404ca715b7
 create_dirs|function|9ad5652177567aed
 merge_data|function|f068c45c4caee8a2
 get_history|function|06f67181415a8834
 .oh_sftp_timestamp|function|27c8e4fa2500c554
-scrape_pa_philadelphia|function|cf4339ff4e336e93
+scrape_pa_philadelphia|function|01e9727ee0c3200e
 plot_voteShare|function|468ba313360331e2
 plot_voteCount_byMode|function|5b440bb2dbc4f762
 plot_voteCount|function|34aae9ed2b328f93
-scrape_pa_montgomery|function|b48cc20afb35b739
-scrape_oh_franklin|function|b6fe822b98ce44d9
+scrape_pa_montgomery|function|6562b76daded8517
+scrape_oh_franklin|function|0b9a4bbc5fbf2aa9
 lvt_timestamp|function|bd35e1b225864fb0
-scrape_ne|function|d38c0ab8bd3226ff
-upload_html|function|3e33ac7d387778fa
-scrape_clarity|function|11cfbcbee0f18a80
-scrape_va|function|368adeebd5ed91a9
-scrape_ga|function|c7a7d6e3da41ef38
-scrape_oh_ev|function|a145ae26dbc3863b
-scrape_pa_ev|function|f8e5f6b2df09777d
-scrape_tx_comal|function|2a84af1f30f0e064
-scrape_oh_lvt|function|f13792cdabb643d6
-scrape_pa_lvt|function|1500c99e2cbe590a
-scrape_tx_williamson|function|60e3a2d791cc283e
-create_table_cbs|function|c1323c56f8d0165b
-get_data|function|fc445083d7e0581f
-set_gdrive|function|3463770651ca496b
-.migrate_dcf|function|1c2ea46723d6821b
-set_all|function|57ef481a5a51d059
-set_s3_bucket|function|56bb4f73f45ba2e5
-set_election_date|function|a71aadd757dbee39
-set_dropbox|function|81be3e72fab59e0b
-set_election_folder|function|ea32a0dfbe8ef210
+scrape_ne|function|2b0869fa330487f2
+upload_html|function|98a18452f2448a18
+scrape_clarity|function|11d753afe74863de
+scrape_va|function|85cd1d5d422e2493
+scrape_ga|function|5369a2287c5618a7
+scrape_oh_ev|function|f8588ea72352d2d5
+scrape_pa_ev|function|2037131661d02e1c
+scrape_tx_comal|function|202a2034a1912886
+scrape_oh_lvt|function|64d483eed2cd2c10
+scrape_pa_lvt|function|3059a852f605b7d3
+scrape_tx_williamson|function|346fa9448bef6d40
+create_table_cbs|function|92250a7111a968e6
+get_data|function|8456387f97c6d559
+set_gdrive|function|496cb61ed4ba226c
+.migrate_dcf|function|88d80cf60b88d8ed
+set_all|function|2f0fd6c327dfeeb7
+set_s3_bucket|function|9381d292de8aed19
+set_election_date|function|1d931e4830a79ff4
+set_dropbox|function|5ef9a3482b33b078
+set_election_folder|function|e41a74b6a2a17235
 run_models|function|fe1bea097ab058b4
 make_summary|function|9759d95b0c9fd910
 oh_timestamp|function|48acdeccf62a1f83
 tx_williamson_timestamp|function|04caf1faa5491231
 pa_timestamp|function|707cec62b7990929
-scrape_tx_clarity|function|f310cd8125b4053f
-scrape_mi_macomb|function|b28e223a90029e4e
-scrape_pa_clarity|function|35712d7642858746
-scrape_oh_clarity|function|59c4d8af1a52882e
-scrape_fl|function|c7ddf7a8fade6a35
-scrape_mi_oakland|function|cd0364ef658c2ea2
-scrape_mi_eaton|function|5abf55fddd2ddd6f
-.load_config|function|5a4f12f0d4a6255d
+scrape_tx_clarity|function|3c70425761c202fc
+scrape_mi_macomb|function|129fe344a8cbceb2
+scrape_pa_clarity|function|d4afa29ca8283332
+scrape_oh_clarity|function|ccf7ca96854eee68
+scrape_fl|function|0341f580e59dde73
+scrape_mi_oakland|function|01f6347f65141195
+scrape_mi_eaton|function|90abe6b9168c2eb6
+.load_config|function|6da8664c3a1d9f84
 manual_runmodels|function|286a601e37b89705
 tx_timestamp|function|e449df2a59f0ce04
-.onLoad|function|75cccdbc524fd9f4
-timestamp_TX_victoria|stem|e130935b64c5eb88|fae381499fca87b2|ad1f612c29aec41f|-1171405619||t20599.8294627289s|s71b|71|rds|local|vector|||1.115||
-timestamp_TX_rusk|stem|822a5bfa2998c0bd|790819c8384ef5b8|ad1f612c29aec41f|-527726731||t20599.8294634349s|s71b|71|rds|local|vector|||0.053||
-timestamp_TX_jefferson|stem|27d78e19b9359c37|8a184e6986f13891|ad1f612c29aec41f|676700373||t20599.8294640825s|s68b|68|rds|local|vector|||0.052||
-timestamp_TX_hidalgo|stem|bd515999bdbc02ce|05460bc89b7917bb|ad1f612c29aec41f|-1408312070||t20599.8294643266s|s67b|67|rds|local|vector|||1.081||
-timestamp_TX_tarrant|stem|c9bc5d235999a74b|63f0a472515b9ce7|ad1f612c29aec41f|-1338999025||t20599.8294647717s|s70b|70|rds|local|vector|||0.055||
-timestamp_TX_denton|stem|025615ca5bc8dc33|22c2c8ff566c9858|ad1f612c29aec41f|1193712040||t20599.8294649642s|s69b|69|rds|local|vector|||0.05||
-timestamp_TX_el.paso|stem|4833b7151ae4b8f6|4db013850d6d0cae|ad1f612c29aec41f|2082910792||t20599.8294657695s|s71b|71|rds|local|vector|||1.053||
-tbl_cbs_TX_rusk|stem||1623a9c7214ed1ad|0cdb7bee72a9a958|-337437212||t20599.8249459118s||0|rds|local|vector|||0.282||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-timestamp_TX_travis|stem|b4481e607db5b12f|e2cc99a9df23590a|ad1f612c29aec41f|2126221176||t20599.8294682849s|s71b|71|rds|local|vector|||1.064||
-tbl_cbs_TX_victoria|stem||d7bb57618c42179e|995cddf450e935e2|27082419||t20599.82494578s||0|rds|local|vector|||0.312||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-timestamp_TX_robertson|stem|7b32c1be08f106d2|bddeba35922e6353|ad1f612c29aec41f|1033310637||t20599.8294686062s|s70b|70|rds|local|vector|||0.987||
-timestamp_TX_rockwall|stem|92a52885070e7a13|d0753dfad92bc083|ad1f612c29aec41f|-1672000356||t20599.8294690065s|s71b|71|rds|local|vector|||0.051||
-tbl_cbs_TX_hidalgo|stem||e674dcf3c15b5910|26d38546f0c5965e|567874165||t20599.8249460735s||0|rds|local|vector|||0.285||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-timestamp_TX_lamar|stem|db7a65db4db8c072|3fdb0e4a6fdae966|ad1f612c29aec41f|-46419316||t20599.8294694127s|s71b|71|rds|local|vector|||0.066||
-timestamp_TX_wood|stem|af5fc384790db68f|8eec616d25bc1566|ad1f612c29aec41f|797511059||t20599.8294699437s|s71b|71|rds|local|vector|||0.043||
-timestamp_TX_montague|stem|9a0ff0744567df2b|2dbc006b0fb39541|ad1f612c29aec41f|1597456689||t20599.829470269s|s69b|69|rds|local|vector|||0.971||
-tbl_cbs_TX_el.paso|stem||adf786541a6c3d6f|b70c4812242d291c|1452990042||t20599.8249469994s||0|rds|local|vector|||0.181||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_travis|stem||db4a41759ed0a65a|17429458862993c0|-1376204672||t20599.8249495472s||0|rds|local|vector|||0.183||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_rockwall|stem||36b1259e329d6b47|ef099e31f7149b42|-303710363||t20599.8249470829s||0|rds|local|vector|||0.164||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-timestamp_TX_kaufman|stem|23080bfe5718ba50|1b3978021680f4b9|ad1f612c29aec41f|1547070942||t20599.8294710964s|s71b|71|rds|local|vector|||0.041||
-timestamp_TX_kendall|stem|9dca7f79de432272|d019c1afe9d9a548|ad1f612c29aec41f|-1157120478||t20599.8294716833s|s71b|71|rds|local|vector|||0.044||
-timestamp_TX_bexar|stem|ddc283eeaf992194|d931b467e08278d7|ad1f612c29aec41f|948869460||t20599.829471738s|s69b|69|rds|local|vector|||0.054||
-tbl_cbs_TX_montague|stem||1c36db01ddde5ed5|cf3fd0b10743d043|395711353||t20599.8249510588s||0|rds|local|vector|||0.14||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_robertson|stem||99528614e8f0aa45|70bedfa3ad30ab9f|400562896||t20599.8249493517s||0|rds|local|vector|||0.287||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-timestamp_TX_hunt|stem|078e319f534a3643|5f9a3c1794ae89a2|ad1f612c29aec41f|1264160749||t20599.8294728209s|s67b|67|rds|local|vector|||0.048||
-timestamp_TX_fort.bend|stem|8f78a024ee223173|fd11d5ebe653a7fe|ad1f612c29aec41f|-1805516279||t20599.8294730384s|s71b|71|rds|local|vector|||0.956||
-tbl_cbs_TX_lamar|stem||df8b6788b090f329|5cda3c069ab2587d|1384460719||t20599.8249472284s||0|rds|local|vector|||0.27||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_bexar|stem||69146d8bab870821|3b29d1078900a8ff|390230815||t20599.8249482255s||0|rds|local|vector|||0.144||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_kendall|stem||3dc76dc6616dd492|69cb6f3aa103609c|1811571451||t20599.8249481652s||0|rds|local|vector|||0.154||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_wood|stem||c262ccaea08da1c9|8f8ce2f6208bd5f5|-1761390555||t20599.8249480683s||0|rds|local|vector|||0.31||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-timestamp_TX_parker|stem|3d7cbe48715747d0|6e62a90f00272bc0|ad1f612c29aec41f|-1412391558||t20599.8294743819s|s71b|71|rds|local|vector|||0.93||
-tbl_cbs_TX_hunt|stem||0de5836d2ad4ece0|bcc464c7f294c759|1511039281||t20599.8249485653s||0|rds|local|vector|||0.136||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_fort.bend|stem||0e08497b3a87e055|65df9f249a4f5d1a|-429455495||t20599.8249541896s||0|rds|local|vector|||0.157||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_parker|stem||15d8b1f6ff6f002b|99c1a4551d16aeaa|-510424153||t20599.8249542927s||0|rds|local|vector|||0.136||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_jefferson|stem||53ef4c54be32b7f0|af2d42afb1e4e657|496129676||t20599.8249461331s||0|rds|local|vector|||0.285||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_tarrant|stem||41efbdd219373240|bc6e40e16e48a89d|236801926||t20599.8249557239s||0|rds|local|vector|||0.255||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_denton|stem||cd35450a66c904f3|f15b0fd1f1eb2325|859153252||t20599.8249469378s||0|rds|local|vector|||0.261||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
-tbl_cbs_TX_kaufman|stem||269455eba54633e5|6afd1b87286e97ce|705603523||t20599.8249481052s||0|rds|local|vector|||0.267||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+.onLoad|function|b34c3c60eb451091
+timestamp_TX_victoria|stem|e130935b64c5eb88|fae381499fca87b2|ad1f612c29aec41f|-1171405619||t20599.8324237867s|s71b|71|rds|local|vector|||1.145||
+timestamp_TX_rusk|stem|822a5bfa2998c0bd|790819c8384ef5b8|ad1f612c29aec41f|-527726731||t20599.8324247219s|s71b|71|rds|local|vector|||0.071||
+timestamp_TX_hidalgo|stem|bd515999bdbc02ce|05460bc89b7917bb|ad1f612c29aec41f|-1408312070||t20599.832425306s|s67b|67|rds|local|vector|||1.027||
+timestamp_TX_jefferson|stem|27d78e19b9359c37|8a184e6986f13891|ad1f612c29aec41f|676700373||t20599.8324253607s|s68b|68|rds|local|vector|||0.051||
+timestamp_TX_tarrant|stem|c9bc5d235999a74b|63f0a472515b9ce7|ad1f612c29aec41f|-1338999025||t20599.8324258948s|s70b|70|rds|local|vector|||0.048||
+timestamp_TX_denton|stem|025615ca5bc8dc33|22c2c8ff566c9858|ad1f612c29aec41f|1193712040||t20599.8324260123s|s69b|69|rds|local|vector|||0.052||
+timestamp_TX_el.paso|stem|4833b7151ae4b8f6|4db013850d6d0cae|ad1f612c29aec41f|2082910792||t20599.8324263243s|s71b|71|rds|local|vector|||1.023||
+timestamp_TX_travis|stem|b4481e607db5b12f|e2cc99a9df23590a|ad1f612c29aec41f|2126221176||t20599.8324293866s|s71b|71|rds|local|vector|||1.12||
+timestamp_TX_robertson|stem|7b32c1be08f106d2|bddeba35922e6353|ad1f612c29aec41f|1033310637||t20599.8324296117s|s70b|70|rds|local|vector|||1.109||
+timestamp_TX_montague|stem|9a0ff0744567df2b|2dbc006b0fb39541|ad1f612c29aec41f|1597456689||t20599.8324331182s|s69b|69|rds|local|vector|||1.085||
+timestamp_TX_fort.bend|stem|8f78a024ee223173|fd11d5ebe653a7fe|ad1f612c29aec41f|-1805516279||t20599.8324337977s|s71b|71|rds|local|vector|||0.973||
+timestamp_TX_parker|stem|3d7cbe48715747d0|6e62a90f00272bc0|ad1f612c29aec41f|-1412391558||t20599.8324366217s|s71b|71|rds|local|vector|||1.02||
+data_TX_rusk|stem|f215b78f8783ffbd|cc838e283b10eb63|7c55d69c16ebf71a|2083324082||t20599.8324422545s|s1091b|1091|rds|local|vector|||1.409||
+data_TX_jefferson|stem|e82573aefa176806|ad7e878f3e6fb2da|3c46c04bc2b82426|-1630103424||t20599.8324428338s|s1624b|1624|rds|local|vector|||1.42||
+data_TX_hidalgo|stem|bb9790db7c073aca|4782294501ce0b91|68f0a403d56cca67|698886757||t20599.8324437605s|s760b|760|rds|local|vector|||1.529|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
+data_TX_el.paso|stem|0b96accd7c0556ff|b22a5bf6df6da419|197120b7b2cc5aa1|55451957||t20599.8324456448s|s2432b|2432|rds|local|vector|||1.38||
+data_TX_montague|stem|a0ad985bc4a7ec93|a17b6d15052246b4|f9e9e609d4b03ac0|1654160506||t20599.8324461565s|s1028b|1028|rds|local|vector|||1.116||
+data_TX_denton|stem|bb9790db7c073aca|ff59330efcce13dd|7827f8a6e10d3e03|642851590||t20599.8324486943s|s760b|760|rds|local|vector|||1.662|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
+data_TX_fort.bend|stem|93fb6f3cb782bd3e|3f56515f0aa43c79|622a6fdc8a91eaad|744259261||t20599.8324496136s|s2441b|2441|rds|local|vector|||1.354||
+data_TX_victoria|stem|0166dd470893e2a1|b822510f44b37d62|0462fdb524671055|-1549427944||t20599.8324508193s|s1180b|1180|rds|local|vector|||1.148||
+data_TX_parker|stem|4dcfe861472160b3|36a45d84c848f891|d483e6f9fb33616d|-1905446523||t20599.832450888s|s1308b|1308|rds|local|vector|||1.22||
+data_TX_robertson|stem|baac7247fa8b0de0|1a5141ae6786694d|9d127db7d278d53d|-282922642||t20599.832455256s|s1140b|1140|rds|local|vector|||0.979||
+data_TX_tarrant|stem|945fd88df2288a8c|f83cd6bf16ec5895|ffe6ddc9a713f976|1982935283||t20599.8324591537s|s15874b|15874|rds|local|vector|||1.665||
+data_TX_travis|stem|bb9790db7c073aca|1cf82b94c6492c12|d85019c4159e20a3|7732808||t20599.832459651s|s760b|760|rds|local|vector|||1.455|There were 2 warnings in `mutate()`. The first warning was: ℹ In argument: `stage = case_when(...)`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.|
+tbl_cbs_TX_rusk|stem|ea95d97d277d3ba7|1623a9c7214ed1ad|a555b860cd9cf591|-337437212||t20599.8324647465s|s43b|43|rds|local|vector|||1.927||
+tbl_cbs_TX_jefferson|stem|ea95d97d277d3ba7|53ef4c54be32b7f0|c0751e63afad6448|496129676||t20599.8324649085s|s43b|43|rds|local|vector|||1.892||
+timestamp_TX_rockwall|stem|92a52885070e7a13|d0753dfad92bc083|ad1f612c29aec41f|-1672000356||t20599.8324653806s|s71b|71|rds|local|vector|||0.046||
+timestamp_TX_lamar|stem|db7a65db4db8c072|3fdb0e4a6fdae966|ad1f612c29aec41f|-46419316||t20599.8324655099s|s71b|71|rds|local|vector|||0.044||
+tbl_cbs_TX_hidalgo|stem|ea95d97d277d3ba7|e674dcf3c15b5910|7cd97c061409d06c|567874165||t20599.8324659658s|s43b|43|rds|local|vector|||1.903||
+timestamp_TX_wood|stem|af5fc384790db68f|8eec616d25bc1566|ad1f612c29aec41f|797511059||t20599.832466525s|s71b|71|rds|local|vector|||0.042||
+data_TX_rockwall|stem|81804572bbf82eb6|9bc8735786bcc887|a21d263441b9e168|1943105709||t20599.8324681227s|s1126b|1126|rds|local|vector|||0.23||
+tbl_cbs_TX_el.paso|stem|ea95d97d277d3ba7|adf786541a6c3d6f|dcf0e77a60bb8f38|1452990042||t20599.8324681501s|s43b|43|rds|local|vector|||1.936||
+data_TX_lamar|stem|c34da85515887104|ffe36df308235181|c932d6fbb869539d|-623941018||t20599.8324682706s|s955b|955|rds|local|vector|||0.232||
+data_TX_wood|stem|d85cf3126c5bf79b|e52d2046773a3f2d|fde4acda90239839|-798652939||t20599.8324684604s|s1022b|1022|rds|local|vector|||0.16||
+tbl_cbs_TX_montague|stem|ea95d97d277d3ba7|1c36db01ddde5ed5|c74e7d709c0f907c|395711353||t20599.8324686308s|s43b|43|rds|local|vector|||1.928||
+timestamp_TX_kaufman|stem|23080bfe5718ba50|1b3978021680f4b9|ad1f612c29aec41f|1547070942||t20599.8324688764s|s71b|71|rds|local|vector|||0.053||
+timestamp_TX_bexar|stem|ddc283eeaf992194|d931b467e08278d7|ad1f612c29aec41f|948869460||t20599.8324691976s|s69b|69|rds|local|vector|||0.04||
+tbl_cbs_TX_denton|stem|ea95d97d277d3ba7|cd35450a66c904f3|2b9b0f7ce38b07d4|859153252||t20599.8324698601s|s43b|43|rds|local|vector|||1.821||
+timestamp_TX_kendall|stem|9dca7f79de432272|d019c1afe9d9a548|ad1f612c29aec41f|-1157120478||t20599.8324703751s|s71b|71|rds|local|vector|||0.039||
+tbl_cbs_TX_fort.bend|stem|ea95d97d277d3ba7|0e08497b3a87e055|48d05ec3a1b9857e|-429455495||t20599.8324708694s|s43b|43|rds|local|vector|||1.829||
+timestamp_TX_hunt|stem|078e319f534a3643|5f9a3c1794ae89a2|ad1f612c29aec41f|1264160749||t20599.8324714976s|s67b|67|rds|local|vector|||0.045||
+data_TX_kaufman|stem|7e7edde574ceaebf|9882438603827430|bbc2e0c854e8c028|-1336242709||t20599.8324716025s|s1298b|1298|rds|local|vector|||0.229||
+tbl_cbs_TX_victoria|stem|ea95d97d277d3ba7|d7bb57618c42179e|ccaf27243dc09261|27082419||t20599.8324722653s|s43b|43|rds|local|vector|||1.845||
+data_TX_hunt|stem|32e7683963974204|0f4127689bef7ca1|f4c19bbba4183b2d|1019823283||t20599.832473407s|s1150b|1150|rds|local|vector|||0.158||
+data_TX_kendall|stem|2cbca4b2c3132f57|e0012ac120da366c|68279a11d2cae112|-2075844664||t20599.8324745285s|s1060b|1060|rds|local|vector|||0.352||
+tbl_cbs_TX_parker|stem|ea95d97d277d3ba7|15d8b1f6ff6f002b|08e5d7ed4667c5a2|-510424153||t20599.8324762875s|s43b|43|rds|local|vector|||2.185||
+data_TX_bexar|stem|c4b39366b8ab5cd7|acb703697815a25e|3ddeabd286218aa3|8595088||t20599.8324769568s|s6827b|6827|rds|local|vector|||0.656||
+tbl_cbs_TX_robertson|stem|ea95d97d277d3ba7|99528614e8f0aa45|3384119f543d62c2|400562896||t20599.8324790555s|s43b|43|rds|local|vector|||2.048||
+tbl_cbs_TX_travis|stem|ea95d97d277d3ba7|db4a41759ed0a65a|f746fc8bed89d856|-1376204672||t20599.8324800453s|s43b|43|rds|local|vector|||1.755||
+tbl_cbs_TX_tarrant|stem|ea95d97d277d3ba7|41efbdd219373240|61c92001283267ae|236801926||t20599.8324816554s|s43b|43|rds|local|vector|||1.931||
+tbl_cbs_TX_lamar|stem|ea95d97d277d3ba7|df8b6788b090f329|565e885fe1927916|1384460719||t20599.8324870067s|s43b|43|rds|local|vector|||1.613||
+tbl_cbs_TX_wood|stem|ea95d97d277d3ba7|c262ccaea08da1c9|4244d39becaea5d3|-1761390555||t20599.8324891438s|s43b|43|rds|local|vector|||1.781||
+tbl_cbs_TX_kaufman|stem|ea95d97d277d3ba7|269455eba54633e5|0d7fcce0cd858dfa|705603523||t20599.8324904452s|s43b|43|rds|local|vector|||1.622||
+tbl_cbs_TX_rockwall|stem|ea95d97d277d3ba7|36b1259e329d6b47|1606f2e4e0543ba9|-303710363||t20599.8324914453s|s43b|43|rds|local|vector|||2.008||
+tbl_cbs_TX_kendall|stem|ea95d97d277d3ba7|3dc76dc6616dd492|80cc06fd82d9d024|1811571451||t20599.8324918857s|s43b|43|rds|local|vector|||1.493||
+tbl_cbs_TX_hunt|stem|ea95d97d277d3ba7|0de5836d2ad4ece0|a8fa4dc0a14568f3|1511039281||t20599.832495181s|s43b|43|rds|local|vector|||1.875||
+tbl_cbs_TX_bexar|stem|ea95d97d277d3ba7|69146d8bab870821|f303beef1d251304|390230815||t20599.8324987775s|s43b|43|rds|local|vector|||1.876||
