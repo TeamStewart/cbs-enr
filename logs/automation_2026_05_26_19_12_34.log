@@ -1,0 +1,200 @@
+G3;2026-05-26 19:12:41: Running tar_make
+g- One or more packages recorded in the lockfile are not installed.
+- Use `]8;;x-r-run:renv::status()renv::status()]8;;` for more details.
+ℹ Updating enightdata documentation
+ℹ Loading enightdata
+ℹ Loading metadata database
+✔ Loading metadata database ... done
+
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏼‍♂️
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (746ms)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (1.8s)
+✔ Installed enightdata 0.0.0.9000 (local) (16ms)
+✔ 1 pkg + 74 deps: kept 74, upd 1, dld 1 (NA B) [8.4s]
+→ de-duplicating _targets/meta/meta
+→ reading _targets/meta/meta
+→ parsing _targets/meta/meta
+→ noting builders and branches
+→ parsing _targets/meta/meta
+→ restricting metadata records
+→ querying 72 local files in _targets/objects
+→ reading _targets/meta/process
+→ parsing _targets/meta/process
++ timestamp_TX_kendall dispatched
++ timestamp_TX_robertson dispatched
++ timestamp_TX_bexar dispatched
++ timestamp_TX_rockwall dispatched
++ timestamp_TX_montague dispatched
++ timestamp_TX_fort.bend dispatched
++ timestamp_TX_hood dispatched
++ timestamp_TX_midland dispatched
++ timestamp_TX_lubbock dispatched
++ timestamp_TX_victoria dispatched
++ timestamp_TX_gregg dispatched
++ timestamp_TX_rusk dispatched
+→ 75 targets ■                                [5.7s, 1+, 0-]
+✔ timestamp_TX_kendall completed [3s, 72 B]
+→ 75 targets ■                                [5.7s, 1+, 0-]+ data_TX_kendall dispatched
+→ 75 targets ■                                [5.7s, 1+, 0-]✔ timestamp_TX_midland completed [56ms, 72 B]
+→ 75 targets ■                                [5.7s, 1+, 0-]+ data_TX_midland dispatched
+→ 75 targets ■                                [5.7s, 1+, 0-]✔ timestamp_TX_lubbock completed [99ms, 70 B]
+→ 75 targets ■                                [5.7s, 1+, 0-]+ data_TX_lubbock dispatched
+→ 75 targets ■                                [5.7s, 1+, 0-]✔ timestamp_TX_gregg completed [79ms, 72 B]
+→ 75 targets ■                                [5.7s, 1+, 0-]+ data_TX_gregg dispatched
+→ 75 targets ■                                [5.7s, 1+, 0-]✔ timestamp_TX_rusk completed [57ms, 72 B]
+→ 75 targets ■                                [5.7s, 1+, 0-]+ data_TX_rusk dispatched
+→ 75 targets ■                                [5.7s, 1+, 0-]✔ timestamp_TX_robertson completed [3.4s, 71 B]
+→ 75 targets ■                                [5.7s, 1+, 0-]+ data_TX_robertson dispatched
+→ 75 targets ■                                [5.7s, 1+, 0-]✔ timestamp_TX_bexar completed [3.4s, 70 B]
+→ 75 targets ■                                [5.7s, 1+, 0-]+ data_TX_bexar dispatched
+→ 75 targets ■                                [5.7s, 1+, 0-]✔ timestamp_TX_rockwall completed [3.3s, 72 B]
+→ 75 targets ■                                [5.7s, 1+, 0-]+ data_TX_rockwall dispatched
+→ 75 targets ■                                [5.7s, 1+, 0-]→ 75 targets ■■■■■                            [8s, 9+, 0-]
+✔ timestamp_TX_montague completed [3.2s, 71 B]
+→ 75 targets ■■■■■                            [8s, 9+, 0-]+ data_TX_montague dispatched
+→ 75 targets ■■■■■                            [8s, 9+, 0-]✔ timestamp_TX_fort.bend completed [3.2s, 72 B]
+→ 75 targets ■■■■■                            [8s, 9+, 0-]+ data_TX_fort.bend dispatched
+→ 75 targets ■■■■■                            [8s, 9+, 0-]✔ timestamp_TX_hood completed [2.8s, 71 B]
+→ 75 targets ■■■■■                            [8s, 9+, 0-]+ data_TX_hood dispatched
+→ 75 targets ■■■■■                            [8s, 9+, 0-]✔ timestamp_TX_victoria completed [2.9s, 72 B]
+→ 75 targets ■■■■■                            [8s, 9+, 0-]+ data_TX_victoria dispatched
+→ 75 targets ■■■■■                            [8s, 9+, 0-]→ 75 targets ■■■■■■                           [13.1s, 13+, 0-]
+✔ data_TX_kendall completed [7.1s, 1.07 kB]
+→ 75 targets ■■■■■■                           [13.1s, 13+, 0-]+ tbl_cbs_TX_kendall dispatched
+→ 75 targets ■■■■■■                           [13.1s, 13+, 0-]✔ data_TX_robertson completed [5.8s, 1.15 kB]
+→ 75 targets ■■■■■■                           [13.1s, 13+, 0-]+ tbl_cbs_TX_robertson dispatched
+→ 75 targets ■■■■■■                           [13.1s, 13+, 0-]✔ data_TX_montague completed [5s, 1.04 kB]
+→ 75 targets ■■■■■■                           [13.1s, 13+, 0-]+ tbl_cbs_TX_montague dispatched
+→ 75 targets ■■■■■■                           [13.1s, 13+, 0-]✔ data_TX_rusk completed [6.3s, 1.10 kB]
+→ 75 targets ■■■■■■                           [13.1s, 13+, 0-]+ tbl_cbs_TX_rusk dispatched
+→ 75 targets ■■■■■■                           [13.1s, 13+, 0-]✔ data_TX_lubbock completed [6.6s, 1.60 kB]
+→ 75 targets ■■■■■■                           [13.1s, 13+, 0-]+ tbl_cbs_TX_lubbock dispatched
+→ 75 targets ■■■■■■                           [13.1s, 13+, 0-]→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]
+✔ data_TX_fort.bend completed [5.6s, 2.44 kB]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ tbl_cbs_TX_fort.bend dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ data_TX_hood completed [5.4s, 763 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ tbl_cbs_TX_hood dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ data_TX_victoria completed [5.1s, 1.19 kB]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ tbl_cbs_TX_victoria dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ data_TX_gregg completed [5.2s, 763 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ tbl_cbs_TX_gregg dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ data_TX_rockwall completed [4.6s, 1.13 kB]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ tbl_cbs_TX_rockwall dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ tbl_cbs_TX_montague completed [2.3s, 44 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ timestamp_TX_travis dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ data_TX_midland completed [6.5s, 1.29 kB]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ tbl_cbs_TX_midland dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ timestamp_TX_travis completed [71ms, 72 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ data_TX_travis dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ data_TX_bexar completed [5.6s, 6.83 kB]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ tbl_cbs_TX_bexar dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ tbl_cbs_TX_lubbock completed [2.5s, 44 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ timestamp_TX_kaufman dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ tbl_cbs_TX_rusk completed [2.5s, 44 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ timestamp_TX_wood dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ tbl_cbs_TX_kendall completed [2.7s, 44 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ timestamp_TX_hunt dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ tbl_cbs_TX_robertson completed [2.7s, 44 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ timestamp_TX_el.paso dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ timestamp_TX_wood completed [72ms, 72 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ data_TX_wood dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ timestamp_TX_hunt completed [64ms, 68 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ data_TX_hunt dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ timestamp_TX_el.paso completed [68ms, 72 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ data_TX_el.paso dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ timestamp_TX_kaufman completed [59ms, 72 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ data_TX_kaufman dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ tbl_cbs_TX_victoria completed [2.1s, 44 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ timestamp_TX_lamar dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ timestamp_TX_lamar completed [80ms, 72 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ data_TX_lamar dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ tbl_cbs_TX_hood completed [2.3s, 44 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ timestamp_TX_jefferson dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ timestamp_TX_jefferson completed [181ms, 69 B]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ data_TX_jefferson dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]✔ data_TX_wood completed [548ms, 1.03 kB]
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]+ tbl_cbs_TX_wood dispatched
+→ 75 targets ■■■■■■■■                         [13.9s, 18+, 0-]→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]
+✔ tbl_cbs_TX_fort.bend completed [2.8s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ timestamp_TX_parker dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ data_TX_hunt completed [753ms, 1.16 kB]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ tbl_cbs_TX_hunt dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ data_TX_kaufman completed [798ms, 1.25 kB]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ tbl_cbs_TX_kaufman dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ timestamp_TX_parker completed [80ms, 72 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ data_TX_parker dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ data_TX_el.paso completed [982ms, 2.43 kB]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ tbl_cbs_TX_el.paso dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_gregg completed [2s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ timestamp_TX_hidalgo dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ data_TX_lamar completed [815ms, 968 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ tbl_cbs_TX_lamar dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ timestamp_TX_hidalgo completed [60ms, 69 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ data_TX_hidalgo dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ data_TX_travis completed [1.5s, 763 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ tbl_cbs_TX_travis dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_rockwall completed [1.9s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ timestamp_TX_tarrant dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ data_TX_jefferson completed [673ms, 1.63 kB]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ tbl_cbs_TX_jefferson dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ data_TX_parker completed [414ms, 1.31 kB]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ tbl_cbs_TX_parker dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ timestamp_TX_tarrant completed [78ms, 71 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ data_TX_tarrant dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ data_TX_hidalgo completed [446ms, 763 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ tbl_cbs_TX_hidalgo dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_bexar completed [2s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ timestamp_TX_comal dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✖ data_TX_tarrant errored
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]Error: ℹ In argument: `when_any(...)`.
+Caused by error:
+! object 'method' not found
+
++ tbl_cbs_TX_tarrant dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✖ tbl_cbs_TX_tarrant errored
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]Error: could not load dependency data_TX_tarrant of target tbl_cbs_TX_tarrant. invalid 'description' argument
+
++ timestamp_TX_bell dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_midland completed [2.3s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ timestamp_TX_denton dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ timestamp_TX_bell completed [46ms, 72 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ data_TX_bell dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ timestamp_TX_denton completed [50ms, 71 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ data_TX_denton dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ timestamp_TX_comal completed [285ms, 71 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ data_TX_comal dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ data_TX_bell completed [356ms, 1.44 kB]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ tbl_cbs_TX_bell dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_hunt completed [1.7s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_kaufman completed [1.7s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ data_TX_comal completed [535ms, 1.13 kB]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ tbl_cbs_TX_comal dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ data_TX_denton completed [606ms, 763 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]+ tbl_cbs_TX_denton dispatched
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_wood completed [2.1s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_jefferson completed [1.4s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_lamar completed [1.6s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_travis completed [1.6s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_el.paso completed [1.9s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_parker completed [1.8s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]✔ tbl_cbs_TX_hidalgo completed [1.9s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■                [16.7s, 40+, 0-]→ 75 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [19.9s, 71+, 0-]
+✔ tbl_cbs_TX_bell completed [1.5s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [19.9s, 71+, 0-]✔ tbl_cbs_TX_comal completed [1.6s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [19.9s, 71+, 0-]✔ tbl_cbs_TX_denton completed [1.6s, 44 B]
+→ 75 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [19.9s, 71+, 0-]→ de-duplicating _targets/meta/meta
+→ 75 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [19.9s, 71+, 0-]→ 75 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [20.5s, 73+, 0-]
+✖ errored pipeline [20.8s, 73 completed, 0 skipped]
+Warning messages:
+1: package ‘targets’ was built under R version 4.5.2 
+2: package ‘tarchetypes’ was built under R version 4.5.2 
+3: package ‘glue’ was built under R version 4.5.2 
+4: 2 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
+5: 13 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
