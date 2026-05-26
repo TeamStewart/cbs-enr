@@ -6,9 +6,8 @@
 ##################################################
 
 INTERVAL = 5 # minutes
-googlesheets4::gs4_auth(
-  email = TRUE
-)
+googlesheets4::gs4_auth(email = TRUE)
+googledrive::drive_auth(email = TRUE)
 
 # Function to execute the R script
 execute_script <- function() {
