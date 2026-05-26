@@ -71,9 +71,10 @@ find_ga_candidate|function|e1a2198548f41064
 scrape_wi_milwaukee|function|f49ab0d032ad3d3c
 read_html_live_cf|function|39c4bcab0b10f26e
 statename_to_abb|function|0209bce62db9dda1
-.Random.seed|object|d6debcaa39faf4c6
+.Random.seed|object|a8542df3f2bbe56d
 PATH_ENIGHTDATA|object|0cb918180a86ef27
 scrape_tx|function|685358a6552a064d
+office_filter|object|08d5f59e833de599
 .onAttach|function|26335bdda585bf36
 find_ne_candidate|function|09949e5d91a84151
 scrape_az_pima|function|159bff48995df5ff
@@ -124,7 +125,7 @@ scrape_tx_comal|function|2a84af1f30f0e064
 scrape_oh_lvt|function|f13792cdabb643d6
 scrape_pa_lvt|function|1500c99e2cbe590a
 scrape_tx_williamson|function|60e3a2d791cc283e
-create_table_cbs|function|08e2aff4627dcde2
+create_table_cbs|function|c1323c56f8d0165b
 get_data|function|fc445083d7e0581f
 set_gdrive|function|3463770651ca496b
 .migrate_dcf|function|1c2ea46723d6821b
@@ -149,41 +150,41 @@ scrape_mi_eaton|function|5abf55fddd2ddd6f
 manual_runmodels|function|286a601e37b89705
 tx_timestamp|function|e449df2a59f0ce04
 .onLoad|function|75cccdbc524fd9f4
-timestamp_TX_victoria|stem|e130935b64c5eb88|fae381499fca87b2|ad1f612c29aec41f|-1171405619||t20599.8249429801s|s71b|71|rds|local|vector|||1.115||
-timestamp_TX_rusk|stem|822a5bfa2998c0bd|790819c8384ef5b8|ad1f612c29aec41f|-527726731||t20599.8249438391s|s71b|71|rds|local|vector|||0.07||
-timestamp_TX_jefferson|stem|27d78e19b9359c37|8a184e6986f13891|ad1f612c29aec41f|676700373||t20599.8249446956s|s68b|68|rds|local|vector|||0.064||
-timestamp_TX_hidalgo|stem|bd515999bdbc02ce|05460bc89b7917bb|ad1f612c29aec41f|-1408312070||t20599.8249453453s|s67b|67|rds|local|vector|||1.063||
-timestamp_TX_tarrant|stem|c9bc5d235999a74b|63f0a472515b9ce7|ad1f612c29aec41f|-1338999025||t20599.8249456424s|s70b|70|rds|local|vector|||0.077||
-tbl_cbs_TX_victoria|stem||d7bb57618c42179e|ed78538b34779839|27082419||t20599.82494578s||0|rds|local|vector|||0.003||object 'office_filter' not found
-tbl_cbs_TX_rusk|stem||1623a9c7214ed1ad|ac24d9b6f844496d|-337437212||t20599.8249459118s||0|rds|local|vector|||0.004||object 'office_filter' not found
-tbl_cbs_TX_hidalgo|stem||e674dcf3c15b5910|0a85747755f9b120|567874165||t20599.8249460735s||0|rds|local|vector|||0.003||object 'office_filter' not found
-tbl_cbs_TX_jefferson|stem||53ef4c54be32b7f0|5a98fa24a8d2832d|496129676||t20599.8249461331s||0|rds|local|vector|||0.004||object 'office_filter' not found
-timestamp_TX_denton|stem|025615ca5bc8dc33|22c2c8ff566c9858|ad1f612c29aec41f|1193712040||t20599.8249461278s|s69b|69|rds|local|vector|||0.061||
-timestamp_TX_el.paso|stem|4833b7151ae4b8f6|4db013850d6d0cae|ad1f612c29aec41f|2082910792||t20599.8249465648s|s71b|71|rds|local|vector|||1.037||
-timestamp_TX_rockwall|stem|92a52885070e7a13|d0753dfad92bc083|ad1f612c29aec41f|-1672000356||t20599.8249467475s|s71b|71|rds|local|vector|||0.056||
-timestamp_TX_lamar|stem|db7a65db4db8c072|3fdb0e4a6fdae966|ad1f612c29aec41f|-46419316||t20599.8249467914s|s71b|71|rds|local|vector|||0.053||
-tbl_cbs_TX_denton|stem||cd35450a66c904f3|f999c10991cd1da3|859153252||t20599.8249469378s||0|rds|local|vector|||0.002||object 'office_filter' not found
-tbl_cbs_TX_el.paso|stem||adf786541a6c3d6f|d9040cbc799c5e51|1452990042||t20599.8249469994s||0|rds|local|vector|||0.004||object 'office_filter' not found
-tbl_cbs_TX_rockwall|stem||36b1259e329d6b47|c49f3faab17a115e|-303710363||t20599.8249470829s||0|rds|local|vector|||0.004||object 'office_filter' not found
-tbl_cbs_TX_lamar|stem||df8b6788b090f329|362d97ad0cc48693|1384460719||t20599.8249472284s||0|rds|local|vector|||0.004||object 'office_filter' not found
-timestamp_TX_wood|stem|af5fc384790db68f|8eec616d25bc1566|ad1f612c29aec41f|797511059||t20599.8249472529s|s71b|71|rds|local|vector|||0.056||
-timestamp_TX_kaufman|stem|23080bfe5718ba50|1b3978021680f4b9|ad1f612c29aec41f|1547070942||t20599.8249475074s|s71b|71|rds|local|vector|||0.061||
-timestamp_TX_kendall|stem|9dca7f79de432272|d019c1afe9d9a548|ad1f612c29aec41f|-1157120478||t20599.8249479193s|s71b|71|rds|local|vector|||0.054||
-timestamp_TX_bexar|stem|ddc283eeaf992194|d931b467e08278d7|ad1f612c29aec41f|948869460||t20599.8249479414s|s69b|69|rds|local|vector|||0.061||
-tbl_cbs_TX_wood|stem||c262ccaea08da1c9|02fd0775693e0466|-1761390555||t20599.8249480683s||0|rds|local|vector|||0.003||object 'office_filter' not found
-tbl_cbs_TX_kaufman|stem||269455eba54633e5|ee84f38eb86dcdf1|705603523||t20599.8249481052s||0|rds|local|vector|||0.002||object 'office_filter' not found
-tbl_cbs_TX_kendall|stem||3dc76dc6616dd492|e4ac4499c0cf2236|1811571451||t20599.8249481652s||0|rds|local|vector|||0.005||object 'office_filter' not found
-tbl_cbs_TX_bexar|stem||69146d8bab870821|0ffb7a42e2b1d1fa|390230815||t20599.8249482255s||0|rds|local|vector|||0.002||object 'office_filter' not found
-timestamp_TX_hunt|stem|078e319f534a3643|5f9a3c1794ae89a2|ad1f612c29aec41f|1264160749||t20599.8249483857s|s67b|67|rds|local|vector|||0.074||
-tbl_cbs_TX_hunt|stem||0de5836d2ad4ece0|622b6e7a44a1a190|1511039281||t20599.8249485653s||0|rds|local|vector|||0.002||object 'office_filter' not found
-timestamp_TX_robertson|stem|7b32c1be08f106d2|bddeba35922e6353|ad1f612c29aec41f|1033310637||t20599.8249492294s|s70b|70|rds|local|vector|||0.971||
-tbl_cbs_TX_robertson|stem||99528614e8f0aa45|2ccffacdd285c32d|400562896||t20599.8249493517s||0|rds|local|vector|||0.002||object 'office_filter' not found
-timestamp_TX_travis|stem|b4481e607db5b12f|e2cc99a9df23590a|ad1f612c29aec41f|2126221176||t20599.8249494243s|s71b|71|rds|local|vector|||1.144||
-tbl_cbs_TX_travis|stem||db4a41759ed0a65a|240093932e5b9662|-1376204672||t20599.8249495472s||0|rds|local|vector|||0.002||object 'office_filter' not found
-timestamp_TX_montague|stem|9a0ff0744567df2b|2dbc006b0fb39541|ad1f612c29aec41f|1597456689||t20599.8249509464s|s69b|69|rds|local|vector|||0.953||
-tbl_cbs_TX_montague|stem||1c36db01ddde5ed5|1bd08ac96f680ba1|395711353||t20599.8249510588s||0|rds|local|vector|||0.002||object 'office_filter' not found
-timestamp_TX_fort.bend|stem|8f78a024ee223173|fd11d5ebe653a7fe|ad1f612c29aec41f|-1805516279||t20599.8249540546s|s71b|71|rds|local|vector|||0.999||
-timestamp_TX_parker|stem|3d7cbe48715747d0|6e62a90f00272bc0|ad1f612c29aec41f|-1412391558||t20599.8249541459s|s71b|71|rds|local|vector|||0.842||
-tbl_cbs_TX_fort.bend|stem||0e08497b3a87e055|eaacb247870fc942|-429455495||t20599.8249541896s||0|rds|local|vector|||0.002||object 'office_filter' not found
-tbl_cbs_TX_parker|stem||15d8b1f6ff6f002b|0d70997499fe424c|-510424153||t20599.8249542927s||0|rds|local|vector|||0.002||object 'office_filter' not found
-tbl_cbs_TX_tarrant|stem||41efbdd219373240|ffa3372c8849655b|236801926||t20599.8249557239s||0|rds|local|vector|||0.002||object 'office_filter' not found
+timestamp_TX_victoria|stem|e130935b64c5eb88|fae381499fca87b2|ad1f612c29aec41f|-1171405619||t20599.8294627289s|s71b|71|rds|local|vector|||1.115||
+timestamp_TX_rusk|stem|822a5bfa2998c0bd|790819c8384ef5b8|ad1f612c29aec41f|-527726731||t20599.8294634349s|s71b|71|rds|local|vector|||0.053||
+timestamp_TX_jefferson|stem|27d78e19b9359c37|8a184e6986f13891|ad1f612c29aec41f|676700373||t20599.8294640825s|s68b|68|rds|local|vector|||0.052||
+timestamp_TX_hidalgo|stem|bd515999bdbc02ce|05460bc89b7917bb|ad1f612c29aec41f|-1408312070||t20599.8294643266s|s67b|67|rds|local|vector|||1.081||
+timestamp_TX_tarrant|stem|c9bc5d235999a74b|63f0a472515b9ce7|ad1f612c29aec41f|-1338999025||t20599.8294647717s|s70b|70|rds|local|vector|||0.055||
+timestamp_TX_denton|stem|025615ca5bc8dc33|22c2c8ff566c9858|ad1f612c29aec41f|1193712040||t20599.8294649642s|s69b|69|rds|local|vector|||0.05||
+timestamp_TX_el.paso|stem|4833b7151ae4b8f6|4db013850d6d0cae|ad1f612c29aec41f|2082910792||t20599.8294657695s|s71b|71|rds|local|vector|||1.053||
+tbl_cbs_TX_rusk|stem||1623a9c7214ed1ad|0cdb7bee72a9a958|-337437212||t20599.8249459118s||0|rds|local|vector|||0.282||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+timestamp_TX_travis|stem|b4481e607db5b12f|e2cc99a9df23590a|ad1f612c29aec41f|2126221176||t20599.8294682849s|s71b|71|rds|local|vector|||1.064||
+tbl_cbs_TX_victoria|stem||d7bb57618c42179e|995cddf450e935e2|27082419||t20599.82494578s||0|rds|local|vector|||0.312||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+timestamp_TX_robertson|stem|7b32c1be08f106d2|bddeba35922e6353|ad1f612c29aec41f|1033310637||t20599.8294686062s|s70b|70|rds|local|vector|||0.987||
+timestamp_TX_rockwall|stem|92a52885070e7a13|d0753dfad92bc083|ad1f612c29aec41f|-1672000356||t20599.8294690065s|s71b|71|rds|local|vector|||0.051||
+tbl_cbs_TX_hidalgo|stem||e674dcf3c15b5910|26d38546f0c5965e|567874165||t20599.8249460735s||0|rds|local|vector|||0.285||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+timestamp_TX_lamar|stem|db7a65db4db8c072|3fdb0e4a6fdae966|ad1f612c29aec41f|-46419316||t20599.8294694127s|s71b|71|rds|local|vector|||0.066||
+timestamp_TX_wood|stem|af5fc384790db68f|8eec616d25bc1566|ad1f612c29aec41f|797511059||t20599.8294699437s|s71b|71|rds|local|vector|||0.043||
+timestamp_TX_montague|stem|9a0ff0744567df2b|2dbc006b0fb39541|ad1f612c29aec41f|1597456689||t20599.829470269s|s69b|69|rds|local|vector|||0.971||
+tbl_cbs_TX_el.paso|stem||adf786541a6c3d6f|b70c4812242d291c|1452990042||t20599.8249469994s||0|rds|local|vector|||0.181||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_travis|stem||db4a41759ed0a65a|17429458862993c0|-1376204672||t20599.8249495472s||0|rds|local|vector|||0.183||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_rockwall|stem||36b1259e329d6b47|ef099e31f7149b42|-303710363||t20599.8249470829s||0|rds|local|vector|||0.164||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+timestamp_TX_kaufman|stem|23080bfe5718ba50|1b3978021680f4b9|ad1f612c29aec41f|1547070942||t20599.8294710964s|s71b|71|rds|local|vector|||0.041||
+timestamp_TX_kendall|stem|9dca7f79de432272|d019c1afe9d9a548|ad1f612c29aec41f|-1157120478||t20599.8294716833s|s71b|71|rds|local|vector|||0.044||
+timestamp_TX_bexar|stem|ddc283eeaf992194|d931b467e08278d7|ad1f612c29aec41f|948869460||t20599.829471738s|s69b|69|rds|local|vector|||0.054||
+tbl_cbs_TX_montague|stem||1c36db01ddde5ed5|cf3fd0b10743d043|395711353||t20599.8249510588s||0|rds|local|vector|||0.14||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_robertson|stem||99528614e8f0aa45|70bedfa3ad30ab9f|400562896||t20599.8249493517s||0|rds|local|vector|||0.287||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+timestamp_TX_hunt|stem|078e319f534a3643|5f9a3c1794ae89a2|ad1f612c29aec41f|1264160749||t20599.8294728209s|s67b|67|rds|local|vector|||0.048||
+timestamp_TX_fort.bend|stem|8f78a024ee223173|fd11d5ebe653a7fe|ad1f612c29aec41f|-1805516279||t20599.8294730384s|s71b|71|rds|local|vector|||0.956||
+tbl_cbs_TX_lamar|stem||df8b6788b090f329|5cda3c069ab2587d|1384460719||t20599.8249472284s||0|rds|local|vector|||0.27||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_bexar|stem||69146d8bab870821|3b29d1078900a8ff|390230815||t20599.8249482255s||0|rds|local|vector|||0.144||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_kendall|stem||3dc76dc6616dd492|69cb6f3aa103609c|1811571451||t20599.8249481652s||0|rds|local|vector|||0.154||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_wood|stem||c262ccaea08da1c9|8f8ce2f6208bd5f5|-1761390555||t20599.8249480683s||0|rds|local|vector|||0.31||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+timestamp_TX_parker|stem|3d7cbe48715747d0|6e62a90f00272bc0|ad1f612c29aec41f|-1412391558||t20599.8294743819s|s71b|71|rds|local|vector|||0.93||
+tbl_cbs_TX_hunt|stem||0de5836d2ad4ece0|bcc464c7f294c759|1511039281||t20599.8249485653s||0|rds|local|vector|||0.136||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_fort.bend|stem||0e08497b3a87e055|65df9f249a4f5d1a|-429455495||t20599.8249541896s||0|rds|local|vector|||0.157||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_parker|stem||15d8b1f6ff6f002b|99c1a4551d16aeaa|-510424153||t20599.8249542927s||0|rds|local|vector|||0.136||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_jefferson|stem||53ef4c54be32b7f0|af2d42afb1e4e657|496129676||t20599.8249461331s||0|rds|local|vector|||0.285||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_tarrant|stem||41efbdd219373240|bc6e40e16e48a89d|236801926||t20599.8249557239s||0|rds|local|vector|||0.255||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_denton|stem||cd35450a66c904f3|f15b0fd1f1eb2325|859153252||t20599.8249469378s||0|rds|local|vector|||0.261||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+tbl_cbs_TX_kaufman|stem||269455eba54633e5|6afd1b87286e97ce|705603523||t20599.8249481052s||0|rds|local|vector|||0.267||ℹ In index: 1. Caused by error in `drive_auth()`: ! Can't get Google credentials. ℹ Are you running googledrive in a non-interactive session? Consider: • Call `drive_deauth()` to prevent the attempt to get credentials. • Call `drive_auth()` directly with all necessary specifics. ℹ See gargle's 'Non-interactive auth' vignette for more details: ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>

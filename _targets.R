@@ -82,6 +82,8 @@ create_dirs(metadata)
 #   "TX", "tx", "house_rep", 33,
 # )
 
+office_filter = NULL
+
 # ========================================
 ## PIPELINE
 # ========================================
