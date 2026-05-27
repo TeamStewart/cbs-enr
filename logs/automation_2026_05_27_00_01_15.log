@@ -1,0 +1,92 @@
+2026-05-27 00:01:15: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
+ℹ Updating enightdata documentation
+ℹ Loading enightdata
+ℹ Loading metadata database✔ Loading metadata database ... done
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏾
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (374ms)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (1.4s)
+✔ Installed enightdata 0.0.0.9000 (local) (11ms)
+✔ 1 pkg + 74 deps: kept 74, upd 1, dld 1 (NA B) [6s]
++ timestamp_TX_parker dispatched
++ timestamp_TX_travis dispatched
++ timestamp_TX_hunt dispatched
++ timestamp_TX_midland dispatched
++ timestamp_TX_wood dispatched
++ timestamp_TX_montague dispatched
++ timestamp_TX_gregg dispatched
++ timestamp_TX_kendall dispatched
++ timestamp_TX_galveston dispatched
++ timestamp_TX_bexar dispatched
++ timestamp_TX_harris dispatched
++ timestamp_TX_fort.bend dispatched
+✔ timestamp_TX_parker completed [1.1s, 70 B]
++ timestamp_TX_hood dispatched
+✔ timestamp_TX_kendall completed [57ms, 70 B]
++ timestamp_TX_bell dispatched
+✔ timestamp_TX_bexar completed [51ms, 70 B]
++ timestamp_TX_williamson dispatched
+✔ timestamp_TX_travis completed [1.1s, 70 B]
++ timestamp_TX_denton dispatched
+✔ timestamp_TX_fort.bend completed [51ms, 70 B]
++ timestamp_TX_hidalgo dispatched
+✔ timestamp_TX_hood completed [50ms, 70 B]
++ timestamp_TX_lamar dispatched
+✔ timestamp_TX_hunt completed [1.1s, 70 B]
++ data_TX_hunt dispatched
+✔ timestamp_TX_harris completed [222ms, 70 B]
++ timestamp_TX_dallas dispatched
+✔ timestamp_TX_hidalgo completed [50ms, 70 B]
+✔ timestamp_TX_denton completed [55ms, 70 B]
++ timestamp_TX_tarrant dispatched
++ timestamp_TX_rusk dispatched
+✔ timestamp_TX_lamar completed [49ms, 70 B]
+✔ timestamp_TX_williamson completed [180ms, 70 B]
++ timestamp_TX_comal dispatched
++ timestamp_TX_kaufman dispatched
+✔ timestamp_TX_tarrant completed [65ms, 70 B]
++ data_TX_tarrant dispatched
+✔ timestamp_TX_rusk completed [65ms, 67 B]
++ timestamp_TX_el.paso dispatched
+✔ timestamp_TX_midland completed [1.1s, 70 B]
++ timestamp_TX_victoria dispatched
+✔ timestamp_TX_kaufman completed [45ms, 70 B]
++ timestamp_TX_nueces dispatched
+✔ timestamp_TX_wood completed [939ms, 68 B]
++ timestamp_TX_lubbock dispatched
+✔ timestamp_TX_victoria completed [61ms, 70 B]
++ timestamp_TX_jefferson dispatched
+✔ timestamp_TX_nueces completed [64ms, 70 B]
++ timestamp_TX_bastrop dispatched
+✔ timestamp_TX_lubbock completed [60ms, 68 B]
++ timestamp_TX_rockwall dispatched
+✔ timestamp_TX_comal completed [191ms, 70 B]
++ timestamp_TX_robertson dispatched
+✔ timestamp_TX_jefferson completed [47ms, 70 B]
+✔ timestamp_TX_bastrop completed [54ms, 70 B]
+✔ timestamp_TX_montague completed [986ms, 70 B]
+✔ timestamp_TX_robertson completed [95ms, 70 B]
+✔ timestamp_TX_gregg completed [1s, 68 B]
+✔ timestamp_TX_galveston completed [841ms, 70 B]
+✔ timestamp_TX_bell completed [826ms, 70 B]
+✔ timestamp_TX_dallas completed [870ms, 78 B]
++ data_TX_dallas dispatched
+✔ timestamp_TX_el.paso completed [834ms, 70 B]
+✔ timestamp_TX_rockwall completed [787ms, 70 B]
+✔ data_TX_hunt completed [1.2s, 1.30 kB]
++ tbl_cbs_TX_hunt dispatched
+✔ data_TX_tarrant completed [1.8s, 20.60 kB]
++ tbl_cbs_TX_tarrant dispatched
+✔ tbl_cbs_TX_hunt completed [1.8s, 43 B]
+✔ data_TX_dallas completed [2.2s, 33.34 kB]
++ tbl_cbs_TX_dallas dispatched
+✔ tbl_cbs_TX_tarrant completed [3s, 43 B]
+✔ tbl_cbs_TX_dallas completed [2.7s, 43 B]
+✔ ended pipeline [10.6s, 37 completed, 56 skipped]
