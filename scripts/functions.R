@@ -105,3 +105,20 @@ make_summary <- function(data, state, county, timestamp, history){
       glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries/summarylive_{state}_{county}_{timestamp}.csv")
     )
 }
+
+get_castatewide <- function() {
+
+  time = Sys.time() |> format(format = "%Y-%m-%d %H:%M:%S") |> str_replace_all("-|:| ", "_")
+
+  read_html("https://dp.electionresults.sos.ca.gov/returns/status") |>
+    rvest::html_table() |>
+    pluck(1) |>
+    rename_with(.fn = ~ str_remove_all(.x, "\\*") |> str_squish()) |>
+    janitor::clean_names() |>
+    filter(!(county_name %in% c("Statewide", "County Name"))) |> 
+    mutate(
+      across(c(total_precincts:percent_turnout), ~ str_remove_all(.x, ",|%") |> as.numeric()),
+      across(starts_with("percent_"), ~ .x / 100)
+    ) |> 
+    write_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/CA/clean/statewide/ca_statewide_{time}.csv"))
+}
