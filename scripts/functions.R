@@ -110,7 +110,7 @@ get_castatewide <- function() {
 
   time = Sys.time() |> format(format = "%Y-%m-%d %H:%M:%S") |> str_replace_all("-|:| ", "_")
 
-  read_html("https://dp.electionresults.sos.ca.gov/returns/status") |>
+  rvest::read_html("https://dp.electionresults.sos.ca.gov/returns/status") |>
     rvest::html_table() |>
     pluck(1) |>
     rename_with(.fn = ~ str_remove_all(.x, "\\*") |> str_squish()) |>
