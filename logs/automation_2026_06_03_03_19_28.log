@@ -1,0 +1,78 @@
+2026-06-03 03:19:28: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
+ℹ Updating enightdata documentation
+ℹ Loading enightdata
+ℹ Loading metadata database✔ Loading metadata database ... done
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏿‍♂️
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (409ms)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (1.5s)
+✔ Installed enightdata 0.0.0.9000 (local) (12ms)
+✔ 1 pkg + 77 deps: kept 77, upd 1, dld 1 (NA B) [6.4s]
++ timestamp_CA_merced dispatched
++ timestamp_CA_marin dispatched
++ timestamp_CA_sacramento dispatched
++ timestamp_CA_solano dispatched
++ timestamp_CA_san.mateo dispatched
++ timestamp_CA_sonoma dispatched
++ timestamp_CA_contra.costa dispatched
++ timestamp_CA_shasta dispatched
++ timestamp_CA_santa.clara dispatched
++ timestamp_CA_imperial dispatched
++ ca_statewide dispatched
++ timestamp_CA_riverside dispatched
+✔ timestamp_CA_merced completed [1.1s, 69 B]
++ data_CA_merced dispatched
+✔ timestamp_CA_santa.clara completed [47ms, 68 B]
++ timestamp_CA_san.diego dispatched
+✔ timestamp_CA_marin completed [1.1s, 69 B]
+✔ timestamp_CA_imperial completed [127ms, 69 B]
++ timestamp_CA_butte dispatched
++ timestamp_CA_orange dispatched
+✔ timestamp_CA_riverside completed [98ms, 69 B]
++ timestamp_CA_san.francisco dispatched
+✔ timestamp_CA_san.diego completed [111ms, 69 B]
+✔ timestamp_CA_butte completed [46ms, 68 B]
+✔ timestamp_CA_san.mateo completed [1.2s, 60 B]
+✔ ca_statewide completed [682ms, 2.38 kB]
+✔ timestamp_CA_sonoma completed [1.1s, 68 B]
+✔ timestamp_CA_contra.costa completed [981ms, 69 B]
++ data_CA_contra.costa dispatched
+✔ timestamp_CA_shasta completed [857ms, 69 B]
+✔ timestamp_CA_san.francisco completed [512ms, 69 B]
+✔ timestamp_CA_sacramento completed [2s, 66 B]
++ data_CA_sacramento dispatched
+✔ timestamp_CA_orange completed [953ms, 67 B]
++ data_CA_orange dispatched
+✖ data_CA_orange errored
+Error: wrong sign in 'by' argument
+
++ tbl_cbs_CA_orange dispatched
+✖ tbl_cbs_CA_orange errored
+Error: could not load dependency data_CA_orange of target tbl_cbs_CA_orange. invalid 'description' argument
+
+✔ timestamp_CA_solano completed [2.9s, 69 B]
+✖ data_CA_contra.costa errored
+Error: ℹ In argument: `when_any(...)`.
+Caused by error:
+! object 'method' not found
+
++ tbl_cbs_CA_contra.costa dispatched
+✖ tbl_cbs_CA_contra.costa errored
+Error: could not load dependency data_CA_contra.costa of target tbl_cbs_CA_contra.costa. invalid 'description' argument
+
+✔ data_CA_sacramento completed [8.9s, 47.41 kB]
++ tbl_cbs_CA_sacramento dispatched
+✔ data_CA_merced completed [11.7s, 60.01 kB]
++ tbl_cbs_CA_merced dispatched
+✔ tbl_cbs_CA_sacramento completed [2.9s, 43 B]
+✔ tbl_cbs_CA_merced completed [4.9s, 43 B]
+✖ errored pipeline [22.1s, 20 completed, 22 skipped]
+Warning message:
+4 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
