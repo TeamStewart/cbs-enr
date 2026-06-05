@@ -106,6 +106,31 @@ make_summary <- function(data, state, county, timestamp, history){
     )
 }
 
+parse_ca_datetime <- function(x, year = 2026L) {
+  m         <- stringr::str_match(x, "^(\\w{3}) (\\d+):(\\d{2}) (a\\.m\\.|p\\.m\\.)$")
+  month_str <- m[, 2]
+  day_hour  <- m[, 3]
+  mins      <- as.integer(m[, 4])
+  ampm      <- m[, 5]
+
+  n      <- nchar(day_hour)
+  hour_2 <- as.integer(substr(day_hour, n - 1L, n))
+  hour_1 <- as.integer(substr(day_hour, n, n))
+  use_2  <- n >= 2L & !is.na(hour_2) & hour_2 >= 1L & hour_2 <= 12L
+
+  hour <- ifelse(use_2, hour_2, hour_1)
+  day  <- as.integer(ifelse(use_2,
+                            substr(day_hour, 1L, n - 2L),
+                            substr(day_hour, 1L, n - 1L)))
+
+  hour <- ifelse(!is.na(ampm) & ampm == "p.m." & !is.na(hour) & hour != 12L, hour + 12L,
+           ifelse(!is.na(ampm) & ampm == "a.m." & !is.na(hour) & hour == 12L, 0L, hour))
+
+  month_num <- match(month_str, month.abb)
+  lubridate::ymd_hms(sprintf("%04d-%02d-%02d %02d:%02d:00",
+                             year, month_num, day, hour, mins))
+}
+
 get_castatewide <- function() {
 
   time = Sys.time() |> format(format = "%Y-%m-%d %H:%M:%S") |> str_replace_all("-|:| ", "_")
@@ -115,10 +140,11 @@ get_castatewide <- function() {
     pluck(1) |>
     rename_with(.fn = ~ str_remove_all(.x, "\\*") |> str_squish()) |>
     janitor::clean_names() |>
-    filter(!(county_name %in% c("Statewide", "County Name"))) |> 
+    filter(!(county_name %in% c("Statewide", "County Name"))) |>
     mutate(
       across(c(total_precincts:percent_turnout), ~ str_remove_all(.x, ",|%") |> as.numeric()),
-      across(starts_with("percent_"), ~ .x / 100)
-    ) |> 
+      across(starts_with("percent_"), ~ .x / 100),
+      across(c(first_report_date_time, last_report_date_time), parse_ca_datetime)
+    ) |>
     write_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/CA/clean/statewide/ca_statewide_{time}.csv"))
 }
