@@ -1,0 +1,161 @@
+G3;2026-06-05 22:07:52: Running tar_make
+g- One or more packages recorded in the lockfile are not installed.
+- Use `]8;;x-r-run:renv::status()renv::status()]8;;` for more details.
+ℹ Updating enightdata documentation
+ℹ Loading enightdata
+
+✔ Updated metadata database: 8.03 MB in 13 files.
+
+ℹ R 4.5 aarch64-apple-darwin20 packages are missing from bioconductor.org: Not Found (HTTP 404)., Not Found (HTTP 404)., Not Found (HTTP 404)., Not Found (HTTP 404)., and Not Found (HTTP 404).
+ℹ Updating metadata database
+✔ Updating metadata database ... done
+
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏽‍♀️
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (858ms)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (2s)
+✔ Installed enightdata 0.0.0.9000 (local) (18ms)
+✔ 1 pkg + 77 deps: kept 77, upd 1, dld 1 (NA B) [23.8s]
+→ de-duplicating _targets/meta/meta
+→ reading _targets/meta/meta
+→ parsing _targets/meta/meta
+→ noting builders and branches
+→ parsing _targets/meta/meta
+→ restricting metadata records
+→ querying 46 local files in _targets/objects
+→ reading _targets/meta/process
+→ parsing _targets/meta/process
++ timestamp_CA_merced dispatched
++ timestamp_CA_marin dispatched
++ timestamp_CA_sacramento dispatched
++ timestamp_CA_solano dispatched
++ timestamp_CA_san.mateo dispatched
++ timestamp_CA_sonoma dispatched
++ timestamp_CA_contra.costa dispatched
++ timestamp_CA_shasta dispatched
++ timestamp_CA_santa.clara dispatched
++ timestamp_CA_imperial dispatched
++ ca_statewide dispatched
++ timestamp_CA_riverside dispatched
+→ 46 targets ■■                               [5.8s, 1+, 0-]
+✔ timestamp_CA_marin completed [2.9s, 71 B]
+→ 46 targets ■■                               [5.8s, 1+, 0-]→ 46 targets ■■                               [6s, 1+, 1-]
+✔ timestamp_CA_merced completed [3s, 71 B]
+→ 46 targets ■■                               [6s, 1+, 1-]✔ timestamp_CA_santa.clara completed [146ms, 71 B]
+→ 46 targets ■■                               [6s, 1+, 1-]+ data_CA_merced dispatched
+→ 46 targets ■■                               [6s, 1+, 1-]+ data_CA_santa.clara dispatched
+→ 46 targets ■■                               [6s, 1+, 1-]+ timestamp_CA_san.diego dispatched
+→ 46 targets ■■                               [6s, 1+, 1-]✔ timestamp_CA_riverside completed [621ms, 71 B]
+→ 46 targets ■■                               [6s, 1+, 1-]+ data_CA_riverside dispatched
+→ 46 targets ■■                               [6s, 1+, 1-]✔ ca_statewide completed [1.4s, 2.19 kB]
+→ 46 targets ■■                               [6s, 1+, 1-]+ timestamp_CA_butte dispatched
+→ 46 targets ■■                               [6s, 1+, 1-]✔ timestamp_CA_san.mateo completed [3.3s, 71 B]
+→ 46 targets ■■                               [6s, 1+, 1-]+ data_CA_san.mateo dispatched
+→ 46 targets ■■                               [6s, 1+, 1-]✔ timestamp_CA_sonoma completed [2.8s, 71 B]
+→ 46 targets ■■                               [6s, 1+, 1-]+ data_CA_sonoma dispatched
+→ 46 targets ■■                               [6s, 1+, 1-]✔ timestamp_CA_contra.costa completed [3s, 71 B]
+→ 46 targets ■■                               [6s, 1+, 1-]+ data_CA_contra.costa dispatched
+→ 46 targets ■■                               [6s, 1+, 1-]✔ timestamp_CA_imperial completed [2.4s, 68 B]
+→ 46 targets ■■                               [6s, 1+, 1-]+ data_CA_imperial dispatched
+→ 46 targets ■■                               [6s, 1+, 1-]✔ timestamp_CA_san.diego completed [2.2s, 71 B]
+→ 46 targets ■■                               [6s, 1+, 1-]+ data_CA_san.diego dispatched
+→ 46 targets ■■                               [6s, 1+, 1-]→ 46 targets ■■■■■■■■■                        [9s, 11+, 2-]
+✔ timestamp_CA_shasta completed [3.4s, 71 B]
+→ 46 targets ■■■■■■■■■                        [9s, 11+, 2-]+ data_CA_shasta dispatched
+→ 46 targets ■■■■■■■■■                        [9s, 11+, 2-]✔ timestamp_CA_butte completed [2.9s, 71 B]
+→ 46 targets ■■■■■■■■■                        [9s, 11+, 2-]+ data_CA_butte dispatched
+→ 46 targets ■■■■■■■■■                        [9s, 11+, 2-]→ 46 targets ■■■■■■■■■■■                      [19.1s, 12+, 2-]
+✖ data_CA_contra.costa errored
+→ 46 targets ■■■■■■■■■■■                      [19.1s, 12+, 2-]Error: ℹ In argument: `when_any(...)`.
+Caused by error:
+! object 'method' not found
+
++ tbl_cbs_CA_contra.costa dispatched
+→ 46 targets ■■■■■■■■■■■                      [19.1s, 12+, 2-]✖ tbl_cbs_CA_contra.costa errored
+→ 46 targets ■■■■■■■■■■■                      [19.1s, 12+, 2-]Error: could not load dependency data_CA_contra.costa of target tbl_cbs_CA_contra.costa. invalid 'description' argument
+
++ timestamp_CA_orange dispatched
+→ 46 targets ■■■■■■■■■■■                      [19.1s, 12+, 2-]✔ timestamp_CA_orange completed [713ms, 71 B]
+→ 46 targets ■■■■■■■■■■■                      [19.1s, 12+, 2-]+ data_CA_orange dispatched
+→ 46 targets ■■■■■■■■■■■                      [19.1s, 12+, 2-]→ 46 targets ■■■■■■■■■■■■■                    [22.3s, 14+, 2-]
+✔ data_CA_shasta completed [13.2s, 14.46 kB]
+→ 46 targets ■■■■■■■■■■■■■                    [22.3s, 14+, 2-]+ tbl_cbs_CA_shasta dispatched
+→ 46 targets ■■■■■■■■■■■■■                    [22.3s, 14+, 2-]✔ data_CA_butte completed [12.1s, 14.55 kB]
+→ 46 targets ■■■■■■■■■■■■■                    [22.3s, 14+, 2-]+ tbl_cbs_CA_butte dispatched
+→ 46 targets ■■■■■■■■■■■■■                    [22.3s, 14+, 2-]→ 46 targets ■■■■■■■■■■■■■■                   [24.3s, 16+, 2-]
+✔ timestamp_CA_sacramento completed [20.9s, 71 B]
+→ 46 targets ■■■■■■■■■■■■■■                   [24.3s, 16+, 2-]+ data_CA_sacramento dispatched
+→ 46 targets ■■■■■■■■■■■■■■                   [24.3s, 16+, 2-]✔ data_CA_sonoma completed [17.3s, 40.67 kB]
+→ 46 targets ■■■■■■■■■■■■■■                   [24.3s, 16+, 2-]+ tbl_cbs_CA_sonoma dispatched
+→ 46 targets ■■■■■■■■■■■■■■                   [24.3s, 16+, 2-]→ 46 targets ■■■■■■■■■■■■■■■                  [27.2s, 18+, 2-]
+✔ data_CA_san.mateo completed [19.5s, 40.88 kB]
+→ 46 targets ■■■■■■■■■■■■■■■                  [27.2s, 18+, 2-]+ tbl_cbs_CA_san.mateo dispatched
+→ 46 targets ■■■■■■■■■■■■■■■                  [27.2s, 18+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■                 [32.7s, 19+, 2-]
+✔ data_CA_imperial completed [24.2s, 22.62 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■                 [32.7s, 19+, 2-]+ tbl_cbs_CA_imperial dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■                 [32.7s, 19+, 2-]✔ tbl_cbs_CA_shasta completed [10.4s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■                 [32.7s, 19+, 2-]+ timestamp_CA_san.francisco dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■                 [32.7s, 19+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■                [33.5s, 21+, 2-]
+✔ timestamp_CA_san.francisco completed [762ms, 71 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■                [33.5s, 21+, 2-]+ data_CA_san.francisco dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■                [33.5s, 21+, 2-]✔ tbl_cbs_CA_butte completed [11.4s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■                [33.5s, 21+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■              [36.8s, 23+, 2-]
+✔ tbl_cbs_CA_san.mateo completed [9.6s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■              [36.8s, 23+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■              [41.1s, 24+, 2-]
+✔ data_CA_santa.clara completed [34.5s, 72.36 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■              [41.1s, 24+, 2-]+ tbl_cbs_CA_santa.clara dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■              [41.1s, 24+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■             [46.5s, 25+, 2-]
+✔ data_CA_san.francisco completed [12.9s, 70.10 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■             [46.5s, 25+, 2-]+ tbl_cbs_CA_san.francisco dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■             [46.5s, 25+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■            [48.1s, 26+, 2-]
+✔ tbl_cbs_CA_imperial completed [15.4s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■            [48.1s, 26+, 2-]✔ tbl_cbs_CA_sonoma completed [24.5s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■            [48.1s, 26+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■           [52.7s, 28+, 2-]
+✔ timestamp_CA_solano completed [49.2s, 71 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■           [52.7s, 28+, 2-]+ data_CA_solano dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■           [52.7s, 28+, 2-]✔ data_CA_riverside completed [45.7s, 117.79 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■           [52.7s, 28+, 2-]+ tbl_cbs_CA_riverside dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■           [52.7s, 28+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■          [55.7s, 30+, 2-]
+✔ data_CA_merced completed [47.5s, 61.42 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■          [55.7s, 30+, 2-]+ tbl_cbs_CA_merced dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■          [55.7s, 30+, 2-]✔ data_CA_sacramento completed [31.7s, 50.44 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■          [55.7s, 30+, 2-]+ tbl_cbs_CA_sacramento dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■          [55.7s, 30+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■         [1m 12.7s, 32+, 2-]
+✔ data_CA_solano completed [20s, 26.36 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■         [1m 12.7s, 32+, 2-]+ tbl_cbs_CA_solano dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■         [1m 12.7s, 32+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■        [1m 16s, 33+, 2-]
+✔ data_CA_san.diego completed [1m 7s, 264.52 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■        [1m 16s, 33+, 2-]+ tbl_cbs_CA_san.diego dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■        [1m 16s, 33+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■       [1m 26.5s, 34+, 2-]
+✔ tbl_cbs_CA_solano completed [13.7s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■       [1m 26.5s, 34+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■       [1m 29.6s, 35+, 2-]
+✔ tbl_cbs_CA_san.francisco completed [43s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■       [1m 29.6s, 35+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■      [1m 30.2s, 36+, 2-]
+✔ tbl_cbs_CA_santa.clara completed [49.1s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■      [1m 30.2s, 36+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [1m 35.4s, 37+, 2-]
+✔ tbl_cbs_CA_sacramento completed [39.3s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [1m 35.4s, 37+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [1m 36.2s, 38+, 2-]
+✔ tbl_cbs_CA_riverside completed [43.1s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [1m 36.2s, 38+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [2m 16.1s, 39+, 2-]
+✔ tbl_cbs_CA_merced completed [1m 20.4s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [2m 16.1s, 39+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [2m 19s, 40+, 2-]
+✔ tbl_cbs_CA_san.diego completed [1m 2.9s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [2m 19s, 40+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [2m 30.3s, 41+, 2-]
+✔ data_CA_orange completed [2m 10.3s, 255.22 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [2m 30.3s, 41+, 2-]+ tbl_cbs_CA_orange dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [2m 30.3s, 41+, 2-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [3m 7s, 42+, 2-]
+✔ tbl_cbs_CA_orange completed [36.7s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [3m 7s, 42+, 2-]→ de-duplicating _targets/meta/meta
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [3m 7s, 42+, 2-]✖ errored pipeline [3m 7.6s, 42 completed, 2 skipped]
+Warning messages:
+1: package ‘targets’ was built under R version 4.5.2 
+2: package ‘tarchetypes’ was built under R version 4.5.2 
+3: package ‘glue’ was built under R version 4.5.2 
+4: 2 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
+5: 13 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 

@@ -165,3 +165,8 @@ Warning messages:
 3: package ‘glue’ was built under R version 4.5.2 
 4: 7 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
 5: 12 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
+G3;ℹ The googlesheets4 package is using a cached token for
+  'joseph.r.loffredo@gmail.com'.
+gG3;ℹ The googledrive package is using a cached token for
+  'joseph.r.loffredo@gmail.com'.
+gStarted at 2026-06-05 22:07:51, waiting...
