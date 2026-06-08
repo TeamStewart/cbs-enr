@@ -111,7 +111,16 @@ list(
     tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
     names = c(state, county)
   ),
-  tar_target(ca_statewide, get_castatewide(), cue = tar_cue(mode = "always"))
+  tar_target(ca_statewide, get_castatewide(), cue = tar_cue(mode = "always")),
+  tar_target(
+    la_totals_timestamp,
+    enightdata::ca_timestamp(
+      "https://results.lavote.gov/ElectionResults/GetElectionData?electionID=4338",
+      county = "los angeles"
+    ),
+    cue = tar_cue(mode = "always")
+  ),
+  tar_target(la_totals, get_la_totals(la_totals_timestamp))
   # tar_quarto(dashboard, "index.qmd", quiet = FALSE),
   # tar_target(upload_h, upload_html(dashboard[1]))
 )

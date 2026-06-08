@@ -131,6 +131,19 @@ parse_ca_datetime <- function(x, year = 2026L) {
                              year, month_num, day, hour, mins))
 }
 
+get_la_totals <- function(timestamp) {
+  path    <- "https://results.lavote.gov/ElectionResults/GetElectionData?electionID=4338"
+  out_dir <- fs::path(PATH_DROPBOX, ELECTION_FOLDER, "CA", "clean", "Los Angeles")
+  fs::dir_create(out_dir)
+
+  data <- enightdata::scrape_ca("CA", "los angeles", path, timestamp)
+
+  readr::write_csv(data, fs::path(out_dir, glue("CA_los angeles_{timestamp}.csv")))
+  readr::write_csv(data, fs::path(out_dir, "CA_los angeles_latest.csv"))
+
+  data
+}
+
 get_castatewide <- function() {
 
   time = Sys.time() |> format(format = "%Y-%m-%d %H:%M:%S") |> str_replace_all("-|:| ", "_")

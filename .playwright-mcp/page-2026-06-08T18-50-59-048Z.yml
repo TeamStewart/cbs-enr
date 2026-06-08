@@ -1,0 +1,594 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "Logo - Home" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - generic:
+            - img "Los Angeles County RR/CC" [ref=e10]
+            - generic [ref=e11]:
+              - paragraph [ref=e12]: Los Angeles County
+              - paragraph [ref=e13]:
+                - strong [ref=e14]: Registrar-Recorder/County Clerk
+        - navigation "Primary" [ref=e15]:
+          - list [ref=e16]:
+            - listitem [ref=e17]:
+              - link "Navigate to lavote.gov" [ref=e18] [cursor=pointer]:
+                - /url: https://www.lavote.gov
+                - text: LAVote.gov
+            - listitem [ref=e19]:
+              - link "Navigate to About Us" [ref=e20] [cursor=pointer]:
+                - /url: https://www.lavote.gov/about-us/background
+                - text: About Us
+            - listitem [ref=e21]:
+              - link "Navigate to Contact" [ref=e22] [cursor=pointer]:
+                - /url: https://www.lavote.gov/contact-us/contact-us
+                - text: Contact
+      - generic [ref=e23]:
+        - generic:
+          - img "Icon — LA County Election Results" [ref=e25]
+          - generic [ref=e27]: LA COUNTY ELECTION RESULTS
+    - generic [ref=e28]:
+      - generic [ref=e31]:
+        - main [ref=e32]:
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - generic [ref=e39]: Year
+              - generic [ref=e40]: Election
+              - generic [ref=e41]: Contest
+            - generic [ref=e43]:
+              - listbox [ref=e44] [cursor=pointer]:
+                - generic [ref=e47]: 2026 Elections
+              - listbox [ref=e48] [cursor=pointer]:
+                - generic [ref=e51]: Statewide Direct Primary Election, June 2
+              - combobox [ref=e52] [cursor=pointer]:
+                - generic [ref=e55]: Jump to...
+            - generic [ref=e57]:
+              - text: Statewide Direct Primary ElectionJune 2, 2026
+              - link "View all elections" [ref=e59] [cursor=pointer]:
+                - /url: election-list
+            - generic [ref=e60]:
+              - generic [ref=e64]:
+                - img [ref=e66]:
+                  - generic [ref=e69]: Voter Turnout
+                  - generic [ref=e77]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic: 1,897,653 (32.21%)
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic: 3,994,198 (67.79%)
+                  - generic [ref=e80]:
+                    - generic [ref=e84]: Voted
+                    - generic [ref=e88]: Remaining Eligible Voters
+                - img [ref=e90]:
+                  - generic [ref=e93]: Ballot Distribution
+                  - generic [ref=e101]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic: 1,503,836 (79.25%)
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic: 393,817 (20.75%)
+                  - generic [ref=e104]:
+                    - generic [ref=e108]: VBM Ballots
+                    - generic [ref=e112]: Vote Center Ballots
+              - generic [ref=e113]:
+                - generic [ref=e114]: "Results as of 6/7/2026 4:50:39 PM. Results are representative of Los Angeles County only. Total number of precincts: 2,175. Total number of registrations: 5,891,851."
+                - generic [ref=e115]: Ballots cast in Vote by Mail precincts are counted in the first bulletin. These tallied Vote by Mail precincts are reflected in the "Precincts Reporting" figure. There are 865 Vote by Mail precincts.
+                - generic [ref=e116]: The voter registration figure reflects registrations 29 days before the election. Voters who registered after this date will have their vote counted.
+            - generic [ref=e117]:
+              - generic [ref=e118]:
+                - heading "Governor" [level=2] [ref=e119]:
+                  - generic [ref=e120]: Governor
+                - generic [ref=e121]:
+                  - generic [ref=e123]: GOVERNOR
+                  - generic [ref=e124]:
+                    - generic [ref=e126]:
+                      - generic "Democratic" [ref=e129]: D
+                      - generic [ref=e130]: XAVIER BECERRA
+                      - generic [ref=e131]: 31.0%
+                      - generic [ref=e135]: 562,432
+                    - generic [ref=e137]:
+                      - generic "Democratic" [ref=e140]: D
+                      - generic [ref=e141]: TOM STEYER
+                      - generic [ref=e142]: 25.01%
+                      - generic [ref=e146]: 453,730
+                    - generic [ref=e148]:
+                      - generic "Republican" [ref=e151]: R
+                      - generic [ref=e152]: STEVE HILTON
+                      - generic [ref=e153]: 20.67%
+                      - generic [ref=e157]: 375,069
+                    - generic [ref=e159]:
+                      - generic "Republican" [ref=e162]: R
+                      - generic [ref=e163]: CHAD BIANCO
+                      - generic [ref=e164]: 6.52%
+                      - generic [ref=e168]: 118,306
+                    - generic [ref=e170]:
+                      - generic "Democratic" [ref=e173]: D
+                      - generic [ref=e174]: KATIE PORTER
+                      - generic [ref=e175]: 4.27%
+                      - generic [ref=e179]: 77,436
+                    - generic [ref=e181]:
+                      - generic "Democratic" [ref=e184]: D
+                      - generic [ref=e185]: MATT MAHAN
+                      - generic [ref=e186]: 3.46%
+                      - generic [ref=e190]: 62,811
+                    - generic [ref=e192]:
+                      - generic "Democratic" [ref=e195]: D
+                      - generic [ref=e196]: ANTONIO VILLARAIGOSA
+                      - generic [ref=e197]: 2.64%
+                      - generic [ref=e201]: 47,857
+                    - generic [ref=e203]:
+                      - generic "Democratic" [ref=e206]: D
+                      - generic [ref=e207]: TONY K. THURMOND
+                      - generic [ref=e208]: 0.77%
+                      - generic [ref=e212]: 13,908
+                    - generic [ref=e214]:
+                      - generic "Peace and Freedom" [ref=e217]: P
+                      - generic [ref=e218]: RAMSEY ROBINSON
+                      - generic [ref=e219]: 0.64%
+                      - generic [ref=e223]: 11,526
+                    - generic [ref=e225]:
+                      - generic "Democratic" [ref=e228]: D
+                      - generic [ref=e229]: BETTY T. YEE
+                      - generic [ref=e230]: 0.41%
+                      - generic [ref=e234]: 7,407
+                    - generic [ref=e236]:
+                      - generic "Democratic" [ref=e239]: D
+                      - generic [ref=e240]: BARACK D. OBAMA SHAW
+                      - generic [ref=e241]: 0.33%
+                      - generic [ref=e245]: 5,993
+                    - generic [ref=e247]:
+                      - generic "Republican" [ref=e250]: R
+                      - generic [ref=e251]: LEO SAMUEL ZACKY
+                      - generic [ref=e252]: 0.33%
+                      - generic [ref=e256]: 5,918
+                    - generic [ref=e258]:
+                      - generic "Democratic" [ref=e261]: D
+                      - generic [ref=e262]: ERIC SWALWELL
+                      - generic [ref=e263]: 0.32%
+                      - generic [ref=e267]: 5,769
+                    - generic [ref=e269]:
+                      - generic "Republican" [ref=e272]: R
+                      - generic [ref=e273]: TIM NELSON
+                      - generic [ref=e274]: 0.30%
+                      - generic [ref=e278]: 5,372
+                    - generic [ref=e280]:
+                      - generic "Republican" [ref=e283]: R
+                      - generic [ref=e284]: GRETHA SOLÓRZANO
+                      - generic [ref=e285]: 0.24%
+                      - generic [ref=e289]: 4,336
+                    - generic [ref=e291]:
+                      - generic "Republican" [ref=e294]: R
+                      - generic [ref=e295]: JAMES ATHANS JR.
+                      - generic [ref=e296]: 0.22%
+                      - generic [ref=e300]: 4,063
+                    - generic [ref=e302]:
+                      - generic "Republican" [ref=e305]: R
+                      - generic [ref=e306]: RANDEEP S. DHILLON
+                      - generic [ref=e307]: 0.17%
+                      - generic [ref=e311]: 3,133
+                    - generic [ref=e313]:
+                      - generic "Democratic" [ref=e316]: D
+                      - generic [ref=e317]: MOHAMMAD ARIF
+                      - generic [ref=e318]: 0.17%
+                      - generic [ref=e322]: 3,070
+                    - generic [ref=e324]:
+                      - generic "Republican" [ref=e327]: R
+                      - generic [ref=e328]: DAVID ZICKEFOOSE
+                      - generic [ref=e329]: 0.14%
+                      - generic [ref=e333]: 2,578
+                    - generic [ref=e335]:
+                      - generic "Libertarian" [ref=e338]: L
+                      - generic [ref=e339]: TOM WOODARD
+                      - generic [ref=e340]: 0.13%
+                      - generic [ref=e344]: 2,439
+                    - generic [ref=e346]:
+                      - generic "Democratic" [ref=e349]: D
+                      - generic [ref=e350]: LARRY AZEVEDO
+                      - generic [ref=e351]: 0.12%
+                      - generic [ref=e355]: 2,212
+                    - generic [ref=e357]:
+                      - generic "Democratic" [ref=e360]: D
+                      - generic [ref=e361]: SCOTT P SHIELDS
+                      - generic [ref=e362]: 0.12%
+                      - generic [ref=e366]: 2,197
+                    - generic [ref=e368]:
+                      - generic "Democratic" [ref=e371]: D
+                      - generic [ref=e372]: DEREK GRASTY
+                      - generic [ref=e373]: 0.12%
+                      - generic [ref=e377]: 2,118
+                    - generic [ref=e379]:
+                      - generic "Democratic" [ref=e382]: D
+                      - generic [ref=e383]: ERIN "ZEZ" ZEZULAK
+                      - generic [ref=e384]: 0.11%
+                      - generic [ref=e388]: 1,987
+                    - generic [ref=e390]:
+                      - generic "Democratic" [ref=e393]: D
+                      - generic [ref=e394]: CAROLINA BUHLER
+                      - generic [ref=e395]: 0.11%
+                      - generic [ref=e399]: 1,922
+                    - generic [ref=e401]:
+                      - generic "Democratic" [ref=e404]: D
+                      - generic [ref=e405]: SOPHIA EDUM-A-SAM
+                      - generic [ref=e406]: 0.10%
+                      - generic [ref=e410]: 1,884
+                    - generic [ref=e412]:
+                      - generic "Non Partisan" [ref=e415]: "N"
+                      - generic [ref=e416]: CHRISTINE R. SARMIENTO
+                      - generic [ref=e417]: 0.10%
+                      - generic [ref=e421]: 1,857
+                    - generic [ref=e423]:
+                      - generic "Non Partisan" [ref=e426]: "N"
+                      - generic [ref=e427]: FREDERIC C. SCHULTZ
+                      - generic [ref=e428]: 0.10%
+                      - generic [ref=e432]: 1,757
+                    - generic [ref=e434]:
+                      - generic "Democratic" [ref=e437]: D
+                      - generic [ref=e438]: MATTHEW CHASE LEVY
+                      - generic [ref=e439]: 0.09%
+                      - generic [ref=e443]: 1,716
+                    - generic [ref=e445]:
+                      - generic "Non Partisan" [ref=e448]: "N"
+                      - generic [ref=e449]: NANCY D. YOUNG
+                      - generic [ref=e450]: 0.09%
+                      - generic [ref=e454]: 1,654
+                    - generic [ref=e456]:
+                      - generic "Democratic" [ref=e459]: D
+                      - generic [ref=e460]: GARY HOWARD KIDGELL
+                      - generic [ref=e461]: 0.09%
+                      - generic [ref=e465]: 1,563
+                    - generic [ref=e467]:
+                      - generic "Non Partisan" [ref=e470]: "N"
+                      - generic [ref=e471]: AMANDA MARTIN
+                      - generic [ref=e472]: 0.08%
+                      - generic [ref=e476]: 1,476
+                    - generic [ref=e478]:
+                      - generic "Democratic" [ref=e481]: D
+                      - generic [ref=e482]: AKINYEMI AGBEDE
+                      - generic [ref=e483]: 0.08%
+                      - generic [ref=e487]: 1,461
+                    - generic [ref=e489]:
+                      - generic "Non Partisan" [ref=e492]: "N"
+                      - generic [ref=e493]: MAURO ALBERTO OROZCO
+                      - generic [ref=e494]: 0.07%
+                      - generic [ref=e498]: 1,299
+                    - generic [ref=e500]:
+                      - generic "Democratic" [ref=e503]: D
+                      - generic [ref=e504]: LOUIS A. DE BARRAICUA
+                      - generic [ref=e505]: 0.06%
+                      - generic [ref=e509]: 1,143
+                    - generic [ref=e511]:
+                      - generic "Republican" [ref=e514]: R
+                      - generic [ref=e515]: LEO NARANJO IV
+                      - generic [ref=e516]: 0.06%
+                      - generic [ref=e520]: 1,104
+                    - generic [ref=e522]:
+                      - generic "Non Partisan" [ref=e525]: "N"
+                      - generic [ref=e526]: REZA SAFARNEJAD
+                      - generic [ref=e527]: 0.06%
+                      - generic [ref=e531]: 1,045
+                    - generic [ref=e533]:
+                      - generic "Republican" [ref=e536]: R
+                      - generic [ref=e537]: ALICIA OLIVIA LAPP
+                      - generic [ref=e538]: 0.06%
+                      - generic [ref=e542]: 1,035
+                    - generic [ref=e544]:
+                      - generic "Non Partisan" [ref=e547]: "N"
+                      - generic [ref=e548]: ANNE KOMAROVSK
+                      - generic [ref=e549]: 0.05%
+                      - generic [ref=e553]: "946"
+                    - generic [ref=e555]:
+                      - generic "Non Partisan" [ref=e558]: "N"
+                      - generic [ref=e559]: DON J. GRUNDMANN
+                      - generic [ref=e560]: 0.05%
+                      - generic [ref=e564]: "856"
+                    - generic [ref=e566]:
+                      - generic "Democratic" [ref=e569]: D
+                      - generic [ref=e570]: THUNDER PARLEY
+                      - generic [ref=e571]: 0.05%
+                      - generic [ref=e575]: "827"
+                    - generic [ref=e577]:
+                      - generic "Non Partisan" [ref=e580]: "N"
+                      - generic [ref=e581]: MARGARET TROWE
+                      - generic [ref=e582]: 0.04%
+                      - generic [ref=e586]: "785"
+                    - generic [ref=e588]:
+                      - generic "Non Partisan" [ref=e591]: "N"
+                      - generic [ref=e592]: DAWIT KELLEL
+                      - generic [ref=e593]: 0.04%
+                      - generic [ref=e597]: "768"
+                    - generic [ref=e599]:
+                      - generic "Democratic" [ref=e602]: D
+                      - generic [ref=e603]: RAJI RAB
+                      - generic [ref=e604]: 0.04%
+                      - generic [ref=e608]: "700"
+                    - generic [ref=e610]:
+                      - generic "Non Partisan" [ref=e613]: "N"
+                      - generic [ref=e614]: ELAINE CULOTTI
+                      - generic [ref=e615]: 0.04%
+                      - generic [ref=e619]: "694"
+                    - generic [ref=e621]:
+                      - generic "Republican" [ref=e624]: R
+                      - generic [ref=e625]: RAFAEL M. HERNANDEZ
+                      - generic [ref=e626]: 0.04%
+                      - generic [ref=e630]: "685"
+                    - generic [ref=e632]:
+                      - generic "Non Partisan" [ref=e635]: "N"
+                      - generic [ref=e636]: JOSEPH CABRERA
+                      - generic [ref=e637]: 0.04%
+                      - generic [ref=e641]: "658"
+                    - generic [ref=e643]:
+                      - generic "Non Partisan" [ref=e646]: "N"
+                      - generic [ref=e647]: SAM SANDAK
+                      - generic [ref=e648]: 0.03%
+                      - generic [ref=e652]: "578"
+                    - generic [ref=e654]:
+                      - generic "Non Partisan" [ref=e657]: "N"
+                      - generic [ref=e658]: JON HENDERSON
+                      - generic [ref=e659]: 0.03%
+                      - generic [ref=e663]: "559"
+                    - generic [ref=e665]:
+                      - generic "Democratic" [ref=e668]: D
+                      - generic [ref=e669]: SATISH RAO
+                      - generic [ref=e670]: 0.03%
+                      - generic [ref=e674]: "553"
+                    - generic [ref=e676]:
+                      - generic "Non Partisan" [ref=e679]: "N"
+                      - generic [ref=e680]: DANIEL MERCURI
+                      - generic [ref=e681]: 0.03%
+                      - generic [ref=e685]: "455"
+                    - generic [ref=e687]:
+                      - generic "Non Partisan" [ref=e690]: "N"
+                      - generic [ref=e691]: BRENT MAUPIN
+                      - generic [ref=e692]: 0.02%
+                      - generic [ref=e696]: "427"
+                    - generic [ref=e698]:
+                      - generic "Non Partisan" [ref=e701]: "N"
+                      - generic [ref=e702]: DUANE TERRENCE LOYNES JR.
+                      - generic [ref=e703]: 0.02%
+                      - generic [ref=e707]: "421"
+                    - generic [ref=e709]:
+                      - generic "Republican" [ref=e712]: R
+                      - generic [ref=e713]: PATRICIA DE LUCA BASUALDO
+                      - generic [ref=e714]: 0.02%
+                      - generic [ref=e718]: "348"
+                    - generic [ref=e720]:
+                      - generic "Non Partisan" [ref=e723]: "N"
+                      - generic [ref=e724]: NAOMI BAR-LEV
+                      - generic [ref=e725]: 0.02%
+                      - generic [ref=e729]: "342"
+                    - generic [ref=e731]:
+                      - generic "Non Partisan" [ref=e734]: "N"
+                      - generic [ref=e735]: LIVINGFORGOD ANDCOUNTRY DEMOTT
+                      - generic [ref=e736]: 0.02%
+                      - generic [ref=e740]: "340"
+                    - generic [ref=e742]:
+                      - generic "Non Partisan" [ref=e745]: "N"
+                      - generic [ref=e746]: LEWIS HERMS
+                      - generic [ref=e747]: 0.02%
+                      - generic [ref=e751]: "322"
+                    - generic [ref=e753]:
+                      - generic "Democratic" [ref=e756]: D
+                      - generic [ref=e757]: JOEL E. JACOB
+                      - generic [ref=e758]: 0.02%
+                      - generic [ref=e762]: "309"
+                    - generic [ref=e764]:
+                      - generic "Non Partisan" [ref=e767]: "N"
+                      - generic [ref=e768]: MAX FOMIN
+                      - generic [ref=e769]: 0.01%
+                      - generic [ref=e773]: "142"
+                    - generic [ref=e775]:
+                      - generic "Non Partisan" [ref=e778]: "N"
+                      - generic [ref=e779]: LUKASZ ADAM FILINSKI
+                      - generic [ref=e780]: 0.00%
+                      - generic [ref=e784]: "84"
+                    - generic [ref=e786]:
+                      - generic "Non Partisan" [ref=e789]: "N"
+                      - generic [ref=e790]: SERGE FIANKAN
+                      - generic [ref=e791]: 0.00%
+                      - generic [ref=e795]: "75"
+                  - generic [ref=e796]: Voter Nominated
+              - generic [ref=e798]:
+                - heading "Lieutenant Governor" [level=2] [ref=e799]:
+                  - generic [ref=e800]: Lieutenant Governor
+                - generic [ref=e801]:
+                  - generic [ref=e803]: LIEUTENANT GOVERNOR
+                  - generic [ref=e804]:
+                    - generic [ref=e806]:
+                      - generic "Democratic" [ref=e809]: D
+                      - generic [ref=e810]: ABDUR RAHMAN SIKDER
+                    - generic [ref=e816]:
+                      - generic "Peace and Freedom" [ref=e819]: P
+                      - generic [ref=e820]: ALICE STEK
+                    - generic [ref=e826]:
+                      - generic "Republican" [ref=e829]: R
+                      - generic [ref=e830]: DAVID COLLENBERG
+                    - generic [ref=e836]:
+                      - generic "Republican" [ref=e839]: R
+                      - generic [ref=e840]: DAVID FENNELL
+                    - generic [ref=e846]:
+                      - generic "Republican" [ref=e849]: R
+                      - generic [ref=e850]: EBIE LYNCH
+                    - generic [ref=e856]:
+                      - generic "Democratic" [ref=e859]: D
+                      - generic [ref=e860]: FIONA MA
+                    - generic [ref=e866]:
+                      - generic "Republican" [ref=e869]: R
+                      - generic [ref=e870]: GLORIA ROMERO
+                    - generic [ref=e876]:
+                      - generic "Democratic" [ref=e879]: D
+                      - generic [ref=e880]: JANELLE KELLMAN
+                    - generic [ref=e886]:
+                      - generic "Democratic" [ref=e889]: D
+                      - generic [ref=e890]: JEYSON LOPEZ
+                    - generic [ref=e896]:
+                      - generic "Democratic" [ref=e899]: D
+                      - generic [ref=e900]: JOSH FRYDAY
+                    - generic [ref=e906]:
+                      - generic "Democratic" [ref=e909]: D
+                      - generic [ref=e910]: MICHAEL TUBBS
+                    - generic [ref=e916]:
+                      - generic "Democratic" [ref=e919]: D
+                      - generic [ref=e920]: OLIVER MA
+                    - generic [ref=e926]:
+                      - generic "Non Partisan" [ref=e929]: "N"
+                      - generic [ref=e930]: RAKESH CHRISTIAN
+                    - generic [ref=e936]:
+                      - generic "Non Partisan" [ref=e939]: "N"
+                      - generic [ref=e940]: SEAN COLLINSON
+                    - generic [ref=e946]:
+                      - generic "Republican" [ref=e949]: R
+                      - generic [ref=e950]: SKIP SHELTON
+                    - generic [ref=e956]:
+                      - generic "Democratic" [ref=e959]: D
+                      - generic [ref=e960]: TIM MYERS
+                  - generic [ref=e965]: Voter Nominated
+            - generic [ref=e968]:
+              - generic [ref=e970]: American Independent
+              - generic [ref=e972]: Democratic
+              - generic [ref=e974]: Green
+              - generic [ref=e976]: Libertarian
+              - generic [ref=e978]: Non Partisan
+              - generic [ref=e980]: Peace and Freedom
+              - generic [ref=e982]: Republican
+        - complementary:
+          - generic:
+            - generic: Filter Contests
+            - button "Clear Filter"
+          - progressbar "Loading contests"
+          - generic:
+            - generic:
+              - generic:
+                - button "Expand Governor": ▶
+                - checkbox "Governor"
+                - generic: Governor
+            - generic:
+              - generic:
+                - button "Expand Lieutenant Governor": ▶
+                - checkbox "Lieutenant Governor"
+                - generic: Lieutenant Governor
+            - generic:
+              - generic:
+                - button "Expand Secretary of State": ▶
+                - checkbox "Secretary of State"
+                - generic: Secretary of State
+            - generic:
+              - generic:
+                - button "Expand Controller": ▶
+                - checkbox "Controller"
+                - generic: Controller
+            - generic:
+              - generic:
+                - button "Expand Treasurer": ▶
+                - checkbox "Treasurer"
+                - generic: Treasurer
+            - generic:
+              - generic:
+                - button "Expand Attorney General": ▶
+                - checkbox "Attorney General"
+                - generic: Attorney General
+            - generic:
+              - generic:
+                - button "Expand Insurance Commissioner": ▶
+                - checkbox "Insurance Commissioner"
+                - generic: Insurance Commissioner
+            - generic:
+              - generic:
+                - button "Expand Board of Equalization": ▶
+                - checkbox "Board of Equalization"
+                - generic: Board of Equalization
+            - generic:
+              - generic:
+                - button "Expand Superintendent Public Inst": ▶
+                - checkbox "Superintendent Public Inst"
+                - generic: Superintendent Public Inst
+            - generic:
+              - generic:
+                - button "Expand U.S. Representative": ▶
+                - checkbox "U.S. Representative"
+                - generic: U.S. Representative
+            - generic:
+              - generic:
+                - button "Expand State Senator": ▶
+                - checkbox "State Senator"
+                - generic: State Senator
+            - generic:
+              - generic:
+                - button "Expand Member of the Assembly": ▶
+                - checkbox "Member of the Assembly"
+                - generic: Member of the Assembly
+            - generic:
+              - generic:
+                - button "Expand County Measures": ▶
+                - checkbox "County Measures"
+                - generic: County Measures
+            - generic:
+              - generic:
+                - button "Expand Board of Supervisors": ▶
+                - checkbox "Board of Supervisors"
+                - generic: Board of Supervisors
+            - generic:
+              - generic:
+                - button "Expand Sheriff": ▶
+                - checkbox "Sheriff"
+                - generic: Sheriff
+            - generic:
+              - generic:
+                - button "Expand Assessor": ▶
+                - checkbox "Assessor"
+                - generic: Assessor
+            - generic:
+              - generic:
+                - button "Expand Judge Superior Court": ▶
+                - checkbox "Judge Superior Court"
+                - generic: Judge Superior Court
+            - generic:
+              - generic:
+                - button "Expand Cities": ▶
+                - checkbox "Cities"
+                - generic: Cities
+            - generic:
+              - generic:
+                - button "Expand Schools": ▶
+                - checkbox "Schools"
+                - generic: Schools
+            - generic:
+              - generic:
+                - button "Expand Community Services": ▶
+                - checkbox "Community Services"
+                - generic: Community Services
+      - contentinfo [ref=e983]:
+        - generic [ref=e988]:
+          - link "About Us" [ref=e989] [cursor=pointer]:
+            - /url: https://lavote.gov/about-us/background
+          - text: "|"
+          - link "Privacy Policy (opens in new tab)" [ref=e990] [cursor=pointer]:
+            - /url: https://www.lacounty.gov/wps/portal/lac/about/privacy
+            - text: Privacy Policy
+            - generic [ref=e991]: (opens in new tab)
+          - text: "|"
+          - link "User Rights (opens in new tab)" [ref=e992] [cursor=pointer]:
+            - /url: https://www.lacounty.gov/wps/portal/lac/user/
+            - text: User Rights
+            - generic [ref=e993]: (opens in new tab)
+          - text: "|"
+          - link "Disclaimer (opens in new tab)" [ref=e994] [cursor=pointer]:
+            - /url: https://www.lacounty.gov/wps/portal/lac/disclaimer/
+            - text: Disclaimer
+            - generic [ref=e995]: (opens in new tab)
+          - text: "|"
+          - link "Site Map" [ref=e996] [cursor=pointer]:
+            - /url: https://lavote.gov/site-map
+          - text: "|"
+          - link "Accessibility (opens in new tab)" [ref=e997] [cursor=pointer]:
+            - /url: https://www.lacounty.gov/accessibility
+            - text: Accessibility
+            - generic [ref=e998]: (opens in new tab)
