@@ -1,0 +1,97 @@
+G3;2026-06-07 23:26:15: Running tar_make
+g- One or more packages recorded in the lockfile are not installed.
+- Use `]8;;x-r-run:renv::status()renv::status()]8;;` for more details.
+ℹ Updating enightdata documentation
+ℹ Loading enightdata
+
+✔ Updated metadata database: 7.76 MB in 9 files.
+
+ℹ R 4.5 aarch64-apple-darwin20 packages are missing from bioconductor.org: Not Found (HTTP 404)., Not Found (HTTP 404)., Not Found (HTTP 404)., Not Found (HTTP 404)., and Not Found (HTTP 404).
+ℹ Updating metadata database
+✔ Updating metadata database ... done
+
+ 
+→ Will update 1 package.
+→ The package (0 B) is cached.
++ enightdata 0.0.0.9000 → 0.0.0.9000 👷🏽
+ℹ No downloads are needed, 1 pkg is cached
+✔ Got enightdata 0.0.0.9000 (source) (96 B)
+ℹ Packaging enightdata 0.0.0.9000
+✔ Packaged enightdata 0.0.0.9000 (904ms)
+ℹ Building enightdata 0.0.0.9000
+✔ Built enightdata 0.0.0.9000 (1.9s)
+✔ Installed enightdata 0.0.0.9000 (local) (15ms)
+✔ 1 pkg + 77 deps: kept 77, upd 1, dld 1 (NA B) [15.5s]
+→ de-duplicating _targets/meta/meta
+→ reading _targets/meta/meta
+→ parsing _targets/meta/meta
+→ noting builders and branches
+→ parsing _targets/meta/meta
+→ restricting metadata records
+→ querying 46 local files in _targets/objects
+→ reading _targets/meta/process
+→ parsing _targets/meta/process
++ timestamp_CA_merced dispatched
++ timestamp_CA_marin dispatched
++ timestamp_CA_sacramento dispatched
++ timestamp_CA_solano dispatched
++ timestamp_CA_san.mateo dispatched
++ timestamp_CA_sonoma dispatched
++ timestamp_CA_contra.costa dispatched
++ timestamp_CA_shasta dispatched
++ timestamp_CA_santa.clara dispatched
++ timestamp_CA_imperial dispatched
++ ca_statewide dispatched
++ timestamp_CA_riverside dispatched
+→ 46 targets ■■                               [4.5s, 1+, 0-]
+✔ timestamp_CA_merced completed [2.5s, 71 B]
+→ 46 targets ■■                               [4.5s, 1+, 0-]+ timestamp_CA_san.diego dispatched
+→ 46 targets ■■                               [4.5s, 1+, 0-]✔ timestamp_CA_marin completed [2.2s, 71 B]
+→ 46 targets ■■                               [4.5s, 1+, 0-]+ timestamp_CA_butte dispatched
+→ 46 targets ■■                               [4.5s, 1+, 0-]✔ timestamp_CA_santa.clara completed [320ms, 70 B]
+→ 46 targets ■■                               [4.5s, 1+, 0-]+ data_CA_santa.clara dispatched
+→ 46 targets ■■                               [4.5s, 1+, 0-]✔ timestamp_CA_riverside completed [555ms, 69 B]
+→ 46 targets ■■                               [4.5s, 1+, 0-]✔ timestamp_CA_san.mateo completed [2.1s, 71 B]
+→ 46 targets ■■                               [4.5s, 1+, 0-]✔ timestamp_CA_imperial completed [713ms, 68 B]
+→ 46 targets ■■                               [4.5s, 1+, 0-]+ timestamp_CA_orange dispatched
+→ 46 targets ■■                               [4.5s, 1+, 0-]+ timestamp_CA_san.francisco dispatched
+→ 46 targets ■■                               [4.5s, 1+, 0-]✔ timestamp_CA_sonoma completed [1.9s, 71 B]
+→ 46 targets ■■                               [4.5s, 1+, 0-]✔ timestamp_CA_contra.costa completed [1.9s, 71 B]
+→ 46 targets ■■                               [4.5s, 1+, 0-]+ data_CA_contra.costa dispatched
+→ 46 targets ■■                               [4.5s, 1+, 0-]✔ timestamp_CA_shasta completed [1.7s, 71 B]
+→ 46 targets ■■                               [4.5s, 1+, 0-]+ data_CA_shasta dispatched
+→ 46 targets ■■                               [4.5s, 1+, 0-]✔ timestamp_CA_orange completed [703ms, 69 B]
+→ 46 targets ■■                               [4.5s, 1+, 0-]→ 46 targets ■■■■■■■■■■■■■■■■■                [6.6s, 11+, 14-]
+✔ timestamp_CA_san.diego completed [1.5s, 71 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■                [6.6s, 11+, 14-]✔ timestamp_CA_butte completed [1.3s, 71 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■                [6.6s, 11+, 14-]✔ timestamp_CA_san.francisco completed [1.2s, 71 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■                [6.6s, 11+, 14-]✔ ca_statewide completed [2.1s, 2.20 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■■                [6.6s, 11+, 14-]✔ timestamp_CA_sacramento completed [5.4s, 71 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■                [6.6s, 11+, 14-]✔ timestamp_CA_solano completed [5.8s, 71 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■                [6.6s, 11+, 14-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [10.5s, 16+, 24-]
+✖ data_CA_contra.costa errored
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [10.5s, 16+, 24-]Error: ℹ In argument: `when_any(...)`.
+Caused by error:
+! object 'method' not found
+
++ tbl_cbs_CA_contra.costa dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [10.5s, 16+, 24-]✖ tbl_cbs_CA_contra.costa errored
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [10.5s, 16+, 24-]Error: could not load dependency data_CA_contra.costa of target tbl_cbs_CA_contra.costa. invalid 'description' argument
+
+✔ data_CA_shasta completed [5.2s, 15.03 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [10.5s, 16+, 24-]+ tbl_cbs_CA_shasta dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     [10.5s, 16+, 24-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [14.5s, 18+, 24-]
+✔ tbl_cbs_CA_shasta completed [3.2s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [14.5s, 18+, 24-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [16.1s, 19+, 24-]
+✔ data_CA_santa.clara completed [10.6s, 74.43 kB]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [16.1s, 19+, 24-]+ tbl_cbs_CA_santa.clara dispatched
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   [16.1s, 19+, 24-]→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [25.5s, 20+, 24-]
+✔ tbl_cbs_CA_santa.clara completed [9.4s, 44 B]
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [25.5s, 20+, 24-]→ de-duplicating _targets/meta/meta
+→ 46 targets ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [25.5s, 20+, 24-]✖ errored pipeline [26.2s, 20 completed, 24 skipped]
+Warning messages:
+1: package ‘targets’ was built under R version 4.5.2 
+2: package ‘tarchetypes’ was built under R version 4.5.2 
+3: package ‘glue’ was built under R version 4.5.2 
+4: 2 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
+5: 12 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
