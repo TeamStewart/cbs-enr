@@ -1,0 +1,19 @@
+2026-06-10 11:44:09: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
+ℹ Updating enightdata documentation
+ℹ Loading enightdata
+✔ Updated metadata database: 6.22 MB in 7 files.
+ℹ Updating metadata database✔ Updating metadata database ... done
+Error:
+! Error in tar_make():
+  ! error in pak subprocess
+Caused by error: 
+! Could not solve package dependencies:
+* local::/Users/stewart/Documents/enightdata: Can't install dependency CoryMcCartan/enightmodels (>= 0.0.0.9000)
+* CoryMcCartan/enightmodels: ! pkgdepends resolution error for CoryMcCartan/enightmodels.
+Caused by error: 
+! GitHub HTTP error
+Caused by error in `stop(http_error(resp))`:
+! Unauthorized (HTTP 401).
+  See https://books.ropensci.org/targets/debugging.html
+Execution halted
