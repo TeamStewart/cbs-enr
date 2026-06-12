@@ -69,7 +69,7 @@ find_oh_candidate|function|bb2cbcc965f49181
 find_oh_contest|function|054d70ba3690e5f9
 find_oh_district|function|1db385bbac9e869e
 find_oh_jurisdiction|function|e79112ce189136df
-.Random.seed|object|b550cfb3e672de34
+.Random.seed|object|541ab6a8227e871f
 add_resid|function|8c34556aafe3cb01
 run_model|function|bc1e3f5b6405009e
 find_tx_contest|function|459f6726a9b65988
@@ -178,23 +178,23 @@ scrape_ca_clarity|function|7b32de701d1f13d1
 tx_timestamp|function|e449df2a59f0ce04
 manual_runmodels|function|286a601e37b89705
 .onLoad|function|b34c3c60eb451091
-timestamp_CA_merced|stem|c10d419b0e61ab8e|6fd73517f2530c6c|ad1f612c29aec41f|1782685284||t20616.2868442249s|s70b|70|rds|local|vector|||1.024||
-timestamp_CA_shasta|stem|ccb6a74ef0269d72|572784a78f2cb73f|ad1f612c29aec41f|-1912505998||t20616.286845008s|s71b|71|rds|local|vector|||0.063||
-timestamp_CA_sonoma|stem|4a14a1e6a7bd22f5|4e4c18368e916f6f|ad1f612c29aec41f|-1097435852||t20616.2868498176s|s69b|69|rds|local|vector|||0.964||
-timestamp_CA_butte|stem|908b75f817d9c79e|b67ef2a006d0bcf2|ad1f612c29aec41f|-320120728||t20616.2868512759s|s69b|69|rds|local|vector|||0.977||
-la_totals_timestamp|stem|dbc0dd41c544fe2d|cac19ff60e2a9859|2c530c1562a7fbd1|1756349458||t20616.2868537977s|s70b|70|rds|local|vector|||0.993||
-timestamp_CA_marin|stem|7f613798188b657d|83170c8a3604d39f|ad1f612c29aec41f|1173289839||t20616.2868545765s|s70b|70|rds|local|vector|||0.065||
-timestamp_CA_san.francisco|stem|4669b6ffaf3ff334|3bd18bb23f19dc99|ad1f612c29aec41f|-825297797||t20616.2868616076s|s71b|71|rds|local|vector|||0.605||
-timestamp_CA_orange|stem|7b71ef0717aa2c4c|38d0449d2ada3273|ad1f612c29aec41f|75673971||t20616.2868646038s|s69b|69|rds|local|vector|||0.257||
-timestamp_CA_contra.costa|stem|0a610060c6ce678e|60321be33c0146e2|ad1f612c29aec41f|-976530686||t20616.2868651041s|s71b|71|rds|local|vector|||0.041||
-ca_statewide|stem|7db6cc98d2abcff9|3064de853e4f96c4|583ebf273365560b|-826617881||t20616.2868731226s|s2200b|2200|rds|local|vector|||0.691||
-timestamp_CA_sacramento|stem|6fe680cdc24536e3|659ec1d21a023e19|ad1f612c29aec41f|-38997487||t20616.2868886578s|s69b|69|rds|local|vector|||1.34||
-la_totals|stem|7c914afdeb4fd35f|9e8a5f9df9584a74|26e38b99e4806c8e|-1060118838||t20616.2868961328s|s2790b|2790|rds|local|vector|||0.643||
-timestamp_CA_santa.clara|stem|17f5a6c5ce4e78d4|749f1a5300060c2a|ad1f612c29aec41f|-687950561||t20616.2868966979s|s70b|70|rds|local|vector|||0.046||
-data_CA_contra.costa|stem||16d62913f717734b|0013b73007367640|1253014225||t20607.2689801112s||0|rds|local|vector|||1.581||ℹ In argument: `when_any(...)`. Caused by error: ! object 'method' not found
+timestamp_CA_san.diego|stem|3ddacda0266f3ecc|6d1c9477e9e1f376|ad1f612c29aec41f|1079177479||t20616.3285141537s|s69b|69|rds|local|vector|||1.164||
+timestamp_CA_imperial|stem|d9577e69ca6828fb|13300daba89ac10b|ad1f612c29aec41f|-1437450791||t20616.3285142576s|s71b|71|rds|local|vector|||1.066||
+timestamp_CA_riverside|stem|d5efd38fa3c343ab|47e2a36d85f96a2d|ad1f612c29aec41f|-2118173496||t20616.3285153736s|s71b|71|rds|local|vector|||0.1||
+timestamp_CA_marin|stem|7f613798188b657d|83170c8a3604d39f|ad1f612c29aec41f|1173289839||t20616.3285207383s|s70b|70|rds|local|vector|||0.555||
+timestamp_CA_merced|stem|c10d419b0e61ab8e|6fd73517f2530c6c|ad1f612c29aec41f|1782685284||t20616.3285207722s|s70b|70|rds|local|vector|||1.925||
+timestamp_CA_sonoma|stem|4a14a1e6a7bd22f5|4e4c18368e916f6f|ad1f612c29aec41f|-1097435852||t20616.3285208289s|s69b|69|rds|local|vector|||1.465||
+timestamp_CA_butte|stem|908b75f817d9c79e|b67ef2a006d0bcf2|ad1f612c29aec41f|-320120728||t20616.3285208433s|s69b|69|rds|local|vector|||1.308||
+timestamp_CA_shasta|stem|ccb6a74ef0269d72|572784a78f2cb73f|ad1f612c29aec41f|-1912505998||t20616.3285209855s|s71b|71|rds|local|vector|||0.879||
+la_totals_timestamp|stem|d2a899a668473772|cac19ff60e2a9859|2c530c1562a7fbd1|1756349458||t20616.3285210909s|s70b|70|rds|local|vector|||1.147||
+timestamp_CA_san.francisco|stem|4669b6ffaf3ff334|3bd18bb23f19dc99|ad1f612c29aec41f|-825297797||t20616.3285211771s|s71b|71|rds|local|vector|||0.498||
+timestamp_CA_santa.clara|stem|17f5a6c5ce4e78d4|749f1a5300060c2a|ad1f612c29aec41f|-687950561||t20616.3285214051s|s70b|70|rds|local|vector|||0.042||
+timestamp_CA_san.mateo|stem|a44db41a6e13e63b|09023aeffc16551c|ad1f612c29aec41f|-475161064||t20616.3285246472s|s71b|71|rds|local|vector|||0.918||
+la_totals|stem|31216d4b81d3d6b2|9e8a5f9df9584a74|02950cca33de85b4|-1060118838||t20616.3285303121s|s2789b|2789|rds|local|vector|||0.788||
+timestamp_CA_orange|stem|7b71ef0717aa2c4c|38d0449d2ada3273|ad1f612c29aec41f|75673971||t20616.3285304034s|s69b|69|rds|local|vector|||1.104||
+timestamp_CA_contra.costa|stem|0a610060c6ce678e|60321be33c0146e2|ad1f612c29aec41f|-976530686||t20616.3285317814s|s71b|71|rds|local|vector|||1.088||
+timestamp_CA_solano|stem|8ea902c1f5cc3a94|5240d9e1db0cfabd|ad1f612c29aec41f|819587531||t20616.3285388103s|s71b|71|rds|local|vector|||2.23||
+ca_statewide|stem|7db6cc98d2abcff9|3064de853e4f96c4|583ebf273365560b|-826617881||t20616.3285396404s|s2200b|2200|rds|local|vector|||1.606||
+timestamp_CA_sacramento|stem|6fe680cdc24536e3|659ec1d21a023e19|ad1f612c29aec41f|-38997487||t20616.3285397148s|s69b|69|rds|local|vector|||1.629||
+data_CA_contra.costa|stem||16d62913f717734b|0013b73007367640|1253014225||t20607.2689801112s||0|rds|local|vector|||1.689||ℹ In argument: `when_any(...)`. Caused by error: ! object 'method' not found
 tbl_cbs_CA_contra.costa|stem||bf839ba200ac3563|c67efea2b30751d5|418834321||t20607.2689802885s||0|rds|local|vector|||0.002||could not load dependency data_CA_contra.costa of target tbl_cbs_CA_contra.costa. invalid 'description' argument
-timestamp_CA_san.mateo|stem|a44db41a6e13e63b|09023aeffc16551c|ad1f612c29aec41f|-475161064||t20616.2869475934s|s71b|71|rds|local|vector|||8.445||
-timestamp_CA_imperial|stem|d9577e69ca6828fb|13300daba89ac10b|ad1f612c29aec41f|-1437450791||t20616.2869476078s|s71b|71|rds|local|vector|||9.657||
-timestamp_CA_riverside|stem|d5efd38fa3c343ab|47e2a36d85f96a2d|ad1f612c29aec41f|-2118173496||t20616.2869477433s|s71b|71|rds|local|vector|||8.332||
-timestamp_CA_san.diego|stem|3ddacda0266f3ecc|6d1c9477e9e1f376|ad1f612c29aec41f|1079177479||t20616.2869478874s|s69b|69|rds|local|vector|||9.804||
-timestamp_CA_solano|stem|8ea902c1f5cc3a94|5240d9e1db0cfabd|ad1f612c29aec41f|819587531||t20616.2869593182s|s71b|71|rds|local|vector|||9.872||
