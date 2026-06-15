@@ -5,7 +5,7 @@
 ## Author: Joseph R. Loffredo and Mason Reece
 ##################################################
 
-INTERVAL = 60 # minutes
+INTERVAL = 480 # minutes
 googlesheets4::gs4_auth(email = TRUE)
 googledrive::drive_auth(email = TRUE)
 
