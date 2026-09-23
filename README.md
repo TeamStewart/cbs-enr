@@ -53,6 +53,15 @@ One of the functions of the pipeline is to build a simple website consisting of 
 
 -   The Quarto pages for each webpage are found in `/pages` and `index.qmd` - `/docs`, `/index_files`, `index.html` are generated automatically and should never be modified
 
+#### Dashboard (`index.qmd`)
+
+The dashboard is rendered by the `dashboard` target on every `tar_make()`. A dropdown next to the title switches between State x Contest selections; every selection gets the same value boxes (last update, precincts reported, total/Election Day votes, leading Dem and Rep candidates) and the same charts (vote totals/counts/shares over time, precinct margin and swing histograms, a swing scatter, and a precinct explorer). All charts are drawn in the browser (Observable Plot), so one HTML file covers every selection. `?c=GA-sen` in the URL opens a specific selection.
+
+-   **Adding or removing a selection:** edit `DASHBOARD_CONTESTS` in `scripts/util/globals.R` (`state`, `contest` code as it appears in the clean data, `district` or `NA`, optional `label`, optional `hist_contest`) and rerun `tar_make()`. Counties scraped separately for the same state are pooled.
+-   **Pipeline pieces:** each jurisdiction's `summary_*` target (`make_summary()`) writes a small per-run file to `{ELECTION_FOLDER}/{STATE}/summaries/` (these build the time series) and returns its precinct table; `dashboard_data` (`build_dashboard_data()`) combines them for the configured selections.
+-   **History (optional):** `{ELECTION_FOLDER}/history/{STATE}_history.parquet`, long format with columns `geo`, `contest`, `party`, `year`, `votes`, and optionally `method`, `district`, `county`. `geo` must match the live scraper's `geo` ids. When present, the dashboard adds "% of 'YY" to the vote boxes, the swing histogram, and the swing scatter; otherwise those show a "no history" note. The latest `year` for the matching contest is used.
+-   **Testing without a live election:** `CBS_ELECTION_FOLDER=26_dashtest Rscript scripts/util/make_dashboard_test_data.R` builds fake Dem-vs-Rep data from the `26_primaries` snapshots, then `CBS_ELECTION_FOLDER=26_dashtest CBS_DASH_RDS="<PATH_DROPBOX>/26_dashtest/dashboard_data.rds" quarto render index.qmd --output dashtest.html`.
+
 ### Version control and package management:
 
 We use the R package `renv` to maintain a consistent package and version state for all users. It's two basic uses are to `renv::restore()` to set-up a new user and `renv::snapshot()` to update the list of packages in use. Additionally, because of the use of the R `targets` package, users need to also run `targets::tar_renv()` when before snapshotting to correctly identify all the packages.

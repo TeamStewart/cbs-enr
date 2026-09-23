@@ -87,23 +87,195 @@ upload_html <- function(path, state) {
   )
 }
 
-make_summary <- function(data, state, county, timestamp, history){
-  merge_data(
-    data = data,
-    history = history,
-    office = c("Governor", "Attorney General", "Lt Governor"),
-    impute = FALSE
-  ) |> 
-    summarize(
-      across(c(turnout, matches("votes_.*?2\\d_.*?precinct_total$")), ~ sum(.x, na.rm=TRUE)),
-      .by = c(timestamp, vote_mode) 
-    ) |> 
+# ========================================
+## DASHBOARD
+# ========================================
+
+# Per-run summary for one jurisdiction. Writes the candidate x method totals for
+# every contest to {state}/summaries/ (these accumulate into the dashboard time
+# series) and returns the precinct-level table for the latest run.
+make_summary <- function(data, state, county) {
+  key = if (is.na(county)) state else glue("{state}_{county}")
+
+  d = as_tibble(data) |>
     mutate(
-      across(matches("votes_.*?2\\d_.*?precinct_total$"), ~ .x / turnout, .names = "{str_replace(.col, '_precinct_total$', '_share')}"),
-    ) |> 
-    write_csv(
-      glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/{state}/summaries/summarylive_{state}_{county}_{timestamp}.csv")
+      across(c(jurisdiction, contest, candidate, party, method, geo), as.character),
+      stage = suppressWarnings(as.integer(as.character(stage)))
     )
+
+  time = max(d$time, na.rm = TRUE)
+
+  summ = d |>
+    summarise(votes = sum(votes, na.rm = TRUE), .by = c(contest, district, candidate, party, method)) |>
+    mutate(key = key, time = time)
+
+  dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, state, "summaries")
+  fs::dir_create(dir)
+  nanoparquet::write_parquet(summ, fs::path(dir, glue("summary_{key}_{format(time, '%Y_%m_%d_%H_%M_%S')}.parquet")))
+
+  prec = d |>
+    summarise(
+      votes = sum(votes, na.rm = TRUE),
+      stage = suppressWarnings(max(stage, na.rm = TRUE)),
+      .by = c(jurisdiction, contest, district, geo, method, candidate, party)
+    ) |>
+    mutate(stage = if_else(is.finite(stage), stage, NA_integer_))
+
+  list(key = key, state = state, time = time, prec = prec)
+}
+
+# "carter, buddy" -> "Buddy Carter"
+clean_cand_name <- function(x) {
+  x = if_else(str_detect(x, ","), str_replace(x, "^(.*?),\\s*(.*)$", "\\2 \\1"), x)
+  str_to_title(str_squish(x))
+}
+
+read_history <- function(state) {
+  path = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "history", glue("{state}_history.parquet"))
+  if (!fs::file_exists(path)) return(NULL)
+  h = nanoparquet::read_parquet(path) |> as_tibble()
+  if (!"method" %in% names(h)) h$method = NA_character_
+  if (!"district" %in% names(h)) h$district = NA_integer_
+  if (!"county" %in% names(h)) h$county = NA_character_
+  mutate(h, across(c(geo, method, contest, party, county), as.character), district = as.integer(district))
+}
+
+read_summaries <- function(state, keys) {
+  files = fs::dir_ls(fs::path(PATH_DROPBOX, ELECTION_FOLDER, state, "summaries"), regexp = "summary_.*\\.parquet$", fail = FALSE)
+  if (length(files) == 0) return(NULL)
+  map(files, nanoparquet::read_parquet) |>
+    bind_rows() |>
+    filter(key %in% keys) |>
+    distinct()
+}
+
+# Build everything index.qmd needs for each row of `contests`.
+# `dash` is a list of make_summary() outputs (one per jurisdiction).
+build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
+  contests = contests |>
+    mutate(
+      key = if_else(is.na(district), paste0(state, "-", contest), paste0(state, "-", contest, "-", district)),
+      label = coalesce(label, if_else(is.na(district), paste(state, contest), paste0(state, " ", contest, "-", district))),
+      hist_contest = coalesce(hist_contest, contest)
+    )
+
+  prec_all = map(dash, \(x) mutate(x$prec, state = x$state, src = x$key, src_time = x$time)) |> bind_rows()
+  keys_by_state = split(map_chr(dash, "key"), map_chr(dash, "state"))
+
+  states = unique(contests$state)
+  summaries = map(states, \(s) read_summaries(s, keys_by_state[[s]])) |> set_names(states)
+  histories = map(states, read_history) |> set_names(states)
+
+  out = pmap(contests, \(state, contest, district, key, label, hist_contest, ...) {
+    p = filter(prec_all, .env$state == .data$state, .env$contest == .data$contest)
+    # statewide rows sometimes carry a dummy district (e.g. NC sen = 1): accept it if it's the only one
+    dist = if (is.na(district) && !anyNA(p$district) && n_distinct(p$district) == 1) unique(p$district) else district
+    p = filter(p, .data$district %in% dist)
+    h = histories[[state]]
+    if (!is.null(h)) {
+      h = filter(h, contest == hist_contest, district %in% c(district, dist))
+      if (nrow(h) == 0) h = NULL else h = filter(h, year == max(year))
+    }
+
+    lead = p |>
+      filter(party %in% c("dem", "rep")) |>
+      summarise(votes = sum(votes), .by = c(candidate, party)) |>
+      slice_max(votes, n = 1, by = party, with_ties = FALSE)
+    dem_cand = lead$candidate[lead$party == "dem"]
+    rep_cand = lead$candidate[lead$party == "rep"]
+    if (length(dem_cand) == 0) dem_cand = NA_character_
+    if (length(rep_cand) == 0) rep_cand = NA_character_
+
+    prec = p |>
+      summarise(
+        dem = sum(votes[party == "dem" & candidate == dem_cand]),
+        rep = sum(votes[party == "rep" & candidate == rep_cand]),
+        total = sum(votes),
+        stage = suppressWarnings(max(stage, na.rm = TRUE)),
+        .by = c(src, geo, method)
+      ) |>
+      mutate(stage = if_else(is.finite(stage), stage, NA_integer_))
+
+    hist_eday = NA_real_
+    if (!is.null(h)) {
+      hwide = h |>
+        summarise(
+          hist_dem = sum(votes[party == "dem"]),
+          hist_rep = sum(votes[party == "rep"]),
+          hist_total = sum(votes),
+          .by = c(geo, method, county)
+        )
+      if (all(is.na(hwide$method))) {
+        prec = left_join(prec, select(hwide, -method), by = "geo")
+      } else {
+        prec = left_join(prec, hwide, by = c("geo", "method"))
+        if ("eday" %in% hwide$method) hist_eday = sum(hwide$hist_total[hwide$method == "eday"], na.rm = TRUE)
+      }
+      prec = mutate(prec, county = coalesce(county, src))
+    } else {
+      prec = mutate(prec, county = src, hist_dem = NA_real_, hist_rep = NA_real_, hist_total = NA_real_)
+    }
+
+    geo_stage = summarise(prec, stage = suppressWarnings(max(stage, na.rm = TRUE)), .by = geo)
+
+    meta = tibble(
+      key = key, label = label, state = state, contest = contest, district = district,
+      time = if (nrow(p) > 0) max(p$src_time) else NA,
+      n_juris = n_distinct(p$src),
+      juris = paste(sort(unique(p$src)), collapse = ", "),
+      n_geo = nrow(geo_stage),
+      n_complete = sum(geo_stage$stage >= 6, na.rm = TRUE),
+      n_partial = sum(geo_stage$stage %in% 1:5),
+      total = sum(prec$total),
+      eday = if ("eday" %in% prec$method) sum(prec$total[prec$method == "eday"]) else NA_real_,
+      dem_name = clean_cand_name(dem_cand),
+      dem_votes = sum(prec$dem),
+      rep_name = clean_cand_name(rep_cand),
+      rep_votes = sum(prec$rep),
+      has_hist = !is.null(h),
+      hist_by_method = !is.null(h) && !all(is.na(h$method)),
+      hist_year = if (is.null(h)) NA_integer_ else as.integer(max(h$year)),
+      hist_total = if (is.null(h)) NA_real_ else sum(h$votes),
+      hist_eday = hist_eday
+    )
+
+    s = summaries[[state]]
+    ts = tibble(time = as.POSIXct(character()), method = character(), total = numeric(), dem = numeric(), rep = numeric())
+    if (!is.null(s)) {
+      s = filter(s, .env$contest == .data$contest, .data$district %in% dist)
+      if (nrow(s) > 0) {
+        by_key = s |>
+          summarise(
+            dem = sum(votes[party == "dem" & candidate == dem_cand]),
+            rep = sum(votes[party == "rep" & candidate == rep_cand]),
+            total = sum(votes),
+            .by = c(key, time, method)
+          )
+        # carry each jurisdiction's latest run forward to every timestamp
+        ts = by_key |>
+          complete(key, method, time = sort(unique(by_key$time))) |>
+          arrange(time) |>
+          group_by(key, method) |>
+          fill(dem, rep, total) |>
+          ungroup() |>
+          mutate(across(c(dem, rep, total), \(x) coalesce(x, 0))) |>
+          summarise(across(c(dem, rep, total), sum), .by = c(time, method))
+      }
+    }
+
+    list(
+      meta = meta,
+      ts = mutate(ts, key = key, .before = 1),
+      prec = mutate(prec, key = key, .before = 1)
+    )
+  })
+
+  list(
+    meta = map(out, "meta") |> bind_rows(),
+    ts = map(out, "ts") |> bind_rows(),
+    prec = map(out, "prec") |> bind_rows(),
+    title = DASHBOARD_TITLE
+  )
 }
 
 parse_ca_datetime <- function(x, year = 2026L) {
