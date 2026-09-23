@@ -29,8 +29,9 @@
 
 .dbox-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 0.75rem;
+  // always one row of six; text scales with box width (container queries below)
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
   height: 100%;
 }
 
@@ -38,7 +39,7 @@
   background: $secondary;
   color: white;
   border-radius: 0.5rem;
-  padding: 0.6rem 0.9rem;
+  padding: 0.4rem 0.75rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -50,31 +51,37 @@
 }
 
 .dbox-title {
-  font-size: 0.85rem;
+  font-size: clamp(0.7rem, 7cqw, 0.85rem);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .dbox-value {
-  font-size: clamp(1rem, 12cqw, 2rem);
+  font-size: clamp(1rem, 11cqw, 1.5rem);
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
 }
 
 .dbox-sub {
-  font-size: 0.8rem;
+  font-size: clamp(0.65rem, 6.5cqw, 0.8rem);
   opacity: 0.85;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-// Plot legends sit above the card-sized svg; let the svg shrink so the x axis stays visible
-.quarto-dashboard .observablehq:has(> figure > svg) {
+// Plot legends sit above the card-sized svg (and card toolbars eat into the height);
+// let the svg shrink so the x axis stays visible
+.quarto-dashboard .observablehq:has(> figure > svg),
+.quarto-dashboard .observablehq:has(> svg) {
   height: 100%;
   min-height: 0;
+}
+
+.quarto-dashboard .observablehq > svg {
+  max-height: 100%;
 }
 
 .quarto-dashboard figure:has(> svg) {

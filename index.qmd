@@ -33,7 +33,7 @@ ojs_define(
 )
 ```
 
-## Overview {height="12%"}
+## Overview {height="88px"}
 
 ```{ojs setup}
 //| output: false
@@ -250,16 +250,16 @@ histSpec = (rows, x, label, xticks = 2) => ({
 ### Share Plots {.tabset}
 
 ```{ojs}
-//| title: Histogram-Margin
+//| title: Margin
 {
   if (noData) return empty("No data yet for this contest.");
-  const s = histSpec(reported.filter(d => d.margin != null), "margin", `Precinct margin (${cur.dem_name ?? "Dem"} − ${cur.rep_name ?? "Rep"}) →`, [-0.5, 0, 0.5]);
+  const s = histSpec(reported.filter(d => d.margin != null), "margin", `Precinct margin (${cur.dem_name ?? "Dem"} − ${cur.rep_name ?? "Rep"}) →`, [-0.5, 0.5]);
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
 
 ```{ojs}
-//| title: Histogram-Swing
+//| title: Swing
 {
   if (!cur.has_hist) return noHist();
   const s = histSpec(reported.filter(d => d.swing != null), "swing", `Dem share swing vs '${String(cur.hist_year).slice(2)} →`);
@@ -268,7 +268,7 @@ histSpec = (rows, x, label, xticks = 2) => ({
 ```
 
 ```{ojs}
-//| title: Scatter-Swing
+//| title: Swing Scatter
 !cur.has_hist ? noHist() :
 Plot.plot({
   fx: { domain: ["Precincts", "Counties"], label: null },
