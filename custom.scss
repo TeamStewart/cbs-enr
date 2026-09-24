@@ -9,23 +9,101 @@
     margin-right: 1em;
 }
 
-.quarto-dashboard .bslib-value-box {
-  .value-box-title {
-    color: white !important;
+// State x Contest dropdown, injected next to the navbar title by index.qmd
+.dash-select {
+  width: auto;
+  min-width: 12rem;
+  margin-left: 1rem;
+  display: inline-block;
+  font-weight: 600;
+}
+
+// value boxes (drawn in OJS so they follow the dropdown); drop the wrapping card chrome
+.card:has(.dbox-row) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+
+  .card-body { padding: 0; overflow: visible; }
+}
+
+.dbox-row {
+  display: grid;
+  // always one row of six; text scales with box width (container queries below)
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+  height: 100%;
+}
+
+.dbox {
+  background: $secondary;
+  color: white;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  container-type: inline-size;
+
+  &.dbox-dem { background: #005599; }
+  &.dbox-rep { background: #ce0008; }
+}
+
+.dbox-title {
+  font-size: clamp(0.7rem, 7cqw, 0.85rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dbox-value {
+  font-size: clamp(1rem, 11cqw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.dbox-sub {
+  font-size: clamp(0.65rem, 6.5cqw, 0.8rem);
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Plot legends sit above the card-sized svg (and card toolbars eat into the height);
+// let the svg shrink so the x axis stays visible
+.quarto-dashboard .observablehq:has(> figure > svg),
+.quarto-dashboard .observablehq:has(> svg) {
+  height: 100%;
+  min-height: 0;
+}
+
+.quarto-dashboard .observablehq > svg {
+  max-height: 100%;
+}
+
+.quarto-dashboard figure:has(> svg) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin: 0;
+
+  > svg {
+    flex: 1 1 auto;
+    min-height: 0;
   }
-  
-  .value-box-value {
-    color: white !important;
-    font-size: clamp(.1em, 8cqw, 5em) !important;
-  }
-  
-  .value-box-area {
-    color: white !important;
-    margin-top: -0.75em;
-  }
-  
-  // Target any paragraphs or spans that might be in the box
-  p, span {
-    color: white !important;
-  }
+}
+
+.dash-empty {
+  padding: 2rem;
+  color: $text-muted;
+  font-style: italic;
+}
+
+.dash-pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
 }

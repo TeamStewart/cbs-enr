@@ -87,30 +87,34 @@ office_filter = NULL
 # ========================================
 ## PIPELINE
 # ========================================
+map_multi = tar_map(
+  dplyr::filter(metadata, dplyr::n() > 1, .by = c(state, county)) |>
+    dplyr::summarise(
+      paths = list(path),
+      path_timestamps = list(path_timestamp),
+      .by = c(state, county, upload, trust_stage)
+    ),
+  tar_target(timestamp, purrr::map2(path_timestamps, paths, \(pt, p) get_timestamp(state, county, pt)), cue = tar_cue(mode = "always")),
+  tar_target(data, purrr::pmap(list(paths, timestamp, trust_stage), \(p, ts, tr) get_data(state, county, ts, p, tr, multi=TRUE)) |> dplyr::bind_rows()),
+  tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp[[1]], upload, do_cbs = FALSE, office_filter = office_filter)),
+  tar_target(summary, make_summary(data, state, county)),
+  names = c(state, county)
+)
+
+map_single = tar_map(
+  dplyr::filter(metadata, dplyr::n() == 1, .by = c(state, county)),
+  tar_target(timestamp, get_timestamp(state, county, path_timestamp), cue = tar_cue(mode = "always")),
+  tar_target(data, get_data(state, county, timestamp, path, trust_stage)),
+  tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
+  tar_target(summary, make_summary(data, state, county)),
+  names = c(state, county)
+)
+
 list(
   # first, parse jurisdictions with multiple URLs (e.g., for Dem/Rep primary)
-  tar_map(
-    dplyr::filter(metadata, dplyr::n() > 1, .by = c(state, county)) |>
-      dplyr::summarise(
-        paths = list(path),
-        path_timestamps = list(path_timestamp),
-        .by = c(state, county, upload, trust_stage)
-      ),
-    tar_target(timestamp, purrr::map2(path_timestamps, paths, \(pt, p) get_timestamp(state, county, pt)), cue = tar_cue(mode = "always")),
-    tar_target(data, purrr::pmap(list(paths, timestamp, trust_stage), \(p, ts, tr) get_data(state, county, ts, p, tr, multi=TRUE)) |> dplyr::bind_rows()),
-    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp[[1]], upload, do_cbs = FALSE, office_filter = office_filter)),
-    names = c(state, county)
-  ),
+  map_multi,
   # parse remaining, normal jurisdictions
-  tar_map(
-    dplyr::filter(metadata, dplyr::n() == 1, .by = c(state, county)),
-    tar_target(timestamp, get_timestamp(state, county, path_timestamp), cue = tar_cue(mode = "always")),
-    # tar_target(history, get_history(state, impute = FALSE)),
-    tar_target(data, get_data(state, county, timestamp, path, trust_stage)),
-    # tar_target(summary, make_summary(data, state, county, timestamp, history)),
-    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
-    names = c(state, county)
-  ),
+  map_single,
   tar_target(ca_statewide, get_castatewide(), cue = tar_cue(mode = "always")),
   tar_target(
     la_totals_timestamp,
@@ -120,7 +124,9 @@ list(
     ),
     cue = tar_cue(mode = "always")
   ),
-  tar_target(la_totals, get_la_totals(la_totals_timestamp))
-  # tar_quarto(dashboard, "index.qmd", quiet = FALSE),
-  # tar_target(upload_h, upload_html(dashboard[1]))
+  tar_target(la_totals, get_la_totals(la_totals_timestamp)),
+  # dashboard: contests shown are set by DASHBOARD_CONTESTS in scripts/util/globals.R
+  tar_combine(dash_inputs, map_multi[["summary"]], map_single[["summary"]], command = list(!!!.x)),
+  tar_target(dashboard_data, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS)),
+  tar_quarto(dashboard, "index.qmd", quiet = FALSE)
 )
