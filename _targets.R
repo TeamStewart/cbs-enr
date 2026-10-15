@@ -17,7 +17,9 @@ suppressPackageStartupMessages({
 source("scripts/functions.R")
 
 devtools::document(PATH_ENIGHTDATA)
-pak::local_install(PATH_ENIGHTDATA, upgrade = TRUE, ask = FALSE)
+# renv (not pak) so dependency versions stay at renv.lock; enightdata itself
+# is in renv's ignored.packages since each machine installs its own checkout
+renv::install(PATH_ENIGHTDATA, prompt = FALSE)
 
 options(
   readr.show_col_types = FALSE,
@@ -115,18 +117,8 @@ list(
   map_multi,
   # parse remaining, normal jurisdictions
   map_single,
-  tar_target(ca_statewide, get_castatewide(), cue = tar_cue(mode = "always")),
-  tar_target(
-    la_totals_timestamp,
-    enightdata::ca_timestamp(
-      "https://results.lavote.gov/ElectionResults/GetElectionData?electionID=4338",
-      county = "los angeles"
-    ),
-    cue = tar_cue(mode = "always")
-  ),
-  tar_target(la_totals, get_la_totals(la_totals_timestamp)),
   # dashboard: contests shown are set by DASHBOARD_CONTESTS in scripts/util/globals.R
-  tar_combine(dash_inputs, map_multi[["summary"]], map_single[["summary"]], command = list(!!!.x)),
+  tar_combine(dash_inputs, c(map_multi[["summary"]], map_single[["summary"]]), command = list(!!!.x)),
   tar_target(dashboard_data, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS)),
   tar_quarto(dashboard, "index.qmd", quiet = FALSE)
 )
