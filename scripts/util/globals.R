@@ -1,8 +1,8 @@
 PATH_GDRIVE = "https://drive.google.com/drive/u/0/folders/1ByjqU2Cq-qnBR8NYpC6r_JOE8CB1hJnL"
 PATH_CBS_S3 = "cbsn-elections-external-models"
 PATH_LOCAL = ""
-ELECTION_DATE = "20260526"
-ELECTION_FOLDER = Sys.getenv("CBS_ELECTION_FOLDER", "26_primaries")
+ELECTION_DATE = "2026-11-03"
+ELECTION_FOLDER = Sys.getenv("CBS_ELECTION_FOLDER", "26_general")
 PATH_DROPBOX = ""
 PATH_ENIGHTDATA = ""
 
