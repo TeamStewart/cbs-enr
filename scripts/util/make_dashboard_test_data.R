@@ -22,6 +22,8 @@ stopifnot(ELECTION_FOLDER != "26_primaries", ELECTION_FOLDER != "26_general")
 
 SOURCE_FOLDER = "26_primaries"
 STATES = unique(DASHBOARD_CONTESTS$state)
+# late post-primary snapshots cause big jumps in the time series; TX keeps them (runoff day)
+DROP_DATE = "2026_05_26"
 
 to_general <- function(d) {
   d |>
@@ -44,6 +46,7 @@ for (s in STATES) {
       prefix = str_match(fs::path_file(path), "^(.*)_\\d{4}(_\\d{2}){5}\\.parquet$")[, 2],
       county = na_if(str_remove(prefix, glue("^{s}_?")), "")
     ) |>
+    filter(s == "TX" | !str_detect(fs::path_file(path), glue("_{DROP_DATE}_"))) |>
     arrange(path)
 
   for (i in seq_len(nrow(files))) {
