@@ -68,3 +68,4 @@ data/voteshift/2022 County History.csv
 scripts/util/clarity_search/probe_results.csv
 scripts/util/clarity_search/discovered_elections.csv
 .Rprofile
+/.playwright-mcp

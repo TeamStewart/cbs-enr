@@ -1,108 +1,14 @@
 {
   "R": {
-    "Version": "4.6.0",
+    "Version": "4.6.1",
     "Repositories": [
       {
         "Name": "CRAN",
         "URL": "https://cloud.r-project.org"
-      },
-      {
-        "Name": "BioCsoft",
-        "URL": "https://bioconductor.org/packages/3.23/bioc"
-      },
-      {
-        "Name": "BioCann",
-        "URL": "https://bioconductor.org/packages/3.23/data/annotation"
-      },
-      {
-        "Name": "BioCexp",
-        "URL": "https://bioconductor.org/packages/3.23/data/experiment"
-      },
-      {
-        "Name": "BioCworkflows",
-        "URL": "https://bioconductor.org/packages/3.23/workflows"
-      },
-      {
-        "Name": "BioCbooks",
-        "URL": "https://bioconductor.org/packages/3.23/books"
       }
     ]
   },
-  "Bioconductor": {
-    "Version": "3.23"
-  },
   "Packages": {
-    "AsioHeaders": {
-      "Package": "AsioHeaders",
-      "Version": "1.30.2-1",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "'Asio' C++ Header Files",
-      "Date": "2025-04-15",
-      "Authors@R": "c(person(\"Dirk\", \"Eddelbuettel\", role = c(\"aut\", \"cre\"), email = \"edd@debian.org\", comment = c(ORCID = \"0000-0001-6419-907X\")), person(\"Christopher M.\", \"Kohlhoff\", role = \"aut\", comment = \"Author of Asio\"))",
-      "Description": "'Asio' is a cross-platform C++ library for network and low-level I/O programming that provides developers with a consistent asynchronous model using a modern C++ approach. It is also included in Boost but requires linking when used with Boost. Standalone it can be used header-only (provided a recent compiler). 'Asio' is written and maintained by Christopher M. Kohlhoff, and released under the 'Boost Software License', Version 1.0.",
-      "Copyright": "file inst/COPYRIGHTS",
-      "License": "BSL-1.0",
-      "URL": "https://github.com/eddelbuettel/asioheaders, https://dirk.eddelbuettel.com/code/asioheaders.html",
-      "BugReports": "https://github.com/eddelbuettel/asioheaders/issues",
-      "NeedsCompilation": "no",
-      "Author": "Dirk Eddelbuettel [aut, cre] (<https://orcid.org/0000-0001-6419-907X>), Christopher M. Kohlhoff [aut] (Author of Asio)",
-      "Maintainer": "Dirk Eddelbuettel <edd@debian.org>",
-      "Repository": "CRAN"
-    },
-    "BiocManager": {
-      "Package": "BiocManager",
-      "Version": "1.30.27",
-      "Source": "Repository",
-      "Title": "Access the Bioconductor Project Package Repository",
-      "Description": "A convenient tool to install and update Bioconductor packages.",
-      "Authors@R": "c( person(\"Martin\", \"Morgan\", email = \"martin.morgan@roswellpark.org\", role = \"aut\", comment = c(ORCID = \"0000-0002-5874-8148\")), person(\"Marcel\", \"Ramos\", email = \"marcel.ramos@sph.cuny.edu\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-3242-0582\")))",
-      "Imports": [
-        "utils"
-      ],
-      "Suggests": [
-        "BiocVersion",
-        "BiocStyle",
-        "remotes",
-        "rmarkdown",
-        "testthat",
-        "withr",
-        "curl",
-        "knitr"
-      ],
-      "URL": "https://bioconductor.github.io/BiocManager/",
-      "BugReports": "https://github.com/Bioconductor/BiocManager/issues",
-      "VignetteBuilder": "knitr",
-      "License": "Artistic-2.0",
-      "Encoding": "UTF-8",
-      "RoxygenNote": "7.3.2",
-      "NeedsCompilation": "no",
-      "Author": "Martin Morgan [aut] (ORCID: <https://orcid.org/0000-0002-5874-8148>), Marcel Ramos [aut, cre] (ORCID: <https://orcid.org/0000-0002-3242-0582>)",
-      "Maintainer": "Marcel Ramos <marcel.ramos@sph.cuny.edu>",
-      "Repository": "CRAN"
-    },
-    "BiocVersion": {
-      "Package": "BiocVersion",
-      "Version": "3.23.1",
-      "Source": "Bioconductor",
-      "Title": "Set the appropriate version of Bioconductor packages",
-      "Description": "This package provides repository information for the appropriate version of Bioconductor.",
-      "Authors@R": "c( person(\"Martin\", \"Morgan\", email = \"martin.morgan@roswellpark.org\", role = \"aut\"), person(\"Marcel\", \"Ramos\", email = \"marcel.ramos@sph.cuny.edu\", role = \"ctb\"), person(\"Bioconductor\", \"Package Maintainer\", email  = \"maintainer@bioconductor.org\", role = c(\"ctb\", \"cre\")))",
-      "biocViews": "Infrastructure",
-      "Depends": [
-        "R (>= 4.4.0)"
-      ],
-      "License": "Artistic-2.0",
-      "Encoding": "UTF-8",
-      "RoxygenNote": "6.0.1",
-      "Repository": "https://bioc.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/BiocVersion",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "252d7c8f03a39a9b83f6de7e9dbf9a5ee6584365",
-      "NeedsCompilation": "no",
-      "Author": "Martin Morgan [aut], Marcel Ramos [ctb], Bioconductor Package Maintainer [ctb, cre]",
-      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
-    },
     "DBI": {
       "Package": "DBI",
       "Version": "1.3.0",
@@ -195,7 +101,8 @@
       "NeedsCompilation": "no",
       "Author": "Achim Zeileis [aut, cre] (<https://orcid.org/0000-0003-0918-3766>), Yves Croissant [aut]",
       "Maintainer": "Achim Zeileis <Achim.Zeileis@R-project.org>",
-      "Repository": "CRAN"
+      "Repository": "RSPM",
+      "Encoding": "UTF-8"
     },
     "GauPro": {
       "Package": "GauPro",
@@ -860,7 +767,8 @@
       "NeedsCompilation": "no",
       "Author": "Thomas J. Leeper [aut] (<https://orcid.org/0000-0003-4097-6326>), Jonathan Stott [cre, aut], Mike Kaminsky [ctb]",
       "Maintainer": "Jonathan Stott <jonathan.stott@magairports.com>",
-      "Repository": "CRAN"
+      "Repository": "RSPM",
+      "Encoding": "UTF-8"
     },
     "backports": {
       "Package": "backports",
@@ -1529,52 +1437,6 @@
       "Collate": "'AssertCollection.R' 'allMissing.R' 'anyInfinite.R' 'anyMissing.R' 'anyNaN.R' 'asInteger.R' 'assert.R' 'helper.R' 'makeExpectation.R' 'makeTest.R' 'makeAssertion.R' 'checkAccess.R' 'checkArray.R' 'checkAtomic.R' 'checkAtomicVector.R' 'checkCharacter.R' 'checkChoice.R' 'checkClass.R' 'checkComplex.R' 'checkCount.R' 'checkDataFrame.R' 'checkDataTable.R' 'checkDate.R' 'checkDirectoryExists.R' 'checkDisjunct.R' 'checkDouble.R' 'checkEnvironment.R' 'checkFALSE.R' 'checkFactor.R' 'checkFileExists.R' 'checkFlag.R' 'checkFormula.R' 'checkFunction.R' 'checkInt.R' 'checkInteger.R' 'checkIntegerish.R' 'checkList.R' 'checkLogical.R' 'checkMatrix.R' 'checkMultiClass.R' 'checkNamed.R' 'checkNames.R' 'checkNull.R' 'checkNumber.R' 'checkNumeric.R' 'checkOS.R' 'checkPOSIXct.R' 'checkPathForOutput.R' 'checkPermutation.R' 'checkR6.R' 'checkRaw.R' 'checkScalar.R' 'checkScalarNA.R' 'checkSetEqual.R' 'checkString.R' 'checkSubset.R' 'checkTRUE.R' 'checkTibble.R' 'checkVector.R' 'coalesce.R' 'isIntegerish.R' 'matchArg.R' 'qassert.R' 'qassertr.R' 'vname.R' 'wfwl.R' 'zzz.R'",
       "Author": "Michel Lang [cre, aut] (ORCID: <https://orcid.org/0000-0001-9754-0393>), Bernd Bischl [ctb], Dénes Tóth [ctb] (ORCID: <https://orcid.org/0000-0003-4262-3217>)",
       "Maintainer": "Michel Lang <michellang@gmail.com>",
-      "Repository": "CRAN"
-    },
-    "chromote": {
-      "Package": "chromote",
-      "Version": "0.5.1",
-      "Source": "Repository",
-      "Title": "Headless Chrome Web Browser Interface",
-      "Authors@R": "c( person(\"Garrick\", \"Aden-Buie\", , \"garrick@posit.co\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-7111-0077\")), person(\"Winston\", \"Chang\", , \"winston@posit.co\", role = \"aut\"), person(\"Barret\", \"Schloerke\", , \"barret@posit.co\", role = \"aut\", comment = c(ORCID = \"0000-0001-9986-114X\")), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"), comment = c(ROR = \"03wc8by49\")) )",
-      "Description": "An implementation of the 'Chrome DevTools Protocol', for controlling a headless Chrome web browser.",
-      "License": "MIT + file LICENSE",
-      "URL": "https://rstudio.github.io/chromote/, https://github.com/rstudio/chromote",
-      "BugReports": "https://github.com/rstudio/chromote/issues",
-      "Imports": [
-        "cli",
-        "curl",
-        "fastmap",
-        "jsonlite",
-        "later (>= 1.1.0)",
-        "magrittr",
-        "processx",
-        "promises (>= 1.1.1)",
-        "R6",
-        "rlang (>= 1.1.0)",
-        "utils",
-        "websocket (>= 1.2.0)",
-        "withr",
-        "zip"
-      ],
-      "Suggests": [
-        "knitr",
-        "rmarkdown",
-        "showimage",
-        "testthat (>= 3.0.0)"
-      ],
-      "VignetteBuilder": "knitr",
-      "Config/Needs/website": "r-lib/pkgdown, rstudio/bslib",
-      "Config/testthat/edition": "3",
-      "Config/testthat/parallel": "FALSE",
-      "Config/testthat/start-first": "chromote_session",
-      "Encoding": "UTF-8",
-      "Language": "en-US",
-      "RoxygenNote": "7.3.2",
-      "SystemRequirements": "Google Chrome or other Chromium-based browser. chromium: chromium (rpm) or chromium-browser (deb)",
-      "NeedsCompilation": "no",
-      "Author": "Garrick Aden-Buie [aut, cre] (<https://orcid.org/0000-0002-7111-0077>), Winston Chang [aut], Barret Schloerke [aut] (<https://orcid.org/0000-0001-9986-114X>), Posit Software, PBC [cph, fnd] (03wc8by49)",
-      "Maintainer": "Garrick Aden-Buie <garrick@posit.co>",
       "Repository": "CRAN"
     },
     "class": {
@@ -2781,52 +2643,6 @@
       "Maintainer": "Hadley Wickham <hadley@rstudio.com>",
       "Repository": "CRAN"
     },
-    "enightdata": {
-      "Package": "enightdata",
-      "Version": "0.0.0.9000",
-      "Source": "Local",
-      "Title": "Election Night Data Tools",
-      "Authors@R": "c( person(given = \"Mason\", family = \"Reece\", email = \"masonreece1317@gmail.com\", role = c(\"aut\", \"cre\")), person(given = \"Joseph\", family = \"Loffredo\", role = c(\"aut\")), person(given = \"Ethan\", family = \"Singer\", role = c(\"aut\")), person(given = \"Bridget\", family = \"Schippers\", role = c(\"aut\")), person(given = \"Dominic\", family = \"Skinnion\", role = c(\"aut\")), person(given = \"Young-Kyung\", family = \"Kim\", role = c(\"aut\")))",
-      "Description": "Tools for scraping, cleaning, and uploading election night data.",
-      "License": "MIT + file LICENSE",
-      "Encoding": "UTF-8",
-      "Roxygen": "list(markdown = TRUE)",
-      "Imports": [
-        "chromote",
-        "cli",
-        "data.table",
-        "dplyr",
-        "enightmodels (>= 0.0.0.9000)",
-        "fs",
-        "glue",
-        "googledrive",
-        "httr2",
-        "janitor",
-        "jsonlite",
-        "lubridate",
-        "nanoparquet",
-        "purrr",
-        "readr",
-        "reticulate",
-        "rlang",
-        "rvest",
-        "stringr",
-        "tibble",
-        "tidyr",
-        "utils",
-        "xml2"
-      ],
-      "Remotes": "CoryMcCartan/enightmodels",
-      "Config/roxygen2/version": "8.0.0",
-      "RemotePkgRef": "local::/Users/stewart/Documents/enightdata",
-      "RemoteType": "local",
-      "NeedsCompilation": "no",
-      "Author": "Mason Reece [aut, cre], Joseph Loffredo [aut], Ethan Singer [aut], Bridget Schippers [aut], Dominic Skinnion [aut], Young-Kyung Kim [aut]",
-      "Maintainer": "Mason Reece <masonreece1317@gmail.com>",
-      "Depends": [
-        "R (>= 4.1.0)"
-      ]
-    },
     "enightmodels": {
       "Package": "enightmodels",
       "Version": "0.0.0.9000",
@@ -2876,7 +2692,7 @@
       "RemoteUsername": "CoryMcCartan",
       "RemoteRepo": "enightmodels",
       "RemoteRef": "main",
-      "RemoteSha": "c99797a662d163800537c23ba54b49174b47234c"
+      "RemoteSha": "90f63e405376224395b8b25e140384f56cf689f1"
     },
     "evaluate": {
       "Package": "evaluate",
@@ -3848,7 +3664,8 @@
       "NeedsCompilation": "no",
       "Author": "Baptiste Auguie [aut, cre], Anton Antonov [ctb]",
       "Maintainer": "Baptiste Auguie <baptiste.auguie@gmail.com>",
-      "Repository": "CRAN"
+      "Repository": "RSPM",
+      "Encoding": "UTF-8"
     },
     "gt": {
       "Package": "gt",
@@ -4774,7 +4591,8 @@
       "NeedsCompilation": "yes",
       "Author": "Andrea Peters [aut], Torsten Hothorn [aut, cre], Brian D. Ripley [ctb], Terry Therneau [ctb], Beth Atkinson [ctb]",
       "Maintainer": "Torsten Hothorn <Torsten.Hothorn@R-project.org>",
-      "Repository": "CRAN"
+      "Repository": "RSPM",
+      "Encoding": "UTF-8"
     },
     "isoband": {
       "Package": "isoband",
@@ -5124,7 +4942,8 @@
       "NeedsCompilation": "yes",
       "Author": "Deepayan Sarkar [aut, cre] (ORCID: <https://orcid.org/0000-0003-4107-1553>), Felix Andrews [ctb], Kevin Wright [ctb] (documentation), Neil Klepeis [ctb], Johan Larsson [ctb] (miscellaneous improvements), Zhijian (Jason) Wen [cph] (filled contour code), Paul Murrell [ctb], Stefan Eng [ctb] (violin plot improvements), Achim Zeileis [ctb] (modern colors), Alexandre Courtiol [ctb] (generics for larrows, lpolygon, lrect and lsegments)",
       "Maintainer": "Deepayan Sarkar <deepayan.sarkar@r-project.org>",
-      "Repository": "CRAN"
+      "Repository": "RSPM",
+      "Encoding": "UTF-8"
     },
     "lava": {
       "Package": "lava",
@@ -7100,11 +6919,6 @@
       "Author": "Travers Ching [aut, cre, cph], Yann Collet [ctb, cph] (Yann Collet is the author of the bundled zstd), Facebook, Inc. [cph] (Facebook is the copyright holder of the bundled zstd code), Reichardt Tino [ctb, cph] (Contributor/copyright holder of zstd bundled code), Skibinski Przemyslaw [ctb, cph] (Contributor/copyright holder of zstd bundled code), Mori Yuta [ctb, cph] (Contributor/copyright holder of zstd bundled code), Francesc Alted [ctb, cph] (Shuffling routines derived from Blosc library)",
       "Repository": "CRAN"
     },
-    "quarto": {
-      "Package": "quarto",
-      "Version": "1.5.1",
-      "Source": "Repository"
-    },
     "ragg": {
       "Package": "ragg",
       "Version": "1.5.2",
@@ -7421,8 +7235,8 @@
     },
     "recipes": {
       "Package": "recipes",
-      "Version": "1.3.2",
-      "Source": "Bioconductor",
+      "Version": "1.4.0",
+      "Source": "Repository",
       "Title": "Preprocessing and Feature Engineering Steps for Modeling",
       "Authors@R": "c( person(\"Max\", \"Kuhn\", , \"max@posit.co\", role = c(\"aut\", \"cre\")), person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = \"aut\"), person(\"Emil\", \"Hvitfeldt\", , \"emil.hvitfeldt@posit.co\", role = \"aut\"), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"), comment = c(ROR = \"03wc8by49\")) )",
       "Description": "A recipe prepares your data for modeling. We provide an extensible framework for pipeable sequences of feature engineering steps provides preprocessing tools to be applied to data. Statistical parameters for the steps can be estimated from an initial data set and then applied to other data sets. The resulting processed output can then be used as inputs for statistical or machine learning models.",
@@ -7468,8 +7282,10 @@
         "kernlab",
         "knitr",
         "methods",
+        "mixOmics",
         "modeldata (>= 0.1.1)",
         "parsnip (>= 1.2.0)",
+        "quarto",
         "RANN",
         "RcppRoll",
         "rmarkdown",
@@ -7477,18 +7293,18 @@
         "rsample",
         "RSpectra",
         "splines2",
+        "survival",
         "testthat (>= 3.3.0)",
         "workflows",
         "xml2"
       ],
-      "VignetteBuilder": "knitr",
+      "VignetteBuilder": "quarto",
       "RdMacros": "lifecycle",
-      "biocViews": "mixOmics",
       "Config/Needs/website": "tidyverse/tidytemplate, rmarkdown",
       "Config/testthat/edition": "3",
       "Config/usethis/last-upkeep": "2025-04-23",
       "Encoding": "UTF-8",
-      "RoxygenNote": "7.3.3",
+      "Config/roxygen2/version": "8.0.0",
       "NeedsCompilation": "no",
       "Author": "Max Kuhn [aut, cre], Hadley Wickham [aut], Emil Hvitfeldt [aut], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
       "Maintainer": "Max Kuhn <max@posit.co>",
@@ -7541,7 +7357,7 @@
     },
     "renv": {
       "Package": "renv",
-      "Version": "1.1.7",
+      "Version": "1.3.1",
       "Source": "Repository",
       "Type": "Package",
       "Title": "Project Environments",
@@ -7570,6 +7386,7 @@
         "modules",
         "packrat",
         "pak",
+        "pkgload",
         "R6",
         "remotes",
         "reticulate",
@@ -7583,12 +7400,12 @@
         "webfakes"
       ],
       "Encoding": "UTF-8",
-      "RoxygenNote": "7.3.3",
       "VignetteBuilder": "knitr",
       "Config/Needs/website": "tidyverse/tidytemplate",
       "Config/testthat/edition": "3",
       "Config/testthat/parallel": "true",
       "Config/testthat/start-first": "bioconductor,python,install,restore,snapshot,retrieve,remotes",
+      "Config/roxygen2/version": "8.0.0",
       "NeedsCompilation": "no",
       "Author": "Kevin Ushey [aut, cre] (ORCID: <https://orcid.org/0000-0003-2880-7407>), Hadley Wickham [aut] (ORCID: <https://orcid.org/0000-0003-4757-117X>), Posit Software, PBC [cph, fnd]",
       "Maintainer": "Kevin Ushey <kevin@rstudio.com>",
@@ -7698,14 +7515,14 @@
     },
     "rlang": {
       "Package": "rlang",
-      "Version": "1.2.0",
+      "Version": "1.3.0",
       "Source": "Repository",
       "Title": "Functions for Base Types and Core R and 'Tidyverse' Features",
+      "Authors@R": "c( person(\"Lionel\", \"Henry\", , \"lionel@posit.co\", role = c(\"aut\", \"cre\")), person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = \"aut\"), person(\"mikefc\", , , \"mikefc@coolbutuseless.com\", role = \"cph\", comment = \"Hash implementation based on Mike's xxhashlite\"), person(\"Yann\", \"Collet\", role = \"cph\", comment = \"Author of the embedded xxHash library\"), person(\"Posit, PBC\", role = c(\"cph\", \"fnd\")) )",
       "Description": "A toolbox for working with base types, core R features like the condition system, and core 'Tidyverse' features like tidy evaluation.",
-      "Authors@R": "c( person(\"Lionel\", \"Henry\", ,\"lionel@posit.co\", c(\"aut\", \"cre\")), person(\"Hadley\", \"Wickham\", ,\"hadley@posit.co\", \"aut\"), person(given = \"mikefc\", email = \"mikefc@coolbutuseless.com\", role = \"cph\", comment = \"Hash implementation based on Mike's xxhashlite\"), person(given = \"Yann\", family = \"Collet\", role = \"cph\", comment = \"Author of the embedded xxHash library\"), person(given = \"Posit, PBC\", role = c(\"cph\", \"fnd\")) )",
       "License": "MIT + file LICENSE",
-      "ByteCompile": "true",
-      "Biarch": "true",
+      "URL": "https://rlang.r-lib.org, https://github.com/r-lib/rlang",
+      "BugReports": "https://github.com/r-lib/rlang/issues",
       "Depends": [
         "R (>= 4.0.0)"
       ],
@@ -7735,13 +7552,14 @@
       "Enhances": [
         "winch"
       ],
-      "Encoding": "UTF-8",
-      "RoxygenNote": "7.3.3",
-      "URL": "https://rlang.r-lib.org, https://github.com/r-lib/rlang",
-      "BugReports": "https://github.com/r-lib/rlang/issues",
+      "Biarch": "true",
+      "ByteCompile": "true",
       "Config/build/compilation-database": "true",
-      "Config/testthat/edition": "3",
       "Config/Needs/website": "dplyr, tidyverse/tidytemplate",
+      "Config/roxygen2/version": "8.0.0",
+      "Config/testthat/edition": "3",
+      "Config/testthat/parallel": "true",
+      "Encoding": "UTF-8",
       "NeedsCompilation": "yes",
       "Author": "Lionel Henry [aut, cre], Hadley Wickham [aut], mikefc [cph] (Hash implementation based on Mike's xxhashlite), Yann Collet [cph] (Author of the embedded xxHash library), Posit, PBC [cph, fnd]",
       "Maintainer": "Lionel Henry <lionel@posit.co>",
@@ -8259,16 +8077,15 @@
       ],
       "Config/testthat/edition": "3",
       "URL": "http://corymccartan.com/schmear/",
+      "Author": "Cory McCartan [aut, cre] (ORCID: <https://orcid.org/0000-0002-6251-669X>)",
+      "Maintainer": "Cory McCartan <mccartan@psu.edu>",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "schmear",
       "RemoteUsername": "CoryMcCartan",
       "RemotePkgRef": "CoryMcCartan/schmear",
       "RemoteRef": "HEAD",
-      "RemoteSha": "ea5ea0e8c5ec7b1fd9e9f788e0a2153fe3afb59d",
-      "NeedsCompilation": "no",
-      "Author": "Cory McCartan [aut, cre] (ORCID: <https://orcid.org/0000-0002-6251-669X>)",
-      "Maintainer": "Cory McCartan <mccartan@psu.edu>"
+      "RemoteSha": "ea5ea0e8c5ec7b1fd9e9f788e0a2153fe3afb59d"
     },
     "secretbase": {
       "Package": "secretbase",
@@ -8319,7 +8136,8 @@
       "NeedsCompilation": "no",
       "Author": "Simon Potter [aut, trl, cre], Simon Sapin [aut], Ian Bicking [aut]",
       "Maintainer": "Simon Potter <simon@sjp.co.nz>",
-      "Repository": "CRAN"
+      "Repository": "RSPM",
+      "Encoding": "UTF-8"
     },
     "sessioninfo": {
       "Package": "sessioninfo",
@@ -10226,40 +10044,6 @@
       "NeedsCompilation": "yes",
       "Author": "Davis Vaughan [aut, cre], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
       "Maintainer": "Davis Vaughan <davis@posit.co>",
-      "Repository": "CRAN"
-    },
-    "websocket": {
-      "Package": "websocket",
-      "Version": "1.4.4",
-      "Source": "Repository",
-      "Title": "'WebSocket' Client Library",
-      "Description": "Provides a 'WebSocket' client interface for R. 'WebSocket' is a protocol for low-overhead real-time communication: <https://en.wikipedia.org/wiki/WebSocket>.",
-      "Authors@R": "c( person(\"Winston\", \"Chang\", role = c(\"aut\", \"cre\"), email = \"winston@posit.co\"), person(\"Joe\", \"Cheng\", role = \"aut\", email = \"joe@posit.co\"), person(\"Alan\", \"Dipert\", role = \"aut\"), person(\"Barbara\", \"Borges\", role = \"aut\"), person(family = \"Posit, PBC\", role = \"cph\"), person(\"Peter\", \"Thorson\", role = c(\"ctb\", \"cph\"), comment = \"WebSocket++ library\"), person(\"René\", \"Nyffenegger\", role = c(\"ctb\", \"cph\"), comment = \"Base 64 library\"), person(\"Micael\", \"Hildenborg\", role = c(\"ctb\", \"cph\"), comment = \"SHA1 library\"), person(family = \"Aladdin Enterprises\", role = \"cph\", comment = \"MD5 library\"), person(\"Bjoern\", \"Hoehrmann\", role = c(\"ctb\", \"cph\"), comment = \"UTF8 Validation library\"))",
-      "License": "GPL-2",
-      "Encoding": "UTF-8",
-      "ByteCompile": "true",
-      "Imports": [
-        "R6",
-        "later (>= 1.2.0)"
-      ],
-      "LinkingTo": [
-        "cpp11",
-        "AsioHeaders",
-        "later"
-      ],
-      "BugReports": "https://github.com/rstudio/websocket/issues",
-      "SystemRequirements": "GNU make, OpenSSL >= 1.0.2",
-      "RoxygenNote": "7.3.2",
-      "Suggests": [
-        "httpuv",
-        "testthat",
-        "knitr",
-        "rmarkdown"
-      ],
-      "VignetteBuilder": "knitr",
-      "NeedsCompilation": "yes",
-      "Author": "Winston Chang [aut, cre], Joe Cheng [aut], Alan Dipert [aut], Barbara Borges [aut], Posit, PBC [cph], Peter Thorson [ctb, cph] (WebSocket++ library), René Nyffenegger [ctb, cph] (Base 64 library), Micael Hildenborg [ctb, cph] (SHA1 library), Aladdin Enterprises [cph] (MD5 library), Bjoern Hoehrmann [ctb, cph] (UTF8 Validation library)",
-      "Maintainer": "Winston Chang <winston@posit.co>",
       "Repository": "CRAN"
     },
     "whisker": {
