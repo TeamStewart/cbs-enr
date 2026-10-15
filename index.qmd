@@ -130,6 +130,9 @@ partyColor = { return { type: "categorical", domain: [cur.dem_name ?? "Dem", cur
 
 empty = msg => html`<div class="dash-empty">${msg}</div>`
 noData = pc.length === 0
+// precincts exist but every count is still zero (pre-election / zero files)
+noVotes = reported.length === 0
+noVotesMsg = () => empty(noData ? "No data yet for this contest." : "No votes reported yet for this contest.")
 noHist = () => empty(`No history file for ${cur.state} (${cur.contest}). Expected history/${cur.state}_history.parquet.`)
 
 // precinct + county points for the history scatter
@@ -252,7 +255,7 @@ histSpec = (rows, x, label, xticks = 2) => ({
 ```{ojs}
 //| title: Margin
 {
-  if (noData) return empty("No data yet for this contest.");
+  if (noVotes) return noVotesMsg();
   const s = histSpec(reported.filter(d => d.margin != null), "margin", `Precinct margin (${cur.dem_name ?? "Dem"} − ${cur.rep_name ?? "Rep"}) →`, [-0.5, 0.5]);
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
@@ -262,6 +265,7 @@ histSpec = (rows, x, label, xticks = 2) => ({
 //| title: Swing
 {
   if (!cur.has_hist) return noHist();
+  if (noVotes) return noVotesMsg();
   const s = histSpec(reported.filter(d => d.swing != null), "swing", `Dem share swing vs '${String(cur.hist_year).slice(2)} →`);
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
@@ -269,7 +273,7 @@ histSpec = (rows, x, label, xticks = 2) => ({
 
 ```{ojs}
 //| title: Swing Scatter
-!cur.has_hist ? noHist() :
+!cur.has_hist ? noHist() : noVotes ? noVotesMsg() :
 Plot.plot({
   fx: { domain: ["Precincts", "Counties"], label: null },
   x: { domain: [0, 1], label: `Dem share '${String(cur.hist_year).slice(2)} →`, tickFormat: ".0%", grid: true },
@@ -318,7 +322,7 @@ viewof prec_mode = {
 ```
 
 ```{ojs explorer}
-noData ? empty("No data yet for this contest.") :
+noVotes ? noVotesMsg() :
 Plot.plot({
   x: { label: `${prec_x} →`, grid: true, type: explorerType(prec_x) },
   y: { label: `↑ ${prec_y}`, grid: true, type: explorerType(prec_y) },

@@ -96,6 +96,8 @@ upload_html <- function(path, state) {
 # series) and returns the precinct-level table for the latest run.
 make_summary <- function(data, state, county) {
   key = if (is.na(county)) state else glue("{state}_{county}")
+  # upstream scrape errored (NULL via error = "null") or site posted nothing yet
+  if (is.null(data) || nrow(data) == 0) return(NULL)
 
   d = as_tibble(data) |>
     mutate(
@@ -159,7 +161,15 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
       hist_contest = coalesce(hist_contest, contest)
     )
 
-  prec_all = map(dash, \(x) mutate(x$prec, state = x$state, src = x$key, src_time = x$time)) |> bind_rows()
+  # drop jurisdictions whose scrape/summary failed; show whatever is left
+  dash = purrr::compact(dash)
+  prec_all = map(dash, \(x) mutate(x$prec, state = x$state, src = x$key, src_time = x$time)) |>
+    unname() |>
+    bind_rows(tibble(
+      jurisdiction = character(), contest = character(), district = integer(), geo = character(),
+      method = character(), candidate = character(), party = character(), votes = numeric(),
+      stage = integer(), state = character(), src = character(), src_time = as.POSIXct(character())
+    ))
   keys_by_state = split(map_chr(dash, "key"), map_chr(dash, "state"))
 
   states = unique(contests$state)

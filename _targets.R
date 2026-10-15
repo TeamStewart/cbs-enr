@@ -41,7 +41,7 @@ tar_option_set(
     "enightdata" # internal package for scrapers and timestamps
   ),
   imports = c("enightdata"),
-  error = "continue",
+  error = "null",
   controller = crew::crew_controller_local(workers = 12)
 )
 
@@ -89,36 +89,18 @@ office_filter = NULL
 # ========================================
 ## PIPELINE
 # ========================================
-map_multi = tar_map(
-  dplyr::filter(metadata, dplyr::n() > 1, .by = c(state, county)) |>
-    dplyr::summarise(
-      paths = list(path),
-      path_timestamps = list(path_timestamp),
-      .by = c(state, county, upload, trust_stage)
-    ),
-  tar_target(timestamp, purrr::map2(path_timestamps, paths, \(pt, p) get_timestamp(state, county, pt)), cue = tar_cue(mode = "always")),
-  tar_target(data, purrr::pmap(list(paths, timestamp, trust_stage), \(p, ts, tr) get_data(state, county, ts, p, tr, multi=TRUE)) |> dplyr::bind_rows()),
-  tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp[[1]], upload, do_cbs = FALSE, office_filter = office_filter)),
-  tar_target(summary, make_summary(data, state, county)),
-  names = c(state, county)
-)
-
-map_single = tar_map(
-  dplyr::filter(metadata, dplyr::n() == 1, .by = c(state, county)),
-  tar_target(timestamp, get_timestamp(state, county, path_timestamp), cue = tar_cue(mode = "always")),
-  tar_target(data, get_data(state, county, timestamp, path, trust_stage)),
-  tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
-  tar_target(summary, make_summary(data, state, county)),
-  names = c(state, county)
-)
-
 list(
-  # first, parse jurisdictions with multiple URLs (e.g., for Dem/Rep primary)
-  map_multi,
-  # parse remaining, normal jurisdictions
-  map_single,
+  # all states/counties
+  tar_map(
+    metadata,
+    tar_target(timestamp, get_timestamp(state, county, path_timestamp), cue = tar_cue(mode = "always")),
+    tar_target(data, get_data(state, county, timestamp, path, trust_stage)),
+    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
+    tar_target(summary, make_summary(data, state, county)),
+    names = c(state, county)
+  ),
   # dashboard: contests shown are set by DASHBOARD_CONTESTS in scripts/util/globals.R
-  tar_combine(dash_inputs, c(map_multi[["summary"]], map_single[["summary"]]), command = list(!!!.x)),
+  tar_combine(dash_inputs, map_single[["summary"]], command = list(!!!.x)),
   tar_target(dashboard_data, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS)),
   tar_quarto(dashboard, "index.qmd", quiet = FALSE)
 )
