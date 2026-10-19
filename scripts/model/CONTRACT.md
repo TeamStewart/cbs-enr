@@ -5,7 +5,7 @@ and its successors. See `tx_gov_model.tex` for the model these inputs feed and
 `nyc_tx_comparison.tex` for why it is shaped this way.
 
 **Update 2026-10-19 (Bridget Schippers):** TX §1, §2, §3, §6 and §9 are now built by
-`scripts/model/prep_tx_model_inputs.R`, which reads only shared Dropbox files
+`scripts/model/prep_tx_model_inputs.R`, which reads shared Dropbox files in
 (`26_general/input_data`) and writes `26_general/input_data/model_inputs/TX_*`. Changes
 in this update: the `geo` normalization rule (§0), measured TX join rates (§0), where `n`
 comes from and how L2 gaps are filled (§2), and the status of `prec_*` / `pr_other` (§11).
