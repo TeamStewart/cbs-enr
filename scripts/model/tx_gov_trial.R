@@ -75,8 +75,12 @@ PATH_DROPBOX   = Sys.getenv(
   "PATH_DROPBOX",
   unset = "~/Library/CloudStorage/Dropbox-MIT/Young-Kyung Kim/Contracting/2024 Election Results"
 )
-path_covs      = file.path(PATH_DROPBOX, ELECTION_FOLDER, "input_data",
-                           paste0(STATE, "_prec_covs.parquet"))
+# PATH_COVS override lets a backtest driver swap in a panel whose covariates are all
+# pre-treatment for its target election (see tx24_backtest.R).
+path_covs      = Sys.getenv(
+  "PATH_COVS",
+  unset = file.path(PATH_DROPBOX, ELECTION_FOLDER, "input_data",
+                    paste0(STATE, "_prec_covs.parquet")))
 # Historical precinct x mode x party returns. Supplies ALL THREE mode-dependent
 # inputs: the turnout split, the partisan offset, and Sigma. See the MODE PRIORS
 # block for the required schema. Drop the file here and everything below uses it.
@@ -90,6 +94,78 @@ DRAWS          = 500      # posterior draws
 PRIOR_N_TURN   = 3.0      # prior strength, in PRECINCT-EQUIVALENTS (not per-cell)
 PRIOR_N_SHARE  = 3.0      # keep FIXED across the night; relative weight decays on its own
 STAGE_DONE     = 2L       # a mode cell counts as observed at this reporting stage
+# Support gate: the minimum reported cells, and reporting counties, before a MODE's
+# returns are used at all. Below it the mode stays at its prior. See the gate in
+# fit_stage() for the TX 2024 measurement that motivates it.
+# Lowered from the 60/3 stopgap once the obs/obs_turn split landed: the turnout blow-up
+# it existed to prevent is now handled properly, so the gate only catches degenerate
+# cases rather than discarding legitimate share information.
+# Below this many reported cells an equation is held at its prior LOCATION outright
+# (see the prior-only branch in fit_stage's mu construction).
+MIN_FIT_OBS    = as.integer(Sys.getenv("MIN_FIT_OBS", unset = "30"))
+MIN_MODE_CELLS = as.integer(Sys.getenv("MIN_MODE_CELLS", unset = "10"))
+MIN_MODE_CTY   = as.integer(Sys.getenv("MIN_MODE_CTY",   unset = "1"))
+# Fallback completeness test for TURNOUT when the feed carries no `pct_reported`:
+# a cell's turnout counts as observed once counted >= COMPLETE_FRAC * prior_tau.
+# It is only as good as prior_tau, which on TX 2024 is off by ~1.7x for eday and ~0.5x
+# for mail -- so prefer a real pct_reported field wherever the feed has one.
+COMPLETE_FRAC  = as.numeric(Sys.getenv("COMPLETE_FRAC", unset = "1.1"))
+# Wide prior on the unreported set's share offset, in logit units, shared within a
+# (county, mode). Measured on TX 2024 at 0.26-0.45 raw / 0.15-0.30 vote-weighted; 0.25 is
+# the starting point. SD_UNREP=0 disables it (ablation). See the block in fit_stage.
+SD_UNREP       = as.numeric(Sys.getenv("SD_UNREP", unset = "0.25"))
+# Right-censoring of the turnout equation (USE_CENSOR=0 to ablate). See the block in the
+# fit loop and the EM in model_core.R::fit_conj_re.
+# DEFAULT OFF on the headline metric, but the picture is genuinely split -- see the log.
+# Censoring FIXES early turnout (184% -> 99% at 20:00, because giving the election-day
+# equation every reporting cell instead of only counted-out ones stabilises its sigma and
+# stops the exp(mu + sigma^2/2) blow-up) and BREAKS late turnout (100% -> 124%, because
+# E[tau | tau >= C] > C strictly, so every still-censored cell is pushed above its bound).
+# Net on two-party share: 15/15 and 0.49pp mean |err| OFF, 12/15 and 0.65pp ON.
+# The misspecification is that pure Tobit gives a FINISHED cell zero probability of
+# sitting exactly at its bound, when tau = C exactly is the common case late on. The fix
+# is a mixture likelihood with an atom at the bound, not a different threshold.
+USE_CENSOR     = Sys.getenv("USE_CENSOR", unset = "0") == "1"
+# ---- BOUNDED TURNOUT: precinct total x mode composition -----------------------------
+# The three per-mode turnout equations used to be unconstrained log-normals fitted
+# independently, so nothing tied them to each other or to anything physical. Turnout read
+# 184% of truth at 20:00 and 107.8% at 100% counted. Reparameterized:
+#     theta_i = logit(T_i / (KAPPA * n_i))   precinct TOTAL, bounded in (0, KAPPA*n_i)
+#     eta_im  = log(p_im / p_i,ref)          composition, m != REF_MODE
+#     tau_im  = T_i * softmax(eta)_im        so sum_m tau_im = T_i exactly
+# Measured: the precinct total is predicted at corr(log) 0.962 / sd(log) 0.246 while the
+# mode split is at sd(log) 0.698 for eday -- so the well-known quantity now gets its own
+# equation instead of being multiplied by the badly-known one.
+# A cap only bites on the TOTAL: per-mode caps must exceed each mode's observed max share
+# of registrants, which sum to 4.66x n against an actual total of 0.654x n (7.1x actual,
+# useless). On the total, kappa=1.25 binds on 1.16% of precincts and allows 1.91x actual.
+# USE_COMPOSE=0 restores the old independent-log-normal turnout equations.
+USE_COMPOSE    = Sys.getenv("USE_COMPOSE", unset = "1") == "1"
+KAPPA          = as.numeric(Sys.getenv("KAPPA", unset = "1.25"))
+REF_MODE       = Sys.getenv("REF_MODE", unset = "early")
+# Prior sd on the STATEWIDE LEVEL, in logit units, decoupled from PRIOR_N_*.
+# MEASURED (calibrate_swing.R, 9 states x 37 contest pairs): the statewide two-party Dem
+# share moves 0.22-0.26 logit between a prior contest and its target, against the ~0.098
+# the g-prior implicitly assumed -- so the bundled prior was ~2.3x too tight.
+# 0.22 is sen20->pres24, the closest analogue to what the model actually does.
+# NOTE this cannot be validated by a single-election backtest: TX 2024's own swing was
+# 0.085, unusually small, so the tight prior did no harm there. This is insurance against
+# a typical-swing election the backtest does not contain.
+# DEFAULT 0 (bundled, i.e. OFF) on the strength of the backtest. Measured on TX 2024:
+#   SD_SYS_LEVEL=0     15/15 coverage, max |err| 1.40pp, mean 0.49pp
+#   SD_SYS_LEVEL=0.22  15/15 coverage, max |err| 2.23pp, mean 0.63pp
+# Loosening the level prior makes POINT ESTIMATES WORSE, and the reason matters: a looser
+# prior lets the data pull the statewide level, and the early-night data is BIASED (the
+# first batches read 8.9pp more Democratic than the final), not merely noisy. The tight
+# bundled prior was doing protective work against sample bias that the swing measurement
+# does not by itself justify removing.
+# So the 0.22 finding is real but it sizes the wrong thing: interval WIDTH should reflect
+# level uncertainty (0.22), while SHRINKAGE against a biased early sample is a separate
+# job. Conflating them is what this ablation exposed. Setting SD_SYS_LEVEL > 0 does both
+# at once, which is why it is off by default pending a design that separates them --
+# most likely a mean-zero statewide offset added to the PREDICTIVE draw (as SD_UNREP is)
+# rather than a loosening of the posterior shrinkage.
+SD_SYS_LEVEL   = as.numeric(Sys.getenv("SD_SYS_LEVEL", unset = "0"))
 LEVEL          = 0.95
 USE_CROSS_MODE = TRUE     # FALSE => independent residuals (ablation, for comparison)
 
@@ -247,12 +323,24 @@ path_sigma   = file.path(PATH_DROPBOX, ELECTION_FOLDER, "input_data",
 # Same set in both equations for now -> Sigma does not change beta (SUR == OLS when
 # designs match); it only fixes the joint predictive distribution, which is the point.
 # To also gain SUR efficiency, give the two equations NON-NESTED sets (see TODO below).
-COVS_TURN  = c("log_n", "turnout22", "turnout24", "age", "male",
-               "pred.bla", "pred.his", "dem2")
-COVS_SHARE = c("log_n", "turnout22", "turnout24", "age", "male",
-               "pred.bla", "pred.his", "dem2")
+# Overridable from the environment (comma-separated) so a backtest can drop a covariate
+# that would be look-ahead for ITS target year -- e.g. turnout24 for a 2024 backtest.
+cov_env = function(var, default) {
+  v = Sys.getenv(var, unset = "")
+  if (!nzchar(v)) return(default)
+  trimws(strsplit(v, ",", fixed = TRUE)[[1]])
+}
+COVS_TURN  = cov_env("COVS_TURN",
+             c("log_n", "turnout22", "turnout24", "age", "male",
+               "pred.bla", "pred.his", "dem2"))
+COVS_SHARE = cov_env("COVS_SHARE",
+             c("log_n", "turnout22", "turnout24", "age", "male",
+               "pred.bla", "pred.his", "dem2"))
 # Third-party share is a weak, stable signal -- keep its design small or it overfits.
-COVS_TP    = c("log_n", "age", "male", "dem2", "tp_prior_raw")
+COVS_TP    = cov_env("COVS_TP", c("log_n", "age", "male", "dem2", "tp_prior_raw"))
+# Covariates DERIVED in section 1 rather than read from the frame. Everything else named
+# by a COVS_* list is a raw frame column and gets standardized there.
+COVS_DERIVED = c("log_n", "dem2", "tp_prior_raw")
 
 # Three outcomes per mode. The composition is FACTORED, not flattened:
 #     tau = ALL votes in the cell
@@ -354,11 +442,18 @@ if (Sys.getenv("USE_NC_DELTA") == "1") {
   MODE_SHARE_OFFSET = NC_DELTA
   cli_alert_warning("Using NC-measured mode offsets for TX -- sensitivity run only.")
 }
+# Where delta_m comes from when a mode-history FILE is present (it overrides the
+# constants above). "history" derives it from the file, "zero" and "nc" keep the file's
+# turnout split but replace its partisan offset. See derive_mode_priors().
+MODE_OFFSET_SOURCE = Sys.getenv("MODE_OFFSET_SOURCE", unset = "history")
 #
 # Which past election to lean on. 2026 is a MIDTERM, so 2022 is the better analogue
 # for mode composition and for the mode partisan differential; 2024 has better
 # coverage and a fresher precinct partisan lean. Preference order, first match wins.
-MODE_HIST_PREFER = c("2022_general", "2024_general")
+# Env-overridable (comma-separated) so a backtest can name an analogue appropriate to
+# ITS target year -- 2020 for a presidential target, since TX mode composition tracks
+# turnout type rather than calendar.
+MODE_HIST_PREFER = cov_env("MODE_HIST_PREFER", c("2022_general", "2024_general"))
 # --------------------------------------------------------------------------------
 
 
@@ -378,9 +473,12 @@ load_covs = function(path) {
   if (file.exists(path)) {
     cli_alert_success("Reading {.path {path}}")
     d = read_parquet(path)
-    req = c("geo", "county", "geostratum", "stratum_demo", "n", "turnout22",
-            "turnout24", "turnoutPred", "age", "male", "pred.bla", "pred.his",
-            "dem2", "party", "est", "method")
+    # Structural columns, plus whatever the ACTIVE covariate lists name. Checking the
+    # active set rather than a fixed list is what lets a backtest supply turnout20 in
+    # place of turnout24 without carrying a dead column.
+    req = unique(c("geo", "county", "geostratum", "stratum_demo", "n", "party", "est",
+                   "method", setdiff(c(COVS_TURN, COVS_SHARE, COVS_TP), COVS_DERIVED),
+                   "dem2"))
     miss = setdiff(req, names(d))
     if (length(miss)) cli_abort("Input is missing required columns: {miss}")
     if (!all(d$method == "all")) {
@@ -498,6 +596,21 @@ derive_mode_priors = function(hist, prec, k_turn = 40, k_share = 60) {
     c(a = unname(f$coefficients[1]), b = unname(f$coefficients[2]))
   }, numeric(2)))
   rownames(off) = MODES
+  # The turnout split and the partisan offset come from the same file but are NOT equally
+  # trustworthy: a history built from registration-by-mode carries a real turnout split
+  # and a misleading partisan one. MODE_OFFSET_SOURCE lets the two be sourced separately.
+  if (MODE_OFFSET_SOURCE == "zero") {
+    off[] = 0
+    cli_alert_info("MODE_OFFSET_SOURCE=zero -- keeping the derived turnout split, \\
+                    forcing delta_m to 0")
+  } else if (MODE_OFFSET_SOURCE == "nc") {
+    off = NC_DELTA[MODES, , drop = FALSE]
+    cli_alert_info("MODE_OFFSET_SOURCE=nc -- keeping the derived turnout split, \\
+                    borrowing NC-measured delta_m")
+  } else if (MODE_OFFSET_SOURCE != "history") {
+    cli_abort("unknown MODE_OFFSET_SOURCE {MODE_OFFSET_SOURCE} \\
+               (history | zero | nc)")
+  }
   cli_inform(c("derived mode priors:",
     paste0("  statewide turnout split: ",
            paste(sprintf("%s %.3f", sw_sh$method, sw_sh$sw), collapse = "  ")),
@@ -519,9 +632,14 @@ prec = covs_long |>
     # third-party prior from the frame's residual 1 - pr_harris - pr_trump. Measured
     # n-weighted 1.64% for TX vs ~1.4% actual 2024 "other", so it is signal -- but the
     # precinct range is 0% to 20.4%, so shrink hard toward the statewide value.
-    tp_prior_raw = pmin(pmax(1 - pr_harris - pr_trump, 0), 0.25),
-    across(c(turnout22, turnout24, age, male, `pred.bla`, `pred.his`),
-           ~ as.numeric(scale(.x)))          # standardize for a stable design
+    # A panel may instead supply `tp_raw` directly -- a backtest must, since
+    # pr_harris/pr_trump are calibrated to 2024 returns and so are look-ahead for 2024.
+    tp_prior_raw = if ("tp_raw" %in% names(covs_long)) pmin(pmax(tp_raw, 0), 0.25)
+                   else pmin(pmax(1 - pr_harris - pr_trump, 0), 0.25),
+    # standardize every raw frame covariate the active COVS_* lists name (with the
+    # default lists this is turnout22/turnout24/age/male/pred.bla/pred.his, as before)
+    across(all_of(setdiff(unique(c(COVS_TURN, COVS_SHARE, COVS_TP)), COVS_DERIVED)),
+           ~ as.numeric(scale(.x)))
   ) |>
   filter(est_tot > 0, is.finite(dem2), is.finite(tp_prior_raw)) |>
   mutate(
@@ -574,9 +692,23 @@ cells = tidyr::expand_grid(prec, mode = MODES) |>
     # delta_im = a_m + b_m * logit(dem2_i)  -- lean-dependent, per the NC measurement
     prior_s   = invlogit(logit(dem2) + off_a + off_b * logit(dem2)),
     prior_tp  = tp_prior,            # no mode differential assumed for third party
-    y_tau_prior = log(prior_tau + 0.1),      # log_s(), matching enightmodels
     y_tp_prior  = logit(prior_tp),
-    y_s_prior   = logit(prior_s)
+    y_s_prior   = logit(prior_s),
+    # registrant-based ceiling on the PRECINCT total
+    cap = KAPPA * pmax(n, 1),
+    # share of this precinct's prior composition carried by the reference mode
+    ref_share = mode_turn_share[match(REF_MODE, mode)], .by = geo
+  ) |>
+  mutate(
+    # The per-mode `tau` SLOT is reinterpreted rather than restructured, so every
+    # downstream index (Sigma, eps, the conditional-MVN block, the aggregation offsets)
+    # keeps working unchanged:
+    #   reference mode's slot -> theta, the precinct TOTAL on the capped logit scale
+    #   other modes' slots    -> eta_m, the log-ratio of that mode's share to the ref's
+    y_tau_prior = if (!USE_COMPOSE) log(prior_tau + 0.1) else if_else(
+      mode == REF_MODE,
+      logit(pmin(pmax(est_tot / cap, 1e-4), 1 - 1e-4)),
+      log(pmax(mode_turn_share, 1e-6) / pmax(ref_share, 1e-6)))
   )
 N_PREC = nrow(prec); M = length(MODES)
 # county indicator matrix for the random effect (one column per county, in prec order)
@@ -674,21 +806,93 @@ make_stages = function(cells, truth, frac) {
 
 fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
                      Sigma_hist = NULL) {
+  has_complete = "complete" %in% names(returns)
+  if (!has_complete)
+    cli_alert_warning("returns carry no `complete` flag -- falling back to \\
+                       COMPLETE_FRAC * prior_tau, which is known to be unreliable \\
+                       (see the note in fit_stage)")
   d = cells |>
     left_join(returns, by = c("geo", "mode")) |>
     mutate(
+      complete = if (has_complete) coalesce(complete, FALSE) else FALSE,
       tot2  = votes_dem + votes_rep,
       tau   = tot2 + votes_oth,                       # ALL votes in the cell
       obs   = !is.na(votes_dem) & stage >= STAGE_DONE & tau > 0 & tot2 > 0,
-      # RAW observed values -- used to substitute counted cells in the aggregation
-      o_tau = if_else(obs, tau, NA_real_),
+      # TWO observation flags, matching enightmodels::forecast_prec(obs, obs_turn):
+      # a cell's SHARES become usable as soon as it reports (they are a sample of that
+      # cell's electorate, weighted by counted ballots below), but its TURNOUT is only
+      # usable once the cell is essentially COUNTED OUT. Real snapshots are cumulative
+      # partial counts: measured on TX 2024, when an election-day cell first shows votes
+      # the median cell has 5.4% of its final count in, and mail sits at 66% of final at
+      # 19:00. Treating those as final understated statewide turnout by 12.5pp at 22:30
+      # and biased the share estimate toward the under-counted mode's opponent.
+      # `pct_reported` from the live feed is the RIGHT input here (that is what
+      # nyc_enr_io.R uses, at >= 0.98); COMPLETE_FRAC is the fallback for feeds that do
+      # not carry it, and it is only as good as prior_tau.
+      # Preference order for the turnout flag:
+      #  1. `complete` supplied in the returns -- the PRODUCTION path. nyc_enr_io.R sets
+      #     it from the feed's pct_reported >= 0.98; the TX backtest sets it from whether
+      #     the cell has stopped growing across that county's last two snapshots. Both
+      #     are unbiased with respect to the cell's final size.
+      #  2. COMPLETE_FRAC * prior_tau -- last-resort fallback, and a poor one: it
+      #     inherits prior_tau's error, which on TX 2024 is ~0.5x for mail and ~1.7x for
+      #     eday, so no single threshold works. Strict settings never pin mail (turnout
+      #     ends the night at 113%); loose ones treat 5%-counted eday cells as final
+      #     (turnout ends at 87%). Supply `complete` instead wherever possible.
+      obs_turn = obs & if (has_complete) complete else tau >= COMPLETE_FRAC * prior_tau,
+      # RAW observed values -- used to substitute counted cells in the aggregation.
+      # o_tau is gated on obs_turn, the shares on obs.
+      o_tau = if_else(obs_turn, tau, NA_real_),
+      # CENSORING FLOOR: whatever is counted in a cell is a hard LOWER BOUND on its
+      # final turnout, whether or not the cell is counted out. This needs no threshold
+      # and no completeness classifier, so it carries the cases the classifier gets
+      # wrong -- which on TX 2024 is most of them, since prior_tau is off by ~0.5x for
+      # mail and ~1.7x for eday and no single COMPLETE_FRAC can serve both.
+      f_tau = if_else(obs, tau, 0),
+      f_dem = if_else(obs, votes_dem, 0),
+      f_rep = if_else(obs, votes_rep, 0),
+      f_oth = if_else(obs, votes_oth, 0),
       o_tp  = if_else(obs, votes_oth / pmax(tau, 1), NA_real_),
       o_s   = if_else(obs, votes_dem / pmax(tot2, 1), NA_real_),
       # CONTINUITY-CORRECTED values -- used to FIT, so a cell with zero third-party
       # votes (very common) gives a finite logit instead of -Inf
-      y_tau = if_else(obs, log(tau + 0.1), NA_real_),
+      y_tau = NA_real_,                 # filled below; meaning depends on USE_COMPOSE
       y_tp  = if_else(obs, logit((votes_oth + 0.5) / (tau + 1)),  NA_real_),
       y_s   = if_else(obs, logit((votes_dem + 0.5) / (tot2 + 1)), NA_real_)
+    )
+
+  # ---- precinct-level quantities for the total x composition parameterization ------
+  # The per-mode `tau` SLOT is REINTERPRETED (see the cells block): the reference mode's
+  # slot carries the precinct TOTAL on the capped logit scale, the others carry their
+  # log-ratio to the reference. Doing it this way rather than restructuring the key
+  # layout keeps Sigma, eps, the conditional-MVN grouping and the aggregation offsets
+  # working unchanged.
+  d = d |>
+    mutate(
+      cnt_prec  = sum(if_else(obs, tau, 0), na.rm = TRUE),   # counted so far, precinct
+      all_done  = all(obs_turn),                             # every mode counted out
+      T_final   = sum(if_else(obs_turn, tau, 0), na.rm = TRUE),
+      tau_ref   = { i <- match(REF_MODE, mode); if_else(rep(obs_turn[i], n()), tau[i], NA_real_) },
+      ref_done  = { i <- match(REF_MODE, mode); rep(obs_turn[i], n()) },
+      .by = geo) |>
+    mutate(
+      is_ref = mode == REF_MODE,
+      # WHICH ROWS THE TURNOUT SLOT CAN BE FITTED ON:
+      #   total      -- needs every mode of the precinct counted out, else T is unknown
+      #   log-ratio  -- needs this mode AND the reference mode counted out
+      fit_tau = if (!USE_COMPOSE) obs_turn
+                else if_else(is_ref, all_done, obs_turn & ref_done & !is.na(tau_ref) & tau_ref > 0),
+      y_tau = if (!USE_COMPOSE) if_else(obs_turn, log(tau + 0.1), NA_real_)
+              else if_else(is_ref,
+                           logit(pmin(pmax(T_final / cap, 1e-4), 1 - 1e-4)),
+                           log(pmax(tau, 0.5) / pmax(tau_ref, 0.5))),
+      y_tau = if_else(fit_tau, y_tau, NA_real_),
+      # The TOTAL is right-censored for any reporting precinct: T_i >= what is counted.
+      # This is a far better home for censoring than the cell level, where it fixed the
+      # early blow-up and broke the late one -- the total is the quantity with the good
+      # prior (corr(log) 0.962) and the bound is directly observable.
+      cens_tau = USE_COMPOSE & is_ref & !fit_tau & cnt_prec > 0,
+      lb_tau   = logit(pmin(pmax(cnt_prec / cap, 1e-4), 1 - 1e-4))
     )
 
   n_obs_cells = sum(d$obs)
@@ -697,7 +901,8 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   }
 
   # --- 4a. per-(mode, outcome) conjugate fits ---
-  fits = list(); resid_mat = matrix(NA_real_, N_PREC, K_OUT * M)
+  fits = list(); n_fit = list(); prior_loc_mat = list()
+  resid_mat = matrix(NA_real_, N_PREC, K_OUT * M)
   colnames(resid_mat) = paste(rep(MODES, each = K_OUT), OUTCOMES, sep = "_")
   geo_idx = setNames(seq_len(N_PREC), prec$geo)
   covs_for = function(out) switch(out, tau = COVS_TURN, tp = COVS_TP, s = COVS_SHARE)
@@ -706,6 +911,26 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
 
   for (m in MODES) {
     dm = filter(d, mode == m)
+    # --- MODE SUPPORT GATE ---------------------------------------------------------
+    # A mode whose only reported cells come from a handful of precincts in one or two
+    # counties is not evidence about that mode statewide, and treating it as such is
+    # actively harmful. Measured on the real TX 2024 cadence: at 20:00, the ONLY county
+    # with any election-day cells was Montague (15 precincts, rural, and still mid-count
+    # -- its own count ran to 20:52). Fitting log(tau_eday) on those 15 partial cells
+    # gave a residual sd of 1.15 on the log scale, and exp(mu + eps) then put the
+    # statewide turnout draw at 10^11 against a truth of 3.6M.
+    # Note this gates the counted-cell SUBSTITUTION too, deliberately: an early snapshot
+    # of a cell is a PARTIAL count, so substituting it as if final understates turnout
+    # (the standing "partial reporting is censored for turnout" caveat). Below the gate
+    # the mode stays entirely at its prior.
+    n_c = sum(dm$obs); n_cty = n_distinct(dm$county[dm$obs])
+    if (n_c > 0 && (n_c < MIN_MODE_CELLS || n_cty < MIN_MODE_CTY)) {
+      cli_alert_info("mode {m}: only {n_c} cell(s) in {n_cty} county(ies) \\
+                      -- below the support gate ({MIN_MODE_CELLS} cells / \\
+                      {MIN_MODE_CTY} counties), holding the mode at its prior")
+      dm$obs = FALSE; dm$obs_turn = FALSE
+      dm$o_tau = dm$o_tp = dm$o_s = NA_real_
+    }
     for (out in OUTCOMES) {
       ycol  = paste0("y_", out)
       pcol  = paste0("y_", out, "_prior")
@@ -719,8 +944,23 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # binomial. So weight the share equations by counted ballots. Var(logit p-hat)
       # ~ 1/(n p(1-p)), so precision ~ n. Turnout is observed exactly once a cell
       # reports, so its residual is model error, not sampling error -- no weights there.
+      # which observation flag this equation uses: turnout needs a counted-out cell,
+      # shares only need a reporting one (see the two flags built in `d` above)
+      ob = if (out == "tau") dm$fit_tau else dm$obs
+      # TURNOUT IS RIGHT-CENSORED. A cell that is reporting but not known counted out
+      # tells us its final turnout is AT LEAST what has been counted -- true even at 5%
+      # counted, which is the median election-day cell when it first reports. Feeding
+      # that bound in (rather than dropping the cell, or pretending the partial count is
+      # final) is what makes the completeness flag non-load-bearing, which matters
+      # because in production `stage` reaches "complete" days late, uses a different
+      # vocabulary per state, is downgraded by our own loader, and moves BACKWARDS.
+      # Shares are NOT censored -- a partial count is a noisy SAMPLE of the cell's share,
+      # not a bound on it, and that is already handled by the ballot weights plus the
+      # mixture in the aggregation.
+      cs = if (out == "tau") dm$cens_tau else NULL
+      lb = if (out == "tau") dm$lb_tau else NULL
       wt = if (out == "tau") NULL else {
-        raw = pmax(dm$o_tau, 1)                       # ballots counted in the cell
+        raw = pmax(dm$tau, 1)                         # ballots counted in the cell
         raw[!dm$obs] = 1                              # unused (not in subset), keep finite
         # normalise to mean 1 over the OBSERVED rows, so prior_n keeps its
         # "precinct-equivalents" meaning instead of being swamped by raw counts
@@ -732,21 +972,27 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
         lam = (1 - icc) / icc
         Xcov = cbind(1, as.matrix(prec[, covs, drop = FALSE]))
         fit = fit_conj_re(
-          y = dm[[ycol]], Xcov = Xcov, Cty = CTY_MAT, obs = dm$obs,
+          y = dm[[ycol]], Xcov = Xcov, Cty = CTY_MAT, obs = ob,
           prior_loc = dm[[pcol]], prior_eff = pn / nrow(dm),
-          lambda = lam, wts = wt
+          lambda = lam, wts = wt,
+          sd_level = if (SD_SYS_LEVEL > 0) SD_SYS_LEVEL else NULL,
+          cens = if (USE_CENSOR) cs else NULL, y_lb = lb
         )
         if (is.null(fit)) cli_abort("county-RE design is rank deficient for {m}/{out}")
       } else {
         fit = lm_bayes(
-          form, data = dm2, subset = dm$obs, weights = wt,
+          form, data = dm2, subset = ob, weights = wt,
           prior_yhat_loc = dm[[pcol]],
           prior_yhat_eff = pn / nrow(dm)
         )
       }
       fits[[paste(m, out, sep = "_")]] = fit
+      n_fit[[paste(m, out, sep = "_")]] = sum(ob)
+      pl = rep(NA_real_, N_PREC)
+      pl[geo_idx[dm$geo]] = dm[[pcol]]
+      prior_loc_mat[[paste(m, out, sep = "_")]] = pl
       r = rep(NA_real_, N_PREC)
-      r[geo_idx[dm$geo[dm$obs]]] = fit$residuals
+      r[geo_idx[dm$geo[ob]]] = fit$residuals
       resid_mat[, paste(m, out, sep = "_")] = r
     }
   }
@@ -809,6 +1055,16 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     parts = strsplit(k, "_")[[1]]; out = parts[2]
     covs = covs_for(out)
     X    = cbind(1, as.matrix(prec[, covs, drop = FALSE]))
+    # An equation with (almost) no reported cells must sit at its PRIOR LOCATION, not at
+    # a posterior mean drawn from a g-prior worth 3 precinct-equivalents. With no data
+    # that posterior is extremely diffuse -- var of a fitted value is ~sigma^2 * p /
+    # prior_n -- and for the turnout equations it is then EXPONENTIATED, which put the
+    # statewide turnout draw at 1e26 the first time the obs/obs_turn split left eday and
+    # mail with no counted-out cells. Holding the mode at its prior has to mean the
+    # prior, not an unconstrained fit to nothing.
+    if (n_fit[[k]] < MIN_FIT_OBS) {
+      return(matrix(prior_loc_mat[[k]], draws, N_PREC, byrow = TRUE))
+    }
     if (USE_COUNTY_RE) {
       # design now carries the county block; counties with no reported precincts get
       # u_c shrunk to ~0 but keep the full random-effect variance in the draws
@@ -825,6 +1081,23 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     pivot_wider(names_from = mode, values_from = obs) |>
     arrange(match(geo, prec$geo))
   mask = as.matrix(obs_mode[, MODES, drop = FALSE])            # N_PREC x M logical
+  # second mask, for TURNOUT substitution only: a reporting-but-still-counting cell
+  # contributes its shares but NOT its turnout (see the two flags in `d`)
+  turn_mode = d |>
+    select(geo, mode, obs_turn) |>
+    pivot_wider(names_from = mode, values_from = obs_turn) |>
+    arrange(match(geo, prec$geo))
+  mask_turn = as.matrix(turn_mode[, MODES, drop = FALSE])      # N_PREC x M logical
+  # THIRD mask, for the turnout SLOT's observed-ness in the conditional-MVN block.
+  # It is not the same as mask_turn once the slot holds a total / log-ratio: a non-ref
+  # cell can be counted out while its REFERENCE mode is not, in which case its log-ratio
+  # does not exist. Conditioning on mask_turn there reads an NA y_tau -- which is exactly
+  # what the stopifnot below caught.
+  fit_mode = d |>
+    select(geo, mode, fit_tau) |>
+    pivot_wider(names_from = mode, values_from = fit_tau) |>
+    arrange(match(geo, prec$geo))
+  mask_fit = as.matrix(fit_mode[, MODES, drop = FALSE])        # N_PREC x M logical
   obs_vals = d |>
     select(geo, mode, y_tau, y_tp, y_s) |>
     pivot_wider(names_from = mode, values_from = c(y_tau, y_tp, y_s),
@@ -837,16 +1110,32 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
                 names_glue = "{mode}_{str_remove(.value, 'o_')}") |>
     arrange(match(geo, prec$geo))
   obs_raw = as.matrix(obs_raw[, keys, drop = FALSE])           # N_PREC x K_OUT*M
+  cnt_mat = function(col) {
+    m = d |> select(geo, mode, all_of(col)) |>
+      pivot_wider(names_from = mode, values_from = all_of(col)) |>
+      arrange(match(geo, prec$geo))
+    m = as.matrix(m[, MODES, drop = FALSE]); m[is.na(m)] = 0; m
+  }
+  cnt_tau = cnt_mat("f_tau"); cnt_dem = cnt_mat("f_dem")
+  cnt_rep = cnt_mat("f_rep"); cnt_oth = cnt_mat("f_oth")
 
-  # residual draws, conditioning on observed modes of the same precinct
+  # residual draws, conditioning on observed OUTCOMES of the same precinct.
+  # The pattern is per (mode, outcome), not per mode: since the obs/obs_turn split a
+  # reporting-but-still-counting cell has its shares observed and its TURNOUT not, so
+  # conditioning on all three outcomes of an "observed" mode would read an NA y_tau.
+  obs_out = matrix(FALSE, N_PREC, K_OUT * M, dimnames = list(NULL, keys))
+  for (mi in seq_along(MODES)) {
+    k = K_OUT * (mi - 1)
+    obs_out[, k + 1] = mask_fit[, mi]       # turnout slot: where y_tau actually exists
+    obs_out[, k + 2] = mask[, mi]           # tp
+    obs_out[, k + 3] = mask[, mi]           # s
+  }
+  stopifnot(!any(is.na(obs_vals[obs_out])))
   eps = array(0, c(draws, N_PREC, K_OUT * M))
-  pat = apply(mask, 1, function(z) paste(as.integer(z), collapse = ""))
+  pat = apply(obs_out, 1, function(z) paste(as.integer(z), collapse = ""))
   for (p in unique(pat)) {
     rows = which(pat == p)
-    o_mode = which(strsplit(p, "")[[1]] == "1")
-    o = if (length(o_mode)) {
-      sort(as.vector(outer(seq_len(K_OUT), K_OUT * (o_mode - 1), "+")))
-    } else integer(0)
+    o = which(strsplit(p, "")[[1]] == "1")
     u = setdiff(seq_len(K_OUT * M), o)
     if (!length(u)) next
     # With a diagonal Sigma, Sigma_uo = 0, so conditioning is an exact no-op. Skip it
@@ -867,32 +1156,147 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     }
   }
 
+  # --- 4c-bis. WIDE PRIOR ON THE UNREPORTED SET -----------------------------------
+  # The cells still to be counted inside a (county, mode) differ from that county's
+  # already-counted ones by more than any existing term can express. Measured on TX 2024,
+  # the logit gap between the remaining and the counted share within (county, mode):
+  #   as-of  20:30  21:30  22:30  23:00  01:00
+  #   mean   -0.10  -0.06  +0.04  +0.02  +0.13     <- MEAN ~ 0
+  #   sd      0.42   0.45   0.34   0.32   0.26     <- large and stable
+  #   leave-one-county-out sd 0.337-0.395 against a full-sample 0.373
+  # Mean ~ 0 with large stable dispersion is a VARIANCE component, not a predictable
+  # offset -- and the predictor route is separately refuted (within county x mode,
+  # pre-election covariates explain 4.6% of election-day lateness, and lateness -> share
+  # is t = -1.4). So: one shared mean-zero offset per (county, mode, draw) on the
+  # UNREPORTED cells' share.
+  #
+  # Why nothing already covers it: per-cell residuals average over the unreported set at
+  # 1/sqrt(k), which with k in the tens-to-hundreds is ~0.02 on the logit scale, two
+  # orders below the measured 0.3. And u_c for a (county, mode) is pinned by that
+  # county's REPORTED cells, so it cannot express a reported-vs-unreported difference.
+  #
+  # Being mean-zero, this must NOT move the point estimate -- only the width. That is the
+  # sharpest check on this block, and the backtest's error curve is where it is verified.
+  if (SD_UNREP > 0) {
+    cf = factor(prec$county); ci = as.integer(cf); n_cty = nlevels(cf)
+    for (mi in seq_along(MODES)) {
+      k = K_OUT * (mi - 1)
+      # Keyed on mask_turn, NOT mask: a cell that is reporting but still counting has its
+      # share SUBSTITUTED only once counted out (see 4d), so the cells whose final share
+      # is still uncertain are exactly the not-counted-out ones. Keying this on `mask`
+      # instead left the late stages untouched -- at 92.7% reported the width moved
+      # 0.59 -> 0.60pp -- because by then almost every cell has SOME report, while the
+      # remaining VOTES still sat inside half-counted cells.
+      unrep = !mask_turn[, mi]
+      if (!any(unrep)) next
+      z = matrix(rnorm(draws * n_cty, 0, SD_UNREP), draws, n_cty)
+      eps[, unrep, k + 3] = eps[, unrep, k + 3] + z[, ci[unrep], drop = FALSE]
+    }
+  }
+
   # --- 4d. invert, substitute observed, aggregate WITHIN each draw ---
   num_d = num_r = num_o = den = numeric(draws)
   cell_s_hat = matrix(NA_real_, N_PREC, M, dimnames = list(NULL, MODES))
   # PER-PRECINCT accumulators (draws x N_PREC), for precinct-level output
   pnum_d = matrix(0, draws, N_PREC); pden = matrix(0, draws, N_PREC)
+  # ---- reconstruct turnout from the TOTAL and the COMPOSITION ---------------------
+  # tau_im = T_i * p_im with sum_m p_im = 1, so sum_m tau_im = T_i EXACTLY and
+  # T_i < KAPPA * n_i by construction. Phantom ballots in one mode can no longer inflate
+  # the precinct total, and 184%-of-truth turnout is arithmetically impossible rather
+  # than something detected afterwards.
+  ref_i = match(REF_MODE, MODES)
+  if (USE_COMPOSE) {
+    k_ref = K_OUT * (ref_i - 1)
+    capm  = matrix(KAPPA * pmax(prec$n, 1), draws, N_PREC, byrow = TRUE)  # cap lives on `cells`
+    T_draw = capm * invlogit(mu[[k_ref + 1]] + eps[, , k_ref + 1])
+    # softmax over modes; the reference mode's log-ratio is 0 by definition
+    ex = vector("list", M); den_p = matrix(0, draws, N_PREC)
+    for (mi in seq_along(MODES)) {
+      k = K_OUT * (mi - 1)
+      ex[[mi]] = if (mi == ref_i) matrix(1, draws, N_PREC)
+                 else exp(pmin(mu[[k + 1]] + eps[, , k + 1], 20))
+      den_p = den_p + ex[[mi]]
+    }
+    # THE FLOOR MUST ACT ON THE PRECINCT TOTAL, NOT PER CELL.
+    # Flooring each cell at its own counted value (`pmax(tau, ct)`) destroys the
+    # adding-up property this parameterization exists for: sum_m tau_im could then exceed
+    # T_i again. Measured when I got this wrong: late turnout went 106.3% -> 114.4% at
+    # 99.2% counted, worse than the unconstrained model it replaced.
+    # Instead: floor the TOTAL at the precinct's counted total, then hand the remainder
+    # only to the modes that are short of their composition-implied share, in proportion
+    # to how short they are. Counted stays a hard floor per cell AND sum_m v_im = T_i.
+    cnt_tot = matrix(rowSums(cnt_tau), draws, N_PREC, byrow = TRUE)
+    T_draw  = pmax(T_draw, cnt_tot)
+    rem_tot = T_draw - cnt_tot
+    short = vector("list", M); short_sum = matrix(0, draws, N_PREC)
+    for (mi in seq_along(MODES)) {
+      cti = matrix(cnt_tau[, mi], draws, N_PREC, byrow = TRUE)
+      short[[mi]] = pmax(T_draw * (ex[[mi]] / den_p) - cti, 0)
+      short_sum = short_sum + short[[mi]]
+    }
+    # degenerate case: every mode already at or above its share -- fall back to the
+    # composition itself so the remainder still goes somewhere proportionate
+    flat = short_sum <= 1e-9
+    for (mi in seq_along(MODES)) {
+      short[[mi]][flat] = (ex[[mi]] / den_p)[flat]
+      short_sum[flat] = 1
+    }
+  }
   for (mi in seq_along(MODES)) {
     k = K_OUT * (mi - 1)
-    tau = exp(mu[[k + 1]] + eps[, , k + 1]) - 0.1
-    tau[tau < 0] = 0
+    tau = if (USE_COMPOSE) NULL else {
+      tt = exp(mu[[k + 1]] + eps[, , k + 1]) - 0.1; tt[tt < 0] = 0; tt
+    }
     tp  = invlogit(mu[[k + 2]] + eps[, , k + 2])
     s   = invlogit(mu[[k + 3]] + eps[, , k + 3])
-    ob = mask[, mi]
-    if (any(ob)) {                                   # substitute counted cells (RAW)
-      nb = sum(ob)
-      tau[, ob] = matrix(obs_raw[ob, k + 1], draws, nb, byrow = TRUE)
-      tp[,  ob] = matrix(obs_raw[ob, k + 2], draws, nb, byrow = TRUE)
-      s[,   ob] = matrix(obs_raw[ob, k + 3], draws, nb, byrow = TRUE)
+    # ---- PARTIAL COUNTS AS A MIXTURE, not substitute-or-predict -------------------
+    # A cell's final votes = what is already counted (KNOWN exactly) + what remains
+    # (predicted). So:
+    #   tau   >= counted           (censoring floor; counted is a hard lower bound)
+    #   rem    = tau - counted     (ballots still to count in this cell)
+    #   dem    = counted_dem + rem*(1-tp)*s
+    # This replaces the binary rule it grew out of, which substituted a reporting cell's
+    # share as EXACT once flagged complete and otherwise PREDICTED it, discarding the
+    # observed share entirely. That was wrong in both directions: a 5%-counted cell got
+    # its partial share asserted as final, and a 99%-counted-but-unflagged cell had
+    # near-perfect information thrown away -- which is why the interval at 100% counted
+    # came out 4.81pp wide instead of collapsing.
+    # The mixture needs NO completeness classifier: a counted-out cell has rem ~ 0 so its
+    # share is pinned automatically, and a barely-started cell is mostly predicted. That
+    # removes the dependence on the plateau proxy (and on a feed `pct_reported`) for the
+    # aggregate, which is a strictly better place to be.
+    ct = matrix(cnt_tau[, mi], draws, N_PREC, byrow = TRUE)
+    cd = matrix(cnt_dem[, mi], draws, N_PREC, byrow = TRUE)
+    cr = matrix(cnt_rep[, mi], draws, N_PREC, byrow = TRUE)
+    co = matrix(cnt_oth[, mi], draws, N_PREC, byrow = TRUE)
+    if (USE_COMPOSE) {
+      rem = rem_tot * (short[[mi]] / short_sum)     # this mode's share of what is left
+      tau = ct + rem                                 # sums to T_i across modes
+    } else {
+      tau = pmax(tau, ct)
+      rem = tau - ct
     }
-    cell_s_hat[, mi] = colMeans(s)
-    two = tau * (1 - tp)
-    num_d = num_d + rowSums(two * s)
-    num_r = num_r + rowSums(two * (1 - s))
-    num_o = num_o + rowSums(tau * tp)
-    den   = den   + rowSums(tau)
-    pnum_d = pnum_d + two * s
-    pden   = pden + tau
+    # Substitute a cell's values as EXACT only once it is counted out. A half-counted
+    # cell still informs the FIT -- its share enters weighted by counted ballots -- but
+    # its final share is not yet known, so pinning it at the partial share asserts
+    # certainty the data does not support. Measured on TX 2024: when an election-day cell
+    # first reports, the median cell has 5.4% of its final count in; at 23:00 the still-
+    # uncounted votes were +7.76pp more Democratic than the counted ones. This is the
+    # same partial-reporting defect as on the turnout side, in the share equation.
+    # (enightmodels::forecast_prec substitutes shares on its `obs` flag, but nyc_enr_io.R
+    # sets that flag to `total > turn_early * 1.2` -- a cell with a substantial count --
+    # not "any votes at all", which is what this reproduces.)
+    rem_two = rem * (1 - tp)
+    v_dem = cd + rem_two * s
+    v_rep = cr + rem_two * (1 - s)
+    v_oth = co + rem * tp
+    cell_s_hat[, mi] = colMeans(v_dem / pmax(v_dem + v_rep, 1e-9))
+    num_d = num_d + rowSums(v_dem)
+    num_r = num_r + rowSums(v_rep)
+    num_o = num_o + rowSums(v_oth)
+    den   = den   + rowSums(v_dem + v_rep + v_oth)
+    pnum_d = pnum_d + v_dem
+    pden   = pden + v_dem + v_rep + v_oth
   }
   # precinct-level Dem share of ALL votes, summarised across draws
   pshare = pnum_d / pmax(pden, 1e-9)
@@ -961,6 +1365,15 @@ prior_draws = function(cells, draws = DRAWS,
 }
 
 # ---- 6. run --------------------------------------------------------------------
+# SOURCE_ONLY=1 stops here: sections 1-5 are definitions plus the real `cells`, `prec`,
+# `CTY_MAT` and config, which is exactly what a backtest driver needs. The driver then
+# calls the SAME fit_stage() the live model uses, so the two cannot drift -- the reason
+# model_core.R was extracted in the first place. The closing brace is at end of file.
+if (nzchar(Sys.getenv("SOURCE_ONLY"))) {
+  cli_alert_info("SOURCE_ONLY set -- definitions and cells built; \\
+                  skipping the synthetic run")
+} else {
+
 args  = commandArgs(trailingOnly = TRUE)
 fracs = if (length(args)) as.numeric(args[1]) else c(0.10, 0.30, 0.50, 0.70, 0.90, 1.00)
 
@@ -1069,6 +1482,8 @@ if (USE_CROSS_MODE) {
     "  ratio {round(rmse(fa)/rmse(fb), 3)}  (<1 => observed modes informed unobserved ones)"
   ))
 }
+
+}   # end of the SOURCE_ONLY guard opened at section 6
 
 # ---- TODO before this is more than a trial -------------------------------------
 # 0. THIRD-PARTY VOTE: now modelled (the `tp` equation), so `tau` is ALL votes and the
