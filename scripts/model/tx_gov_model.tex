@@ -1,0 +1,659 @@
+\documentclass[11pt]{article}
+
+%% ============================================================
+%% Model memo for scripts/model/tx_gov_trial.R
+%% Built from ~/Work/papers/memo-template (see its README for font setup).
+%% Compile: pdflatex tx_gov_model.tex  (twice, for refs)
+%% ============================================================
+
+\usepackage{amsmath}
+\usepackage{mypaperfonts}
+\usepackage{microtype}
+\usepackage[margin=1in]{geometry}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage{xcolor}
+\definecolor{memolink}{RGB}{0,60,120}
+\usepackage[hyphens]{url}
+\usepackage[colorlinks=true, linkcolor=memolink, citecolor=memolink,
+            urlcolor=memolink]{hyperref}
+\usepackage{enumitem}
+\setlist{noitemsep, topsep=2pt}
+
+\usepackage{csquotes}
+
+\usepackage[most]{tcolorbox}
+\definecolor{memoalert}{RGB}{155,28,49}
+\newtcolorbox{memobox}[2][]{%
+  enhanced, breakable,
+  colback=memoalert!4!white, colframe=memoalert!85!black,
+  colbacktitle=memoalert!85!black, coltitle=white,
+  fonttitle=\bfseries\small, fontupper=\small,
+  title={#2},
+  boxrule=0.6pt, arc=1.5pt, titlerule=0pt,
+  left=7pt, right=7pt, top=6pt, bottom=6pt,
+  before skip=10pt, after skip=10pt,
+  #1}
+
+\newcommand{\memoheader}[2]{%
+  \noindent{\bfseries #1 \textperiodcentered\ Young-Kyung Kim \textperiodcentered\ #2}%
+  \par\vspace{2pt}\hrule\vspace{1.2\baselineskip}%
+}
+
+\usepackage{titlesec}
+\titleformat{\section}{\normalsize\bfseries}{\thesection.}{0.5em}{}
+\titlespacing{\section}{0pt}{1.1\baselineskip}{0.35\baselineskip}
+\titleformat{\subsection}{\normalsize\itshape\bfseries}{\thesubsection.}{0.5em}{}
+\titlespacing{\subsection}{0pt}{0.9\baselineskip}{0.25\baselineskip}
+
+%% shorthands
+\newcommand{\dem}{\mathrm{dem}}
+\newcommand{\rep}{\mathrm{rep}}
+\newcommand{\oth}{\mathrm{oth}}
+\newcommand{\tp}{\mathrm{tp}}
+\newcommand{\logit}{\operatorname{logit}}
+\newcommand{\Norm}{\mathcal{N}}
+
+\begin{document}
+
+\memoheader{Precinct $\times$ vote-mode election-night model (TX Governor trial)}{October 18, 2026}
+
+\noindent This documents the model implemented in \texttt{scripts/model/tx\_gov\_trial.R}:
+what is estimated, how, and what it assumes. The design goal is a forecast of each
+candidate's share of all votes that updates as returns arrive by vote mode, with honest
+uncertainty under repeated looks. Section~\ref{sec:setup} fixes notation,
+\ref{sec:system}--\ref{sec:post} give the model and its estimation,
+\ref{sec:sigma}--\ref{sec:agg} the prediction machinery, \ref{sec:int} the intervals,
+and \ref{sec:assume} the assumptions and known gaps.
+
+\section{Setup and the composition}\label{sec:setup}
+
+Index precincts $i = 1,\dots,N$ and vote modes $m \in \mathcal{M} = \{\textrm{mail},
+\textrm{early}, \textrm{eday}\}$, with $M = |\mathcal{M}| = 3$. The unit of analysis is
+the \emph{cell} $(i,m)$. When a cell has reported we observe three counts
+$v^{\dem}_{im}, v^{\rep}_{im}, v^{\oth}_{im}$, where $\oth$ collects every candidate
+outside the two major parties, including write-ins.
+
+Rather than model the three counts directly, the model works with a factorisation of the
+composition:
+\begin{equation}
+  \tau_{im} = v^{\dem}_{im} + v^{\rep}_{im} + v^{\oth}_{im},
+  \qquad
+  \tp_{im} = \frac{v^{\oth}_{im}}{\tau_{im}},
+  \qquad
+  s_{im} = \frac{v^{\dem}_{im}}{v^{\dem}_{im} + v^{\rep}_{im}},
+  \label{eq:fwd}
+\end{equation}
+so $\tau$ is all votes cast in the cell, $\tp$ is the third-party share \emph{of all}
+votes, and $s$ is the Democratic share of the \emph{two-party} vote. The map is invertible:
+\begin{equation}
+  v^{\dem}_{im} = \tau_{im}(1-\tp_{im})s_{im},
+  \qquad
+  v^{\rep}_{im} = \tau_{im}(1-\tp_{im})(1-s_{im}),
+  \qquad
+  v^{\oth}_{im} = \tau_{im}\tp_{im}.
+  \label{eq:inv}
+\end{equation}
+Because \eqref{eq:fwd}--\eqref{eq:inv} is a bijection between $(\tau,\tp,s) \in
+\mathbb{R}_+ \times (0,1)^2$ and $(v^{\dem},v^{\rep},v^{\oth})$, nothing is lost relative
+to modelling the counts, and the three implied shares of all votes sum to one and lie in
+$[0,1]$ \emph{by construction} --- no clamping and no post-hoc renormalisation.
+
+This matters because the obvious alternative --- one model per candidate, then divide by
+the row sum --- is not innocuous. With two candidates the predictive residuals are drawn
+independently when they should be perfectly anticorrelated, and the division cancels part
+of the genuine noise; simulation against the implementation puts the resulting predictive
+standard deviation about $29\%$ too small. Factorising avoids this and leaves the
+inter-candidate dependence to be estimated rather than induced.
+
+\section{The system of equations}\label{sec:system}
+
+Write $k \in \mathcal{K} = \{\tau, \tp, s\}$ for the three outcomes. The precinct-level
+covariate vector $x_i$ is deliberately small --- with hundreds of races one cannot
+hand-curate a design per contest --- and is given in Table~\ref{tab:covs}. All of the
+continuous demographic terms are standardised, so the design mixes a log-count, two rates
+and four standardised scores; the $g$-prior of \S\ref{sec:prior} is invariant to that
+rescaling, which is why no further normalisation is needed.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}L{3.1cm}L{4.3cm}L{6.4cm}@{}}
+\toprule
+term & source & in which equation \\
+\midrule
+\texttt{log\_n} & $\log$ registrants, L2 & turnout, third-party, share \\
+\texttt{turnout22} & \texttt{vote22}/\texttt{n}, L2 (2022 midterm rate) & turnout, share \\
+\texttt{turnout24} & \texttt{vote24}/\texttt{n}, L2 & turnout, share \\
+\texttt{age} & median age, voter file & turnout, third-party, share \\
+\texttt{male} & male share of registrants & turnout, third-party, share \\
+\texttt{pred.bla} & modelled Black share (BISG) & turnout, share \\
+\texttt{pred.his} & modelled Hispanic share (BISG) & turnout, share \\
+\texttt{dem2} & two-party Dem baseline, \newline \texttt{pr\_harris}/(\texttt{pr\_harris}$+$\texttt{pr\_trump}) & turnout, third-party, share \\
+\texttt{tp\_prior\_raw} & $1-$\texttt{pr\_harris}$-$\texttt{pr\_trump} & third-party only \\
+\midrule
+county indicators & one column per county & all three (penalised; \S\ref{sec:cre}) \\
+\bottomrule
+\end{tabular}
+\caption{The covariate vector $x_i$. Turnout and share share a design; the third-party
+equation has its own, smaller one, which is the only non-nested pair and therefore the only
+place a SUR efficiency gain is available (\S\ref{sec:assume}).}
+\label{tab:covs}
+\end{table}
+
+\noindent Note what is \emph{absent}. There is no vote-mode covariate, because mode is a
+dimension of the unit rather than a regressor. There is no spatial basis. And the partisan
+baseline enters as a single term, \texttt{dem2}, derived from a vendor model calibrated to
+2024 precinct returns --- so the design carries one partisan signal, not the three that the
+NYC pipeline used. The modelled quantities are
+\begin{equation}
+  y^{\tau}_{im} = \log(\tau_{im} + 0.1),
+  \qquad
+  y^{\tp}_{im} = \logit\!\left(\frac{v^{\oth}_{im} + \tfrac12}{\tau_{im} + 1}\right),
+  \qquad
+  y^{s}_{im}   = \logit\!\left(\frac{v^{\dem}_{im} + \tfrac12}{v^{\dem}_{im}+v^{\rep}_{im} + 1}\right).
+  \label{eq:outcomes}
+\end{equation}
+The $+\tfrac12$ terms are continuity corrections used \emph{only for fitting}: a cell with
+zero third-party votes is common and would otherwise give $y^{\tp} = -\infty$. Aggregation
+substitutes the raw quantities of \eqref{eq:fwd} for reported cells, so counted precincts
+are not perturbed.
+
+Each of the $K M = 9$ outcomes gets its own equation, and they are tied together only
+through their errors:
+\begin{equation}
+  y^{k}_{im} = x_i' \beta^{k}_{m} + \varepsilon^{k}_{im},
+  \qquad
+  \boldsymbol\varepsilon_i = \big(\varepsilon^{\tau}_{i,\textrm{mail}},\,
+  \varepsilon^{\tp}_{i,\textrm{mail}},\, \varepsilon^{s}_{i,\textrm{mail}},\,
+  \varepsilon^{\tau}_{i,\textrm{early}},\, \dots\big)'
+  \;\sim\; \Norm(\mathbf{0}, \Sigma),
+  \label{eq:sur}
+\end{equation}
+with $\Sigma \in \mathbb{R}^{9\times 9}$ and $\boldsymbol\varepsilon_i$ independent across
+$i$. Note that $m$ is an index, not a multiplicand: $\beta^{k}_{m}$ is a separate
+$p$-vector per mode, which is algebraically the same as one pooled regression with mode
+dummies interacted with every covariate.
+
+This is Zellner's seemingly unrelated regressions (SUR). The equations share no
+parameters. $\Sigma$ carries three substantively distinct kinds of dependence:
+\begin{enumerate}
+  \item turnout $\leftrightarrow$ share \emph{within} a mode;
+  \item turnout $\leftrightarrow$ turnout \emph{across} modes (substitution: heavy early
+        voting implies a lighter election day);
+  \item share $\leftrightarrow$ share \emph{across} modes --- which would let an observed
+        mode inform an unobserved mode of the same precinct.
+\end{enumerate}
+
+\noindent Measured on North Carolina 2024 (1{,}118 precincts; MEDSL official returns, the
+only state with complete precinct $\times$ mode $\times$ party), items 1 and 3 behave very
+differently. \emph{Within} mode, $\rho(\tau,s)$ is real and sign-varying: $+0.204$ for mail
+($z=6.9$), $+0.052$ for early (not significant), $-0.140$ for election day ($z=-4.7$).
+\emph{Across} modes, only mail\,$\leftrightarrow$\,early is distinguishable from zero
+($+0.232$, $z=7.9$); mail\,$\leftrightarrow$\,election-day is $-0.050$ ($z=-1.7$) and
+early\,$\leftrightarrow$\,election-day is $+0.039$ ($z=1.3$). Cross-mode \emph{turnout}
+correlation is also $\approx 0$ (L2, 5{,}362 Texas precincts, $|\rho|<0.2$ in both 2022 and
+2024). $\Sigma$ is therefore imposed \textbf{block-diagonal by mode}: the within-mode blocks
+are kept because they are measured, the cross-mode blocks dropped because they are not.
+
+\section{The prior: a $g$-prior placed on fitted values}\label{sec:prior}
+
+Each equation is given a conjugate prior specified in the units of the outcome rather
+than on coefficients. Write $\tilde y^{k}_{\cdot m}$ for the vector of prior fitted values
+across all $N$ precincts in mode $m$. These come from an external baseline: expected
+turnout split across modes, the 2024 two-party lean shifted by a mode-specific offset, and
+a shrunk third-party share,
+\begin{equation}
+  \tilde\tau_{im} = \widehat{\textrm{est}}_i \cdot \pi_{im},
+  \qquad
+  \tilde s_{im} = \logit^{-1}\!\big(\logit(\textrm{dem2}_i) + \delta_m\big),
+  \qquad
+  \tilde\tp_{im} = \tp_i,
+\end{equation}
+where $\pi_{im}$ are the mode turnout shares and $\delta_m$ the mode partisan offsets.
+
+Despite the name, ``$g$-prior'' is not shorthand for ``Gaussian prior.'' It is Zellner's
+specific structure $\beta \sim \Norm(\beta_0, g\sigma^2 (X'X)^{-1})$, in which the prior
+covariance is proportional to $(X'X)^{-1}$ --- the same matrix appearing in the OLS
+sampling variance --- and $g$ is the scalar multiplier. A ridge prior
+$\Norm(0, \lambda^{-1}I)$ is equally Gaussian but is \emph{not} a $g$-prior, and the
+difference is exactly what produces items 1 and 3 below. Here $g = 1/w_k$.
+
+The prior is implemented as \emph{data augmentation}. Stack all $N$ precincts as
+pseudo-observations with response $\tilde y^{k}$ and weight $w_k = n_k / N$, on top of the
+$n_{\textrm{obs}}$ reported rows with weight one:
+\begin{equation}
+  X_a = \begin{bmatrix} X \\ X_{\textrm{obs}} \end{bmatrix},
+  \qquad
+  y_a = \begin{bmatrix} \tilde y^{k} \\ y^{k}_{\textrm{obs}} \end{bmatrix},
+  \qquad
+  W_a = \operatorname{diag}\big(w_k \mathbf{1}_N,\ \mathbf{1}_{n_{\textrm{obs}}}\big),
+  \label{eq:aug}
+\end{equation}
+then solve one weighted least-squares problem. The implied prior on the coefficients is
+exactly Zellner's $g$-prior,
+\begin{equation}
+  \beta^{k}_{m} \;\sim\; \Norm\!\Big(\underbrace{(X'X)^{-1}X'\tilde y^{k}}_{\textrm{OLS projection of the prior}},\;\;
+  \sigma_k^2 \big(w_k X'X\big)^{-1}\Big),
+  \qquad
+  \sigma_k^2 \sim \textrm{Scaled-Inv-}\chi^2(\nu_0, s_0^2),
+  \label{eq:gprior}
+\end{equation}
+with $\nu_0 = 4$ and $s_0 = 0.05$. Three consequences are worth stating plainly.
+
+\begin{enumerate}
+  \item \textbf{$n_k$ is an effective sample size in precinct-equivalents.} Because the
+        pseudo-rows live in the same design space and share the same $\sigma$, setting
+        $n_\tau = 3$ really does mean ``three precincts' worth of information.'' The
+        prior's \emph{relative} weight then decays as $n_k/(n_k + n_{\textrm{obs}})$ with
+        no intervention, which is why $n_k$ is held fixed through the night rather than
+        tuned downward as returns arrive. Shrinking it as well would double-discount the
+        prior and overstate confidence in early partial data.
+  \item \textbf{The prior mean is a projection, so it can be lossy.} Only the component of
+        $\tilde y^{k}$ lying in $\operatorname{col}(X)$ survives \eqref{eq:gprior}. Including
+        the baseline itself as a covariate makes the projection exact; omitting it
+        discards whatever structure the covariates cannot express.
+  \item \textbf{The prior precision is proportional to $X'X$.} It is therefore tightest in
+        the directions the design is already most informative about, and vanishes in
+        near-null directions. Unlike a ridge penalty $\lambda I$, no choice of $n_k$
+        improves the conditioning of the design; the prior fixes
+        $n_{\textrm{obs}} < p$ early in the night but not collinearity.
+\end{enumerate}
+
+\section{The county random effect}\label{sec:cre}
+
+Equation~\eqref{eq:sur} as written has $\boldsymbol\varepsilon_i$ independent across
+precincts. That assumption is false, and it is the single most consequential error the
+model can make. For a sum of $N$ precinct-level terms with mean pairwise correlation
+$\bar\rho$,
+\begin{equation}
+  \operatorname{Var}\Big(\sum_{i=1}^{N} X_i\Big) = N\sigma^2\big(1 + (N-1)\bar\rho\big),
+  \label{eq:rhobar}
+\end{equation}
+so the standard deviation is inflated by $\sqrt{1+(N-1)\bar\rho}$ relative to
+independence. With $N \approx 4{,}500$ a $\bar\rho$ of one \emph{thousandth} roughly
+doubles a statewide interval --- while every other dependence examined in this model moves
+it by under one percent.
+
+\subsection{What the data say}
+
+Residuals cluster by county, and not marginally. Measuring the county intraclass
+correlation of a top-of-ticket statewide share residual (regressed on another statewide
+office on the same ballot, vote-weighted, plus log size), on MEDSL official precinct
+returns:
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+ & \multicolumn{2}{c}{county ICC} & \multicolumn{2}{c}{implied sd inflation} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+state & 2022 & 2024 & 2022 & 2024 \\
+\midrule
+\textbf{TX} & \textbf{0.269} & \textbf{0.196} & $3.07\times$ & $2.72\times$ \\
+NC & --- & 0.430 & --- & $3.47\times$ \\
+GA & 0.295 & --- & $2.37\times$ & --- \\
+MI & 0.381 & 0.149 & $4.61\times$ & $2.90\times$ \\
+PA & 0.091 & 0.091 & $3.38\times$ & $3.52\times$ \\
+WI & 0.114 & 0.144 & $2.37\times$ & $2.66\times$ \\
+AZ & 0.089 & 0.227 & $3.19\times$ & $5.12\times$ \\
+OH & 0.193 & 0.131 & $4.31\times$ & $3.70\times$ \\
+NV & 0.106 & 0.142 & $2.81\times$ & $3.22\times$ \\
+\bottomrule
+\end{tabular}
+\caption{County ICC of the share residual, nine states and two cycles. The ICC ranges
+widely but the inflation is tightly clustered, because inflation depends on ICC $\times$
+precincts-per-county and states trade off between the two.}
+\label{tab:icc}
+\end{table}
+
+\noindent Three things follow. The effect is \emph{universal} --- every state-year shows
+it. The inflation is \emph{stable} at $2.4\times$ to $5.1\times$, so any precinct model
+treating precincts as independent is overconfident by roughly a factor of three
+essentially everywhere. And midterm ICCs generally exceed presidential ones, so for a 2026
+forecast the 2022 column is the relevant analogue.
+
+The defaults are the Texas measurements, avoiding cross-state borrowing on the parameter
+that matters most: $\text{ICC}_s = 0.269$ (MEDSL TX 2022, governor on attorney general,
+7{,}529 precincts in 233 counties) and $\text{ICC}_\tau = 0.200$ (L2 Texas,
+$\log(\texttt{vote22})$ on registration, demographics and 2018 turnout, 5{,}433 precincts
+in 32 counties).
+
+A coarse stratification will not substitute. Regressing the NC county effects on county
+attributes gives $R^2 = 0.005$ for lean, $0.281$ for log size, $0.396$ for both with cubic
+terms, and $0.034$ for a six-level stratification on lean. Roughly $60\%$ of the county
+effect is county-\emph{idiosyncratic}, which is why neither existing pipeline captures it:
+the NYC model has no grouping term at all, and the TX primary model's
+$(1\,|\,\texttt{stratum\_demo})$ and $(1\,|\,\texttt{geostratum})$ have five and six levels
+over 254 counties.
+
+\subsection{Implementation: a ridge-equivalent effect that preserves conjugacy}
+
+Let $C$ be the $N \times J$ matrix of county indicators and $u \in \mathbb{R}^J$ the county
+effects. The model becomes
+\begin{equation}
+  y^{k}_{im} = x_i'\beta^{k}_{m} + u^{k}_{m,c(i)} + \varepsilon^{k}_{im},
+  \qquad u^{k}_{m,c} \sim \Norm\big(0,\ \sigma_k^2/\lambda_k\big),
+  \qquad \lambda_k = \frac{1 - \text{ICC}_k}{\text{ICC}_k}.
+  \label{eq:cre}
+\end{equation}
+Fitting this with \texttt{lme4} would forfeit conjugacy and the closed-form draws of
+\eqref{eq:draws}. Instead, note that a Gaussian random effect is exactly a ridge penalty
+on the indicator columns, and that a ridge penalty is representable as pseudo-rows. The
+augmented system stacks three blocks and is solved by one weighted QR:
+\begin{equation}
+  \underbrace{\begin{bmatrix} X & \mathbf{0} \\ X_{\textrm{obs}} & C_{\textrm{obs}} \\
+  \mathbf{0} & I_J \end{bmatrix}}_{\textrm{design}},
+  \qquad
+  \begin{bmatrix} \tilde y^{k} \\ y^{k}_{\textrm{obs}} \\ \mathbf{0}\end{bmatrix},
+  \qquad
+  W = \operatorname{diag}\big(\tfrac{n_k}{N}\mathbf 1_N,\ w_{\textrm{obs}},\ \lambda_k \mathbf 1_J\big).
+  \label{eq:creaug}
+\end{equation}
+The first block is the $g$-prior of \S\ref{sec:prior}, with the county columns zeroed so
+that it governs $\beta$ only; the second is the reported data, weighted by counted ballots;
+the third shrinks $u$ toward zero with weight $\lambda_k$. Conjugacy, the closed-form
+draws, and the precinct-equivalents reading of $n_k$ all survive.
+
+The behaviour that produces the widening is at the edge: a county with \emph{no} reported
+precincts has $u_c$ shrunk to zero but retains the full random-effect variance
+$\sigma_k^2/\lambda_k$ in the posterior draws. Unreported counties are therefore
+genuinely uncertain rather than silently assumed average.
+
+\subsection{Validation}
+
+Coverage over 14 replications with a fresh truth each (county component at the measured
+ICCs), single stage at $70\%$ reported, nominal $95\%$:
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & coverage & mean width & mean $|$error$|$ \\
+\midrule
+county effect off & $8/14 = 57\%$ & $0.577$pp & $0.326$pp \\
+county effect on  & $13/14 = 93\%$ & $1.331$pp & $0.232$pp \\
+\midrule
+off, at the TX ICCs & $11/14 = 79\%$ & $0.526$pp & $0.218$pp \\
+on, at the TX ICCs  & $13/14 = 93\%$ & $1.012$pp & $0.235$pp \\
+\bottomrule
+\end{tabular}
+\caption{The uncorrected model's nominal $95\%$ intervals cover $57$--$79\%$ of the time.
+With the county effect, $93\%$ --- indistinguishable from nominal given $n=14$ (SE on
+coverage $\approx 5.8$pp).}
+\label{tab:cov}
+\end{table}
+
+\noindent Two caveats. The synthetic truth is generated with the same ICCs the model
+assumes, so this establishes that the machinery is calibrated \emph{when the ICC is
+correct}, not that $0.269$ is correct for 2026. And $n=14$ is thin: the $93\%$ figures are
+consistent with roughly $82$--$100\%$, while the $57\%$ and $79\%$ figures are far enough
+from nominal to survive that noise.
+
+\paragraph{One component remains unmeasured.} Equation~\eqref{eq:cre} captures the
+\emph{county} level. A \emph{statewide} component --- a uniform swing the covariates miss
+--- is not identifiable from a single election's residuals, because the fitted intercept
+absorbs it by construction. The inflation factors in Table~\ref{tab:icc} are therefore
+lower bounds, and recovering the statewide term needs either multi-election backtesting or
+an explicit prior, which is what the systematic term in \S\ref{sec:int} is.
+
+\section{Posterior and posterior draws}\label{sec:post}
+
+With \eqref{eq:aug} the posterior is closed-form. Let $R$ be the upper-triangular factor
+from the QR decomposition of $W_a^{1/2} X_a$, so $R'R = X_a' W_a X_a$. Then
+\begin{equation}
+  \hat\beta = \big(X_a' W_a X_a\big)^{-1} X_a' W_a y_a,
+  \qquad
+  \hat\sigma^2 = \frac{\big\| W_a^{1/2}\big(y_a - X_a\hat\beta\big)\big\|^2}{n_{\textrm{obs}} - p},
+\end{equation}
+and the variance posterior is updated conjugately,
+\begin{equation}
+  \nu_\star = \nu_0 + N + n_{\textrm{obs}},
+  \qquad
+  s_\star^2 = \frac{\nu_0 s_0^2 + (N + n_{\textrm{obs}})\,\hat\sigma^2}{\nu_\star}.
+\end{equation}
+Two details of this are deliberate but easy to miss. The residual sum of squares runs over
+the \emph{augmented} rows, so it includes the prior's misfit, while the degrees of freedom
+use only the reported rows. Prior--data conflict therefore inflates $\sigma$ and widens
+every interval --- a crude but directionally correct self-protection. The flip side is
+that with a large covariate set and few reported precincts the denominator is small, so
+early-night intervals from a rich specification are wide by construction.
+
+Draws are then taken directly:
+\begin{equation}
+  \sigma^{(d)} = s_\star \sqrt{\nu_\star / \chi^2_{\nu_\star}},
+  \qquad
+  \beta^{(d)} = \hat\beta + R^{-1} z^{(d)},
+  \qquad
+  z^{(d)} \sim \Norm\big(\mathbf{0},\, \sigma^{(d)2} I_p\big),
+  \label{eq:draws}
+\end{equation}
+which is a multivariate $t$ for $\beta$ marginally. We take $D = 500$ draws.
+
+\begin{memobox}{Why Gaussian rather than Poisson counts}
+A Poisson or negative-binomial model of candidate counts is the natural alternative and is
+what the Texas primary pipeline uses. The Poisson log-likelihood
+$\sum_i \{v_i x_i'\beta - e^{x_i'\beta}\}$ is not quadratic in $\beta$, so no
+finite-dimensional conjugate family exists --- Gamma conjugacy applies to a free rate
+$\lambda_i$, and imposing $\lambda_i = e^{x_i'\beta}$ with $\beta$ shared across precincts
+destroys it. One must then optimise or sample, which returns a point estimate rather than a
+posterior, and intervals have to be manufactured some other way. Keeping everything
+Gaussian preserves \eqref{eq:draws} in closed form, which is what makes refitting many
+races every few minutes feasible.
+\end{memobox}
+
+\section{$\Sigma$ and conditioning on reported modes}\label{sec:sigma}
+
+$\Sigma$ is treated as an \emph{input}, estimated once from a past election in which every
+mode eventually reported, as the complete-case covariance of the $N \times 9$ residual
+matrix (with eigenvalue clipping to restore positive-definiteness).
+
+\begin{memobox}{$\Sigma$ cannot be estimated from tonight's returns}
+Modes report in sequence --- mail, then early, then election day --- so the number of
+precincts with \emph{all} modes counted is near zero until counting is essentially over.
+The share\,$\leftrightarrow$\,share block linking mail to election day, which is precisely
+the most useful one, is never identified from the current night's data. It has to come
+from history. An earlier implementation estimated $\Sigma$ by complete cases from the live
+returns and silently fell back to a diagonal matrix at every reporting stage, making the
+whole mechanism inert.
+\end{memobox}
+
+Partition precinct $i$'s error vector into the components belonging to reported modes
+($o$) and unreported modes ($u$). Prediction for the unreported cells then uses the
+conditional normal rather than the marginal:
+\begin{equation}
+  \boldsymbol\varepsilon_{iu} \mid \boldsymbol\varepsilon_{io}
+  \;\sim\;
+  \Norm\!\Big(
+    \Sigma_{uo}\Sigma_{oo}^{-1} \boldsymbol\varepsilon_{io},\;\;
+    \Sigma_{uu} - \Sigma_{uo}\Sigma_{oo}^{-1}\Sigma_{ou}
+  \Big),
+  \qquad
+  \varepsilon^{k(d)}_{im} = y^{k}_{im} - x_i'\beta^{k(d)}_{m}.
+  \label{eq:cond}
+\end{equation}
+Concretely: if a precinct's mail vote lands three points more Democratic than predicted,
+its election-day prediction shifts by roughly $\rho\cdot 3 \cdot
+(\sigma_{\textrm{eday}}/\sigma_{\textrm{mail}})$ points and its variance shrinks by the
+Schur complement. Without \eqref{eq:cond}, observing one mode tells you nothing about
+another mode of the same precinct beyond what the covariates already said.
+
+Since the observed/unobserved pattern is shared by many precincts, \eqref{eq:cond} is
+computed once per distinct pattern --- at most $2^M = 8$ of them.
+
+\section{Prediction and aggregation}\label{sec:agg}
+
+Within each draw $d$: form the latent outcomes from \eqref{eq:sur} using $\beta^{(d)}$ and
+the residual draw from \eqref{eq:cond}, invert the transforms of \eqref{eq:outcomes},
+substitute the raw observed values of \eqref{eq:fwd} for reported cells, and only then
+aggregate via \eqref{eq:inv}:
+\begin{equation}
+  S^{(d)}_{\dem} = \frac{\sum_{i,m} \tau^{(d)}_{im}\big(1-\tp^{(d)}_{im}\big)s^{(d)}_{im}}
+                        {\sum_{i,m} \tau^{(d)}_{im}},
+  \qquad
+  S^{(d)}_{\oth} = \frac{\sum_{i,m} \tau^{(d)}_{im}\tp^{(d)}_{im}}{\sum_{i,m} \tau^{(d)}_{im}},
+  \label{eq:agg}
+\end{equation}
+and $S^{(d)}_{\rep}$ analogously. The headline quantities are these shares of all votes;
+they satisfy $S_{\dem} + S_{\rep} + S_{\oth} = 1$ identically, since the numerators sum to
+$\sum \tau$. The two-party share $S_{\dem}/(S_{\dem} + S_{\rep})$ is reported alongside,
+because it is what decides the race.
+
+The ordering is not cosmetic. Because $\exp$, $\logit^{-1}$ and the ratio in \eqref{eq:agg}
+are all nonlinear, aggregating within each draw and taking quantiles afterwards is not the
+same as --- and is the correct alternative to --- forming per-cell intervals and combining
+them.
+
+\section{Intervals}\label{sec:int}
+
+Two intervals are reported for the headline quantity, and they answer different questions.
+
+The \textbf{credible interval} summarises the posterior draws and is a fixed-sample
+statement: given the model, there is $1-\alpha$ posterior probability that the quantity
+lies in the interval, \emph{for one look at the data}.
+
+The \textbf{confidence sequence} is anytime-valid. It is the set of values whose
+posterior-to-prior density ratio has not yet crossed $1/\alpha$,
+\begin{equation}
+  \mathrm{CS}_\alpha = \left\{ y : \frac{p_{\textrm{post}}(y)}{p_{\textrm{prior}}(y)} \le \frac{1}{\alpha} \right\}.
+  \label{eq:cs}
+\end{equation}
+That ratio is a Bayes factor against the hypothesis that the truth is $y$; by Ville's
+inequality it is a non-negative martingale with unit expectation under the truth, so it
+exceeds $1/\alpha$ with probability at most $\alpha$ \emph{at any stopping time}. Coverage
+therefore holds uniformly across the whole night. This matters because the model refits
+every few minutes: with on the order of a hundred looks, a freshly computed $95\%$
+credible interval has nowhere near $95\%$ joint coverage, while \eqref{eq:cs} does by
+construction.
+
+The price is width. For Gaussian prior and posterior with scales $\sigma_0 > \sigma_1$, the
+confidence sequence runs roughly $1.2$--$1.6$ times wider than the credible interval, the
+ratio shrinking toward one as $\alpha \to 0$ because both widths grow like
+$\sqrt{\log(1/\alpha)}$. When the posterior has not concentrated relative to the prior the
+ratio in \eqref{eq:cs} can never reach $1/\alpha$ and the interval is $(-\infty,\infty)$ ---
+which is the honest answer early in the night, and something a credible interval will never
+tell you.
+
+Note that \eqref{eq:cs} requires the prior predictive as its reference measure, and that
+this must include a \emph{systematic} component. A prior built only from idiosyncratic
+per-cell noise averages out at $1/\sqrt{NM}$ and comes out tighter than the posterior,
+which makes the governing quadratic unbounded and returns an infinite interval at every
+stage. Real prior uncertainty is about the statewide swing, which is common to all
+precincts and does not average away.
+
+\section{Assumptions and known gaps}\label{sec:assume}
+
+\paragraph{Reporting is ignorable given covariates.} A cell enters the likelihood when it
+has reported, and early reporters are not a random sample. The model's validity rests on
+the covariates (and the mode dimension) absorbing the systematic difference between early
+and late reporters. The prior limits how far the fit can travel but does nothing to correct
+selection.
+
+\paragraph{Errors are independent across precincts.} This is the most consequential
+remaining gap. Summing $N$ precincts with independent errors gives aggregate variance
+$O(N)$; with correlated errors it is $O(N^2)$, and that difference is what sets the true
+width of a statewide band. Earlier drafts of this memo reported that cross-mode conditioning
+improves cell-level share prediction by $21\%$ in RMSE and statewide standard deviation by
+$10\%$. \textbf{Both figures were artefacts and are withdrawn.} The first came from a
+synthetic generator that planted $\rho \approx 0.88$ across modes, so it measured only that
+exploiting an assumption helps; the real value is $\approx 0$ for the
+mail\,$\leftrightarrow$\,election-day pair. The second compared two $\Sigma$ matrices that
+differed in their \emph{diagonal} as well, so it measured an unreconciled variance estimate
+rather than correlation structure. Holding the diagonal fixed and varying only the
+off-diagonals moves the statewide standard deviation by $0.09\%$; propagating the measured
+NC correlations gives $0.09\%$ statewide, $0.21\%$ for a $500$-precinct district and
+$0.86\%$ for a $30$-precinct one. Correlation structure is thus second-order at every
+aggregate scale, because the residual term contributes only $O(1/\sqrt{k})$ of total
+variance while coefficient uncertainty moves every precinct together and does not average
+down. A geostratum random effect or explicit spatial term remains the highest-value
+addition.
+
+\paragraph{Partial reporting is treated as all-or-nothing.} A cell counts as observed at
+\texttt{STAGE\_DONE} and is otherwise unobserved. In reality a half-counted cell is
+asymmetric between the equations: a \emph{weighted} observation for the share equations,
+but a \emph{censored} one for turnout, since the count so far is a lower bound on
+$\tau_{im}$. Treating it as observed would bias turnout downward across nearly every cell
+early in the night.
+
+\paragraph{The mode partisan offsets $\delta_m$ are not yet calibrated, and must be
+lean-dependent rather than constant.} Measured on NC 2024, mail runs $+0.660$ logit above
+its precinct's overall two-party share on average, with a slope of $-0.297$ on the
+precinct's own lean ($t=-20.8$); early and election day are near zero on average but also
+lean-dependent ($t=17.5$ and $-11.8$). A constant offset is therefore misspecified, not
+approximately right. The \emph{likelihood} already accommodates this, since each mode has
+its own $\beta^{s}_{m}$ with the partisan baseline in the design; it was the \emph{prior}
+that was wrong, and it is now $\delta_{im} = a_m + b_m \logit(\text{dem2}_i)$. Supplying a
+correct lean-dependent offset cuts the error at $10\%$ reported from $1.07$ to $0.17$
+percentage points in the trial. The coefficients are left at zero for Texas because NC has
+no-excuse mail voting while Texas restricts it to voters 65+, disabled or absent, so the
+magnitudes should not be transferred; NC establishes that a nonzero, lean-dependent offset
+is needed, not its size. Voter-file sources give
+mode turnout composition --- for Texas the 2022 midterm split is mail $4.2\%$, early
+$63.8\%$, election day $32.0\%$, against $3.5/76.4/20.2$ in 2024, so a presidential-year
+analogue would understate election day by about ten points --- but they record how people
+voted, never for whom. The offsets therefore require either precinct $\times$ mode
+$\times$ party results, or ecological inference crossing precinct mode composition with
+precinct partisan outcomes. Until then the trial reproduces the full red-mirage bias on
+purpose, and does so visibly.
+
+\paragraph{The SUR system is not fully exploited.} Coefficients are estimated
+equation-by-equation and $\Sigma$ is used only at prediction time. Where designs coincide
+this costs nothing: with identical regressors the GLS estimator collapses algebraically to
+equation-by-equation least squares. Since the turnout and share equations currently share a
+design, the only available gain comes through the third-party equation's distinct design
+and is worth about $1\%$. Differentiating the turnout and share designs would raise it to
+roughly $10\%$, but that requires genuine exclusion restrictions and an iterative
+(Gibbs/feasible-GLS) fit, forfeiting the closed form of \eqref{eq:draws}. Given the cost of
+refitting many races continuously, that trade is currently unattractive.
+
+\section{Implementation}\label{sec:impl}
+
+Per refit, per race: nine QR decompositions of the augmented design \eqref{eq:aug}, plus at
+most eight small solves for \eqref{eq:cond}, each inverting a $\Sigma_{oo}$ of order at most
+nine with one Cholesky of the Schur complement. Nothing iterates and nothing has to
+converge.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+Equation & Quantity & Code \\
+\midrule
+\eqref{eq:fwd}, \eqref{eq:outcomes} & observed outcomes, corrected and raw & \texttt{fit\_stage} step 4 \\
+\eqref{eq:sur}, \eqref{eq:aug}, \eqref{eq:gprior} & nine conjugate fits & \texttt{fit\_stage} step 4a \\
+\eqref{eq:draws} & coefficient draws & \texttt{draw\_beta} \\
+$\Sigma$ & source and repair & \texttt{fit\_stage} 4b, \texttt{calibrate\_sigma} \\
+\eqref{eq:cond} & conditioning by observation pattern & \texttt{fit\_stage} 4c \\
+\eqref{eq:inv}, \eqref{eq:agg} & invert, substitute, aggregate & \texttt{fit\_stage} 4d \\
+\eqref{eq:cs} & anytime-valid interval & \texttt{conf\_seq}, \texttt{prior\_draws} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The conjugate regression, the credible interval and the confidence sequence come
+from the \texttt{enightmodels} package (\texttt{lm\_bayes}, \texttt{cred\_int},
+\texttt{conf\_seq}); everything else is in \texttt{tx\_gov\_trial.R}. The trial runs on
+synthetic covariates and synthetic returns when the real inputs are absent, so the
+plumbing is testable before data arrives; synthetic mode is labelled loudly at run time.
+
+\section{Next steps}
+
+\begin{enumerate}
+  \item Calibrate $\delta_m$, by ecological inference or from real mode $\times$ party
+        results. This is the dominant source of early-night error.
+  \item Add cross-precinct correlation --- a geostratum random effect at minimum. This,
+        not $\Sigma$, governs statewide interval width.
+  \item Handle partial reporting asymmetrically: weighted for share, censored for turnout.
+  \item Replace the third-party prior with observed past third-party share once precinct
+        identifiers are reconciled across vintages.
+  \item Backtest on real 2022 and 2024 reporting order, measuring interval coverage as a
+        function of the share reported, rather than the synthetic order used here.
+\end{enumerate}
+
+\end{document}
