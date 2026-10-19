@@ -4,6 +4,12 @@
 and its successors. See `tx_gov_model.tex` for the model these inputs feed and
 `nyc_tx_comparison.tex` for why it is shaped this way.
 
+**Update 2026-10-19 (Bridget Schippers):** TX §1, §2, §3, §6 and §9 are now built by
+`scripts/model/prep_tx_model_inputs.R`, which reads only shared Dropbox files
+(`26_general/input_data`) and writes `26_general/input_data/model_inputs/TX_*`. Changes
+in this update: the `geo` normalization rule (§0), measured TX join rates (§0), where `n`
+comes from and how L2 gaps are filled (§2), and the status of `prec_*` / `pr_other` (§11).
+
 This specifies what the model needs, at what grain, in what units. It is written so a
 database can be mapped to it field by field. Sections marked **BLOCKED** are inputs we do
 not yet have; they are specified anyway so the schema can carry typed placeholders rather
@@ -15,17 +21,30 @@ than be reshaped later.
 
 **Canonical precinct id.** One string, `geo`, formatted `{st}_{county_cbs}_{precinct_id}`
 with `st` lowercase two-letter and `county_cbs` zero-padded to 3 digits —
-e.g. `tx_257_0001`. This is the live-scraper format and the spine of every join.
+e.g. `tx_257_1`. This is the live-scraper format and the spine of every join.
+
+**`precinct_id` is normalized the same way for every source** before `geo` is built:
+trim, upper-case, and drop leading zeros (`0007` → `7`, `001A` → `1A`). Live feeds write
+ids WITHOUT leading zeros: Kaufman's live id for YouGov precinct `0001` is `1`, and
+Harris live ids matched the frame at 15.8% before stripping zeros and 99.6% after. The
+county's own label is kept unchanged in `precinct_raw` (§1). Where the crosswalk has a
+`precinct_enr`, `geo` is built from that id instead (same normalization).
 
 **ID reconciliation is the main failure mode, not a detail.** Measured on TX as of
 2026-10-18, matching each source to the covariate frame:
 
 | source | match rate | note |
 |---|---|---|
-| L2 (`precinct_l2` via crosswalk) | 93.5% | usable |
+| L2 (`precinct_l2` via crosswalk) | 90.3% of precincts (5,537 / 6,134), 98.2% of registrants | usable; measured 2026-10-19 on the 2026-10-11 L2 file |
 | L2 (direct `county` + `precinct`) | 62.4% | **do not join directly** |
 | live ENR feed (`precinct_enr`) | **0.8%** | hard blocker, see §8 |
 | votehub past results | 88% / 38% / 0% | varies by county (BEXAR / KAUFMAN / BELL) |
+
+**Do not backfill crosswalk gaps by normalizing ids.** For 92 TX precincts the crosswalk
+leaves `precinct_l2` blank although a normalized-id match exists in L2. Those pairs are
+different places that share a number: their registrant counts differ by a median of 35%
+(e.g. El Paso `0054`: 13,275 registrants in the frame vs 1,989 in L2), against a median
+gap of about 1% for crosswalk matches. The blanks are correct.
 
 Every table below therefore carries `geo` as its key, and **any source whose native ids
 differ must be reconciled upstream**, not at query time. The crosswalk
@@ -96,7 +115,7 @@ Grain: one row per `geo`. Source: L2 precinct frame, except `dem2` / `oth_base`.
 |---|---|---|---|---|
 | `geo` | text | no | — | **PK/FK** |
 | `as_of` | date | no | — | voter-file vintage |
-| `n` | int | no | count | registrants |
+| `n` | int | no | count | registrants, from the YouGov frame (complete for every precinct); L2's count is carried as `l2_n` |
 | `active` | int | yes | count | |
 | `new` | int | yes | count | new registrants |
 | `p_male` | double | yes | share of `n` | |
@@ -112,12 +131,30 @@ Grain: one row per `geo`. Source: L2 precinct frame, except `dem2` / `oth_base`.
 **Validation:** `p_*` families each sum to ≤ 1 within tolerance; `turnout*` strictly in
 [0,1]; `est_turnout > 0`; `dem2` and `oth_base` strictly interior.
 
+**As built for TX (2026-10-19), `TX_precinct.parquet`:**
+- `p_*` and `turnout*` use L2's own registrant count (`l2_n`) as the denominator.
+  `p_white`…`p_other` exclude L2's `race_unk`, so they sum to less than 1.
+- Precincts with no L2 match (TX: 610 precincts, 207,777 registrants; mostly Travis) get
+  the county's registrant-weighted mean for every L2 field, flagged `l2_imputed = TRUE`.
+  The design matrix therefore has no blanks; `lm_bayes` misaligns rows when covariates
+  are NA.
+- `dem2` / `oth_base`: from `pr_harris` / `pr_trump` until the frame carries `prec_*`
+  (§11.1); the source is recorded per row in `dem2_source`, and the model version is
+  kept as `dem2_model` / `oth_model`. `vote_imputed` flags the 231 precincts filled from
+  the county average.
+- `est_turnout` = vendor `turnoutPred × n`, capped at `n` (§11.3 still open).
+- Extra columns: the join ids (`precinct26_code`, `precinct_l2`, `precinct_enr`,
+  `l2_rule`), YouGov values (`yg_*`), `cd_main`, and the flags above.
+
 ---
 
 ## 3. `precinct_mode_history` — mode turnout composition
 
 Grain: one row per `geo` × `election` × `method`. Source: L2
-`vote{YY}_{mail,early,eday}`. **Available now.**
+`vote{YY}_{mail,early,eday}`. **Available now:** TX built as
+`TX_precinct_mode_history.parquet` (2016–2024 generals, 5,537 precincts with an L2 match).
+In the 32 TX scope counties the 2022 split is mail 4.4% / early 65.0% / election day 30.5%,
+and the mode columns cover 99.8% of 2022 voters (93.6% in 2016).
 
 | field | type | null | unit | notes |
 |---|---|---|---|---|
@@ -426,9 +463,18 @@ prediction — is never identified from the current night's data.
    `prec_harris`/`prec_trump` (actual 2024 returns, already on `precinct26_code`, so no
    crosswalk needed); votehub `gov22_dem/rep` (2022 governor — right electorate, wrong
    ids). Recommend `prec_*` for now, `gov22` once reconciled.
+   **Status 2026-10-19:** `prec_*` (and `prec_harris2p`) are in the raw voter file
+   (`vf_frame_current_202609`) but NOT in `yougov_precinct_frame.parquet`; `create_frame.R`
+   has to average them in (over 2024 voters, like `pr_harris`). Once it does,
+   `prep_tx_model_inputs.R` switches to them automatically and reports
+   corr(logit returns, logit model) per §14.4.
 2. **`oth_base` source.** `pr_other` exists as a column and should replace the
    `1 − pr_harris − pr_trump` residual. Better still is `gov22_oth/gov22_total`
    (mean 1.43%, p95 2.69%) once ids are reconciled.
+   **Status 2026-10-19:** `pr_other` is also not in the frame parquet. Because each
+   voter's `pr_harris + pr_trump + pr_other = 1`, the residual `1 − pr_harris − pr_trump`
+   of the precinct averages equals the precinct's mean `pr_other`, so the current
+   `oth_base` is already that quantity.
 3. **`est_turnout`.** Either the vendor's `turnoutPred × n`, or built from L2 `vote18`/
    `vote22` history. The latter is more grounded but needs a midterm-trend assumption.
 4. **`stratum_demo` definition.** The TX primary's version is a hard majority-threshold
