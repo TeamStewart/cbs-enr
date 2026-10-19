@@ -281,6 +281,37 @@ TX primary feed the emitted values were 0, 2 and 5 only — and code filtering o
 every run. **Required:** a `stage_meaning` lookup table giving, per state, which values
 mean "nothing yet", "partially counted", and "complete".
 
+**UPDATE 2026-10-19 — the practical vocabulary is 0 / 4 / 6, and 6 can take DAYS.**
+Per the user, the best we can expect from a stage field is 0, 4 or 6, with 6 meaning
+complete — and reaching 6 routinely takes days, well past election night. Three other
+facts in this repo point the same way:
+- `scripts/functions.R` actively DOWNGRADES `stage == 6` to 5 unless `trust_stage=TRUE`,
+  i.e. the pipeline already treats a reported 6 as unreliable.
+- the TX primary emitted 0/2/5, a different vocabulary again.
+- `pct_rep` has been observed going BACKWARDS in production (0.997 → 0.269 → 0.364).
+
+**Design consequence, and it is a hard one: no model component may GATE on completeness.**
+A completeness signal that arrives days late, varies by state, is distrusted by our own
+loader and is non-monotonic cannot carry any weight on election night. Measured
+confirmation from the TX 2024 backtest: a plateau-based completeness proxy un-flagged 556
+cells at 23:59 — the count of "complete" cells FELL — reproducing the same backwards
+movement the real `pct_rep` shows.
+
+What this means concretely for the model:
+- the AGGREGATE is already safe: partial counts enter as a mixture
+  (`dem = counted_dem + rem*(1-tp)*s`, `rem = tau - counted`), which needs no flag at all.
+  A counted-out cell pins itself because `rem -> 0`.
+- the TURNOUT EQUATION is NOT safe: it is still fitted on cells flagged counted-out, and
+  that flag's instability is what makes the election-day turnout sigma oscillate between
+  0.054 (prior floor) and 1.315 across adjacent stages. **Fix direction: treat counted as
+  a RIGHT-censored observation of final turnout for every reporting cell, so no
+  completeness signal is needed.** (Right-censored: we learn the true value lies ABOVE
+  what we see, as with a subject still alive at study end. I first wrote "left" here,
+  which is the opposite case. Conjugacy can be kept by data augmentation (impute the
+  censored tau from the truncated normal, refit in closed form, iterate).**
+- `STAGE_DONE = 2` in `tx_gov_trial.R` is written against yet another vocabulary and must
+  be replaced by the `stage_meaning` lookup once it exists.
+
 **Blocker.** `precinct_enr` in the TX crosswalk is populated for 92 of 11,563 rows (0.8%),
 covering two counties. Until that is filled, returns cannot be joined to covariates for
 30 of 32 counties and the model cannot ingest them. This is independent of everything
@@ -423,3 +454,174 @@ With §7 and §10 absent the model runs and converges, but early-night estimates
 known bias toward whichever party leads the early-reporting modes, and cross-mode
 conditioning is inert for vote share. Both are acceptable for a trial; neither is
 acceptable on air.
+
+---
+
+## 13. Backtest inputs — what a past election must provide
+
+**Why this section exists.** Everything in §1-§12 describes what the model needs on
+election night. This section describes what it needs to *validate* the model beforehand,
+which is a different and in places stricter list. It is written from the TX 2024 backtest
+(built 2026-10-18/19) and from a Georgia dataset that passed every obvious check and was
+still unusable — see the acceptance tests, which exist because of that.
+
+Grain: one row per `geo` x `method` x `observed_at`, per state per past election.
+
+| field | type | null | notes |
+|---|---|---|---|
+| `geo` | text | no | **must reconcile to §1** — see the join test below |
+| `method` | text | no | §0 taxonomy |
+| `observed_at` | timestamptz | no | scrape time, **local or with an explicit offset** |
+| `votes_dem` / `votes_rep` / `votes_oth` | int | no | candidate-specific, not precinct totals |
+| `stage` | int | yes | if present, document the per-state vocabulary (§8) |
+
+Plus, once per state per election, the **final canvass** at the same grain (`geo` x
+`method` x party). That is the truth the backtest scores against, and it is not the same
+as the last scrape: measured on TX 2024, the last election-night snapshot is **99.28%** of
+the canvass, and Dallas alone lands at 97.87%.
+
+### Semantics that must hold (and that bit us)
+
+1. **Snapshots are cumulative within a county and counties are scraped independently.**
+   A timestamp is therefore only comparable to other timestamps of the *same* county. Any
+   statewide aggregate needs an as-of join (each county's latest snapshot at or before
+   `t`). Summing per-county snapshots as if they were statewide totals produces a
+   plausible-looking and wrong reporting curve.
+2. **Election-night coverage is the thing that makes a state usable.** A scrape that only
+   has pre-election or post-canvass snapshots is worthless for cadence work. On TX 2024,
+   3 of 19 counties had *only* 2026-02 scrapes carrying zero votes.
+3. **`votes_*` must be the candidate's votes**, not the precinct's total repeated on each
+   candidate row.
+
+### ACCEPTANCE TESTS — please run these and send the output with the data
+
+These are cheap and each one caught a real defect:
+
+- **T1 Turnout against official.** Sum the final canvass and compare to the published
+  statewide turnout for that contest. *Georgia failed only here*: its two-party share was
+  48.9% against an actual 48.9% — correct — while its vote total was 10.5M against an
+  actual 5.27M. **A share-only sanity check passes this data.** Report both.
+- **T2 Mode replication, at a SINGLE snapshot.** For each `(geo, candidate)` in one
+  snapshot, are all of that cell's mode values identical and non-zero? In Georgia this
+  was true for **64 of 159 counties**, which repeat the precinct total on every mode row
+  and inflate any sum across modes by 4x. Report the per-county fraction.
+  *This must be evaluated on ONE snapshot* — pooled across snapshots the test silently
+  returns zero, because the four mode rows do not all appear in every snapshot.
+- **T3 Night coverage.** Per county: number of snapshots between poll close and 08:00 the
+  next morning, and the first/last of them.
+- **T4 Join rate to §1**, per county, as `matched / total`. This is the binding
+  constraint, not a formality — measured against our current frame, NC joins at **17%**
+  and OH at **20%**, because L2 stores precinct NAMES (`BETHLEHEM 1`) where votehub stores
+  ABBREVIATIONS (`B1`). 81 of 100 NC counties join at 0%.
+- **T5 Party mapping.** List every distinct raw party string and its mapping. TX 2024
+  needed this because Travis parenthesises the party (`(D)`, `(R)`) in *both* the party
+  and candidate-name fields; a naive prefix test sent Travis's entire vote to `oth` and
+  put panel third-party at 17.7% against a true 2.54%.
+- **T6 Mode mapping.** List every distinct raw mode label and its mapping, with **zero
+  unmapped**. Note state-specific semantics: in TX, "Absentee" means BY MAIL (2.1-4.7% of
+  each county's vote, matching TX's restricted mail share), which is *not* transferable to
+  states where absentee means in-person early.
+
+### Priority states for backtesting
+
+In descending order of what we would learn. The model has only ever been validated on one
+state-election, so breadth matters more than depth here.
+
+| state | why | known blocker |
+|---|---|---|
+| **NC** | full-state L2 coverage, 100 counties, has mode x party via MEDSL | the 17% join — needs a precinct name/abbreviation crosswalk |
+| **GA** | full state, all four modes, 2024 scrape exists | the T2 replication problem in 64 counties |
+| **MI** | dense election-night sampling (141 night snapshots) | only 4 counties in the scrape |
+| **FL** | 97.6% join already | confirm night coverage |
+| **TX** | **done** — the reference implementation | — |
+
+---
+
+## 14. 2026 prep datasets — per state, before election night
+
+Scope is the 12 races in `26_general/input_data/priors.csv`: **AK, CA, FL, MI, NC, NY, TX**
+(Senate / Governor / House as listed). Crosswalks exist for all but **NY**.
+
+The intent of this section is that we do no data wrangling during the run-up. Each item
+below is a deliverable with an acceptance test.
+
+### 14.1 The precinct spine and its crosswalk — **highest priority**
+
+One row per 2026 precinct, carrying **every id we will need to join on**:
+
+| field | notes |
+|---|---|
+| `geo` | our canonical key |
+| `precinct_l2` | L2 frame id |
+| `precinct_votehub` | votehub `unit_id`, for historical results |
+| `precinct_enr` | **the id the live feed will emit** |
+| `precinct_shp` | shapefile id, if mapping |
+| `county_fips` | 5-digit |
+
+**`precinct_enr` is the binding blocker and has been since the contract was written.** It
+is populated for 92 of 11,563 rows (0.8%) in the TX crosswalk, covering two counties.
+Until it is filled, live returns cannot be joined to covariates in 30 of 32 counties and
+the model cannot ingest them. Everything else in this section is secondary to it.
+
+*Acceptance:* per county, the fill rate of each id column, and a round-trip test showing a
+sample of live-format ids joining to `geo`.
+
+### 14.2 Registrants per precinct
+
+`n` = registered voters. Used as a **ceiling**: the model now bounds precinct turnout at
+`KAPPA * n` (default 1.25), which is what stopped turnout estimates reaching 184% of
+truth.
+
+*Acceptance:* the distribution of `historical turnout / n`. On TX 2024 this is median
+0.654, p99 1.385, and **2.4% of precincts exceed 1.0** — which turned out to be a *join
+artifact detector*: the violations cluster in FORT BEND (15.0% of its precincts, max ratio
+4.50) and BELL (9.4%), the two counties with the worst join rates. Please report the
+per-county exceedance rate; it is a free data-quality signal.
+
+### 14.3 Mode turnout history (feeds §3)
+
+Per precinct, votes by mode for **each** of the last several comparable elections — not
+just one analogue year, and please label them rather than pre-selecting.
+
+*Why:* the analogue-year choice is a real modelling decision and the obvious pick is often
+wrong. TX mode composition tracks *turnout type*, not calendar — midterms run 27-32%
+election-day, presidentials 13-20%. For the 2024 target: 2020 gives 7.15/81.71/11.15,
+2022 gives 4.03/65.23/30.74, and the actual was 3.70/77.21/19.10. Neither analogue is
+close, because 2020 was anomalous. We need the series to choose from, per state.
+
+### 14.4 Partisan baseline (`dem2`, feeds §2)
+
+Prior-cycle two-party Dem share per precinct, from **results** rather than modelled
+partisanship, plus the third-party share from the same contest.
+
+*Do not* substitute L2 modelled party: measured on TX, registrants read 64.1% two-party
+Dem against an actual 2024 presidential 43.1%, and its mode differential is directionally
+wrong (election day reads *more* Democratic than early in both 2022 and 2024, with the
+ordering flipping between cycles).
+
+*Acceptance:* `corr(logit(dem2), logit(actual))` at precinct level against the most recent
+completed contest. TX 2024 gives **0.958**; anything far below that needs investigating
+before we rely on it.
+
+### 14.5 `stage` / completeness semantics, per state
+
+Document which emitted values mean "nothing yet", "partially counted", and "complete", per
+state and per feed.
+
+*Why this is not bookkeeping:* the model is now built so that **nothing gates on
+completeness** — partial counts enter as a vote-weighted mixture and a counted-out cell
+pins itself — precisely because this field cannot be relied on. Realistic values are
+0 / 4 / 6 with 6 meaning complete, and 6 can take **days**. The TX primary emitted only
+0/2/5, so code filtering `stage >= 6` never fired. Our own loader downgrades a reported 6
+to 5 unless `trust_stage=TRUE`. And `pct_rep` has been observed moving *backwards* in
+production (0.997 -> 0.269 -> 0.364). We still want the semantics documented so the few
+places that do read it are correct — but please do not spend effort making the field
+reliable, because the model no longer depends on it.
+
+### 14.6 Delivery order
+
+1. §14.1 `precinct_enr` for the 7 in-scope states — nothing else matters until this lands
+2. §14.2 registrants + the exceedance report (cheap, and it validates §14.1)
+3. §14.4 `dem2`
+4. §14.3 mode history series
+5. §13 backtest data for NC and GA, with T1-T6
