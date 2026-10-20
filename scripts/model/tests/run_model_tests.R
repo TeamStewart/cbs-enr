@@ -14,6 +14,7 @@
 ##   Rscript scripts/model/tests/run_model_tests.R tx_base --variants=nc,stopped
 ##   Variants:
 ##     nc       mode partisan offsets borrowed from NC 2024 (default: zero)
+##     tx24     mode partisan offsets measured on TX 2024 (CONTRACT.md section 7)
 ##     stopped  a cell counts as fully counted once it has not grown in 30 minutes,
 ##              instead of being told by the feed (closer to what TX will give us)
 ##     diag     no cross-mode correlation (SIGMA_STRUCT=diag)
@@ -23,6 +24,8 @@
 ##
 ## Other flags passed to every run of test_sim_night.R: --model=, --cells=, --complete=
 ## (see test_sim_night.R). --with-tx22 also reruns the older TX 2022 backtest.
+## --publish also copies the page to model_tests/index.html in the repo for GitHub Pages
+## (commit it and merge to main to update the online page).
 ##
 ## Each run takes about 10 minutes. Writes 26_general/model_tests/sim_*_results.csv, then
 ## 26_general/model_tests/model_tests.html, and opens it. Stops at the first failure.
@@ -33,6 +36,7 @@ args = commandArgs(trailingOnly = TRUE)
 VARIANTS = list(
   default = list(env = character(), flags = character()),
   nc      = list(env = "MODE_OFFSET_SOURCE=nc", flags = character()),
+  tx24    = list(env = c("MODE_OFFSET_SOURCE=nc", "MODE_OFFSETS_TX24=1"), flags = character()),
   stopped = list(env = character(), flags = "--complete=stopped"),
   diag    = list(env = "SIGMA_STRUCT=diag", flags = character()),
   nore    = list(env = "USE_COUNTY_RE=0", flags = character()),
@@ -45,7 +49,8 @@ bad_v = setdiff(variants, names(VARIANTS))
 if (length(bad_v)) stop("Unknown variant(s): ", paste(bad_v, collapse = ", "), ". Choose from: ", paste(names(VARIANTS), collapse = ", "))
 only_new = "--new" %in% args
 with_tx22 = "--with-tx22" %in% args
-bad = setdiff(grep("^--", args, value = TRUE), c(sim_flags, var_arg, "--new", "--with-tx22"))
+publish = "--publish" %in% args
+bad = setdiff(grep("^--", args, value = TRUE), c(sim_flags, var_arg, "--new", "--with-tx22", "--publish"))
 if (length(bad)) stop("Unknown option(s): ", paste(bad, collapse = " "))
 
 all_sc = basename(dirname(list.files(DIR_SIM, pattern = "^TX_truth\\.parquet$", recursive = TRUE, full.names = TRUE)))
@@ -78,7 +83,7 @@ for (i in seq_len(nrow(jobs))) {
   v = VARIANTS[[jobs$v[i]]]
   run("test_sim_night.R", c(jobs$sc[i], sim_flags, v$flags, if (jobs$v[i] != "default") paste0("--label=", jobs$v[i])), v$env)
 }
-run("make_model_test_page.R")
+run("make_model_test_page.R", if (publish) "--publish")
 
 page = file.path(DIR_OUT, "model_tests.html")
 cat(sprintf("\nDone in %.1f minutes. Page: %s\n", as.numeric(difftime(Sys.time(), t0, units = "mins")), page))

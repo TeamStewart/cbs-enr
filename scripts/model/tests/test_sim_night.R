@@ -16,8 +16,10 @@
 ##                    no cross-mode correlation, no mode offsets), kept for comparison.
 ##
 ## The trial model's own switches still work as environment variables, e.g.
-##   MODE_OFFSET_SOURCE=nc  borrow NC's mode partisan offsets (default here: zero,
-##                          since TX has no mode x party history)
+##   MODE_OFFSET_SOURCE=nc  borrow NC's mode partisan offsets (default here: zero, since
+##                          the TX mode history file has turnout by mode but not party)
+##     + MODE_OFFSETS_TX24=1  use the TX 2024 offsets measured from the 2024 scrape
+##                          (CONTRACT.md section 7) instead of NC's
 ##   SIGMA_STRUCT=diag   turn off cross-mode correlation (default: full)
 ##   USE_COUNTY_RE=0     turn off the county random effect
 ## Settings used are printed at the start and saved with the results.
@@ -160,6 +162,16 @@ if (MODEL == "trial") {
     if (lhs(ex[[i]]) %in% c("covs_long", "mode_hist")) { skipped = c(skipped, lhs(ex[[i]])); next }
     # sections 1-2 run in full; sections 3-5 contribute only their functions
     if (line < cut_ret || (line < cut_run && is_fun(ex[[i]]))) eval(ex[[i]], envir = globalenv())
+    # MODE_OFFSETS_TX24=1 (with MODE_OFFSET_SOURCE=nc): use the TX 2024 offsets measured
+    # from the real 2024 scrape (CONTRACT.md section 7) in place of NC's. The trial has no
+    # source option for them yet, so they are swapped into its NC_DELTA right after it is
+    # defined, before the mode priors are built from it.
+    if (lhs(ex[[i]]) == "NC_DELTA" && Sys.getenv("MODE_OFFSETS_TX24") == "1") {
+      assign("NC_DELTA", rbind(mail  = c(a = 0.769, b = -0.088),
+                               early = c(a = 0.087, b = -0.039),
+                               eday  = c(a = 0.082, b = -0.288)), envir = globalenv())
+      cat("Mode offsets: TX 2024 measured values (CONTRACT.md section 7) in place of NC's\n")
+    }
   }
   if (!setequal(skipped, c("covs_long", "mode_hist")))
     stop("tx_gov_trial.R no longer assigns covs_long / mode_hist at top level; update test_sim_night.R")
@@ -299,7 +311,9 @@ changes = c(if (MODEL == "core") "simpler model_core version",
             if (CELLS == "complete") "cells used only once fully counted",
             if (COMPLETE == "stopped") "fully-counted guessed from counts (no growth in 30 min)")
 if (MODEL == "trial") changes = c(changes,
-  if (MODE_OFFSET_SOURCE != "zero") paste0("mode offsets: ", MODE_OFFSET_SOURCE, if (MODE_OFFSET_SOURCE == "nc") " (NC 2024)" else ""),
+  if (MODE_OFFSET_SOURCE != "zero") paste0("mode offsets: ",
+    if (MODE_OFFSET_SOURCE == "nc" && Sys.getenv("MODE_OFFSETS_TX24") == "1") "TX 2024 (measured, CONTRACT.md section 7)"
+    else if (MODE_OFFSET_SOURCE == "nc") "NC 2024" else MODE_OFFSET_SOURCE),
   if (SIGMA_STRUCT != "full") paste0("cross-mode correlation: ", SIGMA_STRUCT),
   if (!USE_COUNTY_RE) "no county random effect",
   if (!USE_COMPOSE) "unbounded turnout")
