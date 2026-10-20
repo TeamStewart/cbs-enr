@@ -101,7 +101,7 @@ counties) and TX (Kaufman, Wood). NY also has Columbia but is not in the frame.
 | AK | 30 (all) | 402 | ak_20261008 | `748`, `002` (frame_name `DD-PPP`) | done 2026-10-15 |
 | AZ | 9 | 1,545 | az_20260901 | `0009`, `0133` | waiting |
 | CA | 17 | 23,685 (26,700 rows) | ca_20260901 | `47252`, `1204` | partial 2026-10-15 (L2 all counties; ENR San Diego only, 0 matched: consolidated precincts) |
-| FL | 31 | 3,764 (4,342 rows) | fl_20261011 | `8735`, `127` | partial 2026-10-15 (ENR: Hillsborough, Miami-Dade) |
+| FL | 31 | 3,764 (4,342 rows) | fl_20261011 | `8735`, `127` | partial 2026-10-20 (ENR: 18 frame counties; see Results) |
 | GA | 159 (all) | 2,581 | ga_20261002 | `CP04A`, `029` | waiting |
 | IA | 99 (all) | 1,658 | ia_20260901 | `DOWS`, `FC2` (name-like) | waiting |
 | MI | 31 | 2,737 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-19 (ENR: Berrien, Branch, Clare, Isabella, Kent, Newaygo, Osceola, Roscommon, Saginaw, Van Buren) |
@@ -198,6 +198,19 @@ Changes against the 2026-10-15 files:
     `ca_sandiego_members.csv`. 1,893 consolidations (88.9% of SD frame voters)
     pass the CD check. Rerun it after `ca.R`, and recheck it on real ballot
     totals. See `docs/precinct_crosswalks.md`.
+- FL (2026-10-20 rebuild; clean files written for the 19 `updated` FL counties
+  from the 2026 general sites, votes still 0): ENR 1,275 -> 2,141 of 4,342
+  frame rows (49.3%). L2 unchanged. All earlier matches kept.
+  - 100%: Bradford, Citrus, Columbia, Dixie, Gadsden, Glades, Hernando, Hillsborough,
+    Indian River, Lake, Levy, Marion, Monroe, Okeechobee, Sarasota, Walton. Polk
+    197/198, Miami-Dade 752/771 (sub-precinct splits, as before).
+  - New ENR recode: Citrus, Columbia, Dixie, Glades and Monroe append the
+    polling place to the code (`406 - Redemption Point AG`, `15.0 Deep
+    Creek`); keep the leading code, Dixie padded to 2.
+  - Gadsden and Levy ENR ids are polling-place names; `place_codes` maps them using
+    the county precinct lists (one polling place per precinct). Levy's L2 names are
+    precinct areas, not polling places (06 GULF HAMMOCK votes at Otter Creek Baptist).
+  - St. Johns has ENR but is not a frame county.
 - FL (2026-10-15, partial; ENR Hillsborough 2026-10-08, Miami-Dade 2026-09-28):
   4,342 frame rows. Overall 29.4% ENR, 99.9% L2, 29.4% both. In the two ENR
   counties (1,294 rows): 98.5% ENR, 100% L2, 98.5% both.
@@ -242,6 +255,13 @@ Changes against the 2026-10-15 files:
 
 ## Follow-ups
 
+- **Recheck on 2026-11-02 and 2026-11-03: FL Gadsden and Levy polling places.**
+  Their ENR precinct ids are polling-place names, mapped to precinct codes by
+  `place_codes` in `scripts/util/crosswalks/fl.R`. If a county moved a polling
+  place, that precinct silently drops to NA. Compare the ENR names with:
+  - Gadsden: https://votegadsdenfl.gov/election-info/precinct-information/list-of-precincts/
+  - Levy: https://www.voterfocus.com/PrecinctFinder/precinctDirectory?county=FL-LEV
+  Then rerun `fl.R` and confirm both counties are still 100% ENR.
 - (agents: list any generic helper worth promoting into `helpers.R`)
 - Done 2026-10-15: `input_data/create_frame.R` now groups by
   `precinct26_code` and keeps `precinct26_id`. Outside MI the frame rows and

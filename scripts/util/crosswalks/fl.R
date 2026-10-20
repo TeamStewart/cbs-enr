@@ -4,7 +4,7 @@ source("scripts/util/crosswalks/helpers.R")
 # Process and general rules: docs/precinct_crosswalks.md. Reference state: nc.R.
 #
 # FL ENR comes as per-county files (`FL_{County}_latest.parquet`); as of
-# 2026-10-15 only Hillsborough and Miami-Dade have 26_general data. Rerunning
+# 2026-10-20, 19 counties have 26_general data. Rerunning
 # picks up new county files automatically, but each new county's id format must
 # be checked (see the ENR recodes below).
 #
@@ -18,6 +18,30 @@ fl_counties = unique(fl_frame$county)
 # ========================================
 ## ENR
 # ========================================
+
+# Polling place -> code; sources in docs/crosswalk_todo.md Follow-ups.
+place_codes = c(
+  "GADSDEN|Centenary Church" = "1", "GADSDEN|Havana Public Library" = "2",
+  "GADSDEN|Concordia Baptist Church" = "3", "GADSDEN|Everybody's Church" = "4",
+  "GADSDEN|Quincy Recreation Center" = "5", "GADSDEN|Wetumpka Fire Department" = "6",
+  "GADSDEN|Union Chapel A.M.E. Church" = "7", "GADSDEN|Sycamore Methodist Ch." = "8",
+  "GADSDEN|Chattahoochee REC Center" = "9", "GADSDEN|Mt. Pleasant Fire Dept." = "10",
+  "GADSDEN|Gretna City Hall" = "11", "GADSDEN|Greensboro Town Hall" = "12",
+  "GADSDEN|FAMU Research Center" = "13", "GADSDEN|Shiloh Church" = "14",
+  "GADSDEN|St. James Baptist Church" = "15", "GADSDEN|National Guard Armory" = "16",
+  "GADSDEN|New Bethel A.M.E. Church" = "17", "GADSDEN|St. Matthew Church" = "18",
+  "GADSDEN|Hopewell Church" = "19", "GADSDEN|Assembly of God" = "20",
+  "GADSDEN|Green Shade A.M.E. Church" = "21", "GADSDEN|Second Elizabeth Church" = "22",
+  "GADSDEN|The Livestock Pavilion" = "23", "GADSDEN|St. Joseph MBC" = "24",
+  "GADSDEN|Elizabeth A.M.E. Church" = "25",
+  "LEVY|Levy County Ag Extension Office" = "01", "LEVY|Williston Highlands" = "02",
+  "LEVY|Bronson First Baptist" = "03", "LEVY|Cedar Key City Hall" = "04",
+  "LEVY|Willow Sink" = "05", "LEVY|Otter Creek Baptist Church" = "06",
+  "LEVY|Williston City Hall" = "07", "LEVY|Morriston Baptist Church" = "08",
+  "LEVY|Inglis Community Center" = "09", "LEVY|Pine Grove Baptist Church" = "10",
+  "LEVY|Miracle Vision Tabernacle" = "11", "LEVY|College of Central Florida" = "12",
+  "LEVY|Tommy Usher Center" = "13"
+)
 
 enr_files = Sys.glob(election_path("FL/clean/*_latest.parquet")) |> fs::path_rel(election_path())
 
@@ -39,7 +63,16 @@ fl = read_enr(enr_files) |>
     ),
     .by = c(county, md_base)
   ) |>
-  select(-md_base)
+  select(-md_base) |>
+  # "406 - Redemption Point AG" -> "406".
+  mutate(
+    precinct = case_when(
+      county == "DIXIE" ~ str_pad(str_extract(precinct, "^[0-9]+"), 2, pad = "0"),
+      county %in% c("CITRUS", "COLUMBIA", "GLADES", "MONROE") ~ str_extract(precinct, "^[0-9]+"),
+      county %in% c("GADSDEN", "LEVY") ~ unname(place_codes[paste(county, precinct, sep = "|")]),
+      .default = precinct
+    )
+  )
 stopifnot(
   !anyDuplicated(filter(fl, !is.na(precinct))[c("county", "precinct")]),
   !anyDuplicated(fl[c("county", "precinct_enr")])
