@@ -45,39 +45,13 @@ precinct $i$ for the Democratic candidate, the Republican candidate, and all oth
 \end{itemize}
 
 \paragraph{What $\Sigma$ does.}
-It is worth separating estimation from prediction here. $\Sigma$ does not improve the
-coefficients: because all nine equations share a design matrix, seemingly unrelated
-regression coincides with equation-by-equation estimation (Zellner), so $\hat\beta$ is
-unchanged. Estimating the nine equations separately and then drawing from a correlated
-$\Sigma$ is therefore not an approximation --- it is exact, and much cheaper.
-
-What $\Sigma$ buys is prediction, in three ways. First, it makes a joint predictive
-distribution possible at all: the statewide aggregate is nonlinear in $(\tau, tp, s)$
-jointly within each cell, so $\operatorname{Var}(\text{aggregate})$ depends on their
-correlation and cannot be assembled from the marginals. Second, it calibrates that
-variance --- drawing the nine errors independently when they are in fact correlated gives
-an interval that is simply wrong, and with positive correlations too narrow. Third, and
-most usefully during the count, it lets observed equations inform unobserved ones.
-Partitioning the nine into observed $o$ and unobserved $u$,
-\begin{equation}
-  \mathbb{E}[\epsilon_u \mid \epsilon_o] = \Sigma_{uo}\Sigma_{oo}^{-1}\epsilon_o,
-  \qquad
-  \operatorname{Var}[\epsilon_u \mid \epsilon_o]
-    = \Sigma_{uu} - \Sigma_{uo}\Sigma_{oo}^{-1}\Sigma_{ou}.
-  \label{eq:cond}
-\end{equation}
-The mean shift carries information from reported modes into unreported ones, and the
-conditional variance is a Schur complement: no larger than $\Sigma_{uu}$, and strictly
-smaller whenever $\Sigma_{uo} \neq 0$. Relative to treating the equations as independent
-this is a genuine efficiency gain, not merely a correction for miscalibration.
-
-Two caveats. The size of the third benefit should not be overstated --- propagated
-through to the statewide number, the cross-mode blocks move the aggregate standard
-deviation by about $0.09\%$, rising to $0.86\%$ for a district of thirty precincts. And
-the Zellner equivalence requires the same regressors on the \emph{same rows}; on election
-night the observed sets differ by mode, since early returns arrive hours before election
-day, so the system is unbalanced and equation-by-equation estimation is not strictly
-efficient there. That cost is currently unmeasured.
+Each equation is estimated separately; since they share a design matrix, seemingly
+unrelated regression coincides with equation-by-equation estimation, so $\Sigma$ does not
+change $\hat\beta$. It acts on prediction. The aggregate is nonlinear in $(\tau, tp, s)$
+jointly within a cell, so the predictive variance depends on their correlation, and
+conditioning on the observed equations sharpens the unobserved ones rather than merely
+rescaling them --- the conditional covariance is a Schur complement, strictly smaller
+than the unconditional one whenever the cross-blocks are nonzero.
 
 \section{The factorization}
 
@@ -133,9 +107,8 @@ $0 < T_i < \kappa n_i$. An earlier version of the model predicted turnout at 184
 truth; under \eqref{eq:compose} that is arithmetically impossible rather than something
 detected after the fact.
 
-Setting $\refm = \text{early}$ is an identifiability normalization, not a claim that early
-voting predicts the other modes --- it does not. Early is chosen because it reports first
-and is the best-measured mode.
+Setting $\refm = \text{early}$ is an identifiability normalization; early is chosen
+because it reports first and is the best-measured mode.
 
 \section{Partial counts}
 
@@ -149,9 +122,7 @@ With $c_{im}$ the ballots already counted in a cell and $r_{im}$ those remaining
   \label{eq:mixture}
 \end{equation}
 A counted-out cell has $r_{im} \approx 0$, so its observed share is pinned automatically;
-a barely-started cell is mostly predicted. No completeness classifier is required, which
-matters because in production the reported completeness flag arrives days late, uses a
-different vocabulary per state, and has been observed moving backwards.
+a barely-started cell is mostly predicted. No completeness classifier is required.
 
 Partial counts also impose their own restrictions, and these are inequalities. The floor
 must act on the precinct \emph{total}: flooring each cell at its own count destroys the
@@ -171,13 +142,10 @@ short they are:
 This preserves both $\sum_m \tau_{im} = T_i$ and $\tau_{im} \geq c_{im}$.
 
 \paragraph{Known limitation.}
-Two of the properties above are conditional rather than guaranteed, and both conditions
-can fail empirically. The identity $\tau_{im} = T_i\, p_{im}$ holds only when no mode has
-over-reported relative to its composition share; once one has, it receives $r_{im} = 0$
-and the others split the remainder by their own shortfalls, which is no longer the
-composition. Likewise $T_i < \kappa n_i$ survives the floor in \eqref{eq:alloc} only when
-$\sum_m c_{im} < \kappa n_i$. The unconditional invariants are the adding-up ones:
-$\sum_m \tau_{im} = T_i$ and $\tau_{im} \geq c_{im}$.
+$\tau_{im} = T_i\, p_{im}$ holds only when no mode has over-reported relative to its
+composition share, and $T_i < \kappa n_i$ only when $\sum_m c_{im} < \kappa n_i$. Both
+can fail empirically; the unconditional invariants are $\sum_m \tau_{im} = T_i$ and
+$\tau_{im} \geq c_{im}$.
 
 \section{Covariates and the county effect}
 
@@ -240,14 +208,12 @@ county coefficients a random effect. The whole system is one weighted least squa
 solve, which keeps conjugacy and closed-form draws.
 
 \paragraph{The covariance matrix.}
-$\Sigma$ is assembled as $D\,\mathcal{C}\,D$. The scale factors $D$ --- the nine
-per-equation residual standard deviations --- are estimated from the current night's own
-fits. The correlation matrix $\mathcal{C}$ is supplied from past elections, because the
-modes report in sequence: the number of precincts with every mode counted is near zero
-until the count is essentially over, so the cross-mode blocks are never estimable from
-tonight's data. The measured within-mode correlations between turnout and share vary in
-both magnitude and sign across modes ($+0.204$ for mail, $+0.052$ for early, $-0.140$ for
-election day, on 2024 returns), which is why a single pooled value is not adequate.
+$\Sigma$ is assembled as $D\,\mathcal{C}\,D$: the nine per-equation residual standard
+deviations $D$ come from the current night's fits, while the correlations $\mathcal{C}$
+are supplied from past elections, because the modes report in sequence and the cross-mode
+blocks are never estimable from tonight's data. The measured within-mode correlation
+between turnout and share varies in sign across modes, so a single pooled value will not
+do.
 
 \section{Prediction}
 
