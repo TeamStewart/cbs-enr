@@ -26,8 +26,18 @@
 ##   share<->share correlation ACROSS modes, which is what lets early/mail returns
 ##   update the election-day prediction for that same precinct.
 ##
-## Input:  {PATH_DROPBOX}/26_general/input_data/TX_prec_covs.parquet
-##         Schema (from scripts/model/prep_tx_covs.R, long by party):
+## Input:  {PATH_DROPBOX}/26_general/input_data/model_inputs/TX_precinct.parquet
+##         (was TX_prec_covs.parquet; PATH_COVS overrides the path)
+##         Built by scripts/model/prep_tx_model_inputs.R, which supersedes the removed
+##         prep_tx_covs.R / check_live_ids.R / inspect_l2.R (Bridget, 2026-10-19).
+##         NOTE two changes there that affect joins and covariates:
+##           - `geo` drops LEADING ZEROS (`tx_257_1`, not `tx_257_0001`), because live
+##             feeds write ids without them -- Harris matched 15.8% before stripping and
+##             99.6% after.
+##           - `n` is now the YouGov frame's registrant count (complete for every
+##             precinct); L2's is carried alongside as `l2_n`, and L2 gaps are filled
+##             with the county registrant-weighted mean flagged `l2_imputed`.
+##         Schema (long by party):
 ##           geo, county, geostratum, stratum_demo, cd_main, cd_main_share, n_cd, n,
 ##           turnout20, turnout22, turnout24, turnoutPred, age, male,
 ##           pred.whi, pred.bla, pred.his, pred.asi, pred.oth,
@@ -367,8 +377,10 @@ MODES = c("mail", "early", "eday")
 #
 # REQUIRED SCHEMA for {STATE}_mode_history.parquet -- one row per precinct x mode x
 # party, FINAL CANVASS numbers (not an election-night snapshot):
-#     geo      chr  live-scraper format: tx_{county_cbs 3-digit}_{precinct_id}
-#                   (same ids as prep_tx_covs.R; see its norm_prec_id/add_geo)
+#     geo      chr  live-scraper format: tx_{county_cbs 3-digit}_{precinct_id}, with
+#                   precinct_id trimmed, upper-cased and LEADING ZEROS DROPPED
+#                   (tx_257_1, not tx_257_0001) -- see CONTRACT.md §0 and
+#                   prep_tx_model_inputs.R
 #     election chr  e.g. "2022_general", "2024_general"
 #     method   chr  one of mail / early / eday  (map provisional+limited explicitly;
 #                   say whether they are folded into eday or dropped)
@@ -398,8 +410,16 @@ MODES = c("mail", "early", "eday")
 # into red-mirage bias.
 #
 # THESE ARE AVAILABLE PER PRECINCT -- the statewide constants below are only a fallback.
-# Join path: L2 `precinct_cbs` -> crosswalks/tx.csv `precinct_l2` (93.5% populated) ->
-# `precinct_yougov` -> the covariate frame. See derive_mode_priors() for the shape.
+# BUILT ARTIFACT (Bridget, 2026-10-19): TX_precinct_mode_history.parquet covers the
+# 2016-2024 generals for 5,537 precincts with an L2 match; in the 32 scope counties the
+# 2022 split is mail 4.4 / early 65.0 / eday 30.5, and the mode columns cover 99.8% of
+# 2022 voters. Point PATH_MODE_HIST at it rather than re-deriving the join.
+# Join path, if rebuilding: L2 `precinct_cbs` -> crosswalks/tx.csv `precinct_l2`
+# (90.3% of precincts, 98.2% of REGISTRANTS -- the weighted figure is the relevant one)
+# -> `precinct_yougov` -> the covariate frame. See derive_mode_priors() for the shape.
+# DO NOT backfill crosswalk gaps by normalizing ids: for 92 TX precincts a normalized
+# match exists but the pairs are different places sharing a number, with registrant
+# counts differing by a median 35%. The blanks are correct (CONTRACT.md §0).
 #
 # Caveat: still a stock of CURRENT registrants who voted in 2022 by each mode, so
 # survivorship-biased (2022 voters since died/moved are absent). But it is the right

@@ -22,6 +22,15 @@
 ##   scripts/model/lookups/vote_mode_map.csv
 ##   scripts/model/lookups/party_map.csv
 ##
+##
+## GEO CONVENTION — NOT the production one. This backtest keys on
+##   "{fips5} {precinct zero-padded to 4}"  e.g. "48453 0100"
+## because it joins votehub `unit_id` to the L2 frame directly. Production uses
+##   "{st}_{county_cbs}_{precinct_id}" with LEADING ZEROS DROPPED, e.g. "tx_257_1"
+## (CONTRACT.md §0, built by prep_tx_model_inputs.R). The two do NOT interoperate.
+## Anything moving between this backtest and the live path must go through the
+## crosswalk, not through string surgery -- see §0 on why normalizing ids to close
+## crosswalk gaps produces wrong matches.
 ## Run:  Rscript scripts/model/tx24_returns_panel.R
 ## Env:  PANEL_REF  -- path to the 2026-10-18 reference CSV; when set, the script asserts
 ##                     byte-equality against it restricted to the reference's geo set.

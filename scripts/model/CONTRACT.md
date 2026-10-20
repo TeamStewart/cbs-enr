@@ -604,19 +604,34 @@ One row per 2026 precinct, carrying **every id we will need to join on**:
 | `precinct_shp` | shapefile id, if mapping |
 | `county_fips` | 5-digit |
 
-**`precinct_enr` is the binding blocker and has been since the contract was written.** It
-is populated for 92 of 11,563 rows (0.8%) in the TX crosswalk, covering two counties.
-Until it is filled, live returns cannot be joined to covariates in 30 of 32 counties and
-the model cannot ingest them. Everything else in this section is secondary to it.
+**UPDATE 2026-10-19 — largely mitigated, and not the way this section expected.**
+`precinct_enr` is still populated for only 92 of 11,563 TX rows (0.8%), but the §0
+normalization rule removes most of the dependency on it: stripping leading zeros takes
+Harris live ids from **15.8% to 99.6%** matched against the frame. So the live feed can be
+joined without a filled `precinct_enr` wherever that rule works. What remains worth
+having is `precinct_enr` for the counties where it does not.
 
-*Acceptance:* per county, the fill rate of each id column, and a round-trip test showing a
-sample of live-format ids joining to `geo`.
+**And a correction to the instinct this section encouraged.** Do NOT close crosswalk gaps
+by normalizing ids. For 92 TX precincts a normalized-id match exists in L2 and is WRONG —
+the pairs are different places sharing a number, with registrant counts differing by a
+median of 35% (El Paso `0054`: 13,275 in the frame vs 1,989 in L2) against ~1% for genuine
+crosswalk matches. The blanks are correct. A high match rate achieved by loosening the key
+is not the same as a good join, and the registrant-weighted rate (98.2% for L2, against
+90.3% of precincts) is the figure to judge by.
+
+*Acceptance:* per county, the fill rate of each id column; a round-trip test showing a
+sample of live-format ids joining to `geo`; and the join rate reported BOTH per precinct
+and registrant-weighted.
 
 ### 14.2 Registrants per precinct
 
 `n` = registered voters. Used as a **ceiling**: the model now bounds precinct turnout at
 `KAPPA * n` (default 1.25), which is what stopped turnout estimates reaching 184% of
 truth.
+
+As of 2026-10-19 `n` is the YouGov frame's registrant count (complete for every
+precinct), with L2's carried as `l2_n` and L2 gaps filled by the county
+registrant-weighted mean flagged `l2_imputed` — so the design matrix has no blanks.
 
 *Acceptance:* the distribution of `historical turnout / n`. On TX 2024 this is median
 0.654, p99 1.385, and **2.4% of precincts exceed 1.0** — which turned out to be a *join
