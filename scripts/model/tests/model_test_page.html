@@ -83,12 +83,12 @@ code { font-family: var(--font-data); font-size: 0.85em; }
 
 <section id="sim">
   <div class="eyebrow">Simulated nights</div>
-  <h2>How each scenario went</h2>
+  <h2>How each scenario went in the 32 counties</h2>
   <p>Each row is one race in one run: one of Ethan's scenarios, with the model at its default settings or, for runs labelled "scenario · name", with some model settings changed. "What's different" lists the sim settings that differ from <code>tx_base</code> and the model settings that differ from the defaults. Coverage counts the checkpoints where the 95% interval held the true result; "confidently wrong" counts checkpoints where the whole interval was on the wrong side of 50%. Average error and interval width are over checkpoints with any votes counted, in percentage points of the two-party share; these are where runs with different model settings usually differ.</p>
   <div class="tbl">
     <table id="sc-table" aria-label="Scenario comparison"></table>
   </div>
-  <h2>One scenario in detail</h2>
+  <h2>One scenario in detail: the 32 counties</h2>
   <p>Ethan's simulation produces the final count for all 6,134 precincts and a reporting schedule by vote mode: early votes in one countywide dump after polls close, Election Day precincts over the next few hours, and late mail days later. Some precincts never appear (unmatched IDs) and some counties may never report, as set in the scenario's manifest. The model is refit every 15 minutes from 8:00pm to 4:00am, then at four later times. Before any votes are in for a vote mode, the full model has nothing to fit for that mode, so the first one or two checkpoints show very wide intervals.</p>
   <figure>
     <div class="controls">
