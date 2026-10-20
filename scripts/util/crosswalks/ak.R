@@ -60,7 +60,7 @@ l2_county = function(x) {
 }
 county_map = distinct(ak_frame, county) |> mutate(county_l2 = l2_county(county))
 
-ak_l2 = enightdata::read_local("input_data/l2/ak_20260901_precincts.parquet", parquet = TRUE) |>
+ak_l2 = enightdata::read_local(Sys.glob(election_path("input_data/l2/ak_*_precincts.parquet")) |> fs::path_rel(election_path()) |> max(), parquet = TRUE) |>
   as_tibble() |>
   select(state, county_l2 = county, precinct_l2 = precinct, n_l2 = n) |>
   filter(!is.na(precinct_l2))

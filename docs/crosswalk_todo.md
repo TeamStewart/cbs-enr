@@ -1,6 +1,6 @@
 # Crosswalk TODO: one script per frame state
 
-Goal: for every state in `input_data/yougov_precinct_frame.csv`, write
+Goal: for every state in `input_data/yougov_precinct_frame.parquet`, write
 `scripts/util/crosswalks/{st}.R`, which produces `input_data/crosswalks/{st}.csv`.
 Follow `docs/precinct_crosswalks.md` (rules and tiers) and use
 `scripts/util/crosswalks/nc.R` as the reference implementation.
@@ -9,6 +9,14 @@ Follow `docs/precinct_crosswalks.md` (rules and tiers) and use
 `26_general/{ST}/clean/` and nothing else: do not use `26_primaries/`,
 `26_dashtest/` or older folders. States without that data stay in `waiting`.
 This list is meant to be rerun over the coming weeks as ENR data arrives.
+
+Status as of 2026-10-19: new `clean/` data landed for MI (Berrien, Branch,
+Clare, Isabella, Newaygo, Saginaw, Van Buren) and TX (Harris, Lamar), and both
+states were rebuilt. All built states were also rerun on the parquet frame and
+the new L2 vintages (see Results). AZ (Pima), VA and WA (Cowlitz, Pacific,
+Skamania, Wahkiakum) are in the pipeline but have no precinct rows yet: Pima and
+VA have not posted contests, and the WA statewide feed fills `precinctResults`
+only once results post. WI Wood has data but is not a frame state.
 
 Status as of 2026-10-15 (second check): NC is done. New `clean/` data has
 landed for AK (statewide), CA (San Diego), FL (Hillsborough, Miami-Dade), MI
@@ -20,7 +28,7 @@ counties) and TX (Kaufman, Wood). NY also has Columbia but is not in the frame.
 1. Check which states are ready. From the project root, run:
    ```r
    root = fs::path(enightdata:::the$path_dropbox, enightdata:::the$election_folder)
-   frame_states = unique(enightdata::read_local("input_data/yougov_precinct_frame.csv")$state)
+   frame_states = unique(enightdata::read_local("input_data/yougov_precinct_frame.parquet", parquet = TRUE)$state)
    # Needs actual parquet files: state folders and empty clean/ dirs can exist before data lands
    n_files = sapply(frame_states, \(s) length(Sys.glob(fs::path(root, s, "clean", "*.parquet"))))
    ready = frame_states[n_files > 0]
@@ -89,19 +97,19 @@ counties) and TX (Kaufman, Wood). NY also has Columbia but is not in the frame.
 
 | state | frame counties | frame precincts | L2 file | sample frame ids | status |
 |---|---|---|---|---|---|
-| NC | 100 (all) | 2,657 (31 blank) | nc_20260901 | `01`, `PR24`, `01-01` | done 2026-10-15 |
-| AK | 30 (all) | 402 | ak_20260901 | `748`, `002` (frame_name `DD-PPP`) | done 2026-10-15 |
+| NC | 100 (all) | 2,657 (31 blank) | nc_20261006 | `01`, `PR24`, `01-01` | done 2026-10-15 |
+| AK | 30 (all) | 402 | ak_20261008 | `748`, `002` (frame_name `DD-PPP`) | done 2026-10-15 |
 | AZ | 9 | 1,545 | az_20260901 | `0009`, `0133` | waiting |
 | CA | 17 | 23,685 (26,700 rows) | ca_20260901 | `47252`, `1204` | partial 2026-10-15 (L2 all counties; ENR San Diego only, 0 matched: consolidated precincts) |
-| FL | 31 | 3,764 (4,342 rows) | fl_20260923 | `8735`, `127` | partial 2026-10-15 (ENR: Hillsborough, Miami-Dade) |
+| FL | 31 | 3,764 (4,342 rows) | fl_20261011 | `8735`, `127` | partial 2026-10-15 (ENR: Hillsborough, Miami-Dade) |
 | GA | 159 (all) | 2,581 | ga_20261002 | `CP04A`, `029` | waiting |
 | IA | 99 (all) | 1,658 | ia_20260901 | `DOWS`, `FC2` (name-like) | waiting |
-| MI | 31 | 2,737 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-15 (ENR: Kent, Osceola, Roscommon) |
+| MI | 31 | 2,737 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-19 (ENR: Berrien, Branch, Clare, Isabella, Kent, Newaygo, Osceola, Roscommon, Saginaw, Van Buren) |
 | NE | 93 (all) | 1,321 | ne_20261002 | `03`, `16` | waiting |
 | NM | 33 (all) | 2,203 | nm_20260914 | `034`, `012` | waiting |
 | OH | 13 | 4,153 | oh_20260929 | `83AHA`, `31BLU` | waiting |
 | PA | 19 | 6,217 | pa_20260911 | `2403`, `1680100`, `011905S` | waiting |
-| TX | 32 | 6,153 (45 blank; 11,563 rows) | tx_20260930 | `2305`, `4608` | partial 2026-10-15 (ENR: Kaufman, Wood) |
+| TX | 32 | 6,153 (45 blank; 11,563 rows) | tx_20261011 | `2305`, `4608` | partial 2026-10-19 (ENR: Harris, Kaufman, Lamar, Wood) |
 | VA | 133 (all) | 2,534 | va_20260901 | `0206`, `0412` | waiting |
 | WA | 4 | 167 | wa_20260917 | `0001` | waiting |
 
@@ -122,6 +130,34 @@ some counties only; list them in Results. `done` means built.
 > Results entry in `docs/crosswalk_todo.md`.
 
 ## Results
+
+Rerun of 2026-10-19 (frame now `input_data/yougov_precinct_frame.parquet`, rebuilt
+2026-10-18; `nc.R` and `ak.R` now pick the latest L2 file, like the others).
+Changes against the 2026-10-15 files:
+
+- NC: identical. CA and the San Diego files: same coverage; L2 gains Imperial
+  `285001 MAIL` and loses San Diego `ENCINITAS 414270` (L2 vintage unchanged,
+  frame rebuild).
+- AK (L2 ak_20261008): L2 398 -> 400 rows. 29-525 and 02-740 now clear the 90%
+  `paren_code_split` threshold.
+- FL (L2 fl_20261011): L2 4,338 -> 4,334. Broward A016, R044, R047, T024 are no
+  longer in L2.
+- MI: ENR 232 -> 480 rows, L2 2,708 -> 2,722. New counties: Berrien 53 of 55
+  precincts, Branch 21/21, Clare 19/19, Isabella 24/24, Newaygo 29/29, Saginaw
+  71/71, Van Buren 31/31. Two rule changes in `mi.R`:
+  - `muni_std` maps `MT` to `MOUNT` (ENR "City of Mt. Pleasant").
+  - New last tier `ward_as_pct`: cities with one precinct per ward, where the
+    frame has `WD 02 PCT 001` but L2/ENR number precincts by ward (Coldwater,
+    Benton Harbor, South Haven, Hudsonville). 14 L2 matches, ratios 0.91-0.98.
+  - NA by design: Berrien Lincoln Charter Twp 003 and Royalton 001 (frame
+    splits them across MI-04/MI-05); Van Buren ENR "City of South Haven, Ward
+    3, Precinct 2" (the Allegan County piece; 10 frame voters under ALLEGAN).
+- TX (L2 tx_20261011): ENR 92 -> 4,336 rows. Harris 1,151 of 1,157 frame
+  precincts; the 6 misses are 1-voter junk codes and the blank bucket. 73 Harris
+  ENR precincts are in neither the frame nor L2 (presumably no registered
+  voters). Lamar 25 of 28 (misses: `002F`, 231 voters, not in ENR; `0408`, 1
+  voter; blank). L2: the voter-count guard now drops El Paso 0086 and keeps
+  Travis 0439.
 
 - NC (2026-10-15, ENR `NC_latest` as of 2026-10-05): 3,498 coded frame rows.
   99.4% have ENR, 99.5% have L2, 99.4% have both. See

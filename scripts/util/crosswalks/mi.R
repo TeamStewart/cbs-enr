@@ -53,6 +53,7 @@ muni_std = function(x) {
     str_replace_all("\\bTWP\\b", "TOWNSHIP") |>
     str_remove_all("\\bCHARTER\\b") |>            # ENR/frame "Caledonia Charter Township" vs "CALEDONIA TOWNSHIP"
     str_replace_all("[.'-]", " ") |>
+    str_replace_all("\\bMT\\b", "MOUNT") |>                 # ENR "City of Mt. Pleasant"
     str_squish() |>
     str_replace("\\bCITY CITY$", "CITY")        # frame "TRAVERSE CITY CITY" vs L2 "TRAVERSE CITY 08"
 }
@@ -82,8 +83,14 @@ parse_frame = function(x) {
 # precinct in the county on that side (L2 "BOWNE TWP" == frame "BOWNE TOWNSHIP -
 # 001"; Leelanau L2 "TRAVERSE CITY" == frame "TRAVERSE CITY CITY - 004", the only
 # Traverse City precinct in that county).
-add_keys = function(d) {
-  d |>
+# k_wn: cities with one precinct per ward, where the frame says "WD 02 PCT 001"
+# but L2/ENR number the precincts by ward (Branch L2 "COLDWATER CITY 2", ENR
+# "City of Coldwater, Precinct 2"; Berrien ENR "City of Benton Harbor, Ward 2,
+# Precinct 2"). Frame side: only munis whose precincts are all PCT 001 with
+# distinct wards. Source side: the precinct number, when there is no ward or the
+# ward equals the precinct.
+add_keys = function(d, frame = FALSE) {
+  d = d |>
     mutate(n_muni = n(), .by = c(county, muni)) |>
     mutate(
       k_wp = if_else(is.na(ward) | is.na(pct), NA, paste(muni, ward, pct, sep = "|")),
@@ -91,6 +98,14 @@ add_keys = function(d) {
       k_m1 = if_else(n_muni == 1, muni, NA),
       across(c(k_wp, k_p, k_m1), \(k) str_remove_all(k, " "), .names = "{.col}_ns")
     )
+  if (frame) {
+    d |>
+      mutate(one_per_ward = all(!is.na(ward) & pct == "1") & !anyDuplicated(ward), .by = c(county, muni)) |>
+      mutate(k_wn = if_else(one_per_ward, paste(muni, ward, sep = "|"), NA)) |>
+      select(-one_per_ward)
+  } else {
+    mutate(d, k_wn = if_else(!is.na(pct) & (is.na(ward) | ward == pct), paste(muni, pct, sep = "|"), NA))
+  }
 }
 
 # Frame side: one row per (county, cd, code, name). Rows of a pooled frame unit
@@ -105,7 +120,7 @@ fr_keys = mi_vf |>
   ) |>
   select(county, precinct_yougov = fid, frame_name, n_frame) |>
   mutate(parse_frame(frame_name)) |>
-  add_keys()
+  add_keys(frame = TRUE)
 stopifnot(!anyNA(fr_keys$muni), !anyDuplicated(fr_keys[c("county", "precinct_yougov")]))
 
 tiers = tribble(
@@ -115,7 +130,8 @@ tiers = tribble(
   "muni_single",   "k_m1",     "k_m1",
   "ward_pct_ns",   "k_wp_ns",  "k_wp_ns",
   "muni_pct_ns",   "k_p_ns",   "k_p_ns",
-  "muni_single_ns","k_m1_ns",  "k_m1_ns"
+  "muni_single_ns","k_m1_ns",  "k_m1_ns",
+  "ward_as_pct",   "k_wn",     "k_wn"
 )
 
 finish = function(matched) {
