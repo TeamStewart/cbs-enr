@@ -29,6 +29,7 @@ ojs_define(
   meta = transform(dd$meta, time = to_ms(time)),
   ts = transform(dd$ts, time = to_ms(time)),
   prec = dd$prec,
+  l2 = if (is.null(dd$l2)) data.frame(key = character(), geo = character(), mode = character()) else dd$l2,
   dash_title = dd$title
 )
 ```
@@ -41,6 +42,12 @@ ojs_define(
 M = transpose(meta)
 TS = transpose(ts).map(d => ({ ...d, time: new Date(d.time) }))
 P = transpose(prec)
+L2 = transpose(l2)
+
+// L2 precinct shares, joined to ENR geos through input_data/crosswalks (see read_l2() in functions.R)
+L2_COLS = ["l2_n", "l2_turnout20", "l2_turnout22", "l2_turnout24", "l2_male", "l2_white", "l2_black", "l2_hispanic", "l2_asian"]
+// ENR method -> L2 vote-mode columns used for turnout; other methods (prov, all) get no turnout
+L2_MODE = { return { Total: "Total", eday: "eday", early: "early", adv: "early", mail: "mail", abs: "mail" } }
 
 DEM = "#005599"
 REP = "#ce0008"
@@ -111,7 +118,18 @@ withShares = rows => rows.map(d => ({
   swing: d.total > 0 && d.hist_total > 0 ? d.dem / d.total - d.hist_dem / d.hist_total : null
 }))
 
-precRows = withShares([...geoTotal, ...pc.filter(d => modes.includes(d.method))])
+l2c = new Map(L2.filter(d => d.key === sel).map(d => [`${d.geo}|${d.mode}`, d]))
+// non-turnout L2 vars are the same in every mode; turnout follows the row's vote mode
+withL2 = d => {
+  const t = l2c.get(`${d.geo}|Total`);
+  if (!t) return d;
+  const m = l2c.get(`${d.geo}|${L2_MODE[d.method]}`);
+  const o = { ...d };
+  for (const k of L2_COLS) o[k] = k.startsWith("l2_turnout") ? (m ? m[k] : null) : t[k];
+  return o;
+}
+
+precRows = withShares([...geoTotal, ...pc.filter(d => modes.includes(d.method))]).map(withL2)
 reported = precRows.filter(d => d.total > 0)
 
 // time series: Total facet + one facet per method present
@@ -153,7 +171,9 @@ scatterRows = {
 
 // precinct explorer (controls live in the explorer card toolbar)
 explorerCols = ["dem", "rep", "total", "dem_share", "rep_share", "margin", "stage",
-  ...(cur.has_hist ? ["hist_dem", "hist_rep", "hist_total", "hist_dem_share", "hist_margin", "swing"] : [])]
+  ...(cur.has_hist ? ["hist_dem", "hist_rep", "hist_total", "hist_dem_share", "hist_margin", "swing"] : []),
+  ...L2_COLS]
+// precincts without an L2 match have null L2 vars and drop out here
 explorerRows = reported.filter(d => d.facet === prec_mode && d[prec_x] != null && d[prec_y] != null)
 explorerType = k => d3.max(explorerRows, d => d[k]) > 2 ? "sqrt" : "linear"
 explorerLo = Math.max(d3.min(explorerRows, d => d[prec_x]), d3.min(explorerRows, d => d[prec_y]))
@@ -299,6 +319,10 @@ Plot.plot({
 
 ```{ojs ctrl-prec}
 //| content: card-toolbar
+l2Warn = {
+  if (![prec_x, prec_y].some(k => k.startsWith("l2_"))) return html`<span></span>`;
+  return html`<span class="l2-warn" title="ENR precincts in this contest matched to L2 via input_data/crosswalks. Unmatched precincts are dropped from the plot.">⚠ L2 matched for ${pct(cur.l2_match ?? 0)} of precincts</span>`;
+}
 viewof line45 = {
   const out = Inputs.checkbox(["45°"], { value: [] });
   out.querySelector("input").classList.add("form-check-input");

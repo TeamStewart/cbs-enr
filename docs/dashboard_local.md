@@ -24,7 +24,7 @@ Use the `CBS_ELECTION_FOLDER` env var to point at a folder other than the defaul
 
 ## Test data (no live election)
 
-Builds fake Dem-vs-Rep data from the `26_primaries` snapshots into `26_dashtest`, then renders against it without touching the targets store:
+Builds fake Dem-vs-Rep data from the `26_primaries` snapshots into `26_dashtest`, then renders against it without touching the targets store. It copies the dashboard states' crosswalks and L2 files from `26_general/input_data` for the explorer's `l2_*` variables. States with `26_general` files for the dashboard contest (currently NC) have their primary votes moved onto the general precinct geos; the rest keep primary geos:
 
 ```bash
 CBS_ELECTION_FOLDER=26_dashtest Rscript scripts/util/make_dashboard_test_data.R

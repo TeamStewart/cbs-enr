@@ -107,3 +107,13 @@
   flex-wrap: wrap;
   gap: 1rem;
 }
+
+// precinct explorer toolbar: L2 crosswalk coverage, shown only when an L2 var is picked
+.l2-warn {
+  color: #8a5a00;
+  background: #fff3cd;
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
