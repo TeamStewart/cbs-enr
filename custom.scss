@@ -117,3 +117,21 @@
   font-size: 0.8rem;
   white-space: nowrap;
 }
+
+// chart image export button (added to card headers by index.qmd)
+.card-header:has(.dash-export), .card-toolbar:has(.dash-export) {
+  display: flex;
+  align-items: center;
+}
+
+.dash-export {
+  margin-left: auto;
+  padding: 0 0.4rem;
+  color: $text-muted;
+  border: 0;
+
+  &:hover { color: $body-color; }
+  &.dash-export-done { color: #198754; }
+}
+
+.card-toolbar:has(.dash-export) { flex: 1 1 auto; }

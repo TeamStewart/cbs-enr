@@ -207,6 +207,126 @@ histSpec = (rows, x, label, xticks = 2) => ({
     Plot.ruleY([0])
   ]
 })
+
+// ---- Image export ----
+// Each chart cell registers its spec here; the card-header button re-renders it with EXPORT_THEME
+// (fixed size, larger type, title/legend/caption) and saves a PNG. The live charts are untouched.
+EXPORT_THEME = { return {
+  width: 1200, height: 675, scale: 3, format: "png",   // pixels = width/height x scale; format "png" or "jpeg"
+  font: "Helvetica Neue, Helvetica, Arial, sans-serif",
+  fontSize: 15, titleSize: 26, subtitleSize: 16, captionSize: 12,
+  ink: "#222222", muted: "#666666", background: "#ffffff", pad: 36,
+  margin: { top: 44, right: 24, bottom: 56, left: 64 },   // minimum plot margins at the larger font
+  caption: "Source: CBS News / MIT Election Data"
+} }
+EXPORTS = new Map()
+exportable = (name, s, title) => (EXPORTS.set(`${cur.key}|${name}`, { s, title: title ?? name }), s)
+
+exportChart = {
+  const T = EXPORT_THEME;
+  const idb = (op, val) => new Promise((resolve, reject) => {
+    const req = indexedDB.open("cbs-dash-export", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("kv");
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      const tx = req.result.transaction("kv", op === "get" ? "readonly" : "readwrite");
+      const r = op === "get" ? tx.objectStore("kv").get("dir") : tx.objectStore("kv").put(val, "dir");
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    };
+  });
+  // folder is picked once (shift-click to re-pick) and remembered; needs Chrome/Edge, otherwise a normal download
+  const getDir = async repick => {
+    if (!window.showDirectoryPicker) return null;
+    let dir = repick ? null : await idb("get").catch(() => null);
+    if (dir && (await dir.requestPermission({ mode: "readwrite" })) !== "granted") dir = null;
+    if (!dir) {
+      dir = await window.showDirectoryPicker({ id: "cbs-dash-export", mode: "readwrite" });
+      await idb("put", dir).catch(() => null);
+    }
+    return dir;
+  };
+  const render = async ({ s, title }) => {
+    const legend = s.color?.legend && s.color.domain ? s.color : null;
+    const subtitle = `${cur.label} · as of ${fmtTime(cur.time)} ET`;
+    const headH = T.pad + T.titleSize + 10 + T.subtitleSize + (legend ? 34 : 0) + 18;
+    const plotW = T.width - 2 * T.pad, plotH = T.height - headH - T.captionSize - T.pad - 14;
+    const svg = Plot.plot({
+      ...s, color: s.color && { ...s.color, legend: false }, width: plotW, height: plotH,
+      marginTop: Math.max(s.marginTop ?? 0, T.margin.top), marginRight: Math.max(s.marginRight ?? 0, T.margin.right),
+      marginBottom: Math.max(s.marginBottom ?? 0, T.margin.bottom), marginLeft: Math.max(s.marginLeft ?? 0, T.margin.left),
+      style: { fontFamily: T.font, fontSize: `${T.fontSize}px`, color: T.ink, background: "transparent", overflow: "visible" }
+    });
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const img = new Image();
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(svg));
+    await img.decode();
+    const c = document.createElement("canvas");
+    c.width = T.width * T.scale; c.height = T.height * T.scale;
+    const g = c.getContext("2d");
+    g.scale(T.scale, T.scale);
+    g.fillStyle = T.background; g.fillRect(0, 0, T.width, T.height);
+    g.textBaseline = "top";
+    g.fillStyle = T.ink; g.font = `700 ${T.titleSize}px ${T.font}`;
+    g.fillText(title, T.pad, T.pad);
+    g.fillStyle = T.muted; g.font = `400 ${T.subtitleSize}px ${T.font}`;
+    g.fillText(subtitle, T.pad, T.pad + T.titleSize + 10);
+    if (legend) {
+      let x = T.pad;
+      const y = T.pad + T.titleSize + 10 + T.subtitleSize + 14;
+      g.font = `400 ${T.fontSize}px ${T.font}`;
+      legend.domain.forEach((d, i) => {
+        g.fillStyle = legend.range[i]; g.fillRect(x, y + 1, 14, 14);
+        g.fillStyle = T.ink; g.fillText(d, x + 20, y);
+        x += 20 + g.measureText(d).width + 24;
+      });
+    }
+    g.drawImage(img, T.pad, headH, plotW, plotH);
+    g.fillStyle = T.muted; g.font = `400 ${T.captionSize}px ${T.font}`;
+    g.fillText(T.caption, T.pad, T.height - T.pad - T.captionSize + 6);
+    return new Promise(resolve => c.toBlob(resolve, `image/${T.format}`, 0.95));
+  };
+  return async (name, repick = false) => {
+    const entry = EXPORTS.get(`${cur.key}|${name}`);
+    if (!entry) return "Nothing to export for this chart.";
+    const stamp = new Date(cur.time ?? Date.now()).toISOString().slice(0, 16).replace(/[-:]/g, "").replace("T", "-");
+    const file = `${cur.key}_${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}_${stamp}.${T.format === "jpeg" ? "jpg" : T.format}`;
+    let dir = null;
+    try { dir = await getDir(repick); } catch (e) { if (e.name === "AbortError") return "Cancelled."; console.warn(e); }
+    const blob = await render(entry);
+    if (dir) {
+      const w = await (await dir.getFileHandle(file, { create: true })).createWritable();
+      await w.write(blob);
+      await w.close();
+      return `Saved ${dir.name}/${file}`;
+    }
+    const a = html`<a download=${file} href=${URL.createObjectURL(blob)}>`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    return `Downloaded ${file}`;
+  };
+}
+
+// one button per chart card header; exports whichever tab is showing
+exportButtons = {
+  const add = (header, nameFn) => {
+    header.querySelector(".dash-export")?.remove();
+    const b = html`<button type="button" class="btn btn-sm dash-export" title="Save chart image (shift-click: choose folder)"><i class="bi bi-download"></i></button>`;
+    b.onclick = async e => {
+      b.disabled = true;
+      const msg = await exportChart(nameFn(), e.shiftKey).catch(err => (console.error(err), `Export failed: ${err.message}`));
+      b.disabled = false;
+      b.title = msg;
+      b.classList.add("dash-export-done");
+      setTimeout(() => b.classList.remove("dash-export-done"), 1500);
+    };
+    header.append(b);
+  };
+  document.querySelectorAll(".card.tabset > .card-header").forEach(h => add(h, () => h.querySelector(".nav-link.active")?.dataset.value));
+  const ex = document.querySelector(".card-toolbar");
+  if (ex) add(ex, () => "Precinct Explorer");
+  return exportChart;
+}
 ```
 
 ```{ojs boxes}
@@ -241,9 +361,9 @@ histSpec = (rows, x, label, xticks = 2) => ({
 //| title: Total Votes
 {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
-  const s = timeSpec(tsLong.filter(d => d.series === "Total"), "votes", {
+  const s = exportable("Total Votes", timeSpec(tsLong.filter(d => d.series === "Total"), "votes", {
     label: "Votes", tickFormat: "~s", stroke: () => INK, tip: d => fmt(d.votes)
-  });
+  }));
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -252,9 +372,9 @@ histSpec = (rows, x, label, xticks = 2) => ({
 //| title: Vote Count
 {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
-  const s = timeSpec(tsLong.filter(d => d.party), "votes", {
+  const s = exportable("Vote Count", timeSpec(tsLong.filter(d => d.party), "votes", {
     label: "Votes", tickFormat: "~s", stroke: "series", color: partyColor, tip: d => fmt(d.votes)
-  });
+  }));
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -263,9 +383,9 @@ histSpec = (rows, x, label, xticks = 2) => ({
 //| title: Vote Share
 {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
-  const s = timeSpec(tsLong.filter(d => d.party && d.share != null), "share", {
+  const s = exportable("Vote Share", timeSpec(tsLong.filter(d => d.party && d.share != null), "share", {
     label: "Share of all votes", tickFormat: ".0%", stroke: "series", color: partyColor, domain: [0, 1], tip: d => pct(d.share)
-  });
+  }));
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -276,7 +396,7 @@ histSpec = (rows, x, label, xticks = 2) => ({
 //| title: Margin
 {
   if (noVotes) return noVotesMsg();
-  const s = histSpec(reported.filter(d => d.margin != null), "margin", `Precinct margin (${cur.dem_name ?? "Dem"} − ${cur.rep_name ?? "Rep"}) →`, [-0.5, 0.5]);
+  const s = exportable("Margin", histSpec(reported.filter(d => d.margin != null), "margin", `Precinct margin (${cur.dem_name ?? "Dem"} − ${cur.rep_name ?? "Rep"}) →`, [-0.5, 0.5]));
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -286,15 +406,17 @@ histSpec = (rows, x, label, xticks = 2) => ({
 {
   if (!cur.has_hist) return noHist();
   if (noVotes) return noVotesMsg();
-  const s = histSpec(reported.filter(d => d.swing != null), "swing", `Dem share swing vs '${String(cur.hist_year).slice(2)} →`);
+  const s = exportable("Swing", histSpec(reported.filter(d => d.swing != null), "swing", `Dem share swing vs '${String(cur.hist_year).slice(2)} →`));
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
 
 ```{ojs}
 //| title: Swing Scatter
-!cur.has_hist ? noHist() : noVotes ? noVotesMsg() :
-Plot.plot({
+{
+  if (!cur.has_hist) return noHist();
+  if (noVotes) return noVotesMsg();
+  const s = exportable("Swing Scatter", {
   fx: { domain: ["Precincts", "Counties"], label: null },
   x: { domain: [0, 1], label: `Dem share '${String(cur.hist_year).slice(2)} →`, tickFormat: ".0%", grid: true },
   y: { domain: [0, 1], label: "↑ Dem share now", tickFormat: ".0%", grid: true },
@@ -310,7 +432,9 @@ Plot.plot({
       fill: DEM, fillOpacity: 0.4, stroke: "white", strokeWidth: 0.5, channels: { county: "county" }, tip: true
     })
   ]
-})
+  });
+  return Plot.plot({ fx: s.fx, x: s.x, y: s.y, r: s.r, marks: s.marks });
+}
 ```
 
 ## Row {height="37%"}
@@ -346,8 +470,9 @@ viewof prec_mode = {
 ```
 
 ```{ojs explorer}
-noVotes ? noVotesMsg() :
-Plot.plot({
+{
+  if (noVotes) return noVotesMsg();
+  const s = exportable("Precinct Explorer", {
   x: { label: `${prec_x} →`, grid: true, type: explorerType(prec_x) },
   y: { label: `↑ ${prec_y}`, grid: true, type: explorerType(prec_y) },
   marks: [
@@ -355,5 +480,7 @@ Plot.plot({
     Plot.linearRegressionY(explorerRows, { x: prec_x, y: prec_y, stroke: "black" }),
     line45.length > 0 && explorerLo < explorerHi ? Plot.link([0], { x1: explorerLo, y1: explorerLo, x2: explorerHi, y2: explorerHi, stroke: "#999", strokeDasharray: "4,4" }) : null
   ]
-})
+  }, `Precincts: ${prec_y} vs ${prec_x} (${prec_mode})`);
+  return Plot.plot({ x: s.x, y: s.y, marks: s.marks });
+}
 ```
