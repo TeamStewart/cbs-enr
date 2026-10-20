@@ -1,0 +1,286 @@
+<title>TX Precinct Model Check</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; each test is a figure with its own controls, chart, and a short read-out below. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #1b2230;
+  --muted: #5d6676;
+  --rule: #d9dde5;
+  --dem: #2563a8;
+  --dem-band: rgba(37, 99, 168, 0.16);
+  --rep: #b4383a;
+  --truth: #1b2230;
+  --raw: #8a919e;
+  --warn-bg: #fbecea;
+  --ok-bg: #e8f1fa;
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161d; --surface: #1a2029; --fg: #e6e9ef; --muted: #9aa3b2; --rule: #2e3643;
+    --dem: #6ea8e8; --dem-band: rgba(110, 168, 232, 0.2); --rep: #e57373; --truth: #e6e9ef; --raw: #7d8594;
+    --warn-bg: #3a2224; --ok-bg: #1d2c3d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161d; --surface: #1a2029; --fg: #e6e9ef; --muted: #9aa3b2; --rule: #2e3643;
+  --dem: #6ea8e8; --dem-band: rgba(110, 168, 232, 0.2); --rep: #e57373; --truth: #e6e9ef; --raw: #7d8594;
+  --warn-bg: #3a2224; --ok-bg: #1d2c3d; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+h1, h2 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: 2.1rem; }
+h2 { font-size: 1.5rem; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-family: var(--font-data); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header { display: grid; gap: 12px; }
+.findings { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.findings li { padding: 12px 14px; border-radius: 6px; background: var(--surface); border: 1px solid var(--rule); max-width: 68ch; }
+.findings li.bad { background: var(--warn-bg); border-color: transparent; }
+.findings li.good { background: var(--ok-bg); border-color: transparent; }
+section { display: grid; gap: 14px; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.85rem; padding: 6px 12px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.seg button:focus-visible { outline: 2px solid var(--dem); outline-offset: -2px; }
+.chart { width: 100%; height: auto; display: block; }
+.chart text { font-family: var(--font-data); font-size: 11px; fill: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.82rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 18px; height: 10px; display: inline-block; border-radius: 2px; }
+.readout { font-family: var(--font-data); font-size: 0.82rem; color: var(--muted); min-height: 1.4em; font-variant-numeric: tabular-nums; }
+.note { color: var(--muted); font-size: 0.92rem; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; min-width: 520px; }
+th, td { text-align: right; padding: 5px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 600; color: var(--muted); font-size: 0.78rem; }
+td.miss { color: var(--rep); font-weight: 600; }
+ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 68ch; }
+code { font-family: var(--font-data); font-size: 0.85em; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow" id="stamp">CBS election desk · TX precinct model</div>
+  <h1>How the TX precinct model behaves as votes come in</h1>
+  <p>Two tests of the same model code (<code>scripts/model/model_core.R</code>). Each chart shows the model's estimate of the Democratic two-party share, its 95% interval, the raw share of votes counted so far, and the true final result.</p>
+  <ul class="findings" id="findings"></ul>
+</header>
+
+<section id="backtest">
+  <div class="eyebrow">Test 1 · real election</div>
+  <h2>Backtest: 2022 governor in our 32 counties</h2>
+  <p>The model is fit to the real 2022 result using only information available before November 2022: 2020 Senate results as the partisan baseline, 2018 turnout, and L2 demographics. Precincts are then revealed in order and the estimate is checked against the known result at each step. Texas has no precinct results by vote mode, so this test treats each precinct as one unit.</p>
+  <figure>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Reporting order">
+        <button id="bt-county_re" aria-pressed="true">Small counties first</button>
+        <button id="bt-county_nore" aria-pressed="false">Small first, no county effect</button>
+        <button id="bt-random_re" aria-pressed="false">Random order</button>
+      </div>
+    </div>
+    <svg id="bt-chart" class="chart" viewBox="0 0 760 380" role="img" aria-label="Backtest estimate by share of votes counted"></svg>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--dem-band)"></i>95% interval</span>
+      <span><i class="sw" style="background:var(--dem);height:3px"></i>Model estimate</span>
+      <span><i class="sw" style="background:var(--raw);height:2px"></i>Raw count so far</span>
+      <span><i class="sw" style="background:var(--truth);height:2px"></i>Final result (<span id="bt-truth"></span>%)</span>
+    </div>
+    <div class="readout" id="bt-readout">Hover or tap the chart to read values.</div>
+  </figure>
+  <p class="note">"Small counties first" reveals whole counties from smallest to largest, so Harris, Dallas, Bexar and Travis come last. That is harsher than a real night, where early votes from every county arrive within about an hour, and it isolates one problem: the first counties in are rural and Republican, so the model can read their lean as a statewide pattern. Compare the first two buttons to see what the county effect adds.</p>
+</section>
+
+<section id="sim">
+  <div class="eyebrow">Test 2 · simulated night</div>
+  <h2>Ethan's simulated election night (<span id="sc-name"></span>)</h2>
+  <p>Ethan's simulation produces the final count for all 6,134 precincts and a reporting schedule by vote mode: early votes in one countywide dump after polls close, Election Day precincts over the next few hours, and late mail days later. Some precincts never appear (unmatched IDs) and some counties may never report, as set in the scenario's manifest. The model is refit every 15 minutes from 8:00pm to 4:00am, then at four later times.</p>
+  <figure>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Race">
+        <span id="sim-buttons" style="display:contents"></span>
+      </div>
+    </div>
+    <svg id="sim-chart" class="chart" viewBox="0 0 760 420" role="img" aria-label="Simulated night estimate by time"></svg>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--dem-band)"></i>95% interval</span>
+      <span><i class="sw" style="background:var(--dem);height:3px"></i>Model estimate</span>
+      <span><i class="sw" style="background:var(--raw);height:2px"></i>Raw count so far</span>
+      <span><i class="sw" style="background:var(--truth);height:2px"></i>Final result</span>
+      <span><i class="sw" style="background:var(--rule)"></i>Share of votes counted (bottom strip)</span>
+    </div>
+    <div class="readout" id="sim-readout">Hover or tap the chart to read values.</div>
+  </figure>
+  <div class="tbl">
+    <table id="sim-table" aria-label="Simulated night checkpoints"></table>
+  </div>
+  <p class="note">Times are Eastern. The time axis is not to scale after 4:00am: the last four points are Nov 4 noon, Nov 5, Nov 7 and Nov 10, when late mail lands. Counted share tops out below 100% because unmatched precincts and non-reporting counties never come in; the model predicts their votes from the baseline.</p>
+</section>
+
+<section id="method">
+  <div class="eyebrow">What was run</div>
+  <h2>How these numbers were produced</h2>
+  <ul class="plain">
+    <li><strong>Model:</strong> the shared fitting functions in <code>model_core.R</code> (turnout, third-party share and two-party share equations; g-prior worth 3 precincts; county random effect with ICC 0.302), with the same covariates as <code>tx_backtest.R</code>: registrants, 2018 and 2020 turnout, sex, age 65+, Black, Hispanic and college shares.</li>
+    <li><strong>Backtest:</strong> <code>test_backtest_tx22.R</code> rebuilds Young-Kyung's panel (as in <code>tx_backtest_panel.R</code>) from the Dropbox files: precincts in the 32 counties joined to votehub's 2022 results. 500 draws per checkpoint.</li>
+    <li><strong>Simulated night:</strong> <code>test_sim_night.R</code>. <code>tx_gov_trial.R</code> can't read snapshot files yet, so this runs the same model core on precinct-by-mode cells (early, Election Day, mail), fitting each mode separately. Priors come from <code>TX_precinct.parquet</code>: expected turnout split by each precinct's 2022 mode mix, <code>dem2</code>, and <code>oth_base</code>. Vote shares are fit on every cell with votes counted; turnout is fit only on fully counted cells, and a partly counted cell is never predicted below its count. No cross-mode correlation and no mode partisan offset (delta = 0), matching the data contract's current default. 300 draws per checkpoint.</li>
+    <li><strong>Limits:</strong> the simulation's swing, noise sizes, mail lean and timing are invented, and its results are built from the same <code>dem2</code> the model uses as a prior, so its good performance after 9pm is partly by construction. The backtest is the stronger evidence about real-world accuracy.</li>
+  </ul>
+</section>
+
+<section id="next">
+  <div class="eyebrow">Next</div>
+  <h2>What this suggests</h2>
+  <ul class="plain">
+    <li>Intervals need to widen when the counted precincts don't resemble the outstanding ones. One option is a geographic effect above the county (region or urban/rural) with a prior wide enough that the first counties can't pin it.</li>
+    <li>Rerun the backtest with a realistic order (early votes from every county first, then Election Day precincts) once a TX 2022 or 2024 snapshot history is available.</li>
+    <li>Connect <code>tx_gov_trial.R</code> to Ethan's snapshot format and rerun Test 2 with the full model, including the cross-mode correlation.</li>
+  </ul>
+</section>
+</div>
+
+<script>
+const DATA = __DATA__;
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+const fmt = (x, d = 1) => Number(x).toFixed(d);
+
+function drawBacktest(key) {
+  const svg = document.getElementById("bt-chart"); svg.innerHTML = "";
+  const rows = DATA.bt[key], truth = DATA.bt_truth;
+  const W = 760, H = 380, m = { l: 52, r: 20, t: 16, b: 44 };
+  const x = v => m.l + v / 100 * (W - m.l - m.r);
+  const y0 = 10, y1 = 70;
+  const y = v => m.t + (y1 - Math.max(y0, Math.min(y1, v))) / (y1 - y0) * (H - m.t - m.b);
+  for (let v = 10; v <= 70; v += 10) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: "var(--rule)", "stroke-width": v === 50 ? 1.5 : 1, "stroke-dasharray": v === 50 ? "4 3" : "" }, svg);
+    el("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = v + "%";
+  }
+  for (let v = 0; v <= 100; v += 20) el("text", { x: x(v), y: H - m.b + 18, "text-anchor": "middle" }, svg).textContent = v + "%";
+  el("text", { x: (m.l + W - m.r) / 2, y: H - 6, "text-anchor": "middle" }, svg).textContent = "share of votes counted";
+  el("text", { x: x(62), y: y(50) + 16, "text-anchor": "start" }, svg).textContent = "50% = tie";
+  const band = rows.map(r => [x(r[0]), y(r[3])]).concat(rows.slice().reverse().map(r => [x(r[0]), y(r[2])]));
+  el("path", { d: "M" + band.map(p => p.join(",")).join("L") + "Z", fill: "var(--dem-band)", stroke: "none" }, svg);
+  el("line", { x1: m.l, x2: W - m.r, y1: y(truth), y2: y(truth), stroke: "var(--truth)", "stroke-width": 1.5 }, svg);
+  el("path", { d: "M" + rows.map(r => x(r[0]) + "," + y(r[4])).join("L"), fill: "none", stroke: "var(--raw)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
+  el("path", { d: "M" + rows.map(r => x(r[0]) + "," + y(r[1])).join("L"), fill: "none", stroke: "var(--dem)", "stroke-width": 2.5 }, svg);
+  rows.forEach(r => { if (r[3] < truth - 0.0001 || r[2] > truth + 0.0001) el("circle", { cx: x(r[0]), cy: y(r[1]), r: 3, fill: "var(--rep)" }, svg); });
+  const cover = rows.filter(r => r[2] <= truth && r[3] >= truth).length;
+  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = `interval contains result at ${cover} of ${rows.length} checkpoints (red dots = misses)`;
+  hover(svg, rows, r => x(r[0]), r => `${fmt(r[0])}% counted · ${r[6]} counties in · estimate ${fmt(r[1])}% (${fmt(r[2])}–${fmt(r[3])}) · raw ${fmt(r[4])}% · P(Dem wins) ${Math.round(r[5] * 100)}% · result ${fmt(truth)}%`, "bt-readout", W, H, m);
+}
+
+function drawSim(key) {
+  const svg = document.getElementById("sim-chart"); svg.innerHTML = "";
+  const S = DATA.sim[key], rows = S.rows, truth = S.truth;
+  const W = 760, H = 420, m = { l: 52, r: 20, t: 16, b: 96 };
+  const n = rows.length, x = i => m.l + i / (n - 1) * (W - m.l - m.r);
+  const vals = rows.slice(1).flatMap(r => [r[3], r[4], r[5] || r[2]]).concat([truth, 50]).filter(v => v > 0);
+  const lo = Math.floor((Math.min(...vals) - 1) / 5) * 5, hi = Math.ceil((Math.max(...vals) + 1) / 5) * 5;
+  const y = v => m.t + (hi - Math.max(lo, Math.min(hi, v))) / (hi - lo) * (H - m.t - m.b);
+  for (let v = lo; v <= hi; v += 5) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: "var(--rule)", "stroke-width": v === 50 ? 1.5 : 1, "stroke-dasharray": v === 50 ? "4 3" : "" }, svg);
+    el("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = v + "%";
+  }
+  // counted-share strip
+  const sb = H - m.b + 30, sh = 30;
+  el("text", { x: m.l, y: sb - 4, "text-anchor": "start" }, svg).textContent = "share of votes counted";
+  rows.forEach((r, i) => { const w = (W - m.l - m.r) / (n - 1) * 0.8; el("rect", { x: x(i) - w / 2, y: sb + sh * (1 - r[1] / 100), width: w, height: sh * r[1] / 100, fill: "var(--rule)" }, svg); });
+  rows.forEach((r, i) => {
+    const t = r[0].slice(6), d = r[0].slice(0, 5);
+    const show = t.endsWith(":00") && i % 4 === 0 && i < n - 4;
+    if (show) el("text", { x: x(i), y: H - 22, "text-anchor": "middle" }, svg).textContent = (+t.slice(0, 2) > 12 ? (+t.slice(0, 2) - 12) + "pm" : (+t.slice(0, 2) === 0 ? "12am" : +t.slice(0, 2) + "am"));
+  });
+  const xsep = (x(n - 5) + x(n - 4)) / 2;
+  el("line", { x1: xsep, x2: xsep, y1: m.t, y2: H - m.b + 60, stroke: "var(--muted)", "stroke-dasharray": "2 3" }, svg);
+  el("text", { x: (x(n - 4) + x(n - 1)) / 2, y: H - 22, "text-anchor": "middle" }, svg).textContent = "Nov 4–10";
+  el("text", { x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle" }, svg).textContent = "time (ET) on election night; right of the dashed line, later days";
+  const band = rows.map((r, i) => [x(i), y(r[4])]).concat(rows.map((r, i) => [x(i), y(r[3])]).reverse());
+  el("path", { d: "M" + band.map(p => p.join(",")).join("L") + "Z", fill: "var(--dem-band)" }, svg);
+  el("line", { x1: m.l, x2: W - m.r, y1: y(truth), y2: y(truth), stroke: "var(--truth)", "stroke-width": 1.5 }, svg);
+  const rawPts = rows.map((r, i) => [i, r]).filter(([i, r]) => r[1] > 0);
+  el("path", { d: "M" + rawPts.map(([i, r]) => x(i) + "," + y(r[5])).join("L"), fill: "none", stroke: "var(--raw)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
+  el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[2])).join("L"), fill: "none", stroke: "var(--dem)", "stroke-width": 2.5 }, svg);
+  rows.forEach((r, i) => { if (r[4] < truth || r[3] > truth) el("circle", { cx: x(i), cy: y(r[2]), r: 3, fill: "var(--rep)" }, svg); });
+  el("text", { x: x(Math.round(n * 0.55)), y: y(truth) + 16, "text-anchor": "middle" }, svg).textContent = `final result ${fmt(truth)}%`;
+  const cover = rows.filter(r => r[3] <= truth && r[4] >= truth).length;
+  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = `interval contains result at ${cover} of ${rows.length} checkpoints (red dots = misses)`;
+  const xs = rows.map((r, i) => x(i));
+  hover(svg, rows, (r) => xs[rows.indexOf(r)], r => `${r[0].replace("11-", "Nov ")} · ${fmt(r[1])}% counted (early ${r[7]}%, Election Day ${r[8]}%, mail ${r[9]}%) · estimate ${fmt(r[2])}% (${fmt(r[3])}–${fmt(r[4])}) · raw ${fmt(r[5])}% · P(Dem wins) ${Math.round(r[6] * 100)}%`, "sim-readout", W, H, m);
+  // table
+  const tbl = document.getElementById("sim-table");
+  const pick = rows.filter((r, i) => i <= 12 || i >= n - 4 || r[0].endsWith(":00") && i % 4 === 0);
+  tbl.innerHTML = "<thead><tr><th>Time (ET)</th><th>Counted</th><th>Raw Dem</th><th>Estimate</th><th>95% interval</th><th>P(Dem wins)</th></tr></thead><tbody>" +
+    pick.map(r => { const miss = r[4] < truth || r[3] > truth; return `<tr><td>${r[0].replace("11-", "Nov ")}</td><td>${fmt(r[1])}%</td><td>${r[1] > 0 ? fmt(r[5]) + "%" : "–"}</td><td class="${miss ? "miss" : ""}">${fmt(r[2])}%</td><td class="${miss ? "miss" : ""}">${fmt(r[3])}–${fmt(r[4])}%</td><td>${Math.round(r[6] * 100)}%</td></tr>`; }).join("") +
+    `</tbody><caption class="note" style="caption-side:bottom;text-align:left;padding-top:6px">Final result ${fmt(truth)}%. Red rows: the interval misses the result.</caption>`;
+}
+
+function hover(svg, rows, xf, label, outId, W, H, m) {
+  const g = el("g", { visibility: "hidden" }, svg);
+  const line = el("line", { y1: m.t, y2: H - m.b, stroke: "var(--muted)", "stroke-width": 1 }, g);
+  const out = document.getElementById(outId);
+  function at(evt) {
+    const pt = svg.createSVGPoint(); const e = evt.touches ? evt.touches[0] : evt;
+    pt.x = e.clientX; pt.y = e.clientY; const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    let best = rows[0], bd = Infinity; rows.forEach(r => { const d = Math.abs(xf(r) - p.x); if (d < bd) { bd = d; best = r; } });
+    line.setAttribute("x1", xf(best)); line.setAttribute("x2", xf(best)); g.setAttribute("visibility", "visible");
+    out.textContent = label(best);
+  }
+  svg.addEventListener("mousemove", at); svg.addEventListener("touchstart", at, { passive: true }); svg.addEventListener("touchmove", at, { passive: true });
+}
+
+function seg(prefix, keys, draw) {
+  keys.forEach(k => document.getElementById(prefix + k).addEventListener("click", () => {
+    keys.forEach(j => document.getElementById(prefix + j).setAttribute("aria-pressed", j === k ? "true" : "false"));
+    draw(k);
+  }));
+}
+// ---- header findings, computed from the data ----
+const RACE = { gov: "Governor", sen: "Senate", house: "House" };
+const cov = (rows, lo, hi, t) => rows.filter(r => r[lo] <= t && r[hi] >= t).length;
+const wrong = (r, lo, hi, t) => (t > 50 && r[hi] < 50) || (t < 50 && r[lo] > 50);
+const right = (r, lo, hi, t) => (t > 50 && r[lo] > 50) || (t < 50 && r[hi] < 50);
+const lis = [];
+const bt = DATA.bt, T = DATA.bt_truth;
+if (bt.county_re) {
+  const r = bt.county_re, w = r.filter(x => wrong(x, 2, 3, T));
+  const last = w.length ? Math.max(...w.map(x => x[0])) : null;
+  lis.push([w.length ? "bad" : "good", `<strong>Backtest, TX 2022 governor, small counties first:</strong> the interval held the true result (${fmt(T)}%) at ${cov(r, 2, 3, T)} of ${r.length} checkpoints. ` +
+    (w.length ? `It confidently pointed to the wrong winner at ${w.length} checkpoints, the last at ${fmt(last)}% of votes counted.` : "It never confidently pointed to the wrong winner.")]);
+}
+if (bt.random_re) {
+  const r = bt.random_re; let first = null;
+  for (let i = r.length - 1; i >= 0; i--) { if (right(r[i], 2, 3, T)) first = r[i][0]; else break; }
+  lis.push([cov(r, 2, 3, T) / r.length >= 0.9 ? "good" : "bad", `<strong>Same backtest, random reporting order:</strong> the interval held the truth at ${cov(r, 2, 3, T)} of ${r.length} checkpoints` +
+    (first !== null ? `, and from ${fmt(first)}% counted it excluded 50% on the right side.` : ".")]);
+}
+Object.keys(DATA.sim).forEach(k => {
+  const S = DATA.sim[k], r = S.rows, t = S.truth, w = r.filter(x => wrong(x, 3, 4, t));
+  let first = null; for (let i = r.length - 1; i >= 0; i--) { if (right(r[i], 3, 4, t)) first = r[i][0]; else break; }
+  const wl = w.slice(0, 3).map(x => `${x[0].slice(6)} (${fmt(x[1])}% counted: ${fmt(x[2])}%, interval ${fmt(x[3])}–${fmt(x[4])}%)`).join("; ");
+  lis.push([w.length ? "bad" : "good", `<strong>Simulated night, ${RACE[k] || k}:</strong> true result ${fmt(t)}%; the interval held it at ${cov(r, 3, 4, t)} of ${r.length} checkpoints. ` +
+    (w.length ? `Confidently wrong at ${w.length}: ${wl}. ` : "Never confidently wrong. ") + (first ? `Right winner from ${first.replace("11-", "Nov ")} on.` : "")]);
+});
+document.getElementById("findings").innerHTML = lis.map(([c, h]) => `<li class="${c}">${h}</li>`).join("");
+document.getElementById("bt-truth").textContent = fmt(T);
+document.getElementById("sc-name").textContent = DATA.scenario;
+document.getElementById("stamp").textContent = `CBS election desk · TX precinct model · run ${DATA.run}`;
+const simKeys = Object.keys(DATA.sim);
+document.getElementById("sim-buttons").outerHTML = simKeys.map((k, i) => `<button id="sim-${k}" aria-pressed="${i === 0}">${RACE[k] || k}</button>`).join("");
+seg("bt-", ["county_re", "county_nore", "random_re"].filter(k => bt[k]), drawBacktest);
+seg("sim-", simKeys, drawSim);
+drawBacktest("county_re");
+drawSim(simKeys[0]);
+</script>
