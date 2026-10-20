@@ -1,7 +1,9 @@
 # ========================================
 ## Build the model-test page (charts + findings) from the simulated-night results
 ##
-## Reads 26_general/model_tests/sim_<scenario>_results.csv for each scenario (from
+## Only reads results files, so it never reruns the model: rerun it any time to rebuild the page.
+## Reads 26_general/model_tests/sim_<scenario>_results.csv for each scenario, and
+## sim_<scenario>__<label>_results.csv for runs with other model settings (both from
 ## test_sim_night.R), each scenario's 26_sim/<scenario>/manifest.json (to list what is
 ## different from tx_base), and, if present, the older backtest_tx22_results.csv. Writes
 ## one self-contained page, 26_general/model_tests/model_tests.html. Open it in any browser.
@@ -10,15 +12,21 @@
 ##
 ## Run from the cbs-enr folder, after test_sim_night.R:
 ##   Rscript scripts/model/tests/make_model_test_page.R                  # every scenario with results
-##   Rscript scripts/model/tests/make_model_test_page.R tx_base tx_slow  # just these
+##   Rscript scripts/model/tests/make_model_test_page.R tx_base tx_slow  # just these scenarios
+##       (with all their labelled runs)
 # ========================================
 source("scripts/model/tests/model_test_common.R")
 args = commandArgs(trailingOnly = TRUE)
+# one run = one results file; its key is "<scenario>" or "<scenario>__<label>"
 have = sub("^sim_(.*)_results\\.csv$", "\\1", list.files(DIR_OUT, pattern = "^sim_.*_results\\.csv$"))
-SCENARIOS = if (length(args)) args else c(intersect("tx_base", have), sort(setdiff(have, "tx_base")))
-miss = setdiff(SCENARIOS, have)
+if (!length(have)) stop("No sim_*_results.csv in ", DIR_OUT, ". Run test_sim_night.R first.")
+sc_of = function(k) sub("__.*$", "", k)
+want = if (length(args)) args else unique(sc_of(have))
+miss = setdiff(want, sc_of(have))
 if (length(miss)) stop("No results for: ", paste(miss, collapse = ", "), ". Run test_sim_night.R for them first.")
-if (!length(SCENARIOS)) stop("No sim_*_results.csv in ", DIR_OUT, ". Run test_sim_night.R first.")
+want = c(intersect("tx_base", want), sort(setdiff(want, "tx_base")))
+# each scenario's default run first, then its labelled runs
+KEYS = unlist(lapply(want, \(sc) { k = have[sc_of(have) == sc]; c(intersect(sc, k), sort(setdiff(k, sc))) }))
 r2 = function(x) round(100 * x, 2)
 
 # ---- what each scenario changes, from its manifest ----------------------------------
@@ -50,17 +58,24 @@ night_list = function(df) df |>
   split(~race) |>
   lapply(\(g) list(
     truth = r2(g$truth_twop[1]),
-    rows = unname(Map(\(tm, a, b, c, d, e, f, x, y, z) list(tm, a, b, c, d, e, f, x, y, z),
+    truth_turn = round(g$truth_turnout[1] / 1e6, 4),
+    # turnout in millions: predicted, lo, hi, counted so far
+    rows = unname(Map(\(tm, a, b, c, d, e, f, x, y, z, t1, t2, t3, t4) list(tm, a, b, c, d, e, f, x, y, z, t1, t2, t3, t4),
       substr(g$time, 6, 16), round(100 * g$pct_votes, 1), r2(g$est_twop), r2(g$lo_twop), r2(g$hi_twop),
-      r2(g$raw_twop), round(g$p_dem_win, 3), round(100 * g$pct_early), round(100 * g$pct_eday), round(100 * g$pct_mail)))
+      r2(g$raw_twop), round(g$p_dem_win, 3), round(100 * g$pct_early), round(100 * g$pct_eday), round(100 * g$pct_mail),
+      round(g$est_turnout / 1e6, 4), round(g$lo_turnout / 1e6, 4), round(g$hi_turnout / 1e6, 4),
+      round(g$pct_votes * g$truth_turnout / 1e6, 4)))
   ))
-sims = setNames(lapply(SCENARIOS, function(sc) {
-  d = read_csv(file.path(DIR_OUT, sprintf("sim_%s_results.csv", sc)), show_col_types = FALSE,
+sims = setNames(lapply(KEYS, function(k) {
+  d = read_csv(file.path(DIR_OUT, sprintf("sim_%s_results.csv", k)), show_col_types = FALSE,
                col_types = cols(time = "c", race = "c"))
-  list(races = night_list(d), diff = diff_text(sc),
+  mc = if ("model_changes" %in% names(d)) coalesce(as.character(d$model_changes[1]), "") else ""
+  sc_diff = diff_text(sc_of(k))
+  list(races = night_list(d),
+       diff = paste(c(if (nzchar(sc_diff)) paste("Sim:", sc_diff), if (nzchar(mc)) paste("Model:", mc)), collapse = ". "),
        settings = paste0(if ("model" %in% names(d)) paste(d$model[1], "model; ") else "",
                          if ("settings" %in% names(d)) d$settings[1] else ""))
-}), SCENARIOS)
+}), sub("__", " · ", KEYS))
 
 # ---- the older TX 2022 backtest, if its results exist -------------------------------
 p22 = file.path(DIR_OUT, "backtest_tx22_results.csv")
@@ -81,4 +96,4 @@ page = paste0("<!doctype html>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\
               sub("__DATA__", json, tpl, fixed = TRUE))
 out = file.path(DIR_OUT, "model_tests.html")
 writeLines(page, out)
-cat("Wrote", out, "with scenarios:", paste(SCENARIOS, collapse = ", "), "\nOpen it in a browser (double-click the file).\n")
+cat("Wrote", out, "with runs:", paste(sub("__", " · ", KEYS), collapse = ", "), "\nOpen it in a browser (double-click the file).\n")

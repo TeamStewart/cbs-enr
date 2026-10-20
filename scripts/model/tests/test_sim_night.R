@@ -37,10 +37,13 @@
 ##                   grown in 30 minutes (how the TX backtest does it). Fooled by mail,
 ##                   whose last 5-25% arrives days later.
 ##
-## Output: 26_general/model_tests/sim_<scenario>_results.csv, one row per race x time
+## Output: 26_general/model_tests/sim_<scenario>_results.csv, one row per race x time.
+## With --label=<name> (for a run with non-default model settings), the output is
+## sim_<scenario>__<name>_results.csv, so it sits beside the default run instead of
+## replacing it; the page shows each as its own row.
 ## Run from the cbs-enr folder:
 ##   Rscript scripts/model/tests/test_sim_night.R [scenario] [--model=trial|core]
-##       [--cells=any|complete] [--complete=feed|stopped]
+##       [--cells=any|complete] [--complete=feed|stopped] [--label=name]
 # ========================================
 source("scripts/model/tests/model_test_common.R")
 args = commandArgs(trailingOnly = TRUE)
@@ -51,6 +54,8 @@ COMPLETE = sub("^--complete=", "", c(grep("^--complete=", args, value = TRUE), "
 stopifnot("--complete must be feed or stopped" = COMPLETE %in% c("feed", "stopped"))
 SCENARIO = c(grep("^--", args, value = TRUE, invert = TRUE), "tx_base")[1]
 stopifnot("--model must be trial or core" = MODEL %in% c("trial", "core"))
+LABEL = sub("^--label=", "", c(grep("^--label=", args, value = TRUE), "--label=")[1])
+stopifnot("--label may use only letters, digits, - and _" = grepl("^[A-Za-z0-9_-]*$", LABEL))
 TZ = "America/New_York"
 
 dir_sc = file.path(DIR_SIM, SCENARIO)
@@ -259,15 +264,27 @@ res = map_dfr(sort(unique(final$contest)), function(r) { cat("  fitting", r, "..
   mutate(model = MODEL,
          covers = truth_twop >= lo_twop & truth_twop <= hi_twop,
          confident_wrong = (truth_twop > 0.5 & hi_twop < 0.5) | (truth_twop < 0.5 & lo_twop > 0.5))
+# what this run changes from the default model settings, in words, for the page
+changes = c(if (MODEL == "core") "simpler model_core version",
+            if (CELLS == "complete") "cells used only once fully counted",
+            if (COMPLETE == "stopped") "fully-counted guessed from counts (no growth in 30 min)")
+if (MODEL == "trial") changes = c(changes,
+  if (MODE_OFFSET_SOURCE != "zero") paste0("mode offsets: ", MODE_OFFSET_SOURCE, if (MODE_OFFSET_SOURCE == "nc") " (NC 2024)" else ""),
+  if (SIGMA_STRUCT != "full") paste0("cross-mode correlation: ", SIGMA_STRUCT),
+  if (!USE_COUNTY_RE) "no county random effect",
+  if (!USE_COMPOSE) "unbounded turnout")
+res = mutate(res, scenario = SCENARIO, label = LABEL,
+             model_changes = if (length(changes)) paste(changes, collapse = "; ") else "")
 if (MODEL == "trial") {
   res = mutate(res, settings = sprintf("cells %s; complete %s; bounded turnout %s (KAPPA %.2f); Sigma %s/%s; county RE %s; mode offsets %s; draws %d",
                                        CELLS, COMPLETE, USE_COMPOSE, KAPPA, SIGMA_SOURCE, SIGMA_STRUCT,
                                        USE_COUNTY_RE, MODE_OFFSET_SOURCE, DRAWS))
 }
 
-out = file.path(DIR_OUT, sprintf("sim_%s_results.csv", SCENARIO))
+out = file.path(DIR_OUT, sprintf("sim_%s%s_results.csv", SCENARIO, if (nzchar(LABEL)) paste0("__", LABEL) else ""))
 write_csv(res, out)
-cat(sprintf("\nSummary (two-party Dem share), %s model, %.1f minutes:\n", MODEL, as.numeric(difftime(Sys.time(), t0, units = "mins"))))
+cat(sprintf("\nSummary (two-party Dem share), %s model%s, %.1f minutes:\n", MODEL,
+            if (length(changes)) paste0(" [", paste(changes, collapse = "; "), "]") else "", as.numeric(difftime(Sys.time(), t0, units = "mins"))))
 res |>
   summarize(checkpoints = n(), interval_holds_truth = sum(covers), confident_wrong = sum(confident_wrong),
             truth = round(100 * first(truth_twop), 2), .by = race) |>
