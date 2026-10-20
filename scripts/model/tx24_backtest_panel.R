@@ -120,7 +120,7 @@ vh <- read_csv(P_VH, col_types = cols(.default = "c"), progress = FALSE) |>
 
 # ---- 4. the universe -------------------------------------------------------------
 # Precincts present in the returns AND in L2 AND in votehub. A returns precinct that
-# does not join cannot be modelled; an L2 precinct absent from the returns has no
+# does not join cannot be modeled; an L2 precinct absent from the returns has no
 # observable truth. Report the loss per county -- it is NOT random within a county.
 ret_geo <- final |> summarize(votes = sum(dem + rep + oth), .by = c(cty, geo))
 j <- ret_geo |>
@@ -183,7 +183,7 @@ covs <- d |>
 truth <- final |> filter(geo %in% d$geo) |> select(geo, method, dem, rep, oth)
 TT <- truth |> summarize(dem = sum(dem), rep = sum(rep), oth = sum(oth))
 tot <- TT$dem + TT$rep + TT$oth
-cli_h2("truth on the modelled universe")
+cli_h2("truth on the modeled universe")
 cli_inform(c(
   "dem {format(TT$dem, big.mark=',')} / rep {format(TT$rep, big.mark=',')} / \\
    oth {format(TT$oth, big.mark=',')}  total {format(tot, big.mark=',')}",
@@ -213,7 +213,7 @@ print(as.data.frame(mode_split), row.names = FALSE)
 # turnout split needs) while carrying no mode partisan differential (so a `history`
 # offset derivation returns ~0 rather than something misleading).
 #
-# TWO files, because the choice of analogue year is itself a modelling decision and the
+# TWO files, because the choice of analogue year is itself a modeling decision and the
 # model's own config warns about getting it wrong in the other direction:
 #   2020 -- the right analogue for a PRESIDENTIAL target. TX mode composition tracks
 #           turnout type, not calendar: midterms run 27-32% election-day, presidentials

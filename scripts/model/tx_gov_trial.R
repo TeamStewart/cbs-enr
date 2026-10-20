@@ -488,7 +488,7 @@ stopifnot(
 
 # ---- 1. load precinct covariates ------------------------------------------------
 # Falls back to a synthetic frame with the documented schema so this script is
-# runnable before the real file lands. Synthetic mode is loudly labelled.
+# runnable before the real file lands. Synthetic mode is loudly labeled.
 load_covs = function(path) {
   if (file.exists(path)) {
     cli_alert_success("Reading {.path {path}}")
@@ -985,7 +985,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       wt = if (out == "tau") NULL else {
         raw = pmax(dm$tau, 1)                         # ballots counted in the cell
         raw[!dm$obs] = 1                              # unused (not in subset), keep finite
-        # normalise to mean 1 over the OBSERVED rows, so prior_n keeps its
+        # normalize to mean 1 over the OBSERVED rows, so prior_n keeps its
         # "precinct-equivalents" meaning instead of being swamped by raw counts
         mu = if (any(dm$obs)) mean(raw[dm$obs]) else 1
         raw / mu
@@ -1321,7 +1321,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     pnum_d = pnum_d + v_dem
     pden   = pden + v_dem + v_rep + v_oth
   }
-  # precinct-level Dem share of ALL votes, summarised across draws
+  # precinct-level Dem share of ALL votes, summarized across draws
   pshare = pnum_d / pmax(pden, 1e-9)
   prec_out = tibble(
     geo      = prec$geo,
@@ -1509,7 +1509,7 @@ if (USE_CROSS_MODE) {
 }   # end of the SOURCE_ONLY guard opened at section 6
 
 # ---- TODO before this is more than a trial -------------------------------------
-# 0. THIRD-PARTY VOTE: now modelled (the `tp` equation), so `tau` is ALL votes and the
+# 0. THIRD-PARTY VOTE: now modeled (the `tp` equation), so `tau` is ALL votes and the
 #    three shares of all votes sum to 1 by construction. Remaining caveats:
 #    (a) the tp prior is the frame residual 1 - pr_harris - pr_trump (n-weighted 1.64%,
 #        but precinct range 0-20.4%, hence the heavy shrinkage). votehub

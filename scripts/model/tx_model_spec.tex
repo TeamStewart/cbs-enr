@@ -32,7 +32,7 @@
 
 The model estimates three outcomes at the precinct level, separately by vote mode, giving
 nine equations in total. Each equation is estimated separately, but the errors are
-modelled jointly through a $9 \times 9$ covariance matrix $\Sigma$.
+modeled jointly through a $9 \times 9$ covariance matrix $\Sigma$.
 
 Let $m \in \{\text{mail}, \text{early}, \text{eday}\}$, and let
 $v^{\dem}_{im}$, $v^{\rep}_{im}$, $v^{\oth}_{im}$ denote votes cast in mode $m$ in
@@ -47,11 +47,8 @@ precinct $i$ for the Democratic candidate, the Republican candidate, and all oth
 \paragraph{What $\Sigma$ does.}
 Each equation is estimated separately; since they share a design matrix, seemingly
 unrelated regression coincides with equation-by-equation estimation, so $\Sigma$ does not
-change $\hat\beta$. It acts on prediction. The aggregate is nonlinear in $(\tau, tp, s)$
-jointly within a cell, so the predictive variance depends on their correlation, and
-conditioning on the observed equations sharpens the unobserved ones rather than merely
-rescaling them --- the conditional covariance is a Schur complement, strictly smaller
-than the unconditional one whenever the cross-blocks are nonzero.
+change $\hat\beta$. It should improve prediction; the aggregate is jointly nonlinear in $(\tau, tp, s)$, so the predictive variance depends on their correlation. With the plausibility of correlation between vote shares and turnout by vote modes in precincts, this should mean the conditional covariance is smaller
+than the unconditional one. Knowing that we might want individual precinct predictions also motivated this modeling choice: I'd prefer to have more information to pull into those more weakly powered estimates. 
 
 \section{The factorization}
 
@@ -70,7 +67,7 @@ construction, with no clamping and no renormalizing.
 
 \section{Link functions}
 
-The two share outcomes are bounded in $[0,1]$, so both are modelled on the logit scale:
+The two share outcomes are bounded in $[0,1]$, so both are modeled on the logit scale:
 \begin{equation*}
   y^{tp}_{im} = \logit\!\left(\frac{v^{\oth}_{im} + \tfrac{1}{2}}{\tau_{im} + 1}\right),
   \qquad
@@ -80,14 +77,14 @@ The two share outcomes are bounded in $[0,1]$, so both are modelled on the logit
 The $\tfrac{1}{2}$ offsets keep the transform finite where a third-party candidate
 receives no votes in a precinct, which is common.
 
-Turnout is modelled on a log scale, because precinct-level mode-specific turnout is
+Turnout is modeled on a log scale, because precinct-level mode-specific turnout is
 right-skewed. Where the composition is disabled the outcome is simply
 $y^{\tau}_{im} = \log(\tau_{im} + 0.1)$, the offset keeping cells with zero counted votes
 finite. Getting this scale right mattered more than expected.
 
 \section{Turnout: total and composition}
 
-By default turnout is reparameterized rather than modelled as three free log-levels,
+By default turnout is reparameterized rather than modeled as three free log-levels,
 because turnout has a known ceiling and the three modes must add up. Writing $T_i$ for
 the precinct total and $p_{im}$ for its split across modes,
 \begin{equation}
@@ -113,7 +110,7 @@ because it reports first and is the best-measured mode.
 \section{Partial counts}
 
 Treating an incomplete snapshot as final, or thresholding it as ``complete enough,''
-produces strange behaviour, and the problem compounds when the decision is made per
+produces strange behavior, and the problem compounds when the decision is made per
 precinct-mode rather than per precinct. We therefore model partial counts as a mixture.
 With $c_{im}$ the ballots already counted in a cell and $r_{im}$ those remaining,
 \begin{equation}
@@ -201,7 +198,7 @@ $(\tilde{y}^{k},\ y^{k}_{\text{obs}},\ \mathbf{0})$:
 
 The first block is the $g$-prior, with the county columns zeroed so that it affects
 $\beta$ only. The second is the reported data, with the share equations weighted by
-counted ballots --- normalised to mean one, so $n_k$ keeps its interpretation in
+counted ballots --- normalized to mean one, so $n_k$ keeps its interpretation in
 precinct-equivalents --- and the turnout equation unweighted. The third shrinks $u$
 toward zero with weight $\lambda_k$; it is these rows, not $C$ itself, that make the
 county coefficients a random effect. The whole system is one weighted least squares

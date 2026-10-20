@@ -95,7 +95,7 @@ plot_night <- function(res, arm = ARM, truth_2p = T_2p, outdir = "quality_report
     geom_area(fill = COL_EST, alpha = 0.18) +
     geom_line(colour = COL_EST, linewidth = 0.7) +
     geom_point(colour = COL_EST, size = 1.4) +
-    # modelled turnout as % of the true final, on the same panel: this is the quantity
+    # modeled turnout as % of the true final, on the same panel: this is the quantity
     # the bounded-total reparameterization changed most (184% -> 88% at 20:00), and it
     # belongs next to the reporting curve that drives it
     geom_hline(yintercept = 100, linetype = "dashed", colour = COL_TRUTH, linewidth = 0.4) +
@@ -106,7 +106,7 @@ plot_night <- function(res, arm = ARM, truth_2p = T_2p, outdir = "quality_report
                        labels = scales::label_number(suffix = "%", accuracy = 1)) +
     scale_x_datetime(date_breaks = "1 hour", date_labels = "%H:%M") +
     labs(x = sprintf("Election night, %s", TZ_LAB),
-         y = "% of final vote\nreported (solid), modelled (dashed)") +
+         y = "% of final vote\nreported (solid), modeled (dashed)") +
     theme_bw(base_size = 11) +
     theme(panel.grid.minor = element_blank())
 

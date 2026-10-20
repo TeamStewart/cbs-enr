@@ -100,7 +100,7 @@ Grain: one row per precinct per cycle.
 | `county_name` | text | no | — | upper-case, squished |
 | `county_fips` | char(5) | no | — | |
 | `county_cbs` | char(3) | no | — | the id used inside `geo` |
-| `precinct_raw` | text | no | — | the county's own label, pre-normalisation |
+| `precinct_raw` | text | no | — | the county's own label, pre-normalization |
 | `boundary_vintage` | text | no | — | e.g. `2026_general` |
 | `geostratum` | text | yes | — | geographic pooling key |
 | `stratum_demo` | text | yes | — | demographic pooling key. See §11 note |
@@ -467,7 +467,7 @@ Users would do well to double-check the face validity of any mode values they us
 this state." MI 2022's 44% coverage is the same kind of partial recovery. Treat both as
 unusable for calibration.
 
-**NY needs hand-built per-year rules** and a decision about its unlabelled majority; MEDSL
+**NY needs hand-built per-year rules** and a decision about its unlabeled majority; MEDSL
 also flags unexplained precinct-vs-total vote discrepancies there.
 
 **Data-quality flag:** CA 2022 has exactly 1,048,575 rows = 2^20 - 1, the Excel row limit,
@@ -685,7 +685,7 @@ per-county exceedance rate; it is a free data-quality signal.
 Per precinct, votes by mode for **each** of the last several comparable elections — not
 just one analogue year, and please label them rather than pre-selecting.
 
-*Why:* the analogue-year choice is a real modelling decision and the obvious pick is often
+*Why:* the analogue-year choice is a real modeling decision and the obvious pick is often
 wrong. TX mode composition tracks *turnout type*, not calendar — midterms run 27-32%
 election-day, presidentials 13-20%. For the 2024 target: 2020 gives 7.15/81.71/11.15,
 2022 gives 4.03/65.23/30.74, and the actual was 3.70/77.21/19.10. Neither analogue is
@@ -693,10 +693,10 @@ close, because 2020 was anomalous. We need the series to choose from, per state.
 
 ### 14.4 Partisan baseline (`dem2`, feeds §2)
 
-Prior-cycle two-party Dem share per precinct, from **results** rather than modelled
+Prior-cycle two-party Dem share per precinct, from **results** rather than modeled
 partisanship, plus the third-party share from the same contest.
 
-*Do not* substitute L2 modelled party: measured on TX, registrants read 64.1% two-party
+*Do not* substitute L2 modeled party: measured on TX, registrants read 64.1% two-party
 Dem against an actual 2024 presidential 43.1%, and its mode differential is directionally
 wrong (election day reads *more* Democratic than early in both 2022 and 2024, with the
 ordering flipping between cycles).

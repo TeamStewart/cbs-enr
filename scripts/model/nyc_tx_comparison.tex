@@ -77,7 +77,7 @@ committed code and its logged output; sources are given in \S\ref{sec:prov}.
 Contest & 2025 NYC mayoral, \emph{general} & 2026 TX \emph{primaries} (Senate, House) \\
 Election day & 4 November 2025 & 3 March 2026 \\
 Unit & election district (precinct) & precinct $\times$ vote method \\
-Units modelled & 4{,}061 & 6{,}079 (Senate GOP) \\
+Units modeled & 4{,}061 & 6{,}079 (Senate GOP) \\
 Candidates & 3 (Mamdani, Cuomo, Sliwa) & up to 8 per contest \\
 Live runs logged & 24, 21:31--00:27 EST & 21, 01:38--21:14 \\
 Estimator lives in & \texttt{enightmodels} (binary dep.) & the repo itself \\
@@ -95,7 +95,7 @@ on its database.
 
 This is the deepest divergence, and most of the others follow from it.
 
-\paragraph{NYC: Gaussian, turnout and share modelled separately.} Two kinds of equation,
+\paragraph{NYC: Gaussian, turnout and share modeled separately.} Two kinds of equation,
 sharing one control formula:
 \begin{equation}
   \log(\tau_i + 0.1) = x_i'\beta^{\tau} + \varepsilon^{\tau}_i,
@@ -105,7 +105,7 @@ sharing one control formula:
 \end{equation}
 The share equations are linear in the \emph{level} of the share --- no logit, no
 multinomial --- and are fit independently. Predictions are clamped to $[0,1]$, observed
-values substituted for reported precincts, and then normalised so the three shares sum to
+values substituted for reported precincts, and then normalized so the three shares sum to
 one. That division is the only thing coupling the candidates.
 
 \paragraph{TX: Poisson on counts, turnout implicit.} One model per candidate per method:
@@ -114,7 +114,7 @@ one. That division is the only thing coupling the candidates.
   + f(\textrm{covariates}) + u_{\textrm{stratum}} + u_{\textrm{geostratum}} .
   \label{eq:tx}
 \end{equation}
-Because counts are modelled, turnout is implied ($\tau_{im} = \sum_j v_{ijm}$) rather than
+Because counts are modeled, turnout is implied ($\tau_{im} = \sum_j v_{ijm}$) rather than
 estimated, and shares are formed afterwards as $(0.1 + \hat v)/(0.1 + \sum_j \hat v)$.
 Note $\log(\widehat{\textrm{est}})$ enters as a free-coefficient covariate, not a fixed
 offset, so the relationship to expected turnout is a fitted power law.
@@ -163,7 +163,7 @@ difference rather than an omission.
 \paragraph{Consequence: the two models move for different reasons.} In NYC the prior's
 relative weight decays automatically as $n_0/(n_0 + n_{\textrm{obs}})$, so the forecast
 walks from the vendor prediction toward the data. In TX there is nothing to walk from:
-early-night behaviour rests entirely on $\log(\widehat{\textrm{est}})$ and a turnout-ratio
+early-night behavior rests entirely on $\log(\widehat{\textrm{est}})$ and a turnout-ratio
 adjustment.
 
 \section{Estimation}\label{sec:est}
@@ -278,7 +278,7 @@ legislative districts would need.
 
 \paragraph{NYC: the prior is lossy in one spec, and silently so.} Because the $g$-prior
 location is the projection of $\tilde y$ onto $\operatorname{col}(X)$, only the component
-the covariates can express survives. Measuring the centred $R^2$ of each vendor prediction
+the covariates can express survives. Measuring the centered $R^2$ of each vendor prediction
 on each spec's own column span:
 
 \begin{table}[ht]
@@ -307,7 +307,7 @@ reported bands.
 $20/1511/2776$). The lookup table is therefore always empty and every run silently used the
 hardcoded \texttt{turn\_ratio = 0.95}. Separately, \texttt{pct\_rep} in the logs is
 non-monotonic --- $0.997 \to 0.269 \to 0.364$ --- so the feed regressed and the model's
-reported base collapsed mid-count. Both are plumbing faults rather than modelling errors,
+reported base collapsed mid-count. Both are plumbing faults rather than modeling errors,
 and both are invisible without reading the logs.
 
 \section{Where each one's design should carry into 2026}\label{sec:impl}
@@ -327,7 +327,7 @@ Vote mode as a dimension of the unit & TX & the composition mechanism is structu
 Strata + partial pooling & TX & required once districts are small \\
 Small, fixed covariate set & TX & the only thing that scales to hundreds of races \\
 \midrule
-Post-hoc normalisation of independent share fits & \emph{neither} & deflates predictive variance; induces rather than estimates correlation \\
+Post-hoc normalization of independent share fits & \emph{neither} & deflates predictive variance; induces rather than estimates correlation \\
 Conformal residual quantiles & \emph{neither} & assumes perfect cross-precinct correlation \\
 Hardcoded $\lambda$ & \emph{neither} & effective strength varies with data scale \\
 \bottomrule
@@ -337,7 +337,7 @@ Hardcoded $\lambda$ & \emph{neither} & effective strength varies with data scale
 \noindent The trial model in \texttt{tx\_gov\_trial.R} (documented separately in
 \texttt{tx\_gov\_model.tex}) is an attempt at the top half of that table: a Gaussian,
 conjugate, $g$-prior system in which vote mode is a dimension of the unit and the
-composition is factored rather than normalised after the fact.
+composition is factored rather than normalized after the fact.
 
 \section{Provenance of the diagnostics}\label{sec:prov}
 
@@ -345,7 +345,7 @@ composition is factored rather than normalised after the fact.
   \item NYC run log: \texttt{nyc/reports/data-out/nyc\_small\_history.json}, 24 records
         2025-11-05 02:31--05:27 UTC plus one at 19:48.
   \item NYC final snapshot and interval widths: \texttt{nyc\_current.json}.
-  \item NYC projection losses: centred $R^2$ of each \texttt{pred\_*} column on each
+  \item NYC projection losses: centered $R^2$ of each \texttt{pred\_*} column on each
         spec's design, computed on \texttt{nyc/data/nyc/nyc\_pre.parquet} (4{,}061 rows).
   \item NYC estimator internals: \texttt{forecast\_prec}, \texttt{lm\_bayes},
         \texttt{sim\_fitted}, \texttt{cred\_int}, \texttt{conf\_seq}, \texttt{fit\_t},
