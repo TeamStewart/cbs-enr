@@ -14,9 +14,15 @@
 ##   Rscript scripts/model/tests/make_model_test_page.R                  # every scenario with results
 ##   Rscript scripts/model/tests/make_model_test_page.R tx_base tx_slow  # just these scenarios
 ##       (with all their labelled runs)
+##   Rscript scripts/model/tests/make_model_test_page.R --publish
+##       also copy the page to model_tests/index.html in the repo, for GitHub Pages.
+##       Commit that file and get it onto main; the page is then at
+##       https://teamstewart.github.io/cbs-enr/model_tests/ (if Pages serves main).
 # ========================================
 source("scripts/model/tests/model_test_common.R")
 args = commandArgs(trailingOnly = TRUE)
+PUBLISH = "--publish" %in% args
+args = setdiff(args, "--publish")
 # one run = one results file; its key is "<scenario>" or "<scenario>__<label>"
 have = sub("^sim_(.*)_results\\.csv$", "\\1", list.files(DIR_OUT, pattern = "^sim_.*_results\\.csv$"))
 if (!length(have)) stop("No sim_*_results.csv in ", DIR_OUT, ". Run test_sim_night.R first.")
@@ -83,16 +89,28 @@ night_list = function(df) df |>
       if (st) r2(g$stu_est) else NA, if (st) r2(g$stu_lo) else NA, if (st) r2(g$stu_hi) else NA)),
     st_exact = if (st) r2(g$st_exact[1]) else NULL, stu_exact = if (st) r2(g$stu_exact[1]) else NULL
   ) })
+# display names: model_y = the full precinct model (tx_gov_trial.R), model_simpleswing =
+# the standard uniform swing model, model_core = the simpler model_core.R version
+MODEL_NAMES = c(trial = "model_y", model_y = "model_y", swing = "model_simpleswing",
+                model_simpleswing = "model_simpleswing", core = "model_core", model_core = "model_core")
+run_name = function(k, d) {
+  m = if ("model" %in% names(d)) as.character(d$model[1]) else "trial"
+  m = coalesce(unname(MODEL_NAMES[m]), m)
+  lab = if (grepl("__", k)) sub("^.*?__", "", k) else ""
+  paste(c(sc_of(k), m, if (nzchar(lab) && !lab %in% c("swing", "core")) lab), collapse = " · ")
+}
+NAMES = character()
 sims = setNames(lapply(KEYS, function(k) {
   d = read_csv(file.path(DIR_OUT, sprintf("sim_%s_results.csv", k)), show_col_types = FALSE,
                col_types = cols(time = "c", race = "c"))
+  NAMES[[k]] <<- run_name(k, d)
   mc = if ("model_changes" %in% names(d)) coalesce(as.character(d$model_changes[1]), "") else ""
   sc_diff = diff_text(sc_of(k))
   list(races = night_list(d),
        diff = paste(c(if (nzchar(sc_diff)) paste("Sim:", sc_diff), if (nzchar(mc)) paste("Model:", mc)), collapse = ". "),
-       settings = paste0(if ("model" %in% names(d)) paste(d$model[1], "model; ") else "",
-                         if ("settings" %in% names(d)) d$settings[1] else ""))
-}), sub("__", " · ", KEYS))
+       settings = if ("settings" %in% names(d)) d$settings[1] else "")
+}), KEYS)
+names(sims) = NAMES[KEYS]
 
 # ---- the older TX 2022 backtest, if its results exist -------------------------------
 p22 = file.path(DIR_OUT, "backtest_tx22_results.csv")
@@ -113,4 +131,9 @@ page = paste0("<!doctype html>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\
               sub("__DATA__", json, tpl, fixed = TRUE))
 out = file.path(DIR_OUT, "model_tests.html")
 writeLines(page, out)
-cat("Wrote", out, "with runs:", paste(sub("__", " · ", KEYS), collapse = ", "), "\nOpen it in a browser (double-click the file).\n")
+if (PUBLISH) {
+  dir.create("model_tests", showWarnings = FALSE)
+  file.copy(out, "model_tests/index.html", overwrite = TRUE)
+  cat("Copied to model_tests/index.html for GitHub Pages: commit it and merge to main.\n")
+}
+cat("Wrote", out, "with runs:", paste(NAMES[KEYS], collapse = ", "), "\nOpen it in a browser (double-click the file).\n")

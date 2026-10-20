@@ -426,7 +426,7 @@ if (MODEL == "swing") {
 # ======================================================================
 t0 = Sys.time()
 res = map_dfr(sort(unique(final$contest)), function(r) { cat("  fitting", r, "...\n"); run_contest(r) }) |>
-  mutate(model = MODEL,
+  mutate(model = c(trial = "model_y", swing = "model_simpleswing", core = "model_core")[[MODEL]],
          covers = truth_twop >= lo_twop & truth_twop <= hi_twop,
          confident_wrong = (truth_twop > 0.5 & hi_twop < 0.5) | (truth_twop < 0.5 & lo_twop > 0.5))
 # what this run changes from the default model settings, in words, for the page
