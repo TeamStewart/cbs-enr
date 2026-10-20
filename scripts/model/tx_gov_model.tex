@@ -158,9 +158,37 @@ NYC pipeline used. The modelled quantities are
   \label{eq:outcomes}
 \end{equation}
 The $+\tfrac12$ terms are continuity corrections used \emph{only for fitting}: a cell with
-zero third-party votes is common and would otherwise give $y^{\tp} = -\infty$. Aggregation
-substitutes the raw quantities of \eqref{eq:fwd} for reported cells, so counted precincts
-are not perturbed.
+zero third-party votes is common and would otherwise give $y^{\tp} = -\infty$.
+
+\paragraph{Turnout is reparameterised as a bounded total times a composition
+(2026-10-19).} Equation~\eqref{eq:outcomes} models each cell's turnout as an unconstrained
+log-normal, and the three per-mode turnout equations are fitted independently. Nothing then
+ties them to each other or to anything physical, and the consequences were severe:
+statewide turnout read $184\%$ of truth at 20:00 and $107.8\%$ with $100\%$ of the vote
+counted. The prior mode shares are normalised to sum to one, but only in the prior.
+
+The turnout slot now carries a precinct \emph{total} and a \emph{composition}:
+\begin{equation}
+  \theta_i = \logit\!\left(\frac{T_i}{\kappa\, n_i}\right),
+  \qquad
+  \eta_{im} = \log\!\frac{p_{im}}{p_{i,\textrm{ref}}}\;\; (m \neq \textrm{ref}),
+  \qquad
+  \tau_{im} = T_i\,p_{im},
+  \quad p_i = \operatorname{softmax}(\eta_i),
+  \label{eq:compose}
+\end{equation}
+so $\sum_m \tau_{im} = T_i$ exactly and $T_i < \kappa n_i$ by construction, with $n_i$ the
+registrants and $\kappa = 1.25$ by default. Both transforms are monotone and the outcomes
+stay Gaussian, so conjugacy is untouched; the equation count is unchanged at $KM$, one
+total plus $M-1$ log-ratios plus the $2M$ share equations, and $\Sigma$ keeps its
+dimensions. Two measurements motivate the split. The precinct total is predicted well
+($\operatorname{corr}$ of logs $0.962$, sd of log ratio $0.246$) while the mode split is
+not (sd $0.698$ for election day, median ratio $1.87$); and a cap only bites on the total,
+since per-mode caps must exceed each mode's observed maximum share of registrants and those
+sum to $4.66 n_i$ against an actual total of $0.654 n_i$. The reference mode is early
+voting --- not because it predicts the others, which it does not
+($R^2 = 0.849$ for $\log(\textrm{eday})$ on $\log(\textrm{early}) + \log n$ against $0.849$
+for $\log n$ alone), but because it reports first and is the best measured.
 
 Each of the $K M = 9$ outcomes gets its own equation, and they are tied together only
 through their errors:
@@ -198,6 +226,35 @@ early\,$\leftrightarrow$\,election-day is $+0.039$ ($z=1.3$). Cross-mode \emph{t
 correlation is also $\approx 0$ (L2, 5{,}362 Texas precincts, $|\rho|<0.2$ in both 2022 and
 2024). $\Sigma$ is therefore imposed \textbf{block-diagonal by mode}: the within-mode blocks
 are kept because they are measured, the cross-mode blocks dropped because they are not.
+
+\paragraph{Texas 2024 now measures the same quantities, and disagrees with North Carolina
+(2026-10-19).} The 2024 Texas scrape yields real precinct $\times$ mode $\times$ party
+results, so the blocks that had to be borrowed can be measured directly. On share
+\emph{residuals} --- which is what $\Sigma$ holds, and not raw share correlations, which
+are dominated by precinct lean and come out at $0.81$--$0.94$:
+\[
+\begin{array}{lrr}
+\textrm{pair} & \textrm{TX 2024} & \textrm{NC 2024}\\
+\textrm{mail}\leftrightarrow\textrm{early} & +0.049\ (t=2.0) & +0.232\\
+\textrm{mail}\leftrightarrow\textrm{eday}  & -0.117\ (t=-4.9) & -0.050\\
+\textrm{early}\leftrightarrow\textrm{eday} & \mathbf{+0.417}\ (t=22.3) & +0.039
+\end{array}
+\]
+The pair North Carolina says is negligible is the strongest in Texas, and it is the one
+that would matter most for the red mirage. Within-mode $\rho(\tau,s)$ also differs: TX
+gives mail $+0.008$, early $+0.292$, election day $+0.021$. \textbf{The NC-borrowed
+cross-mode block is therefore wrong for Texas in exactly the place it is used.} Until a
+second state confirms which pattern generalises, the block-diagonal default stands --- but
+it should now be read as ``we do not know'' rather than ``we measured it to be zero''.
+
+\paragraph{The mode partisan differential also flips sign between states.} Measured on
+TX 2024 with the specification of \S\ref{sec:impl}: mail $a=+0.769$, early $a=+0.087$,
+election day $a=+0.082$, with two-party Democratic shares by mode of $67.3\%$, $53.3\%$ and
+$55.9\%$. \textbf{Texas election day runs $2.6$pp more Democratic than early voting} ---
+the opposite of North Carolina, and the opposite of the red-mirage pattern the mode
+machinery was built for. Borrowing NC's $\delta_m$ for Texas is accordingly worth nothing:
+on the 2024 backtest it moves mean $|\textrm{err}|$ from $0.60$pp to $0.59$pp, and even an
+oracle $\delta_m$ measured on the target election itself only reaches $0.41$pp.
 
 \section{The prior: a $g$-prior placed on fitted values}\label{sec:prior}
 
@@ -417,12 +474,43 @@ and the variance posterior is updated conjugately,
   \qquad
   s_\star^2 = \frac{\nu_0 s_0^2 + (N + n_{\textrm{obs}})\,\hat\sigma^2}{\nu_\star}.
 \end{equation}
-Two details of this are deliberate but easy to miss. The residual sum of squares runs over
-the \emph{augmented} rows, so it includes the prior's misfit, while the degrees of freedom
-use only the reported rows. Prior--data conflict therefore inflates $\sigma$ and widens
-every interval --- a crude but directionally correct self-protection. The flip side is
-that with a large covariate set and few reported precincts the denominator is small, so
-early-night intervals from a rich specification are wide by construction.
+\paragraph{Corrected 2026-10-19 --- the previous version of this was a bug.}
+Earlier drafts described the residual sum of squares as running over the \emph{augmented}
+rows while the degrees of freedom used only the reported rows, and defended that as
+``crude but directionally correct self-protection''. It is not defensible: the numerator
+and the denominator then describe different row sets, and the error is unbounded in both
+directions. With $n_{\textrm{obs}}$ small relative to $N$ and $J$, the $g$-prior and ridge
+blocks dominate the numerator and $\sigma$ explodes --- the election-day equation fitted on
+one county's 15 cells returned $\sigma = 2.19$ on the log-turnout scale, so
+$\exp(\mu+\varepsilon)$ produced statewide turnout draws of order $10^{12}$. In the other
+direction, setting $\nu_\star = \nu_0 + N + n_{\textrm{obs}}$ counts the pseudo-rows as
+data, which makes $\sigma$ effectively \emph{known} and strips its uncertainty out of every
+predictive interval; late-night widths collapsed to $0.02$pp while the point estimate was
+off by $0.75$pp. Both symptoms came from the same mis-specification.
+
+Residual variance is now computed on the data rows alone, with the degrees of freedom
+consumed measured exactly rather than assumed:
+\begin{equation}
+  \widehat{\mathrm{edf}} = \operatorname{tr}\!\big(H_{\mathcal{D}\mathcal{D}}\big)
+    = \sum_{r \in \mathcal{D}} \|Q_{r\cdot}\|^2,
+  \qquad
+  \nu = n_{\textrm{obs}} - \widehat{\mathrm{edf}},
+  \qquad
+  \hat\sigma^2 = \frac{\sum_{r\in\mathcal{D}} \big(W_a^{1/2}(y_a - X_a\hat\beta)\big)_r^2}{\nu},
+\end{equation}
+where $\mathcal{D}$ indexes the reported rows and $Q$ is the thin $Q$ factor of
+$W_a^{1/2}X_a$. The trace matters because the county block is penalised: it consumes well
+under $J$ degrees of freedom, and when only a few county levels are identified by data at
+all, assuming otherwise is badly wrong. The conjugate update then runs on the data degrees
+of freedom, $\nu_\star = \nu_0 + \nu$ and
+$s_\star^2 = (\nu_0 s_0^2 + \nu\hat\sigma^2)/\nu_\star$.
+
+One consequence is worth stating plainly, because it cost a day to understand. The old
+inflated $\sigma$ was accidentally supplying predictive variance for \emph{unobserved}
+cells, which the model has no other source for. Removing the bug removed that too, and
+synthetic precinct coverage fell from $0.98$ to $0.65$. The missing component is real and
+is treated in \S\ref{sec:int}; the old formula was a badly-scaled proxy for it, not a
+substitute.
 
 Draws are then taken directly:
 \begin{equation}
@@ -489,9 +577,35 @@ computed once per distinct pattern --- at most $2^M = 8$ of them.
 \section{Prediction and aggregation}\label{sec:agg}
 
 Within each draw $d$: form the latent outcomes from \eqref{eq:sur} using $\beta^{(d)}$ and
-the residual draw from \eqref{eq:cond}, invert the transforms of \eqref{eq:outcomes},
-substitute the raw observed values of \eqref{eq:fwd} for reported cells, and only then
-aggregate via \eqref{eq:inv}:
+the residual draw from \eqref{eq:cond}, invert the transforms of \eqref{eq:outcomes} and
+\eqref{eq:compose}, combine each cell's counted votes with its predicted remainder, and
+only then aggregate via \eqref{eq:inv}:
+
+\paragraph{Partial counts enter as a mixture, not a substitution (2026-10-19).} A reported
+cell used to have its counted votes substituted as if final. Real snapshots are cumulative
+\emph{partial} counts: measured on Texas 2024, when an election-day cell first shows votes
+the median cell has $5.4\%$ of its final count in, and mail sits at $66\%$ of final at
+19:00. Treating those as final understated statewide turnout by $12.5$pp at 22:30 and
+biased the share toward the under-counted mode's opponent. The binary alternative --- drop
+the cell until it is ``complete'' --- is worse, because it discards a cell that is $99\%$
+counted. Writing $C_{im}$ for votes counted so far in the cell and $C_i = \sum_m C_{im}$,
+\begin{equation}
+  T^{(d)}_i \;\ge\; C_i,
+  \qquad
+  r^{(d)}_{im} \;=\; \big(T^{(d)}_i - C_i\big)\,
+    \frac{\big[T^{(d)}_i p^{(d)}_{im} - C_{im}\big]_+}{\sum_{m'}\big[T^{(d)}_i p^{(d)}_{im'} - C_{im'}\big]_+},
+  \qquad
+  v^{\dem(d)}_{im} = C^{\dem}_{im} + r^{(d)}_{im}\big(1-\tp^{(d)}_{im}\big)s^{(d)}_{im},
+  \label{eq:mixture}
+\end{equation}
+and analogously for $\rep$ and $\oth$. A counted-out cell has $r \to 0$ and pins itself; a
+barely-started cell is mostly predicted. This needs \textbf{no completeness classifier},
+which matters because in production the \texttt{stage} field reaches ``complete'' days
+late, uses a different vocabulary per state, is downgraded by our own loader, and has been
+observed moving \emph{backwards} ($\mathtt{pct\_rep}$ $0.997 \to 0.269 \to 0.364$). The
+floor acts on the precinct total rather than per cell: flooring cells independently lets
+$\sum_m \tau_{im}$ exceed $T_i$ again and cost $8$pp of turnout accuracy at $99\%$ counted
+when it was first written that way.
 \begin{equation}
   S^{(d)}_{\dem} = \frac{\sum_{i,m} \tau^{(d)}_{im}\big(1-\tp^{(d)}_{im}\big)s^{(d)}_{im}}
                         {\sum_{i,m} \tau^{(d)}_{im}},
@@ -544,15 +658,50 @@ this must include a \emph{systematic} component. A prior built only from idiosyn
 per-cell noise averages out at $1/\sqrt{NM}$ and comes out tighter than the posterior,
 which makes the governing quadratic unbounded and returns an infinite interval at every
 stage. Real prior uncertainty is about the statewide swing, which is common to all
-precincts and does not average away.
+precincts and does not average away. That scale is now measured rather than assumed:
+across $37$ ordered contest pairs in $9$ states, the statewide two-party share moves
+$0.22$--$0.26$ logit units between a prior contest and its target, against the
+$\sigma/\sqrt{n_{\textrm{prior}}} \approx 0.098$ the $g$-prior implicitly assumed.
+
+\paragraph{A wide prior on the unreported set (2026-10-19).} The cells still to be counted
+within a (county, mode) differ from that county's already-counted ones by more than any
+existing term can express. Measured on Texas 2024, the logit gap between the remaining and
+the counted share has \emph{mean} $\approx 0$ ($-0.10$ to $+0.13$ across stages) and sd
+$0.26$--$0.45$, stable under leave-one-county-out ($0.337$--$0.395$ against a full-sample
+$0.373$). Mean zero with large stable dispersion is a variance component, not a predictable
+offset --- and the predictor route is separately refuted, since within (county, mode)
+pre-election covariates explain only $4.6\%$ of election-day lateness and lateness
+$\to$ share is $t=-1.4$. The model therefore adds one shared mean-zero offset per
+(county, mode) draw to the share of cells that are not counted out,
+$\varepsilon^{s}_{im} \mathrel{+}= u_{c(i),m}$ with
+$u \sim \Norm(0, \sigma_u^2)$, $\sigma_u = 0.25$. Being mean-zero it must not move the
+point estimate, only the width --- which is the sharpest available check that it is wired
+correctly. Nothing already in the model covers it: per-cell residuals average over the
+unreported set at $1/\sqrt{k}$, giving $\approx 0.02$ on the logit scale, two orders below
+the measured $0.3$; and $u_c$ for a (county, mode) is pinned by that county's
+\emph{reported} cells, so it cannot express a reported-versus-unreported difference.
 
 \section{Assumptions and known gaps}\label{sec:assume}
 
-\paragraph{Reporting is ignorable given covariates.} A cell enters the likelihood when it
-has reported, and early reporters are not a random sample. The model's validity rests on
-the covariates (and the mode dimension) absorbing the systematic difference between early
-and late reporters. The prior limits how far the fit can travel but does nothing to correct
-selection.
+\paragraph{Reporting is ignorable given covariates --- now partly measured, and it
+largely holds.} A cell enters the likelihood when it has reported, and early reporters are
+not a random sample: on Texas 2024 the early vote counted at 18:45 reads $62.95\%$
+two-party Democratic against an early-vote final of $53.29\%$, a raw selection of nearly
+ten points \emph{within a single mode}. The question is whether the covariates absorb it.
+They largely do. \texttt{dem2} alone explains $R^2 = 0.938$ of early-vote logit share and
+the full design $0.963$; after fitting, county-mean residuals do \emph{not} significantly
+track when a county reported ($\rho = 0.268$, $t = 1.04$, $p = 0.32$, $n = 16$, weighted
+residual sd $0.057$ logit). In the backtest the model removes over half the raw skew: the
+counted sample is $+1.76$pp at 19:30 and the estimate lands at $+0.79$pp.
+
+Two cautions. Three of the sixteen counties post early-vote totals \emph{before} poll
+close and all three carry negative residuals, which drags that correlation toward zero, so
+a weak effect may exist that $n=16$ cannot resolve. And the residual $+0.79$pp is better
+explained by the prior's level than by geography: \texttt{dem2} is $52.22\%$ vote-weighted
+against an actual two-party $54.33\%$, so the prior pulls down while the skewed counted
+sample pulls up. That is a prior-level problem, and loosening the level prior is
+\emph{not} the fix --- doing so lets the biased early sample pull harder and degrades the
+point estimate (max $|\textrm{err}|$ $1.40 \to 2.23$pp).
 
 \paragraph{Errors are independent across precincts.} This is the most consequential
 remaining gap. Summing $N$ precincts with independent errors gives aggregate variance
@@ -642,18 +791,94 @@ from the \texttt{enightmodels} package (\texttt{lm\_bayes}, \texttt{cred\_int},
 synthetic covariates and synthetic returns when the real inputs are absent, so the
 plumbing is testable before data arrives; synthetic mode is labelled loudly at run time.
 
+\section{Validation: the Texas 2024 real reporting cadence}\label{sec:valid}
+
+Earlier drafts closed with a request to backtest on a real reporting order rather than a
+synthetic one. That has now been done, and it changed the model.
+
+\paragraph{Why the synthetic orders were not enough.} Two reporting orders had been tried,
+both invented. A representative order gave $8/8$ coverage and $|\textrm{err}| \le 0.36$pp
+--- too benign. An adversarial order in which small rural counties finish first gave $2/7$
+coverage and errors to $-16.5$pp. The real Texas curve is neither: all sixteen counties
+report \emph{something} within minutes of poll close, so geographic coverage is nearly
+complete from the start, but the first batches are $\approx 97\%$ early vote. Texas posts
+$47\%$ of its entire vote in the first batch after poll close, and that batch reads
+$8.9$pp more Democratic than the final result. Neither invented order produced that, and
+the defects it exposed were invisible to both.
+
+\paragraph{Construction.} The panel is rebuilt from 249 raw county scrapes into $98{,}201$
+(precinct, mode, timestamp) cells over 16 counties and 4 modes, reproducing an independent
+reference exactly (identical key set, zero vote differences). Snapshots are cumulative
+\emph{within} a county and counties are scraped independently, so every statewide figure
+uses an as-of join --- each county's latest snapshot at or before $t$. Truth is the final
+canvass over the same precinct universe: $2{,}417$ precincts, $52.950\%$ Democratic of all
+votes, $54.327\%$ two-party. All predictors predate November 2024: \texttt{dem2} and the
+third-party prior from the 2020 Senate race, expected turnout from 2020, demographics and
+turnout history from 2018 and 2022.
+
+\paragraph{Result.} Against a naive count-what-is-in benchmark that is $+8.94$pp wrong at
+18:45, the model holds $\le 1.4$pp at every stage, with mean $|\textrm{err}|$ of
+$0.42$--$0.49$pp across configurations, and the interval collapses as the count completes.
+\[
+\begin{array}{lrrrr}
+\textrm{as-of} & \%\ \textrm{votes} & \textrm{naive} & \textrm{model} & \textrm{width}\\
+18{:}45 & 16.2 & +8.94 & -1.40 & 6.97\\
+19{:}15 & 53.7 & -0.96 & +0.30 & 3.90\\
+21{:}00 & 78.2 & -0.65 & +0.16 & 2.45\\
+23{:}00 & 89.2 & -0.82 & -0.17 & 2.50\\
+03{:}00 & 99.2 & -0.09 & -0.06 & 0.35\\
+\textrm{final} & 100.0 & 0.00 & -0.03 & 0.44
+\end{array}
+\]
+
+\paragraph{What it found.} Three defects that neither synthetic order could reach, each
+documented in the section it belongs to: the variance mis-specification of
+\S\ref{sec:post}; partial reporting, \S\ref{sec:agg}, which the all-or-nothing synthetic
+generator cannot produce at all; and unbounded per-mode turnout, \S\ref{sec:system}.
+Turnout at 20:00 improved from $184\%$ of truth to $88\%$ once the composition was
+imposed, and from $107.8\%$ to $103.7\%$ at $100\%$ counted.
+
+\paragraph{What it does not establish.} The fifteen stages are nested snapshots of one
+election with one truth, so a coverage count across them is not a coverage \emph{rate} ---
+it behaves closer to a single observation, and varying the random seed tests Monte Carlo
+stability rather than calibration. The honest claim is narrower than the numbers invite:
+the fixes removed clear evidence of \emph{under}-coverage, and the point-estimate curve is
+good. Demonstrating calibration needs independent replications --- other states, other
+elections --- which the multi-state panel work exists to supply. The synthetic path can no
+longer serve as that check either: its generator reveals cells all-or-nothing, so it cannot
+exercise either partial-reporting fix, and its coverage figures are uninterpretable until
+it emits partial counts.
+
 \section{Next steps}
 
+Items 1, 3 and 5 of the previous list are done or superseded; what remains is reordered by
+what the Texas 2024 backtest showed actually binds.
+
 \begin{enumerate}
-  \item Calibrate $\delta_m$, by ecological inference or from real mode $\times$ party
-        results. This is the dominant source of early-night error.
-  \item Add cross-precinct correlation --- a geostratum random effect at minimum. This,
-        not $\Sigma$, governs statewide interval width.
-  \item Handle partial reporting asymmetrically: weighted for share, censored for turnout.
+  \item \textbf{Replicate on a second state-election.} This is now the binding item: every
+        number in \S\ref{sec:valid} comes from one election, and calibration cannot be
+        established from it. North Carolina is the best candidate --- full-state coverage,
+        100 counties, mode $\times$ party available --- and its crosswalk is $98.6\%$
+        populated, so it is not blocked.
+  \item \textbf{Separate level uncertainty from level shrinkage.} The measured statewide
+        swing ($0.22$--$0.26$ logit) is the right scale for interval \emph{width} and the
+        wrong one for shrinkage: applying it to the prior degrades the point estimate,
+        because a looser prior lets the biased early sample pull the level. The likely
+        shape is a mean-zero statewide offset on the predictive draw, as in
+        \S\ref{sec:int}, rather than a weaker posterior pull. Implemented but defaulted
+        off pending that distinction.
+  \item \textbf{An atom at the bound for censored turnout.} Right-censoring is implemented
+        (EM, conjugacy preserved) and currently \emph{off}: it fixes early turnout
+        ($184\% \to 99\%$) and breaks late ($100\% \to 124\%$), because pure Tobit gives a
+        finished cell zero probability of sitting exactly at its bound when $\tau = C$
+        exactly is the common case. The fix is a mixture likelihood with a discretised
+        probability atom, not a different threshold.
+  \item \textbf{Cross-precinct correlation} beyond the county effect --- still the term
+        that governs statewide width, and still absent.
+  \item \textbf{Make the synthetic generator emit partial cumulative counts} and a
+        completeness flag, so it can once again serve as a regression check.
   \item Replace the third-party prior with observed past third-party share once precinct
         identifiers are reconciled across vintages.
-  \item Backtest on real 2022 and 2024 reporting order, measuring interval coverage as a
-        function of the share reported, rather than the synthetic order used here.
 \end{enumerate}
 
 \end{document}
