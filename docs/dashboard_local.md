@@ -30,22 +30,14 @@ Builds fake Dem-vs-Rep data from the `26_primaries` snapshots into `26_dashtest`
 CBS_ELECTION_FOLDER=26_dashtest Rscript scripts/util/make_dashboard_test_data.R
 
 CBS_ELECTION_FOLDER=26_dashtest \
-CBS_DASH_RDS="$HOME/Dropbox (MIT)/Research/CBS-MIT Election Data/26_dashtest/dashboard_data.rds" \
+CBS_DASH_RDS=data/dashboard/dashtest_data.rds \
 quarto render index.qmd --output dashtest.html
 
 open dashtest.html
 ```
 
-Replace the `CBS_DASH_RDS` path with your own `PATH_DROPBOX` from `globals.R`. After the first run, only the `quarto render` step is needed when editing `index.qmd` or `custom.scss`.
+The script saves the rds to both `26_dashtest/dashboard_data.rds` in Dropbox and `data/dashboard/dashtest_data.rds` in the repo. After the first run, only the `quarto render` step is needed when editing `index.qmd` or `custom.scss`.
 
 ## Public test site (GitHub Pages)
 
-The test dashboard is published at <https://teamstewart.github.io/cbs-enr/> from the `gh-pages` branch, which holds only `index.html` and `.nojekyll`. To redeploy after rendering `dashtest.html`:
-
-```bash
-D=$(mktemp -d) && cp dashtest.html "$D/index.html" && touch "$D/.nojekyll"
-cd "$D" && git init -q -b gh-pages && git add . && git commit -qm "Deploy dashboard test data"
-git push -f git@github.com:TeamStewart/cbs-enr.git gh-pages
-```
-
-Pages rebuilds in about a minute (`gh api repos/TeamStewart/cbs-enr/pages/builds/latest --jq .status`).
+The test dashboard is published at <https://teamstewart.github.io/cbs-enr/>. `.github/workflows/pages.yml` renders `index.qmd` against the committed `data/dashboard/dashtest_data.rds` and deploys it on every push to `main` that touches `index.qmd`, `custom.scss`, `cbs_white.svg`, or `data/dashboard/`. To refresh the data, rerun `make_dashboard_test_data.R`, then commit and push the new rds. To redeploy by hand: `gh workflow run pages.yml`. Check status with `gh run list -w pages.yml`.

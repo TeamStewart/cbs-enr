@@ -19,9 +19,7 @@ format:
 # State x Contest selections live in DASHBOARD_CONTESTS (scripts/util/globals.R).
 # Everything below is drawn client-side (OJS) from dashboard_data.
 # For testing outside the pipeline, point CBS_DASH_RDS at a saved build_dashboard_data() rds.
-library(targets)
-
-dd = if (nzchar(Sys.getenv("CBS_DASH_RDS"))) readRDS(Sys.getenv("CBS_DASH_RDS")) else tar_read(dashboard_data)
+dd = if (nzchar(Sys.getenv("CBS_DASH_RDS"))) readRDS(Sys.getenv("CBS_DASH_RDS")) else targets::tar_read(dashboard_data)
 
 to_ms = \(x) as.numeric(x) * 1000
 

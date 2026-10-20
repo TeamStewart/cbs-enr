@@ -123,6 +123,8 @@ nanoparquet::write_parquet(fake_history("NC", TRUE), fs::path(PATH_DROPBOX, ELEC
 
 dd = build_dashboard_data(unname(dash))
 saveRDS(dd, fs::path(PATH_DROPBOX, ELECTION_FOLDER, "dashboard_data.rds"))
+# committed copy; pushing it to main redeploys GitHub Pages (.github/workflows/pages.yml)
+saveRDS(dd, "data/dashboard/dashtest_data.rds")
 
 print(dd$meta, width = Inf)
 cli::cli_inform("ts rows: {nrow(dd$ts)}; prec rows: {nrow(dd$prec)}")
