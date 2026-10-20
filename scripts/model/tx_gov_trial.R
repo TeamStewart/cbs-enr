@@ -812,8 +812,11 @@ make_stages = function(cells, truth, frac) {
 }
 
 # ---- 4. fit --------------------------------------------------------------------
-# One lm_bayes per (mode, outcome) = 2M equations. All share a design, so these
-# coefficients equal the full-SUR ones; Sigma is estimated from residuals.
+# One lm_bayes per (mode, outcome) = K_OUT * M = 3M equations (9 for three modes). All
+# share a design, so these coefficients equal the full-SUR ones; Sigma is estimated from
+# residuals. Caveat: the equivalence needs the same regressors on the SAME ROWS, and the
+# observed sets differ by mode on the night (early reports before eday), so this is an
+# unbalanced SUR and equation-by-equation is not strictly efficient. Unmeasured.
 
 # Conjugate Gaussian fit with a g-prior on the covariate block and a ridge-equivalent
 # random effect on the county block. One weighted QR; same posterior form as lm_bayes.
