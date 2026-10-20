@@ -1,7 +1,7 @@
 # Data contract — race-by-race election-night model (2026)
 
 **Status:** draft 1, 2026-10-18. Owner: Young-Kyung Kim. Consumer: `scripts/model/tx_gov_trial.R`
-and its successors. See `tx_gov_model.tex` for the model these inputs feed and
+and its successors. See `tx_model_spec.tex` for the model these inputs feed and
 `nyc_tx_comparison.tex` for why it is shaped this way.
 
 **Update 2026-10-19 (Bridget Schippers):** TX §1, §2, §3, §6 and §9 are now built by
