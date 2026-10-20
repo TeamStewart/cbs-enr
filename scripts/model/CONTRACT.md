@@ -230,7 +230,27 @@ keep `prior_oth` as its own nullable field.
 
 ---
 
-## 7. `race_mode_prior` — the mode partisan differential — **BLOCKED**
+## 7. `race_mode_prior` — the mode partisan differential — **UNBLOCKED for TX 2024**
+
+**Status 2026-10-19.** No longer blocked in principle: the 2024 TX scrape yields real
+precinct × mode × party results, and δ_m is now measured rather than borrowed or assumed.
+Built as `scripts/model/tx24_mode_history_2024.parquet` (not copied into the pipeline path,
+see §10). Measured on TX 2024:
+
+| method | `delta_a` | `delta_b` | two-party Dem of that mode |
+|---|---|---|---|
+| mail | +0.769 | −0.088 | 67.3% |
+| early | +0.087 | −0.039 | 53.3% |
+| eday | +0.082 | −0.288 | 55.9% |
+
+**TX election day runs 2.6pp MORE Democratic than early voting** — the opposite of NC
+(mail +0.660 / early −0.029 / eday −0.025) and the opposite of the red-mirage pattern this
+field exists to capture. So `delta_source` must be recorded per state and **NC's values
+must not be borrowed for TX**: on the 2024 backtest the NC borrow moves mean |err| from
+0.60pp to 0.59pp, i.e. nothing, and even an oracle δ_m measured on the target election
+reaches only 0.41pp. δ_m is a smaller lever than this section originally assumed.
+
+Still wanted: the same measurement for the other in-scope states, which needs §10 for each.
 
 Grain: one row per `race_id` × `method`. This is $\delta_m$ in the model.
 
@@ -371,7 +391,23 @@ scope**; statewide-only can omit it.
 
 ---
 
-## 10. `results_historical` — final canvass by mode and party — **BLOCKED**
+## 10. `results_historical` — final canvass by mode and party — **PARTIALLY UNBLOCKED**
+
+**Status 2026-10-19.** TX 2024 now exists, built from the raw county scrapes rather than
+supplied: `scripts/model/tx24_mode_history_2024.parquet`, 16 counties, 4 modes, in this
+table's schema. It is deliberately **not** copied to
+`26_general/input_data/TX_mode_history.parquet`, which is where the live model looks —
+dropping it there would silently switch production off `delta_m = 0`, and that should be a
+deliberate choice rather than a side effect. Activating it is a one-line copy.
+
+Two caveats on what was built. It is the last election-night scrape per county, not the
+certified canvass: measured against the canvass it is 99.28% of votes, with Dallas at
+97.87%, so `is_final` is **false** for it. And it covers 16 of 254 TX counties — the ones
+with election-night scrapes — not the state.
+
+What is still wanted, in priority order: the certified canvass for TX 2024; and the same
+table for the other in-scope states, which is what §13's backtest work needs and what would
+let §7 be measured outside Texas.
 
 Grain: one row per `geo` × `election` × `office` × `method` × `party`.
 
@@ -386,8 +422,13 @@ Grain: one row per `geo` × `election` × `office` × `method` × `party`.
 | `is_final` | bool | no | — | **must be true**; see below |
 | `boundary_vintage` | text | no | — | §0 |
 
-**This single table unblocks both §7 and the model's $\Sigma$.** It is the highest-value
-acquisition in this contract.
+**This single table unblocks both §7 and the model's Σ.** It was the highest-value
+acquisition in this contract, and for TX 2024 it has now been obtained — which immediately
+showed that Σ's cross-mode blocks, borrowed from NC, are wrong for Texas where it matters
+most: on share residuals TX gives early↔eday **+0.417** (t=22.3) against NC's +0.039, while
+mail↔early is +0.049 against NC's +0.232. The pair NC says is negligible is the strongest
+in TX. Getting this table for a second state is now the way to learn which pattern
+generalises.
 
 **`is_final` must be the certified canvass, not an election-night snapshot**, because
 $\Sigma$ is estimated as the complete-case residual covariance across all modes. Partial

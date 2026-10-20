@@ -39,6 +39,14 @@ this transfers: in other states "absentee" can mean in-person absentee, which wo
 ## Provenance
 
 Built 2026-10-18 from `24_general/TX/raw/*.csv` (249 snapshot files, 28 counties).
+**These lookups are only needed where the cleaning step has not run.** As of 2026-10-19,
+`24_general/{AZ,GA,MI,NC,PA}/clean/` carry an already-normalized schema — `vote_mode` in
+the canonical vocabulary (`Early Voting` / `Election Day` / `Absentee/Mail` /
+`Provisional` / `Overvote/Undervote`) and `candidate_party` spelled out (`Democrat`) — so
+those states need no mapping at all. The states still on the raw county shape, and so
+dependent on these files, are AR, CO, SC, TX and WV. `scripts/model/returns_panel.R`
+branches on which shape a state has.
+
 Note `24_general/TX/clean/` is empty — the TX 2024 cleaning step was never run, which is
 why no normalized TX 2024 data existed and this map had to be reconstructed from raw.
 
