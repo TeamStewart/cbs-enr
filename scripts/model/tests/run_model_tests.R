@@ -19,6 +19,7 @@
 ##              instead of being told by the feed (closer to what TX will give us)
 ##     diag     no cross-mode correlation (SIGMA_STRUCT=diag)
 ##     nore     no county random effect (USE_COUNTY_RE=0)
+##     swing    the standard uniform swing model (feols with county fixed effects)
 ##     core     the simpler model_core.R version
 ##   Add "default" to the list to rerun the default settings too, e.g. --variants=default,nc
 ##
@@ -40,7 +41,8 @@ VARIANTS = list(
   stopped = list(env = character(), flags = "--complete=stopped"),
   diag    = list(env = "SIGMA_STRUCT=diag", flags = character()),
   nore    = list(env = "USE_COUNTY_RE=0", flags = character()),
-  core    = list(env = character(), flags = "--model=core")
+  core    = list(env = character(), flags = "--model=core"),
+  swing   = list(env = character(), flags = "--model=swing")
 )
 sim_flags = grep("^--(model|cells|complete)=", args, value = TRUE)
 var_arg = grep("^--variants=", args, value = TRUE)

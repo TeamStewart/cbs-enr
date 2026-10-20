@@ -5,7 +5,7 @@
 ## scripts/sim/make_sim_tx.R) plus our model inputs, and refits the model every 15
 ## minutes from 8pm to 4am ET, then at four later times, for every race in the sim.
 ##
-## Two models (choose with --model=):
+## Three models (choose with --model=):
 ##   trial (default)  the full model in scripts/model/tx_gov_trial.R: precinct x mode cells,
 ##                    turnout / third-party / two-party equations, county random effect,
 ##                    cross-mode correlation (Sigma), mode partisan offsets, and its
@@ -14,6 +14,14 @@
 ##                    files are swapped for TX_precinct / TX_precinct_mode_history.
 ##   core             the simpler model_core.R version this test used before (by mode,
 ##                    no cross-mode correlation, no mode offsets), kept for comparison.
+##   swing            the standard uniform swing model, fit with fixest::feols with county
+##                    fixed effects: each reported precinct x method cell's swing in Dem
+##                    two-party share from its Harris 2024 share, regressed on county and
+##                    method fixed effects, weighted by expected votes. Unreported cells get
+##                    their county's swing; counties with nothing in get the average swing.
+##                    Turnout the same way (log ratio of counted to expected votes, county and
+##                    method fixed effects, fully counted cells only). Interval: bootstrap
+##                    over counties. Needs the fixest package.
 ##
 ## The trial model's own switches still work as environment variables, e.g.
 ##   MODE_OFFSET_SOURCE=nc  borrow NC's mode partisan offsets (default here: zero, since
@@ -55,7 +63,7 @@ stopifnot("--cells must be any or complete" = CELLS %in% c("any", "complete"))
 COMPLETE = sub("^--complete=", "", c(grep("^--complete=", args, value = TRUE), "--complete=feed")[1])
 stopifnot("--complete must be feed or stopped" = COMPLETE %in% c("feed", "stopped"))
 SCENARIO = c(grep("^--", args, value = TRUE, invert = TRUE), "tx_base")[1]
-stopifnot("--model must be trial or core" = MODEL %in% c("trial", "core"))
+stopifnot("--model must be trial, core or swing" = MODEL %in% c("trial", "core", "swing"))
 LABEL = sub("^--label=", "", c(grep("^--label=", args, value = TRUE), "--label=")[1])
 stopifnot("--label may use only letters, digits, - and _" = grepl("^[A-Za-z0-9_-]*$", LABEL))
 TZ = "America/New_York"
@@ -299,6 +307,121 @@ if (MODEL == "core") {
 }
 
 # ======================================================================
+## C. the standard uniform swing model (feols with county fixed effects)
+# ======================================================================
+if (MODEL == "swing") {
+  if (!requireNamespace("fixest", quietly = TRUE))
+    stop('The uniform swing model needs the fixest package. In R: install.packages("fixest")')
+  set.seed(2026)
+  BOOT = 100                                   # county bootstrap replicates for the interval
+  METHODS = c("early", "eday", "mail")
+  # expected votes per precinct x method: est_turnout x the precinct's 2022 method split,
+  # shrunk toward its county's split (k = 40, as in the trial model's mode priors)
+  sh = mh |> inner_join(select(inp, geo, county = county_name), by = "geo") |> rename(v = voters)
+  cty_sh = sh |> summarize(v = sum(v), .by = c(county, method)) |> mutate(cs = v / sum(v), .by = county) |>
+    select(county, method, cs)
+  base = inp |>
+    transmute(geo, county = county_name, dem2, oth = pmin(pmax(oth_base, 0), 0.25), est_turnout) |>
+    cross_join(tibble(method = METHODS)) |>
+    left_join(sh |> mutate(n_p = sum(v), .by = geo) |> select(geo, method, v, n_p), by = c("geo", "method")) |>
+    left_join(cty_sh, by = c("county", "method")) |>
+    mutate(v = coalesce(v, 0), n_p = coalesce(n_p, 0), cs = coalesce(cs, 1 / 3),
+           share = (v + 40 * cs) / (n_p + 40)) |>
+    mutate(share = share / sum(share), .by = geo) |>
+    mutate(exp_votes = pmax(est_turnout * share, 0.5)) |>
+    select(geo, county, method, dem2, oth, exp_votes)
+  source("scripts/model/tests/statewide_tx.R")
+  ST = statewide_setup(inp)
+  cat("Model: standard uniform swing model (feols, county fixed effects), interval from", BOOT, "county bootstrap replicates\n")
+
+  # predictions from county + method fixed effects; cells whose county (or method) has no
+  # data fall back to the weighted average for that method, then overall
+  fe_predict = function(dd, yname, fit_rows, w) {
+    fr = dd[fit_rows & w > 0, ]
+    if (nrow(fr) < 2) return(rep(if (nrow(fr)) fr[[yname]][1] else 0, nrow(dd)))
+    fit = tryCatch(fixest::feols(stats::as.formula(paste(yname, "~ 1 | county + method")), data = fr,
+                                 weights = w[fit_rows & w > 0], notes = FALSE, warn = FALSE),
+                   error = function(e) NULL)
+    p = if (is.null(fit)) rep(NA_real_, nrow(dd)) else suppressWarnings(predict(fit, newdata = dd))
+    by_m = tapply(fr[[yname]] * w[fit_rows & w > 0], fr$method, sum) / tapply(w[fit_rows & w > 0], fr$method, sum)
+    all_m = sum(fr[[yname]] * w[fit_rows & w > 0]) / sum(w[fit_rows & w > 0])
+    fb = unname(ifelse(dd$method %in% names(by_m), by_m[dd$method], all_m))
+    if_else(is.na(p), fb, p)
+  }
+
+  swing_once = function(d, cw) {
+    w = d$exp_votes * cw[d$county]                # county bootstrap weights (1 for the point fit)
+    w[is.na(w)] = 0
+    rep_cell = d$c_dem + d$c_rep > 0
+    done = rep_cell & d$frac >= 1
+    sw = fe_predict(d, "y", rep_cell, w)
+    lr = if (any(done)) fe_predict(d, "lr", done, w) else rep(0, nrow(d))
+    tot = if_else(done, d$c_tot, pmax(d$c_tot, d$exp_votes * exp(lr)))
+    s = pmin(pmax(d$dem2 + sw, 0.001), 0.999)
+    rem2 = (tot - d$c_tot) * (1 - d$oth)
+    tibble(geo = d$geo, dem = if_else(done, d$c_dem, d$c_dem + rem2 * s),
+           rep = if_else(done, d$c_rep, d$c_rep + rem2 * (1 - s)), tot = tot)
+  }
+
+  run_contest = function(contest_id) {
+    fin = filter(final, contest == contest_id, geo %in% base$geo)
+    cells0 = base |> left_join(select(fin, -contest), by = c("geo", "method")) |>
+      mutate(across(c(dem, rep, oth.y), \(x) coalesce(x, 0))) |>
+      rename(oth = oth.x, oth_v = oth.y)
+    # statewide if the 32 counties' final precinct results were known exactly
+    st_exact = list()
+    if (!is.null(ST)) {
+      tr = fin |> summarize(dem = sum(dem), rep = sum(rep), tot = sum(dem + rep + oth), .by = geo)
+      i = match(ST$p32$geo, tr$geo)
+      ok = !is.na(i) & tr$tot[i] > 0
+      s2 = tr$dem[i] / pmax(tr$dem[i] + tr$rep[i], 1)
+      z = statewide_draws(ST, if_else(ok, s2, plogis(ST$p32$lb)), if_else(ok, tr$tot[i], 0),
+                          rep(sum(tr$dem) / sum(tr$dem + tr$rep), 2), rep(sum(tr$tot), 2), noise = FALSE)
+      st_exact = list(st_exact = z$dem[1], stu_exact = z$uni[1])
+    }
+    # the uniform swing model has nothing to estimate before any votes are counted, so
+    # checkpoints with no votes in are left out for this model
+    map_dfr(times, function(tm) {
+      d = counted_at(transmute(cells0, geo, method, dem, rep, oth = oth_v), tm) |>
+        left_join(select(cells0, geo, method, county, dem2, exp_votes, oth_share = oth), by = c("geo", "method")) |>
+        rename(oth_v = oth, oth = oth_share)
+      if (!any(d$c_tot > 0)) return(NULL)
+      d = d |>
+        mutate(y = c_dem / pmax(c_dem + c_rep, 1) - dem2,
+               lr = log(pmax(c_tot, 0.5) / exp_votes))
+      ctys = unique(d$county)
+      pt = swing_once(d, setNames(rep(1, length(ctys)), ctys))
+      rep_ctys = unique(d$county[d$c_tot > 0])
+      draws = lapply(seq_len(BOOT), function(b) {
+        cw = setNames(rep(1, length(ctys)), ctys)
+        if (length(rep_ctys) > 1) {
+          k = table(factor(sample(rep_ctys, length(rep_ctys), replace = TRUE), levels = rep_ctys))
+          cw[rep_ctys] = as.numeric(k)
+        }
+        o = swing_once(d, cw)
+        c(s2 = sum(o$dem) / sum(o$dem + o$rep), turn = sum(o$tot))
+      })
+      S2 = vapply(draws, `[[`, 0, "s2"); TT = vapply(draws, `[[`, 0, "turn")
+      # centre the bootstrap draws on the point fit
+      S2 = S2 - mean(S2) + sum(pt$dem) / sum(pt$dem + pt$rep); TT = TT - mean(TT) + sum(pt$tot)
+      st = list()
+      if (!is.null(ST)) {
+        pg = pt |> summarize(dem = sum(dem), rep = sum(rep), tot = sum(tot), .by = geo)
+        i = match(ST$p32$geo, pg$geo)
+        s2 = pg$dem[i] / pmax(pg$dem[i] + pg$rep[i], 1)
+        z = statewide_draws(ST, if_else(is.na(s2), plogis(ST$p32$lb), s2), coalesce(pg$tot[i], 0), S2, TT)
+        q = function(x) unname(quantile(x, c(0.025, 0.975)))
+        st = list(st_est = mean(z$dem), st_lo = q(z$dem)[1], st_hi = q(z$dem)[2],
+                  stu_est = mean(z$uni), stu_lo = q(z$uni)[1], stu_hi = q(z$uni)[2])
+      }
+      dd = transmute(d, geo, method, dem, rep, oth = oth_v, c_dem, c_rep, c_oth, c_tot)
+      summarize_draws(contest_id, tm, dd, S2, TT,
+                      c(list(obs_cells = sum(d$c_tot > 0), complete_cells = sum(d$c_tot > 0 & d$frac >= 1)), st, st_exact))
+    })
+  }
+}
+
+# ======================================================================
 ## run every race in the sim
 # ======================================================================
 t0 = Sys.time()
@@ -308,6 +431,7 @@ res = map_dfr(sort(unique(final$contest)), function(r) { cat("  fitting", r, "..
          confident_wrong = (truth_twop > 0.5 & hi_twop < 0.5) | (truth_twop < 0.5 & lo_twop > 0.5))
 # what this run changes from the default model settings, in words, for the page
 changes = c(if (MODEL == "core") "simpler model_core version",
+            if (MODEL == "swing") "standard uniform swing model (feols with county fixed effects)",
             if (CELLS == "complete") "cells used only once fully counted",
             if (COMPLETE == "stopped") "fully-counted guessed from counts (no growth in 30 min)")
 if (MODEL == "trial") changes = c(changes,
@@ -319,6 +443,10 @@ if (MODEL == "trial") changes = c(changes,
   if (!USE_COMPOSE) "unbounded turnout")
 res = mutate(res, scenario = SCENARIO, label = LABEL,
              model_changes = if (length(changes)) paste(changes, collapse = "; ") else "")
+if (MODEL == "swing") {
+  res = mutate(res, settings = sprintf("standard uniform swing model: feols(swing ~ 1 | county + method), weighted by expected votes; turnout feols(log ratio ~ 1 | county + method) on fully counted cells; cells %s, complete %s; interval from %d county bootstrap replicates",
+                                       CELLS, COMPLETE, BOOT))
+}
 if (MODEL == "trial") {
   res = mutate(res, settings = sprintf("cells %s; complete %s; bounded turnout %s (KAPPA %.2f); Sigma %s/%s; county RE %s; mode offsets %s; draws %d",
                                        CELLS, COMPLETE, USE_COMPOSE, KAPPA, SIGMA_SOURCE, SIGMA_STRUCT,
