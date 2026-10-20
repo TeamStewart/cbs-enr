@@ -44,19 +44,40 @@ precinct $i$ for the Democratic candidate, the Republican candidate, and all oth
   \item Three equations for $s_{im}$, the two-party Democratic share of the cell.
 \end{itemize}
 
-\paragraph{What $\Sigma$ does, and does not, do.}
-Because all nine equations share a design matrix, seemingly unrelated regression
-coincides with equation-by-equation estimation (Zellner), so $\Sigma$ leaves the
-coefficients unchanged. Its job is the \emph{joint predictive distribution}: the
-statewide aggregate is nonlinear in $(\tau, tp, s)$ jointly within each cell, so
-$\operatorname{Var}(\text{aggregate})$ depends on their correlation. Estimating the nine
-equations separately and then drawing from a correlated $\Sigma$ is therefore not an
-approximation --- it is exact, and much cheaper.
+\paragraph{What $\Sigma$ does.}
+It is worth separating estimation from prediction here. $\Sigma$ does not improve the
+coefficients: because all nine equations share a design matrix, seemingly unrelated
+regression coincides with equation-by-equation estimation (Zellner), so $\hat\beta$ is
+unchanged. Estimating the nine equations separately and then drawing from a correlated
+$\Sigma$ is therefore not an approximation --- it is exact, and much cheaper.
 
-One caveat: the Zellner equivalence requires the same regressors on the \emph{same rows}.
-On election night the observed sets differ by mode, since early returns arrive hours
-before election day. This is an unbalanced system, and equation-by-equation estimation is
-not strictly efficient there. The cost is currently unmeasured.
+What $\Sigma$ buys is prediction, in three ways. First, it makes a joint predictive
+distribution possible at all: the statewide aggregate is nonlinear in $(\tau, tp, s)$
+jointly within each cell, so $\operatorname{Var}(\text{aggregate})$ depends on their
+correlation and cannot be assembled from the marginals. Second, it calibrates that
+variance --- drawing the nine errors independently when they are in fact correlated gives
+an interval that is simply wrong, and with positive correlations too narrow. Third, and
+most usefully during the count, it lets observed equations inform unobserved ones.
+Partitioning the nine into observed $o$ and unobserved $u$,
+\begin{equation}
+  \mathbb{E}[\epsilon_u \mid \epsilon_o] = \Sigma_{uo}\Sigma_{oo}^{-1}\epsilon_o,
+  \qquad
+  \operatorname{Var}[\epsilon_u \mid \epsilon_o]
+    = \Sigma_{uu} - \Sigma_{uo}\Sigma_{oo}^{-1}\Sigma_{ou}.
+  \label{eq:cond}
+\end{equation}
+The mean shift carries information from reported modes into unreported ones, and the
+conditional variance is a Schur complement: no larger than $\Sigma_{uu}$, and strictly
+smaller whenever $\Sigma_{uo} \neq 0$. Relative to treating the equations as independent
+this is a genuine efficiency gain, not merely a correction for miscalibration.
+
+Two caveats. The size of the third benefit should not be overstated --- propagated
+through to the statewide number, the cross-mode blocks move the aggregate standard
+deviation by about $0.09\%$, rising to $0.86\%$ for a district of thirty precincts. And
+the Zellner equivalence requires the same regressors on the \emph{same rows}; on election
+night the observed sets differ by mode, since early returns arrive hours before election
+day, so the system is unbalanced and equation-by-equation estimation is not strictly
+efficient there. That cost is currently unmeasured.
 
 \section{The factorization}
 
