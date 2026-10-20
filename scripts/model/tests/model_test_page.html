@@ -123,8 +123,9 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     <svg id="state-chart" class="chart" viewBox="0 0 760 300" role="img" aria-label="Statewide extrapolated estimate by time"></svg>
     <div class="legend">
       <span><i class="sw" style="background:var(--dem-band)"></i>95% interval</span>
-      <span><i class="sw" style="background:var(--dem);height:3px"></i>Statewide estimate</span>
-      <span><i class="sw" style="background:var(--truth);height:2px"></i>Same method if the 32 counties' result were known exactly</span>
+      <span><i class="sw" style="background:var(--dem);height:3px"></i>Statewide estimate (demographic swing)</span>
+      <span><i class="sw" style="background:var(--raw);height:2px"></i>Uniform swing, for comparison</span>
+      <span><i class="sw" style="background:var(--truth);height:2px"></i>Demographic method if the 32 counties' precinct results were known exactly</span>
     </div>
     <div class="readout" id="state-readout">Hover or tap the chart to read values.</div>
     </div>
@@ -177,7 +178,7 @@ code { font-family: var(--font-data); font-size: 0.85em; }
   <ul class="plain">
     <li>Intervals need to widen when the counted precincts don't resemble the outstanding ones. One option is a geographic effect above the county (region or urban/rural) with a prior wide enough that the first counties can't pin it.</li>
     <li>Turnout: on the simulated night the full model's predicted total for the 32 counties runs about 3–5% above the truth by the end of the night, with an interval far too narrow to cover it (see the turnout chart). The two-party share is unaffected, but turnout intervals should not be published until this is fixed.</li>
-    <li><strong>To do: map this onto the statewide result properly.</strong> The statewide chart above is a rough first pass: it extrapolates the 32 counties' swing to the other 222 counties and never uses their returns. A real version should model the rest of the state from its county-level returns as they come in, carry the uncertainty of both parts through jointly, and be tested against a simulation that includes statewide truth.</li>
+    <li><strong>To do: map this onto the statewide result properly.</strong> The statewide chart above is a first pass: it predicts the other 222 counties' swing from their demographics, using the relationship in the 32 counties, and never uses their returns. A real version should model the rest of the state from its county-level returns as they come in, carry the uncertainty of both parts through jointly, and be tested against a simulation that includes statewide truth.</li>
   </ul>
 </section>
 </div>
@@ -297,7 +298,7 @@ function drawState(S, late) {
   document.getElementById("state-block").hidden = false;
   const W = 760, H = 300, m = { l: 52, r: 20, t: 16, b: 40 };
   const n = rows.length, x = i => m.l + i / (n - 1) * (W - m.l - m.r);
-  const vals = rows.slice(1).flatMap(r => [r[15], r[16]]).concat([ex, 50]);
+  const vals = rows.slice(1).flatMap(r => [r[15], r[16], r[17]]).concat([ex, 50]);
   const lo = Math.floor((Math.min(...vals) - 1) / 5) * 5, hi = Math.ceil((Math.max(...vals) + 1) / 5) * 5;
   const y = v => m.t + (hi - Math.max(lo, Math.min(hi, v))) / (hi - lo) * (H - m.t - m.b);
   for (let v = lo; v <= hi; v += 5) {
@@ -312,10 +313,11 @@ function drawState(S, late) {
   const band = rows.map((r, i) => [x(i), y(r[16])]).concat(rows.map((r, i) => [x(i), y(r[15])]).reverse());
   el("path", { d: "M" + band.map(p => p.join(",")).join("L") + "Z", fill: "var(--dem-band)" }, svg);
   el("line", { x1: m.l, x2: W - m.r, y1: y(ex), y2: y(ex), stroke: "var(--truth)", "stroke-width": 1.5, "stroke-dasharray": "6 3" }, svg);
+  el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[17])).join("L"), fill: "none", stroke: "var(--raw)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
   el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[14])).join("L"), fill: "none", stroke: "var(--dem)", "stroke-width": 2.5 }, svg);
-  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = `if the 32 counties were known exactly: ${fmt(ex)}% (interval width then comes only from the rest of the state)`;
+  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = `if the 32 counties' precinct results were known exactly: ${fmt(ex)}% (uniform swing: ${fmt(S.stu_exact)}%)`;
   const xs = rows.map((r, i) => x(i));
-  hover(svg, rows, r => xs[rows.indexOf(r)], r => `${r[0].replace(/^11-0?/, "Nov ")} · statewide ${fmt(r[14])}% (${fmt(r[15])}–${fmt(r[16])}) · 32 counties ${fmt(r[2])}%`, "state-readout", W, H, m);
+  hover(svg, rows, r => xs[rows.indexOf(r)], r => `${r[0].replace(/^11-0?/, "Nov ")} · statewide ${fmt(r[14])}% (${fmt(r[15])}–${fmt(r[16])}) · uniform swing ${fmt(r[17])}% (${fmt(r[18])}–${fmt(r[19])}) · 32 counties ${fmt(r[2])}%`, "state-readout", W, H, m);
 }
 
 function hover(svg, rows, xf, label, outId, W, H, m) {
@@ -377,8 +379,9 @@ if (T !== undefined && T !== null) document.getElementById("bt-truth").textConte
 else document.getElementById("backtest").hidden = true;
 if (DATA.state) {
   const st = DATA.state;
-  document.getElementById("state-note").innerHTML = `Our model covers only the 32 counties, about two-thirds of the statewide vote. For the other 222 counties this applies the 32 counties' swing from Harris 2024 (${fmt(100 * st.base32)}% there, ${fmt(100 * st.baserest)}% in the rest of the state), plus extra error for the rest swinging differently, and scales their votes from the 32-county turnout (${fmt(st.ratio, 3)}× the 32 counties' vote, as in 2022). No rest-of-state returns are used, and the sim has no statewide result to check it against. How well this method has worked before, if the 32 counties' result were known exactly: ` +
-    st.hist.map(h => `${h.pair}, off by ${h.state_err > 0 ? "+" : ""}${fmt(h.state_err, 2)} pts statewide`).join("; ") + `. The extra error uses the largest of these.`;
+  const sg = x => (x > 0 ? "+" : "") + fmt(x, 2);
+  document.getElementById("state-note").innerHTML = `Our model covers only the 32 counties, about two-thirds of the statewide vote. At each checkpoint this fits how the model's precinct swing from Harris 2024 varies with demographics across the 32 counties (L2: Hispanic, Black, 65+, male and college shares, 2018 and 2020 turnout, size, baseline lean), predicts the swing of each precinct in the other 222 counties from its own L2 demographics (${fmt(100 * st.rest_join, 0)}% of their votes join to L2; the rest get the average swing), and scales their votes from the 32-county turnout (${fmt(st.ratio, 3)}× the 32 counties' vote, as in 2022). The interval adds an extra error for the rest of the state swinging differently than predicted. No rest-of-state returns are used, and the sim has no statewide result to check it against. How the method has done on past TX elections, if the 32 counties' precinct results were known exactly (statewide error, demographic vs uniform swing): ` +
+    st.hist.map(h => `${h.pair}: ${sg(h.err_d)} vs ${sg(h.err_u)} pts`).join("; ") + `. The extra error uses the largest demographic miss.`;
 }
 document.getElementById("sc-table").innerHTML = "<thead><tr><th style='text-align:left'>Run</th><th style='text-align:left'>What's different</th><th>Race</th><th>True Dem</th><th>Covered</th><th>Confidently wrong</th><th>Right winner from</th><th>Avg error</th><th>Avg interval width</th><th>Turnout at 4am vs truth</th><th>Statewide at 4am (rough)</th></tr></thead><tbody>" +
   scKeys.flatMap(sc => Object.keys(SC[sc].races).map((k, i) => { const z = stats(SC[sc].races[k]);

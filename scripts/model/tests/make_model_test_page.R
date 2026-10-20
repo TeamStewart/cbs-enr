@@ -53,19 +53,36 @@ diff_text = function(sc) {
   paste(sprintf("%s %s (base %s)", d, vapply(d, \(k) show_val(p[[k]]), ""), vapply(d, \(k) show_val(base[[k]]), "")), collapse = "; ")
 }
 
+# ---- statewide estimate: computed in test_sim_night.R (statewide_tx.R); here we only
+#      fetch the method's historical check to describe it on the page
+state = NULL
+p_tp = file.path(DIR_26, "input_data", "model_inputs", "TX_precinct.parquet")
+if (file.exists(p_tp)) {
+  source("scripts/model/tests/statewide_tx.R")
+  ST = statewide_setup(read_pq(p_tp))
+  if (!is.null(ST)) state = list(hist = ST$hist, gap_sd_d = ST$gap_sd_d, ratio = ST$ratio, base32 = ST$base32,
+                                 rest_join = ST$rest_join)
+}
+has = function(g, v) v %in% names(g) && any(!is.na(g[[v]]))
+
 # ---- one chart's rows: time, % counted, estimate, lo, hi, raw, P(Dem wins), % early/eday/mail
+#      counted; turnout predicted/lo/hi/counted (millions); statewide estimate/lo/hi with
+#      demographic swing, then with uniform swing
 night_list = function(df) df |>
   split(~race) |>
-  lapply(\(g) list(
+  lapply(\(g) { st = has(g, "st_est"); list(
     truth = r2(g$truth_twop[1]),
     truth_turn = round(g$truth_turnout[1] / 1e6, 4),
     # turnout in millions: predicted, lo, hi, counted so far
-    rows = unname(Map(\(tm, a, b, c, d, e, f, x, y, z, t1, t2, t3, t4) list(tm, a, b, c, d, e, f, x, y, z, t1, t2, t3, t4),
+    rows = unname(Map(list,
       substr(g$time, 6, 16), round(100 * g$pct_votes, 1), r2(g$est_twop), r2(g$lo_twop), r2(g$hi_twop),
       r2(g$raw_twop), round(g$p_dem_win, 3), round(100 * g$pct_early), round(100 * g$pct_eday), round(100 * g$pct_mail),
       round(g$est_turnout / 1e6, 4), round(g$lo_turnout / 1e6, 4), round(g$hi_turnout / 1e6, 4),
-      round(g$pct_votes * g$truth_turnout / 1e6, 4)))
-  ))
+      round(g$pct_votes * g$truth_turnout / 1e6, 4),
+      if (st) r2(g$st_est) else NA, if (st) r2(g$st_lo) else NA, if (st) r2(g$st_hi) else NA,
+      if (st) r2(g$stu_est) else NA, if (st) r2(g$stu_lo) else NA, if (st) r2(g$stu_hi) else NA)),
+    st_exact = if (st) r2(g$st_exact[1]) else NULL, stu_exact = if (st) r2(g$stu_exact[1]) else NULL
+  ) })
 sims = setNames(lapply(KEYS, function(k) {
   d = read_csv(file.path(DIR_OUT, sprintf("sim_%s_results.csv", k)), show_col_types = FALSE,
                col_types = cols(time = "c", race = "c"))
@@ -86,7 +103,7 @@ bt_list = if (is.null(bt)) NULL else bt |>
   lapply(\(g) unname(Map(\(a, b, c, d, e, f, n) list(a, b, c, d, e, f, n),
     r2(g$pct_votes), r2(g$est_twop), r2(g$lo_twop), r2(g$hi_twop), r2(g$raw_twop), round(g$p_dem_win, 3), g$n_counties)))
 
-data = list(sims = sims, bt = bt_list, bt_truth = if (is.null(bt)) NULL else r2(bt$truth_twop[1]),
+data = list(sims = sims, state = state, bt = bt_list, bt_truth = if (is.null(bt)) NULL else r2(bt$truth_twop[1]),
             run = format(Sys.time(), "%b %d, %Y %H:%M"))
 json = jsonlite::toJSON(data, auto_unbox = TRUE, digits = NA, null = "null")
 

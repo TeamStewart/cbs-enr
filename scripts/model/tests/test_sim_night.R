@@ -168,9 +168,39 @@ if (MODEL == "trial") {
               DRAWS, USE_COMPOSE, KAPPA, REF_MODE, SIGMA_SOURCE, SIGMA_STRUCT, USE_COUNTY_RE,
               MODE_OFFSET_SOURCE, MIN_MODE_CELLS, MIN_MODE_CTY))
   d0 = prior_draws(cells)          # reference prior for the confidence sequence
+  # rough statewide estimate (see statewide_tx.R); NULL if its inputs are missing
+  source("scripts/model/tests/statewide_tx.R")
+  ST = statewide_setup(inp)
+  # this run's two-party Dem share and votes per precinct, in ST$p32 order
+  prec_two_party = function(f) {
+    i = match(ST$p32$geo, f$prec$geo)
+    tp = prec$tp_prior[i]
+    s2 = f$prec$dem_est[i] / pmax(1 - tp, 0.5)          # Dem share of all votes -> two-party
+    w = f$prec$turn_est[i]
+    list(s2 = if_else(is.na(s2), plogis(ST$p32$lb), s2), w = coalesce(w, 0))
+  }
+  st_cols = function(f) {
+    if (is.null(ST)) return(list())
+    pt = prec_two_party(f)
+    z = statewide_draws(ST, pt$s2, pt$w, f$S_2p, f$turn)
+    q = function(x) unname(quantile(x, c(0.025, 0.975)))
+    list(st_est = mean(z$dem), st_lo = q(z$dem)[1], st_hi = q(z$dem)[2],
+         stu_est = mean(z$uni), stu_lo = q(z$uni)[1], stu_hi = q(z$uni)[2])
+  }
 
   run_contest = function(contest_id) {
     fin = filter(final, contest == contest_id, geo %in% prec$geo)
+    # statewide if the 32 counties' final precinct results were known exactly
+    st_exact = list()
+    if (!is.null(ST)) {
+      tr = fin |> summarize(dem = sum(dem), rep = sum(rep), tot = sum(dem + rep + oth), .by = geo)
+      i = match(ST$p32$geo, tr$geo)
+      s2 = tr$dem[i] / pmax(tr$dem[i] + tr$rep[i], 1)
+      ok = !is.na(i) & tr$tot[i] > 0
+      S2t = sum(tr$dem) / sum(tr$dem + tr$rep)
+      z = statewide_draws(ST, if_else(ok, s2, plogis(ST$p32$lb)), if_else(ok, tr$tot[i], 0), rep(S2t, 2), rep(sum(tr$tot), 2), noise = FALSE)
+      st_exact = list(st_exact = z$dem[1], stu_exact = z$uni[1])
+    }
     map_dfr(times, function(tm) {
       d = counted_at(fin, tm)
       # A cell is COMPLETE when that mode is fully counted (what a feed's pct_reported
@@ -192,11 +222,11 @@ if (MODEL == "trial") {
       f = suppressMessages(fit_stage(cells, returns, cross_mode = USE_CROSS_MODE))
       cs = conf_seq(d0, f$S_dem, level = LEVEL)
       ci_all = cred(f$S_dem)
-      summarize_draws(contest_id, tm, d, f$S_2p, f$turn, list(
+      summarize_draws(contest_id, tm, d, f$S_2p, f$turn, c(list(
         obs_cells = f$n_obs_cells, complete_cells = sum(returns$complete),
         est_dem_all = mean(f$S_dem), lo_dem_all = ci_all[["lower"]], hi_dem_all = ci_all[["upper"]],
         cs_lo_dem_all = cs[["lower"]], cs_hi_dem_all = cs[["upper"]],
-        truth_dem_all = sum(d$dem) / sum(d$dem + d$rep + d$oth)))
+        truth_dem_all = sum(d$dem) / sum(d$dem + d$rep + d$oth)), st_cols(f), st_exact))
     })
   }
 }
