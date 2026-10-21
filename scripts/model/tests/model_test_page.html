@@ -1,4 +1,4 @@
-<title>TX Precinct Model Check</title>
+<title>TX Precinct Model Check (Bridget)</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -16,6 +16,7 @@
   --truth: #1b2230;
   --raw: #8a919e;
   --warn-bg: #fbecea;
+  --note-bg: #fbf3d5;
   --ok-bg: #e8f1fa;
   --font-display: "Newsreader", Georgia, "Times New Roman", serif;
   --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -25,26 +26,32 @@
   :root:not([data-theme="light"]) {
     --bg: #12161d; --surface: #1a2029; --fg: #e6e9ef; --muted: #9aa3b2; --rule: #2e3643;
     --dem: #6ea8e8; --dem-band: rgba(110, 168, 232, 0.2); --rep: #e57373; --truth: #e6e9ef; --raw: #7d8594;
-    --warn-bg: #3a2224; --ok-bg: #1d2c3d; color-scheme: dark;
+    --warn-bg: #3a2224; --ok-bg: #1d2c3d; --note-bg: #3a3420; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #12161d; --surface: #1a2029; --fg: #e6e9ef; --muted: #9aa3b2; --rule: #2e3643;
   --dem: #6ea8e8; --dem-band: rgba(110, 168, 232, 0.2); --rep: #e57373; --truth: #e6e9ef; --raw: #7d8594;
-  --warn-bg: #3a2224; --ok-bg: #1d2c3d; color-scheme: dark;
+  --warn-bg: #3a2224; --ok-bg: #1d2c3d; --note-bg: #3a3420; color-scheme: dark;
 }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
 .wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
 h1, h2 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.15; }
 h1 { font-size: 2.1rem; }
 h2 { font-size: 1.5rem; }
-p { margin: 0; max-width: 68ch; }
+p { margin: 0; }
 .eyebrow { font-family: var(--font-data); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 header { display: grid; gap: 12px; }
 .findings { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.findings li { padding: 12px 14px; border-radius: 6px; background: var(--surface); border: 1px solid var(--rule); max-width: 68ch; }
+.findings li { padding: 12px 14px; border-radius: 6px; background: var(--surface); border: 1px solid var(--rule); }
 .findings li.bad { background: var(--warn-bg); border-color: transparent; }
 .findings li.good { background: var(--ok-bg); border-color: transparent; }
+.findings li.note { background: var(--note-bg); border-color: transparent; }
+.findings li .sc { display: block; margin-top: 4px; }
+table.rank td { text-align: left; vertical-align: top; white-space: normal; min-width: 14ch; }
+table.rank th { text-align: left; }
+table.rank td.q { font-weight: 600; }
+table.rank ol { margin: 0; padding-left: 1.3em; }
 section { display: grid; gap: 14px; }
 figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -66,50 +73,39 @@ th, td { text-align: right; padding: 5px 10px; border-bottom: 1px solid var(--ru
 th:first-child, td:first-child { text-align: left; }
 th { font-weight: 600; color: var(--muted); font-size: 0.78rem; }
 td.miss { color: var(--rep); font-weight: 600; }
-ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 68ch; }
+ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
 code { font-family: var(--font-data); font-size: 0.85em; }
+[hidden] { display: none !important; }
 </style>
 
 <div class="wrap">
 <header>
   <div class="eyebrow" id="stamp">CBS election desk · TX precinct model</div>
-  <h1>How the TX precinct model behaves as votes come in</h1>
-  <p>Two tests of the same model code (<code>scripts/model/model_core.R</code>). Each chart shows the model's estimate of the Democratic two-party share, its 95% interval, the raw share of votes counted so far, and the true final result.</p>
+  <h1>How the TX precinct model behaves as votes come in (Bridget)</h1>
+  <p>Three election-night models run on Ethan's simulated night (<code>tx_base</code>) and two stress versions of it: <strong>model_y</strong>, the full precinct model (<code>scripts/model/tx_gov_trial.R</code>); <strong>model_simpleswing</strong>, the standard uniform swing model; and <strong>model_cory</strong>, Cory's <code>model_legacy()</code> from enightmodels. Blue boxes: every 95% interval held the truth at 90%+ of checkpoints and was never confidently wrong; red: at least one race fell short; yellow: no interval to check. Each chart shows the model's estimate of the Democratic two-party share, its 95% interval, the raw share of votes counted so far, and the true final result.</p>
   <ul class="findings" id="findings"></ul>
+  <h2>How the models rank</h2>
+  <p class="note">Each cell ranks the models on one quality for one scenario, best first, averaging Governor and Senate. A cell is filled with the colour of its top model's box above; it is left blank when the top two tie. "Right winner from" is the time from which the model had the right winner in both races and kept it; for a model with an interval that means the whole interval was on the right side of 50%, for model_cory (point estimates only) that its estimate was. Coverage is the share of checkpoints where the 95% interval held the true result. Errors and widths are in points of the two-party share, over checkpoints with any votes counted. Turnout is the 32-county total at 4am against the truth. All in the 32 counties except the last row.</p>
+  <div class="tbl"><table class="rank" id="rank-table" aria-label="Model rankings by scenario"></table></div>
 </header>
 
-<section id="backtest">
-  <div class="eyebrow">Test 1 · real election</div>
-  <h2>Backtest: 2022 governor in our 32 counties</h2>
-  <p>The model is fit to the real 2022 result using only information available before November 2022: 2020 Senate results as the partisan baseline, 2018 turnout, and L2 demographics. Precincts are then revealed in order and the estimate is checked against the known result at each step. Texas has no precinct results by vote mode, so this test treats each precinct as one unit.</p>
-  <figure>
-    <div class="controls">
-      <div class="seg" role="group" aria-label="Reporting order">
-        <button id="bt-county_re" aria-pressed="true">Small counties first</button>
-        <button id="bt-county_nore" aria-pressed="false">Small first, no county effect</button>
-        <button id="bt-random_re" aria-pressed="false">Random order</button>
-      </div>
-    </div>
-    <svg id="bt-chart" class="chart" viewBox="0 0 760 380" role="img" aria-label="Backtest estimate by share of votes counted"></svg>
-    <div class="legend">
-      <span><i class="sw" style="background:var(--dem-band)"></i>95% interval</span>
-      <span><i class="sw" style="background:var(--dem);height:3px"></i>Model estimate</span>
-      <span><i class="sw" style="background:var(--raw);height:2px"></i>Raw count so far</span>
-      <span><i class="sw" style="background:var(--truth);height:2px"></i>Final result (<span id="bt-truth"></span>%)</span>
-    </div>
-    <div class="readout" id="bt-readout">Hover or tap the chart to read values.</div>
-  </figure>
-  <p class="note">"Small counties first" reveals whole counties from smallest to largest, so Harris, Dallas, Bexar and Travis come last. That is harsher than a real night, where early votes from every county arrive within about an hour, and it isolates one problem: the first counties in are rural and Republican, so the model can read their lean as a statewide pattern. Compare the first two buttons to see what the county effect adds.</p>
-</section>
+
+
 
 <section id="sim">
-  <div class="eyebrow">Test 2 · simulated night</div>
-  <h2>Ethan's simulated election night (<span id="sc-name"></span>)</h2>
-  <p>Ethan's simulation produces the final count for all 6,134 precincts and a reporting schedule by vote mode: early votes in one countywide dump after polls close, Election Day precincts over the next few hours, and late mail days later. Some precincts never appear (unmatched IDs) and some counties may never report, as set in the scenario's manifest. The model is refit every 15 minutes from 8:00pm to 4:00am, then at four later times.</p>
+  <div class="eyebrow">Simulated nights</div>
+  <h2>One scenario in detail: the 32 counties</h2>
+  <p>Ethan's simulation produces the final count for all 6,134 precincts and a reporting schedule by vote mode: early votes in one countywide dump after polls close, Election Day precincts over the next few hours, and late mail days later. Some precincts never appear (unmatched IDs) and some counties may never report, as set in the scenario's manifest. The model is refit every 15 minutes from 8:00pm to 4:00am, then at four later times. Before any votes are in for a vote mode, model_y has nothing to fit for that mode, so the first one or two checkpoints show very wide intervals; model_simpleswing has no estimate at all until votes arrive.</p>
   <figure>
     <div class="controls">
       <div class="seg" role="group" aria-label="Race">
         <span id="sim-buttons" style="display:contents"></span>
+      </div>
+      <div class="seg" role="group" aria-label="Model">
+        <span id="mod-buttons" style="display:contents"></span>
+      </div>
+      <div class="seg" role="group" aria-label="Scenario">
+        <span id="scn-buttons" style="display:contents"></span>
       </div>
     </div>
     <svg id="sim-chart" class="chart" viewBox="0 0 760 420" role="img" aria-label="Simulated night estimate by time"></svg>
@@ -121,21 +117,63 @@ code { font-family: var(--font-data); font-size: 0.85em; }
       <span><i class="sw" style="background:var(--rule)"></i>Share of votes counted (bottom strip)</span>
     </div>
     <div class="readout" id="sim-readout">Hover or tap the chart to read values.</div>
+    <h3 style="margin:8px 0 0;font-size:1rem">Turnout: total votes predicted in the 32 counties</h3>
+    <svg id="turn-chart" class="chart" viewBox="0 0 760 300" role="img" aria-label="Predicted turnout by time"></svg>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--dem-band)"></i>95% interval</span>
+      <span><i class="sw" style="background:var(--dem);height:3px"></i>Predicted total votes</span>
+      <span><i class="sw" style="background:var(--raw);height:2px"></i>Votes counted so far</span>
+      <span><i class="sw" style="background:var(--truth);height:2px"></i>True final total</span>
+    </div>
+    <div class="readout" id="turn-readout">Hover or tap the chart to read values.</div>
+    <div id="state-block">
+    <h3 style="margin:8px 0 0;font-size:1rem">Statewide, rough extrapolation (not tested)</h3>
+    <p class="note" id="state-note" style="margin:0"></p>
+    <svg id="state-chart" class="chart" viewBox="0 0 760 300" role="img" aria-label="Statewide extrapolated estimate by time"></svg>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--dem-band)"></i>95% interval</span>
+      <span><i class="sw" style="background:var(--dem);height:3px"></i>Statewide estimate (demographic swing)</span>
+      <span><i class="sw" style="background:var(--raw);height:2px"></i>Uniform swing, for comparison</span>
+      <span><i class="sw" style="background:var(--truth);height:2px"></i>Demographic method if the 32 counties' precinct results were known exactly</span>
+    </div>
+    <div class="readout" id="state-readout">Hover or tap the chart to read values.</div>
+    </div>
   </figure>
+  <p class="note" id="sc-note"></p>
   <div class="tbl">
     <table id="sim-table" aria-label="Simulated night checkpoints"></table>
   </div>
   <p class="note">Times are Eastern. The time axis is not to scale after 4:00am: the last four points are Nov 4 noon, Nov 5, Nov 7 and Nov 10, when late mail lands. Counted share tops out below 100% because unmatched precincts and non-reporting counties never come in; the model predicts their votes from the baseline.</p>
 </section>
 
+<section id="calib">
+  <div class="eyebrow">Calibration</div>
+  <h2>How often is each model wrong? Many synthetic nights</h2>
+  <p>Each synthetic night keeps <code>tx_base</code>'s turnout, vote-method split and reporting schedule but draws a new result for every precinct: a race-wide shift (the 32-county result lands within about ±4 points of <code>tx_base</code>'s), a shift for each county sized from real Texas swings, a within-county tilt by Hispanic, college and Black share (Hispanic from −15 to +20 points per 100% Hispanic, drawn per night), and a leftover precinct pattern taken from a real past Texas swing (2020→2022, 2022→2024 or 2020→2024) with its county and demographic parts removed. About three-quarters of the variation is within counties, as in real Texas swings. A well-calibrated model's 50%, 80% and 95% intervals hold the true 32-county result about 50%, 80% and 95% of the time. "Confidently wrong" is the share of race-nights where the whole 95% interval was on the wrong side of 50%. The 50% and 80% intervals are read off each model's 95% interval assuming a normal shape. Made with <code>run_calibration.R</code>; <span id="calib-updated"></span></p>
+  <div class="tbl"><table id="calib-table" aria-label="Calibration by checkpoint"></table></div>
+  <h3 style="margin:8px 0 0;font-size:1rem">By the night's Hispanic tilt, and in close races</h3>
+  <div class="tbl"><table id="calib-table2" aria-label="Calibration by Hispanic tilt"></table></div>
+</section>
+
+<section id="scen">
+  <div class="eyebrow">Scenario summary</div>
+  <h2>How each scenario went in the 32 counties</h2>
+  <p>Each row is one race in one run: one of Ethan's scenarios run through one model: <strong>model_y</strong> is the full precinct model (<code>tx_gov_trial.R</code>), <strong>model_simpleswing</strong> is the standard uniform swing model (feols with county fixed effects), and <strong>model_cory</strong> is Cory's <code>model_legacy()</code> from the enightmodels package. model_cory gives point estimates only, so it has no coverage, "confidently wrong" count or interval width. "What's different" lists the sim settings that differ from <code>tx_base</code> and the model settings that differ from the defaults. Coverage counts the checkpoints where the 95% interval held the true result; "confidently wrong" counts checkpoints where the whole interval was on the wrong side of 50%. Average error and interval width are over checkpoints with any votes counted, in percentage points of the two-party share; these are where runs with different model settings usually differ.</p>
+  <div class="tbl">
+    <table id="sc-table" aria-label="Scenario comparison"></table>
+  </div>
+</section>
+
+
 <section id="method">
   <div class="eyebrow">What was run</div>
   <h2>How these numbers were produced</h2>
   <ul class="plain">
-    <li><strong>Model:</strong> the shared fitting functions in <code>model_core.R</code> (turnout, third-party share and two-party share equations; g-prior worth 3 precincts; county random effect with ICC 0.302), with the same covariates as <code>tx_backtest.R</code>: registrants, 2018 and 2020 turnout, sex, age 65+, Black, Hispanic and college shares.</li>
-    <li><strong>Backtest:</strong> <code>test_backtest_tx22.R</code> rebuilds Young-Kyung's panel (as in <code>tx_backtest_panel.R</code>) from the Dropbox files: precincts in the 32 counties joined to votehub's 2022 results. 500 draws per checkpoint.</li>
-    <li><strong>Simulated night:</strong> <code>test_sim_night.R</code>. <code>tx_gov_trial.R</code> can't read snapshot files yet, so this runs the same model core on precinct-by-mode cells (early, Election Day, mail), fitting each mode separately. Priors come from <code>TX_precinct.parquet</code>: expected turnout split by each precinct's 2022 mode mix, <code>dem2</code>, and <code>oth_base</code>. Vote shares are fit on every cell with votes counted; turnout is fit only on fully counted cells, and a partly counted cell is never predicted below its count. No cross-mode correlation and no mode partisan offset (delta = 0), matching the data contract's current default. 300 draws per checkpoint.</li>
-    <li><strong>Limits:</strong> the simulation's swing, noise sizes, mail lean and timing are invented, and its results are built from the same <code>dem2</code> the model uses as a prior, so its good performance after 9pm is partly by construction. The backtest is the stronger evidence about real-world accuracy.</li>
+    <li><strong>Simulated nights:</strong> <code>test_sim_night.R</code>, once per scenario; the settings for each are under its chart. <strong>model_y</strong> is the full model in <code>tx_gov_trial.R</code> (precinct × vote-mode cells, bounded turnout, county random effect, cross-mode correlation, mode offsets): its own code builds the precinct frame, mode priors and cells, and it is fed the simulated counts at each time, with each cell flagged complete once that mode is fully counted; "core" is the simpler <code>model_core.R</code> version with no cross-mode correlation or mode offsets. Priors come from <code>TX_precinct.parquet</code> and the 2022 mode mix in <code>TX_precinct_mode_history.parquet</code>.</li>
+    <li><strong>model_simpleswing</strong>, the standard uniform swing model: <code>test_sim_night.R --model=swing</code>. Each reported precinct × vote-method cell's swing in Democratic two-party share from its Harris 2024 share is regressed on county and vote-method fixed effects with <code>fixest::feols</code>, weighted by expected votes; unreported cells get their county's swing, and counties with nothing in yet get the average swing. Turnout is fit the same way on fully counted cells (log of counted over expected votes). The interval comes from 100 bootstrap resamples of the reporting counties. It has no estimate before any votes are in, so its runs start at the first checkpoint with votes.</li>
+    <li><strong>model_cory</strong>: <code>test_sim_night.R --model=cory</code> calls <code>enightmodels::model_legacy()</code> exactly as the package provides it, with its default configuration (<code>model_legacy_config()</code>: by vote method, strata = geostratum, a precinct counts as complete at stage 6). Turnout: each stratum × method's ratio of counted to expected votes in reporting precincts, applied to the rest. Vote share: each candidate's ratio of counted votes to expected votes, by stratum and method. Its input is the standard election-data format built from Ethan's snapshot (one row per precinct × method × candidate, stage 0 / 4 / 6), with <code>past</code> set to the expected votes for that row (expected turnout × 2022 method split × the Harris 2024 two-party share, third parties from <code>oth_base</code>). It returns point estimates only.</li>
+    <li><strong>Stress scenarios</strong> (made with <code>make_stress_scenario.R</code> from <code>tx_base</code>; Ethan's files are not changed): <strong>tx_hispanic_swing</strong> moves Hispanic voters 21.1 points of the two-party vote toward the Democrat on top of <code>tx_base</code> (from Trump winning Texas Latinos by about 10 in 2024, Democratic two-party about 45%, to 2026 polling of roughly 60–63% to 30–33%, about 66%). Each precinct moves by its Hispanic share of voters (YouGov's estimate) times 21.1 points, with its two-party total unchanged. <strong>tx_urbanfirst</strong> keeps <code>tx_base</code>'s results but, within each county, has Election Day votes report from the most Democratic precincts first (by Harris 2024 share, standing in for urban cores, since the data has no urbanicity measure); each county keeps its own report times.</li>
+    <li><strong>Limits:</strong> the simulation's swing, noise sizes, mail lean and timing are invented, and its results are built from the same <code>dem2</code> the model uses as a prior, so its good performance after 9pm is partly by construction. So these runs test how the model copes with reporting order, timing, missing data and swings it doesn't expect; they can't show whether its intervals are the right width for real elections. That calibration check is Young-Kyung's TX 2024 backtest (<code>tx24_backtest.R</code>).</li>
   </ul>
 </section>
 
@@ -144,8 +182,8 @@ code { font-family: var(--font-data); font-size: 0.85em; }
   <h2>What this suggests</h2>
   <ul class="plain">
     <li>Intervals need to widen when the counted precincts don't resemble the outstanding ones. One option is a geographic effect above the county (region or urban/rural) with a prior wide enough that the first counties can't pin it.</li>
-    <li>Rerun the backtest with a realistic order (early votes from every county first, then Election Day precincts) once a TX 2022 or 2024 snapshot history is available.</li>
-    <li>Connect <code>tx_gov_trial.R</code> to Ethan's snapshot format and rerun Test 2 with the full model, including the cross-mode correlation.</li>
+    <li>Turnout: on the simulated night model_y's predicted total for the 32 counties runs about 3–5% above the truth by the end of the night, with an interval far too narrow to cover it (see the turnout chart). The two-party share is unaffected, but turnout intervals should not be published until this is fixed.</li>
+    <li><strong>To do: map this onto the statewide result properly.</strong> The statewide chart above is a first pass: it predicts the other 222 counties' swing from their demographics, using the relationship in the 32 counties, and never uses their returns. A real version should model the rest of the state from its county-level returns as they come in, carry the uncertainty of both parts through jointly, and be tested against a simulation that includes statewide truth.</li>
   </ul>
 </section>
 </div>
@@ -156,35 +194,18 @@ const NS = "http://www.w3.org/2000/svg";
 function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
 function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 const fmt = (x, d = 1) => Number(x).toFixed(d);
-
-function drawBacktest(key) {
-  const svg = document.getElementById("bt-chart"); svg.innerHTML = "";
-  const rows = DATA.bt[key], truth = DATA.bt_truth;
-  const W = 760, H = 380, m = { l: 52, r: 20, t: 16, b: 44 };
-  const x = v => m.l + v / 100 * (W - m.l - m.r);
-  const y0 = 10, y1 = 70;
-  const y = v => m.t + (y1 - Math.max(y0, Math.min(y1, v))) / (y1 - y0) * (H - m.t - m.b);
-  for (let v = 10; v <= 70; v += 10) {
-    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: "var(--rule)", "stroke-width": v === 50 ? 1.5 : 1, "stroke-dasharray": v === 50 ? "4 3" : "" }, svg);
-    el("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = v + "%";
-  }
-  for (let v = 0; v <= 100; v += 20) el("text", { x: x(v), y: H - m.b + 18, "text-anchor": "middle" }, svg).textContent = v + "%";
-  el("text", { x: (m.l + W - m.r) / 2, y: H - 6, "text-anchor": "middle" }, svg).textContent = "share of votes counted";
-  el("text", { x: x(62), y: y(50) + 16, "text-anchor": "start" }, svg).textContent = "50% = tie";
-  const band = rows.map(r => [x(r[0]), y(r[3])]).concat(rows.slice().reverse().map(r => [x(r[0]), y(r[2])]));
-  el("path", { d: "M" + band.map(p => p.join(",")).join("L") + "Z", fill: "var(--dem-band)", stroke: "none" }, svg);
-  el("line", { x1: m.l, x2: W - m.r, y1: y(truth), y2: y(truth), stroke: "var(--truth)", "stroke-width": 1.5 }, svg);
-  el("path", { d: "M" + rows.map(r => x(r[0]) + "," + y(r[4])).join("L"), fill: "none", stroke: "var(--raw)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
-  el("path", { d: "M" + rows.map(r => x(r[0]) + "," + y(r[1])).join("L"), fill: "none", stroke: "var(--dem)", "stroke-width": 2.5 }, svg);
-  rows.forEach(r => { if (r[3] < truth - 0.0001 || r[2] > truth + 0.0001) el("circle", { cx: x(r[0]), cy: y(r[1]), r: 3, fill: "var(--rep)" }, svg); });
-  const cover = rows.filter(r => r[2] <= truth && r[3] >= truth).length;
-  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = `interval contains result at ${cover} of ${rows.length} checkpoints (red dots = misses)`;
-  hover(svg, rows, r => x(r[0]), r => `${fmt(r[0])}% counted · ${r[6]} counties in · estimate ${fmt(r[1])}% (${fmt(r[2])}–${fmt(r[3])}) · raw ${fmt(r[4])}% · P(Dem wins) ${Math.round(r[5] * 100)}% · result ${fmt(truth)}%`, "bt-readout", W, H, m);
+const isNum = v => typeof v === "number" && !Number.isNaN(v);
+// a band path over only the rows that have an interval (models with point estimates only have none)
+function bandPath(rows, xf, yf, lo, hi) {
+  const ok = rows.map((r, i) => [r, i]).filter(([r]) => isNum(r[lo]) && isNum(r[hi]));
+  if (!ok.length) return null;
+  return "M" + ok.map(([r, i]) => xf(i) + "," + yf(r[hi])).concat(ok.slice().reverse().map(([r, i]) => xf(i) + "," + yf(r[lo]))).join("L") + "Z";
 }
 
-function drawSim(key) {
-  const svg = document.getElementById("sim-chart"); svg.innerHTML = "";
-  const S = DATA.sim[key], rows = S.rows, truth = S.truth;
+
+function drawNight(id, S, late, tzName, lateLabel) {
+  const svg = document.getElementById(id + "-chart"); svg.innerHTML = "";
+  const rows = S.rows, truth = S.truth;
   const W = 760, H = 420, m = { l: 52, r: 20, t: 16, b: 96 };
   const n = rows.length, x = i => m.l + i / (n - 1) * (W - m.l - m.r);
   const vals = rows.slice(1).flatMap(r => [r[3], r[4], r[5] || r[2]]).concat([truth, 50]).filter(v => v > 0);
@@ -200,31 +221,92 @@ function drawSim(key) {
   rows.forEach((r, i) => { const w = (W - m.l - m.r) / (n - 1) * 0.8; el("rect", { x: x(i) - w / 2, y: sb + sh * (1 - r[1] / 100), width: w, height: sh * r[1] / 100, fill: "var(--rule)" }, svg); });
   rows.forEach((r, i) => {
     const t = r[0].slice(6), d = r[0].slice(0, 5);
-    const show = t.endsWith(":00") && i % 4 === 0 && i < n - 4;
+    const show = t.endsWith(":00") && i < n - late;
     if (show) el("text", { x: x(i), y: H - 22, "text-anchor": "middle" }, svg).textContent = (+t.slice(0, 2) > 12 ? (+t.slice(0, 2) - 12) + "pm" : (+t.slice(0, 2) === 0 ? "12am" : +t.slice(0, 2) + "am"));
   });
-  const xsep = (x(n - 5) + x(n - 4)) / 2;
+  const xsep = (x(n - late - 1) + x(n - late)) / 2;
   el("line", { x1: xsep, x2: xsep, y1: m.t, y2: H - m.b + 60, stroke: "var(--muted)", "stroke-dasharray": "2 3" }, svg);
-  el("text", { x: (x(n - 4) + x(n - 1)) / 2, y: H - 22, "text-anchor": "middle" }, svg).textContent = "Nov 4–10";
-  el("text", { x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle" }, svg).textContent = "time (ET) on election night; right of the dashed line, later days";
-  const band = rows.map((r, i) => [x(i), y(r[4])]).concat(rows.map((r, i) => [x(i), y(r[3])]).reverse());
-  el("path", { d: "M" + band.map(p => p.join(",")).join("L") + "Z", fill: "var(--dem-band)" }, svg);
+  el("text", { x: (x(n - late) + x(n - 1)) / 2, y: H - 22, "text-anchor": late > 1 ? "middle" : "end" }, svg).textContent = lateLabel;
+  el("text", { x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle" }, svg).textContent = `time (${tzName}) on election night; right of the dashed line, ${late > 1 ? "later days" : "the final count"}`;
+  const hasInt = rows.some(r => isNum(r[3]));
+  const bp = bandPath(rows, x, y, 3, 4);
+  if (bp) el("path", { d: bp, fill: "var(--dem-band)" }, svg);
   el("line", { x1: m.l, x2: W - m.r, y1: y(truth), y2: y(truth), stroke: "var(--truth)", "stroke-width": 1.5 }, svg);
   const rawPts = rows.map((r, i) => [i, r]).filter(([i, r]) => r[1] > 0);
   el("path", { d: "M" + rawPts.map(([i, r]) => x(i) + "," + y(r[5])).join("L"), fill: "none", stroke: "var(--raw)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
   el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[2])).join("L"), fill: "none", stroke: "var(--dem)", "stroke-width": 2.5 }, svg);
-  rows.forEach((r, i) => { if (r[4] < truth || r[3] > truth) el("circle", { cx: x(i), cy: y(r[2]), r: 3, fill: "var(--rep)" }, svg); });
+  rows.forEach((r, i) => { if (isNum(r[3]) && (r[4] < truth || r[3] > truth)) el("circle", { cx: x(i), cy: y(r[2]), r: 3, fill: "var(--rep)" }, svg); });
   el("text", { x: x(Math.round(n * 0.55)), y: y(truth) + 16, "text-anchor": "middle" }, svg).textContent = `final result ${fmt(truth)}%`;
   const cover = rows.filter(r => r[3] <= truth && r[4] >= truth).length;
-  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = `interval contains result at ${cover} of ${rows.length} checkpoints (red dots = misses)`;
+  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = hasInt ? `interval contains result at ${cover} of ${rows.length} checkpoints (red dots = misses)` : "point estimates only: this model gives no interval";
   const xs = rows.map((r, i) => x(i));
-  hover(svg, rows, (r) => xs[rows.indexOf(r)], r => `${r[0].replace("11-", "Nov ")} · ${fmt(r[1])}% counted (early ${r[7]}%, Election Day ${r[8]}%, mail ${r[9]}%) · estimate ${fmt(r[2])}% (${fmt(r[3])}–${fmt(r[4])}) · raw ${fmt(r[5])}% · P(Dem wins) ${Math.round(r[6] * 100)}%`, "sim-readout", W, H, m);
+  hover(svg, rows, (r) => xs[rows.indexOf(r)], r => `${r[0].replace(/^11-0?/, "Nov ")} · ${fmt(r[1])}% counted (early ${r[7]}%, Election Day ${r[8]}%, mail ${r[9]}%) · estimate ${fmt(r[2])}%${isNum(r[3]) ? ` (${fmt(r[3])}–${fmt(r[4])})` : ""} · raw ${fmt(r[5])}%${isNum(r[6]) ? ` · P(Dem wins) ${Math.round(r[6] * 100)}%` : ""}`, id + "-readout", W, H, m);
   // table
-  const tbl = document.getElementById("sim-table");
-  const pick = rows.filter((r, i) => i <= 12 || i >= n - 4 || r[0].endsWith(":00") && i % 4 === 0);
-  tbl.innerHTML = "<thead><tr><th>Time (ET)</th><th>Counted</th><th>Raw Dem</th><th>Estimate</th><th>95% interval</th><th>P(Dem wins)</th></tr></thead><tbody>" +
-    pick.map(r => { const miss = r[4] < truth || r[3] > truth; return `<tr><td>${r[0].replace("11-", "Nov ")}</td><td>${fmt(r[1])}%</td><td>${r[1] > 0 ? fmt(r[5]) + "%" : "–"}</td><td class="${miss ? "miss" : ""}">${fmt(r[2])}%</td><td class="${miss ? "miss" : ""}">${fmt(r[3])}–${fmt(r[4])}%</td><td>${Math.round(r[6] * 100)}%</td></tr>`; }).join("") +
+  const tbl = document.getElementById(id + "-table");
+  const pick = rows.filter((r, i) => i <= 12 || i >= n - late || r[0].endsWith(":00"));
+  tbl.innerHTML = `<thead><tr><th>Time (${tzName})</th>`+"<th>Counted</th><th>Raw Dem</th><th>Estimate</th><th>95% interval</th><th>P(Dem wins)</th></tr></thead><tbody>" +
+    pick.map(r => { const miss = isNum(r[3]) && (r[4] < truth || r[3] > truth); return `<tr><td>${r[0].replace(/^11-0?/, "Nov ")}</td><td>${fmt(r[1])}%</td><td>${r[1] > 0 ? fmt(r[5]) + "%" : "–"}</td><td class="${miss ? "miss" : ""}">${fmt(r[2])}%</td><td class="${miss ? "miss" : ""}">${isNum(r[3]) ? fmt(r[3]) + "–" + fmt(r[4]) + "%" : "–"}</td><td>${isNum(r[6]) ? Math.round(r[6] * 100) + "%" : "–"}</td></tr>`; }).join("") +
     `</tbody><caption class="note" style="caption-side:bottom;text-align:left;padding-top:6px">Final result ${fmt(truth)}%. Red rows: the interval misses the result.</caption>`;
+}
+
+
+function drawTurnout(S, late) {
+  const svg = document.getElementById("turn-chart"); svg.innerHTML = "";
+  const rows = S.rows, truth = S.truth_turn;
+  if (!truth || rows[0].length < 13) { el("text", { x: 20, y: 30 }, svg).textContent = "No turnout in these results; rerun test_sim_night.R."; return; }
+  const W = 760, H = 300, m = { l: 64, r: 20, t: 16, b: 40 };
+  const n = rows.length, x = i => m.l + i / (n - 1) * (W - m.l - m.r);
+  const vals = rows.flatMap(r => [r[10], r[11], r[12]]).filter(isNum).concat([truth]);
+  const lo = 0, hi = Math.ceil(Math.max(...vals) * 1.05 / 0.5) * 0.5;
+  const y = v => m.t + (hi - Math.max(lo, Math.min(hi, v))) / (hi - lo) * (H - m.t - m.b);
+  for (let v = lo; v <= hi + 1e-9; v += hi > 4 ? 1 : 0.5) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: "var(--rule)" }, svg);
+    el("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = v.toFixed(1) + "M";
+  }
+  rows.forEach((r, i) => { const t = r[0].slice(6); if (t.endsWith(":00") && i < n - late)
+    el("text", { x: x(i), y: H - 22, "text-anchor": "middle" }, svg).textContent = (+t.slice(0, 2) > 12 ? (+t.slice(0, 2) - 12) + "pm" : (+t.slice(0, 2) === 0 ? "12am" : +t.slice(0, 2) + "am")); });
+  const xsep = (x(n - late - 1) + x(n - late)) / 2;
+  el("line", { x1: xsep, x2: xsep, y1: m.t, y2: H - m.b + 10, stroke: "var(--muted)", "stroke-dasharray": "2 3" }, svg);
+  el("text", { x: (x(n - late) + x(n - 1)) / 2, y: H - 22, "text-anchor": "middle" }, svg).textContent = "Nov 4–10";
+  const tb = bandPath(rows, x, y, 11, 12);
+  if (tb) el("path", { d: tb, fill: "var(--dem-band)" }, svg);
+  el("line", { x1: m.l, x2: W - m.r, y1: y(truth), y2: y(truth), stroke: "var(--truth)", "stroke-width": 1.5 }, svg);
+  el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[13])).join("L"), fill: "none", stroke: "var(--raw)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
+  el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[10])).join("L"), fill: "none", stroke: "var(--dem)", "stroke-width": 2.5 }, svg);
+  rows.forEach((r, i) => { if (isNum(r[11]) && (r[12] < truth || r[11] > truth)) el("circle", { cx: x(i), cy: y(r[10]), r: 3, fill: "var(--rep)" }, svg); });
+  const cover = rows.filter(r => isNum(r[11]) && r[11] <= truth && r[12] >= truth).length;
+  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = rows.some(r => isNum(r[11])) ? `interval contains true total (${truth.toFixed(2)}M) at ${cover} of ${n} checkpoints` : `point estimates only (true total ${truth.toFixed(2)}M)`;
+  const xs = rows.map((r, i) => x(i));
+  hover(svg, rows, r => xs[rows.indexOf(r)], r => `${r[0].replace(/^11-0?/, "Nov ")} · predicted ${r[10].toFixed(3)}M${isNum(r[11]) ? ` (${r[11].toFixed(3)}–${r[12].toFixed(3)})` : ""} · counted ${r[13].toFixed(3)}M · true ${truth.toFixed(3)}M · off by ${fmt(100 * (r[10] / truth - 1), 1)}%`, "turn-readout", W, H, m);
+}
+
+function drawState(S, late) {
+  const svg = document.getElementById("state-chart"); svg.innerHTML = "";
+  const rows = S.rows, ex = S.st_exact;
+  if (!DATA.state || rows[0][14] === null || rows[0][14] === undefined) { document.getElementById("state-block").hidden = true; return; }
+  document.getElementById("state-block").hidden = false;
+  const W = 760, H = 300, m = { l: 52, r: 20, t: 16, b: 40 };
+  const n = rows.length, x = i => m.l + i / (n - 1) * (W - m.l - m.r);
+  const vals = rows.slice(1).flatMap(r => [r[14], r[15], r[16], r[17]]).filter(isNum).concat([ex, 50]);
+  const lo = Math.floor((Math.min(...vals) - 1) / 5) * 5, hi = Math.ceil((Math.max(...vals) + 1) / 5) * 5;
+  const y = v => m.t + (hi - Math.max(lo, Math.min(hi, v))) / (hi - lo) * (H - m.t - m.b);
+  for (let v = lo; v <= hi; v += 5) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: "var(--rule)", "stroke-width": v === 50 ? 1.5 : 1, "stroke-dasharray": v === 50 ? "4 3" : "" }, svg);
+    el("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = v + "%";
+  }
+  rows.forEach((r, i) => { const t = r[0].slice(6); if (t.endsWith(":00") && i < n - late)
+    el("text", { x: x(i), y: H - 22, "text-anchor": "middle" }, svg).textContent = (+t.slice(0, 2) > 12 ? (+t.slice(0, 2) - 12) + "pm" : (+t.slice(0, 2) === 0 ? "12am" : +t.slice(0, 2) + "am")); });
+  const xsep = (x(n - late - 1) + x(n - late)) / 2;
+  el("line", { x1: xsep, x2: xsep, y1: m.t, y2: H - m.b + 10, stroke: "var(--muted)", "stroke-dasharray": "2 3" }, svg);
+  el("text", { x: (x(n - late) + x(n - 1)) / 2, y: H - 22, "text-anchor": "middle" }, svg).textContent = "Nov 4–10";
+  const sb = bandPath(rows, x, y, 15, 16);
+  if (sb) el("path", { d: sb, fill: "var(--dem-band)" }, svg);
+  el("line", { x1: m.l, x2: W - m.r, y1: y(ex), y2: y(ex), stroke: "var(--truth)", "stroke-width": 1.5, "stroke-dasharray": "6 3" }, svg);
+  el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[17])).join("L"), fill: "none", stroke: "var(--raw)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
+  el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[14])).join("L"), fill: "none", stroke: "var(--dem)", "stroke-width": 2.5 }, svg);
+  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = `if the 32 counties' precinct results were known exactly: ${fmt(ex)}% (uniform swing: ${fmt(S.stu_exact)}%)`;
+  const xs = rows.map((r, i) => x(i));
+  hover(svg, rows, r => xs[rows.indexOf(r)], r => `${r[0].replace(/^11-0?/, "Nov ")} · statewide ${fmt(r[14])}%${isNum(r[15]) ? ` (${fmt(r[15])}–${fmt(r[16])})` : ""} · uniform swing ${fmt(r[17])}%${isNum(r[18]) ? ` (${fmt(r[18])}–${fmt(r[19])})` : ""} · 32 counties ${fmt(r[2])}%`, "state-readout", W, H, m);
 }
 
 function hover(svg, rows, xf, label, outId, W, H, m) {
@@ -252,35 +334,132 @@ const RACE = { gov: "Governor", sen: "Senate", house: "House" };
 const cov = (rows, lo, hi, t) => rows.filter(r => r[lo] <= t && r[hi] >= t).length;
 const wrong = (r, lo, hi, t) => (t > 50 && r[hi] < 50) || (t < 50 && r[lo] > 50);
 const right = (r, lo, hi, t) => (t > 50 && r[lo] > 50) || (t < 50 && r[hi] < 50);
-const lis = [];
-const bt = DATA.bt, T = DATA.bt_truth;
-if (bt.county_re) {
-  const r = bt.county_re, w = r.filter(x => wrong(x, 2, 3, T));
-  const last = w.length ? Math.max(...w.map(x => x[0])) : null;
-  lis.push([w.length ? "bad" : "good", `<strong>Backtest, TX 2022 governor, small counties first:</strong> the interval held the true result (${fmt(T)}%) at ${cov(r, 2, 3, T)} of ${r.length} checkpoints. ` +
-    (w.length ? `It confidently pointed to the wrong winner at ${w.length} checkpoints, the last at ${fmt(last)}% of votes counted.` : "It never confidently pointed to the wrong winner.")]);
+
+const SC = DATA.sims, scKeys = Object.keys(SC);
+const when = x => x ? x.replace(/^11-0?/, "Nov ") : "never";
+// models with point estimates only (no interval): coverage, "confidently wrong" and width are
+// not defined, and "right winner from" uses the estimate itself
+const stats = (S) => { const r = S.rows, t = S.truth, hasInt = r.some(x => isNum(x[3]));
+  const ri = r.filter(x => isNum(x[3])), w = ri.filter(x => wrong(x, 3, 4, t));
+  const rightAt = x => hasInt ? right(x, 3, 4, t) : ((t > 50) === (x[2] > 50));
+  let f = null; for (let i = r.length - 1; i >= 0; i--) { if (rightAt(r[i])) f = r[i][0]; else break; }
+  const c = r.filter(x => x[1] > 0), avg = a => a.reduce((p, q) => p + q, 0) / Math.max(a.length, 1);
+  return { t, n: r.length, hasInt, cov: hasInt ? cov(ri, 3, 4, t) : null, wrong: hasInt ? w.length : null, firstWrong: w[0], first: f,
+           err: avg(c.map(x => Math.abs(x[2] - t))), width: hasInt ? avg(c.filter(x => isNum(x[3])).map(x => x[4] - x[3])) : null,
+           st4: r.find(x => x[0].endsWith("04 04:00")),
+           turn4: (() => { const q = r.find(x => x[0].endsWith("04 04:00")); return q && S.truth_turn ? 100 * (q[10] / S.truth_turn - 1) : null; })() }; };
+if (DATA.state) {
+  const st = DATA.state;
+  const sg = x => (x > 0 ? "+" : "") + fmt(x, 2);
+  document.getElementById("state-note").innerHTML = `Our model covers only the 32 counties, about two-thirds of the statewide vote. At each checkpoint this fits how the model's precinct swing from Harris 2024 varies with demographics across the 32 counties (L2: Hispanic, Black, 65+, male and college shares, 2018 and 2020 turnout, size, baseline lean), predicts the swing of each precinct in the other 222 counties from its own L2 demographics (${fmt(100 * st.rest_join, 0)}% of their votes join to L2; the rest get the average swing), and scales their votes from the 32-county turnout (${fmt(st.ratio, 3)}× the 32 counties' vote, as in 2022). The interval adds an extra error for the rest of the state swinging differently than predicted. No rest-of-state returns are used, and the sim has no statewide result to check it against. How the method has done on past TX elections, if the 32 counties' precinct results were known exactly (statewide error, demographic vs uniform swing): ` +
+    st.hist.map(h => `${h.pair}: ${sg(h.err_d)} vs ${sg(h.err_u)} pts`).join("; ") + `. The extra error uses the largest demographic miss.`;
 }
-if (bt.random_re) {
-  const r = bt.random_re; let first = null;
-  for (let i = r.length - 1; i >= 0; i--) { if (right(r[i], 2, 3, T)) first = r[i][0]; else break; }
-  lis.push([cov(r, 2, 3, T) / r.length >= 0.9 ? "good" : "bad", `<strong>Same backtest, random reporting order:</strong> the interval held the truth at ${cov(r, 2, 3, T)} of ${r.length} checkpoints` +
-    (first !== null ? `, and from ${fmt(first)}% counted it excluded 50% on the right side.` : ".")]);
+document.getElementById("sc-table").innerHTML = "<thead><tr><th style='text-align:left'>Run</th><th style='text-align:left'>What's different</th><th>Race</th><th>True Dem</th><th>Covered</th><th>Confidently wrong</th><th>Right winner from</th><th>Avg error</th><th>Avg interval width</th><th>Turnout at 4am vs truth</th><th>Statewide at 4am (rough)</th></tr></thead><tbody>" +
+  scKeys.flatMap(sc => Object.keys(SC[sc].races).map((k, i) => { const z = stats(SC[sc].races[k]);
+    return `<tr>${i === 0 ? `<td style="text-align:left" rowspan="${Object.keys(SC[sc].races).length}"><strong>${sc}</strong></td><td style="text-align:left;white-space:normal;max-width:34ch" rowspan="${Object.keys(SC[sc].races).length}">${SC[sc].diff || "–"}</td>` : ""}<td>${RACE[k] || k}</td><td>${fmt(z.t)}%</td><td class="${z.hasInt && z.cov / z.n < 0.9 ? "miss" : ""}">${z.hasInt ? z.cov + "/" + z.n : "no interval"}</td><td class="${z.wrong ? "miss" : ""}">${z.hasInt ? z.wrong : "–"}</td><td>${when(z.first)}</td><td>${fmt(z.err, 2)} pts</td><td>${z.hasInt ? fmt(z.width, 2) + " pts" : "–"}</td><td>${z.turn4 === null ? "–" : (z.turn4 > 0 ? "+" : "") + fmt(z.turn4, 1) + "%"}</td><td>${z.st4 && isNum(z.st4[14]) ? fmt(z.st4[14]) + "%" + (isNum(z.st4[15]) ? " (" + fmt(z.st4[15]) + "–" + fmt(z.st4[16]) + ")" : "") : "–"}</td></tr>`; })).join("") + "</tbody>";
+document.getElementById("stamp").textContent = `CBS election desk · TX precinct model · run ${DATA.run}`;
+// three button rows: race, model, scenario. Runs that only change a model setting (shown
+// with --all-runs) appear in the tables; the chart shows each model's main run.
+const mainRuns = scKeys.filter(k => !SC[k].variant);
+const uniq = a => [...new Set(a)];
+const MODEL_ORDER = ["model_y", "model_simpleswing", "model_cory", "model_core"];
+const modelKeys = uniq(mainRuns.map(k => SC[k].model)).sort((a, b) => (MODEL_ORDER.indexOf(a) + 99 * (MODEL_ORDER.indexOf(a) < 0)) - (MODEL_ORDER.indexOf(b) + 99 * (MODEL_ORDER.indexOf(b) < 0)));
+const scenKeys = uniq(mainRuns.map(k => SC[k].scenario));
+const raceKeys = uniq(scKeys.flatMap(sc => Object.keys(SC[sc].races)));
+let curRace = raceKeys[0], curModel = modelKeys[0], curScen = scenKeys[0];
+const btns = (ids, prefix, label, cur) => ids.map(k => `<button id="${prefix}${k}" aria-pressed="${k === cur}">${label(k)}</button>`).join("");
+document.getElementById("sim-buttons").outerHTML = btns(raceKeys, "sim-", k => RACE[k] || k, curRace);
+document.getElementById("mod-buttons").outerHTML = btns(modelKeys, "mod-", k => k, curModel);
+document.getElementById("scn-buttons").outerHTML = btns(scenKeys, "scn-", k => k, curScen);
+function drawSim() {
+  const key = mainRuns.find(k => SC[k].model === curModel && SC[k].scenario === curScen);
+  const svgs = ["sim-chart", "turn-chart", "state-chart"];
+  if (!key) {
+    svgs.forEach(id => { const s = document.getElementById(id); s.innerHTML = ""; el("text", { x: 20, y: 30 }, s).textContent = `No results for ${curModel} on ${curScen} yet: run it with run_model_tests.R.`; });
+    document.getElementById("sim-table").innerHTML = ""; document.getElementById("sc-note").textContent = ""; return;
+  }
+  const S = SC[key], race = S.races[curRace] ? curRace : Object.keys(S.races)[0];
+  drawNight("sim", S.races[race], 4, "ET", "Nov 4–10");
+  drawTurnout(S.races[race], 4);
+  drawState(S.races[race], 4);
+  document.getElementById("sc-note").textContent = `${key}: ${S.diff || "the base scenario, default model settings"}. Model settings: ${S.settings || "defaults"}.`;
 }
-Object.keys(DATA.sim).forEach(k => {
-  const S = DATA.sim[k], r = S.rows, t = S.truth, w = r.filter(x => wrong(x, 3, 4, t));
-  let first = null; for (let i = r.length - 1; i >= 0; i--) { if (right(r[i], 3, 4, t)) first = r[i][0]; else break; }
-  const wl = w.slice(0, 3).map(x => `${x[0].slice(6)} (${fmt(x[1])}% counted: ${fmt(x[2])}%, interval ${fmt(x[3])}–${fmt(x[4])}%)`).join("; ");
-  lis.push([w.length ? "bad" : "good", `<strong>Simulated night, ${RACE[k] || k}:</strong> true result ${fmt(t)}%; the interval held it at ${cov(r, 3, 4, t)} of ${r.length} checkpoints. ` +
-    (w.length ? `Confidently wrong at ${w.length}: ${wl}. ` : "Never confidently wrong. ") + (first ? `Right winner from ${first.replace("11-", "Nov ")} on.` : "")]);
+seg("sim-", raceKeys, k => { curRace = k; drawSim(); });
+seg("mod-", modelKeys, k => { curModel = k; drawSim(); });
+seg("scn-", scenKeys, k => { curScen = k; drawSim(); });
+// ---- header: one summary box per model, and the ranking table ----
+const SCEN_LABEL = { tx_base: "tx_base", tx_hispanic_swing: "tx_hispanic_swing", tx_urbanfirst: "tx_urbanfirst" };
+const runOf = (model, scen) => mainRuns.find(k => SC[k].model === model && SC[k].scenario === scen);
+const stWidth = S => { const c = S.rows.filter(x => x[1] > 0 && isNum(x[15]) && isNum(x[16])); return c.length ? c.reduce((a, x) => a + x[16] - x[15], 0) / c.length : null; };
+// per model x scenario: both races summarised
+const summ = (model, scen) => {
+  const k = runOf(model, scen); if (!k) return null;
+  const rs = Object.keys(SC[k].races), zs = rs.map(r => stats(SC[k].races[r]));
+  const mean = a => a.some(v => v === null) ? null : a.reduce((p, q) => p + q, 0) / a.length;
+  const firsts = zs.map(z => z.first);
+  return {
+    races: rs, zs,
+    first: firsts.some(f => !f) ? null : firsts.reduce((a, b) => (a > b ? a : b)),
+    cov: zs[0].hasInt ? mean(zs.map(z => z.cov / z.n)) : null,
+    wrong: zs[0].hasInt ? zs.reduce((a, z) => a + z.wrong, 0) : null,
+    err: mean(zs.map(z => z.err)), width: zs[0].hasInt ? mean(zs.map(z => z.width)) : null,
+    turn: mean(zs.map(z => z.turn4)), stw: mean(rs.map(r => stWidth(SC[k].races[r])))
+  };
+};
+const MODEL_BLURB = { model_y: "full precinct model (tx_gov_trial.R)", model_simpleswing: "standard uniform swing model (feols, county fixed effects)",
+                      model_cory: "Cory's enightmodels::model_legacy(), point estimates only" };
+const MODEL_CLASS = {};
+const lis = modelKeys.map(m => {
+  const parts = scenKeys.map(sc => [sc, summ(m, sc)]).filter(([, z]) => z);
+  const anyWrong = parts.some(([, z]) => z.wrong > 0), lowCov = parts.some(([, z]) => z.zs.some(zz => zz.hasInt && zz.cov / zz.n < 0.9));
+  const cls = parts.length && parts[0][1].cov === null ? "note" : (anyWrong || lowCov ? "bad" : "good");
+  const lines = parts.map(([sc, z]) => `<span class="sc"><em>${sc}:</em> ` + z.races.map((r, i) => { const zz = z.zs[i];
+      return `${RACE[r] || r} ` + (zz.hasInt ? `${zz.cov}/${zz.n} covered` : `no interval`) + `, error ${fmt(zz.err, 2)} pts` + (zz.wrong ? `, confidently wrong ${zz.wrong}×` : ""); }).join("; ") +
+    `; right winner from ${when(z.first)}` + (z.turn !== null ? `; turnout ${z.turn > 0 ? "+" : ""}${fmt(z.turn, 1)}% at 4am` : "") + `.</span>`).join("");
+  MODEL_CLASS[m] = cls;
+  return [cls, `<strong>${m}</strong> — ${MODEL_BLURB[m] || ""}${lines}`];
 });
 document.getElementById("findings").innerHTML = lis.map(([c, h]) => `<li class="${c}">${h}</li>`).join("");
-document.getElementById("bt-truth").textContent = fmt(T);
-document.getElementById("sc-name").textContent = DATA.scenario;
-document.getElementById("stamp").textContent = `CBS election desk · TX precinct model · run ${DATA.run}`;
-const simKeys = Object.keys(DATA.sim);
-document.getElementById("sim-buttons").outerHTML = simKeys.map((k, i) => `<button id="sim-${k}" aria-pressed="${i === 0}">${RACE[k] || k}</button>`).join("");
-seg("bt-", ["county_re", "county_nore", "random_re"].filter(k => bt[k]), drawBacktest);
-seg("sim-", simKeys, drawSim);
-drawBacktest("county_re");
-drawSim(simKeys[0]);
+
+const QUALITIES = [
+  ["Earliest right winner from", z => z.first, (a, b) => (a < b ? -1 : 1), v => when(v)],
+  ["Top coverage (95% interval holds truth)", z => z.cov, (a, b) => b - a, v => fmt(100 * v, 0) + "%"],
+  ["Lowest average error", z => z.err, (a, b) => a - b, v => fmt(v, 2) + " pts"],
+  ["Lowest average interval width", z => z.width, (a, b) => a - b, v => fmt(v, 2) + " pts"],
+  ["Turnout vs truth (closest first)", z => z.turn, (a, b) => Math.abs(a) - Math.abs(b), v => (v > 0 ? "+" : "") + fmt(v, 1) + "%"],
+  ["Lowest statewide interval width (rough)", z => z.stw, (a, b) => a - b, v => fmt(v, 2) + " pts"]
+];
+document.getElementById("rank-table").innerHTML = "<thead><tr><th>Quality</th>" + scenKeys.map(sc => `<th>${SCEN_LABEL[sc] || sc}</th>`).join("") + "</tr></thead><tbody>" +
+  QUALITIES.map(([name, get, cmp, show]) => `<tr><td class="q">${name}</td>` + scenKeys.map(sc => {
+    const vals = modelKeys.map(m => [m, summ(m, sc)]).filter(([, z]) => z).map(([m, z]) => [m, get(z)]);
+    const has = vals.filter(([, v]) => v !== null && v !== undefined).sort((a, b) => cmp(a[1], b[1]));
+    const none = vals.filter(([, v]) => v === null || v === undefined);
+    // fill with the #1 model's box colour, unless the top two tie
+    const tie = has.length > 1 && show(has[0][1]) === show(has[1][1]);
+    const bg = has.length && !tie ? { good: "var(--ok-bg)", bad: "var(--warn-bg)", note: "var(--note-bg)" }[MODEL_CLASS[has[0][0]]] : null;
+    return `<td${bg ? ` style="background:${bg}"` : ""}><ol>` + has.map(([m, v]) => `<li>${m} (${show(v)})</li>`).join("") + "</ol>" +
+      (none.length ? `<span class="note">${name.startsWith("Earliest") ? "never right" : "n/a (no interval)"}: ${none.map(([m]) => m).join(", ")}</span>` : "") + "</td>";
+  }).join("") + "</tr>").join("") + "</tbody>";
+// ---- calibration section ----
+if (DATA.calib) {
+  const C = DATA.calib.rows, models = [...new Set(C.map(r => r.m))].sort((a, b) => MODEL_ORDER.indexOf(a) - MODEL_ORDER.indexOf(b));
+  document.getElementById("calib-updated").textContent = `last summarised ${DATA.calib.updated}, ${Math.max(...C.map(r => r.n))} nights.`;
+  const fmtT = t => t === "all" ? "All checkpoints" : t.replace(/^2026-11-0?/, "Nov ").replace(/^Nov (\d+) /, "Nov $1, ");
+  const colr = (v, target) => Math.abs(v - target) <= 3 ? "" : (v < target ? "miss" : "");
+  const head = "<thead><tr><th style='text-align:left'>When</th><th>Counted</th>" + models.map(m => `<th>${m}<br>95% / 80% / 50% hold truth</th><th>Confidently wrong</th><th>Avg width</th>`).join("") + "</tr></thead>";
+  const row = (g, t) => { const rs = models.map(m => C.find(r => r.g === g && r.t === t && r.m === m));
+    if (!rs.some(Boolean)) return "";
+    const any = rs.find(Boolean);
+    return `<tr><td style="text-align:left">${fmtT(t)}</td><td>${any.pv}%</td>` + rs.map(r => r ? `<td><span class="${colr(r.c95, 95)}">${fmt(r.c95)}%</span> / <span class="${colr(r.c80, 80)}">${fmt(r.c80)}%</span> / <span class="${colr(r.c50, 50)}">${fmt(r.c50)}%</span></td><td class="${r.w > 1 ? "miss" : ""}">${fmt(r.w)}%</td><td>${fmt(r.wd, 2)} pts</td>` : "<td>–</td><td>–</td><td>–</td>").join("") + "</tr>"; };
+  const times = [...new Set(C.filter(r => r.g === "by checkpoint").map(r => r.t))].sort();
+  document.getElementById("calib-table").innerHTML = head + "<tbody>" + times.map(t => row("by checkpoint", t)).join("") + row("all checkpoints", "all") + "</tbody>";
+  const g2 = [...new Set(C.filter(r => r.g === "by Hispanic tilt").map(r => r.t))];
+  const closeT = [...new Set(C.filter(r => r.g.startsWith("close")).map(r => r.t))].sort();
+  const head2 = "<thead><tr><th style='text-align:left'>Group</th>" + models.map(m => `<th>${m}<br>95% holds truth</th><th>Confidently wrong</th><th>Race-nights</th>`).join("") + "</tr></thead>";
+  const row2 = (g, t, label) => "<tr><td style='text-align:left'>" + label + "</td>" + models.map(m => { const r = C.find(x => x.g === g && x.t === t && x.m === m);
+    return r ? `<td class="${colr(r.c95, 95)}">${fmt(r.c95)}%</td><td class="${r.w > 1 ? "miss" : ""}">${fmt(r.w)}%</td><td>${r.rn}</td>` : "<td>–</td><td>–</td><td>–</td>"; }).join("") + "</tr>";
+  document.getElementById("calib-table2").innerHTML = head2 + "<tbody>" + g2.map(t => row2("by Hispanic tilt", t, t)).join("") +
+    closeT.map(t => row2(C.find(r => r.t === t && r.g.startsWith("close")).g, t, "Close races (true result within 3 pts of 50%), all checkpoints")).join("") + "</tbody>";
+} else document.getElementById("calib").hidden = true;
+drawSim();
 </script>
