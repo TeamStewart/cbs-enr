@@ -32,6 +32,7 @@ read_pq = function(p) {
   if (file.size(p) == 0) stop(p, " is 0 bytes: make the folder available offline in Dropbox")
   as_tibble(nanoparquet::read_parquet(p))
 }
+write_pq = function(d, p) nanoparquet::write_parquet(d, p)
 
 # 95% interval from draws: mean +/- z * sd, the same thing enightmodels::cred_int()
 # returns with param = TRUE (its fit_t() falls back to a normal)

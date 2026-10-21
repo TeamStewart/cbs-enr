@@ -92,11 +92,14 @@ code { font-family: var(--font-data); font-size: 0.85em; }
   <p>Ethan's simulation produces the final count for all 6,134 precincts and a reporting schedule by vote mode: early votes in one countywide dump after polls close, Election Day precincts over the next few hours, and late mail days later. Some precincts never appear (unmatched IDs) and some counties may never report, as set in the scenario's manifest. The model is refit every 15 minutes from 8:00pm to 4:00am, then at four later times. Before any votes are in for a vote mode, model_y has nothing to fit for that mode, so the first one or two checkpoints show very wide intervals; model_simpleswing has no estimate at all until votes arrive.</p>
   <figure>
     <div class="controls">
-      <div class="seg" role="group" aria-label="Run">
-        <span id="sc-buttons" style="display:contents"></span>
-      </div>
       <div class="seg" role="group" aria-label="Race">
         <span id="sim-buttons" style="display:contents"></span>
+      </div>
+      <div class="seg" role="group" aria-label="Model">
+        <span id="mod-buttons" style="display:contents"></span>
+      </div>
+      <div class="seg" role="group" aria-label="Scenario">
+        <span id="scn-buttons" style="display:contents"></span>
       </div>
     </div>
     <svg id="sim-chart" class="chart" viewBox="0 0 760 420" role="img" aria-label="Simulated night estimate by time"></svg>
@@ -170,6 +173,7 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     <li><strong>Simulated nights:</strong> <code>test_sim_night.R</code>, once per scenario; the settings for each are under its chart. <strong>model_y</strong> is the full model in <code>tx_gov_trial.R</code> (precinct × vote-mode cells, bounded turnout, county random effect, cross-mode correlation, mode offsets): its own code builds the precinct frame, mode priors and cells, and it is fed the simulated counts at each time, with each cell flagged complete once that mode is fully counted; "core" is the simpler <code>model_core.R</code> version with no cross-mode correlation or mode offsets. Priors come from <code>TX_precinct.parquet</code> and the 2022 mode mix in <code>TX_precinct_mode_history.parquet</code>.</li>
     <li><strong>model_simpleswing</strong>, the standard uniform swing model: <code>test_sim_night.R --model=swing</code>. Each reported precinct × vote-method cell's swing in Democratic two-party share from its Harris 2024 share is regressed on county and vote-method fixed effects with <code>fixest::feols</code>, weighted by expected votes; unreported cells get their county's swing, and counties with nothing in yet get the average swing. Turnout is fit the same way on fully counted cells (log of counted over expected votes). The interval comes from 100 bootstrap resamples of the reporting counties. It has no estimate before any votes are in, so its runs start at the first checkpoint with votes.</li>
     <li><strong>model_cory</strong>: <code>test_sim_night.R --model=cory</code> calls <code>enightmodels::model_legacy()</code> exactly as the package provides it, with its default configuration (<code>model_legacy_config()</code>: by vote method, strata = geostratum, a precinct counts as complete at stage 6). Turnout: each stratum × method's ratio of counted to expected votes in reporting precincts, applied to the rest. Vote share: each candidate's ratio of counted votes to expected votes, by stratum and method. Its input is the standard election-data format built from Ethan's snapshot (one row per precinct × method × candidate, stage 0 / 4 / 6), with <code>past</code> set to the expected votes for that row (expected turnout × 2022 method split × the Harris 2024 two-party share, third parties from <code>oth_base</code>). It returns point estimates only.</li>
+    <li><strong>Stress scenarios</strong> (made with <code>make_stress_scenario.R</code> from <code>tx_base</code>; Ethan's files are not changed): <strong>tx_hispanic_swing</strong> moves Hispanic voters 21.1 points of the two-party vote toward the Democrat on top of <code>tx_base</code> (from Trump winning Texas Latinos by about 10 in 2024, Democratic two-party about 45%, to 2026 polling of roughly 60–63% to 30–33%, about 66%). Each precinct moves by its Hispanic share of voters (YouGov's estimate) times 21.1 points, with its two-party total unchanged. <strong>tx_urbanfirst</strong> keeps <code>tx_base</code>'s results but, within each county, has Election Day votes report from the most Democratic precincts first (by Harris 2024 share, standing in for urban cores, since the data has no urbanicity measure); each county keeps its own report times.</li>
     <li><strong>Limits:</strong> the simulation's swing, noise sizes, mail lean and timing are invented, and its results are built from the same <code>dem2</code> the model uses as a prior, so its good performance after 9pm is partly by construction. So these runs test how the model copes with reporting order, timing, missing data and swings it doesn't expect; they can't show whether its intervals are the right width for real elections. That calibration check is Young-Kyung's TX 2024 backtest (<code>tx24_backtest.R</code>).</li>
   </ul>
 </section>
@@ -401,19 +405,35 @@ document.getElementById("sc-table").innerHTML = "<thead><tr><th style='text-alig
   scKeys.flatMap(sc => Object.keys(SC[sc].races).map((k, i) => { const z = stats(SC[sc].races[k]);
     return `<tr>${i === 0 ? `<td style="text-align:left" rowspan="${Object.keys(SC[sc].races).length}"><strong>${sc}</strong></td><td style="text-align:left;white-space:normal;max-width:34ch" rowspan="${Object.keys(SC[sc].races).length}">${SC[sc].diff || "–"}</td>` : ""}<td>${RACE[k] || k}</td><td>${fmt(z.t)}%</td><td class="${z.hasInt && z.cov / z.n < 0.9 ? "miss" : ""}">${z.hasInt ? z.cov + "/" + z.n : "no interval"}</td><td class="${z.wrong ? "miss" : ""}">${z.hasInt ? z.wrong : "–"}</td><td>${when(z.first)}</td><td>${fmt(z.err, 2)} pts</td><td>${z.hasInt ? fmt(z.width, 2) + " pts" : "–"}</td><td>${z.turn4 === null ? "–" : (z.turn4 > 0 ? "+" : "") + fmt(z.turn4, 1) + "%"}</td><td>${z.st4 && isNum(z.st4[14]) ? fmt(z.st4[14]) + "%" + (isNum(z.st4[15]) ? " (" + fmt(z.st4[15]) + "–" + fmt(z.st4[16]) + ")" : "") : "–"}</td></tr>`; })).join("") + "</tbody>";
 document.getElementById("stamp").textContent = `CBS election desk · TX precinct model · run ${DATA.run}`;
-let curSc = scKeys[0], curRace = Object.keys(SC[curSc].races)[0];
-const raceKeys = [...new Set(scKeys.flatMap(sc => Object.keys(SC[sc].races)))];
-document.getElementById("sc-buttons").outerHTML = scKeys.map((k, i) => `<button id="sc-${k}" aria-pressed="${i === 0}">${k}</button>`).join("");
-document.getElementById("sim-buttons").outerHTML = raceKeys.map((k, i) => `<button id="sim-${k}" aria-pressed="${k === curRace}">${RACE[k] || k}</button>`).join("");
+// three button rows: race, model, scenario. Runs that only change a model setting (shown
+// with --all-runs) appear in the tables; the chart shows each model's main run.
+const mainRuns = scKeys.filter(k => !SC[k].variant);
+const uniq = a => [...new Set(a)];
+const MODEL_ORDER = ["model_y", "model_simpleswing", "model_cory", "model_core"];
+const modelKeys = uniq(mainRuns.map(k => SC[k].model)).sort((a, b) => (MODEL_ORDER.indexOf(a) + 99 * (MODEL_ORDER.indexOf(a) < 0)) - (MODEL_ORDER.indexOf(b) + 99 * (MODEL_ORDER.indexOf(b) < 0)));
+const scenKeys = uniq(mainRuns.map(k => SC[k].scenario));
+const raceKeys = uniq(scKeys.flatMap(sc => Object.keys(SC[sc].races)));
+let curRace = raceKeys[0], curModel = modelKeys[0], curScen = scenKeys[0];
+const btns = (ids, prefix, label, cur) => ids.map(k => `<button id="${prefix}${k}" aria-pressed="${k === cur}">${label(k)}</button>`).join("");
+document.getElementById("sim-buttons").outerHTML = btns(raceKeys, "sim-", k => RACE[k] || k, curRace);
+document.getElementById("mod-buttons").outerHTML = btns(modelKeys, "mod-", k => k, curModel);
+document.getElementById("scn-buttons").outerHTML = btns(scenKeys, "scn-", k => k, curScen);
 function drawSim() {
-  const S = SC[curSc], key = S.races[curRace] ? curRace : Object.keys(S.races)[0];
-  drawNight("sim", S.races[key], 4, "ET", "Nov 4–10");
-  drawTurnout(S.races[key], 4);
-  drawState(S.races[key], 4);
-  document.getElementById("sc-note").textContent = `${curSc}: ${S.diff || "the base scenario, default model settings"}. Model settings: ${S.settings || "defaults"}.`;
+  const key = mainRuns.find(k => SC[k].model === curModel && SC[k].scenario === curScen);
+  const svgs = ["sim-chart", "turn-chart", "state-chart"];
+  if (!key) {
+    svgs.forEach(id => { const s = document.getElementById(id); s.innerHTML = ""; el("text", { x: 20, y: 30 }, s).textContent = `No results for ${curModel} on ${curScen} yet: run it with run_model_tests.R.`; });
+    document.getElementById("sim-table").innerHTML = ""; document.getElementById("sc-note").textContent = ""; return;
+  }
+  const S = SC[key], race = S.races[curRace] ? curRace : Object.keys(S.races)[0];
+  drawNight("sim", S.races[race], 4, "ET", "Nov 4–10");
+  drawTurnout(S.races[race], 4);
+  drawState(S.races[race], 4);
+  document.getElementById("sc-note").textContent = `${key}: ${S.diff || "the base scenario, default model settings"}. Model settings: ${S.settings || "defaults"}.`;
 }
-seg("sc-", scKeys, k => { curSc = k; drawSim(); });
 seg("sim-", raceKeys, k => { curRace = k; drawSim(); });
+seg("mod-", modelKeys, k => { curModel = k; drawSim(); });
+seg("scn-", scenKeys, k => { curScen = k; drawSim(); });
 seg("bt-", ["county_re", "county_nore", "random_re"].filter(k => bt[k]), drawBacktest);
 if (bt.county_re) drawBacktest("county_re");
 drawSim();

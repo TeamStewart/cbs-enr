@@ -63,6 +63,12 @@ show_val = function(v) {
 }
 base = read_params("tx_base")
 diff_text = function(sc) {
+  f = file.path(DIR_SIM, sc, "manifest.json")
+  if (file.exists(f)) {
+    m = jsonlite::fromJSON(f, simplifyVector = FALSE)
+    # stress scenarios (make_stress_scenario.R) say in words what they changed
+    if (!is.null(m$stress)) return(paste0(paste(unlist(m$stress$changes), collapse = "; "), " (made from ", m$stress$from, ")"))
+  }
   p = read_params(sc)
   if (is.null(p)) return("no manifest found")
   if (sc == "tx_base" || is.null(base)) return(if (sc == "tx_base") "" else "tx_base manifest not found")
@@ -108,9 +114,12 @@ night_list = function(df) df |>
 MODEL_NAMES = c(trial = "model_y", model_y = "model_y", swing = "model_simpleswing",
                 model_simpleswing = "model_simpleswing", core = "model_core", model_core = "model_core",
                 cory = "model_cory", model_cory = "model_cory")
-run_name = function(k, d) {
+model_of = function(d) {
   m = if ("model" %in% names(d)) as.character(d$model[1]) else "trial"
-  m = coalesce(unname(MODEL_NAMES[m]), m)
+  coalesce(unname(MODEL_NAMES[m]), m)
+}
+run_name = function(k, d) {
+  m = model_of(d)
   lab = if (grepl("__", k)) sub("^.*?__", "", k) else ""
   paste(c(sc_of(k), m, if (nzchar(lab) && !lab %in% c("swing", "core", "cory")) lab), collapse = " · ")
 }
@@ -121,7 +130,9 @@ sims = setNames(lapply(KEYS, function(k) {
   NAMES[[k]] <<- run_name(k, d)
   mc = if ("model_changes" %in% names(d)) coalesce(as.character(d$model_changes[1]), "") else ""
   sc_diff = diff_text(sc_of(k))
-  list(races = night_list(d),
+  lab = if (grepl("__", k)) sub("^.*?__", "", k) else ""
+  list(races = night_list(d), scenario = sc_of(k), model = model_of(d),
+       variant = if (nzchar(lab) && !lab %in% MODEL_RUNS) lab else "",
        diff = paste(c(if (nzchar(sc_diff)) paste("Sim:", sc_diff), if (nzchar(mc)) paste("Model:", mc)), collapse = ". "),
        settings = if ("settings" %in% names(d)) d$settings[1] else "")
 }), KEYS)
