@@ -91,14 +91,6 @@ code { font-family: var(--font-data); font-size: 0.85em; }
 
 
 
-<section id="calib">
-  <div class="eyebrow">Calibration</div>
-  <h2>How often is each model wrong? Many synthetic nights</h2>
-  <p>Each synthetic night keeps <code>tx_base</code>'s turnout, vote-method split and reporting schedule but draws a new result for every precinct: a race-wide shift (the 32-county result lands within about ±4 points of <code>tx_base</code>'s), a shift for each county sized from real Texas swings, a within-county tilt by Hispanic, college and Black share (Hispanic from −15 to +20 points per 100% Hispanic, drawn per night), and a leftover precinct pattern taken from a real past Texas swing (2020→2022, 2022→2024 or 2020→2024) with its county and demographic parts removed. About three-quarters of the variation is within counties, as in real Texas swings. A well-calibrated model's 50%, 80% and 95% intervals hold the true 32-county result about 50%, 80% and 95% of the time. "Confidently wrong" is the share of race-nights where the whole 95% interval was on the wrong side of 50%. The 50% and 80% intervals are read off each model's 95% interval assuming a normal shape. Made with <code>run_calibration.R</code>; <span id="calib-updated"></span></p>
-  <div class="tbl"><table id="calib-table" aria-label="Calibration by checkpoint"></table></div>
-  <h3 style="margin:8px 0 0;font-size:1rem">By the night's Hispanic tilt, and in close races</h3>
-  <div class="tbl"><table id="calib-table2" aria-label="Calibration by Hispanic tilt"></table></div>
-</section>
 
 <section id="sim">
   <div class="eyebrow">Simulated nights</div>
@@ -152,6 +144,19 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     <table id="sim-table" aria-label="Simulated night checkpoints"></table>
   </div>
   <p class="note">Times are Eastern. The time axis is not to scale after 4:00am: the last four points are Nov 4 noon, Nov 5, Nov 7 and Nov 10, when late mail lands. Counted share tops out below 100% because unmatched precincts and non-reporting counties never come in; the model predicts their votes from the baseline.</p>
+</section>
+
+<section id="calib">
+  <div class="eyebrow">Calibration</div>
+  <h2>How often is each model wrong? Many synthetic nights</h2>
+  <p>Each synthetic night keeps <code>tx_base</code>'s turnout, vote-method split and reporting schedule but draws a new result for every precinct: a race-wide shift (the 32-county result lands within about ±4 points of <code>tx_base</code>'s), a shift for each county sized from real Texas swings, a within-county tilt by Hispanic, college and Black share (Hispanic from −15 to +20 points per 100% Hispanic, drawn per night), and a leftover precinct pattern taken from a real past Texas swing (2020→2022, 2022→2024 or 2020→2024) with its county and demographic parts removed. About three-quarters of the variation is within counties, as in real Texas swings. A well-calibrated model's 50%, 80% and 95% intervals hold the true 32-county result about 50%, 80% and 95% of the time. "Confidently wrong" is the share of race-nights where the whole 95% interval was on the wrong side of 50%. The 50% and 80% intervals are read off each model's 95% interval assuming a normal shape. Made with <code>run_calibration.R</code>; <span id="calib-updated"></span></p>
+  <div class="tbl"><table id="calib-table" aria-label="Calibration by checkpoint"></table></div>
+  <h3 style="margin:8px 0 0;font-size:1rem">By the night's Hispanic tilt, and in close races</h3>
+  <div class="tbl"><table id="calib-table2" aria-label="Calibration by Hispanic tilt"></table></div>
+</section>
+
+<section id="scen">
+  <div class="eyebrow">Scenario summary</div>
   <h2>How each scenario went in the 32 counties</h2>
   <p>Each row is one race in one run: one of Ethan's scenarios run through one model: <strong>model_y</strong> is the full precinct model (<code>tx_gov_trial.R</code>), <strong>model_simpleswing</strong> is the standard uniform swing model (feols with county fixed effects), and <strong>model_cory</strong> is Cory's <code>model_legacy()</code> from the enightmodels package. model_cory gives point estimates only, so it has no coverage, "confidently wrong" count or interval width. "What's different" lists the sim settings that differ from <code>tx_base</code> and the model settings that differ from the defaults. Coverage counts the checkpoints where the 95% interval held the true result; "confidently wrong" counts checkpoints where the whole interval was on the wrong side of 50%. Average error and interval width are over checkpoints with any votes counted, in percentage points of the two-party share; these are where runs with different model settings usually differ.</p>
   <div class="tbl">
