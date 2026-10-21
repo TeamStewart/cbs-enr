@@ -20,11 +20,14 @@
 ##     diag     no cross-mode correlation (SIGMA_STRUCT=diag)
 ##     nore     no county random effect (USE_COUNTY_RE=0)
 ##     swing    the standard uniform swing model (feols with county fixed effects)
+##     cory     model_cory: enightmodels::model_legacy() (Cory), default configuration
 ##     core     the simpler model_core.R version
 ##   Add "default" to the list to rerun the default settings too, e.g. --variants=default,nc
 ##
 ## Other flags passed to every run of test_sim_night.R: --model=, --cells=, --complete=
 ## (see test_sim_night.R). --with-tx22 also reruns the older TX 2022 backtest.
+## --all-runs also puts runs that only change a model setting (nc, tx24, stopped, ...) on the
+## page; by default it shows one run per model (model_y, model_simpleswing, model_cory).
 ## --publish also copies the page to model_tests/index.html in the repo for GitHub Pages
 ## (commit it and merge to main to update the online page).
 ##
@@ -42,7 +45,8 @@ VARIANTS = list(
   diag    = list(env = "SIGMA_STRUCT=diag", flags = character()),
   nore    = list(env = "USE_COUNTY_RE=0", flags = character()),
   core    = list(env = character(), flags = "--model=core"),
-  swing   = list(env = character(), flags = "--model=swing")
+  swing   = list(env = character(), flags = "--model=swing"),
+  cory    = list(env = character(), flags = "--model=cory")
 )
 sim_flags = grep("^--(model|cells|complete)=", args, value = TRUE)
 var_arg = grep("^--variants=", args, value = TRUE)
@@ -52,7 +56,8 @@ if (length(bad_v)) stop("Unknown variant(s): ", paste(bad_v, collapse = ", "), "
 only_new = "--new" %in% args
 with_tx22 = "--with-tx22" %in% args
 publish = "--publish" %in% args
-bad = setdiff(grep("^--", args, value = TRUE), c(sim_flags, var_arg, "--new", "--with-tx22", "--publish"))
+all_runs = "--all-runs" %in% args
+bad = setdiff(grep("^--", args, value = TRUE), c(sim_flags, var_arg, "--new", "--with-tx22", "--publish", "--all-runs"))
 if (length(bad)) stop("Unknown option(s): ", paste(bad, collapse = " "))
 
 all_sc = basename(dirname(list.files(DIR_SIM, pattern = "^TX_truth\\.parquet$", recursive = TRUE, full.names = TRUE)))
@@ -85,7 +90,7 @@ for (i in seq_len(nrow(jobs))) {
   v = VARIANTS[[jobs$v[i]]]
   run("test_sim_night.R", c(jobs$sc[i], sim_flags, v$flags, if (jobs$v[i] != "default") paste0("--label=", jobs$v[i])), v$env)
 }
-run("make_model_test_page.R", if (publish) "--publish")
+run("make_model_test_page.R", c(if (publish) "--publish", if (all_runs) "--all-runs"))
 
 page = file.path(DIR_OUT, "model_tests.html")
 cat(sprintf("\nDone in %.1f minutes. Page: %s\n", as.numeric(difftime(Sys.time(), t0, units = "mins")), page))

@@ -14,6 +14,8 @@
 ##   Rscript scripts/model/tests/make_model_test_page.R                  # every scenario with results
 ##   Rscript scripts/model/tests/make_model_test_page.R tx_base tx_slow  # just these scenarios
 ##       (with all their labelled runs)
+##   Rscript scripts/model/tests/make_model_test_page.R --all-runs
+##       also show runs that only change a model setting (e.g. tx_base__nc)
 ##   Rscript scripts/model/tests/make_model_test_page.R --publish
 ##       also copy the page to model_tests/index.html in the repo, for GitHub Pages.
 ##       Commit that file and get it onto main; the page is then at
@@ -22,7 +24,11 @@
 source("scripts/model/tests/model_test_common.R")
 args = commandArgs(trailingOnly = TRUE)
 PUBLISH = "--publish" %in% args
-args = setdiff(args, "--publish")
+# by default the page shows each scenario's run of each MODEL (model_y, model_simpleswing,
+# model_cory); runs that only change a model setting (e.g. __nc, __tx24, __stopped) are left
+# off unless --all-runs is given. Their results files stay in model_tests/.
+ALL_RUNS = "--all-runs" %in% args
+args = setdiff(args, c("--publish", "--all-runs"))
 # one run = one results file; its key is "<scenario>" or "<scenario>__<label>"
 have = sub("^sim_(.*)_results\\.csv$", "\\1", list.files(DIR_OUT, pattern = "^sim_.*_results\\.csv$"))
 if (!length(have)) stop("No sim_*_results.csv in ", DIR_OUT, ". Run test_sim_night.R first.")
@@ -32,7 +38,14 @@ miss = setdiff(want, sc_of(have))
 if (length(miss)) stop("No results for: ", paste(miss, collapse = ", "), ". Run test_sim_night.R for them first.")
 want = c(intersect("tx_base", want), sort(setdiff(want, "tx_base")))
 # each scenario's default run first, then its labelled runs
-KEYS = unlist(lapply(want, \(sc) { k = have[sc_of(have) == sc]; c(intersect(sc, k), sort(setdiff(k, sc))) }))
+MODEL_RUNS = c("swing", "cory", "core")          # labels that are models, not setting changes
+# per scenario: model_y, then the other models in MODEL_RUNS order, then setting changes
+KEYS = unlist(lapply(want, \(sc) {
+  k = have[sc_of(have) == sc]
+  m = paste0(sc, "__", MODEL_RUNS)
+  c(intersect(sc, k), intersect(m, k), sort(setdiff(k, c(sc, m))))
+}))
+if (!ALL_RUNS) KEYS = KEYS[!grepl("__", KEYS) | sub("^.*?__", "", KEYS) %in% MODEL_RUNS]
 r2 = function(x) round(100 * x, 2)
 
 # ---- what each scenario changes, from its manifest ----------------------------------
@@ -90,14 +103,16 @@ night_list = function(df) df |>
     st_exact = if (st) r2(g$st_exact[1]) else NULL, stu_exact = if (st) r2(g$stu_exact[1]) else NULL
   ) })
 # display names: model_y = the full precinct model (tx_gov_trial.R), model_simpleswing =
-# the standard uniform swing model, model_core = the simpler model_core.R version
+# the standard uniform swing model, model_cory = enightmodels::model_legacy(),
+# model_core = the simpler model_core.R version
 MODEL_NAMES = c(trial = "model_y", model_y = "model_y", swing = "model_simpleswing",
-                model_simpleswing = "model_simpleswing", core = "model_core", model_core = "model_core")
+                model_simpleswing = "model_simpleswing", core = "model_core", model_core = "model_core",
+                cory = "model_cory", model_cory = "model_cory")
 run_name = function(k, d) {
   m = if ("model" %in% names(d)) as.character(d$model[1]) else "trial"
   m = coalesce(unname(MODEL_NAMES[m]), m)
   lab = if (grepl("__", k)) sub("^.*?__", "", k) else ""
-  paste(c(sc_of(k), m, if (nzchar(lab) && !lab %in% c("swing", "core")) lab), collapse = " · ")
+  paste(c(sc_of(k), m, if (nzchar(lab) && !lab %in% c("swing", "core", "cory")) lab), collapse = " · ")
 }
 NAMES = character()
 sims = setNames(lapply(KEYS, function(k) {
@@ -123,7 +138,7 @@ bt_list = if (is.null(bt)) NULL else bt |>
 
 data = list(sims = sims, state = state, bt = bt_list, bt_truth = if (is.null(bt)) NULL else r2(bt$truth_twop[1]),
             run = format(Sys.time(), "%b %d, %Y %H:%M"))
-json = jsonlite::toJSON(data, auto_unbox = TRUE, digits = NA, null = "null")
+json = jsonlite::toJSON(data, auto_unbox = TRUE, digits = NA, null = "null", na = "null")
 
 tpl = paste(readLines("scripts/model/tests/model_test_page.html", warn = FALSE), collapse = "\n")
 if (!grepl("__DATA__", tpl, fixed = TRUE)) stop("Template is missing the __DATA__ placeholder")

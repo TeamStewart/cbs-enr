@@ -22,6 +22,12 @@
 ##                    Turnout the same way (log ratio of counted to expected votes, county and
 ##                    method fixed effects, fully counted cells only). Interval: bootstrap
 ##                    over counties. Needs the fixest package.
+##   cory             model_cory: Cory McCartan's model_legacy() from the enightmodels package,
+##                    called as is with its default configuration (model_legacy_config():
+##                    by method, strata = geostratum, stage_complete = 6). Its input is the
+##                    standard election-data format (one row per precinct x method x
+##                    candidate, with stage 0 / 4 / 6 as in Ethan's snapshots) plus `past`, the
+##                    expected votes for that row. It gives point estimates only: no interval.
 ##
 ## The trial model's own switches still work as environment variables, e.g.
 ##   MODE_OFFSET_SOURCE=nc  borrow NC's mode partisan offsets (default here: zero, since
@@ -63,7 +69,7 @@ stopifnot("--cells must be any or complete" = CELLS %in% c("any", "complete"))
 COMPLETE = sub("^--complete=", "", c(grep("^--complete=", args, value = TRUE), "--complete=feed")[1])
 stopifnot("--complete must be feed or stopped" = COMPLETE %in% c("feed", "stopped"))
 SCENARIO = c(grep("^--", args, value = TRUE, invert = TRUE), "tx_base")[1]
-stopifnot("--model must be trial, core or swing" = MODEL %in% c("trial", "core", "swing"))
+stopifnot("--model must be trial, core, swing or cory" = MODEL %in% c("trial", "core", "swing", "cory"))
 LABEL = sub("^--label=", "", c(grep("^--label=", args, value = TRUE), "--label=")[1])
 stopifnot("--label may use only letters, digits, - and _" = grepl("^[A-Za-z0-9_-]*$", LABEL))
 TZ = "America/New_York"
@@ -74,6 +80,25 @@ sched = read_pq(file.path(dir_sc, "TX_schedule.parquet")) |> mutate(geo = as.cha
 inp = read_pq(file.path(DIR_26, "input_data", "model_inputs", "TX_precinct.parquet"))
 mh = read_pq(file.path(DIR_26, "input_data", "model_inputs", "TX_precinct_mode_history.parquet")) |>
   filter(election == "2022_general")
+# expected votes per precinct x method (used by model_simpleswing and model_cory as the
+# baseline): est_turnout x the precinct's 2022 method split, shrunk toward its county's
+# split (k = 40, as in the trial model's mode priors)
+METHODS = c("early", "eday", "mail")
+expected_cells = function() {
+  sh = mh |> inner_join(select(inp, geo, county = county_name), by = "geo") |> rename(v = voters)
+  cty_sh = sh |> summarize(v = sum(v), .by = c(county, method)) |> mutate(cs = v / sum(v), .by = county) |>
+    select(county, method, cs)
+  inp |>
+    transmute(geo, county = county_name, geostratum, dem2, oth = pmin(pmax(oth_base, 0), 0.25), est_turnout) |>
+    cross_join(tibble(method = METHODS)) |>
+    left_join(sh |> mutate(n_p = sum(v), .by = geo) |> select(geo, method, v, n_p), by = c("geo", "method")) |>
+    left_join(cty_sh, by = c("county", "method")) |>
+    mutate(v = coalesce(v, 0), n_p = coalesce(n_p, 0), cs = coalesce(cs, 1 / 3),
+           share = (v + 40 * cs) / (n_p + 40)) |>
+    mutate(share = share / sum(share), .by = geo) |>
+    mutate(exp_votes = pmax(est_turnout * share, 0.5)) |>
+    select(geo, county, geostratum, method, dem2, oth, exp_votes)
+}
 cat(sprintf("Scenario %s: %d precincts, %d censored. Model: %s%s\n",
             SCENARIO, n_distinct(truth$geo), n_distinct(truth$geo[truth$censored]), MODEL,
             if (MODEL == "trial") paste0(", cells reported when ", CELLS, ", complete from ", COMPLETE) else ""))
@@ -314,22 +339,7 @@ if (MODEL == "swing") {
     stop('The uniform swing model needs the fixest package. In R: install.packages("fixest")')
   set.seed(2026)
   BOOT = 100                                   # county bootstrap replicates for the interval
-  METHODS = c("early", "eday", "mail")
-  # expected votes per precinct x method: est_turnout x the precinct's 2022 method split,
-  # shrunk toward its county's split (k = 40, as in the trial model's mode priors)
-  sh = mh |> inner_join(select(inp, geo, county = county_name), by = "geo") |> rename(v = voters)
-  cty_sh = sh |> summarize(v = sum(v), .by = c(county, method)) |> mutate(cs = v / sum(v), .by = county) |>
-    select(county, method, cs)
-  base = inp |>
-    transmute(geo, county = county_name, dem2, oth = pmin(pmax(oth_base, 0), 0.25), est_turnout) |>
-    cross_join(tibble(method = METHODS)) |>
-    left_join(sh |> mutate(n_p = sum(v), .by = geo) |> select(geo, method, v, n_p), by = c("geo", "method")) |>
-    left_join(cty_sh, by = c("county", "method")) |>
-    mutate(v = coalesce(v, 0), n_p = coalesce(n_p, 0), cs = coalesce(cs, 1 / 3),
-           share = (v + 40 * cs) / (n_p + 40)) |>
-    mutate(share = share / sum(share), .by = geo) |>
-    mutate(exp_votes = pmax(est_turnout * share, 0.5)) |>
-    select(geo, county, method, dem2, oth, exp_votes)
+  base = expected_cells()
   source("scripts/model/tests/statewide_tx.R")
   ST = statewide_setup(inp)
   cat("Model: standard uniform swing model (feols, county fixed effects), interval from", BOOT, "county bootstrap replicates\n")
@@ -422,16 +432,93 @@ if (MODEL == "swing") {
 }
 
 # ======================================================================
+## D. model_cory: enightmodels::model_legacy(), as in the package
+# ======================================================================
+if (MODEL == "cory") {
+  suppressPackageStartupMessages(library(enightmodels))
+  base = expected_cells()
+  source("scripts/model/tests/statewide_tx.R")
+  ST = statewide_setup(inp)
+  cfg = model_legacy_config()
+  cat("Model: enightmodels::model_legacy() with model_legacy_config() defaults:",
+      paste(names(cfg), vapply(cfg, \(x) paste(x, collapse = ","), ""), sep = " = ", collapse = "; "), "\n")
+  # third-party past votes: the minor-party candidate 85%, write-ins 15%, as in Ethan's sim
+  cand_share = function(party, candidate, dem2, oth)
+    case_when(party == "dem" ~ (1 - oth) * dem2, party == "rep" ~ (1 - oth) * (1 - dem2),
+              candidate == "write-in" ~ oth * 0.15, TRUE ~ oth * 0.85)
+
+  run_contest = function(contest_id) {
+    # every precinct x method x candidate in the 32-county frame; precincts the feed drops
+    # (censored) stay in as unreported (stage 0), as they would in a joined frame
+    tr = truth |> filter(contest == contest_id, geo %in% base$geo)
+    rows = tr |>
+      select(state, election, contest, candidate, party, method, geo, votes_final = votes) |>
+      left_join(base, by = c("geo", "method")) |>
+      mutate(past = exp_votes * cand_share(party, candidate, dem2, oth))
+    st_exact = list()
+    if (!is.null(ST)) {
+      fin = tr |> summarize(dem = sum(votes[party == "dem"]), rep = sum(votes[party == "rep"]), tot = sum(votes), .by = geo)
+      i = match(ST$p32$geo, fin$geo); ok = !is.na(i) & fin$tot[i] > 0
+      z = statewide_draws(ST, if_else(ok, fin$dem[i] / pmax(fin$dem[i] + fin$rep[i], 1), plogis(ST$p32$lb)),
+                          if_else(ok, fin$tot[i], 0), rep(sum(fin$dem) / sum(fin$dem + fin$rep), 2), rep(sum(fin$tot), 2), noise = FALSE)
+      st_exact = list(st_exact = z$dem[1], stu_exact = z$uni[1])
+    }
+    map_dfr(times, function(tm) {
+      fr = frac_at(tm) |> right_join(distinct(rows, geo, method), by = c("geo", "method")) |>
+        left_join(censored, by = "geo") |>
+        mutate(frac = if_else(coalesce(censored, FALSE), 0, coalesce(frac, 0))) |>
+        mutate(stage = case_when(all(frac >= 1) ~ 6L, any(frac > 0) ~ 4L, TRUE ~ 0L), .by = geo) |>
+        select(geo, method, frac, stage)
+      d = rows |> left_join(fr, by = c("geo", "method")) |>
+        mutate(votes = round(votes_final * frac), time = tm, jurisdiction = "TX", district = NA_integer_,
+               election = as.Date(election)) |>
+        select(state, election, jurisdiction, contest, district, candidate, party, time, stage, method, geo,
+               votes, geostratum, past, votes_final, frac)
+      dd = select(d, -votes_final, -frac) |> enightmodels::coerce_elec_data()
+      out = enightmodels::model_legacy(dd, past, cfg)
+      pr = out$pred
+      dem = sum(pr$pred[pr$party == "dem"]); repv = sum(pr$pred[pr$party == "rep"])
+      S2 = dem / (dem + repv); TT = sum(pr$pred)
+      # precinct-level predictions for the statewide step: the same two functions
+      # model_legacy() calls internally
+      st = list()
+      if (!is.null(ST)) {
+        d_tot = enightmodels::model_legacy_total(dd, past, cfg)
+        d_cand = enightmodels::model_legacy_cand(dd, d_tot, past, cfg) |>
+          mutate(geo = as.character(geo), party = as.character(party)) |>
+          summarize(dem = sum(pred[party == "dem"]), rep = sum(pred[party == "rep"]), tot = sum(pred), .by = geo)
+        i = match(ST$p32$geo, d_cand$geo)
+        s2 = d_cand$dem[i] / pmax(d_cand$dem[i] + d_cand$rep[i], 1)
+        z = statewide_draws(ST, if_else(is.na(s2), plogis(ST$p32$lb), s2), coalesce(d_cand$tot[i], 0),
+                            rep(S2, 2), rep(TT, 2), noise = FALSE)
+        st = list(st_est = z$dem[1], st_lo = NA_real_, st_hi = NA_real_,
+                  stu_est = z$uni[1], stu_lo = NA_real_, stu_hi = NA_real_)
+      }
+      cells = d |> mutate(party3 = if_else(party %in% c("dem", "rep"), party, "oth")) |>
+        summarize(v = sum(votes_final), c = sum(votes), .by = c(geo, method, party3)) |>
+        tidyr::pivot_wider(names_from = party3, values_from = c(v, c), values_fill = 0) |>
+        transmute(geo, method, dem = v_dem, rep = v_rep, oth = v_oth,
+                  c_dem, c_rep, c_oth, c_tot = c_dem + c_rep + c_oth)
+      summarize_draws(contest_id, tm, cells, rep(S2, 2), rep(TT, 2),
+                      c(list(obs_cells = sum(cells$c_tot > 0)), st, st_exact)) |>
+        mutate(lo_twop = NA_real_, hi_twop = NA_real_, p_dem_win = NA_real_,
+               lo_turnout = NA_real_, hi_turnout = NA_real_)
+    })
+  }
+}
+
+# ======================================================================
 ## run every race in the sim
 # ======================================================================
 t0 = Sys.time()
 res = map_dfr(sort(unique(final$contest)), function(r) { cat("  fitting", r, "...\n"); run_contest(r) }) |>
-  mutate(model = c(trial = "model_y", swing = "model_simpleswing", core = "model_core")[[MODEL]],
+  mutate(model = c(trial = "model_y", swing = "model_simpleswing", core = "model_core", cory = "model_cory")[[MODEL]],
          covers = truth_twop >= lo_twop & truth_twop <= hi_twop,
          confident_wrong = (truth_twop > 0.5 & hi_twop < 0.5) | (truth_twop < 0.5 & lo_twop > 0.5))
 # what this run changes from the default model settings, in words, for the page
 changes = c(if (MODEL == "core") "simpler model_core version",
             if (MODEL == "swing") "standard uniform swing model (feols with county fixed effects)",
+            if (MODEL == "cory") "enightmodels::model_legacy() (Cory), default configuration; point estimates only",
             if (CELLS == "complete") "cells used only once fully counted",
             if (COMPLETE == "stopped") "fully-counted guessed from counts (no growth in 30 min)")
 if (MODEL == "trial") changes = c(changes,
@@ -443,6 +530,11 @@ if (MODEL == "trial") changes = c(changes,
   if (!USE_COMPOSE) "unbounded turnout")
 res = mutate(res, scenario = SCENARIO, label = LABEL,
              model_changes = if (length(changes)) paste(changes, collapse = "; ") else "")
+if (MODEL == "cory") {
+  res = mutate(res, settings = paste0("enightmodels::model_legacy() with model_legacy_config() defaults (",
+                                      paste(names(cfg), vapply(cfg, \(x) paste(x, collapse = ","), ""), sep = " = ", collapse = "; "),
+                                      "); past = expected votes per precinct x method x candidate; no interval"))
+}
 if (MODEL == "swing") {
   res = mutate(res, settings = sprintf("standard uniform swing model: feols(swing ~ 1 | county + method), weighted by expected votes; turnout feols(log ratio ~ 1 | county + method) on fully counted cells; cells %s, complete %s; interval from %d county bootstrap replicates",
                                        CELLS, COMPLETE, BOOT))
@@ -458,7 +550,9 @@ write_csv(res, out)
 cat(sprintf("\nSummary (two-party Dem share), %s model%s, %.1f minutes:\n", MODEL,
             if (length(changes)) paste0(" [", paste(changes, collapse = "; "), "]") else "", as.numeric(difftime(Sys.time(), t0, units = "mins"))))
 res |>
-  summarize(checkpoints = n(), interval_holds_truth = sum(covers), confident_wrong = sum(confident_wrong),
+  summarize(checkpoints = n(), interval_holds_truth = if (all(is.na(covers))) NA_integer_ else sum(covers, na.rm = TRUE),
+            confident_wrong = if (all(is.na(confident_wrong))) NA_integer_ else sum(confident_wrong, na.rm = TRUE),
+            mean_abs_err_pts = round(100 * mean(abs(est_twop - truth_twop)[pct_votes > 0]), 2),
             truth = round(100 * first(truth_twop), 2), .by = race) |>
   print()
 cat("\nWrote", out, "\n")

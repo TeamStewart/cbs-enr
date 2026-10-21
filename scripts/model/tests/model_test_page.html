@@ -84,7 +84,7 @@ code { font-family: var(--font-data); font-size: 0.85em; }
 <section id="sim">
   <div class="eyebrow">Simulated nights</div>
   <h2>How each scenario went in the 32 counties</h2>
-  <p>Each row is one race in one run: one of Ethan's scenarios run through one model: <strong>model_y</strong> is the full precinct model (<code>tx_gov_trial.R</code>) and <strong>model_simpleswing</strong> is the standard uniform swing model (feols with county fixed effects). A third part, as in "tx_base · model_y · nc", names a model setting changed from its default. "What's different" lists the sim settings that differ from <code>tx_base</code> and the model settings that differ from the defaults. Coverage counts the checkpoints where the 95% interval held the true result; "confidently wrong" counts checkpoints where the whole interval was on the wrong side of 50%. Average error and interval width are over checkpoints with any votes counted, in percentage points of the two-party share; these are where runs with different model settings usually differ.</p>
+  <p>Each row is one race in one run: one of Ethan's scenarios run through one model: <strong>model_y</strong> is the full precinct model (<code>tx_gov_trial.R</code>), <strong>model_simpleswing</strong> is the standard uniform swing model (feols with county fixed effects), and <strong>model_cory</strong> is Cory's <code>model_legacy()</code> from the enightmodels package. model_cory gives point estimates only, so it has no coverage, "confidently wrong" count or interval width. "What's different" lists the sim settings that differ from <code>tx_base</code> and the model settings that differ from the defaults. Coverage counts the checkpoints where the 95% interval held the true result; "confidently wrong" counts checkpoints where the whole interval was on the wrong side of 50%. Average error and interval width are over checkpoints with any votes counted, in percentage points of the two-party share; these are where runs with different model settings usually differ.</p>
   <div class="tbl">
     <table id="sc-table" aria-label="Scenario comparison"></table>
   </div>
@@ -169,6 +169,7 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     <li><strong>Older backtest:</strong> <code>test_backtest_tx22.R</code> rebuilds Young-Kyung's panel (as in <code>tx_backtest_panel.R</code>) from the Dropbox files: precincts in the 32 counties joined to votehub's 2022 results. 500 draws per checkpoint.</li>
     <li><strong>Simulated nights:</strong> <code>test_sim_night.R</code>, once per scenario; the settings for each are under its chart. <strong>model_y</strong> is the full model in <code>tx_gov_trial.R</code> (precinct × vote-mode cells, bounded turnout, county random effect, cross-mode correlation, mode offsets): its own code builds the precinct frame, mode priors and cells, and it is fed the simulated counts at each time, with each cell flagged complete once that mode is fully counted; "core" is the simpler <code>model_core.R</code> version with no cross-mode correlation or mode offsets. Priors come from <code>TX_precinct.parquet</code> and the 2022 mode mix in <code>TX_precinct_mode_history.parquet</code>.</li>
     <li><strong>model_simpleswing</strong>, the standard uniform swing model: <code>test_sim_night.R --model=swing</code>. Each reported precinct × vote-method cell's swing in Democratic two-party share from its Harris 2024 share is regressed on county and vote-method fixed effects with <code>fixest::feols</code>, weighted by expected votes; unreported cells get their county's swing, and counties with nothing in yet get the average swing. Turnout is fit the same way on fully counted cells (log of counted over expected votes). The interval comes from 100 bootstrap resamples of the reporting counties. It has no estimate before any votes are in, so its runs start at the first checkpoint with votes.</li>
+    <li><strong>model_cory</strong>: <code>test_sim_night.R --model=cory</code> calls <code>enightmodels::model_legacy()</code> exactly as the package provides it, with its default configuration (<code>model_legacy_config()</code>: by vote method, strata = geostratum, a precinct counts as complete at stage 6). Turnout: each stratum × method's ratio of counted to expected votes in reporting precincts, applied to the rest. Vote share: each candidate's ratio of counted votes to expected votes, by stratum and method. Its input is the standard election-data format built from Ethan's snapshot (one row per precinct × method × candidate, stage 0 / 4 / 6), with <code>past</code> set to the expected votes for that row (expected turnout × 2022 method split × the Harris 2024 two-party share, third parties from <code>oth_base</code>). It returns point estimates only.</li>
     <li><strong>Limits:</strong> the simulation's swing, noise sizes, mail lean and timing are invented, and its results are built from the same <code>dem2</code> the model uses as a prior, so its good performance after 9pm is partly by construction. So these runs test how the model copes with reporting order, timing, missing data and swings it doesn't expect; they can't show whether its intervals are the right width for real elections. That calibration check is Young-Kyung's TX 2024 backtest (<code>tx24_backtest.R</code>).</li>
   </ul>
 </section>
@@ -190,6 +191,13 @@ const NS = "http://www.w3.org/2000/svg";
 function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
 function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 const fmt = (x, d = 1) => Number(x).toFixed(d);
+const isNum = v => typeof v === "number" && !Number.isNaN(v);
+// a band path over only the rows that have an interval (models with point estimates only have none)
+function bandPath(rows, xf, yf, lo, hi) {
+  const ok = rows.map((r, i) => [r, i]).filter(([r]) => isNum(r[lo]) && isNum(r[hi]));
+  if (!ok.length) return null;
+  return "M" + ok.map(([r, i]) => xf(i) + "," + yf(r[hi])).concat(ok.slice().reverse().map(([r, i]) => xf(i) + "," + yf(r[lo]))).join("L") + "Z";
+}
 
 function drawBacktest(key) {
   const svg = document.getElementById("bt-chart"); svg.innerHTML = "";
@@ -241,23 +249,24 @@ function drawNight(id, S, late, tzName, lateLabel) {
   el("line", { x1: xsep, x2: xsep, y1: m.t, y2: H - m.b + 60, stroke: "var(--muted)", "stroke-dasharray": "2 3" }, svg);
   el("text", { x: (x(n - late) + x(n - 1)) / 2, y: H - 22, "text-anchor": late > 1 ? "middle" : "end" }, svg).textContent = lateLabel;
   el("text", { x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle" }, svg).textContent = `time (${tzName}) on election night; right of the dashed line, ${late > 1 ? "later days" : "the final count"}`;
-  const band = rows.map((r, i) => [x(i), y(r[4])]).concat(rows.map((r, i) => [x(i), y(r[3])]).reverse());
-  el("path", { d: "M" + band.map(p => p.join(",")).join("L") + "Z", fill: "var(--dem-band)" }, svg);
+  const hasInt = rows.some(r => isNum(r[3]));
+  const bp = bandPath(rows, x, y, 3, 4);
+  if (bp) el("path", { d: bp, fill: "var(--dem-band)" }, svg);
   el("line", { x1: m.l, x2: W - m.r, y1: y(truth), y2: y(truth), stroke: "var(--truth)", "stroke-width": 1.5 }, svg);
   const rawPts = rows.map((r, i) => [i, r]).filter(([i, r]) => r[1] > 0);
   el("path", { d: "M" + rawPts.map(([i, r]) => x(i) + "," + y(r[5])).join("L"), fill: "none", stroke: "var(--raw)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
   el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[2])).join("L"), fill: "none", stroke: "var(--dem)", "stroke-width": 2.5 }, svg);
-  rows.forEach((r, i) => { if (r[4] < truth || r[3] > truth) el("circle", { cx: x(i), cy: y(r[2]), r: 3, fill: "var(--rep)" }, svg); });
+  rows.forEach((r, i) => { if (isNum(r[3]) && (r[4] < truth || r[3] > truth)) el("circle", { cx: x(i), cy: y(r[2]), r: 3, fill: "var(--rep)" }, svg); });
   el("text", { x: x(Math.round(n * 0.55)), y: y(truth) + 16, "text-anchor": "middle" }, svg).textContent = `final result ${fmt(truth)}%`;
   const cover = rows.filter(r => r[3] <= truth && r[4] >= truth).length;
-  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = `interval contains result at ${cover} of ${rows.length} checkpoints (red dots = misses)`;
+  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = hasInt ? `interval contains result at ${cover} of ${rows.length} checkpoints (red dots = misses)` : "point estimates only: this model gives no interval";
   const xs = rows.map((r, i) => x(i));
-  hover(svg, rows, (r) => xs[rows.indexOf(r)], r => `${r[0].replace(/^11-0?/, "Nov ")} · ${fmt(r[1])}% counted (early ${r[7]}%, Election Day ${r[8]}%, mail ${r[9]}%) · estimate ${fmt(r[2])}% (${fmt(r[3])}–${fmt(r[4])}) · raw ${fmt(r[5])}% · P(Dem wins) ${Math.round(r[6] * 100)}%`, id + "-readout", W, H, m);
+  hover(svg, rows, (r) => xs[rows.indexOf(r)], r => `${r[0].replace(/^11-0?/, "Nov ")} · ${fmt(r[1])}% counted (early ${r[7]}%, Election Day ${r[8]}%, mail ${r[9]}%) · estimate ${fmt(r[2])}%${isNum(r[3]) ? ` (${fmt(r[3])}–${fmt(r[4])})` : ""} · raw ${fmt(r[5])}%${isNum(r[6]) ? ` · P(Dem wins) ${Math.round(r[6] * 100)}%` : ""}`, id + "-readout", W, H, m);
   // table
   const tbl = document.getElementById(id + "-table");
   const pick = rows.filter((r, i) => i <= 12 || i >= n - late || r[0].endsWith(":00"));
   tbl.innerHTML = `<thead><tr><th>Time (${tzName})</th>`+"<th>Counted</th><th>Raw Dem</th><th>Estimate</th><th>95% interval</th><th>P(Dem wins)</th></tr></thead><tbody>" +
-    pick.map(r => { const miss = r[4] < truth || r[3] > truth; return `<tr><td>${r[0].replace(/^11-0?/, "Nov ")}</td><td>${fmt(r[1])}%</td><td>${r[1] > 0 ? fmt(r[5]) + "%" : "–"}</td><td class="${miss ? "miss" : ""}">${fmt(r[2])}%</td><td class="${miss ? "miss" : ""}">${fmt(r[3])}–${fmt(r[4])}%</td><td>${Math.round(r[6] * 100)}%</td></tr>`; }).join("") +
+    pick.map(r => { const miss = isNum(r[3]) && (r[4] < truth || r[3] > truth); return `<tr><td>${r[0].replace(/^11-0?/, "Nov ")}</td><td>${fmt(r[1])}%</td><td>${r[1] > 0 ? fmt(r[5]) + "%" : "–"}</td><td class="${miss ? "miss" : ""}">${fmt(r[2])}%</td><td class="${miss ? "miss" : ""}">${isNum(r[3]) ? fmt(r[3]) + "–" + fmt(r[4]) + "%" : "–"}</td><td>${isNum(r[6]) ? Math.round(r[6] * 100) + "%" : "–"}</td></tr>`; }).join("") +
     `</tbody><caption class="note" style="caption-side:bottom;text-align:left;padding-top:6px">Final result ${fmt(truth)}%. Red rows: the interval misses the result.</caption>`;
 }
 
@@ -268,7 +277,7 @@ function drawTurnout(S, late) {
   if (!truth || rows[0].length < 13) { el("text", { x: 20, y: 30 }, svg).textContent = "No turnout in these results; rerun test_sim_night.R."; return; }
   const W = 760, H = 300, m = { l: 64, r: 20, t: 16, b: 40 };
   const n = rows.length, x = i => m.l + i / (n - 1) * (W - m.l - m.r);
-  const vals = rows.flatMap(r => [r[11], r[12]]).concat([truth]);
+  const vals = rows.flatMap(r => [r[10], r[11], r[12]]).filter(isNum).concat([truth]);
   const lo = 0, hi = Math.ceil(Math.max(...vals) * 1.05 / 0.5) * 0.5;
   const y = v => m.t + (hi - Math.max(lo, Math.min(hi, v))) / (hi - lo) * (H - m.t - m.b);
   for (let v = lo; v <= hi + 1e-9; v += hi > 4 ? 1 : 0.5) {
@@ -280,16 +289,16 @@ function drawTurnout(S, late) {
   const xsep = (x(n - late - 1) + x(n - late)) / 2;
   el("line", { x1: xsep, x2: xsep, y1: m.t, y2: H - m.b + 10, stroke: "var(--muted)", "stroke-dasharray": "2 3" }, svg);
   el("text", { x: (x(n - late) + x(n - 1)) / 2, y: H - 22, "text-anchor": "middle" }, svg).textContent = "Nov 4–10";
-  const band = rows.map((r, i) => [x(i), y(r[12])]).concat(rows.map((r, i) => [x(i), y(r[11])]).reverse());
-  el("path", { d: "M" + band.map(p => p.join(",")).join("L") + "Z", fill: "var(--dem-band)" }, svg);
+  const tb = bandPath(rows, x, y, 11, 12);
+  if (tb) el("path", { d: tb, fill: "var(--dem-band)" }, svg);
   el("line", { x1: m.l, x2: W - m.r, y1: y(truth), y2: y(truth), stroke: "var(--truth)", "stroke-width": 1.5 }, svg);
   el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[13])).join("L"), fill: "none", stroke: "var(--raw)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
   el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[10])).join("L"), fill: "none", stroke: "var(--dem)", "stroke-width": 2.5 }, svg);
-  rows.forEach((r, i) => { if (r[12] < truth || r[11] > truth) el("circle", { cx: x(i), cy: y(r[10]), r: 3, fill: "var(--rep)" }, svg); });
-  const cover = rows.filter(r => r[11] <= truth && r[12] >= truth).length;
-  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = `interval contains true total (${truth.toFixed(2)}M) at ${cover} of ${n} checkpoints`;
+  rows.forEach((r, i) => { if (isNum(r[11]) && (r[12] < truth || r[11] > truth)) el("circle", { cx: x(i), cy: y(r[10]), r: 3, fill: "var(--rep)" }, svg); });
+  const cover = rows.filter(r => isNum(r[11]) && r[11] <= truth && r[12] >= truth).length;
+  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = rows.some(r => isNum(r[11])) ? `interval contains true total (${truth.toFixed(2)}M) at ${cover} of ${n} checkpoints` : `point estimates only (true total ${truth.toFixed(2)}M)`;
   const xs = rows.map((r, i) => x(i));
-  hover(svg, rows, r => xs[rows.indexOf(r)], r => `${r[0].replace(/^11-0?/, "Nov ")} · predicted ${r[10].toFixed(3)}M (${r[11].toFixed(3)}–${r[12].toFixed(3)}) · counted ${r[13].toFixed(3)}M · true ${truth.toFixed(3)}M · off by ${fmt(100 * (r[10] / truth - 1), 1)}%`, "turn-readout", W, H, m);
+  hover(svg, rows, r => xs[rows.indexOf(r)], r => `${r[0].replace(/^11-0?/, "Nov ")} · predicted ${r[10].toFixed(3)}M${isNum(r[11]) ? ` (${r[11].toFixed(3)}–${r[12].toFixed(3)})` : ""} · counted ${r[13].toFixed(3)}M · true ${truth.toFixed(3)}M · off by ${fmt(100 * (r[10] / truth - 1), 1)}%`, "turn-readout", W, H, m);
 }
 
 function drawState(S, late) {
@@ -299,7 +308,7 @@ function drawState(S, late) {
   document.getElementById("state-block").hidden = false;
   const W = 760, H = 300, m = { l: 52, r: 20, t: 16, b: 40 };
   const n = rows.length, x = i => m.l + i / (n - 1) * (W - m.l - m.r);
-  const vals = rows.slice(1).flatMap(r => [r[15], r[16], r[17]]).concat([ex, 50]);
+  const vals = rows.slice(1).flatMap(r => [r[14], r[15], r[16], r[17]]).filter(isNum).concat([ex, 50]);
   const lo = Math.floor((Math.min(...vals) - 1) / 5) * 5, hi = Math.ceil((Math.max(...vals) + 1) / 5) * 5;
   const y = v => m.t + (hi - Math.max(lo, Math.min(hi, v))) / (hi - lo) * (H - m.t - m.b);
   for (let v = lo; v <= hi; v += 5) {
@@ -311,14 +320,14 @@ function drawState(S, late) {
   const xsep = (x(n - late - 1) + x(n - late)) / 2;
   el("line", { x1: xsep, x2: xsep, y1: m.t, y2: H - m.b + 10, stroke: "var(--muted)", "stroke-dasharray": "2 3" }, svg);
   el("text", { x: (x(n - late) + x(n - 1)) / 2, y: H - 22, "text-anchor": "middle" }, svg).textContent = "Nov 4–10";
-  const band = rows.map((r, i) => [x(i), y(r[16])]).concat(rows.map((r, i) => [x(i), y(r[15])]).reverse());
-  el("path", { d: "M" + band.map(p => p.join(",")).join("L") + "Z", fill: "var(--dem-band)" }, svg);
+  const sb = bandPath(rows, x, y, 15, 16);
+  if (sb) el("path", { d: sb, fill: "var(--dem-band)" }, svg);
   el("line", { x1: m.l, x2: W - m.r, y1: y(ex), y2: y(ex), stroke: "var(--truth)", "stroke-width": 1.5, "stroke-dasharray": "6 3" }, svg);
   el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[17])).join("L"), fill: "none", stroke: "var(--raw)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
   el("path", { d: "M" + rows.map((r, i) => x(i) + "," + y(r[14])).join("L"), fill: "none", stroke: "var(--dem)", "stroke-width": 2.5 }, svg);
   el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = `if the 32 counties' precinct results were known exactly: ${fmt(ex)}% (uniform swing: ${fmt(S.stu_exact)}%)`;
   const xs = rows.map((r, i) => x(i));
-  hover(svg, rows, r => xs[rows.indexOf(r)], r => `${r[0].replace(/^11-0?/, "Nov ")} · statewide ${fmt(r[14])}% (${fmt(r[15])}–${fmt(r[16])}) · uniform swing ${fmt(r[17])}% (${fmt(r[18])}–${fmt(r[19])}) · 32 counties ${fmt(r[2])}%`, "state-readout", W, H, m);
+  hover(svg, rows, r => xs[rows.indexOf(r)], r => `${r[0].replace(/^11-0?/, "Nov ")} · statewide ${fmt(r[14])}%${isNum(r[15]) ? ` (${fmt(r[15])}–${fmt(r[16])})` : ""} · uniform swing ${fmt(r[17])}%${isNum(r[18]) ? ` (${fmt(r[18])}–${fmt(r[19])})` : ""} · 32 counties ${fmt(r[2])}%`, "state-readout", W, H, m);
 }
 
 function hover(svg, rows, xf, label, outId, W, H, m) {
@@ -350,18 +359,22 @@ const lis = [];
 const bt = DATA.bt || {}, T = DATA.bt_truth;
 const SC = DATA.sims, scKeys = Object.keys(SC);
 const when = x => x ? x.replace(/^11-0?/, "Nov ") : "never";
-const stats = (S) => { const r = S.rows, t = S.truth; const w = r.filter(x => wrong(x, 3, 4, t));
-  let f = null; for (let i = r.length - 1; i >= 0; i--) { if (right(r[i], 3, 4, t)) f = r[i][0]; else break; }
+// models with point estimates only (no interval): coverage, "confidently wrong" and width are
+// not defined, and "right winner from" uses the estimate itself
+const stats = (S) => { const r = S.rows, t = S.truth, hasInt = r.some(x => isNum(x[3]));
+  const ri = r.filter(x => isNum(x[3])), w = ri.filter(x => wrong(x, 3, 4, t));
+  const rightAt = x => hasInt ? right(x, 3, 4, t) : ((t > 50) === (x[2] > 50));
+  let f = null; for (let i = r.length - 1; i >= 0; i--) { if (rightAt(r[i])) f = r[i][0]; else break; }
   const c = r.filter(x => x[1] > 0), avg = a => a.reduce((p, q) => p + q, 0) / Math.max(a.length, 1);
-  return { t, n: r.length, cov: cov(r, 3, 4, t), wrong: w.length, firstWrong: w[0], first: f,
-           err: avg(c.map(x => Math.abs(x[2] - t))), width: avg(c.map(x => x[4] - x[3])),
+  return { t, n: r.length, hasInt, cov: hasInt ? cov(ri, 3, 4, t) : null, wrong: hasInt ? w.length : null, firstWrong: w[0], first: f,
+           err: avg(c.map(x => Math.abs(x[2] - t))), width: hasInt ? avg(c.filter(x => isNum(x[3])).map(x => x[4] - x[3])) : null,
            st4: r.find(x => x[0].endsWith("04 04:00")),
            turn4: (() => { const q = r.find(x => x[0].endsWith("04 04:00")); return q && S.truth_turn ? 100 * (q[10] / S.truth_turn - 1) : null; })() }; };
 scKeys.forEach(sc => {
   const races = SC[sc].races, parts = Object.keys(races).map(k => { const z = stats(races[k]); return [k, z]; });
   const bad = parts.some(([, z]) => z.wrong > 0);
   lis.push([bad ? "bad" : "good", `<strong>${sc}:</strong> ` + parts.map(([k, z]) =>
-    `${RACE[k] || k} ${z.cov}/${z.n} covered` + (z.wrong ? `, confidently wrong ${z.wrong} times (first ${z.firstWrong[0].slice(6)})` : "") + `, right winner from ${when(z.first)}`).join("; ") + "."]);
+    (z.hasInt ? `${RACE[k] || k} ${z.cov}/${z.n} covered` : `${RACE[k] || k} point estimates only, average error ${fmt(z.err, 2)} pts`) + (z.wrong ? `, confidently wrong ${z.wrong} times (first ${z.firstWrong[0].slice(6)})` : "") + `, right winner from ${when(z.first)}`).join("; ") + "."]);
 });
 if (bt.county_re) {
   const r = bt.county_re, w = r.filter(x => wrong(x, 2, 3, T));
@@ -386,7 +399,7 @@ if (DATA.state) {
 }
 document.getElementById("sc-table").innerHTML = "<thead><tr><th style='text-align:left'>Run</th><th style='text-align:left'>What's different</th><th>Race</th><th>True Dem</th><th>Covered</th><th>Confidently wrong</th><th>Right winner from</th><th>Avg error</th><th>Avg interval width</th><th>Turnout at 4am vs truth</th><th>Statewide at 4am (rough)</th></tr></thead><tbody>" +
   scKeys.flatMap(sc => Object.keys(SC[sc].races).map((k, i) => { const z = stats(SC[sc].races[k]);
-    return `<tr>${i === 0 ? `<td style="text-align:left" rowspan="${Object.keys(SC[sc].races).length}"><strong>${sc}</strong></td><td style="text-align:left;white-space:normal;max-width:34ch" rowspan="${Object.keys(SC[sc].races).length}">${SC[sc].diff || "–"}</td>` : ""}<td>${RACE[k] || k}</td><td>${fmt(z.t)}%</td><td class="${z.cov / z.n < 0.9 ? "miss" : ""}">${z.cov}/${z.n}</td><td class="${z.wrong ? "miss" : ""}">${z.wrong}</td><td>${when(z.first)}</td><td>${fmt(z.err, 2)} pts</td><td>${fmt(z.width, 2)} pts</td><td>${z.turn4 === null ? "–" : (z.turn4 > 0 ? "+" : "") + fmt(z.turn4, 1) + "%"}</td><td>${z.st4 && z.st4[14] !== null && z.st4[14] !== undefined ? fmt(z.st4[14]) + "% (" + fmt(z.st4[15]) + "–" + fmt(z.st4[16]) + ")" : "–"}</td></tr>`; })).join("") + "</tbody>";
+    return `<tr>${i === 0 ? `<td style="text-align:left" rowspan="${Object.keys(SC[sc].races).length}"><strong>${sc}</strong></td><td style="text-align:left;white-space:normal;max-width:34ch" rowspan="${Object.keys(SC[sc].races).length}">${SC[sc].diff || "–"}</td>` : ""}<td>${RACE[k] || k}</td><td>${fmt(z.t)}%</td><td class="${z.hasInt && z.cov / z.n < 0.9 ? "miss" : ""}">${z.hasInt ? z.cov + "/" + z.n : "no interval"}</td><td class="${z.wrong ? "miss" : ""}">${z.hasInt ? z.wrong : "–"}</td><td>${when(z.first)}</td><td>${fmt(z.err, 2)} pts</td><td>${z.hasInt ? fmt(z.width, 2) + " pts" : "–"}</td><td>${z.turn4 === null ? "–" : (z.turn4 > 0 ? "+" : "") + fmt(z.turn4, 1) + "%"}</td><td>${z.st4 && isNum(z.st4[14]) ? fmt(z.st4[14]) + "%" + (isNum(z.st4[15]) ? " (" + fmt(z.st4[15]) + "–" + fmt(z.st4[16]) + ")" : "") : "–"}</td></tr>`; })).join("") + "</tbody>";
 document.getElementById("stamp").textContent = `CBS election desk · TX precinct model · run ${DATA.run}`;
 let curSc = scKeys[0], curRace = Object.keys(SC[curSc].races)[0];
 const raceKeys = [...new Set(scKeys.flatMap(sc => Object.keys(SC[sc].races)))];
