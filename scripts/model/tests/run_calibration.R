@@ -48,18 +48,29 @@ if (!SUMMARY_ONLY) {
   todo = jobs[!file.exists(jobs$out), ]
   logit_line(sprintf("calibration: %d nights x %s; %d runs to do, %d already done",
                      N, paste(MODELS, collapse = "+"), nrow(todo), nrow(jobs) - nrow(todo)))
-  t0 = Sys.time()
+  t0 = Sys.time(); n_fail = 0
   for (i in seq_len(nrow(todo))) {
     j = todo[i, ]
     t1 = Sys.time()
+    # paths are quoted: the Dropbox folder name has spaces. A failed run's messages go to
+    # results/<night>__<model>.err so the reason is kept.
+    err = sub("\\.csv$", ".err", j$out)
     st = system2("Rscript", c("scripts/model/tests/test_sim_night.R", paste0("--model=", j$model),
-                              paste0("--sim_dir=", file.path(DIR_NIGHTS, sprintf("night_%03d", j$night))),
-                              paste0("--out=", j$out), "--checkpoints=calib", "--no_statewide"),
-                 stdout = FALSE, stderr = FALSE)
+                              shQuote(paste0("--sim_dir=", file.path(DIR_NIGHTS, sprintf("night_%03d", j$night)))),
+                              shQuote(paste0("--out=", j$out)), "--checkpoints=calib", "--no_statewide"),
+                 stdout = FALSE, stderr = err)
+    if (st == 0 && file.exists(j$out)) unlink(err)
     el = as.numeric(difftime(Sys.time(), t0, units = "mins"))
     logit_line(sprintf("night %03d %-6s %s in %.1f min | %d/%d done, about %.0f min left", j$night, j$model,
-                       if (st == 0 && file.exists(j$out)) "ok" else "FAILED",
+                       if (st == 0 && file.exists(j$out)) "ok" else paste0("FAILED (see ", basename(err), ")"),
                        as.numeric(difftime(Sys.time(), t1, units = "mins")), i, nrow(todo), el / i * (nrow(todo) - i)))
+    # stop early if the first runs all fail: something is wrong with the setup, not one night
+    if (!(st == 0 && file.exists(j$out))) n_fail = n_fail + 1
+    if (i == 3 && n_fail == 3) {
+      cat("\nThe first 3 runs all failed; stopping. The error was:\n")
+      cat(readLines(err, warn = FALSE), sep = "\n")
+      stop("Fix the error above and rerun the same command.")
+    }
   }
 }
 
