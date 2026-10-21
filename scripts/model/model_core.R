@@ -24,9 +24,22 @@ sig_of   = function(f) if (is.null(f$post)) f$sigma_scale else f$post$sigma_scal
 #             v_i = sigma^2 * (1 + alpha*lambda - lambda^2) Var[y_i | y_i >= a_i]
 #   M-step  refit with censored y replaced by m_i; sigma^2 adds the v_i back, because
 #           using only the imputed MEAN would understate the residual variance.
+#
+# `p_atom`: ATOM AT THE BOUND. Pure Tobit has E[y | y >= a] > a STRICTLY, so every
+# still-censored unit is pushed above its bound -- which is why censoring measured as
+# fixing early turnout (184% -> 99% at 20:00) and breaking late (100% -> 124%). The
+# misspecification is that a FINISHED unit sits exactly AT its bound, and the continuous
+# model gives that outcome probability zero, when y = a exactly is the common case late
+# on. So mix a point mass in: with probability p_atom_i the unit is done and y_i = a_i
+# exactly, with probability 1 - p_atom_i it is still counting and y_i > a_i.
+#   m_i = p*a_i + (1-p)*(mu_i + sigma*lambda)
+#   v_i = p*a_i^2 + (1-p)*(v_trunc + m_trunc^2) - m_i^2
+# The variance picks up the BETWEEN-component spread, so a unit we are unsure about
+# widens sigma rather than silently sharpening it. p_atom = 0 is exactly pure Tobit, so
+# the default is unchanged.
 fit_conj_re = function(y, Xcov, Cty, obs, prior_loc, prior_eff, lambda, wts = NULL,
                        sigma_df0 = 4, sigma_s0 = 0.05, sd_level = NULL,
-                       cens = NULL, y_lb = NULL, n_em = 4L) {
+                       cens = NULL, y_lb = NULL, p_atom = NULL, n_em = 4L) {
   N = nrow(Xcov); p = ncol(Xcov); J = ncol(Cty)
   if (is.null(wts)) wts = rep(1, N)
   if (is.null(cens)) cens = rep(FALSE, N)
@@ -36,6 +49,10 @@ fit_conj_re = function(y, Xcov, Cty, obs, prior_loc, prior_eff, lambda, wts = NU
   n_cen = sum(cens)
   cen_in_use = cens[use]                                # position of censored rows in A_dat
   a_lb = if (n_cen > 0) y_lb[cens] else numeric(0)
+  # probability each censored unit is already FINISHED (sits exactly at its bound)
+  pa = if (n_cen == 0) numeric(0)
+       else if (is.null(p_atom)) rep(0, n_cen)
+       else pmin(pmax(p_atom[cens], 0), 1)
   Zp = matrix(0, N, J)                                  # g-prior rows ignore county block
   A_dat = cbind(Xcov[use, , drop = FALSE], Cty[use, , drop = FALSE])
   A_rid = cbind(matrix(0, J, p), diag(J))               # shrink u_c toward 0
@@ -103,8 +120,13 @@ fit_conj_re = function(y, Xcov, Cty, obs, prior_loc, prior_eff, lambda, wts = NU
     alpha = (a_lb - mu[cen_in_use]) / sg
     lam = exp(dnorm(alpha, log = TRUE) - pnorm(alpha, lower.tail = FALSE, log.p = TRUE))
     lam[!is.finite(lam)] = pmax(alpha[!is.finite(lam)], 0)   # far tail: E[y|y>=a] -> a
-    y_use[cen_in_use] = mu[cen_in_use] + sg * lam
-    v_cen = sg^2 * pmax(1 + alpha * lam - lam^2, 0)
+    m_trunc = mu[cen_in_use] + sg * lam              # E[y | y > a], the "still counting" arm
+    v_trunc = sg^2 * pmax(1 + alpha * lam - lam^2, 0)
+    y_use[cen_in_use] = pa * a_lb + (1 - pa) * m_trunc
+    # second moment of the mixture, then the usual Var = E[y^2] - E[y]^2. With pa = 0
+    # this collapses to v_trunc exactly.
+    e_y2  = pa * a_lb^2 + (1 - pa) * (v_trunc + m_trunc^2)
+    v_cen = pmax(e_y2 - y_use[cen_in_use]^2, 0)
   }
   coefs = qr.solve(qrX, y_fit * sw)
   res   = qr.resid(qrX, y_fit * sw)

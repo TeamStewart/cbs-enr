@@ -136,6 +136,23 @@ SD_UNREP       = as.numeric(Sys.getenv("SD_UNREP", unset = "0.25"))
 # sitting exactly at its bound, when tau = C exactly is the common case late on. The fix
 # is a mixture likelihood with an atom at the bound, not a different threshold.
 USE_CENSOR     = Sys.getenv("USE_CENSOR", unset = "0") == "1"
+# ATOM AT THE BOUND (USE_ATOM=1; needs USE_CENSOR=1 to do anything). Pure Tobit gives a
+# FINISHED precinct zero probability of sitting exactly at its bound, which is what makes
+# censoring break late turnout -- E[T | T >= C] > C strictly, so every still-censored
+# precinct is pushed above its count even when counting has plainly stopped. The mixture
+# puts a point mass at C with probability p_atom (see model_core.R::fit_conj_re).
+#
+# WHERE p_atom COMES FROM. The evidence that a precinct has finished is how much of it is
+# already flagged counted-out, measured in EXPECTED VOTES rather than in modes:
+#     q_cov_i = sum_{m counted out} mode_turn_share_im
+# A precinct with mail+early in (q ~ 0.70 on TX 2022 shares) is probably done; one with
+# only mail in (q ~ 0.04) is plainly not. This makes the completeness flag SOFT EVIDENCE
+# rather than a hard gate, which matters because in production it arrives late, varies by
+# state, and moves backwards. ATOM_FLOOR/ATOM_CEIL keep p off 0 and 1 so neither arm of
+# the mixture is ever asserted with certainty.
+USE_ATOM       = Sys.getenv("USE_ATOM", unset = "0") == "1"
+ATOM_FLOOR     = as.numeric(Sys.getenv("ATOM_FLOOR", unset = "0.02"))
+ATOM_CEIL      = as.numeric(Sys.getenv("ATOM_CEIL",  unset = "0.98"))
 # ---- BOUNDED TURNOUT: precinct total x mode composition -----------------------------
 # The three per-mode turnout equations used to be unconstrained log-normals fitted
 # independently, so nothing tied them to each other or to anything physical. Turnout read
@@ -895,6 +912,14 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       cnt_prec  = sum(if_else(obs, tau, 0), na.rm = TRUE),   # counted so far, precinct
       all_done  = all(obs_turn),                             # every mode counted out
       T_final   = sum(if_else(obs_turn, tau, 0), na.rm = TRUE),
+      # share of the precinct's expected votes that is already flagged counted-out;
+      # the evidence p_atom is built from. all_done => q_cov == 1.
+      q_cov     = sum(if_else(obs_turn, mode_turn_share, 0), na.rm = TRUE),
+      # SECOND, independent signal that counting has stopped: how much of the precinct's
+      # PRIOR expected total is already in. q_cov is only as good as the completeness
+      # flag; this one needs no flag at all. A precinct that has already counted its
+      # whole expected vote is done whatever the flag says.
+      r_prior   = cnt_prec / pmax(sum(prior_tau), 1),
       tau_ref   = { i <- match(REF_MODE, mode); if_else(rep(obs_turn[i], n()), tau[i], NA_real_) },
       ref_done  = { i <- match(REF_MODE, mode); rep(obs_turn[i], n()) },
       .by = geo) |>
@@ -915,7 +940,14 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # early blow-up and broke the late one -- the total is the quantity with the good
       # prior (corr(log) 0.962) and the bound is directly observable.
       cens_tau = USE_COMPOSE & is_ref & !fit_tau & cnt_prec > 0,
-      lb_tau   = logit(pmin(pmax(cnt_prec / cap, 1e-4), 1 - 1e-4))
+      lb_tau   = logit(pmin(pmax(cnt_prec / cap, 1e-4), 1 - 1e-4)),
+      # P(this precinct has finished counting). Only the reference slot is ever
+      # censored, so this is only read there.
+      # Either signal on its own is sufficient evidence, so take the max: most modes
+      # flagged done, OR the expected vote already counted. Erring HIGH here is the safe
+      # direction -- a too-high p_atom under-predicts T, and the counted-votes floor
+      # catches that, whereas a too-low p_atom over-predicts and the floor cannot.
+      p_atom   = pmin(pmax(pmax(q_cov, pmin(r_prior, 1)), ATOM_FLOOR), ATOM_CEIL)
     )
 
   n_obs_cells = sum(d$obs)
@@ -982,6 +1014,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # mixture in the aggregation.
       cs = if (out == "tau") dm$cens_tau else NULL
       lb = if (out == "tau") dm$lb_tau else NULL
+      pa = if (out == "tau" && USE_ATOM) dm$p_atom else NULL
       wt = if (out == "tau") NULL else {
         raw = pmax(dm$tau, 1)                         # ballots counted in the cell
         raw[!dm$obs] = 1                              # unused (not in subset), keep finite
@@ -999,7 +1032,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
           prior_loc = dm[[pcol]], prior_eff = pn / nrow(dm),
           lambda = lam, wts = wt,
           sd_level = if (SD_SYS_LEVEL > 0) SD_SYS_LEVEL else NULL,
-          cens = if (USE_CENSOR) cs else NULL, y_lb = lb
+          cens = if (USE_CENSOR) cs else NULL, y_lb = lb, p_atom = pa
         )
         if (is.null(fit)) cli_abort("county-RE design is rank deficient for {m}/{out}")
       } else {
