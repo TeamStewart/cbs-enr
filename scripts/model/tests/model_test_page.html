@@ -91,6 +91,15 @@ code { font-family: var(--font-data); font-size: 0.85em; }
 
 
 
+<section id="calib">
+  <div class="eyebrow">Calibration</div>
+  <h2>How often is each model wrong? Many synthetic nights</h2>
+  <p>Each synthetic night keeps <code>tx_base</code>'s turnout, vote-method split and reporting schedule but draws a new result for every precinct: a race-wide shift (the 32-county result lands within about ±4 points of <code>tx_base</code>'s), a shift for each county sized from real Texas swings, a within-county tilt by Hispanic, college and Black share (Hispanic from −15 to +20 points per 100% Hispanic, drawn per night), and a leftover precinct pattern taken from a real past Texas swing (2020→2022, 2022→2024 or 2020→2024) with its county and demographic parts removed. About three-quarters of the variation is within counties, as in real Texas swings. A well-calibrated model's 50%, 80% and 95% intervals hold the true 32-county result about 50%, 80% and 95% of the time. "Confidently wrong" is the share of race-nights where the whole 95% interval was on the wrong side of 50%. The 50% and 80% intervals are read off each model's 95% interval assuming a normal shape. Made with <code>run_calibration.R</code>; <span id="calib-updated"></span></p>
+  <div class="tbl"><table id="calib-table" aria-label="Calibration by checkpoint"></table></div>
+  <h3 style="margin:8px 0 0;font-size:1rem">By the night's Hispanic tilt, and in close races</h3>
+  <div class="tbl"><table id="calib-table2" aria-label="Calibration by Hispanic tilt"></table></div>
+</section>
+
 <section id="sim">
   <div class="eyebrow">Simulated nights</div>
   <h2>One scenario in detail: the 32 counties</h2>
@@ -426,5 +435,26 @@ document.getElementById("rank-table").innerHTML = "<thead><tr><th>Quality</th>" 
     return `<td${bg ? ` style="background:${bg}"` : ""}><ol>` + has.map(([m, v]) => `<li>${m} (${show(v)})</li>`).join("") + "</ol>" +
       (none.length ? `<span class="note">${name.startsWith("Earliest") ? "never right" : "n/a (no interval)"}: ${none.map(([m]) => m).join(", ")}</span>` : "") + "</td>";
   }).join("") + "</tr>").join("") + "</tbody>";
+// ---- calibration section ----
+if (DATA.calib) {
+  const C = DATA.calib.rows, models = [...new Set(C.map(r => r.m))].sort((a, b) => MODEL_ORDER.indexOf(a) - MODEL_ORDER.indexOf(b));
+  document.getElementById("calib-updated").textContent = `last summarised ${DATA.calib.updated}, ${Math.max(...C.map(r => r.n))} nights.`;
+  const fmtT = t => t === "all" ? "All checkpoints" : t.replace(/^2026-11-0?/, "Nov ").replace(/^Nov (\d+) /, "Nov $1, ");
+  const colr = (v, target) => Math.abs(v - target) <= 3 ? "" : (v < target ? "miss" : "");
+  const head = "<thead><tr><th style='text-align:left'>When</th><th>Counted</th>" + models.map(m => `<th>${m}<br>95% / 80% / 50% hold truth</th><th>Confidently wrong</th><th>Avg width</th>`).join("") + "</tr></thead>";
+  const row = (g, t) => { const rs = models.map(m => C.find(r => r.g === g && r.t === t && r.m === m));
+    if (!rs.some(Boolean)) return "";
+    const any = rs.find(Boolean);
+    return `<tr><td style="text-align:left">${fmtT(t)}</td><td>${any.pv}%</td>` + rs.map(r => r ? `<td><span class="${colr(r.c95, 95)}">${fmt(r.c95)}%</span> / <span class="${colr(r.c80, 80)}">${fmt(r.c80)}%</span> / <span class="${colr(r.c50, 50)}">${fmt(r.c50)}%</span></td><td class="${r.w > 1 ? "miss" : ""}">${fmt(r.w)}%</td><td>${fmt(r.wd, 2)} pts</td>` : "<td>–</td><td>–</td><td>–</td>").join("") + "</tr>"; };
+  const times = [...new Set(C.filter(r => r.g === "by checkpoint").map(r => r.t))].sort();
+  document.getElementById("calib-table").innerHTML = head + "<tbody>" + times.map(t => row("by checkpoint", t)).join("") + row("all checkpoints", "all") + "</tbody>";
+  const g2 = [...new Set(C.filter(r => r.g === "by Hispanic tilt").map(r => r.t))];
+  const closeT = [...new Set(C.filter(r => r.g.startsWith("close")).map(r => r.t))].sort();
+  const head2 = "<thead><tr><th style='text-align:left'>Group</th>" + models.map(m => `<th>${m}<br>95% holds truth</th><th>Confidently wrong</th><th>Race-nights</th>`).join("") + "</tr></thead>";
+  const row2 = (g, t, label) => "<tr><td style='text-align:left'>" + label + "</td>" + models.map(m => { const r = C.find(x => x.g === g && x.t === t && x.m === m);
+    return r ? `<td class="${colr(r.c95, 95)}">${fmt(r.c95)}%</td><td class="${r.w > 1 ? "miss" : ""}">${fmt(r.w)}%</td><td>${r.rn}</td>` : "<td>–</td><td>–</td><td>–</td>"; }).join("") + "</tr>";
+  document.getElementById("calib-table2").innerHTML = head2 + "<tbody>" + g2.map(t => row2("by Hispanic tilt", t, t)).join("") +
+    closeT.map(t => row2(C.find(r => r.t === t && r.g.startsWith("close")).g, t, "Close races (true result within 3 pts of 50%), all checkpoints")).join("") + "</tbody>";
+} else document.getElementById("calib").hidden = true;
 drawSim();
 </script>

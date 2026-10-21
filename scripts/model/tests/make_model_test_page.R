@@ -138,7 +138,17 @@ sims = setNames(lapply(KEYS, function(k) {
 }), KEYS)
 names(sims) = NAMES[KEYS]
 
-data = list(sims = sims, state = state,
+# ---- calibration over many synthetic nights (run_calibration.R), if it has run ----------
+p_cal = file.path(DIR_OUT, "calibration", "calibration_summary.csv")
+calib = if (file.exists(p_cal)) {
+  cs = read_csv(p_cal, show_col_types = FALSE, col_types = cols(time = "c", group = "c", model = "c"))
+  list(rows = unname(Map(\(g, t, m, n, rn, c50, c80, c95, w, e, wd, pv) list(g = g, t = t, m = m, n = n, rn = rn, c50 = c50, c80 = c80, c95 = c95, w = w, e = e, wd = wd, pv = pv),
+                         cs$group, cs$time, cs$model, cs$nights, cs$race_nights, round(100 * cs$cov50, 1), round(100 * cs$cov80, 1),
+                         round(100 * cs$cov95, 1), round(100 * cs$wrong, 1), round(100 * cs$err, 2), round(100 * cs$width, 2), round(100 * cs$pct_votes))),
+       updated = format(file.mtime(p_cal), "%b %d, %Y %H:%M"))
+} else NULL
+
+data = list(sims = sims, state = state, calib = calib,
             run = format(Sys.time(), "%b %d, %Y %H:%M"))
 json = jsonlite::toJSON(data, auto_unbox = TRUE, digits = NA, null = "null", na = "null")
 

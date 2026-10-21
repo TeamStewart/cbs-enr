@@ -71,10 +71,17 @@ stopifnot("--complete must be feed or stopped" = COMPLETE %in% c("feed", "stoppe
 SCENARIO = c(grep("^--", args, value = TRUE, invert = TRUE), "tx_base")[1]
 stopifnot("--model must be trial, core, swing or cory" = MODEL %in% c("trial", "core", "swing", "cory"))
 LABEL = sub("^--label=", "", c(grep("^--label=", args, value = TRUE), "--label=")[1])
+# calibration runs (run_calibration.R): a night outside 26_sim, fewer checkpoints, no
+# statewide step, and an explicit output file
+SIM_DIR = sub("^--sim_dir=", "", c(grep("^--sim_dir=", args, value = TRUE), "--sim_dir=")[1])
+OUT_FILE = sub("^--out=", "", c(grep("^--out=", args, value = TRUE), "--out=")[1])
+CALIB = "--checkpoints=calib" %in% args
+NO_ST = "--no_statewide" %in% args
+if (nzchar(SIM_DIR)) SCENARIO = basename(SIM_DIR)
 stopifnot("--label may use only letters, digits, - and _" = grepl("^[A-Za-z0-9_-]*$", LABEL))
 TZ = "America/New_York"
 
-dir_sc = file.path(DIR_SIM, SCENARIO)
+dir_sc = if (nzchar(SIM_DIR)) SIM_DIR else file.path(DIR_SIM, SCENARIO)
 truth = read_pq(file.path(dir_sc, "TX_truth.parquet")) |> mutate(across(c(geo, county_cbs), as.character))
 sched = read_pq(file.path(dir_sc, "TX_schedule.parquet")) |> mutate(geo = as.character(geo), t = lubridate::with_tz(t, TZ))
 inp = read_pq(file.path(DIR_26, "input_data", "model_inputs", "TX_precinct.parquet"))
@@ -125,6 +132,8 @@ counted_at = function(fin, time) {
 }
 times = c(seq(as.POSIXct("2026-11-03 20:00", tz = TZ), as.POSIXct("2026-11-04 04:00", tz = TZ), by = "15 min"),
           as.POSIXct(c("2026-11-04 12:00", "2026-11-05 12:00", "2026-11-07 12:00", "2026-11-10 12:00"), tz = TZ))
+if (CALIB) times = as.POSIXct(c("2026-11-03 20:30", "2026-11-03 21:00", "2026-11-03 21:30", "2026-11-03 22:30",
+                                 "2026-11-04 00:00", "2026-11-04 04:00", "2026-11-10 12:00"), tz = TZ)
 
 # one results row from draws of the two-party share, plus what has been counted
 summarize_draws = function(race, tm, d, S2, turn, extra = list()) {
@@ -215,7 +224,7 @@ if (MODEL == "trial") {
   d0 = prior_draws(cells)          # reference prior for the confidence sequence
   # rough statewide estimate (see statewide_tx.R); NULL if its inputs are missing
   source("scripts/model/tests/statewide_tx.R")
-  ST = statewide_setup(inp)
+  ST = if (NO_ST) NULL else statewide_setup(inp)
   # this run's two-party Dem share and votes per precinct, in ST$p32 order
   prec_two_party = function(f) {
     i = match(ST$p32$geo, f$prec$geo)
@@ -341,7 +350,7 @@ if (MODEL == "swing") {
   BOOT = 100                                   # county bootstrap replicates for the interval
   base = expected_cells()
   source("scripts/model/tests/statewide_tx.R")
-  ST = statewide_setup(inp)
+  ST = if (NO_ST) NULL else statewide_setup(inp)
   cat("Model: standard uniform swing model (feols, county fixed effects), interval from", BOOT, "county bootstrap replicates\n")
 
   # predictions from county + method fixed effects; cells whose county (or method) has no
@@ -438,7 +447,7 @@ if (MODEL == "cory") {
   suppressPackageStartupMessages(library(enightmodels))
   base = expected_cells()
   source("scripts/model/tests/statewide_tx.R")
-  ST = statewide_setup(inp)
+  ST = if (NO_ST) NULL else statewide_setup(inp)
   cfg = model_legacy_config()
   cat("Model: enightmodels::model_legacy() with model_legacy_config() defaults:",
       paste(names(cfg), vapply(cfg, \(x) paste(x, collapse = ","), ""), sep = " = ", collapse = "; "), "\n")
@@ -545,7 +554,8 @@ if (MODEL == "trial") {
                                        USE_COUNTY_RE, MODE_OFFSET_SOURCE, DRAWS))
 }
 
-out = file.path(DIR_OUT, sprintf("sim_%s%s_results.csv", SCENARIO, if (nzchar(LABEL)) paste0("__", LABEL) else ""))
+out = if (nzchar(OUT_FILE)) OUT_FILE else
+  file.path(DIR_OUT, sprintf("sim_%s%s_results.csv", SCENARIO, if (nzchar(LABEL)) paste0("__", LABEL) else ""))
 write_csv(res, out)
 cat(sprintf("\nSummary (two-party Dem share), %s model%s, %.1f minutes:\n", MODEL,
             if (length(changes)) paste0(" [", paste(changes, collapse = "; "), "]") else "", as.numeric(difftime(Sys.time(), t0, units = "mins"))))
