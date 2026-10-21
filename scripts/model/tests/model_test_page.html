@@ -16,6 +16,7 @@
   --truth: #1b2230;
   --raw: #8a919e;
   --warn-bg: #fbecea;
+  --note-bg: #fbf3d5;
   --ok-bg: #e8f1fa;
   --font-display: "Newsreader", Georgia, "Times New Roman", serif;
   --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -25,26 +26,32 @@
   :root:not([data-theme="light"]) {
     --bg: #12161d; --surface: #1a2029; --fg: #e6e9ef; --muted: #9aa3b2; --rule: #2e3643;
     --dem: #6ea8e8; --dem-band: rgba(110, 168, 232, 0.2); --rep: #e57373; --truth: #e6e9ef; --raw: #7d8594;
-    --warn-bg: #3a2224; --ok-bg: #1d2c3d; color-scheme: dark;
+    --warn-bg: #3a2224; --ok-bg: #1d2c3d; --note-bg: #3a3420; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #12161d; --surface: #1a2029; --fg: #e6e9ef; --muted: #9aa3b2; --rule: #2e3643;
   --dem: #6ea8e8; --dem-band: rgba(110, 168, 232, 0.2); --rep: #e57373; --truth: #e6e9ef; --raw: #7d8594;
-  --warn-bg: #3a2224; --ok-bg: #1d2c3d; color-scheme: dark;
+  --warn-bg: #3a2224; --ok-bg: #1d2c3d; --note-bg: #3a3420; color-scheme: dark;
 }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
 .wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
 h1, h2 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.15; }
 h1 { font-size: 2.1rem; }
 h2 { font-size: 1.5rem; }
-p { margin: 0; max-width: 68ch; }
+p { margin: 0; }
 .eyebrow { font-family: var(--font-data); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 header { display: grid; gap: 12px; }
 .findings { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.findings li { padding: 12px 14px; border-radius: 6px; background: var(--surface); border: 1px solid var(--rule); max-width: 68ch; }
+.findings li { padding: 12px 14px; border-radius: 6px; background: var(--surface); border: 1px solid var(--rule); }
 .findings li.bad { background: var(--warn-bg); border-color: transparent; }
 .findings li.good { background: var(--ok-bg); border-color: transparent; }
+.findings li.note { background: var(--note-bg); border-color: transparent; }
+.findings li .sc { display: block; margin-top: 4px; }
+table.rank td { text-align: left; vertical-align: top; white-space: normal; min-width: 14ch; }
+table.rank th { text-align: left; }
+table.rank td.q { font-weight: 600; }
+table.rank ol { margin: 0; padding-left: 1.3em; }
 section { display: grid; gap: 14px; }
 figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -66,7 +73,7 @@ th, td { text-align: right; padding: 5px 10px; border-bottom: 1px solid var(--ru
 th:first-child, td:first-child { text-align: left; }
 th { font-weight: 600; color: var(--muted); font-size: 0.78rem; }
 td.miss { color: var(--rep); font-weight: 600; }
-ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 68ch; }
+ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
 code { font-family: var(--font-data); font-size: 0.85em; }
 [hidden] { display: none !important; }
 </style>
@@ -75,19 +82,17 @@ code { font-family: var(--font-data); font-size: 0.85em; }
 <header>
   <div class="eyebrow" id="stamp">CBS election desk · TX precinct model</div>
   <h1>How the TX precinct model behaves as votes come in (Bridget)</h1>
-  <p>The full precinct model (<code>scripts/model/tx_gov_trial.R</code>) run on Ethan's simulated election nights, one scenario at a time. Each chart shows the model's estimate of the Democratic two-party share, its 95% interval, the raw share of votes counted so far, and the true final result.</p>
+  <p>Three election-night models run on Ethan's simulated night (<code>tx_base</code>) and two stress versions of it: <strong>model_y</strong>, the full precinct model (<code>scripts/model/tx_gov_trial.R</code>); <strong>model_simpleswing</strong>, the standard uniform swing model; and <strong>model_cory</strong>, Cory's <code>model_legacy()</code> from enightmodels. Blue boxes: every 95% interval held the truth at 90%+ of checkpoints and was never confidently wrong; red: at least one race fell short; yellow: no interval to check. Each chart shows the model's estimate of the Democratic two-party share, its 95% interval, the raw share of votes counted so far, and the true final result.</p>
   <ul class="findings" id="findings"></ul>
+  <h2>How the models rank</h2>
+  <p class="note">Each cell ranks the models on one quality for one scenario, best first, averaging Governor and Senate. A cell is filled with the colour of its top model's box above; it is left blank when the top two tie. "Right winner from" is the time from which the model had the right winner in both races and kept it; for a model with an interval that means the whole interval was on the right side of 50%, for model_cory (point estimates only) that its estimate was. Coverage is the share of checkpoints where the 95% interval held the true result. Errors and widths are in points of the two-party share, over checkpoints with any votes counted. Turnout is the 32-county total at 4am against the truth. All in the 32 counties except the last row.</p>
+  <div class="tbl"><table class="rank" id="rank-table" aria-label="Model rankings by scenario"></table></div>
 </header>
 
 
 
 <section id="sim">
   <div class="eyebrow">Simulated nights</div>
-  <h2>How each scenario went in the 32 counties</h2>
-  <p>Each row is one race in one run: one of Ethan's scenarios run through one model: <strong>model_y</strong> is the full precinct model (<code>tx_gov_trial.R</code>), <strong>model_simpleswing</strong> is the standard uniform swing model (feols with county fixed effects), and <strong>model_cory</strong> is Cory's <code>model_legacy()</code> from the enightmodels package. model_cory gives point estimates only, so it has no coverage, "confidently wrong" count or interval width. "What's different" lists the sim settings that differ from <code>tx_base</code> and the model settings that differ from the defaults. Coverage counts the checkpoints where the 95% interval held the true result; "confidently wrong" counts checkpoints where the whole interval was on the wrong side of 50%. Average error and interval width are over checkpoints with any votes counted, in percentage points of the two-party share; these are where runs with different model settings usually differ.</p>
-  <div class="tbl">
-    <table id="sc-table" aria-label="Scenario comparison"></table>
-  </div>
   <h2>One scenario in detail: the 32 counties</h2>
   <p>Ethan's simulation produces the final count for all 6,134 precincts and a reporting schedule by vote mode: early votes in one countywide dump after polls close, Election Day precincts over the next few hours, and late mail days later. Some precincts never appear (unmatched IDs) and some counties may never report, as set in the scenario's manifest. The model is refit every 15 minutes from 8:00pm to 4:00am, then at four later times. Before any votes are in for a vote mode, model_y has nothing to fit for that mode, so the first one or two checkpoints show very wide intervals; model_simpleswing has no estimate at all until votes arrive.</p>
   <figure>
@@ -138,38 +143,18 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     <table id="sim-table" aria-label="Simulated night checkpoints"></table>
   </div>
   <p class="note">Times are Eastern. The time axis is not to scale after 4:00am: the last four points are Nov 4 noon, Nov 5, Nov 7 and Nov 10, when late mail lands. Counted share tops out below 100% because unmatched precincts and non-reporting counties never come in; the model predicts their votes from the baseline.</p>
+  <h2>How each scenario went in the 32 counties</h2>
+  <p>Each row is one race in one run: one of Ethan's scenarios run through one model: <strong>model_y</strong> is the full precinct model (<code>tx_gov_trial.R</code>), <strong>model_simpleswing</strong> is the standard uniform swing model (feols with county fixed effects), and <strong>model_cory</strong> is Cory's <code>model_legacy()</code> from the enightmodels package. model_cory gives point estimates only, so it has no coverage, "confidently wrong" count or interval width. "What's different" lists the sim settings that differ from <code>tx_base</code> and the model settings that differ from the defaults. Coverage counts the checkpoints where the 95% interval held the true result; "confidently wrong" counts checkpoints where the whole interval was on the wrong side of 50%. Average error and interval width are over checkpoints with any votes counted, in percentage points of the two-party share; these are where runs with different model settings usually differ.</p>
+  <div class="tbl">
+    <table id="sc-table" aria-label="Scenario comparison"></table>
+  </div>
 </section>
 
-<section id="backtest">
-  <div class="eyebrow">Older test · simpler model, real 2022 results</div>
-  <h2>Older backtest: 2022 governor in our 32 counties</h2>
-  <p>The model is fit to the real 2022 result using only information available before November 2022: 2020 Senate results as the partisan baseline, 2018 turnout, and L2 demographics. Precincts are then revealed in order and the estimate is checked against the known result at each step. There are no 2022 precinct results by vote mode, so model_y can't run on it; this test uses the simpler <code>model_core.R</code> version and treats each precinct as one unit. It is kept for the reporting-order comparison.</p>
-  <figure>
-    <div class="controls">
-      <div class="seg" role="group" aria-label="Reporting order">
-        <button id="bt-county_re" aria-pressed="true">Small counties first</button>
-        <button id="bt-county_nore" aria-pressed="false">Small first, no county effect</button>
-        <button id="bt-random_re" aria-pressed="false">Random order</button>
-      </div>
-    </div>
-    <svg id="bt-chart" class="chart" viewBox="0 0 760 380" role="img" aria-label="Backtest estimate by share of votes counted"></svg>
-    <div class="legend">
-      <span><i class="sw" style="background:var(--dem-band)"></i>95% interval</span>
-      <span><i class="sw" style="background:var(--dem);height:3px"></i>Model estimate</span>
-      <span><i class="sw" style="background:var(--raw);height:2px"></i>Raw count so far</span>
-      <span><i class="sw" style="background:var(--truth);height:2px"></i>Final result (<span id="bt-truth"></span>%)</span>
-    </div>
-    <div class="readout" id="bt-readout">Hover or tap the chart to read values.</div>
-  </figure>
-  <p class="note">"Small counties first" reveals whole counties from smallest to largest, so Harris, Dallas, Bexar and Travis come last. That is harsher than a real night, where early votes from every county arrive within about an hour, and it isolates one problem: the first counties in are rural and Republican, so the model can read their lean as a statewide pattern. Compare the first two buttons to see what the county effect adds.</p>
-</section>
 
 <section id="method">
   <div class="eyebrow">What was run</div>
   <h2>How these numbers were produced</h2>
   <ul class="plain">
-    <li><strong>Older backtest model</strong> (shown only if its results exist): the shared fitting functions in <code>model_core.R</code> (turnout, third-party share and two-party share equations; g-prior worth 3 precincts; county random effect with ICC 0.302), with the same covariates as <code>tx_backtest.R</code>: registrants, 2018 and 2020 turnout, sex, age 65+, Black, Hispanic and college shares.</li>
-    <li><strong>Older backtest:</strong> <code>test_backtest_tx22.R</code> rebuilds Young-Kyung's panel (as in <code>tx_backtest_panel.R</code>) from the Dropbox files: precincts in the 32 counties joined to votehub's 2022 results. 500 draws per checkpoint.</li>
     <li><strong>Simulated nights:</strong> <code>test_sim_night.R</code>, once per scenario; the settings for each are under its chart. <strong>model_y</strong> is the full model in <code>tx_gov_trial.R</code> (precinct × vote-mode cells, bounded turnout, county random effect, cross-mode correlation, mode offsets): its own code builds the precinct frame, mode priors and cells, and it is fed the simulated counts at each time, with each cell flagged complete once that mode is fully counted; "core" is the simpler <code>model_core.R</code> version with no cross-mode correlation or mode offsets. Priors come from <code>TX_precinct.parquet</code> and the 2022 mode mix in <code>TX_precinct_mode_history.parquet</code>.</li>
     <li><strong>model_simpleswing</strong>, the standard uniform swing model: <code>test_sim_night.R --model=swing</code>. Each reported precinct × vote-method cell's swing in Democratic two-party share from its Harris 2024 share is regressed on county and vote-method fixed effects with <code>fixest::feols</code>, weighted by expected votes; unreported cells get their county's swing, and counties with nothing in yet get the average swing. Turnout is fit the same way on fully counted cells (log of counted over expected votes). The interval comes from 100 bootstrap resamples of the reporting counties. It has no estimate before any votes are in, so its runs start at the first checkpoint with votes.</li>
     <li><strong>model_cory</strong>: <code>test_sim_night.R --model=cory</code> calls <code>enightmodels::model_legacy()</code> exactly as the package provides it, with its default configuration (<code>model_legacy_config()</code>: by vote method, strata = geostratum, a precinct counts as complete at stage 6). Turnout: each stratum × method's ratio of counted to expected votes in reporting precincts, applied to the rest. Vote share: each candidate's ratio of counted votes to expected votes, by stratum and method. Its input is the standard election-data format built from Ethan's snapshot (one row per precinct × method × candidate, stage 0 / 4 / 6), with <code>past</code> set to the expected votes for that row (expected turnout × 2022 method split × the Harris 2024 two-party share, third parties from <code>oth_base</code>). It returns point estimates only.</li>
@@ -203,30 +188,6 @@ function bandPath(rows, xf, yf, lo, hi) {
   return "M" + ok.map(([r, i]) => xf(i) + "," + yf(r[hi])).concat(ok.slice().reverse().map(([r, i]) => xf(i) + "," + yf(r[lo]))).join("L") + "Z";
 }
 
-function drawBacktest(key) {
-  const svg = document.getElementById("bt-chart"); svg.innerHTML = "";
-  const rows = DATA.bt[key], truth = DATA.bt_truth;
-  const W = 760, H = 380, m = { l: 52, r: 20, t: 16, b: 44 };
-  const x = v => m.l + v / 100 * (W - m.l - m.r);
-  const y0 = 10, y1 = 70;
-  const y = v => m.t + (y1 - Math.max(y0, Math.min(y1, v))) / (y1 - y0) * (H - m.t - m.b);
-  for (let v = 10; v <= 70; v += 10) {
-    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: "var(--rule)", "stroke-width": v === 50 ? 1.5 : 1, "stroke-dasharray": v === 50 ? "4 3" : "" }, svg);
-    el("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = v + "%";
-  }
-  for (let v = 0; v <= 100; v += 20) el("text", { x: x(v), y: H - m.b + 18, "text-anchor": "middle" }, svg).textContent = v + "%";
-  el("text", { x: (m.l + W - m.r) / 2, y: H - 6, "text-anchor": "middle" }, svg).textContent = "share of votes counted";
-  el("text", { x: x(62), y: y(50) + 16, "text-anchor": "start" }, svg).textContent = "50% = tie";
-  const band = rows.map(r => [x(r[0]), y(r[3])]).concat(rows.slice().reverse().map(r => [x(r[0]), y(r[2])]));
-  el("path", { d: "M" + band.map(p => p.join(",")).join("L") + "Z", fill: "var(--dem-band)", stroke: "none" }, svg);
-  el("line", { x1: m.l, x2: W - m.r, y1: y(truth), y2: y(truth), stroke: "var(--truth)", "stroke-width": 1.5 }, svg);
-  el("path", { d: "M" + rows.map(r => x(r[0]) + "," + y(r[4])).join("L"), fill: "none", stroke: "var(--raw)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
-  el("path", { d: "M" + rows.map(r => x(r[0]) + "," + y(r[1])).join("L"), fill: "none", stroke: "var(--dem)", "stroke-width": 2.5 }, svg);
-  rows.forEach(r => { if (r[3] < truth - 0.0001 || r[2] > truth + 0.0001) el("circle", { cx: x(r[0]), cy: y(r[1]), r: 3, fill: "var(--rep)" }, svg); });
-  const cover = rows.filter(r => r[2] <= truth && r[3] >= truth).length;
-  el("text", { x: m.l + 8, y: m.t + 14 }, svg).textContent = `interval contains result at ${cover} of ${rows.length} checkpoints (red dots = misses)`;
-  hover(svg, rows, r => x(r[0]), r => `${fmt(r[0])}% counted · ${r[6]} counties in · estimate ${fmt(r[1])}% (${fmt(r[2])}–${fmt(r[3])}) · raw ${fmt(r[4])}% · P(Dem wins) ${Math.round(r[5] * 100)}% · result ${fmt(truth)}%`, "bt-readout", W, H, m);
-}
 
 function drawNight(id, S, late, tzName, lateLabel) {
   const svg = document.getElementById(id + "-chart"); svg.innerHTML = "";
@@ -359,8 +320,7 @@ const RACE = { gov: "Governor", sen: "Senate", house: "House" };
 const cov = (rows, lo, hi, t) => rows.filter(r => r[lo] <= t && r[hi] >= t).length;
 const wrong = (r, lo, hi, t) => (t > 50 && r[hi] < 50) || (t < 50 && r[lo] > 50);
 const right = (r, lo, hi, t) => (t > 50 && r[lo] > 50) || (t < 50 && r[hi] < 50);
-const lis = [];
-const bt = DATA.bt || {}, T = DATA.bt_truth;
+
 const SC = DATA.sims, scKeys = Object.keys(SC);
 const when = x => x ? x.replace(/^11-0?/, "Nov ") : "never";
 // models with point estimates only (no interval): coverage, "confidently wrong" and width are
@@ -374,27 +334,6 @@ const stats = (S) => { const r = S.rows, t = S.truth, hasInt = r.some(x => isNum
            err: avg(c.map(x => Math.abs(x[2] - t))), width: hasInt ? avg(c.filter(x => isNum(x[3])).map(x => x[4] - x[3])) : null,
            st4: r.find(x => x[0].endsWith("04 04:00")),
            turn4: (() => { const q = r.find(x => x[0].endsWith("04 04:00")); return q && S.truth_turn ? 100 * (q[10] / S.truth_turn - 1) : null; })() }; };
-scKeys.forEach(sc => {
-  const races = SC[sc].races, parts = Object.keys(races).map(k => { const z = stats(races[k]); return [k, z]; });
-  const bad = parts.some(([, z]) => z.wrong > 0);
-  lis.push([bad ? "bad" : "good", `<strong>${sc}:</strong> ` + parts.map(([k, z]) =>
-    (z.hasInt ? `${RACE[k] || k} ${z.cov}/${z.n} covered` : `${RACE[k] || k} point estimates only, average error ${fmt(z.err, 2)} pts`) + (z.wrong ? `, confidently wrong ${z.wrong} times (first ${z.firstWrong[0].slice(6)})` : "") + `, right winner from ${when(z.first)}`).join("; ") + "."]);
-});
-if (bt.county_re) {
-  const r = bt.county_re, w = r.filter(x => wrong(x, 2, 3, T));
-  const last = w.length ? Math.max(...w.map(x => x[0])) : null;
-  lis.push([w.length ? "bad" : "good", `<strong>Older backtest (simpler model), TX 2022 governor, small counties first:</strong> the interval held the true result (${fmt(T)}%) at ${cov(r, 2, 3, T)} of ${r.length} checkpoints. ` +
-    (w.length ? `It confidently pointed to the wrong winner at ${w.length} checkpoints, the last at ${fmt(last)}% of votes counted.` : "It never confidently pointed to the wrong winner.")]);
-}
-if (bt.random_re) {
-  const r = bt.random_re; let first = null;
-  for (let i = r.length - 1; i >= 0; i--) { if (right(r[i], 2, 3, T)) first = r[i][0]; else break; }
-  lis.push([cov(r, 2, 3, T) / r.length >= 0.9 ? "good" : "bad", `<strong>Older backtest, random reporting order:</strong> the interval held the truth at ${cov(r, 2, 3, T)} of ${r.length} checkpoints` +
-    (first !== null ? `, and from ${fmt(first)}% counted it excluded 50% on the right side.` : ".")]);
-}
-document.getElementById("findings").innerHTML = lis.map(([c, h]) => `<li class="${c}">${h}</li>`).join("");
-if (T !== undefined && T !== null) document.getElementById("bt-truth").textContent = fmt(T);
-else document.getElementById("backtest").hidden = true;
 if (DATA.state) {
   const st = DATA.state;
   const sg = x => (x > 0 ? "+" : "") + fmt(x, 2);
@@ -434,7 +373,58 @@ function drawSim() {
 seg("sim-", raceKeys, k => { curRace = k; drawSim(); });
 seg("mod-", modelKeys, k => { curModel = k; drawSim(); });
 seg("scn-", scenKeys, k => { curScen = k; drawSim(); });
-seg("bt-", ["county_re", "county_nore", "random_re"].filter(k => bt[k]), drawBacktest);
-if (bt.county_re) drawBacktest("county_re");
+// ---- header: one summary box per model, and the ranking table ----
+const SCEN_LABEL = { tx_base: "tx_base", tx_hispanic_swing: "tx_hispanic_swing", tx_urbanfirst: "tx_urbanfirst" };
+const runOf = (model, scen) => mainRuns.find(k => SC[k].model === model && SC[k].scenario === scen);
+const stWidth = S => { const c = S.rows.filter(x => x[1] > 0 && isNum(x[15]) && isNum(x[16])); return c.length ? c.reduce((a, x) => a + x[16] - x[15], 0) / c.length : null; };
+// per model x scenario: both races summarised
+const summ = (model, scen) => {
+  const k = runOf(model, scen); if (!k) return null;
+  const rs = Object.keys(SC[k].races), zs = rs.map(r => stats(SC[k].races[r]));
+  const mean = a => a.some(v => v === null) ? null : a.reduce((p, q) => p + q, 0) / a.length;
+  const firsts = zs.map(z => z.first);
+  return {
+    races: rs, zs,
+    first: firsts.some(f => !f) ? null : firsts.reduce((a, b) => (a > b ? a : b)),
+    cov: zs[0].hasInt ? mean(zs.map(z => z.cov / z.n)) : null,
+    wrong: zs[0].hasInt ? zs.reduce((a, z) => a + z.wrong, 0) : null,
+    err: mean(zs.map(z => z.err)), width: zs[0].hasInt ? mean(zs.map(z => z.width)) : null,
+    turn: mean(zs.map(z => z.turn4)), stw: mean(rs.map(r => stWidth(SC[k].races[r])))
+  };
+};
+const MODEL_BLURB = { model_y: "full precinct model (tx_gov_trial.R)", model_simpleswing: "standard uniform swing model (feols, county fixed effects)",
+                      model_cory: "Cory's enightmodels::model_legacy(), point estimates only" };
+const MODEL_CLASS = {};
+const lis = modelKeys.map(m => {
+  const parts = scenKeys.map(sc => [sc, summ(m, sc)]).filter(([, z]) => z);
+  const anyWrong = parts.some(([, z]) => z.wrong > 0), lowCov = parts.some(([, z]) => z.zs.some(zz => zz.hasInt && zz.cov / zz.n < 0.9));
+  const cls = parts.length && parts[0][1].cov === null ? "note" : (anyWrong || lowCov ? "bad" : "good");
+  const lines = parts.map(([sc, z]) => `<span class="sc"><em>${sc}:</em> ` + z.races.map((r, i) => { const zz = z.zs[i];
+      return `${RACE[r] || r} ` + (zz.hasInt ? `${zz.cov}/${zz.n} covered` : `no interval`) + `, error ${fmt(zz.err, 2)} pts` + (zz.wrong ? `, confidently wrong ${zz.wrong}×` : ""); }).join("; ") +
+    `; right winner from ${when(z.first)}` + (z.turn !== null ? `; turnout ${z.turn > 0 ? "+" : ""}${fmt(z.turn, 1)}% at 4am` : "") + `.</span>`).join("");
+  MODEL_CLASS[m] = cls;
+  return [cls, `<strong>${m}</strong> — ${MODEL_BLURB[m] || ""}${lines}`];
+});
+document.getElementById("findings").innerHTML = lis.map(([c, h]) => `<li class="${c}">${h}</li>`).join("");
+
+const QUALITIES = [
+  ["Earliest right winner from", z => z.first, (a, b) => (a < b ? -1 : 1), v => when(v)],
+  ["Top coverage (95% interval holds truth)", z => z.cov, (a, b) => b - a, v => fmt(100 * v, 0) + "%"],
+  ["Lowest average error", z => z.err, (a, b) => a - b, v => fmt(v, 2) + " pts"],
+  ["Lowest average interval width", z => z.width, (a, b) => a - b, v => fmt(v, 2) + " pts"],
+  ["Turnout vs truth (closest first)", z => z.turn, (a, b) => Math.abs(a) - Math.abs(b), v => (v > 0 ? "+" : "") + fmt(v, 1) + "%"],
+  ["Lowest statewide interval width (rough)", z => z.stw, (a, b) => a - b, v => fmt(v, 2) + " pts"]
+];
+document.getElementById("rank-table").innerHTML = "<thead><tr><th>Quality</th>" + scenKeys.map(sc => `<th>${SCEN_LABEL[sc] || sc}</th>`).join("") + "</tr></thead><tbody>" +
+  QUALITIES.map(([name, get, cmp, show]) => `<tr><td class="q">${name}</td>` + scenKeys.map(sc => {
+    const vals = modelKeys.map(m => [m, summ(m, sc)]).filter(([, z]) => z).map(([m, z]) => [m, get(z)]);
+    const has = vals.filter(([, v]) => v !== null && v !== undefined).sort((a, b) => cmp(a[1], b[1]));
+    const none = vals.filter(([, v]) => v === null || v === undefined);
+    // fill with the #1 model's box colour, unless the top two tie
+    const tie = has.length > 1 && show(has[0][1]) === show(has[1][1]);
+    const bg = has.length && !tie ? { good: "var(--ok-bg)", bad: "var(--warn-bg)", note: "var(--note-bg)" }[MODEL_CLASS[has[0][0]]] : null;
+    return `<td${bg ? ` style="background:${bg}"` : ""}><ol>` + has.map(([m, v]) => `<li>${m} (${show(v)})</li>`).join("") + "</ol>" +
+      (none.length ? `<span class="note">${name.startsWith("Earliest") ? "never right" : "n/a (no interval)"}: ${none.map(([m]) => m).join(", ")}</span>` : "") + "</td>";
+  }).join("") + "</tr>").join("") + "</tbody>";
 drawSim();
 </script>

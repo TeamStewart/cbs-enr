@@ -4,8 +4,8 @@
 ## Only reads results files, so it never reruns the model: rerun it any time to rebuild the page.
 ## Reads 26_general/model_tests/sim_<scenario>_results.csv for each scenario, and
 ## sim_<scenario>__<label>_results.csv for runs with other model settings (both from
-## test_sim_night.R), each scenario's 26_sim/<scenario>/manifest.json (to list what is
-## different from tx_base), and, if present, the older backtest_tx22_results.csv. Writes
+## test_sim_night.R), and each scenario's 26_sim/<scenario>/manifest.json (to list what
+## is different from tx_base). Writes
 ## one self-contained page, 26_general/model_tests/model_tests.html. Open it in any browser.
 ## The page layout lives in scripts/model/tests/model_test_page.html; findings at the top
 ## are computed from the data, so they update with each run.
@@ -138,16 +138,7 @@ sims = setNames(lapply(KEYS, function(k) {
 }), KEYS)
 names(sims) = NAMES[KEYS]
 
-# ---- the older TX 2022 backtest, if its results exist -------------------------------
-p22 = file.path(DIR_OUT, "backtest_tx22_results.csv")
-bt = if (file.exists(p22)) read_csv(p22, show_col_types = FALSE) else NULL
-bt_list = if (is.null(bt)) NULL else bt |>
-  mutate(key = paste0(if_else(order == "county_size", "county", "random"), if_else(county_effect, "_re", "_nore"))) |>
-  split(~key) |>
-  lapply(\(g) unname(Map(\(a, b, c, d, e, f, n) list(a, b, c, d, e, f, n),
-    r2(g$pct_votes), r2(g$est_twop), r2(g$lo_twop), r2(g$hi_twop), r2(g$raw_twop), round(g$p_dem_win, 3), g$n_counties)))
-
-data = list(sims = sims, state = state, bt = bt_list, bt_truth = if (is.null(bt)) NULL else r2(bt$truth_twop[1]),
+data = list(sims = sims, state = state,
             run = format(Sys.time(), "%b %d, %Y %H:%M"))
 json = jsonlite::toJSON(data, auto_unbox = TRUE, digits = NA, null = "null", na = "null")
 
