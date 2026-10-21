@@ -43,7 +43,7 @@ get_data <- function(state, county, timestamp, path = NULL, trust_stage = FALSE,
   }
 
   write_local(d, glue("{state}/clean/{local_file_name}_latest.csv"))
-  write_local(d, glue("{state}/clean/{local_file_name}_{timestamp}.csv"))
+  write_local(d, glue("{state}/clean/{local_file_name}_{timestamp}.csv"), csv = FALSE)
 
   return(d)
 }
