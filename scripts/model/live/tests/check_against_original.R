@@ -25,9 +25,10 @@ tmp = tempfile(fileext = ".csv")
 
 run_original = function(model) {
   cat("Running the original harness (--model=", model, ") ...\n", sep = "")
-  st = system2("Rscript", c("scripts/model/tests/test_sim_night.R", paste0("--sim_dir=", dir_sc),
-                            paste0("--model=", model), "--no_statewide", paste0("--out=", tmp)),
-               stdout = FALSE, stderr = FALSE)
+  # quoted: the Dropbox path has spaces. stderr shows, so a failure says why.
+  st = system2("Rscript", shQuote(c("scripts/model/tests/test_sim_night.R", paste0("--sim_dir=", dir_sc),
+                                    paste0("--model=", model), "--no_statewide", paste0("--out=", tmp))),
+               stdout = FALSE, stderr = "")
   if (st != 0) stop("The original harness failed (exit ", st, "). Run it by hand to see why.")
   read_csv(tmp, col_types = cols(time = col_character(), .default = col_guess()))
 }
