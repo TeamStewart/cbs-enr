@@ -38,7 +38,7 @@ miss = setdiff(want, sc_of(have))
 if (length(miss)) stop("No results for: ", paste(miss, collapse = ", "), ". Run test_sim_night.R for them first.")
 want = c(intersect("tx_base", want), sort(setdiff(want, "tx_base")))
 # each scenario's default run first, then its labelled runs
-MODEL_RUNS = c("swing", "cory", "core")          # labels that are models, not setting changes
+MODEL_RUNS = c("swing", "cory", "core", "both")   # labels that are models, not setting changes
 # per scenario: model_y, then the other models in MODEL_RUNS order, then setting changes
 KEYS = unlist(lapply(want, \(sc) {
   k = have[sc_of(have) == sc]
@@ -111,7 +111,8 @@ night_list = function(df) df |>
 # display names: model_y = the full precinct model (model_turnout.R), model_simpleswing =
 # the standard uniform swing model, model_cory = enightmodels::model_legacy(),
 # model_core = the simpler model_core.R version
-MODEL_NAMES = c(trial = "model_y", model_y = "model_y", swing = "model_simpleswing",
+MODEL_NAMES = c(trial = "model_y", model_y = "model_y", both = "model_both",
+                model_both = "model_both", swing = "model_simpleswing",
                 model_simpleswing = "model_simpleswing", core = "model_core", model_core = "model_core",
                 cory = "model_cory", model_cory = "model_cory")
 model_of = function(d) {
