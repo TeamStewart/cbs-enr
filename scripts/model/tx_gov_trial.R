@@ -148,13 +148,13 @@ USE_CENSOR     = Sys.getenv("USE_CENSOR", unset = "0") == "1"
 #
 # WHERE p_atom COMES FROM. The evidence that a precinct has finished is how much of it is
 # already flagged counted-out, measured in EXPECTED VOTES rather than in modes:
-#     q_cov_i = sum_{m counted out} mode_turn_share_im
+#     q_share_i = sum_{m counted out} mode_turn_share_im
 # A precinct with mail+early in (q ~ 0.70 on TX 2022 shares) is probably done; one with
 # only mail in (q ~ 0.04) is plainly not. This makes the completeness flag SOFT EVIDENCE
 # rather than a hard gate, which matters because in production it arrives late, varies by
 # state, and moves backwards. ATOM_FLOOR/ATOM_CEIL keep p off 0 and 1 so neither arm of
 # the mixture is ever asserted with certainty.
-# Which evidence p_atom is built from. `q_cov` depends on the completeness FLAG, which
+# Which evidence p_atom is built from. `q_share` depends on the completeness FLAG, which
 # in production is unreliable (downgraded 6 -> 5 by our own loader unless the county is
 # on the trust list) and which cannot be validated historically at all -- no stage column
 # exists in any 2024 scrape, and there is no 2022 scrape. `r_prior` needs no flag.
@@ -174,16 +174,16 @@ stopifnot("ATOM_SOURCE must be both, flag or prior" = ATOM_SOURCE %in% c("both",
 #                                 \___ level (theta) ___/   \__ composition (eta) __/
 # ONE completed mode identifies the level given a composition; TWO identify both. So
 # eta's gate (this mode AND the reference) is already right, and only theta's is too
-# strict. MIN_MODE_COVERAGE = 1 is the old all-modes rule; below that a precinct
+# strict. MIN_MODE_SHARE = 1 is the old all-modes rule; below that a precinct
 # qualifies once the modes that ARE done cover that share of its expected vote, and the
-# composition supplies the rest:  That = sum_{m done} tau_im / q_cov.
-# Weighted q_cov^COVERAGE_WT_POW because That multiplies the observed partial by 1/q, so
+# composition supplies the rest:  That = sum_{m done} tau_im / q_share.
+# Weighted q_share^Q_SHARE_WT_EXP: That multiplies the observed partial by 1/q, so
 # its variance scales as 1/q^2 -- an early-only precinct (q~0.65, 1.5x) is strong
 # evidence, a mail-only one (q~0.04, 23x) is nearly worthless.
 # CAVEAT: with one mode the composition is ASSUMED, so a composition shift reads as a
 # level shift. That assumption is already present in prior_tau; the old rule simply
 # declined to use the information rather than avoiding the assumption.
-# COMPOSITION UPDATE (needs MIN_MODE_COVERAGE < 1 to matter). q_cov divides counted
+# COMPOSITION UPDATE (needs MIN_MODE_SHARE < 1 to matter). q_share divides counted
 # votes by the share of the precinct its finished modes are expected to carry, and that
 # share comes from `mode_turn_share` -- a PAST-election composition that is never
 # revisited. If the mode mix shifts (a 2020->2024-style mail collapse), the gross-up is
@@ -194,15 +194,27 @@ stopifnot("ATOM_SOURCE must be both, flag or prior" = ATOM_SOURCE %in% c("both",
 # is estimable before theta is fitted. Measure the vote-weighted mean of
 #   observed log(c_m / c_ref)  -  prior log(p0_m / p0_ref)
 # over those precincts, tilt the prior composition by it, renormalise, and use the
-# tilted shares in q_cov. Reference mode's tilt is 0 by definition.
+# tilted shares in q_share. Reference mode's tilt is 0 by definition.
 # A statewide (not per-precinct) tilt is deliberate: mode mix moves for administrative
 # reasons that are common to a state or county, and a per-precinct tilt would just be
 # the gross-up's own noise fed back into itself.
 COMPOSITION_UPDATE = Sys.getenv("COMPOSITION_UPDATE", unset = "0") == "1"
+# LEVEL UPDATE. `r_prior` = cnt_prec / est_tot is the default evidence behind p_atom,
+# i.e. P(this precinct has finished counting). But est_tot is the vendor turnout score
+# and is never reassigned anywhere after section 2, so if it is 15% high then r_prior
+# reads 15% low, the model concludes precincts are less finished than they are, and the
+# atom under-weights the bound -- the atom's evidence is corrupted by exactly the level
+# error the atom exists to help with, in the direction that makes it worse.
+# The same decomposition that gives the composition tilt isolates the level:
+#   log(c_im / tau0_im) = log(T_i/E_i) + log(p_im/p0_im)   [level] + [composition]
+# so pooling counted-out cells and subtracting the already-estimated delta_m leaves the
+# statewide level correction. Non-circular: it needs no fit, only counted-out cells.
+LEVEL_UPDATE  = Sys.getenv("LEVEL_UPDATE", unset = "0") == "1"
+LEVEL_MIN_CELL = as.integer(Sys.getenv("LEVEL_MIN_CELL", unset = "100"))
 COMP_MIN_PREC      = as.integer(Sys.getenv("COMP_MIN_PREC", unset = "50"))  # min precincts to trust a tilt
-MIN_MODE_COVERAGE = as.numeric(Sys.getenv("MIN_MODE_COVERAGE", unset = "1"))
-COVERAGE_WT_POW   = as.numeric(Sys.getenv("COVERAGE_WT_POW",   unset = "2"))
-stopifnot("MIN_MODE_COVERAGE must be in (0, 1]" = MIN_MODE_COVERAGE > 0 && MIN_MODE_COVERAGE <= 1)
+MIN_MODE_SHARE = as.numeric(Sys.getenv("MIN_MODE_SHARE", unset = "1"))
+Q_SHARE_WT_EXP   = as.numeric(Sys.getenv("Q_SHARE_WT_EXP",   unset = "2"))
+stopifnot("MIN_MODE_SHARE must be in (0, 1]" = MIN_MODE_SHARE > 0 && MIN_MODE_SHARE <= 1)
 USE_ATOM       = Sys.getenv("USE_ATOM", unset = "0") == "1"
 ATOM_FLOOR     = as.numeric(Sys.getenv("ATOM_FLOOR", unset = "0.02"))
 ATOM_CEIL      = as.numeric(Sys.getenv("ATOM_CEIL",  unset = "0.98"))
@@ -966,10 +978,9 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       all_done  = all(obs_turn),                             # every mode counted out
       T_final   = sum(if_else(obs_turn, tau, 0), na.rm = TRUE),
       # SECOND, independent signal that counting has stopped: how much of the precinct's
-      # PRIOR expected total is already in. q_cov is only as good as the completeness
+      # PRIOR expected total is already in. q_share is only as good as the completeness
       # flag; this one needs no flag at all. A precinct that has already counted its
       # whole expected vote is done whatever the flag says.
-      r_prior   = cnt_prec / pmax(sum(prior_tau), 1),
       tau_ref   = { i <- match(REF_MODE, mode); if_else(rep(obs_turn[i], n()), tau[i], NA_real_) },
       ref_done  = { i <- match(REF_MODE, mode); rep(obs_turn[i], n()) },
       .by = geo)
@@ -990,6 +1001,22 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     }
     cli_inform("composition tilt: {paste(sprintf('%s %+.3f', names(comp_tilt), comp_tilt), collapse = '  ')}")
   }
+  # ---- statewide LEVEL correction (see LEVEL_UPDATE) -------------------------------
+  # lambda = vote-weighted mean of [ log(c_im / tau0_im) - delta_m ] over counted-out
+  # cells. With COMPOSITION_UPDATE off, delta_m is 0 and lambda absorbs whatever
+  # composition drift exists as well -- still better than no correction, but noisier.
+  level_tilt = 0
+  if (LEVEL_UPDATE) {
+    zc = d |> filter(obs_turn, tau > 0, prior_tau > 0)
+    if (nrow(zc) >= LEVEL_MIN_CELL) {
+      level_tilt = stats::weighted.mean(
+        log(zc$tau / zc$prior_tau) - comp_tilt[zc$mode], zc$tau)
+      cli_inform("level tilt: {sprintf('%+.3f', level_tilt)} \
+                  ({round(100 * (exp(level_tilt) - 1), 1)}% on est_tot, \
+                  from {nrow(zc)} counted-out cells)")
+    }
+  }
+
   # tilted composition: p_m proportional to p0_m * exp(delta_m), reference tilt = 0
   d = d |>
     mutate(p_tilt = mode_turn_share * exp(comp_tilt[mode])) |>
@@ -997,26 +1024,31 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     mutate(
       # share of the precinct's expected votes already flagged counted-out. Uses the
       # TILTED composition when COMPOSITION_UPDATE is on, the raw prior otherwise.
-      q_cov = sum(if_else(obs_turn, p_tilt, 0), na.rm = TRUE),
+      q_share = sum(if_else(obs_turn, p_tilt, 0), na.rm = TRUE),
+      # counted votes over the expected total, LEVEL-CORRECTED when LEVEL_UPDATE is on.
+      # exp(level_tilt) is 1 when it is off, so this is behaviour-preserving by default.
+      # Must live HERE, not in the earlier mutate: level_tilt is not defined until the
+      # counted-out cells have been pooled above.
+      r_prior = cnt_prec / pmax(sum(prior_tau) * exp(level_tilt), 1),
       .by = geo) |>
     mutate(
       is_ref = mode == REF_MODE,
       # WHICH ROWS THE TURNOUT SLOT CAN BE FITTED ON:
       #   total      -- needs every mode of the precinct counted out, else T is unknown
       #   log-ratio  -- needs this mode AND the reference mode counted out
-      # `all_done |` is not redundant: q_cov sums normalized shares, so an all-modes
+      # `all_done |` is not redundant: q_share sums normalized shares, so an all-modes
       # precinct can land at 0.9999999999999999 and fail a bare `>= 1`.
       fit_tau = if (!USE_COMPOSE) obs_turn
                 else if_else(is_ref,
-                             all_done | (q_cov >= MIN_MODE_COVERAGE & T_final > 0),
+                             all_done | (q_share >= MIN_MODE_SHARE & T_final > 0),
                              obs_turn & ref_done & !is.na(tau_ref) & tau_ref > 0),
       # exact sum when every mode is in; otherwise the composition supplies the rest
-      T_hat = if_else(all_done, T_final, T_final / pmax(q_cov, 1e-6)),
+      T_hat = if_else(all_done, T_final, T_final / pmax(q_share, 1e-6)),
       y_tau = if (!USE_COMPOSE) if_else(obs_turn, log(tau + 0.1), NA_real_)
               else if_else(is_ref,
                            logit(pmin(pmax(T_hat / cap, 1e-4), 1 - 1e-4)),
                            log(pmax(tau, 0.5) / pmax(tau_ref, 0.5))),
-      w_tau = if_else(is_ref, q_cov^COVERAGE_WT_POW, 1),
+      w_tau = if_else(is_ref, q_share^Q_SHARE_WT_EXP, 1),
       y_tau = if_else(fit_tau, y_tau, NA_real_),
       # The TOTAL is right-censored for any reporting precinct: T_i >= what is counted.
       # This is a far better home for censoring than the cell level, where it fixed the
@@ -1031,8 +1063,8 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # direction -- a too-high p_atom under-predicts T, and the counted-votes floor
       # catches that, whereas a too-low p_atom over-predicts and the floor cannot.
       p_raw    = switch(ATOM_SOURCE,
-                        both  = pmax(q_cov, pmin(r_prior, 1)),
-                        flag  = q_cov,
+                        both  = pmax(q_share, pmin(r_prior, 1)),
+                        flag  = q_share,
                         prior = pmin(r_prior, 1)),
       p_atom   = pmin(pmax(p_raw, ATOM_FLOOR), ATOM_CEIL)
     )
@@ -1103,8 +1135,8 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       lb = if (out == "tau") dm$lb_tau else NULL
       pa = if (out == "tau" && USE_ATOM) dm$p_atom else NULL
       wt = if (out == "tau") {
-        # default (MIN_MODE_COVERAGE = 1) keeps the turnout equation unweighted, as before
-        if (!USE_COMPOSE || MIN_MODE_COVERAGE >= 1) NULL else {
+        # default (MIN_MODE_SHARE = 1) keeps the turnout equation unweighted, as before
+        if (!USE_COMPOSE || MIN_MODE_SHARE >= 1) NULL else {
           raw = dm$w_tau; raw[!dm$fit_tau] = 1
           mu  = if (any(dm$fit_tau)) mean(raw[dm$fit_tau]) else 1
           raw / mu

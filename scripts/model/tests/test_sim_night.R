@@ -64,6 +64,13 @@
 source("scripts/model/tests/model_test_common.R")
 args = commandArgs(trailingOnly = TRUE)
 MODEL = sub("^--model=", "", c(grep("^--model=", args, value = TRUE), "--model=trial")[1])
+# --dump-prec=HH:MM[,HH:MM] writes PRECINCT-level predictions at those checkpoints to
+# 26_general/model_tests/prec_<scenario>[__<label>]_<HHMM>.csv. Diagnostic only: an
+# aggregate run yields ONE number (the statewide bias) while a dump yields ~6,100
+# observations from the same fit, which is what lets a bias be attributed to WHICH
+# precincts move rather than inferred from the spread of aggregates across seeds.
+DUMP_PREC = sub("^--dump-prec=", "", c(grep("^--dump-prec=", args, value = TRUE), "--dump-prec=")[1])
+DUMP_PREC = if (nzchar(DUMP_PREC)) strsplit(DUMP_PREC, ",")[[1]] else character(0)
 CELLS = sub("^--cells=", "", c(grep("^--cells=", args, value = TRUE), "--cells=any")[1])
 stopifnot("--cells must be any or complete" = CELLS %in% c("any", "complete"))
 COMPLETE = sub("^--complete=", "", c(grep("^--complete=", args, value = TRUE), "--complete=feed")[1])
@@ -274,6 +281,23 @@ if (MODEL == "trial") {
                   votes_rep = if_else(rep_cell, c_rep, NA_real_),
                   votes_oth = if_else(rep_cell, c_oth, NA_real_))
       f = suppressMessages(fit_stage(cells, returns, cross_mode = USE_CROSS_MODE))
+      if (length(DUMP_PREC) && format(tm, "%H:%M") %in% DUMP_PREC) {
+        # truth per precinct at this checkpoint, so the dump is self-contained
+        tr_p = fin |> summarize(t_dem = sum(dem), t_rep = sum(rep),
+                                t_tot = sum(dem + rep + oth), .by = geo)
+        cn_p = d |> summarize(c_tot = sum(c_tot), n_rep_modes = sum(c_tot > 0),
+                              n_done_modes = sum(done), .by = geo)
+        dmp = f$prec |>
+          left_join(tr_p, by = "geo") |>
+          left_join(cn_p, by = "geo") |>
+          left_join(select(inp, geo, n, dem2, est_turnout, geostratum), by = "geo") |>
+          mutate(scenario = SCENARIO, label = LABEL, time = format(tm, "%H:%M"),
+                 truth_dem2 = t_dem / pmax(t_dem + t_rep, 1))
+        fp = file.path(DIR_OUT, sprintf("prec_%s%s_%s.csv", SCENARIO,
+                       if (nzchar(LABEL)) paste0("__", LABEL) else "", format(tm, "%H%M")))
+        readr::write_csv(dmp, fp)
+        cat("  dumped", nrow(dmp), "precincts ->", basename(fp), "\n")
+      }
       cs = conf_seq(d0, f$S_dem, level = LEVEL)
       ci_all = cred(f$S_dem)
       summarize_draws(contest_id, tm, d, f$S_2p, f$turn, c(list(
