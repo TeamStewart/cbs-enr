@@ -98,7 +98,12 @@ P = list(
   n_dark            = 1,      # counties that never report
   # timing (Eastern)
   poll_close        = "20:00",
-  poll_close_late   = c(`EL PASO` = "21:00"),  # Mountain time
+  # POLL_CLOSE_LATE=0 drops the late close. Diagnostic: EL PASO is Mountain time AND
+  # heavily Hispanic/Democratic, so a late close correlates reporting TIME with
+  # PARTISANSHIP. Any mechanism that weights precincts by how early they finish will
+  # inherit that correlation as a share bias.
+  poll_close_late   = if (Sys.getenv("POLL_CLOSE_LATE", unset = "") == "0") c()
+                      else c(`EL PASO` = "21:00"),  # Mountain time
   zero_post         = "19:00",  # zero files posted before close
   cycles            = c(15, 30),  # county posting cycle, minutes
   speed_sd          = 0.40,   # county multiplier on election-night delays
