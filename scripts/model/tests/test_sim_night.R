@@ -485,7 +485,9 @@ if (MODEL == "cory") {
                votes, geostratum, past, votes_final, frac)
       dd = select(d, -votes_final, -frac) |> enightmodels::coerce_elec_data()
       out = enightmodels::model_legacy(dd, past, cfg)
-      pr = out$pred
+      # model_legacy() returns the prediction table itself in enightmodels builds from early 2026
+      # (e.g. 4944994) and list(pred =, coef =) in later ones
+      pr = if (is.data.frame(out)) out else out$pred
       dem = sum(pr$pred[pr$party == "dem"]); repv = sum(pr$pred[pr$party == "rep"])
       S2 = dem / (dem + repv); TT = sum(pr$pred)
       # precinct-level predictions for the statewide step: the same two functions
