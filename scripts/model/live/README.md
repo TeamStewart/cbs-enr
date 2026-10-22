@@ -27,20 +27,23 @@ Every prediction row passes `enightmodels::check_pred_data()`.
 **Statewide.** Pass `cbs = list(<race_id> = read_cbs_latest(...))` and
 `base = county_baseline(state)` to `predict_all()` and each race x model also gets rows with
 `geo = "all"`: the scraped counties from the model (precinct detail kept) plus every other
-county from CBS's county results (`scripts/model/cbs_county_pull.R` writes them to
+county from CBS's county results (`scripts/model/live/R/cbs_county_pull.R` writes them to
 `26_general/cbs_api/`), with each county's uncounted vote projected from CBS's share of
 expected vote, its 2022 turnout and 2024 lean, and tonight's swing. The model-only rows have
 `geo = "scraped"`. Method and the interval terms are at the top of `R/counties.R`.
 
 CBS county results for every race in `priors.csv`, from the `cbs-enr` folder:
-`Rscript scripts/model/cbs_county_pull.R --all` (test feed; add `--live` on the night). It
-prints which races CBS returned and which it didn't.
+`Rscript scripts/model/live/R/cbs_county_pull.R --all` (test feed; add `--live` on the night). It
+prints which races CBS returned and which it didn't. On the night the pull happens inside each
+model run: `cbs_for_races(races)` pulls every race fresh and falls back to the last saved
+snapshot for any race whose pull fails.
 
 ## Layout
 
 | file | what it holds |
 |---|---|
 | `load.R` | loads packages and the files in `R/`; nothing runs at load time |
+| `R/cbs_county_pull.R` | `pull_cbs_race()`: pulls CBS county results for a race into `26_general/cbs_api/` (called by `cbs_for_races()` at every model run); also runs from the command line for one race, several, or `--all` |
 | `R/paths.R` | finds `26_general` on your machine; parquet read/write; `cred()` interval |
 | `R/cells.R` | `build_cells()`: one row per precinct x method with `dem2`, `oth`, `exp_votes` |
 | `R/returns.R` | the standard returns shape; `returns_from_sim()`, `returns_from_live()`, `cell_counts()` |

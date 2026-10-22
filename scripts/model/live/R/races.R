@@ -10,7 +10,7 @@
 ##                                      (NULL where none has been pulled yet), for
 ##                                      predict_all(cbs = ).
 ## race_id is <STATE>_<contest>[_<district>]. House races in at-large states are district
-## 1, as in enightmodels' schema; scripts/model/cbs_county_pull.R uses the same rule, so
+## 1, as in enightmodels' schema; scripts/model/live/R/cbs_county_pull.R uses the same rule, so
 ## its folders (26_general/cbs_api/<env>/<STATE>_<contest>[_<district>]) line up.
 # ========================================
 
@@ -29,8 +29,31 @@ races_from_priors = function(dir_26 = find_26_general()) {
   bind_rows(lapply(pr$race_id, parse_race_id))
 }
 
-cbs_for_races = function(races, env = "live", at = NULL, dir_26 = find_26_general()) {
-  out = lapply(seq_len(nrow(races)), function(i)
-    read_cbs_latest(races$state[i], races$contest[i], races$district[i], env = env, at = at, dir_26 = dir_26))
-  setNames(out, races$race_id)
+# Pulls fresh CBS county results for every race (pull_cbs_race(), cbs_county_pull.R) and
+# returns the newest snapshot per race. If a pull fails -- or this machine can't pull (no
+# cbsapi or CBS_API_KEY) -- the last saved snapshot is used instead, so the models still
+# run. attr(result, "status") says what happened for each race.
+# at: use saved snapshots as of this time (for testing; no pulling).
+cbs_for_races = function(races, env = "live", pull = is.null(at), at = NULL, dir_26 = find_26_general()) {
+  why = if (pull) cbs_pull_unavailable() else ""
+  if (pull && nzchar(why)) message("Not pulling from CBS (", why, "); using the last saved snapshots")
+  st = character(nrow(races))
+  out = lapply(seq_len(nrow(races)), function(i) {
+    r = races[i, ]
+    snap = NULL; s = "not pulled"
+    if (pull && !nzchar(why)) {
+      snap = tryCatch(pull_cbs_race(r$state, r$contest, r$district, env = env, dir_26 = dir_26, verbose = FALSE),
+                      error = function(e) { s <<- paste("pull failed:", conditionMessage(e)); NULL })
+      if (!is.null(snap)) s = "pulled"
+    }
+    if (is.null(snap)) {
+      snap = read_cbs_latest(r$state, r$contest, r$district, env = env, at = at, dir_26 = dir_26)
+      s = paste0(s, if (is.null(snap)) "; no saved snapshot" else paste0("; using the snapshot saved ", format(max(snap$observed_at), "%Y-%m-%d %H:%M:%S UTC")))
+    }
+    st[i] <<- s
+    snap
+  })
+  out = setNames(out, races$race_id)
+  attr(out, "status") = tibble(race_id = races$race_id, cbs = st)
+  out
 }

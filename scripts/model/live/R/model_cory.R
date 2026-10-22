@@ -34,9 +34,13 @@ fit_cory = function(cells, returns, cfg = NULL, past_share = cory_past_share) {
   rows = returns |>
     left_join(select(cells, geo, method, geostratum, dem2, oth, exp_votes), by = c("geo", "method")) |>
     mutate(past = exp_votes * past_share(party, candidate, dem2, oth))
+  # race ids are "<STATE>_<contest>[_<district>]" live (races.R) and just the contest
+  # ("gov") in Ethan's sims; enightmodels needs the contest and district on their own
+  rid = returns$race_id[1]
+  ri = if (grepl("^[A-Za-z]{2}_", rid)) parse_race_id(rid) else tibble(contest = rid, district = NA_integer_)
   dd = rows |>
-    transmute(state, election = as.Date(election), jurisdiction = state, contest = race_id,
-              district = NA_integer_, candidate, party, time, stage, method, geo, votes, geostratum, past) |>
+    transmute(state, election = as.Date(election), jurisdiction = state, contest = ri$contest,
+              district = ri$district, candidate, party, time, stage, method, geo, votes, geostratum, past) |>
     enightmodels::coerce_elec_data()
   out = enightmodels::model_legacy(dd, past, cfg)
   # model_legacy() returns the prediction table itself in enightmodels builds from early 2026

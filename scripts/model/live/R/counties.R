@@ -3,7 +3,7 @@
 ## for every other county.
 ##
 ## Our models cover only the counties we scrape precinct by precinct (TX: 32). For the
-## rest of the state we use CBS's county results (scripts/model/cbs_county_pull.R writes
+## rest of the state we use CBS's county results (scripts/model/live/R/cbs_county_pull.R writes
 ## them to 26_general/cbs_api/{env}/{ST}_{contest}[_{district}]/). Scraped counties keep
 ## the model's precinct-level prediction; CBS is used ONLY for the others.
 ##
