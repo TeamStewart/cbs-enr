@@ -141,6 +141,11 @@ run_stage <- function(t) {
   r <- as_of(t)
   if (is.null(r)) return(NULL)
   counted <- r |> filter(stage >= STAGE_DONE)
+  # DIAGNOSTIC: how many precincts can actually contribute to the TOTAL equation?
+  # Under USE_COMPOSE, fit_tau on the reference slot needs ALL modes of the precinct
+  # counted out (tx_gov_trial.R:906), so a precinct with two of three modes done feeds
+  # the turnout fit NOTHING -- its theta stays prior-driven.
+  pd <- r |> summarize(nd = sum(complete), nr = sum(stage >= STAGE_DONE), .by = geo)
   cd <- sum(counted$votes_dem); cr <- sum(counted$votes_rep); co <- sum(counted$votes_oth)
   ctot <- cd + cr + co
   f <- fit_stage(cells, r)
@@ -163,7 +168,14 @@ run_stage <- function(t) {
     lo_2p  = 100 * ci2p[["lower"]], hi_2p = 100 * ci2p[["upper"]],
     err_2p = 100 * (mean(f$S_2p) - T_2p),
     cov_2p = T_2p >= ci2p[["lower"]] && T_2p <= ci2p[["upper"]],
-    turn   = mean(f$turn) / T_turn * 100
+    turn   = mean(f$turn) / T_turn * 100,
+    prec_rep      = sum(pd$nr > 0),            # precincts with ANY mode reporting
+    prec_all_done = sum(pd$nd == M),           # precincts eligible for the TOTAL equation
+    pct_eligible  = 100 * sum(pd$nd == M) / max(sum(pd$nr > 0), 1),
+    # distribution of COMPLETE modes among reporting precincts: distinguishes
+    # "modes genuinely still counting" from "the complete flag is broken"
+    nd0 = sum(pd$nr > 0 & pd$nd == 0), nd1 = sum(pd$nd == 1),
+    nd2 = sum(pd$nd == 2), nd3 = sum(pd$nd == 3)
   )
 }
 
@@ -181,7 +193,8 @@ res |>
 
 cli_h2("Two-party Dem share -- truth {round(100*T_2p, 3)}%")
 res |>
-  select(stage, pct_votes, naive_2p, est_2p, err_2p, cov_2p, turn) |>
+  select(stage, pct_votes, naive_2p, est_2p, err_2p, cov_2p, turn,
+         prec_rep, nd0, nd1, nd2, nd3, pct_eligible) |>
   mutate(naive_err = naive_2p - 100 * T_2p,
          across(c(pct_votes, naive_2p, naive_err, est_2p, err_2p, turn), ~ round(.x, 2))) |>
   as.data.frame() |> print(row.names = FALSE)

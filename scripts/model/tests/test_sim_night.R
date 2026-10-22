@@ -485,7 +485,10 @@ if (MODEL == "cory") {
                votes, geostratum, past, votes_final, frac)
       dd = select(d, -votes_final, -frac) |> enightmodels::coerce_elec_data()
       out = enightmodels::model_legacy(dd, past, cfg)
-      pr = out$pred
+      # model_legacy() RETURNS the prediction tibble (COLS_PRED: ..., party, pred, ...).
+      # `out$pred` is the pred COLUMN, so the old `pr = out$pred` then `pr$pred` errored
+      # with "$ operator is invalid for atomic vectors".
+      pr = out
       dem = sum(pr$pred[pr$party == "dem"]); repv = sum(pr$pred[pr$party == "rep"])
       S2 = dem / (dem + repv); TT = sum(pr$pred)
       # precinct-level predictions for the statewide step: the same two functions
