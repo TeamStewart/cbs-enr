@@ -53,6 +53,26 @@ P = list(
   # under-predicted early and over-predicted late, which a correct-by-construction prior
   # can never reproduce. Set it away from 1 to make the night a real test.
   turnout_ratio     = as.numeric(Sys.getenv("TURNOUT_RATIO", unset = "1")),
+  # TURNOUT_DEMO makes the turnout error STRUCTURED rather than uniform: turnout is
+  # multiplied by exp(sum_k coef_k * (x_k - weighted mean)), then rescaled so the
+  # statewide total is preserved. So est_turnout stays right ON AVERAGE and is wrong
+  # per-precinct in a way that tracks demographics.
+  # This is the discriminating test between the two model families. A county x method
+  # fixed effect (the uniform swing model) can absorb a uniform miss and county-level
+  # structure, but NOT within-county demographic structure. The precinct x mode model
+  # carries pred.his, pred.bla, age and col in COVS_TURN, so it should. TURNOUT_RATIO
+  # is the case that flatters the simple model; this is the case that should not.
+  # Env: TURNOUT_DEMO="his=-0.4,col=0.2" (log scale per unit share, omitted = 0).
+  turnout_demo      = {
+    z = c(his = 0, bla = 0, col = 0, age = 0)
+    spec = Sys.getenv("TURNOUT_DEMO", unset = "")
+    if (nzchar(spec)) for (kv in strsplit(spec, ",")[[1]]) {
+      p2 = strsplit(trimws(kv), "=")[[1]]
+      if (length(p2) != 2 || !p2[1] %in% names(z)) stop("bad TURNOUT_DEMO entry: ", kv)
+      z[p2[1]] = as.numeric(p2[2])
+    }
+    z
+  },
   county_turnout_sd = 0.08,
   precinct_turnout_sd = 0.10,
   turnout_cap       = 1.25,
@@ -138,7 +158,8 @@ lookup = function(x, key, default) {
 ## 1. Inputs
 # ========================================
 prec = read_parquet(file.path(DIR_IN, "TX_precinct.parquet")) |>
-  select(geo, county_name, county_cbs, n, est_turnout, dem2, oth_base)
+  select(geo, county_name, county_cbs, n, est_turnout, dem2, oth_base,
+         yg_pred_his, yg_pred_bla, p_col, p_age_65_up)
 
 prior = read.csv(file.path(DIR_IN, "TX_race_prior.csv")) |>
   transmute(contest = sub("^TX_", "", race_id), target = prior_dem / (prior_dem + prior_rep))
@@ -181,7 +202,15 @@ geos = prec |>
   mutate(
     lz       = qlogis(dem2) - lz_mean,
     lean     = qlogis(dem2) + swing + rnorm(n(), 0, P$precinct_sd),
-    ballots  = pmin(est_turnout * P$turnout_ratio * exp(turn + rnorm(n(), 0, P$precinct_turnout_sd)),
+    # structured demographic tilt, centred on the est_turnout-weighted mean so it
+    # redistributes turnout rather than changing its level
+    demo_lp  = P$turnout_demo[["his"]] * (yg_pred_his - weighted.mean(yg_pred_his, est_turnout)) +
+               P$turnout_demo[["bla"]] * (yg_pred_bla - weighted.mean(yg_pred_bla, est_turnout)) +
+               P$turnout_demo[["col"]] * (p_col       - weighted.mean(p_col,       est_turnout)) +
+               P$turnout_demo[["age"]] * (p_age_65_up - weighted.mean(p_age_65_up, est_turnout)),
+    demo_m   = exp(demo_lp) / weighted.mean(exp(demo_lp), est_turnout),   # preserves the total
+    ballots  = pmin(est_turnout * P$turnout_ratio * demo_m *
+                      exp(turn + rnorm(n(), 0, P$precinct_turnout_sd)),
                     P$turnout_cap * n),
     censored = runif(n()) < censor_rate
   )
@@ -289,6 +318,7 @@ realized = truth |>
 manifest = list(
   scenario  = SCENARIO,
   mode_shift = as.list(P$mode_shift),
+  turnout_demo = as.list(P$turnout_demo),
   seed      = SEED,
   created   = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
   git       = system("git rev-parse --short HEAD", intern = TRUE),
