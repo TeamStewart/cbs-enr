@@ -35,13 +35,24 @@ P = list(
   # The prior's two-party share vs. the 2024 presidential result that dem2 is built
   # from sets a uniform logit swing on dem2, plus a statewide miss drawn per race.
   pres24_dem2       = 42.46 / (42.46 + 56.14),  # TX 2024 Harris two-party share
-  miss_sd           = 0.10,
+  # MISS_SD=0 removes the per-race statewide partisan miss, so the model's share prior
+  # (dem2, swung to the target) is correct by construction. Diagnostic use: if a share
+  # bias introduced by the turnout machinery vanishes here, that machinery is AMPLIFYING
+  # an existing prior error rather than creating one -- bounded by prior quality, and a
+  # very different problem from a bias it manufactures on its own.
+  miss_sd           = as.numeric(Sys.getenv("MISS_SD", unset = "0.10")),
   county_swing_sd   = 0.10,
   precinct_sd       = 0.08,
   race_precinct_sd  = 0.05,   # ticket splitting between gov and sen
   # turnout: est_turnout x county x precinct noise (log scale), capped at cap x n,
   # the model's KAPPA ceiling
-  turnout_ratio     = 1,
+  # TURNOUT_RATIO scales the whole turnout level away from est_turnout. At the default
+  # of 1 the simulated truth IS the prior (times exp(sigma^2/2) ~ 1.008), so a model that
+  # passively echoes est_turnout scores near-perfectly and the sim cannot distinguish it
+  # from one that actually learns turnout. The real TX 2024 backtest shows turnout
+  # under-predicted early and over-predicted late, which a correct-by-construction prior
+  # can never reproduce. Set it away from 1 to make the night a real test.
+  turnout_ratio     = as.numeric(Sys.getenv("TURNOUT_RATIO", unset = "1")),
   county_turnout_sd = 0.08,
   precinct_turnout_sd = 0.10,
   turnout_cap       = 1.25,
@@ -49,13 +60,35 @@ P = list(
   # method split: this election's mode history, with county log-noise
   mode_election     = "2022_general",
   mode_share_sd     = 0.15,
+  # MODE_SHIFT tilts the mode COMPOSITION without touching the precinct TOTAL: shares
+  # are multiplied by exp(shift_m) and then renormalised per precinct, so `ballots` is
+  # unchanged by construction. This is the scenario TURNOUT_RATIO cannot produce -- a
+  # 2020->2024-style change in HOW people vote with no change in HOW MANY. It is the
+  # case that should break any model inferring the total by grossing a completed mode
+  # up through a stale composition prior, and the case a fitted composition should
+  # survive. Env: MODE_SHIFT="early=0.25,eday=-0.5" (log scale, omitted modes = 0).
+  mode_shift        = {
+    z = setNames(rep(0, length(MODES)), MODES)
+    spec = Sys.getenv("MODE_SHIFT", unset = "")
+    if (nzchar(spec)) for (kv in strsplit(spec, ",")[[1]]) {
+      p2 = strsplit(trimws(kv), "=")[[1]]
+      if (length(p2) != 2 || !p2[1] %in% MODES) stop("bad MODE_SHIFT entry: ", kv)
+      z[p2[1]] = as.numeric(p2[2])
+    }
+    z
+  },
   # Dem lean by method, delta = a + b * (logit(dem2) - mean). NC 2024 values from
   # CONTRACT.md section 7. Set a and b to 0 for no method lean.
-  mode_lean = tibble(
-    method = c("mail", "early", "eday"),
-    a      = c(0.660, -0.029, -0.025),
-    b      = c(-0.297, 0.041, -0.089)
-  ),
+  # MODE_LEAN=0 zeroes the per-mode partisan differential, so modes differ only in SIZE
+  # and not in how they vote. Diagnostic use: if a share bias that appears under a
+  # composition shift vanishes when the leans are zeroed, the bias is coming from the
+  # mode x partisanship coupling rather than from the turnout machinery itself.
+  mode_lean = {
+    .z = Sys.getenv("MODE_LEAN", unset = "") == "0"
+    tibble(method = c("mail", "early", "eday"),
+           a = if (.z) c(0, 0, 0) else c(0.660, -0.029, -0.025),
+           b = if (.z) c(0, 0, 0) else c(-0.297, 0.041, -0.089))
+  },
   # third party: oth_base with noise, split between the minor candidate and write-ins
   oth_sd            = 0.20,
   writein_frac      = 0.15,
@@ -160,7 +193,7 @@ cells = expand_grid(geo = geos$geo, method = MODES) |>
   left_join(cty_mode_noise, by = c("county_cbs", "method")) |>
   left_join(P$mode_lean, by = "method") |>
   mutate(
-    share = coalesce(share, cshare, sshare) * exp(eps),
+    share = coalesce(share, cshare, sshare) * exp(eps + P$mode_shift[method]),
     share = share / sum(share),
     delta = a + b * lz,
     delta = delta - sum(share * delta),
@@ -250,6 +283,7 @@ realized = truth |>
 
 manifest = list(
   scenario  = SCENARIO,
+  mode_shift = as.list(P$mode_shift),
   seed      = SEED,
   created   = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
   git       = system("git rev-parse --short HEAD", intern = TRUE),
