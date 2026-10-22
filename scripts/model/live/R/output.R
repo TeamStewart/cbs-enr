@@ -19,11 +19,16 @@
 ## plus, beyond the schema (extra columns are allowed):
 ##   p_win       probability the candidate finishes ahead of the other major-party
 ##               candidate (NA without draws, and on third-party rows)
+##   geo         "scraped" = the counties we scrape precinct by precinct (the models
+##               themselves); "all" = statewide: scraped counties from the model plus every
+##               other county from CBS's county results (counties.R). Statewide rows have
+##               model_conf "..._plus_rest" and `cbs_as_of`, the time of the CBS snapshot used.
 ##
 ## Every row passes enightmodels::check_pred_data(). Races x models with no prediction
 ## (no votes yet, or the model errored) are not in this table; they are in the STATUS
 ## table, one row per race x model per run: race_id, model, time, status ("ok",
-## "no_votes", "error: ..."), settings. So a broken model shows up there instead of
+## "no_votes", "error: ..."), statewide (whether statewide rows were added, or why not),
+## settings. So a broken model shows up there instead of
 ## silently vanishing.
 ##
 ## Margins ("margin_share", "margin_vote") are left to the dashboard: enightmodels' schema
@@ -110,17 +115,19 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
     stop("to_pred_data() has no rule for model '", model, "' yet")
   }
   bind_cols(base[rep(1, nrow(out)), ], out) |>
-    mutate(time = time, model = name, model_conf = conf, pct_rep = pct,
+    mutate(time = time, model = name, model_conf = conf, pct_rep = pct, geo = "scraped",
            election = as.Date(election), district = as.integer(district)) |>
     relocate(state, election, jurisdiction, contest, district, candidate, party, pred_type, time,
-             model, model_conf, pct_rep, rep, pred, pred_min, pred_max, p_win) |>
+             model, model_conf, pct_rep, rep, pred, pred_min, pred_max, p_win, geo) |>
     arrange(pred_type, desc(pred))
 }
 
 # every race x model in `returns`: list(pred = prediction table, status = one row per
 # race x model). A model that errors on a race is recorded in status and the rest carry on.
+# cbs: optional named list, race_id -> latest CBS county snapshot (read_cbs_latest()), and
+# base = county_baseline(state): adds statewide rows (geo = "all") for those races.
 predict_all = function(cells, returns, races = race_info(returns), models = MODELS,
-                       time = max(returns$time), level = 0.95) {
+                       time = max(returns$time), level = 0.95, cbs = NULL, base = NULL) {
   res = map(sort(unique(returns$race_id)), function(r) {
     ret = filter(returns, race_id == r)
     race = filter(races, race_id == r)
@@ -129,9 +136,18 @@ predict_all = function(cells, returns, races = race_info(returns), models = MODE
       fit = tryCatch(run_race(m, cells, ret), error = function(e) list(status = paste("error:", conditionMessage(e))))
       pred = tryCatch(to_pred_data(fit, m, cells, ret, race, time, level),
                       error = function(e) { fit$status <<- paste("error in output:", conditionMessage(e)); NULL })
+      st_status = NA_character_
+      if (!is.null(pred) && !is.null(cbs) && !is.null(base)) {
+        if (is.null(cbs[[r]])) st_status = "no CBS county snapshot yet" else {
+          st = tryCatch(state_pred_data(fit, m, cells, ret, race, time, cbs[[r]], base, level),
+                        error = function(e) { st_status <<- paste("error:", conditionMessage(e)); NULL })
+          if (!is.null(st)) { pred = bind_rows(pred, st); st_status = "ok" }
+        }
+      }
       list(pred = pred,
            status = tibble(race_id = r, model = unname(MODEL_NAMES[m]), time = time,
                            status = if (is.null(fit$status)) "error: no status" else fit$status,
+                           statewide = st_status,
                            settings = if (is.null(fit$settings)) NA_character_ else fit$settings))
     })
   }) |> purrr::list_flatten()

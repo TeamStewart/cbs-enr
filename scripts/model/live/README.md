@@ -24,6 +24,18 @@ Dropbox, as timestamped CSVs plus `predictions_latest.csv` / `status_latest.csv`
 runs should pass another `dir` so they never mix with the night's results. Details at the top of `R/output.R`.
 Every prediction row passes `enightmodels::check_pred_data()`.
 
+**Statewide.** Pass `cbs = list(<race_id> = read_cbs_latest(...))` and
+`base = county_baseline(state)` to `predict_all()` and each race x model also gets rows with
+`geo = "all"`: the scraped counties from the model (precinct detail kept) plus every other
+county from CBS's county results (`scripts/model/cbs_county_pull.R` writes them to
+`26_general/cbs_api/`), with each county's uncounted vote projected from CBS's share of
+expected vote, its 2022 turnout and 2024 lean, and tonight's swing. The model-only rows have
+`geo = "scraped"`. Method and the interval terms are at the top of `R/counties.R`.
+
+CBS county results for every race in `priors.csv`, from the `cbs-enr` folder:
+`Rscript scripts/model/cbs_county_pull.R --all` (test feed; add `--live` on the night). It
+prints which races CBS returned and which it didn't.
+
 ## Layout
 
 | file | what it holds |
@@ -37,6 +49,8 @@ Every prediction row passes `enightmodels::check_pred_data()`.
 | `R/model_y.R` | **model_y**: an untouched copy of `tx_gov_trial.R`, not wired in yet (see below) |
 | `R/run.R` | `run_race()`, `run_all()`, and the list of wired models |
 | `R/output.R` | `predict_all()` and `write_predictions()`: results in enightmodels' prediction format for the dashboard |
+| `R/counties.R` | statewide rows: scraped counties from the models + CBS county results for the rest |
+| `R/races.R` | the races we cover, from `26_general/input_data/priors.csv`: `races_from_priors()`, `cbs_for_races()` |
 | `tests/sim_night.R` | runs the models on one of Ethan's simulated nights through `run_all()` |
 | `tests/check_against_original.R` | confirms the moved models reproduce `scripts/model/tests/test_sim_night.R` |
 
