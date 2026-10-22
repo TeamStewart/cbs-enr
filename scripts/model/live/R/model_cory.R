@@ -39,7 +39,9 @@ fit_cory = function(cells, returns, cfg = NULL, past_share = cory_past_share) {
               district = NA_integer_, candidate, party, time, stage, method, geo, votes, geostratum, past) |>
     enightmodels::coerce_elec_data()
   out = enightmodels::model_legacy(dd, past, cfg)
-  pr = out$pred
+  # model_legacy() returns the prediction table itself in enightmodels builds from early 2026
+  # (e.g. 4944994) and list(pred =, coef =) in later ones
+  pr = if (is.data.frame(out)) out else out$pred
   dem = sum(pr$pred[pr$party == "dem"]); repv = sum(pr$pred[pr$party == "rep"])
 
   cc = cell_counts(cells, returns)

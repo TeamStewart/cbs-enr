@@ -9,8 +9,10 @@
 ##     {ST}_{contest}_{YYYYmmdd_HHMMSS}.parquet   one snapshot per run
 ##
 ## One row per county x candidate. Columns:
-##   state, contest, district, county_fips (5-digit text), county_cbs (3-digit,
-##   matches the `geo` prefix tx_{county_cbs}_...), candidate, party, votes
+##   state, contest, district, county_fips (5-digit text), county_cbs (3-digit CBS
+##   county number, alphabetical -- NOT the FIPS county code; matches the `geo` prefix
+##   tx_{county_cbs}_...), candidate, party (dem / rep / oth), party_cbs (CBS's own
+##   label), votes
 ##   (cumulative, all methods), county_total_vote, county_pct_exp_vote,
 ##   county_precincts_in, county_precincts_of, county_ts (CBS's per-county
 ##   update time, UTC), race_last_updated, race_pct_in, race_call, env,
@@ -21,10 +23,11 @@
 ## cumulative, so never sum across snapshots (data contract §13).
 ##
 ## Run from the cbs-enr folder:
-##   Rscript scripts/model/cbs_county_pull.R TX gov            # test feed
-##   Rscript scripts/model/cbs_county_pull.R TX house 7        # House needs a district
-##   Rscript scripts/model/cbs_county_pull.R TX gov --live     # live feed
-## or source() it in RStudio/Positron after editing the defaults below.
+##   Rscript scripts/model/cbs_county_pull.R TX_gov             # one race, test feed
+##   Rscript scripts/model/cbs_county_pull.R TX_gov FL_sen      # several
+##   Rscript scripts/model/cbs_county_pull.R --all              # every race in priors.csv
+##   Rscript scripts/model/cbs_county_pull.R --all --live       # live feed
+##   Rscript scripts/model/cbs_county_pull.R TX house 7         # old form: STATE CONTEST [DISTRICT]
 ##
 ## One-time setup (each person):
 ##   1. CBS API key in ~/.Renviron:      CBS_API_KEY="..."   then restart R
@@ -41,19 +44,26 @@ suppressPackageStartupMessages({
   library(glue)
 })
 
-# ---- settings: defaults, overridden by command-line arguments --------------------
-STATE = "TX"
-CONTEST = "gov"          # pres, sen, house, gov, ag, ltgov, stsen, sthouse, supcrt, mayor, prop
-DISTRICT = NA_integer_   # NA for statewide; required for house/stsen/sthouse
+# ---- which races --------------------------------------------------------------------
+# A race is given as a race_id from 26_general/input_data/priors.csv ("TX_gov",
+# "AK_house", ...), or as STATE CONTEST [DISTRICT]. --all pulls every race in priors.csv.
+# House races in at-large states (AK, DE, ND, SD, VT, WY) are district 1, as in
+# enightmodels' schema.
 ENV = "test"             # "test" until election night
+ELECTION = as.Date("2026-11-03")
+AT_LARGE = c("AK", "DE", "ND", "SD", "VT", "WY")
+
+parse_race_id = function(id) {
+  p = strsplit(id, "_")[[1]]
+  st = toupper(p[1]); ct = tolower(p[2])
+  dist = if (length(p) >= 3) as.integer(p[3]) else if (ct == "house" && st %in% AT_LARGE) 1L else NA_integer_
+  tibble(race_id = id, state = st, contest = ct, district = dist)
+}
 
 args = commandArgs(trailingOnly = TRUE)
 if ("--live" %in% args) ENV = "live"
-args = setdiff(args, "--live")
-if (length(args) >= 1) STATE = toupper(args[1])
-if (length(args) >= 2) CONTEST = tolower(args[2])
-if (length(args) >= 3) DISTRICT = as.integer(args[3])
-ELECTION = as.Date("2026-11-03")
+ALL = "--all" %in% args
+args = setdiff(args, c("--live", "--all"))
 
 # ---- 0. checks and paths ----------------------------------------------------------
 if (!requireNamespace("cbsapi", quietly = TRUE)) {
@@ -83,82 +93,152 @@ find_26_general = function() {
   }
   normalizePath(cands[1])
 }
+
 DIR_26 = find_26_general()
-race_tag = if (is.na(DISTRICT)) glue("{STATE}_{CONTEST}") else glue("{STATE}_{CONTEST}_{DISTRICT}")
-DIR_OUT = file.path(DIR_26, "cbs_api", ENV, race_tag)
-dir.create(DIR_OUT, recursive = TRUE, showWarnings = FALSE)
-
-observed_at = lubridate::now(tzone = "UTC")
-cli::cli_h1("CBS county pull: {race_tag} ({ENV} feed) at {format(observed_at, '%Y-%m-%d %H:%M:%S')} UTC")
-
-# ---- 1. county results ------------------------------------------------------------
-cty_raw = cbsapi::cbs_election_data(ELECTION, STATE, CONTEST, district = DISTRICT,
-                                    county = TRUE, addl = TRUE, env = ENV)
-if (nrow(cty_raw) == 0) {
-  cli::cli_abort("CBS returned no county results for {race_tag} on the {ENV} feed (not published yet, or wrong contest/district).")
-}
-
-# ---- 2. FIPS -> county_cbs ----------------------------------------------------------
-# county_cbs is assumed to be the 3-digit county part of the FIPS code (e.g. Kaufman,
-# TX = 48257 -> tx_257_*). Checked against enightmodels::cbs_counties below; the
-# script stops rather than write rows that would not join to the precinct spine.
-cty = cty_raw |>
-  transmute(
-    state, contest, district,
-    county_fips = str_pad(geo, 5, pad = "0"),
-    county_cbs = str_sub(county_fips, 3, 5),
-    candidate, party, votes,
-    county_total_vote = as.numeric(totalVote),
-    county_pct_exp_vote = as.numeric(pctExpVote),
-    county_precincts_in = as.numeric(precinctsIn),
-    county_precincts_of = as.numeric(precinctsOf),
-    county_ts = lubridate::ymd_hms(ts, tz = "UTC", quiet = TRUE),
-    race_last_updated = time,
-    race_pct_in = pctIn,
-    race_call = call,
-    env = ENV,
-    observed_at = observed_at
-  )
-
-known = enightmodels::cbs_counties |>
-  filter(state == STATE) |>
-  transmute(county_cbs = str_pad(county_cbs, 3, pad = "0"), county_name = county)
-unmatched = setdiff(unique(cty$county_cbs), known$county_cbs)
-if (length(unmatched) > 0) {
-  cli::cli_abort(c("{length(unmatched)} CBS FIPS code(s) don't map to enightmodels::cbs_counties for {STATE}: {head(unmatched, 10)}",
-                   "i" = "The FIPS -> county_cbs rule doesn't hold for this state; add an explicit lookup before using these rows."))
-}
-cty = left_join(cty, known, by = "county_cbs") |> relocate(county_name, .after = county_cbs)
-
-# ---- 3. checks ----------------------------------------------------------------------
-n_cty = n_distinct(cty$county_cbs)
-cli::cli_alert_info("{n_cty} counties returned; {nrow(known)} counties in cbs_counties for {STATE}")
-if (n_cty < nrow(known)) cli::cli_alert_warning("Missing counties: {head(setdiff(known$county_name, cty$county_name), 10)}")
-
-dupes = count(cty, county_cbs, candidate, party) |> filter(n > 1)
-if (nrow(dupes) > 0) cli::cli_abort("Duplicate county x candidate rows in the CBS response ({nrow(dupes)}).")
-
-# county sums should equal the race-level totals when both feeds are in sync
-race = cbsapi::cbs_election_data(ELECTION, STATE, CONTEST, district = DISTRICT,
-                                 county = FALSE, env = ENV)
-sum_check = cty |>
-  summarise(county_sum = sum(votes, na.rm = TRUE), .by = c(candidate, party)) |>
-  full_join(select(race, candidate, party, race_total = votes), by = c("candidate", "party")) |>
-  mutate(diff = county_sum - race_total)
-print(sum_check)
-if (any(is.na(sum_check$diff) | sum_check$diff != 0)) {
-  cli::cli_alert_warning("County sums differ from race totals (feeds out of sync, or counties missing). Snapshot still saved.")
+races = if (ALL) {
+  pr = readr::read_csv(file.path(DIR_26, "input_data", "priors.csv"), show_col_types = FALSE)
+  bind_rows(lapply(pr$race_id, parse_race_id))
+} else if (length(args) == 0) {
+  parse_race_id("TX_gov")
+} else if (length(args) == 1 || grepl("_", args[1])) {
+  bind_rows(lapply(args, parse_race_id))
 } else {
-  cli::cli_alert_success("County sums match race totals.")
+  tibble(race_id = paste(toupper(args[1]), tolower(args[2]), sep = "_"), state = toupper(args[1]),
+         contest = tolower(args[2]), district = if (length(args) >= 3) as.integer(args[3]) else NA_integer_)
 }
 
-cli::cli_h2("Most-reported counties")
-cty |>
-  distinct(county_name, county_cbs, county_ts, county_pct_exp_vote, county_precincts_in, county_precincts_of) |>
-  arrange(desc(county_pct_exp_vote)) |>
-  print(n = 10)
+# ---- one race -----------------------------------------------------------------------
+# Returns a one-row summary; stops with an informative error if the race can't be pulled.
+pull_race = function(STATE, CONTEST, DISTRICT, ENV) {
+  race_tag = if (is.na(DISTRICT)) glue("{STATE}_{CONTEST}") else glue("{STATE}_{CONTEST}_{DISTRICT}")
+  DIR_OUT = file.path(DIR_26, "cbs_api", ENV, race_tag)
+  observed_at = lubridate::now(tzone = "UTC")
+  cli::cli_h1("CBS county pull: {race_tag} ({ENV} feed) at {format(observed_at, '%Y-%m-%d %H:%M:%S')} UTC")
 
-# ---- 4. save append-only snapshot -------------------------------------------------
-f = file.path(DIR_OUT, glue("{race_tag}_{format(observed_at, '%Y%m%d_%H%M%S')}.parquet"))
-nanoparquet::write_parquet(cty, f)
-cli::cli_alert_success("Saved {nrow(cty)} rows to {f}")
+  # ---- 1. county results ------------------------------------------------------------
+  cty_raw = cbsapi::cbs_election_data(ELECTION, STATE, CONTEST, district = DISTRICT,
+                                      county = TRUE, addl = TRUE, env = ENV)
+  if (nrow(cty_raw) == 0) {
+    cli::cli_abort("CBS returned no county results for {race_tag} on the {ENV} feed (not published yet, or wrong contest/district).")
+  }
+
+  # ---- 2. FIPS -> county_cbs ----------------------------------------------------------
+  # CBS numbers a state's counties in alphabetical order (enightmodels::cbs_counties: TX
+  # Anderson = 1 ... Zavala = 254), and the precinct ids use that number (tx_015_* is
+  # Bexar, FIPS 48029). It is NOT the FIPS county code. Census assigned county FIPS codes
+  # alphabetically too, so a county's CBS number = its rank among the state's FIPS codes
+  # (TX: (FIPS county + 1) / 2). Two checks before anything is written:
+  #   - CBS must return every county in cbs_counties, or the ranks would shift
+  #   - where our model inputs exist, the rank must match the county prefix of the precinct
+  #     ids for every county we have (TX: the 32 scraped counties)
+  known = enightmodels::cbs_counties |>
+    filter(state == STATE) |>
+    transmute(county_cbs = str_pad(county_cbs, 3, pad = "0"), county_name = county)
+  fips = sort(unique(str_pad(cty_raw$geo, 5, pad = "0")))
+  if (length(fips) != nrow(known)) {
+    cli::cli_abort(c("CBS returned {length(fips)} counties for {STATE} but cbs_counties has {nrow(known)}.",
+                     "i" = "The FIPS -> CBS number rule needs the full county list; add an explicit lookup for this state."))
+  }
+  fips_map = tibble(county_fips = fips, county_cbs = str_pad(seq_along(fips), 3, pad = "0"))
+  p_inp = file.path(DIR_26, "input_data", "model_inputs", glue("{STATE}_precinct.parquet"))
+  if (file.exists(p_inp)) {
+    chk = nanoparquet::read_parquet(p_inp, col_select = c("geo", "county_fips")) |>
+      distinct(county_fips = str_pad(as.character(county_fips), 5, pad = "0"),
+               prefix = str_extract(as.character(geo), "(?<=_)[0-9]{3}(?=_)")) |>
+      left_join(fips_map, by = "county_fips")
+    bad = filter(chk, is.na(county_cbs) | county_cbs != prefix)
+    if (nrow(bad)) cli::cli_abort(c("FIPS -> CBS number rule disagrees with the precinct ids for {nrow(bad)} county(ies): {head(bad$county_fips, 10)}",
+                                    "i" = "Add an explicit lookup for {STATE} before using these rows."))
+    cli::cli_alert_success("FIPS -> CBS county number checked against the precinct ids of {nrow(chk)} counties")
+  }
+
+  # CBS's county feed labels parties d / r / lb ..., its race feed dem / rep / lib. Both
+  # go to enightmodels' codes (dem, rep, oth), as in lookups/party_map.csv; the original
+  # label is kept in party_cbs.
+  cbs_party = function(p) {
+    p = tolower(trimws(as.character(p)))
+    case_when(p %in% c("d", "dem", "democrat", "democratic") ~ "dem",
+              p %in% c("r", "rep", "gop", "republican") ~ "rep",
+              TRUE ~ "oth")
+  }
+
+  cty = cty_raw |>
+    transmute(
+      state, contest, district,
+      county_fips = str_pad(geo, 5, pad = "0"),
+      candidate, party, votes,
+      county_total_vote = as.numeric(totalVote),
+      county_pct_exp_vote = as.numeric(pctExpVote),
+      county_precincts_in = as.numeric(precinctsIn),
+      county_precincts_of = as.numeric(precinctsOf),
+      county_ts = lubridate::ymd_hms(ts, tz = "UTC", quiet = TRUE),
+      race_last_updated = time,
+      race_pct_in = pctIn,
+      race_call = call,
+      env = ENV,
+      observed_at = observed_at
+    ) |>
+    mutate(party_cbs = party, party = cbs_party(party), .after = party) |>
+    left_join(fips_map, by = "county_fips") |>
+    left_join(known, by = "county_cbs") |>
+    relocate(county_cbs, county_name, .after = county_fips)
+
+  # ---- 3. checks ----------------------------------------------------------------------
+  n_cty = n_distinct(cty$county_cbs)
+  cli::cli_alert_info("{n_cty} counties returned; {nrow(known)} counties in cbs_counties for {STATE}")
+  if (n_cty < nrow(known)) cli::cli_alert_warning("Missing counties: {head(setdiff(known$county_name, cty$county_name), 10)}")
+
+  dupes = count(cty, county_cbs, candidate, party) |> filter(n > 1)
+  if (nrow(dupes) > 0) cli::cli_abort("Duplicate county x candidate rows in the CBS response ({nrow(dupes)}).")
+
+  # county sums should equal the race-level totals when both feeds are in sync
+  race = cbsapi::cbs_election_data(ELECTION, STATE, CONTEST, district = DISTRICT,
+                                   county = FALSE, env = ENV)
+  sum_check = cty |>
+    summarise(county_sum = sum(votes, na.rm = TRUE), .by = c(candidate, party)) |>
+    full_join(race |> mutate(party = cbs_party(party)) |> select(candidate, party, race_total = votes),
+              by = c("candidate", "party")) |>
+    mutate(diff = county_sum - race_total)
+  print(sum_check)
+  if (any(is.na(sum_check$diff) | sum_check$diff != 0)) {
+    cli::cli_alert_warning("County sums differ from race totals (feeds out of sync, or counties missing). Snapshot still saved.")
+  } else {
+    cli::cli_alert_success("County sums match race totals.")
+  }
+
+  cli::cli_h2("Most-reported counties")
+  cty |>
+    distinct(county_name, county_cbs, county_ts, county_pct_exp_vote, county_precincts_in, county_precincts_of) |>
+    arrange(desc(county_pct_exp_vote)) |>
+    print(n = 10)
+
+  # ---- 4. save append-only snapshot -------------------------------------------------
+  dir.create(DIR_OUT, recursive = TRUE, showWarnings = FALSE)
+  f = file.path(DIR_OUT, glue("{race_tag}_{format(observed_at, '%Y%m%d_%H%M%S')}.parquet"))
+  nanoparquet::write_parquet(cty, f)
+  cli::cli_alert_success("Saved {nrow(cty)} rows to {f}")
+  tibble(counties = n_cty, of = nrow(known), rows = nrow(cty),
+         pct_exp_vote = paste(range(cty$county_pct_exp_vote, na.rm = TRUE), collapse = "-"),
+         candidates = paste(unique(paste0(cty$candidate, " (", cty$party, ")")), collapse = "; "),
+         file = basename(f))
+}
+
+# ---- run ------------------------------------------------------------------------------
+out = lapply(seq_len(nrow(races)), function(i) {
+  r = races[i, ]
+  res = tryCatch(pull_race(r$state, r$contest, r$district, ENV),
+                 error = function(e) tibble(error = conditionMessage(e)))
+  bind_cols(select(r, race_id, district), res)
+}) |> bind_rows()
+if (nrow(races) > 1) {
+  cli::cli_h1("Summary ({ENV} feed)")
+  for (cl in c("counties", "of", "pct_exp_vote", "candidates", "error")) if (!cl %in% names(out)) out[[cl]] = NA
+  out |>
+    transmute(race_id, district, result = if_else(is.na(error), "ok", "FAILED"),
+              counties = if_else(is.na(error), paste0(counties, " of ", of), ""),
+              pct_exp_vote = coalesce(pct_exp_vote, ""),
+              detail = if_else(is.na(error), candidates,
+                               str_trunc(str_squish(str_replace_all(error, "\\n|!|\u2139", " ")), 110))) |>
+    as.data.frame() |> print(right = FALSE, row.names = FALSE)
+}
+if ("error" %in% names(out) && any(!is.na(out$error))) quit(status = 1)

@@ -13,6 +13,29 @@ run_race("swing", cells, filter(returns, race_id == "TX_gov"))   # one race, one
 run_all(cells, returns)                           # every race x every model, one row each
 ```
 
+## Output for the dashboard
+
+`predict_all(cells, returns)` runs every race x model and returns `$pred`, in enightmodels'
+tidy prediction format (the columns in `enightmodels::COLS_PRED`: one row per race x model
+x candidate x `pred_type`, with `pred_type` "vote" and "share", `rep`, `pred`, `pred_min`,
+`pred_max`, `pct_rep`, plus `p_win`), and `$status`, one row per race x model saying "ok",
+"no_votes" or "error: ...". `write_predictions(res)` writes both to `26_general/model_results/` in the shared
+Dropbox, as timestamped CSVs plus `predictions_latest.csv` / `status_latest.csv`. Test
+runs should pass another `dir` so they never mix with the night's results. Details at the top of `R/output.R`.
+Every prediction row passes `enightmodels::check_pred_data()`.
+
+**Statewide.** Pass `cbs = list(<race_id> = read_cbs_latest(...))` and
+`base = county_baseline(state)` to `predict_all()` and each race x model also gets rows with
+`geo = "all"`: the scraped counties from the model (precinct detail kept) plus every other
+county from CBS's county results (`scripts/model/cbs_county_pull.R` writes them to
+`26_general/cbs_api/`), with each county's uncounted vote projected from CBS's share of
+expected vote, its 2022 turnout and 2024 lean, and tonight's swing. The model-only rows have
+`geo = "scraped"`. Method and the interval terms are at the top of `R/counties.R`.
+
+CBS county results for every race in `priors.csv`, from the `cbs-enr` folder:
+`Rscript scripts/model/cbs_county_pull.R --all` (test feed; add `--live` on the night). It
+prints which races CBS returned and which it didn't.
+
 ## Layout
 
 | file | what it holds |
@@ -25,6 +48,9 @@ run_all(cells, returns)                           # every race x every model, on
 | `R/model_cory.R` | **model_cory**: `fit_cory()`, a wrapper on `enightmodels::model_legacy()` |
 | `R/model_share.R` | **model_y**: an untouched copy of `model_turnout.R`, not wired in yet (see below) |
 | `R/run.R` | `run_race()`, `run_all()`, and the list of wired models |
+| `R/output.R` | `predict_all()` and `write_predictions()`: results in enightmodels' prediction format for the dashboard |
+| `R/counties.R` | statewide rows: scraped counties from the models + CBS county results for the rest |
+| `R/races.R` | the races we cover, from `26_general/input_data/priors.csv`: `races_from_priors()`, `cbs_for_races()` |
 | `tests/sim_night.R` | runs the models on one of Ethan's simulated nights through `run_all()` |
 | `tests/check_against_original.R` | confirms the moved models reproduce `scripts/model/tests/test_sim_night.R` |
 
@@ -49,7 +75,7 @@ on, so one bad race cannot stop the rest.
 | model | file | status |
 |---|---|---|
 | swing | `R/model_swing.R` | moved from `tests/test_sim_night.R` section C; output checked identical |
-| cory | `R/model_cory.R` | moved from `tests/test_sim_night.R` section D; run `check_against_original.R` on a machine with `enightmodels` to confirm |
+| cory | `R/model_cory.R` | moved from `tests/test_sim_night.R` section D; output checked identical at the 7 calibration times on tx_base |
 | y | `R/model_share.R` | copy of `model_turnout.R` at commit `dc7a4d4`. Young-Kyung is still working on the original, which stays the working version. Once it settles, re-copy it and wrap it as `fit_y(cells, returns)`. |
 
 The originals in `scripts/model/` and `scripts/model/tests/` are untouched.
