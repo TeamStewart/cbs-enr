@@ -13,6 +13,17 @@ run_race("swing", cells, filter(returns, race_id == "TX_gov"))   # one race, one
 run_all(cells, returns)                           # every race x every model, one row each
 ```
 
+## Output for the dashboard
+
+`predict_all(cells, returns)` runs every race x model and returns `$pred`, in enightmodels'
+tidy prediction format (the columns in `enightmodels::COLS_PRED`: one row per race x model
+x candidate x `pred_type`, with `pred_type` "vote" and "share", `rep`, `pred`, `pred_min`,
+`pred_max`, `pct_rep`, plus `p_win`), and `$status`, one row per race x model saying "ok",
+"no_votes" or "error: ...". `write_predictions(res)` writes both to `26_general/model_results/` in the shared
+Dropbox, as timestamped CSVs plus `predictions_latest.csv` / `status_latest.csv`. Test
+runs should pass another `dir` so they never mix with the night's results. Details at the top of `R/output.R`.
+Every prediction row passes `enightmodels::check_pred_data()`.
+
 ## Layout
 
 | file | what it holds |
@@ -25,6 +36,7 @@ run_all(cells, returns)                           # every race x every model, on
 | `R/model_cory.R` | **model_cory**: `fit_cory()`, a wrapper on `enightmodels::model_legacy()` |
 | `R/model_y.R` | **model_y**: an untouched copy of `tx_gov_trial.R`, not wired in yet (see below) |
 | `R/run.R` | `run_race()`, `run_all()`, and the list of wired models |
+| `R/output.R` | `predict_all()` and `write_predictions()`: results in enightmodels' prediction format for the dashboard |
 | `tests/sim_night.R` | runs the models on one of Ethan's simulated nights through `run_all()` |
 | `tests/check_against_original.R` | confirms the moved models reproduce `scripts/model/tests/test_sim_night.R` |
 

@@ -96,11 +96,13 @@ fit_swing = function(cells, counts, boot = 100, level = 0.95, seed = 2026) {
       cw[rep_ctys] = as.numeric(k)
     }
     o = swing_once(d, cw)
-    c(s2 = sum(o$dem) / sum(o$dem + o$rep), turn = sum(o$tot))
+    c(s2 = sum(o$dem) / sum(o$dem + o$rep), turn = sum(o$tot), dem = sum(o$dem), rep = sum(o$rep))
   })
   S2 = vapply(draws, `[[`, 0, "s2"); TT = vapply(draws, `[[`, 0, "turn")
+  DV = vapply(draws, `[[`, 0, "dem"); RV = vapply(draws, `[[`, 0, "rep")
   # centre the bootstrap draws on the point fit
   S2 = S2 - mean(S2) + sum(pt$dem) / sum(pt$dem + pt$rep); TT = TT - mean(TT) + sum(pt$tot)
+  DV = DV - mean(DV) + sum(pt$dem); RV = RV - mean(RV) + sum(pt$rep)
   ci = cred(S2, level); ct = cred(TT, level)
 
   list(model = "swing", status = "ok", settings = settings,
@@ -108,5 +110,5 @@ fit_swing = function(cells, counts, boot = 100, level = 0.95, seed = 2026) {
                                p_dem_win = mean(S2 > 0.5), est_turnout = mean(TT),
                                lo_turnout = ct[["lower"]], hi_turnout = ct[["upper"]]), counted),
        cells = pt,
-       draws = tibble(twop = S2, turnout = TT))
+       draws = tibble(twop = S2, turnout = TT, dem = DV, rep = RV))
 }
