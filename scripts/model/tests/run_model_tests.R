@@ -20,6 +20,8 @@
 ##     diag     no cross-mode correlation (SIGMA_STRUCT=diag)
 ##     nore     no county random effect (USE_COUNTY_RE=0)
 ##     swing    the standard uniform swing model (feols with county fixed effects)
+##     both     model_both.R -- swing-style theta prior on the precinct x mode model.
+##              UNVALIDATED; present so it can be compared, not because it is recommended
 ##     cory     model_cory: enightmodels::model_legacy() (Cory), default configuration
 ##     core     the simpler model_core.R version
 ##   Add "default" to the list to rerun the default settings too, e.g. --variants=default,nc
@@ -46,7 +48,13 @@ VARIANTS = list(
   nore    = list(env = "USE_COUNTY_RE=0", flags = character()),
   core    = list(env = character(), flags = "--model=core"),
   swing   = list(env = character(), flags = "--model=swing"),
-  cory    = list(env = character(), flags = "--model=cory")
+  cory    = list(env = character(), flags = "--model=cory"),
+  # model_both.R: the trial model with a swing-style theta prior. UNVALIDATED -- it is
+  # here so it can be stress-tested alongside the others, not because it is recommended.
+  # On tx_turnout_low it fixes LATE turnout (106.5% -> 100.8% of truth) and costs share
+  # (0.148 -> 0.250 pp); on the early night it barely moves, because its per-cell level
+  # fit needs counted-out cells. See scripts/model/model_both.R for its acceptance tests.
+  both    = list(env = character(), flags = "--model=both")
 )
 sim_flags = grep("^--(model|cells|complete)=", args, value = TRUE)
 var_arg = grep("^--variants=", args, value = TRUE)
