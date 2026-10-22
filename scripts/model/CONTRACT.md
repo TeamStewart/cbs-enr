@@ -1,6 +1,6 @@
 # Data contract — race-by-race election-night model (2026)
 
-**Status:** draft 1, 2026-10-18. Owner: Young-Kyung Kim. Consumer: `scripts/model/tx_gov_trial.R`
+**Status:** draft 1, 2026-10-18. Owner: Young-Kyung Kim. Consumer: `scripts/model/model_turnout.R`
 and its successors. See `tx_model_spec.tex` for the model these inputs feed and
 `nyc_tx_comparison.tex` for why it is shaped this way.
 
@@ -366,7 +366,7 @@ What this means concretely for the model:
   what we see, as with a subject still alive at study end. I first wrote "left" here,
   which is the opposite case. Conjugacy can be kept by data augmentation (impute the
   censored tau from the truncated normal, refit in closed form, iterate).**
-- `STAGE_DONE = 2` in `tx_gov_trial.R` is written against yet another vocabulary and must
+- `STAGE_DONE = 2` in `model_turnout.R` is written against yet another vocabulary and must
   be replaced by the `stage_meaning` lookup once it exists.
 
 **Blocker.** `precinct_enr` in the TX crosswalk is populated for 92 of 11,563 rows (0.8%),

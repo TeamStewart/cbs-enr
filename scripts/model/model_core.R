@@ -1,6 +1,6 @@
 # ========================================
 ## model_core.R -- the fitting primitives, shared by the live model and the backtests.
-## Extracted from tx_gov_trial.R so the two cannot drift apart. Pure functions: no data
+## Extracted from model_turnout.R so the two cannot drift apart. Pure functions: no data
 ## loading, no globals, no side effects.
 # ========================================
 

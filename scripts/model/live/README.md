@@ -23,7 +23,7 @@ run_all(cells, returns)                           # every race x every model, on
 | `R/returns.R` | the standard returns shape; `returns_from_sim()`, `returns_from_live()`, `cell_counts()` |
 | `R/model_swing.R` | **model_simpleswing**: `fit_swing()` (math written out at the top of the file) |
 | `R/model_cory.R` | **model_cory**: `fit_cory()`, a wrapper on `enightmodels::model_legacy()` |
-| `R/model_y.R` | **model_y**: an untouched copy of `tx_gov_trial.R`, not wired in yet (see below) |
+| `R/model_share.R` | **model_y**: an untouched copy of `model_turnout.R`, not wired in yet (see below) |
 | `R/run.R` | `run_race()`, `run_all()`, and the list of wired models |
 | `tests/sim_night.R` | runs the models on one of Ethan's simulated nights through `run_all()` |
 | `tests/check_against_original.R` | confirms the moved models reproduce `scripts/model/tests/test_sim_night.R` |
@@ -50,7 +50,7 @@ on, so one bad race cannot stop the rest.
 |---|---|---|
 | swing | `R/model_swing.R` | moved from `tests/test_sim_night.R` section C; output checked identical |
 | cory | `R/model_cory.R` | moved from `tests/test_sim_night.R` section D; run `check_against_original.R` on a machine with `enightmodels` to confirm |
-| y | `R/model_y.R` | copy of `tx_gov_trial.R` at commit `dc7a4d4`. Young-Kyung is still working on the original, which stays the working version. Once it settles, re-copy it and wrap it as `fit_y(cells, returns)`. |
+| y | `R/model_share.R` | copy of `model_turnout.R` at commit `dc7a4d4`. Young-Kyung is still working on the original, which stays the working version. Once it settles, re-copy it and wrap it as `fit_y(cells, returns)`. |
 
 The originals in `scripts/model/` and `scripts/model/tests/` are untouched.
 

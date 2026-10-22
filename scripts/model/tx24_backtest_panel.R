@@ -13,7 +13,7 @@
 ## 2024 precinct returns), and anything from the 2024 returns themselves.
 ##
 ## Outputs
-##   scripts/model/tx24_backtest_panel.parquet   covariates, in tx_gov_trial.R's
+##   scripts/model/tx24_backtest_panel.parquet   covariates, in model_turnout.R's
 ##                                               load_covs() schema (party-long)
 ##   scripts/model/tx24_truth.parquet            per-precinct x mode FINAL votes
 ##   scripts/model/tx24_mode_history_2020.parquet   BACKTEST mode history (2020)
@@ -63,7 +63,7 @@ OUT_H20   <- "scripts/model/tx24_mode_history_2020.parquet"
 OUT_H22   <- "scripts/model/tx24_mode_history_2022.parquet"
 # The PRODUCTION mode history is written into the repo, NOT straight to
 #   {PATH_DROPBOX}/26_general/input_data/TX_mode_history.parquet
-# which is where tx_gov_trial.R looks by default. Dropping it there would silently switch
+# which is where model_turnout.R looks by default. Dropping it there would silently switch
 # the live 2026 model off delta_m = 0 and onto a 2024-derived offset. That is a decision
 # to take deliberately, not a side effect of running a backtest, so activating it is a
 # one-line copy the user makes:
@@ -153,7 +153,7 @@ d <- l2 |> filter(geo %in% universe) |> left_join(vh, by = "geo") |>
     p_black   = race2 / pmax(n, 1),
     p_hisp    = race3 / pmax(n, 1),
     p_col     = col_known / pmax(col_known + noncol_known, 1),
-    # tx_gov_trial.R's RE_GROUPING offers county / geostratum / cory(stratum_demo +
+    # model_turnout.R's RE_GROUPING offers county / geostratum / cory(stratum_demo +
     # geostratum). The L2 frame has no geostratum, so build an honest stand-in: county
     # for geostratum, and a coarse demographic bucket for stratum_demo.
     geostratum   = county_name,
@@ -219,7 +219,7 @@ print(as.data.frame(mode_split), row.names = FALSE)
 #           turnout type, not calendar: midterms run 27-32% election-day, presidentials
 #           13-20%. 2024 actual is 19.1% eday; 2020 is 13.3%, 2022 is 30.7%.
 #   2022 -- the WRONG analogue here (it is the right one for the 2026 midterm, which is
-#           what tx_gov_trial.R ships with). Kept so the backtest can measure what a
+#           what model_turnout.R ships with). Kept so the backtest can measure what a
 #           mis-chosen turnout-split prior costs.
 mk_hist <- function(cols, election, contest) {
   x <- d |> select(geo, dem2, all_of(cols))
@@ -254,7 +254,7 @@ h24 <- truth |>
   select(geo, election, contest, method, party, votes)
 
 # The measured TX delta_m, reported here so it can replace the NC-borrowed NC_DELTA in
-# tx_gov_trial.R. Same specification derive_mode_priors() uses:
+# model_turnout.R. Same specification derive_mode_priors() uses:
 #   logit(s_im) - logit(dem2_i) = a_m + b_m * logit(dem2_i), weighted by the cell's
 #   two-party votes.
 cli_h2("MEASURED TX 2024 delta_m (same spec as derive_mode_priors)")

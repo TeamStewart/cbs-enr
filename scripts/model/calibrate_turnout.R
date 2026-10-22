@@ -4,7 +4,7 @@
 ## The election-night model's turnout estimates run high while its two-party share is in
 ## good shape, so this sizes the turnout variance components on real TX midterm data
 ## instead of the three hardcoded ICC constants in the repo (ICC_TURN = 0.200 in
-## tx_gov_trial.R:326, 0.269 share in the comment table at tx_gov_trial.R:286-311, 0.302
+## model_turnout.R:326, 0.269 share in the comment table at model_turnout.R:286-311, 0.302
 ## in tests/model_test_common.R:44). None of them is reproducible from a script today.
 ##
 ## WHAT THE CONSTANT ACTUALLY GOVERNS. model_core.R appends J ridge rows of weight
@@ -12,7 +12,7 @@
 ## lambda = (1-ICC)/ICC. So ICC = sigma_u^2 / (sigma_u^2 + sigma^2) where sigma^2 is the
 ## residual variance OF THE MODEL'S OWN FIT -- i.e. a RESIDUAL county ICC, after
 ## covariates, not a raw one. Under the default USE_COMPOSE=1 that fit's reference-mode
-## outcome is y_tau = logit(T_final / cap) (tx_gov_trial.R:910), i.e. THETA. Measuring on
+## outcome is y_tau = logit(T_final / cap) (model_turnout.R:910), i.e. THETA. Measuring on
 ## log(votes) instead understates it by about 1.85x, because the logit Jacobian amplifies
 ## county-level turnout differences more than it amplifies precinct noise.
 ##
@@ -53,8 +53,8 @@ PANELS   <- "scripts/model/panels"
 OUT_CSV  <- "quality_reports/turnout_variance_tx2022.csv"
 OUT_RDS  <- "quality_reports/turnout_variance_tx2022_objects.rds"
 OUT_FIG  <- "quality_reports/figures"
-KAPPA    <- 1.25        # tx_gov_trial.R:154
-ICC_USED <- 0.200       # tx_gov_trial.R:326, the constant under test
+KAPPA    <- 1.25        # model_turnout.R:154
+ICC_USED <- 0.200       # model_turnout.R:326, the constant under test
 MIN_VOTES <- 20         # precinct outcome floor
 MIN_REG   <- 50         # L2 denominator floor -- a DATA-QUALITY cut, reported separately
 NEAR_CAP  <- 0.8        # "near the ceiling" threshold, as a fraction of KAPPA*n
@@ -198,7 +198,7 @@ add("A1", "l2_vote22_over_gov22", "ratio", "ratio", l2cov, nrow(d), n_distinct(d
 # ========================================
 cli_h1("A2. Variance ladder (32 counties)")
 
-# The model's own COVS_TURN (tx_gov_trial.R:343-345) is
+# The model's own COVS_TURN (model_turnout.R:343-345) is
 # {log_n, turnout22, turnout24, age, male, pred.bla, pred.his, dem2}. For a 2022 backtest
 # turnout22/turnout24 are post-outcome, so the honest analogue lags them one cycle.
 COVS      <- c("log_n", "turnout18", "turnout20", "p_male", "p_age65", "p_black", "p_hisp", "p_col", "dem2")
@@ -363,7 +363,7 @@ cli_alert_info("these are OLS residual sigmas, a FLOOR on the model's predictive
 near <- mean(panel$ratio > NEAR_CAP * KAPPA)
 cli_inform("  above {NEAR_CAP} of cap (= ratio > {NEAR_CAP * KAPPA}), UNFILTERED panel: \\
             {sum(panel$ratio > NEAR_CAP * KAPPA)} ({round(100 * near, 2)}%)  \\
-            [tx_gov_trial.R:151 independently records kappa binding on 1.16%]")
+            [model_turnout.R:151 independently records kappa binding on 1.16%]")
 add("A4", "frac_near_cap_unfiltered", "ratio", "ratio", near, nrow(panel), n_distinct(panel$county))
 
 # (b2) Shrinkage implied by the constant vs the measurement.
@@ -376,7 +376,7 @@ cli_inform(c(
 add("A4", "lambda_in_use",   "weight", "weight", lam(ICC_USED), nrow(d), n_distinct(d$county))
 add("A4", "lambda_measured", "weight", "weight", lam(icc_best), nrow(d), n_distinct(d$county))
 cli_alert_warning("ICC_TURN ALSO parameterizes the synthetic generator \\
-                   (tx_gov_trial.R:773, c_tau sd = sd_tau * sqrt(ICC/(1-ICC))). Changing \\
+                   (model_turnout.R:773, c_tau sd = sd_tau * sqrt(ICC/(1-ICC))). Changing \\
                    it moves DGP and fit together, so an ablation on simulated nights is \\
                    uninformative. Split the constant into _FIT and _DGP, or ablate on \\
                    real returns only.")

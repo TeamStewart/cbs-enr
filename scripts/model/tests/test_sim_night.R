@@ -6,7 +6,7 @@
 ## minutes from 8pm to 4am ET, then at four later times, for every race in the sim.
 ##
 ## Three models (choose with --model=):
-##   trial (default)  the full model in scripts/model/tx_gov_trial.R: precinct x mode cells,
+##   trial (default)  the full model in scripts/model/model_turnout.R: precinct x mode cells,
 ##                    turnout / third-party / two-party equations, county random effect,
 ##                    cross-mode correlation (Sigma), mode partisan offsets, and its
 ##                    anytime-valid confidence sequence. That file's own code runs (config,
@@ -64,6 +64,10 @@
 source("scripts/model/tests/model_test_common.R")
 args = commandArgs(trailingOnly = TRUE)
 MODEL = sub("^--model=", "", c(grep("^--model=", args, value = TRUE), "--model=trial")[1])
+# "both" is the trial model with model_both.R's swing-style theta prior: same cells, same
+# fit_stage, one extra step that re-centres theta's prior from a per-cell level fit.
+IS_BOTH = MODEL == "both"
+if (IS_BOTH) MODEL = "trial"
 # --dump-prec=HH:MM[,HH:MM] writes PRECINCT-level predictions at those checkpoints to
 # 26_general/model_tests/prec_<scenario>[__<label>]_<HHMM>.csv. Diagnostic only: an
 # aggregate run yields ONE number (the statewide bias) while a dump yields ~6,100
@@ -159,7 +163,7 @@ summarize_draws = function(race, tm, d, S2, turn, extra = list()) {
 }
 
 # ======================================================================
-## A. the full trial model (tx_gov_trial.R)
+## A. the full trial model (model_turnout.R)
 # ======================================================================
 if (MODEL == "trial") {
   # The trial's mode offsets come from mode x PARTY history, which TX does not have
@@ -168,7 +172,7 @@ if (MODEL == "trial") {
   if (!nzchar(Sys.getenv("MODE_OFFSET_SOURCE"))) Sys.setenv(MODE_OFFSET_SOURCE = "zero")
 
   # ---- the trial's input frame (`covs_long`), built from TX_precinct.parquet ----
-  # tx_gov_trial.R reads a frame long by party (est = expected votes for that party,
+  # model_turnout.R reads a frame long by party (est = expected votes for that party,
   # method "all"). Column mapping from our model inputs:
   #   county       <- county_name              est (dem/rep) <- est_turnout x dem2 / (1 - dem2)
   #   turnout22/24 <- L2 turnout22/24 (rates)  age           <- p_age_65_up (share 65+)
@@ -193,15 +197,15 @@ if (MODEL == "trial") {
     inner_join(select(covs_wide, geo, dem2), by = "geo") |>
     reframe(party = c("dem", "rep"), votes = voters * c(dem2, 1 - dem2), .by = c(geo, method))
 
-  # ---- run tx_gov_trial.R itself, in order, up to its synthetic-returns section ----
+  # ---- run model_turnout.R itself, in order, up to its synthetic-returns section ----
   # Every top-level statement runs (config, functions, `prec`, mode priors, `cells`,
   # CTY_MAT, ...) EXCEPT its two file reads, which are replaced by the frames above.
   # So a change Young-Kyung makes to the model is picked up here with no edits.
-  path_trial = "scripts/model/tx_gov_trial.R"
+  path_trial = "scripts/model/model_turnout.R"
   src = readLines(path_trial, warn = FALSE)
   cut_ret = grep("^# ---- 3\\. synthetic returns", src)[1]
   cut_run = grep("^# ---- 6\\. run", src)[1]
-  if (is.na(cut_ret) || is.na(cut_run)) stop("tx_gov_trial.R section markers changed; update test_sim_night.R")
+  if (is.na(cut_ret) || is.na(cut_run)) stop("model_turnout.R section markers changed; update test_sim_night.R")
   ex = parse(path_trial, keep.source = TRUE); sr = attr(ex, "srcref")
   lhs = function(e) if (is.call(e) && as.character(e[[1]]) %in% c("=", "<-") && is.name(e[[2]])) as.character(e[[2]]) else ""
   is_fun = function(e) lhs(e) != "" && is.call(e[[3]]) && identical(e[[3]][[1]], as.name("function"))
@@ -223,11 +227,15 @@ if (MODEL == "trial") {
     }
   }
   if (!setequal(skipped, c("covs_long", "mode_hist")))
-    stop("tx_gov_trial.R no longer assigns covs_long / mode_hist at top level; update test_sim_night.R")
+    stop("model_turnout.R no longer assigns covs_long / mode_hist at top level; update test_sim_night.R")
   cat(sprintf(paste0("Trial settings: DRAWS %d | bounded turnout %s (KAPPA %.2f, ref %s) | Sigma %s/%s | ",
                      "county RE %s | mode offsets %s | gates %d cells / %d counties\n"),
               DRAWS, USE_COMPOSE, KAPPA, REF_MODE, SIGMA_SOURCE, SIGMA_STRUCT, USE_COUNTY_RE,
               MODE_OFFSET_SOURCE, MIN_MODE_CELLS, MIN_MODE_CTY))
+  if (IS_BOTH) {
+    source("scripts/model/model_both.R")   # defines fit_stage_swingtheta; does not re-source
+    cli_alert_info("model=both: swing-style theta prior from model_both.R")
+  }
   d0 = prior_draws(cells)          # reference prior for the confidence sequence
   # rough statewide estimate (see statewide_tx.R); NULL if its inputs are missing
   source("scripts/model/tests/statewide_tx.R")
@@ -280,7 +288,9 @@ if (MODEL == "trial") {
                   votes_dem = if_else(rep_cell, c_dem, NA_real_),
                   votes_rep = if_else(rep_cell, c_rep, NA_real_),
                   votes_oth = if_else(rep_cell, c_oth, NA_real_))
-      f = suppressMessages(fit_stage(cells, returns, cross_mode = USE_CROSS_MODE))
+      f = suppressMessages(
+        if (IS_BOTH) fit_stage_swingtheta(cells, returns, cross_mode = USE_CROSS_MODE)
+        else         fit_stage(cells, returns, cross_mode = USE_CROSS_MODE))
       if (length(DUMP_PREC) && format(tm, "%H:%M") %in% DUMP_PREC) {
         # truth per precinct at this checkpoint, so the dump is self-contained
         tr_p = fin |> summarize(t_dem = sum(dem), t_rep = sum(rep),
@@ -290,7 +300,7 @@ if (MODEL == "trial") {
         dmp = f$prec |>
           left_join(tr_p, by = "geo") |>
           left_join(cn_p, by = "geo") |>
-          left_join(select(inp, geo, n, dem2, est_turnout, geostratum), by = "geo") |>
+          left_join(select(inp, geo, n, dem2, est_turnout, geostratum, yg_pred_his), by = "geo") |>
           mutate(scenario = SCENARIO, label = LABEL, time = format(tm, "%H:%M"),
                  truth_dem2 = t_dem / pmax(t_dem + t_rep, 1))
         fp = file.path(DIR_OUT, sprintf("prec_%s%s_%s.csv", SCENARIO,
@@ -444,6 +454,23 @@ if (MODEL == "swing") {
         o = swing_once(d, cw)
         c(s2 = sum(o$dem) / sum(o$dem + o$rep), turn = sum(o$tot))
       })
+      if (length(DUMP_PREC) && format(tm, "%H:%M") %in% DUMP_PREC) {
+        # swing's per-geo prediction, in the same shape the trial branch dumps, so the
+        # two models can be compared at PRECINCT level (the aggregate cannot
+        # discriminate on a scenario that preserves the statewide total by construction)
+        pg = pt |> summarize(turn_est = sum(tot), dem_v = sum(dem), rep_v = sum(rep), .by = geo) |>
+          mutate(dem_est = dem_v / pmax(turn_est, 1))
+        tr_p = fin |> summarize(t_dem = sum(dem), t_rep = sum(rep),
+                                t_tot = sum(dem + rep + oth), .by = geo)
+        cn_p = d |> summarize(c_tot = sum(c_tot), .by = geo)
+        dmp = pg |> left_join(tr_p, by = "geo") |> left_join(cn_p, by = "geo") |>
+          left_join(select(inp, geo, n, dem2, est_turnout, yg_pred_his), by = "geo") |>
+          mutate(scenario = SCENARIO, label = LABEL, time = format(tm, "%H:%M"))
+        fp = file.path(DIR_OUT, sprintf("prec_%s%s_%s.csv", SCENARIO,
+                       if (nzchar(LABEL)) paste0("__", LABEL) else "", format(tm, "%H%M")))
+        readr::write_csv(dmp, fp)
+        cat("  dumped", nrow(dmp), "precincts ->", basename(fp), "\n")
+      }
       S2 = vapply(draws, `[[`, 0, "s2"); TT = vapply(draws, `[[`, 0, "turn")
       # centre the bootstrap draws on the point fit
       S2 = S2 - mean(S2) + sum(pt$dem) / sum(pt$dem + pt$rep); TT = TT - mean(TT) + sum(pt$tot)
@@ -548,7 +575,8 @@ if (MODEL == "cory") {
 # ======================================================================
 t0 = Sys.time()
 res = map_dfr(sort(unique(final$contest)), function(r) { cat("  fitting", r, "...\n"); run_contest(r) }) |>
-  mutate(model = c(trial = "model_y", swing = "model_simpleswing", core = "model_core", cory = "model_cory")[[MODEL]],
+  mutate(model = if (IS_BOTH) "model_both" else
+                 c(trial = "model_y", swing = "model_simpleswing", core = "model_core", cory = "model_cory")[[MODEL]],
          covers = truth_twop >= lo_twop & truth_twop <= hi_twop,
          confident_wrong = (truth_twop > 0.5 & hi_twop < 0.5) | (truth_twop < 0.5 & lo_twop > 0.5))
 # what this run changes from the default model settings, in words, for the page

@@ -108,7 +108,7 @@ night_list = function(df) df |>
       if (st) r2(g$stu_est) else NA, if (st) r2(g$stu_lo) else NA, if (st) r2(g$stu_hi) else NA)),
     st_exact = if (st) r2(g$st_exact[1]) else NULL, stu_exact = if (st) r2(g$stu_exact[1]) else NULL
   ) })
-# display names: model_y = the full precinct model (tx_gov_trial.R), model_simpleswing =
+# display names: model_y = the full precinct model (model_turnout.R), model_simpleswing =
 # the standard uniform swing model, model_cory = enightmodels::model_legacy(),
 # model_core = the simpler model_core.R version
 MODEL_NAMES = c(trial = "model_y", model_y = "model_y", swing = "model_simpleswing",

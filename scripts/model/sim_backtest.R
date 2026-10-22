@@ -6,7 +6,7 @@
 ## rather than a backtest-specific panel. The sim's truth is drawn from the same file,
 ## so this exercises the live join path, not a parallel one.
 ##
-## WHY THIS SUITE RATHER THAN tx_gov_trial.R's own make_stages(): the sim's schedule is
+## WHY THIS SUITE RATHER THAN model_turnout.R's own make_stages(): the sim's schedule is
 ## one row per (geo, method, BATCH) with a cumulative fraction, so cells accumulate
 ## PARTIALLY. make_stages reveals cells all-or-nothing and therefore cannot exercise the
 ## partial-count machinery at all. The sim also emits `stage` in the real 0 / 4 / 6
@@ -77,7 +77,7 @@ Sys.setenv(
   COVS_TURN  = "log_n,turnout22,turnout24,p_male,p_age_65_up,p_black,p_hisp,p_col,dem2",
   COVS_SHARE = "log_n,turnout22,turnout24,p_male,p_age_65_up,p_black,p_hisp,p_col,dem2",
   COVS_TP    = "log_n,p_male,p_age_65_up,dem2,tp_prior_raw")
-source("scripts/model/tx_gov_trial.R")   # config, cells, prec, CTY_MAT, fit_stage
+source("scripts/model/model_turnout.R")   # config, cells, prec, CTY_MAT, fit_stage
 
 # ---- 3. the sim ------------------------------------------------------------------
 truth_all <- read_parquet(file.path(DIR_SIM, "TX_truth.parquet")) |> as_tibble()

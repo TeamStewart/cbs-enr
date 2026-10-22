@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 local({
   here = "scripts/model/live/R"
   if (!dir.exists(here)) stop("Run from the cbs-enr folder (scripts/model/live/R not found from ", getwd(), ")")
-  # listed explicitly: model_y.R is a script copy, not functions, and must not be sourced yet
+  # listed explicitly: model_share.R is a script copy, not functions, and must not be sourced yet
   for (f in c("paths.R", "cells.R", "returns.R", "model_swing.R", "model_cory.R", "run.R"))
     source(file.path(here, f))
 })

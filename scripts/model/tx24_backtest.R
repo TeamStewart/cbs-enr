@@ -12,7 +12,7 @@
 ## 53% of the vote in.
 ##
 ## This driver runs the SAME fit_stage() the live model uses -- it sources
-## tx_gov_trial.R with SOURCE_ONLY=1, which builds the config, `cells`, `prec` and
+## model_turnout.R with SOURCE_ONLY=1, which builds the config, `cells`, `prec` and
 ## `CTY_MAT` from the backtest panel and stops before the synthetic run. Re-implementing
 ## the fitting loop (as the M=1 tx_backtest.R does) would reintroduce the drift
 ## model_core.R was extracted to prevent.
@@ -68,12 +68,12 @@ Sys.setenv(
   COVS_SHARE = "log_n,turnout18,turnout22,p_male,p_age65,p_black,p_hisp,p_col,dem2",
   COVS_TP    = "log_n,p_male,p_age65,dem2,tp_prior_raw"
 )
-# ICC defaults in tx_gov_trial.R are TX 2022 measurements (turnout 0.200 from L2, share
+# ICC defaults in model_turnout.R are TX 2022 measurements (turnout 0.200 from L2, share
 # 0.269 from MEDSL) -- post-2022 but PRE-2024, so legitimate here.
 
 cli_h1("TX 2024 Senate backtest -- ARM={ARM}, mode history {arm_cfg$hist}, \\
         delta_m from '{arm_cfg$off}'")
-source("scripts/model/tx_gov_trial.R")   # gives config, cells, prec, CTY_MAT, fit_stage
+source("scripts/model/model_turnout.R")   # gives config, cells, prec, CTY_MAT, fit_stage
 
 # ---- returns on the real cadence -------------------------------------------------
 ret <- read_parquet(P_RET) |> as_tibble() |>
@@ -143,7 +143,7 @@ run_stage <- function(t) {
   counted <- r |> filter(stage >= STAGE_DONE)
   # DIAGNOSTIC: how many precincts can actually contribute to the TOTAL equation?
   # Under USE_COMPOSE, fit_tau on the reference slot needs ALL modes of the precinct
-  # counted out (tx_gov_trial.R:906), so a precinct with two of three modes done feeds
+  # counted out (model_turnout.R:906), so a precinct with two of three modes done feeds
   # the turnout fit NOTHING -- its theta stays prior-driven.
   pd <- r |> summarize(nd = sum(complete), nr = sum(stage >= STAGE_DONE), .by = geo)
   cd <- sum(counted$votes_dem); cr <- sum(counted$votes_rep); co <- sum(counted$votes_oth)
