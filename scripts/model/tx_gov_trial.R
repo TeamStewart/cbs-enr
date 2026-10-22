@@ -150,6 +150,19 @@ USE_CENSOR     = Sys.getenv("USE_CENSOR", unset = "0") == "1"
 # rather than a hard gate, which matters because in production it arrives late, varies by
 # state, and moves backwards. ATOM_FLOOR/ATOM_CEIL keep p off 0 and 1 so neither arm of
 # the mixture is ever asserted with certainty.
+# Which evidence p_atom is built from. `q_cov` depends on the completeness FLAG, which
+# in production is unreliable (downgraded 6 -> 5 by our own loader unless the county is
+# on the trust list) and which cannot be validated historically at all -- no stage column
+# exists in any 2024 scrape, and there is no 2022 scrape. `r_prior` needs no flag.
+# DEFAULT IS "prior", i.e. FLAG-FREE, and that is not a precaution -- it measures as well
+# or better. On the real TX 2024 cadence, two-party coverage 11/15 (prior) vs 10/15
+# (both or flag), mean |err| 0.48 vs 0.47 / 0.60, and late turnout within 0.1pp of
+# "both" at every checkpoint. The flag signal earns nothing and costs a checkpoint.
+# NOTE this is flag-free, not assumption-free: r_prior leans on prior_tau, which is off
+# ~1.7x for eday and ~0.5x for mail on TX 2024. The difference is that the prior's error
+# is measurable and the flag's is not.
+ATOM_SOURCE    = Sys.getenv("ATOM_SOURCE", unset = "prior")  # prior | flag | both
+stopifnot("ATOM_SOURCE must be both, flag or prior" = ATOM_SOURCE %in% c("both", "flag", "prior"))
 USE_ATOM       = Sys.getenv("USE_ATOM", unset = "0") == "1"
 ATOM_FLOOR     = as.numeric(Sys.getenv("ATOM_FLOOR", unset = "0.02"))
 ATOM_CEIL      = as.numeric(Sys.getenv("ATOM_CEIL",  unset = "0.98"))
@@ -947,7 +960,11 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # flagged done, OR the expected vote already counted. Erring HIGH here is the safe
       # direction -- a too-high p_atom under-predicts T, and the counted-votes floor
       # catches that, whereas a too-low p_atom over-predicts and the floor cannot.
-      p_atom   = pmin(pmax(pmax(q_cov, pmin(r_prior, 1)), ATOM_FLOOR), ATOM_CEIL)
+      p_raw    = switch(ATOM_SOURCE,
+                        both  = pmax(q_cov, pmin(r_prior, 1)),
+                        flag  = q_cov,
+                        prior = pmin(r_prior, 1)),
+      p_atom   = pmin(pmax(p_raw, ATOM_FLOOR), ATOM_CEIL)
     )
 
   n_obs_cells = sum(d$obs)
