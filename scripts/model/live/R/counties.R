@@ -46,15 +46,36 @@ REST_COUNTY_SD = 0.08
 REST_TURN_SD   = 0.10
 
 # one row per county (5-digit FIPS): Harris 2024 two-party share, 2024 third-party share,
-# 2022 governor and 2024 presidential votes. From votehub's precinct estimates.
+# 2022 governor and 2024 presidential votes.
+# Source, first that exists:
+#   1. 26_general/input_data/county_history/{ST}_county_history.csv -- for states votehub
+#      doesn't cover (CA, NY). One row per county, columns:
+#        county_fips (5-digit), pres24_dem, pres24_rep, pres24_total, gov22_total
+#      (gov22_total may be blank: 2024 presidential turnout is used instead). AK: the 40
+#      election districts, county_fips 02001-02040, as in AK_counties.csv.
+#   2. votehub's precinct estimates (input_data/votehub-shapefiles/estimated_past_results.csv):
+#      AK, FL, GA, IA, MI, NC, NE, OH, SC, TX as of 2026-10-22.
 county_baseline = function(state, dir_26 = find_26_general()) {
+  f1 = file.path(dir_26, "input_data", "county_history", paste0(state, "_county_history.csv"))
+  if (file.exists(f1)) {
+    x = readr::read_csv(f1, col_types = readr::cols(.default = "c"), progress = FALSE)
+    miss = setdiff(c("county_fips", "pres24_dem", "pres24_rep", "pres24_total"), names(x))
+    if (length(miss)) stop(basename(f1), " is missing columns: ", paste(miss, collapse = ", "))
+    if (!"gov22_total" %in% names(x)) x$gov22_total = NA_character_
+    return(x |>
+      transmute(county_fips = stringr::str_pad(county_fips, 5, pad = "0"),
+                across(c(pres24_dem, pres24_rep, pres24_total, gov22_total), as.numeric),
+                pres24_oth = pmax(pres24_total - pres24_dem - pres24_rep, 0)) |>
+      mutate(h24 = pres24_dem / pmax(pres24_dem + pres24_rep, 1),
+             oth24 = pres24_oth / pmax(pres24_total, 1),
+             exp_base = if_else(coalesce(gov22_total, 0) > 0, gov22_total, pres24_total)))
+  }
   f = file.path(dir_26, "input_data", "votehub-shapefiles", "estimated_past_results.csv")
   if (!file.exists(f)) stop("Missing ", f)
   x = readr::read_csv(f, col_types = readr::cols(.default = "c"), progress = FALSE) |>
     filter(state_abbr == state)
-  # votehub's file covers AK, FL, GA, IA, MI, NC, NE, OH, SC, TX (not CA or NY, as of 2026-10-22)
-  if (!nrow(x)) stop("No county history for ", state, " in ", basename(f),
-                     ": statewide rows for ", state, " need 2024 / 2022 county results from another source")
+  if (!nrow(x)) stop("No county history for ", state, ": add input_data/county_history/", state,
+                     "_county_history.csv (county_fips, pres24_dem, pres24_rep, pres24_total, gov22_total)")
   x |>
     mutate(county_fips = stringr::str_extract(unit_id, "^[0-9]+"),
            across(c(pres24_dem, pres24_rep, pres24_oth, pres24_total, gov22_total), as.numeric)) |>

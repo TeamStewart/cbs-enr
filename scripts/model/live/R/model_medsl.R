@@ -87,11 +87,21 @@ medsl_inputs = function(state, dir_26 = find_26_general(), mode_election = "2022
 }
 
 # Run model_turnout.R's sections 1-2 and its function definitions for one state, in a fresh
-# environment, and return that environment. Cached per state for the session.
-medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refresh = FALSE) {
-  if (!refresh && !is.null(.medsl_env[[state]])) return(.medsl_env[[state]])
+# environment, and return that environment. Cached per state (and county set) for the session.
+# counties: fit only these counties' precincts (county names as in cells$county) -- the
+#   counties the live feed actually covers, so the model's totals never include counties
+#   whose votes come from CBS instead. NULL = every county in the state's inputs.
+medsl_key = function(state, counties) if (is.null(counties)) state else paste(state, paste(sort(unique(counties)), collapse = "|"))
+medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refresh = FALSE, counties = NULL) {
+  key = medsl_key(state, counties)
+  if (!refresh && !is.null(.medsl_env[[key]])) return(.medsl_env[[key]])
   if (!file.exists(src)) stop("Can't find ", src, " (run from the cbs-enr folder)")
   inp = medsl_inputs(state, dir_26)
+  if (!is.null(counties)) {
+    inp$covs_long = filter(inp$covs_long, county %in% counties)
+    inp$mode_hist = filter(inp$mode_hist, geo %in% inp$covs_long$geo)
+    if (!nrow(inp$covs_long)) stop("none of the counties given are in ", state, "_precinct.parquet")
+  }
 
   # the model's own default for mode offsets is its party-by-mode history, which we don't
   # have; use zero unless the person running it has chosen otherwise
@@ -132,8 +142,20 @@ medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refre
     .draws, USE_COMPOSE, KAPPA, REF_MODE, SIGMA_SOURCE, SIGMA_STRUCT, USE_COUNTY_RE,
     MODE_OFFSET_SOURCE, MIN_MODE_CELLS, MIN_MODE_CTY))
   if (nzchar(inp$note)) env$.settings = paste0(env$.settings, "; ", inp$note)
-  .medsl_env[[state]] = env
+  .medsl_env[[key]] = env
   env
+}
+
+# the model environment for the counties in `cells` (all of the state's counties -> the
+# state-wide cached set-up)
+fit_medsl_setup_for = function(cells, returns, dir_26 = find_26_general()) {
+  state = unique(returns$state)
+  if (length(state) != 1) stop("fit_medsl() takes one race (one state) at a time")
+  key = paste0("counties_", state)
+  if (is.null(.medsl_env[[key]])) .medsl_env[[key]] =
+    unique(read_pq(file.path(dir_26, "input_data", "model_inputs", paste0(state, "_precinct.parquet")))$county_name)
+  ctys = unique(cells$county)
+  medsl_setup(state, dir_26, counties = if (setequal(ctys, .medsl_env[[key]])) NULL else ctys)
 }
 
 # cells:   build_cells() output (used for the precinct x method counts and the counted
@@ -142,7 +164,8 @@ medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refre
 fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26_general()) {
   state = unique(returns$state)
   if (length(state) != 1) stop("fit_medsl() takes one race (one state) at a time")
-  env = medsl_setup(state, dir_26)
+  # fit the counties in `cells` (the ones the feed covers; see feed_cells())
+  env = fit_medsl_setup_for(cells, returns, dir_26)
   counts = cell_counts(cells, returns)
 
   counted = tibble(raw_twop = sum(counts$c_dem) / max(sum(counts$c_dem + counts$c_rep), 1),
@@ -167,8 +190,13 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
               votes_dem = if_else(rep_cell, c_dem, NA_real_),
               votes_rep = if_else(rep_cell, c_rep, NA_real_),
               votes_oth = if_else(rep_cell, c_oth, NA_real_))
+  # memory grows with precincts x draws: cap the draws for very large states (CA) so the
+  # fit stays near TX's size (6,134 precincts x 500 draws)
+  max_pd = as.numeric(Sys.getenv("MEDSL_MAX_PRECINCT_DRAWS", unset = "3.5e6"))
+  draws = min(env$.draws, max(50L, floor(max_pd / nrow(env$prec))))
+  if (draws < env$.draws) settings = paste0(settings, sprintf("; draws cut to %d for %d precincts (MEDSL_MAX_PRECINCT_DRAWS)", draws, nrow(env$prec)))
   if (!is.null(seed)) set.seed(seed)
-  f = suppressMessages(env$fit_stage(env$cells, ret_m, draws = env$.draws, cross_mode = env$USE_CROSS_MODE))
+  f = suppressMessages(env$fit_stage(env$cells, ret_m, draws = draws, cross_mode = env$USE_CROSS_MODE))
 
   dr = tibble(twop = f$S_2p, turnout = f$turn, dem = f$S_dem * f$turn, rep = f$S_rep * f$turn)
   ci = cred(dr$twop, level); ct = cred(dr$turnout, level)

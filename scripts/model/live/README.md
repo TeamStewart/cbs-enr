@@ -116,5 +116,7 @@ The originals in `scripts/model/` and `scripts/model/tests/` are untouched. Spee
 - **Cory's third-party split.** `past` gives write-ins 15% and every other third-party
   candidate 85% of the third-party baseline, as in Ethan's sims. Two minor candidates
   would each get 85%. The write-in candidate must be named exactly `write-in`.
+- **Counties the feed doesn't cover.** The models fit only the counties with at least one precinct in the race's returns (`feed_cells()` in `R/output.R`); every other county, including counties in our precinct inputs whose live ids we don't have, comes from CBS's county results in the statewide rows. As of 2026-10-22 the crosswalks have live ids for FL 18 of 31 counties, MI 10 of 31, TX 4 of 32 and CA none.
+- **County history for CA and NY.** votehub has no county results for CA or NY, so their statewide rows read `26_general/input_data/county_history/{ST}_county_history.csv` (2024 presidential by county), built by `scripts/model/make_county_history.R` (outside live/; run it again only to rebuild those files or add a state).
 - **Statewide rows** come from `R/counties.R` (scraped counties from each model + CBS county
   results for the rest), not from `scripts/model/tests/statewide_tx.R`, which is not moved.

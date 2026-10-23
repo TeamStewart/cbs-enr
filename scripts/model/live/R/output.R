@@ -170,7 +170,10 @@ run_par = function(x, f, cores = 1) {
 # arguments. Anything slow to set up (build_cells(), county_baseline(), medsl_setup()) must
 # be done BEFORE this is called: a forked process's caches are thrown away when it ends.
 run_jobs = function(jobs, cores = 1) {
-  one = function(j) tryCatch(do.call(predict_one, j), error = function(e)
+  # model_medsl's set-up for each state x county set, here before forking (see above)
+  for (j in jobs) if (identical(j$model, "medsl") && nrow(j$cells) && is.null(j$fail))
+    try(fit_medsl_setup_for(j$cells, j$ret), silent = TRUE)
+  one = function(j) tryCatch(if (!is.null(j$fail)) stop(j$fail) else do.call(predict_one, j[setdiff(names(j), "fail")]), error = function(e)
     list(pred = NULL, status = tibble(race_id = j$race$race_id[1], model = unname(MODEL_NAMES[j$model]), time = j$time,
                                       status = paste("error:", conditionMessage(e)), statewide = NA_character_,
                                       seconds = NA_real_, settings = NA_character_)))
@@ -183,13 +186,29 @@ run_jobs = function(jobs, cores = 1) {
   list(pred = bind_rows(lapply(res, `[[`, "pred")), status = bind_rows(lapply(res, `[[`, "status")))
 }
 
+# The counties the feed covers for a race: those with at least one of their precincts in the
+# race's returns (a zero file lists every precinct it will report, so this is known before any
+# votes). The models fit only these counties' precincts, and every other county -- including
+# counties in our precinct inputs whose live ids we don't have -- comes from CBS's county
+# results in the statewide rows. (As of 2026-10-22 the crosswalks have live ids for FL 18 of
+# 31 counties, MI 10 of 31, TX 4 of 32, CA none.)
+feed_cells = function(cells, ret) {
+  ctys = unique(cells$county[cells$geo %in% ret$geo])
+  if (!length(ctys)) stop("none of the feed's precinct ids match our precinct inputs (check the crosswalk)")
+  filter(cells, county %in% ctys)
+}
+
 # the predict_one() jobs for every race x model in `returns` (one state's cells)
 make_jobs = function(cells, returns, races, models, time, cbs = NULL, base = NULL, level = 0.95) {
   unlist(lapply(sort(unique(returns$race_id)), function(r) {
     race = filter(races, race_id == r)
     if (nrow(race) != 1) stop("races must have exactly one row for race_id ", r)
     ret = filter(returns, race_id == r)
-    lapply(models, function(m) list(cells = cells, ret = ret, race = race, model = m, time = time,
+    cr = tryCatch(feed_cells(cells, ret), error = function(e) e)
+    if (inherits(cr, "error")) return(lapply(models, function(m) list(cells = cells[0, ], ret = ret, race = race, model = m,
+                                                                      time = time, cbs = NULL, base = NULL, level = level,
+                                                                      fail = conditionMessage(cr))))
+    lapply(models, function(m) list(cells = cr, ret = ret, race = race, model = m, time = time,
                                     cbs = if (is.null(cbs)) NULL else cbs[[r]], base = if (is.null(cbs)) NULL else base, level = level))
   }), recursive = FALSE)
 }
