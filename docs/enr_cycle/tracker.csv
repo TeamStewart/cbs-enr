@@ -1,339 +1,339 @@
 state,county,type,path,path_timestamp,build,updated,for_cbs,frame,platform,disc_status,disc_path,disc_checked,disc_note,scr_status,scr_path,scr_checked,scr_n_geo,scr_note,clean_time,clean_hash,xw_hash,xw_built,xw_status
-AK,,custom,https://www.elections.alaska.gov/enr26/results/GA_ENR_Precinct_State_of_Alaska.csv,,TRUE,TRUE,TRUE,TRUE,single,live,,,,untested,,,,,2026_08_31_17_07_47,416764fbefbed4c7d3606a05d647ac67,416764fbefbed4c7d3606a05d647ac67,2026-10-19,current
-AL,Madison,clarity,127283,,FALSE,TRUE,FALSE,FALSE,single,live,,,,untested,,,,,,,,,n/a
-AR,,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,statewide Clarity returns 403 (elections.json and EIDs); find 2026 general ID by hand,,,,,,,,,,n/a
-AZ,Cochise,,,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-AZ,Coconino,,,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-AZ,Greenlee,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-AZ,Maricopa,custom,https://elections.maricopa.gov/results-and-data/election-results.html,,FALSE,FALSE,TRUE,TRUE,maricopa,pending,,,,,,,,,,,,,waiting
-AZ,Mohave,,,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-AZ,Navajo,,,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-AZ,Pima,lvt,https://www.livevoterturnout.com/ENR/pimaazenr/7/en/Index_7.html,,TRUE,TRUE,TRUE,TRUE,lvt,live,,,,untested,,,,,,,,,waiting
-AZ,Pinal,,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
+AK,,custom,https://www.elections.alaska.gov/enr26/results/GA_ENR_Precinct_State_of_Alaska.csv,,TRUE,TRUE,TRUE,TRUE,single,live,,,,pass,https://www.elections.alaska.gov/enr26/results/GA_ENR_Precinct_State_of_Alaska.csv,2026-10-23,522,"ts 2026_08_31_17_07_47; gov,house1,sen; methods mail,early,eday,prov; votes 493117",2026_08_31_17_07_47,416764fbefbed4c7d3606a05d647ac67,416764fbefbed4c7d3606a05d647ac67,2026-10-19,current
+AL,Madison,clarity,127283,,FALSE,TRUE,FALSE,FALSE,single,live,,2026-10-23,clarity Madison: newest 2026 Primary Runoff Election (6/16/2026 12:00:00 AM),fail,127283,2026-10-23,,No target races (zero rows) for AL; check the race names or the source.,,,,,n/a
+AR,,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug,,,,,,,,,,n/a
+AZ,Cochise,,https://app.enhancedvoting.com/cdn/results/cochise-county-az/export-General11032026.json,,FALSE,TRUE,TRUE,TRUE,ev,live,https://app.enhancedvoting.com/cdn/results/cochise-county-az/export-General11032026.json,2026-10-23,ev: General11032026; export HTTP 200,pass,https://app.enhancedvoting.com/cdn/results/cochise-county-az/export-General11032026.json,2026-10-23,55,"ts 2026_10_21_16_46_22; gov,house6,house7; methods early,eday,prov; votes 0",2026_10_21_16_46_22,83b162796bc0c26e4ab97788612199d6,83b162796bc0c26e4ab97788612199d6,2026-10-23,current
+AZ,Coconino,,,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev coconino-county-az: newest 07_P_2026 (2026-07-21),,,,,,,,,,waiting
+AZ,Greenlee,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity Greenlee: elections.json empty; EID scan 127125-127885 found none,,,,,,,,,,waiting
+AZ,Maricopa,custom,https://elections.maricopa.gov/results-and-data/election-results.html,,FALSE,TRUE,TRUE,TRUE,maricopa,live,https://elections.maricopa.gov/results-and-data/election-results.html,2026-10-23,landing page links '2026 November General Election Results.txt' (zero file 09/21/2026),pass,https://elections.maricopa.gov/results-and-data/election-results.html,2026-10-23,957,"ts 2026_09_21_13_29_39; gov,house1,house2,house3,house4,house5,house7,house8,house9; methods mail,early,eday,prov; votes 0",2026_09_21_13_29_39,b83d32eccd72889e78fad36e5d5f4afb,b83d32eccd72889e78fad36e5d5f4afb,2026-10-23,current
+AZ,Mohave,,,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev mohave-county-az: newest Primary-07212026 (2026-07-21),,,,,,,,,,waiting
+AZ,Navajo,,,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev navajo-county-az: newest Primary-07212026 (2026-07-21),,,,,,,,,,waiting
+AZ,Pima,lvt,https://www.livevoterturnout.com/ENR/pimaazenr/7/en/Index_7.html,,TRUE,TRUE,TRUE,TRUE,lvt,live,,,,fail,https://www.livevoterturnout.com/ENR/pimaazenr/7/en/Index_7.html,2026-10-23,,source: LVT id 7 is Nov 3 2026 but Precincts_7.csv 404; site says results post 8pm election night,,,,,waiting
+AZ,Pinal,,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity Pinal: elections.json empty; EID scan 127125-127885 found none,,,,,,,,,,waiting
 AZ,Yuma,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity Yuma: elections.json empty; EID scan 127125-127885 found none,,,,,,,,,,waiting
-CA,butte,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-CA,contra costa,clarity,127405,,FALSE,TRUE,FALSE,TRUE,clarity,live,,,,untested,,,,,,,,,waiting
-CA,imperial,lvt,https://www.livevoterturnout.com/ENR/imperialcaenr/5/en/Index_5.html,,FALSE,FALSE,FALSE,TRUE,lvt,pending,,,,,,,,,,,,,waiting
-CA,Madera,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,2026-10-23,Clarity 2024 and 2026 primary have no detailxml.zip (summary only); needs another source,,,,,,,,,,waiting
-CA,marin,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-CA,merced,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-CA,orange,,https://services3.arcgis.com/slX5MYawmKdsiRUf/arcgis/rest/services/Precinct_Election_2026_PE_Results_Contest_Public/FeatureServer/2,,FALSE,FALSE,TRUE,TRUE,orange,pending,,,,,,,,,,,,,waiting
+CA,butte,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity Butte: elections.json empty; EID scan 127125-127885 found none,,,,,,,,,,waiting
+CA,contra costa,clarity,127405,,FALSE,TRUE,FALSE,TRUE,clarity,live,,,,fail,127405,2026-10-23,,source: current_ver 379901 but its json/reports 404 (version not published); recheck,,,,,waiting
+CA,imperial,lvt,https://www.livevoterturnout.com/ENR/imperialcaenr/5/en/Index_5.html,,FALSE,FALSE,FALSE,TRUE,lvt,not_posted,,2026-10-23,lvt: ids 5-10 lack a 2026-11-03 page,,,,,,,,,,waiting
+CA,Madera,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity Madera: elections.json empty; EID scan 127125-127885 found none,,,,,,,,,,waiting
+CA,marin,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity Marin: elections.json empty; EID scan 127125-127885 found none,,,,,,,,,,waiting
+CA,merced,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity Merced: elections.json empty; EID scan 127125-127885 found none,,,,,,,,,,waiting
+CA,orange,,https://services3.arcgis.com/slX5MYawmKdsiRUf/arcgis/rest/services/Precinct_Election_2026_PE_Results_Contest_Public/FeatureServer/2,,FALSE,FALSE,TRUE,TRUE,orange,not_posted,,2026-10-23,ArcGIS org has 2026_GE precinct/vote-center layers but no 2026_GE results service yet,,,,,,,,,,waiting
 CA,riverside,lvt,https://www.livevoterturnout.com/ENR/riversidecaenr/11/en/Index_11.html,,FALSE,FALSE,TRUE,TRUE,lvt,not_posted,,2026-10-23,lvt: ids 11-16 lack a 2026-11-03 page,,,,,,,,,,waiting
-CA,sacramento,,https://results.saccounty.gov/cdn/results/sacramento-county-ca/export-68.json,,FALSE,FALSE,FALSE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-CA,san diego,lvt,https://www.livevoterturnout.com/ENR/sandiegocaenr/25/en/Index_25.html,,TRUE,TRUE,TRUE,TRUE,lvt,live,,,,untested,,,,,2026_10_16_15_14_47,32ce4198607f934949a5a39b4ea354fa,32ce4198607f934949a5a39b4ea354fa,2026-10-19,current
-CA,san francisco,,https://www.sfelections.org/results/20261103w/detail.html,,FALSE,TRUE,FALSE,TRUE,san_francisco,live,,,,untested,,,,,,,,,waiting
-CA,san mateo,lvt,https://www.livevoterturnout.com/ENR/sanmateocaenr/19/en/t7vnu_Index_19.html,,FALSE,FALSE,FALSE,TRUE,lvt,pending,,,,,,,,,,,,,waiting
-CA,santa clara,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-CA,shasta,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-CA,solano,lvt,https://www.livevoterturnout.com/ENR/solanocaenr/21/en/Index_21.html,,FALSE,TRUE,FALSE,TRUE,lvt,live,,,,untested,,,,,,,,,waiting
-CA,sonoma,clarity,127275,,FALSE,TRUE,FALSE,TRUE,clarity,live,,,,untested,,,,,,,,,waiting
-CA,Ventura,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-FL,Alachua,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Baker,custom,https://enr.electionsfl.org/BAK/3665/Reports/,,TRUE,FALSE,FALSE,TRUE,electionsfl,pending,,,,,,,,,,,,,waiting
-FL,Bay,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Bradford,custom,https://enr.electionsfl.org/BRA/4113/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_16_15_29_52,fbb32f381e76625acc42a470a2935992,fbb32f381e76625acc42a470a2935992,2026-10-20,current
-FL,Broward,custom,https://enr.electionsfl.org/BRO/3746/Reports/,,TRUE,FALSE,TRUE,TRUE,lvt,pending,,,,,,,,,,,,,waiting
-FL,Calhoun,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Charlotte,custom,https://enr.electionsfl.org/CHA/3715/Reports/,,TRUE,FALSE,FALSE,TRUE,electionsfl,pending,,,,,,,,,,,,,waiting
-FL,Citrus,custom,https://enr.electionsfl.org/CIT/4070/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_08_14_31_17,5c71ac0687b794dd11ca93fbdb186ce1,5c71ac0687b794dd11ca93fbdb186ce1,2026-10-20,current
-FL,Clay,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Collier,custom,https://enr.electionsfl.org/CLL/3733/Reports/,,TRUE,FALSE,TRUE,TRUE,electionsfl,pending,,,,,,,,,,,,,waiting
-FL,Columbia,custom,https://enr.electionsfl.org/CLM/4069/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_09_30_16_19_33,74da1e217e581cb4068c43d47741a7af,74da1e217e581cb4068c43d47741a7af,2026-10-20,current
-FL,DeSoto,custom,https://enr.electionsfl.org/DES/3753/Reports/,,TRUE,FALSE,FALSE,TRUE,electionsfl,pending,,,,,,,,,,,,,waiting
-FL,Dixie,custom,https://enr.electionsfl.org/DIX/4125/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_15_16_31_55,4ce08548065cee6acd0ca63d4005d040,4ce08548065cee6acd0ca63d4005d040,2026-10-20,current
-FL,Duval,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Escambia,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Franklin,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Gadsden,custom,https://enr.electionsfl.org/GAD/4066/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_15_16_09_42,29945cdbe7e4f043c340578815aa76d6,29945cdbe7e4f043c340578815aa76d6,2026-10-20,current
-FL,Gilchrist,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Glades,custom,https://enr.electionsfl.org/GLA/4065/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_20_09_07_12,268430f14c6ae7a6084699e526142774,268430f14c6ae7a6084699e526142774,2026-10-20,current
-FL,Gulf,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Hamilton,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Hardee,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Hendry,custom,,,TRUE,FALSE,TRUE,TRUE,electionsfl,pending,,2026-10-23,electionsfl HEN/3983/Reports 404 in primary (no precinct CSV),,,,,,,,,,waiting
-FL,Hernando,custom,https://enr.electionsfl.org/HER/4106/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_09_10_50_18,30006669a671970a4a34b3af6dc63260,30006669a671970a4a34b3af6dc63260,2026-10-20,current
-FL,Highlands,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Hillsborough,custom,https://enr.electionsfl.org/HIL/4074/Reports/,,TRUE,TRUE,TRUE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_08_10_37_37,7a559628cced15284035518caf59dd81,7a559628cced15284035518caf59dd81,2026-10-20,current
-FL,Holmes,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Indian River,custom,https://enr.electionsfl.org/IND/4096/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_12_15_17_25,7b35bd8820733db42f1e6ce5518aa982,7b35bd8820733db42f1e6ce5518aa982,2026-10-20,current
-FL,Jackson,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Jefferson,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Lafayette,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Lake,custom,https://enr.electionsfl.org/LAK/4079/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_19_08_50_04,001785b00571973821b89f91ccec89fb,001785b00571973821b89f91ccec89fb,2026-10-20,current
-FL,Lee,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Leon,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Levy,custom,https://enr.electionsfl.org/LEV/4058/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_14_15_03_34,7cac33c3691b0b94b5d0cdaaed1ba0d2,7cac33c3691b0b94b5d0cdaaed1ba0d2,2026-10-20,current
-FL,Liberty,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Madison,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Manatee,custom,https://enr.electionsfl.org/MAN/3754/Reports/,,TRUE,FALSE,FALSE,TRUE,electionsfl,pending,,,,,,,,,,,,,waiting
-FL,Marion,custom,https://enr.electionsfl.org/MRN/4099/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_13_14_56_51,fadfedacde0ac892fae17ee3803821fa,fadfedacde0ac892fae17ee3803821fa,2026-10-20,current
-FL,Martin,clarity,,,TRUE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-FL,Miami-Dade,custom,https://enr.electionsfl.org/DAD/4087/Reports/,,TRUE,TRUE,TRUE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_15_14_00_36,d17330b528738ceaaa3ed3aab30049a3,d17330b528738ceaaa3ed3aab30049a3,2026-10-20,current
-FL,Monroe,custom,https://enr.electionsfl.org/MON/4109/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_16_10_09_43,e6aeb477f8e2a76523bc7e13505cf373,e6aeb477f8e2a76523bc7e13505cf373,2026-10-20,current
-FL,Nassau,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Okaloosa,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Okeechobee,custom,https://enr.electionsfl.org/OKE/4060/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_20_08_09_40,018a860b89387d2729e2435fa522da29,018a860b89387d2729e2435fa522da29,2026-10-20,current
-FL,Orange,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Osceola,clarity,,,TRUE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-FL,Palm Beach,custom,,,TRUE,FALSE,TRUE,TRUE,electionsfl,pending,,,,,,,,,,,,,waiting
-FL,Pasco,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Pinellas,clarity,,,TRUE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-FL,Polk,custom,https://enr.electionsfl.org/POL/4000/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_19_16_24_08,447431e5e30655e89e70728c9f5fe0ba,447431e5e30655e89e70728c9f5fe0ba,2026-10-20,current
-FL,Putnam,custom,https://enr.electionsfl.org/PUT/3690/Reports/,,TRUE,FALSE,FALSE,TRUE,electionsfl,pending,,,,,,,,,,,,,waiting
-FL,Santa Rosa,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Sarasota,custom,https://enr.electionsfl.org/SAR/4105/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_19_13_13_11,7d4a611b62609f425fa858fe49f35a8a,7d4a611b62609f425fa858fe49f35a8a,2026-10-20,current
-FL,Seminole,lvt,,,TRUE,FALSE,FALSE,FALSE,lvt,pending,,,,,,,,,,,,,n/a
-FL,St. Johns,custom,https://enr.electionsfl.org/STJ/4082/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,,,,untested,,,,,2026_10_15_15_34_25,46f2ff20cfe9db71b1af4d683ba5f34a,46f2ff20cfe9db71b1af4d683ba5f34a,2026-10-20,n/a
-FL,St. Lucie,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Sumter,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Suwannee,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Taylor,custom,https://enr.electionsfl.org/TAY/3747/Reports/,,TRUE,FALSE,FALSE,TRUE,electionsfl,pending,,,,,,,,,,,,,waiting
-FL,Union,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Volusia,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Wakulla,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-FL,Walton,custom,https://enr.electionsfl.org/WAL/4091/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,untested,,,,,2026_10_16_10_00_26,5ba2c30f70c6d6da965a4e975b5cfc9c,5ba2c30f70c6d6da965a4e975b5cfc9c,2026-10-20,current
-FL,Washington,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,pending,,,,,,,,,,,,,n/a
-GA,,ev,,,FALSE,FALSE,TRUE,TRUE,single,pending,,2026-10-23,ev: no path to derive slug; check by hand,,,,,,,,,,waiting
-IA,,clarity,,,FALSE,FALSE,TRUE,TRUE,single,pending,,,,,,,,,,,,,waiting
-IL,DuPage,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-IL,Kankakee,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-IL,Lake,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-IL,Macoupin,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-IL,McHenry,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-IL,Sangamon,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-IL,Will,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-IL,Winnebago,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-KS,Harvey,clarity,https://results.enr.clarityelections.com/KS/Harvey/127360/,,FALSE,TRUE,FALSE,FALSE,single,live,,,,untested,,,,,,,,,n/a
-KS,Miami,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-MI,Alcona,pdf,https://alconacountymi.com/home/county-clerk/election-results/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Alger,pdf,https://algercounty.gov/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Allegan,custom,https://www2.allegancounty.org/elections/map/map.aspx,,FALSE,FALSE,TRUE,FALSE,allegan,pending,,,,,,,,,,,,,n/a
-MI,Alpena,pdf,https://alpenacounty.org/173/Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Antrim,pdf,https://www.antrimcountymi.gov/departments___services_/clerk/elections.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Arenac,pdf,https://www.arenaccountymi.gov/Clerk/ELECTION-RESULTS-BY-YEAR/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Baraga,pdf,https://www.baragacounty.com/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Barry,pdf,https://www.barrycounty.org/departments_and_officials/officials/county_clerk/election_results.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Bay,pdf,https://www.baycountymi.gov/departments/clerk/elections/election_results.php,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-MI,Benzie,pdf,https://www.benzieco.gov/government/county_clerk.php,,FALSE,FALSE,TRUE,FALSE,none,pending,,,,blocked,,2026-10-23,,no PDF template mapping (see memory pdf-county-scrapers),,,,,n/a
-MI,Berrien,ev,https://app.enhancedvoting.com/cdn/results/berrien-county-mi/export-November_3_2026_General_Election.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,untested,,,,,2026_10_19_10_51_02,a69859e6ade70de83b4271da51ea4234,a69859e6ade70de83b4271da51ea4234,2026-10-19,current
-MI,Branch,ev,https://app.enhancedvoting.com/cdn/results/branch-county-mi/export-2026NovemberGeneral.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,untested,,,,,2026_10_05_12_51_18,78329c240790a6a6458b445a1beb8238,78329c240790a6a6458b445a1beb8238,2026-10-19,current
-MI,Cass,ev,https://app.enhancedvoting.com/cdn/results/cass-county-mi/export-general11052024.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-MI,Chippewa,pdf,https://www.chippewacountymi.gov/county-clerk/election-information-and-results,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Clare,ev,https://app.enhancedvoting.com/cdn/results/clare-county-mi/export-2026_General_ClareCounty_Results.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,untested,,,,,2026_10_19_15_23_40,cf37b89978ef530e4da53ab177a8cfc2,cf37b89978ef530e4da53ab177a8cfc2,2026-10-19,current
-MI,Clinton,pdf,https://www.clinton-county.org/Archive.aspx?AMID=40&Type=Recent,,FALSE,FALSE,TRUE,FALSE,pdf_canvass,pending,,,,,,,,,,,,,n/a
-MI,Crawford,pdf,https://www.crawfordco.org/election-archive/,,FALSE,FALSE,TRUE,FALSE,none,pending,,,,blocked,,2026-10-23,,no PDF template mapping (see memory pdf-county-scrapers),,,,,n/a
-MI,Delta,ev,https://app.enhancedvoting.com/cdn/results/delta-county-mi/export-NovemberGeneral2024.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-MI,Eaton,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-MI,Emmet,,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,2026-10-23,no Clarity URL found (Sept); county site shows no link,,,,,,,,,,waiting
-MI,Genesee,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-MI,Gladwin,pdf,https://gladwincounty-mi.gov/about/elections/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Gogebic,pdf,https://www.gogebic.gov/government/county_offices/election_information.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Grand Traverse,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-MI,Gratiot,ev,https://app.enhancedvoting.com/cdn/results/gratiot-county-mi/export-gratiotcountynovember2024.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-MI,Hillsdale,pdf,https://hillsdalecounty.gov/images/elections/resultuploads/Precinct_Results-11-3-2026.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-MI,Houghton,pdf,https://www.houghtoncounty.net/clerk-2026-elections.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Huron,pdf,https://www.co.huron.mi.us/elections,,FALSE,FALSE,TRUE,FALSE,none,pending,,,,blocked,,2026-10-23,,no PDF template mapping (see memory pdf-county-scrapers),,,,,n/a
+CA,sacramento,,https://results.saccounty.gov/cdn/results/sacramento-county-ca/export-68.json,,FALSE,FALSE,FALSE,TRUE,ev,not_posted,,2026-10-23,ev sacramento-county-ca: newest 68 (2026-06-02),,,,,,,,,,waiting
+CA,san diego,lvt,https://www.livevoterturnout.com/ENR/sandiegocaenr/25/en/Index_25.html,,TRUE,TRUE,TRUE,TRUE,lvt,live,,,,pass,https://www.livevoterturnout.com/ENR/sandiegocaenr/25/en/Index_25.html,2026-10-23,2994,"ts 2026_10_22_16_02_43; gov,house48,house49,house50,house51,house52; methods all; votes 0",2026_10_22_16_02_43,32ce4198607f934949a5a39b4ea354fa,32ce4198607f934949a5a39b4ea354fa,2026-10-23,current
+CA,san francisco,,https://www.sfelections.org/results/20261103w/detail.html,,FALSE,TRUE,FALSE,TRUE,san_francisco,live,,,,pass,https://www.sfelections.org/results/20261103w/detail.html,2026-10-23,514,"ts 2026_10_09_16_53_03; gov,house11,house15; methods mail,eday,all; votes 0",2026_10_09_16_53_03,ae43ff2a45ff03ef8db07f3b0de5e69a,ae43ff2a45ff03ef8db07f3b0de5e69a,2026-10-23,current
+CA,san mateo,lvt,https://www.livevoterturnout.com/ENR/sanmateocaenr/19/en/t7vnu_Index_19.html,,FALSE,FALSE,FALSE,TRUE,lvt,not_posted,,2026-10-23,lvt: ids 19-24 lack a 2026-11-03 page,,,,,,,,,,waiting
+CA,santa clara,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity Santa_Clara: elections.json empty; EID scan 127125-127885 found none,,,,,,,,,,waiting
+CA,shasta,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Shasta,,,,,,,,,,waiting
+CA,solano,lvt,https://www.livevoterturnout.com/ENR/solanocaenr/21/en/Index_21.html,,FALSE,TRUE,FALSE,TRUE,lvt,live,,,,pass,https://www.livevoterturnout.com/ENR/solanocaenr/21/en/Index_21.html,2026-10-23,196,"ts 2026_10_21_16_38_14; gov,house8; methods all; votes 0",2026_10_21_16_38_14,a69a16a4e01d8ac636fda58e07f918da,a69a16a4e01d8ac636fda58e07f918da,2026-10-23,current
+CA,sonoma,clarity,127275,,FALSE,TRUE,FALSE,TRUE,clarity,live,,,,pass,127275,2026-10-23,403,"ts 2026_10_15_19_50_07; gov,house1,house2,house4; methods mail,eday; votes 0",2026_10_15_19_50_07,4c083f77b9350df644e661acf78a204a,4c083f77b9350df644e661acf78a204a,2026-10-23,current
+CA,Ventura,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Ventura,,,,,,,,,,waiting
+FL,Alachua,custom,https://enr.electionsfl.org/ALA/4097/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/ALA/4097/Reports/,2026-10-23,electionsfl ID scan: ALA/4097 dated 11/3/2026,pass,https://enr.electionsfl.org/ALA/4097/Reports/,2026-10-23,63,"ts 2026_10_08_08_44_56; gov,house3,sen; methods mail,early,eday,prov; votes 0",2026_10_08_08_44_56,49170c04991203bb2e84f50512ed10aa,49170c04991203bb2e84f50512ed10aa,2026-10-23,n/a
+FL,Baker,custom,https://enr.electionsfl.org/BAK/3665/Reports/,,TRUE,FALSE,FALSE,TRUE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,waiting
+FL,Bay,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,found,https://enr.electionsfl.org/BAY/4078/Reports/,2026-10-23,electionsfl ID scan: BAY/4078 dated 11/3/2026,fail,https://enr.electionsfl.org/BAY/4078/Reports/,2026-10-23,,source: Summary page live but Precincts/ and Reports/ 404 (not enabled yet); recheck,,,,,n/a
+FL,Bradford,custom,https://enr.electionsfl.org/BRA/4113/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/BRA/4113/Reports/,2026-10-23,13,"ts 2026_10_16_15_29_52; gov,house3,sen; methods mail,early,eday,prov; votes 0",2026_10_16_15_29_52,fbb32f381e76625acc42a470a2935992,fbb32f381e76625acc42a470a2935992,2026-10-23,current
+FL,Broward,custom,https://enr.electionsfl.org/BRO/3746/Reports/,,TRUE,FALSE,TRUE,TRUE,lvt,not_posted,,2026-10-23,browardvotes.gov: no ENR link for 11/3/2026 yet; LVT slug browardflenr has only id 1,,,,,,,,,,waiting
+FL,Calhoun,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Charlotte,custom,https://enr.electionsfl.org/CHA/3715/Reports/,,TRUE,FALSE,FALSE,TRUE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,waiting
+FL,Citrus,custom,https://enr.electionsfl.org/CIT/4070/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/CIT/4070/Reports/,2026-10-23,31,"ts 2026_10_21_11_12_45; gov,house15,sen; methods mail,early,eday; votes 0",2026_10_21_11_12_45,5c71ac0687b794dd11ca93fbdb186ce1,5c71ac0687b794dd11ca93fbdb186ce1,2026-10-23,current
+FL,Clay,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,found,https://enr.electionsfl.org/CLA/4086/Reports/,2026-10-23,electionsfl ID scan: CLA/4086 dated 11/3/2026,fail,https://enr.electionsfl.org/CLA/4086/Reports/,2026-10-23,,source: Summary page live but Precincts/ and Reports/ 404 (not enabled yet); recheck,,,,,n/a
+FL,Collier,custom,https://enr.electionsfl.org/CLL/4083/Reports/,,TRUE,TRUE,TRUE,TRUE,electionsfl,live,https://enr.electionsfl.org/CLL/4083/Reports/,2026-10-23,electionsfl ID scan: CLL/4083 dated 11/3/2026,pass,https://enr.electionsfl.org/CLL/4083/Reports/,2026-10-23,67,"ts 2026_10_20_09_54_38; gov,house19,house22,sen; methods mail,early,eday; votes 0",2026_10_20_09_54_38,01f8023ed06632f3cc9664d2610cff73,01f8023ed06632f3cc9664d2610cff73,2026-10-23,current
+FL,Columbia,custom,https://enr.electionsfl.org/CLM/4069/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/CLM/4069/Reports/,2026-10-23,28,"ts 2026_09_30_16_19_33; gov,house3,sen; methods mail,early,eday; votes 0",2026_09_30_16_19_33,74da1e217e581cb4068c43d47741a7af,74da1e217e581cb4068c43d47741a7af,2026-10-23,current
+FL,DeSoto,custom,https://enr.electionsfl.org/DES/4094/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,https://enr.electionsfl.org/DES/4094/Reports/,2026-10-23,electionsfl ID scan: DES/4094 dated 11/3/2026,pass,https://enr.electionsfl.org/DES/4094/Reports/,2026-10-23,15,"ts 2026_10_16_11_51_54; gov,house16,sen; methods all; votes 0",2026_10_16_11_51_54,b599c39902dceee9e4a36fe60970f4d1,b599c39902dceee9e4a36fe60970f4d1,2026-10-23,current
+FL,Dixie,custom,https://enr.electionsfl.org/DIX/4125/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/DIX/4125/Reports/,2026-10-23,10,"ts 2026_10_15_16_31_55; gov,house3,sen; methods mail,early,eday,prov; votes 0",2026_10_15_16_31_55,4ce08548065cee6acd0ca63d4005d040,4ce08548065cee6acd0ca63d4005d040,2026-10-23,current
+FL,Duval,custom,https://enr.electionsfl.org/DUV/4076/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/DUV/4076/Reports/,2026-10-23,electionsfl ID scan: DUV/4076 dated 11/3/2026,pass,https://enr.electionsfl.org/DUV/4076/Reports/,2026-10-23,159,"ts 2026_10_16_09_57_37; gov,house4,house5,sen; methods mail,early,eday,prov; votes 0",2026_10_16_09_57_37,5ae3930f151db5f2851d6aa1a496a64f,5ae3930f151db5f2851d6aa1a496a64f,2026-10-23,n/a
+FL,Escambia,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Franklin,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Gadsden,custom,https://enr.electionsfl.org/GAD/4066/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/GAD/4066/Reports/,2026-10-23,25,"ts 2026_10_15_16_09_42; gov,house2,sen; methods mail,early,eday,prov; votes 0",2026_10_15_16_09_42,29945cdbe7e4f043c340578815aa76d6,29945cdbe7e4f043c340578815aa76d6,2026-10-23,current
+FL,Gilchrist,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Glades,custom,https://enr.electionsfl.org/GLA/4065/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/GLA/4065/Reports/,2026-10-23,13,"ts 2026_10_20_09_07_12; gov,house9,sen; methods mail,early,eday,prov; votes 0",2026_10_20_09_07_12,268430f14c6ae7a6084699e526142774,268430f14c6ae7a6084699e526142774,2026-10-23,current
+FL,Gulf,custom,https://enr.electionsfl.org/GUL/4084/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/GUL/4084/Reports/,2026-10-23,electionsfl ID scan: GUL/4084 dated 11/3/2026,pass,https://enr.electionsfl.org/GUL/4084/Reports/,2026-10-23,10,"ts 2026_10_16_11_24_29; gov,house2,sen; methods mail,early,eday,prov; votes 0",2026_10_16_11_24_29,a944c92fc46bb78f87f668aea3825dc7,a944c92fc46bb78f87f668aea3825dc7,2026-10-23,n/a
+FL,Hamilton,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,found,https://enr.electionsfl.org/HAM/4101/Reports/,2026-10-23,electionsfl ID scan: HAM/4101 dated 11/3/2026,fail,https://enr.electionsfl.org/HAM/4101/Reports/,2026-10-23,,source: Summary page live but Precincts/ and Reports/ 404 (not enabled yet); recheck,,,,,n/a
+FL,Hardee,custom,https://enr.electionsfl.org/HAR/4063/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/HAR/4063/Reports/,2026-10-23,electionsfl ID scan: HAR/4063 dated 11/3/2026,pass,https://enr.electionsfl.org/HAR/4063/Reports/,2026-10-23,12,"ts 2026_10_16_10_03_50; gov,house16,sen; methods mail,early,eday,prov; votes 0",2026_10_16_10_03_50,76d8cc6b2c189341ad060d14c0f06e9d,76d8cc6b2c189341ad060d14c0f06e9d,2026-10-23,n/a
+FL,Hendry,custom,https://enr.electionsfl.org/HEN/4077/Reports/,,TRUE,TRUE,TRUE,TRUE,electionsfl,live,https://enr.electionsfl.org/HEN/4077/Reports/,2026-10-23,electionsfl ID scan: HEN/4077 dated 11/3/2026,pass,https://enr.electionsfl.org/HEN/4077/Reports/,2026-10-23,10,"ts 2026_10_19_14_39_12; gov,house22,sen; methods mail,early,eday,prov; votes 0",2026_10_19_14_39_12,9b28bfb214375f547dc7624fb7f7aa9c,9b28bfb214375f547dc7624fb7f7aa9c,2026-10-23,current
+FL,Hernando,custom,https://enr.electionsfl.org/HER/4106/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/HER/4106/Reports/,2026-10-23,32,"ts 2026_10_09_10_50_18; gov,house15,sen; methods mail,early,eday; votes 0",2026_10_09_10_50_18,30006669a671970a4a34b3af6dc63260,30006669a671970a4a34b3af6dc63260,2026-10-23,current
+FL,Highlands,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Hillsborough,custom,https://enr.electionsfl.org/HIL/4074/Reports/,,TRUE,TRUE,TRUE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/HIL/4074/Reports/,2026-10-23,446,"ts 2026_10_08_10_37_37; gov,house12,house14,house15,sen; methods mail,early,eday; votes 0",2026_10_08_10_37_37,7a559628cced15284035518caf59dd81,7a559628cced15284035518caf59dd81,2026-10-23,current
+FL,Holmes,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Indian River,custom,https://enr.electionsfl.org/IND/4096/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/IND/4096/Reports/,2026-10-23,36,"ts 2026_10_12_15_17_25; gov,house9,sen; methods mail,early,eday; votes 0",2026_10_12_15_17_25,7b35bd8820733db42f1e6ce5518aa982,7b35bd8820733db42f1e6ce5518aa982,2026-10-23,current
+FL,Jackson,custom,https://enr.electionsfl.org/JAC/4118/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/JAC/4118/Reports/,2026-10-23,electionsfl ID scan: JAC/4118 dated 11/3/2026,pass,https://enr.electionsfl.org/JAC/4118/Reports/,2026-10-23,14,"ts 2026_10_16_11_26_02; gov,house2,sen; methods mail,early,eday,prov; votes 0",2026_10_16_11_26_02,b435aa15b90e9b680c5953ae2bff1c96,b435aa15b90e9b680c5953ae2bff1c96,2026-10-23,n/a
+FL,Jefferson,custom,https://enr.electionsfl.org/JEF/4115/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/JEF/4115/Reports/,2026-10-23,electionsfl ID scan: JEF/4115 dated 11/3/2026,pass,https://enr.electionsfl.org/JEF/4115/Reports/,2026-10-23,16,"ts 2026_10_19_09_42_44; gov,house2,sen; methods mail,early,eday,prov; votes 0",2026_10_19_09_42_44,ff4b9355ebfa31039e1f13ac667fa605,ff4b9355ebfa31039e1f13ac667fa605,2026-10-23,n/a
+FL,Lafayette,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Lake,custom,https://enr.electionsfl.org/LAK/4079/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/LAK/4079/Reports/,2026-10-23,92,"ts 2026_10_21_08_46_36; gov,house11,house6,sen; methods mail,early,eday; votes 0",2026_10_21_08_46_36,001785b00571973821b89f91ccec89fb,001785b00571973821b89f91ccec89fb,2026-10-23,current
+FL,Lee,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Leon,custom,https://enr.electionsfl.org/LEO/4072/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/LEO/4072/Reports/,2026-10-23,electionsfl ID scan: LEO/4072 dated 11/3/2026,pass,https://enr.electionsfl.org/LEO/4072/Reports/,2026-10-23,134,"ts 2026_10_21_10_46_12; gov,house2,sen; methods mail,early,eday; votes 0",2026_10_21_10_46_12,82e528f1bb4f4aa8dfaaef29446730f7,82e528f1bb4f4aa8dfaaef29446730f7,2026-10-23,n/a
+FL,Levy,custom,https://enr.electionsfl.org/LEV/4058/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/LEV/4058/Reports/,2026-10-23,13,"ts 2026_10_14_15_03_34; gov,house3,sen; methods all; votes 4446",2026_10_14_15_03_34,7cac33c3691b0b94b5d0cdaaed1ba0d2,7cac33c3691b0b94b5d0cdaaed1ba0d2,2026-10-23,current
+FL,Liberty,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Madison,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Manatee,custom,https://enr.electionsfl.org/MAN/3754/Reports/,,TRUE,FALSE,FALSE,TRUE,electionsfl,found,https://enr.electionsfl.org/MAN/4126/Reports/,2026-10-23,electionsfl ID scan: MAN/4126 dated 11/3/2026,fail,https://enr.electionsfl.org/MAN/4126/Reports/,2026-10-23,,source: Summary page live but Precincts/ and Reports/ 404 (not enabled yet); recheck,,,,,waiting
+FL,Marion,custom,https://enr.electionsfl.org/MRN/4099/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/MRN/4099/Reports/,2026-10-23,106,"ts 2026_10_13_14_56_51; gov,house3,house6,sen; methods mail,early,eday; votes 0",2026_10_13_14_56_51,fadfedacde0ac892fae17ee3803821fa,fadfedacde0ac892fae17ee3803821fa,2026-10-23,current
+FL,Martin,clarity,,,TRUE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Martin,,,,,,,,,,waiting
+FL,Miami-Dade,custom,https://enr.electionsfl.org/DAD/4087/Reports/,,TRUE,TRUE,TRUE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/DAD/4087/Reports/,2026-10-23,773,"ts 2026_10_20_15_08_12; gov,house24,house25,house26,house27,house28,sen; methods mail,early,eday; votes 0",2026_10_20_15_08_12,d17330b528738ceaaa3ed3aab30049a3,d17330b528738ceaaa3ed3aab30049a3,2026-10-23,current
+FL,Monroe,custom,https://enr.electionsfl.org/MON/4109/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/MON/4109/Reports/,2026-10-23,33,"ts 2026_10_16_10_09_43; gov,house28,sen; methods mail,early,eday,prov; votes 0",2026_10_16_10_09_43,e6aeb477f8e2a76523bc7e13505cf373,e6aeb477f8e2a76523bc7e13505cf373,2026-10-23,current
+FL,Nassau,custom,https://enr.electionsfl.org/NAS/4080/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/NAS/4080/Reports/,2026-10-23,electionsfl ID scan: NAS/4080 dated 11/3/2026,pass,https://enr.electionsfl.org/NAS/4080/Reports/,2026-10-23,18,"ts 2026_09_23_13_31_48; gov,house4,sen; methods mail,early,eday; votes 0",2026_09_23_13_31_48,37b4d243739b29740288b6a811022391,37b4d243739b29740288b6a811022391,2026-10-23,n/a
+FL,Okaloosa,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Okeechobee,custom,https://enr.electionsfl.org/OKE/4060/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/OKE/4060/Reports/,2026-10-23,11,"ts 2026_10_22_14_58_02; gov,house9,sen; methods mail,early,eday,prov; votes 0",2026_10_22_14_58_02,018a860b89387d2729e2435fa522da29,018a860b89387d2729e2435fa522da29,2026-10-23,current
+FL,Orange,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Osceola,clarity,,,TRUE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Osceola,,,,,,,,,,waiting
+FL,Palm Beach,custom,,,TRUE,FALSE,TRUE,TRUE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,waiting
+FL,Pasco,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,found,https://enr.electionsfl.org/PAS/4085/Reports/,2026-10-23,electionsfl ID scan: PAS/4085 dated 11/3/2026,fail,https://enr.electionsfl.org/PAS/4085/Reports/,2026-10-23,,source: Summary page live but Precincts/ and Reports/ 404 (not enabled yet); recheck,,,,,n/a
+FL,Pinellas,clarity,,,TRUE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Pinellas,,,,,,,,,,waiting
+FL,Polk,custom,https://enr.electionsfl.org/POL/4000/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/POL/4000/Reports/,2026-10-23,177,"ts 2026_10_22_16_21_50; gov,house16,house18,house9,sen; methods mail,early,eday; votes 0",2026_10_22_16_21_50,447431e5e30655e89e70728c9f5fe0ba,447431e5e30655e89e70728c9f5fe0ba,2026-10-23,current
+FL,Putnam,custom,https://enr.electionsfl.org/PUT/3690/Reports/,,TRUE,FALSE,FALSE,TRUE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,waiting
+FL,Santa Rosa,custom,https://enr.electionsfl.org/SAN/4093/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/SAN/4093/Reports/,2026-10-23,electionsfl ID scan: SAN/4093 dated 11/3/2026,pass,https://enr.electionsfl.org/SAN/4093/Reports/,2026-10-23,41,"ts 2026_10_13_11_04_19; house1,sen; methods mail,early,eday; votes 0",2026_10_13_11_04_19,12a7d6563813e514b375750b614cd384,12a7d6563813e514b375750b614cd384,2026-10-23,n/a
+FL,Sarasota,custom,https://enr.electionsfl.org/SAR/4105/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/SAR/4105/Reports/,2026-10-23,98,"ts 2026_10_23_08_41_47; gov,house16,house17,sen; methods mail,early,eday,prov; votes 0",2026_10_23_08_41_47,7d4a611b62609f425fa858fe49f35a8a,7d4a611b62609f425fa858fe49f35a8a,2026-10-23,current
+FL,Seminole,lvt,,,TRUE,FALSE,FALSE,FALSE,lvt,not_posted,,2026-10-23,voteseminole.gov/elections/liveresults has no LVT link yet; seminoleflenr ids 1-40 404,,,,,,,,,,n/a
+FL,St. Johns,custom,https://enr.electionsfl.org/STJ/4082/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,,,,pass,https://enr.electionsfl.org/STJ/4082/Reports/,2026-10-23,55,"ts 2026_10_15_15_34_25; gov,house5,house6,sen; methods mail,early,eday; votes 0",2026_10_15_15_34_25,46f2ff20cfe9db71b1af4d683ba5f34a,46f2ff20cfe9db71b1af4d683ba5f34a,2026-10-20,n/a
+FL,St. Lucie,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,found,https://enr.electionsfl.org/STL/4089/Reports/,2026-10-23,electionsfl ID scan: STL/4089 dated 11/3/2026,fail,https://enr.electionsfl.org/STL/4089/Reports/,2026-10-23,,source: Summary page live but Precincts/ and Reports/ 404 (not enabled yet); recheck,,,,,n/a
+FL,Sumter,custom,https://enr.electionsfl.org/SUM/4056/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/SUM/4056/Reports/,2026-10-23,electionsfl ID scan: SUM/4056 dated 11/3/2026,pass,https://enr.electionsfl.org/SUM/4056/Reports/,2026-10-23,33,"ts 2026_10_01_10_38_23; gov,house11,sen; methods mail,early,eday,prov; votes 0",2026_10_01_10_38_23,83e85e1e3e9d2ea4492901d33afab15e,83e85e1e3e9d2ea4492901d33afab15e,2026-10-23,n/a
+FL,Suwannee,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Taylor,custom,https://enr.electionsfl.org/TAY/3747/Reports/,,TRUE,FALSE,FALSE,TRUE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,waiting
+FL,Union,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Volusia,custom,,,TRUE,FALSE,FALSE,FALSE,electionsfl,not_posted,,2026-10-23,electionsfl ID scan 3900-4499: no 11/3/2026 election for county code,,,,,,,,,,n/a
+FL,Wakulla,custom,https://enr.electionsfl.org/WAK/4128/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/WAK/4128/Reports/,2026-10-23,electionsfl ID scan: WAK/4128 dated 11/3/2026,pass,https://enr.electionsfl.org/WAK/4128/Reports/,2026-10-23,12,"ts 2026_10_20_14_15_47; gov,house2,sen; methods mail,early,eday,prov; votes 0",2026_10_20_14_15_47,64cb6314f6d3201f303a07194fed417b,64cb6314f6d3201f303a07194fed417b,2026-10-23,n/a
+FL,Walton,custom,https://enr.electionsfl.org/WAL/4091/Reports/,,TRUE,TRUE,FALSE,TRUE,electionsfl,live,,,,pass,https://enr.electionsfl.org/WAL/4091/Reports/,2026-10-23,22,"ts 2026_10_16_10_00_26; gov,house1,house2,sen; methods mail,early,eday; votes 0",2026_10_16_10_00_26,5ba2c30f70c6d6da965a4e975b5cfc9c,5ba2c30f70c6d6da965a4e975b5cfc9c,2026-10-23,current
+FL,Washington,custom,https://enr.electionsfl.org/WAS/4104/Reports/,,TRUE,TRUE,FALSE,FALSE,electionsfl,live,https://enr.electionsfl.org/WAS/4104/Reports/,2026-10-23,electionsfl ID scan: WAS/4104 dated 11/3/2026,pass,https://enr.electionsfl.org/WAS/4104/Reports/,2026-10-23,12,"ts 2026_10_22_10_50_22; gov,house2,sen; methods mail,early,eday,prov; votes 0",2026_10_22_10_50_22,24622508262f10a5a4b861c2e92bc94c,24622508262f10a5a4b861c2e92bc94c,2026-10-23,n/a
+GA,,ev,,,FALSE,FALSE,TRUE,TRUE,single,not_posted,,2026-10-23,results.sos.ga.gov EV api/jurisdictions/Georgia: newest election 2026-08-25,,,,,,,,,,waiting
+IA,,clarity,,,FALSE,FALSE,TRUE,TRUE,single,not_posted,,2026-10-23,clarity: no elections.json for slug,,,,,,,,,,waiting
+IL,DuPage,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Dupage,,,,,,,,,,n/a
+IL,Kankakee,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Kankakee,,,,,,,,,,n/a
+IL,Lake,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Lake,,,,,,,,,,n/a
+IL,Macoupin,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Macoupin,,,,,,,,,,n/a
+IL,McHenry,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Mchenry,,,,,,,,,,n/a
+IL,Sangamon,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Sangamon,,,,,,,,,,n/a
+IL,Will,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Will,,,,,,,,,,n/a
+IL,Winnebago,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Winnebago,,,,,,,,,,n/a
+KS,Harvey,clarity,https://results.enr.clarityelections.com/KS/Harvey/127360/,,FALSE,TRUE,FALSE,FALSE,single,live,,,,pass,https://results.enr.clarityelections.com/KS/Harvey/127360/,2026-10-23,41,"ts 2026_10_01_09_24_39; gov,house4,sen; methods eday; votes 0",2026_10_01_09_24_39,96323ac8f32de28ae93a7ac77bc3f6bc,,,n/a
+KS,Miami,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Miami,,,,,,,,,,n/a
+MI,Alcona,pdf,https://alconacountymi.com/home/county-clerk/election-results/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest Aug 2026 primary spreadsheet PDF,,,,,,,,,,n/a
+MI,Alger,pdf,https://algercounty.gov/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,results-history page has no 2026 results links; metadata path is homepage,,,,,,,,,,n/a
+MI,Allegan,custom,https://www2.allegancounty.org/elections/map/map.aspx,,FALSE,FALSE,TRUE,FALSE,allegan,found,https://www2.allegancounty.org/elections/map/map.aspx,2026-10-23,map page header reads 'November 03 2026 Election Results',fail,https://www2.allegancounty.org/elections/map/map.aspx,2026-10-23,,source: map.aspx titled Nov 03 2026 but #LabelMenuList empty (no Report.aspx links yet),,,,,n/a
+MI,Alpena,pdf,https://alpenacounty.org/173/Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest 2026 August Primary PDF,,,,,,,,,,n/a
+MI,Antrim,pdf,https://www.antrimcountymi.gov/departments___services_/clerk/elections.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,Nov 3 notices only; newest results Aug 4 2026,,,,,,,,,,n/a
+MI,Arenac,pdf,https://www.arenaccountymi.gov/Clerk/ELECTION-RESULTS-BY-YEAR/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest 2026 Aug SOVC,,,,,,,,,,n/a
+MI,Baraga,pdf,https://www.baragacounty.com/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,blocked,,2026-10-23,baragacounty.com parked; baragacounty.org redirects to keweenawbay.org; no county site found,,,,,,,,,,n/a
+MI,Barry,pdf,https://www.barrycounty.org/departments_and_officials/officials/county_clerk/election_results.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,no 2026 results links,,,,,,,,,,n/a
+MI,Bay,pdf,https://www.baycountymi.gov/departments/clerk/elections/election_results.php,,FALSE,FALSE,TRUE,FALSE,pdf_summary,not_posted,,2026-10-23,newest Aug 4 2026 primary official,,,,,,,,,,n/a
+MI,Benzie,pdf,https://www.benzieco.gov/government/county_clerk.php,,FALSE,FALSE,TRUE,FALSE,none,not_posted,,2026-10-23,no 2026 general results,blocked,,2026-10-23,,no PDF template mapping (see memory pdf-county-scrapers),,,,,n/a
+MI,Berrien,ev,https://app.enhancedvoting.com/cdn/results/berrien-county-mi/export-November_3_2026_General_Election.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/berrien-county-mi/export-November_3_2026_General_Election.json,2026-10-23,55,"ts 2026_10_19_10_51_02; gov,house4,house5,sen; methods mail,early,eday; votes 0",2026_10_19_10_51_02,a69859e6ade70de83b4271da51ea4234,a69859e6ade70de83b4271da51ea4234,2026-10-23,current
+MI,Branch,ev,https://app.enhancedvoting.com/cdn/results/branch-county-mi/export-2026NovemberGeneral.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/branch-county-mi/export-2026NovemberGeneral.json,2026-10-23,21,"ts 2026_10_05_12_51_18; gov,house5,sen; methods mail,early,eday; votes 0",2026_10_05_12_51_18,78329c240790a6a6458b445a1beb8238,78329c240790a6a6458b445a1beb8238,2026-10-23,current
+MI,Cass,ev,https://app.enhancedvoting.com/cdn/results/cass-county-mi/export-general11052024.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev cass-county-mi: newest general11052024 (2024-11-05),,,,,,,,,,waiting
+MI,Chippewa,pdf,https://www.chippewacountymi.gov/county-clerk/election-information-and-results,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,Nov 3 candidate list only,,,,,,,,,,n/a
+MI,Clare,ev,https://app.enhancedvoting.com/cdn/results/clare-county-mi/export-2026_General_ClareCounty_Results.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/clare-county-mi/export-2026_General_ClareCounty_Results.json,2026-10-23,19,"ts 2026_10_19_15_23_40; gov,house2,sen; methods mail,early,eday; votes 0",2026_10_19_15_23_40,cf37b89978ef530e4da53ab177a8cfc2,cf37b89978ef530e4da53ab177a8cfc2,2026-10-23,current
+MI,Clinton,pdf,https://www.clinton-county.org/Archive.aspx?AMID=40&Type=Recent,,FALSE,FALSE,TRUE,FALSE,pdf_canvass,not_posted,,2026-10-23,newest Aug 2026 canvass,,,,,,,,,,n/a
+MI,Crawford,pdf,https://www.crawfordco.org/election-archive/,,FALSE,FALSE,TRUE,FALSE,none,not_posted,,2026-10-23,newest Nov 2025 xlsx,blocked,,2026-10-23,,no PDF template mapping (see memory pdf-county-scrapers),,,,,n/a
+MI,Delta,ev,https://app.enhancedvoting.com/cdn/results/delta-county-mi/export-NovemberGeneral2024.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev delta-county-mi: newest August2026Election (2026-08-04),,,,,,,,,,waiting
+MI,Eaton,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Eaton,,,,,,,,,,waiting
+MI,Emmet,,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Emmet,,,,,,,,,,waiting
+MI,Genesee,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Genesee,,,,,,,,,,waiting
+MI,Gladwin,pdf,https://gladwincounty-mi.gov/about/elections/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,Nov 3 notices; newest results Aug 2026,,,,,,,,,,n/a
+MI,Gogebic,pdf,https://www.gogebic.gov/government/county_offices/election_information.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest Aug 4 2026 SOVC,,,,,,,,,,n/a
+MI,Grand Traverse,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Grand_Traverse,,,,,,,,,,waiting
+MI,Gratiot,ev,https://app.enhancedvoting.com/cdn/results/gratiot-county-mi/export-gratiotcountynovember2024.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev gratiot-county-mi: newest GratiotCountyPrimary2026 (2026-08-04),,,,,,,,,,waiting
+MI,Hillsdale,pdf,https://hillsdalecounty.gov/images/elections/resultuploads/Precinct_Results-11-3-2026.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,Precinct_Results-11-3-2026.pdf 404 (expected pre-election),,,,,,,,,,n/a
+MI,Houghton,pdf,https://www.houghtoncounty.net/clerk-2026-elections.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,Nov 3 notices/proposals only,,,,,,,,,,n/a
+MI,Huron,pdf,https://www.co.huron.mi.us/elections,,FALSE,FALSE,TRUE,FALSE,none,not_posted,,2026-10-23,newest Aug 4 2026 official,blocked,,2026-10-23,,no PDF template mapping (see memory pdf-county-scrapers),,,,,n/a
 MI,Ingham,ev,https://app.enhancedvoting.com/cdn/results/ingham-county-mi/export-general11052024.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev ingham-county-mi: newest AugustElection08042026 (2026-08-04),,,,,,,,,,waiting
-MI,Ionia,pdf,https://ioniacounty.org/wp-content/uploads/elections/2026/11/Results.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Iosco,ev,https://app.enhancedvoting.com/cdn/results/iosco-county-mi/export-NovemberGeneral2024.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-MI,Iron,pdf,https://ironmi.com/election-results-2,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Isabella,ev,https://app.enhancedvoting.com/cdn/results/isabella-county-mi/export-2026NovemberGeneral.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,untested,,,,,2026_10_18_17_15_41,ad6d4b7c67915edac38d19ac3b9794dd,ad6d4b7c67915edac38d19ac3b9794dd,2026-10-19,current
-MI,Jackson,pdf,https://www.co.jackson.mi.us/1799/Current-Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Kalamazoo,ev,https://app.enhancedvoting.com/cdn/results/kalamazoo-county-mi/export-November52024General.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-MI,Kalkaska,pdf,https://www.kalkaskacounty.net/government/county_clerk/election_information_and_results.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Kent,ev,https://app.enhancedvoting.com/cdn/results/kent-county-mi/export-11032026_20261005115447.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/kent-county-mi/export-11032026_20261005115447.json,2026-10-23,202,"ts 2026_10_13_10_16_18; gov,house2,house3,sen; methods mail,early,eday; votes 0",2026_10_13_10_16_18,2591cecdac61fc093804cdd8951f35bc,2591cecdac61fc093804cdd8951f35bc,2026-10-19,current
-MI,Lake,ev,https://app.enhancedvoting.com/cdn/results/lake-county-mi/export-General2024.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-MI,Lapeer,pdf,https://www.lapeercountymi.gov/departments/clerk/election___voter_information/election_results.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Leelanau,ev,https://app.enhancedvoting.com/cdn/results/leelanau-county-mi/export-November2024General.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-MI,Lenawee,pdf,https://www.electionlenawee.com/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Livingston,pdf,https://milivcounty.gov/wp-content/uploads/Statement-of-Votes-Cast-Report-11-3-2026.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Mackinac,pdf,https://www.mackinaccounty.net/departments/county-clerk/elections/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Macomb,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-MI,Manistee,pdf,https://www.manisteecountymi.gov/426/Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Marquette,pdf,https://www.co.marquette.mi.us/ElectionInfo/2026/November/StatementOfVotesCastRPT.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Mecosta,pdf,https://www.mecostacounty.org/government/election_information.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Menominee,pdf,https://www.menomineecountymi.gov/departments/clerk/elections/2026-election-information/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Midland,ev,https://app.enhancedvoting.com/cdn/results/midland-county-mi/export-November11052024General.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-MI,Missaukee,pdf,https://www.missaukee.org/government/clerk___register_of_deeds/elections/past_election_results.php,,FALSE,FALSE,TRUE,FALSE,none,pending,,,,blocked,,2026-10-23,,no PDF template mapping (see memory pdf-county-scrapers),,,,,n/a
-MI,Monroe,ev,https://app.enhancedvoting.com/cdn/results/monroe-county-mi/export-2024NovemberGeneral.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-MI,Montcalm,pdf,https://www.montcalm.us/957/November-3-2026-Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_canvass,pending,,,,,,,,,,,,,n/a
-MI,Muskegon,pdf,https://co.muskegon.mi.us/507/Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-MI,Newaygo,ev,https://app.enhancedvoting.com/cdn/results/newaygo-county-mi/export-2026NovemberGeneralElection.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,untested,,,,,2026_10_19_16_21_10,5f2f18c9357b775e2b1022d744bdd854,5f2f18c9357b775e2b1022d744bdd854,2026-10-19,current
-MI,Oakland,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-MI,Oceana,pdf,https://oceana.mi.us/departments/county-clerk/elections/election-results/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Ogemaw,pdf,https://www.ocmi.us/wp-content/uploads/Election_Results_110326.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Ontonagon,pdf,https://ontonagoncounty.org/elections/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Osceola,ev,https://app.enhancedvoting.com/cdn/results/osceola-county-mi/export-November2026.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,untested,,,,,2026_10_13_11_46_12,f7594a6a61fbd6fb85041d4ae2336fed,f7594a6a61fbd6fb85041d4ae2336fed,2026-10-19,current
-MI,Oscoda,pdf,https://www.oscodacountymi.com/elections/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Ottawa,,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,2026-10-23,no Clarity URL found (Sept); county site shows no link,,,,,,,,,,waiting
-MI,Presque Isle,pdf,https://presqueislecounty.org/election-voting/,,FALSE,FALSE,TRUE,FALSE,none,pending,,,,blocked,,2026-10-23,,no PDF template mapping (see memory pdf-county-scrapers),,,,,n/a
-MI,Roscommon,clarity,https://results.enr.clarityelections.com/MI/Roscommon/127296/,,TRUE,TRUE,TRUE,TRUE,clarity,live,,,,untested,,,,,2026_10_14_10_02_40,a2f461d733b8b4010e795468334934d8,a2f461d733b8b4010e795468334934d8,2026-10-19,current
-MI,Saginaw,ev,https://app.enhancedvoting.com/cdn/results/saginaw-county-mi/export-_20261016111322.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,untested,,,,,2026_10_16_12_19_22,6e1e1be70172f07f39c4e5408c3a151f,6e1e1be70172f07f39c4e5408c3a151f,2026-10-19,current
-MI,Schoolcraft,pdf,https://www.schoolcraftcounty.net/government/election-results,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MI,Shiawassee,ev,https://app.enhancedvoting.com/cdn/results/shiawassee-county-mi/export-November2024General.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-MI,St. Clair,ev,https://app.enhancedvoting.com/cdn/results/st.-clair-county-mi/export-November2026GeneralElection_20260928112331.json,,TRUE,TRUE,TRUE,FALSE,ev,live,,,,untested,,,,,2026_10_12_10_26_05,4b7d4b4bd467e3b48c57d22055ecd3b0,4b7d4b4bd467e3b48c57d22055ecd3b0,2026-10-19,n/a
-MI,St. Joseph,ev,https://app.enhancedvoting.com/cdn/results/st.-joseph-county-mi/export-2026_state_general_results.json,,TRUE,TRUE,TRUE,FALSE,ev,live,,,,untested,,,,,2026_10_08_10_53_34,6c14504153a31e2adb450f62f5be7d93,6c14504153a31e2adb450f62f5be7d93,2026-10-19,n/a
+MI,Ionia,pdf,https://ioniacounty.org/wp-content/uploads/elections/2026/11/Results.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,guessed 2026/11 Results.pdf 404,,,,,,,,,,n/a
+MI,Iosco,ev,https://app.enhancedvoting.com/cdn/results/iosco-county-mi/export-NovemberGeneral2024.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev iosco-county-mi: newest AugustPrimary2026 (2026-08-04),,,,,,,,,,waiting
+MI,Iron,pdf,https://ironmi.com/election-results-2,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest Aug 2026 official SOVC,,,,,,,,,,n/a
+MI,Isabella,ev,https://app.enhancedvoting.com/cdn/results/isabella-county-mi/export-2026NovemberGeneral.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/isabella-county-mi/export-2026NovemberGeneral.json,2026-10-23,24,"ts 2026_10_18_17_15_41; gov,house2,sen; methods mail,early,eday; votes 0",2026_10_18_17_15_41,ad6d4b7c67915edac38d19ac3b9794dd,ad6d4b7c67915edac38d19ac3b9794dd,2026-10-23,current
+MI,Jackson,pdf,https://www.co.jackson.mi.us/1799/Current-Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,DocumentCenter 23185/23186 = Aug 4 2026 primary; IDs may be reused for Nov,,,,,,,,,,n/a
+MI,Kalamazoo,ev,https://app.enhancedvoting.com/cdn/results/kalamazoo-county-mi/export-November52024General.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev kalamazoo-county-mi: newest August-2026-Primary-Election (2026-08-04),,,,,,,,,,waiting
+MI,Kalkaska,pdf,https://www.kalkaskacounty.net/government/county_clerk/election_information_and_results.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,no 2026 results links,,,,,,,,,,n/a
+MI,Kent,ev,https://app.enhancedvoting.com/cdn/results/kent-county-mi/export-11032026_20261005115447.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/kent-county-mi/export-11032026_20261005115447.json,2026-10-23,202,"ts 2026_10_13_10_16_18; gov,house2,house3,sen; methods mail,early,eday; votes 0",2026_10_13_10_16_18,2591cecdac61fc093804cdd8951f35bc,2591cecdac61fc093804cdd8951f35bc,2026-10-23,current
+MI,Lake,ev,https://app.enhancedvoting.com/cdn/results/lake-county-mi/export-General2024.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev lake-county-mi: newest Aug-2026-Primary (2026-08-04),,,,,,,,,,waiting
+MI,Lapeer,pdf,https://www.lapeercountymi.gov/departments/clerk/election___voter_information/election_results.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest Official Results August 2026,,,,,,,,,,n/a
+MI,Leelanau,ev,https://app.enhancedvoting.com/cdn/results/leelanau-county-mi/export-November2024General.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev leelanau-county-mi: newest 20260804_LeelanauAugust2026Primary (2026-08-04),,,,,,,,,,waiting
+MI,Lenawee,pdf,https://www.electionlenawee.com/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest 2026-8-4 partial canvass,,,,,,,,,,n/a
+MI,Livingston,pdf,https://milivcounty.gov/wp-content/uploads/Statement-of-Votes-Cast-Report-11-3-2026.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,guessed SOVC 11-3-2026 PDF 404,,,,,,,,,,n/a
+MI,Mackinac,pdf,https://www.mackinaccounty.net/departments/county-clerk/elections/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest Aug 2026 primary official,,,,,,,,,,n/a
+MI,Macomb,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Macomb,,,,,,,,,,waiting
+MI,Manistee,pdf,https://www.manisteecountymi.gov/426/Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest Nov 2024 SOVC listed,,,,,,,,,,n/a
+MI,Marquette,pdf,https://www.co.marquette.mi.us/ElectionInfo/2026/November/StatementOfVotesCastRPT.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,guessed 2026/November SOVC PDF 404,,,,,,,,,,n/a
+MI,Mecosta,pdf,https://www.mecostacounty.org/government/election_information.php,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,Nov 2026 candidate list; newest Aug 26 SOVC,,,,,,,,,,n/a
+MI,Menominee,pdf,https://www.menomineecountymi.gov/departments/clerk/elections/2026-election-information/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,Nov 3 notice only; newest Aug 4 SOVC,,,,,,,,,,n/a
+MI,Midland,ev,https://app.enhancedvoting.com/cdn/results/midland-county-mi/export-November11052024General.json,,FALSE,FALSE,TRUE,TRUE,ev,found,https://app.enhancedvoting.com/cdn/results/midland-county-mi/export-November_3_2026.json,2026-10-23,ev: November_3_2026; export HTTP 200,fail,https://app.enhancedvoting.com/cdn/results/midland-county-mi/export-November_3_2026.json,2026-10-23,,source: EV export has no precinct results yet,,,,,waiting
+MI,Missaukee,pdf,https://www.missaukee.org/government/clerk___register_of_deeds/elections/past_election_results.php,,FALSE,FALSE,TRUE,FALSE,none,not_posted,,2026-10-23,newest Aug 4 2026 spreadsheet,blocked,,2026-10-23,,no PDF template mapping (see memory pdf-county-scrapers),,,,,n/a
+MI,Monroe,ev,https://app.enhancedvoting.com/cdn/results/monroe-county-mi/export-2024NovemberGeneral.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev monroe-county-mi: newest August2026Election (2026-08-04),,,,,,,,,,waiting
+MI,Montcalm,pdf,https://www.montcalm.us/957/November-3-2026-Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_canvass,not_posted,,2026-10-23,montcalm.us/957/November-3-2026-Election-Results exists; no PDF yet,,,,,,,,,,n/a
+MI,Muskegon,pdf,https://co.muskegon.mi.us/507/Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,newest 2026-08-04 PDFs,,,,,,,,,,n/a
+MI,Newaygo,ev,https://app.enhancedvoting.com/cdn/results/newaygo-county-mi/export-2026NovemberGeneralElection.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/newaygo-county-mi/export-2026NovemberGeneralElection.json,2026-10-23,29,"ts 2026_10_19_16_21_10; gov,house2,sen; methods mail,early,eday; votes 0",2026_10_19_16_21_10,5f2f18c9357b775e2b1022d744bdd854,5f2f18c9357b775e2b1022d744bdd854,2026-10-23,current
+MI,Oakland,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Oakland,,,,,,,,,,waiting
+MI,Oceana,pdf,https://oceana.mi.us/departments/county-clerk/elections/election-results/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest Aug 4 2026 SOVC,,,,,,,,,,n/a
+MI,Ogemaw,pdf,https://www.ocmi.us/wp-content/uploads/Election_Results_110326.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,guessed Election_Results_110326.pdf 404,,,,,,,,,,n/a
+MI,Ontonagon,pdf,https://ontonagoncounty.org/elections/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest Aug 4 2026 official,,,,,,,,,,n/a
+MI,Osceola,ev,https://app.enhancedvoting.com/cdn/results/osceola-county-mi/export-November2026.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/osceola-county-mi/export-November2026.json,2026-10-23,18,"ts 2026_10_13_11_46_12; gov,house2,sen; methods all; votes 0",2026_10_13_11_46_12,f7594a6a61fbd6fb85041d4ae2336fed,f7594a6a61fbd6fb85041d4ae2336fed,2026-10-23,current
+MI,Oscoda,pdf,https://www.oscodacountymi.com/elections/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,Nov 3 notices only,,,,,,,,,,n/a
+MI,Ottawa,,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Ottawa,,,,,,,,,,waiting
+MI,Presque Isle,pdf,https://presqueislecounty.org/election-voting/,,FALSE,FALSE,TRUE,FALSE,none,not_posted,,2026-10-23,newest Nov 2025 official,blocked,,2026-10-23,,no PDF template mapping (see memory pdf-county-scrapers),,,,,n/a
+MI,Roscommon,clarity,https://results.enr.clarityelections.com/MI/Roscommon/127296/,,TRUE,TRUE,TRUE,TRUE,clarity,live,,,,pass,https://results.enr.clarityelections.com/MI/Roscommon/127296/,2026-10-23,56,"ts 2026_10_14_10_02_40; gov,house1,sen; methods all; votes 0",2026_10_14_10_02_40,a2f461d733b8b4010e795468334934d8,a2f461d733b8b4010e795468334934d8,2026-10-23,current
+MI,Saginaw,ev,https://app.enhancedvoting.com/cdn/results/saginaw-county-mi/export-_20261016111322.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/saginaw-county-mi/export-_20261016111322.json,2026-10-23,71,"ts 2026_10_16_12_19_22; gov,house8,sen; methods mail,early,eday; votes 0",2026_10_16_12_19_22,6e1e1be70172f07f39c4e5408c3a151f,6e1e1be70172f07f39c4e5408c3a151f,2026-10-23,current
+MI,Schoolcraft,pdf,https://www.schoolcraftcounty.net/government/election-results,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,newest Aug 4 2026 by precinct,,,,,,,,,,n/a
+MI,Shiawassee,ev,https://app.enhancedvoting.com/cdn/results/shiawassee-county-mi/export-November2024General.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev shiawassee-county-mi: newest AUGUST42026 (2026-08-04),,,,,,,,,,waiting
+MI,St. Clair,ev,https://app.enhancedvoting.com/cdn/results/st.-clair-county-mi/export-November2026GeneralElection_20260928112331.json,,TRUE,TRUE,TRUE,FALSE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/st.-clair-county-mi/export-November2026GeneralElection_20260928112331.json,2026-10-23,62,"ts 2026_10_12_10_26_05; gov,house9,sen; methods mail,early,eday; votes 0",2026_10_12_10_26_05,4b7d4b4bd467e3b48c57d22055ecd3b0,4b7d4b4bd467e3b48c57d22055ecd3b0,2026-10-19,n/a
+MI,St. Joseph,ev,https://app.enhancedvoting.com/cdn/results/st.-joseph-county-mi/export-2026_state_general_results.json,,TRUE,TRUE,TRUE,FALSE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/st.-joseph-county-mi/export-2026_state_general_results.json,2026-10-23,23,"ts 2026_10_08_10_53_34; gov,house5,sen; methods mail,early,eday; votes 0",2026_10_08_10_53_34,6c14504153a31e2adb450f62f5be7d93,6c14504153a31e2adb450f62f5be7d93,2026-10-19,n/a
 MI,Tuscola,,,,FALSE,FALSE,TRUE,TRUE,tuscola,blocked,,2026-10-23,PDF only; tticker.php is summary-only. Recheck on Nov 3,,,,,,,,,,waiting
-MI,Van Buren,ev,https://app.enhancedvoting.com/cdn/results/van-buren-county-mi/export-November2026.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,untested,,,,,2026_10_16_11_17_55,a5f4a38568d5c144b463272360bd51e8,a5f4a38568d5c144b463272360bd51e8,2026-10-19,current
-MI,Washtenaw,custom,https://electionresults.ewashtenaw.org/electionreporting/nov2026/index.jsp,,FALSE,FALSE,TRUE,TRUE,washtenaw,pending,,,,,,,,,,,,,waiting
-MI,Wayne,custom,https://michigan.totalvote.com/Wayne,,FALSE,FALSE,TRUE,TRUE,wayne,pending,,,,,,,,,,,,,waiting
-MI,Wexford,pdf,https://wexfordcounty.org/wp-content/uploads/2026/11/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,pending,,,,,,,,,,,,,n/a
-MN,,custom,custom at https://electionresults.sos.mn.gov/Results/CountyStatisticsStatewide/Index?ersElectionId=200,,FALSE,FALSE,TRUE,FALSE,single,pending,,,,,,,,,,,,,n/a
-MO,Lincoln,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-MO,St Louis,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,2026-10-23,Clarity MO/St_Louis 403; earlier TotalVote; user may need to supply URL,,,,,,,,,,n/a
-NC,,custom,https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2026_11_03/results_pct_20261103.zip,,TRUE,TRUE,TRUE,TRUE,single,live,,,,untested,,,,,2026_10_05_10_57_45,0eb52eedc901ab221656a84e8adf3f4a,0eb52eedc901ab221656a84e8adf3f4a,2026-10-19,current
-NE,,custom,https://electionresults.nebraska.gov,,FALSE,FALSE,TRUE,TRUE,single,pending,,2026-10-23,.ne_races in enightdata holds 2026 PRIMARY race IDs; replace with general IDs from resultsSW.aspx BuildCounty() args,,,,,,,,,,waiting
-NJ,Atlantic,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-NJ,Burlington,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-NJ,Cape May,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-NJ,Cumberland,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-NJ,Essex,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-NJ,Gloucester,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,2026-10-23,2024 Clarity page summary-only (no detailxml.zip); confirm 2026 page has detail,,,,,,,,,,n/a
-NJ,Hudson,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-NJ,Mercer,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-NJ,Middlesex,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,2026-10-23,2024 Clarity page summary-only (no detailxml.zip); confirm 2026 page has detail,,,,,,,,,,n/a
-NJ,Monmouth,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,2026-10-23,2024 Clarity page summary-only (no detailxml.zip); confirm 2026 page has detail,,,,,,,,,,n/a
-NJ,Morris,clarity,,,FALSE,FALSE,TRUE,FALSE,single,pending,,2026-10-23,2024 Clarity page summary-only (no detailxml.zip); confirm 2026 page has detail,,,,,,,,,,n/a
-NJ,Ocean,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-NJ,Passaic,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,2026-10-23,2024 Clarity page summary-only (no detailxml.zip); confirm 2026 page has detail,,,,,,,,,,n/a
-NJ,Somerset,clarity,,,FALSE,FALSE,TRUE,FALSE,single,pending,,2026-10-23,2024 Clarity page summary-only (no detailxml.zip); confirm 2026 page has detail,,,,,,,,,,n/a
-NJ,Union,clarity,,,FALSE,FALSE,TRUE,FALSE,single,pending,,,,,,,,,,,,,n/a
+MI,Van Buren,ev,https://app.enhancedvoting.com/cdn/results/van-buren-county-mi/export-November2026.json,,TRUE,TRUE,TRUE,TRUE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/van-buren-county-mi/export-November2026.json,2026-10-23,32,"ts 2026_10_16_11_17_55; gov,house4,sen; methods mail,early,eday; votes 0",2026_10_16_11_17_55,a5f4a38568d5c144b463272360bd51e8,a5f4a38568d5c144b463272360bd51e8,2026-10-23,current
+MI,Washtenaw,custom,https://electionresults.ewashtenaw.org/electionreporting/nov2026/index.jsp,,FALSE,FALSE,TRUE,TRUE,washtenaw,not_posted,,2026-10-23,electionreporting/nov2026 404 (aug2026 exists),,,,,,,,,,waiting
+MI,Wayne,custom,https://michigan.totalvote.com/Wayne,,TRUE,TRUE,TRUE,TRUE,wayne,live,https://michigan.totalvote.com/Wayne,2026-10-23,TotalVote shows November 3 2026 with 770 precincts,pass,https://michigan.totalvote.com/Wayne,2026-10-23,770,"ts 2026_10_22_17_37_45; gov,house12,house13,house6,sen; methods all; votes 165114",2026_10_22_17_37_45,44e14e0851dd3c85f02d066b3ffcb353,44e14e0851dd3c85f02d066b3ffcb353,2026-10-23,current
+MI,Wexford,pdf,https://wexfordcounty.org/wp-content/uploads/2026/11/,,FALSE,FALSE,TRUE,FALSE,pdf_grid,not_posted,,2026-10-23,wp-content/uploads/2026/11/ 404,,,,,,,,,,n/a
+MN,,custom,https://electionresultsfiles.sos.mn.gov/20261103/,,FALSE,TRUE,TRUE,FALSE,single,live,https://electionresultsfiles.sos.mn.gov/20261103/,2026-10-23,allracesbyprecinct.txt live with Nov 2026 races at 0 votes; metadata path is captcha-gated ERS page,pass,https://electionresultsfiles.sos.mn.gov/20261103/,2026-10-23,4105,"ts 2026_10_23_09_48_36; gov,house1,house2,house3,house4,house5,house6,house7,house8,sen; methods all; votes 165256",2026_10_23_09_48_36,22097c8ea9d54b2f9011c87c9f5cf19a,,,n/a
+MO,Lincoln,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Lincoln,,,,,,,,,,n/a
+MO,St Louis,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug St_Louis,,,,,,,,,,n/a
+NC,,custom,https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2026_11_03/results_pct_20261103.zip,,TRUE,TRUE,TRUE,TRUE,single,live,,,,pass,https://s3.amazonaws.com/dl.ncsbe.gov/ENRS/2026_11_03/results_pct_20261103.zip,2026-10-23,2842,"ts 2026_10_05_10_57_45; house1,house10,house11,house12,house13,house14,house2,house3,house4,house5,house6,house7,house8,house9,sen; methods mail,early,eday,prov; votes 0",2026_10_05_10_57_45,0eb52eedc901ab221656a84e8adf3f4a,0eb52eedc901ab221656a84e8adf3f4a,2026-10-19,current
+NE,,custom,https://electionresults.nebraska.gov,,FALSE,TRUE,TRUE,TRUE,single,live,https://electionresults.nebraska.gov,2026-10-23,page shows General Election November 3 2026 (updated 10/6/2026),pass,https://electionresults.nebraska.gov,2026-10-23,1322,"ts 2026_10_06_09_49_00; gov,house1,house2,house3,sen; methods all; votes 0",2026_10_06_09_49_00,4634f94f084c797390c465d976698f19,4634f94f084c797390c465d976698f19,2026-10-23,current
+NJ,Atlantic,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Atlantic,,,,,,,,,,n/a
+NJ,Burlington,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Burlington,,,,,,,,,,n/a
+NJ,Cape May,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Cape_May,,,,,,,,,,n/a
+NJ,Cumberland,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Cumberland,,,,,,,,,,n/a
+NJ,Essex,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Essex,,,,,,,,,,n/a
+NJ,Gloucester,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Gloucester,,,,,,,,,,n/a
+NJ,Hudson,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Hudson,,,,,,,,,,n/a
+NJ,Mercer,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Mercer,,,,,,,,,,n/a
+NJ,Middlesex,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Middlesex,,,,,,,,,,n/a
+NJ,Monmouth,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Monmouth,,,,,,,,,,n/a
+NJ,Morris,clarity,,,FALSE,FALSE,TRUE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Morris,,,,,,,,,,n/a
+NJ,Ocean,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Ocean,,,,,,,,,,n/a
+NJ,Passaic,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Passaic,,,,,,,,,,n/a
+NJ,Somerset,clarity,,,FALSE,FALSE,TRUE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Somerset,,,,,,,,,,n/a
+NJ,Union,clarity,,,FALSE,FALSE,TRUE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug Union,,,,,,,,,,n/a
 NM,,,,,FALSE,FALSE,TRUE,TRUE,single,blocked,,2026-10-23,SOS TotalVote site resets TLS from this network (enightdata todo NM-1); no scraper; reuse Wayne TotalVote pattern once reachable,,,,,,,,,,waiting
-NY,Broome,,,,FALSE,FALSE,FALSE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-NY,Chemung,ev,https://app.enhancedvoting.com/cdn/results/chemung-county-ny/export-generalelection2024.json,,FALSE,FALSE,FALSE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-NY,Clinton,ev,https://app.enhancedvoting.com/cdn/results/clinton-county-ny/export-GE24.json,,FALSE,FALSE,FALSE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-NY,Columbia,ev,https://app.enhancedvoting.com/cdn/results/columbia-county-ny/export-GE2026.json,,TRUE,TRUE,TRUE,FALSE,ev,live,,,,untested,,,,,2026_10_12_08_08_50,7251a9c3cfbd04aef0c9ba9daf4cab60,,,n/a
-NY,Dutchess,ev,https://app.enhancedvoting.com/cdn/results/dutchess-county-ny/export-ge24.json,,FALSE,FALSE,TRUE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-NY,Jefferson,ev,https://app.enhancedvoting.com/cdn/results/jefferson-county-ny/export-GE24.json,,FALSE,FALSE,FALSE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-NY,Livingston,ev,https://app.enhancedvoting.com/cdn/results/livingston-county-ny/export-GE2026.json,,FALSE,TRUE,FALSE,FALSE,ev,live,,,,untested,,,,,,,,,n/a
-NY,Madison,ev,https://app.enhancedvoting.com/cdn/results/madison-county-ny/export-GE24.json,,FALSE,FALSE,FALSE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-NY,NYC,custom,https://enr.boenyc.gov/index.html,,FALSE,FALSE,TRUE,FALSE,nyc,pending,,,,,,,,,,,,,n/a
-NY,Oneida,ev,https://app.enhancedvoting.com/cdn/results/oneida-county-ny/export-2026GeneralElection.json,,FALSE,TRUE,FALSE,FALSE,ev,live,,,,untested,,,,,,,,,n/a
-NY,Orange,ev,https://app.enhancedvoting.com/cdn/results/orange-county-ny/export-GE24.json,,FALSE,FALSE,FALSE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-NY,Putnam,,,,FALSE,FALSE,TRUE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-NY,Rensselaer,,,,FALSE,FALSE,TRUE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-NY,Rockland,ev,https://app.enhancedvoting.com/results/public/rockland-county-ny/elections/GE2024Results,,FALSE,FALSE,FALSE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-NY,Suffolk,,,,FALSE,FALSE,TRUE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-NY,Westchester,,,,FALSE,FALSE,TRUE,FALSE,ev,pending,,,,,,,,,,,,,n/a
-OH,carroll,lvt,https://liveresults.boe.ohio.gov/ENR/carrollohenr/21/en/Index_21.html,,FALSE,FALSE,TRUE,TRUE,lvt,pending,,,,,,,,,,,,,waiting
-OH,clark,lvt,https://liveresults.boe.ohio.gov/ENR/clarkohenr/19/en/Index_19.html,,FALSE,FALSE,TRUE,TRUE,lvt,pending,,,,,,,,,,,,,waiting
-OH,cuyahoga,ev,https://app.enhancedvoting.com/cdn/results/Cuyahoga-County-OH/export-_20260429163643.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-OH,franklin,custom,https://vote.franklincountyohio.gov/elections/api/election/live,,FALSE,FALSE,TRUE,TRUE,franklin,pending,,,,,,,,,,,,,waiting
-OH,fulton,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-OH,hamilton,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-OH,hocking,,,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-OH,lake,,,,FALSE,FALSE,TRUE,TRUE,lvt,pending,,2026-10-23,not on LVT since 2022; platform unknown,,,,,,,,,,waiting
+NY,Broome,,,,FALSE,FALSE,FALSE,FALSE,ev,not_posted,,2026-10-23,ev broome-county-ny: newest PE26 (2026-06-23),,,,,,,,,,n/a
+NY,Chemung,ev,https://app.enhancedvoting.com/cdn/results/chemung-county-ny/export-generalelection2024.json,,FALSE,FALSE,FALSE,FALSE,ev,not_posted,,2026-10-23,ev chemung-county-ny: newest PE26 (2026-06-23),,,,,,,,,,n/a
+NY,Clinton,ev,https://app.enhancedvoting.com/cdn/results/clinton-county-ny/export-GE24.json,,FALSE,FALSE,FALSE,FALSE,ev,not_posted,,2026-10-23,ev clinton-county-ny: newest PEJUN2026 (2026-06-23),,,,,,,,,,n/a
+NY,Columbia,ev,https://app.enhancedvoting.com/cdn/results/columbia-county-ny/export-GE2026.json,,TRUE,TRUE,TRUE,FALSE,ev,live,,,,fail,https://app.enhancedvoting.com/cdn/results/columbia-county-ny/export-GE2026.json,2026-10-23,,source: export-GE2026.json 404 and EV API has no 2026-11-03 election; sheet path premature,2026_10_12_08_08_50,7251a9c3cfbd04aef0c9ba9daf4cab60,,,n/a
+NY,Dutchess,ev,https://app.enhancedvoting.com/cdn/results/dutchess-county-ny/export-ge24.json,,FALSE,FALSE,TRUE,FALSE,ev,not_posted,,2026-10-23,ev dutchess-county-ny: newest PE26 (2026-06-23),,,,,,,,,,n/a
+NY,Jefferson,ev,https://app.enhancedvoting.com/cdn/results/jefferson-county-ny/export-GE24.json,,FALSE,FALSE,FALSE,FALSE,ev,not_posted,,2026-10-23,ev jefferson-county-ny: newest PE26 (2026-06-23),,,,,,,,,,n/a
+NY,Livingston,ev,https://app.enhancedvoting.com/cdn/results/livingston-county-ny/export-GE2026.json,,FALSE,TRUE,FALSE,FALSE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/livingston-county-ny/export-GE2026.json,2026-10-23,40,"ts 2026_10_22_09_56_58; gov,house24; methods mail,early,eday,prov; votes 0",2026_10_22_09_56_58,b7faee4cd8098a2e86e502eea787dfab,,,n/a
+NY,Madison,ev,https://app.enhancedvoting.com/cdn/results/madison-county-ny/export-GE24.json,,FALSE,FALSE,FALSE,FALSE,ev,not_posted,,2026-10-23,ev madison-county-ny: newest PE26 (2026-06-23),,,,,,,,,,n/a
+NY,NYC,custom,https://enr.boenyc.gov/index.html,,FALSE,FALSE,TRUE,FALSE,nyc,not_posted,,2026-10-23,enr.boenyc.gov offline stub; newest on vote.nyc is 2026-06-23 primary,,,,,,,,,,n/a
+NY,Oneida,ev,https://app.enhancedvoting.com/cdn/results/oneida-county-ny/export-2026GeneralElection.json,,FALSE,TRUE,FALSE,FALSE,ev,live,,,,pass,https://app.enhancedvoting.com/cdn/results/oneida-county-ny/export-2026GeneralElection.json,2026-10-23,193,"ts 2026_10_21_14_50_48; gov,house21,house22; methods mail,early,eday,prov; votes 0",2026_10_21_14_50_48,62e9aa0ebe31a008e35384ba5c1322c6,,,n/a
+NY,Orange,ev,https://app.enhancedvoting.com/cdn/results/orange-county-ny/export-GE24.json,,FALSE,FALSE,FALSE,FALSE,ev,not_posted,,2026-10-23,ev orange-county-ny: newest PE26 (2026-06-23),,,,,,,,,,n/a
+NY,Putnam,,,,FALSE,FALSE,TRUE,FALSE,ev,not_posted,,2026-10-23,ev putnam-county-ny: newest PE26 (2026-06-23),,,,,,,,,,n/a
+NY,Rensselaer,,,,FALSE,FALSE,TRUE,FALSE,ev,not_posted,,2026-10-23,ev rensselaer-county-ny: newest PE26 (2026-06-23),,,,,,,,,,n/a
+NY,Rockland,ev,https://app.enhancedvoting.com/results/public/rockland-county-ny/elections/GE2024Results,,FALSE,FALSE,FALSE,FALSE,ev,not_posted,,2026-10-23,ev rockland-county-ny: newest PE26 (2026-06-23),,,,,,,,,,n/a
+NY,Suffolk,,,,FALSE,FALSE,TRUE,FALSE,ev,not_posted,,2026-10-23,ev suffolk-county-ny: newest PE26 (2026-06-23),,,,,,,,,,n/a
+NY,Westchester,,https://app.enhancedvoting.com/cdn/results/westchester-county-ny/export-2026GeneralElection.json,,FALSE,TRUE,TRUE,FALSE,ev,live,https://app.enhancedvoting.com/cdn/results/westchester-county-ny/export-2026GeneralElection.json,2026-10-23,ev: 2026GeneralElection; export HTTP 200,pass,https://app.enhancedvoting.com/cdn/results/westchester-county-ny/export-2026GeneralElection.json,2026-10-23,906,"ts 2026_10_21_13_08_25; gov,house16,house17; methods abs,mail,early,eday,prov; votes 0",2026_10_21_13_08_25,589a0b7fef99baf395c4b4dc2733f51e,,,n/a
+OH,carroll,lvt,https://liveresults.boe.ohio.gov/ENR/carrollohenr/21/en/Index_21.html,,FALSE,FALSE,TRUE,TRUE,lvt,not_posted,,2026-10-23,lvt: ids 21-26 lack a 2026-11-03 page,,,,,,,,,,waiting
+OH,clark,lvt,https://liveresults.boe.ohio.gov/ENR/clarkohenr/19/en/Index_19.html,,FALSE,FALSE,TRUE,TRUE,lvt,not_posted,,2026-10-23,lvt: ids 19-24 lack a 2026-11-03 page,,,,,,,,,,waiting
+OH,cuyahoga,ev,https://app.enhancedvoting.com/cdn/results/Cuyahoga-County-OH/export-_20260429163643.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev Cuyahoga-County-OH: newest _20260429163643 (2026-05-05),,,,,,,,,,waiting
+OH,franklin,custom,https://vote.franklincountyohio.gov/elections/api/election/live,,FALSE,TRUE,TRUE,TRUE,franklin,live,https://vote.franklincountyohio.gov/elections/api/election/live,2026-10-23,live API name '2026 General Election' with zero votes,pass,https://vote.franklincountyohio.gov/elections/api/election/live,2026-10-23,889,"ts 2026_10_23_09_53_26; gov,house15,house3,sen; methods mail,eday,prov; votes 0",2026_10_23_09_53_26,85f5fabe5caf6184dfcb5eb5715cde6b,85f5fabe5caf6184dfcb5eb5715cde6b,2026-10-23,current
+OH,fulton,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Fulton,,,,,,,,,,waiting
+OH,hamilton,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Hamilton,,,,,,,,,,waiting
+OH,hocking,,,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev hocking-county-oh: newest 050526PrimaryElection (2026-05-05),,,,,,,,,,waiting
+OH,lake,,,,FALSE,FALSE,TRUE,TRUE,lvt,not_posted,,2026-10-23,lakecountyohio.gov/boe/election-results: newest is May 5 2026 primary; lakeohenr ids 1-40 have no 2026,,,,,,,,,,waiting
 OH,lucas,lvt,https://liveresults.boe.ohio.gov/ENR/lucasohenr/22/en/Index_22.html,,FALSE,FALSE,TRUE,TRUE,lvt,not_posted,,2026-10-23,lvt: ids 22-27 lack a 2026-11-03 page,,,,,,,,,,waiting
-OH,montgomery,,,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-OH,stark,lvt,https://liveresults.boe.ohio.gov/ENR/starkohenr/13/en/Index_13.html,,FALSE,FALSE,TRUE,TRUE,lvt,pending,,,,,,,,,,,,,waiting
-OH,summit,ev,https://app.enhancedvoting.com/cdn/results/Summit-County-OH/export-May2026Primary.json,,FALSE,FALSE,TRUE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-OH,warren,lvt,https://liveresults.boe.ohio.gov/ENR/warrenohenr/17/en/N_Index_17.html,,FALSE,FALSE,TRUE,TRUE,lvt,pending,,,,,,,,,,,,,waiting
-PA,allegheny,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-PA,bucks,lvt,https://www.livevoterturnout.com/ENR/buckspaenr/23/en/UYzJe_Index_23.html,,FALSE,FALSE,TRUE,TRUE,lvt,pending,,,,,,,,,,,,,waiting
-PA,cambria,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-PA,chester,lvt,https://www.livevoterturnout.com/ENR/chesterpaenr/4/en/Index_4.html,,FALSE,TRUE,FALSE,TRUE,lvt,live,,,,untested,,,,,,,,,waiting
-PA,crawford,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-PA,dauphin,,,,FALSE,FALSE,TRUE,TRUE,dauphin,pending,,,,,,,,,,,,,waiting
-PA,delaware,clarity,127482,,FALSE,TRUE,FALSE,TRUE,clarity,live,,,,untested,,,,,,,,,waiting
-PA,erie,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-PA,fayette,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-PA,lancaster,custom,https://electionresults.lancastercountypa.gov/cdn/results/lancaster-county-pa/export-2026GeneralPrimary.json,,FALSE,FALSE,FALSE,TRUE,ev,pending,,,,,,,,,,,,,waiting
-PA,lehigh,lvt,https://www.livevoterturnout.com/ENR/lehighpaenr/12/en/Index_12.html,,FALSE,FALSE,TRUE,TRUE,lvt,pending,,,,,,,,,,,,,waiting
-PA,luzerne,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-PA,monroe,,,,FALSE,FALSE,TRUE,TRUE,monroe,pending,,,,,,,,,,,,,waiting
-PA,montgomery,custom,https://services1.arcgis.com/kOChldNuKsox8qZD/arcgis/rest/services/MontgomeryCountyElectionResults_MostVotes_MontgomeryCountyElectionResults_MostVotes/FeatureServer/1/query,https://services1.arcgis.com/kOChldNuKsox8qZD/arcgis/rest/services/MontgomeryCountyElectionResults_MostVotes_MontgomeryCountyElectionResults_MostVotes/FeatureServer/1?f=json,FALSE,FALSE,TRUE,TRUE,montgomery,pending,,,,,,,,,,,,,waiting
-PA,northhampton,lvt,https://www.livevoterturnout.com/ENR/northamptonpaenr/11/en/Index_11.html,,FALSE,FALSE,TRUE,FALSE,lvt,pending,,,,,,,,,,,,,n/a
-PA,philadelphia,custom,https://philadelphiaresults.azurewebsites.us/,,FALSE,TRUE,FALSE,TRUE,philadelphia,live,,,,untested,,,,,,,,,waiting
-PA,pike,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-PA,washington,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-PA,westmoreland,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-PA,york,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,angelina,pdf,https://election.angelinacounty.net/,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-TX,atascosa,pdf,https://co.atascosa.tx.us/elections-administration/,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-TX,bastrop,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,bee,pdf,https://www.beecounty.texas.gov/,,FALSE,FALSE,TRUE,FALSE,none,pending,,,,blocked,,2026-10-23,,"no PDF template mapping (Bee OCR scan, Webb custom table, Wichita Excel)",,,,,n/a
-TX,bell,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,bexar,clarity,https://results.enr.clarityelections.com/TX/Bexar/127291/,,FALSE,TRUE,TRUE,TRUE,clarity,live,https://results.enr.clarityelections.com/TX/Bexar/127291/,2026-10-23,clarity: EID scan,pass,https://results.enr.clarityelections.com/TX/Bexar/127291/,2026-10-23,806,"ts 2026_10_01_16_06_32; gov,house20,house21,house23,house35,sen; methods mail,early,eday; votes 0",2026_10_01_16_06_32,9408818a2f6fbc2914575383610bbcff,,,stale
-TX,bowie,pdf,https://www.bowiecounty.org/1239/Elections,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-TX,brazoria,pdf,https://www.brazoriacountyclerktx.gov/departments/elections/election-results,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,brazos,pdf,https://elections.brazoscountytx.gov/results/,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,burnet,pdf,https://www.burnetcountytexas.org/1327/Current-Election,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,cameron,pdf,https://cameroncountytx.gov/elections/results/,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-TX,chambers,pdf,https://www.chamberscountytx.gov/503/Current-Elections,,FALSE,FALSE,TRUE,FALSE,pdf_canvass,pending,,,,,,,,,,,,,n/a
-TX,clay,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,2026-10-23,no Clarity ID found in Sept scan; user may need to supply,,,,,,,,,,waiting
-TX,collin,custom,https://www.collincountytx.gov/docs/default-source/elections/election-results/june-13th-2026---joint-general-runoff---all-races.CSV,,FALSE,FALSE,TRUE,FALSE,collin,pending,,2026-10-23,scraper done; path is June runoff CSV; put Nov 3 CSV link from collincountytx.gov on election night,,,,,,,,,,n/a
-TX,comal,ev,https://app.enhancedvoting.com/cdn/results/comal-county-tx/export-ComalCountyPrimaryRunoff26.json,,FALSE,FALSE,TRUE,TRUE,comal,pending,,,,,,,,,,,,,waiting
-TX,coryell,pdf,https://coryellcountytax.com/elections/,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,dallas,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,denton,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,dewitt,pdf,https://www.co.dewitt.tx.us/page/dewitt.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,ector,pdf,https://www.ectorcountytx.gov/271/Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,el paso,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,ellis,lvt,https://www.livevoterturnout.com/ENR/ellistxenr/10/en/Index_10.html,,FALSE,FALSE,TRUE,FALSE,lvt,pending,,,,,,,,,,,,,n/a
-TX,fort bend,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,galveston,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,grayson,pdf,https://www.co.grayson.tx.us/page/elec.history,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-TX,gregg,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,guadalupe,pdf,https://www.guadalupetx.gov/page/elections.election1,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-TX,hardin,custom,https://hcelectioncenter.hardincountytx.gov/results/election/13/,,FALSE,FALSE,TRUE,FALSE,hardin,pending,,,,,,,,,,,,,n/a
-TX,harris,custom,https://appfiles.harrisvotes.com/harrisvotes/prd/Data/1126,,TRUE,TRUE,TRUE,TRUE,harris,live,,,,untested,,,,,2026_09_17_13_15_00,e4e734185b9a94eeabb6bf1c55136326,e4e734185b9a94eeabb6bf1c55136326,2026-10-19,current
-TX,harrison,pdf,https://www.harrisoncountytexas.gov/page/Elections-2026,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,hays,pdf,https://www.hayscountytx.gov/873/November-3-2026-General-Election,,FALSE,FALSE,TRUE,FALSE,pdf_canvass,pending,,,,,,,,,,,,,n/a
-TX,henderson,pdf,https://www.henderson-county.com/228/November-3-2026,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-TX,hidalgo,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,hood,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,hunt,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,jefferson,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,jim hogg,pdf,https://www.co.jim-hogg.tx.us/page/jim-hogg.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,jim wells,pdf,https://jimwellscountyelections.gov/,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
+OH,montgomery,,,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev montgomery-county-oh: newest May-5th-2026-Primary-Special-Election-Live (2026-05-05),,,,,,,,,,waiting
+OH,stark,lvt,https://liveresults.boe.ohio.gov/ENR/starkohenr/14/en/Index_14.html,,FALSE,TRUE,TRUE,TRUE,lvt,live,https://liveresults.boe.ohio.gov/ENR/starkohenr/14/en/Index_14.html,2026-10-23,lvt: id 14,pass,https://liveresults.boe.ohio.gov/ENR/starkohenr/14/en/Index_14.html,2026-10-23,274,"ts 2026_10_22_12_25_50; gov,house13,house6,sen; methods all; votes 0",2026_10_22_12_25_50,e69a1c2b47a01e86c1d5f851697d3741,e69a1c2b47a01e86c1d5f851697d3741,2026-10-23,current
+OH,summit,ev,https://app.enhancedvoting.com/cdn/results/Summit-County-OH/export-May2026Primary.json,,FALSE,FALSE,TRUE,TRUE,ev,not_posted,,2026-10-23,ev Summit-County-OH: newest May2026Primary (2026-05-05),,,,,,,,,,waiting
+OH,warren,lvt,https://liveresults.boe.ohio.gov/ENR/warrenohenr/17/en/N_Index_17.html,,FALSE,FALSE,TRUE,TRUE,lvt,not_posted,,2026-10-23,lvt: ids 17-22 lack a 2026-11-03 page,,,,,,,,,,waiting
+PA,allegheny,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Allegheny,,,,,,,,,,waiting
+PA,bucks,lvt,https://www.livevoterturnout.com/ENR/buckspaenr/23/en/UYzJe_Index_23.html,,FALSE,FALSE,TRUE,TRUE,lvt,not_posted,,2026-10-23,lvt: ids 23-28 lack a 2026-11-03 page,,,,,,,,,,waiting
+PA,cambria,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Cambria,,,,,,,,,,waiting
+PA,chester,lvt,https://www.livevoterturnout.com/ENR/chesterpaenr/4/en/Index_4.html,,TRUE,TRUE,FALSE,TRUE,lvt,live,,,,pass,https://www.livevoterturnout.com/ENR/chesterpaenr/4/en/Index_4.html,2026-10-23,230,"ts 2026_10_15_13_47_34; gov,house6; methods all; votes 12774",2026_10_15_13_47_34,274a434d8c45ff189f2346613326fcc1,274a434d8c45ff189f2346613326fcc1,2026-10-23,current
+PA,crawford,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Crawford,,,,,,,,,,waiting
+PA,dauphin,,,,FALSE,FALSE,TRUE,TRUE,dauphin,not_posted,,2026-10-23,elections.dauphincounty.gov newest is 2026 Primary (key=41); key=42 not live,,,,,,,,,,waiting
+PA,delaware,clarity,127482,,FALSE,TRUE,FALSE,TRUE,clarity,live,,,,pass,127482,2026-10-23,383,"ts 2026_10_22_16_29_17; gov,house5; methods mail,eday,prov; votes 0",2026_10_22_16_29_17,dc2d444b39a0130e6b63eb506df15503,dc2d444b39a0130e6b63eb506df15503,2026-10-23,current
+PA,erie,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Erie,,,,,,,,,,waiting
+PA,fayette,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Fayette,,,,,,,,,,waiting
+PA,lancaster,custom,https://electionresults.lancastercountypa.gov/cdn/results/lancaster-county-pa/export-2026GeneralPrimary.json,,FALSE,FALSE,FALSE,TRUE,ev,not_posted,,2026-10-23,ev lancaster-county-pa: newest 2026GeneralPrimary (2026-05-19),,,,,,,,,,waiting
+PA,lehigh,lvt,https://www.livevoterturnout.com/ENR/lehighpaenr/12/en/Index_12.html,,FALSE,FALSE,TRUE,TRUE,lvt,not_posted,,2026-10-23,lvt: ids 12-17 lack a 2026-11-03 page,,,,,,,,,,waiting
+PA,luzerne,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Luzerne,,,,,,,,,,waiting
+PA,monroe,,,,FALSE,FALSE,TRUE,TRUE,monroe,not_posted,,2026-10-23,agencies2.monroecountypa.gov newest is 2026 General Primary (id=9); id=10 empty,,,,,,,,,,waiting
+PA,montgomery,custom,https://services1.arcgis.com/kOChldNuKsox8qZD/arcgis/rest/services/MontgomeryCountyElectionResults_MostVotes_MontgomeryCountyElectionResults_MostVotes/FeatureServer/1/query,https://services1.arcgis.com/kOChldNuKsox8qZD/arcgis/rest/services/MontgomeryCountyElectionResults_MostVotes_MontgomeryCountyElectionResults_MostVotes/FeatureServer/1?f=json,FALSE,FALSE,TRUE,TRUE,montgomery,not_posted,,2026-10-23,ArcGIS results layer still holds 2026 primary data (last edit 2026-06-01),,,,,,,,,,waiting
+PA,northhampton,lvt,https://www.livevoterturnout.com/ENR/northamptonpaenr/11/en/Index_11.html,,FALSE,FALSE,TRUE,FALSE,lvt,not_posted,,2026-10-23,lvt: ids 11-16 lack a 2026-11-03 page,,,,,,,,,,n/a
+PA,philadelphia,custom,https://philadelphiaresults.azurewebsites.us/,,TRUE,TRUE,FALSE,TRUE,philadelphia,live,,,,pass,https://philadelphiaresults.azurewebsites.us/,2026-10-23,1706,"ts 2026_10_17_07_57_23; gov,house2,house3,house5; methods mail,eday,prov; votes 10528",2026_10_17_07_57_23,7d640e5cbea4e1e65271727484039ee3,7d640e5cbea4e1e65271727484039ee3,2026-10-23,current
+PA,pike,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Pike,,,,,,,,,,waiting
+PA,washington,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Washington,,,,,,,,,,waiting
+PA,westmoreland,clarity,,,FALSE,FALSE,FALSE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Westmoreland,,,,,,,,,,waiting
+PA,york,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug York,,,,,,,,,,waiting
+TX,angelina,pdf,https://election.angelinacounty.net/,,FALSE,FALSE,TRUE,FALSE,pdf_summary,found,https://election.angelinacounty.net/api/results.php,2026-10-23,custom JSON app 'November 3 2026 General'; county totals only; no PDF,blocked,,2026-10-23,,moved from PDF to custom JSON app (api/results.php) with county totals only; no precinct data,,,,,n/a
+TX,atascosa,pdf,https://co.atascosa.tx.us/elections-administration/,,FALSE,FALSE,TRUE,FALSE,pdf_summary,not_posted,,2026-10-23,orders of election only,,,,,,,,,,n/a
+TX,bastrop,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Bastrop,,,,,,,,,,waiting
+TX,bee,pdf,https://www.beecounty.texas.gov/,,FALSE,FALSE,TRUE,FALSE,none,not_posted,,2026-10-23,beecounty.gov/277/2026-Elections Nov 3 tab; newest results May 26 runoff,blocked,,2026-10-23,,"no PDF template mapping (Bee OCR scan, Webb custom table, Wichita Excel)",,,,,n/a
+TX,bell,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Bell,,,,,,,,,,waiting
+TX,bexar,clarity,https://results.enr.clarityelections.com/TX/Bexar/127291/,,FALSE,TRUE,TRUE,TRUE,clarity,live,https://results.enr.clarityelections.com/TX/Bexar/127291/,2026-10-23,clarity: EID scan,pass,https://results.enr.clarityelections.com/TX/Bexar/127291/,2026-10-23,806,"ts 2026_10_01_16_06_32; gov,house20,house21,house23,house35,sen; methods mail,early,eday; votes 0",2026_10_01_16_06_32,9408818a2f6fbc2914575383610bbcff,9408818a2f6fbc2914575383610bbcff,2026-10-23,current
+TX,bowie,pdf,https://www.bowiecounty.org/1239/Elections,,FALSE,FALSE,TRUE,FALSE,pdf_summary,not_posted,,2026-10-23,newest March 3 2026 unofficial,,,,,,,,,,n/a
+TX,brazoria,pdf,https://www.brazoriacountyclerktx.gov/departments/elections/election-results,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,newest May 26 2026 runoff; 403 to curl (browser OK),,,,,,,,,,n/a
+TX,brazos,pdf,https://elections.brazoscountytx.gov/results/,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,newest May 26 2026 runoff; 403 to curl (browser OK),,,,,,,,,,n/a
+TX,burnet,pdf,https://www.burnetcountytexas.org/1327/Current-Election,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,Nov 3 page exists but PDFs View 2324/2325 still May runoff,,,,,,,,,,n/a
+TX,cameron,pdf,https://cameroncountytx.gov/elections/results/,,FALSE,FALSE,TRUE,FALSE,pdf_summary,not_posted,,2026-10-23,Nov 3 section has early-vote turnout only,,,,,,,,,,n/a
+TX,chambers,pdf,https://www.chamberscountytx.gov/503/Current-Elections,,FALSE,FALSE,TRUE,FALSE,pdf_canvass,not_posted,,2026-10-23,Nov 3 orders/voter history only,,,,,,,,,,n/a
+TX,clay,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Clay,,,,,,,,,,waiting
+TX,collin,custom,https://www.collincountytx.gov/docs/default-source/elections/election-results/june-13th-2026---joint-general-runoff---all-races.CSV,,FALSE,FALSE,TRUE,FALSE,collin,not_posted,,2026-10-23,newest June 13 2026 runoff CSV,,,,,,,,,,n/a
+TX,comal,ev,https://app.enhancedvoting.com/cdn/results/comal-county-tx/export-ComalCountyPrimaryRunoff26.json,,FALSE,FALSE,TRUE,TRUE,comal,not_posted,,2026-10-23,EV comal-county-tx newest election 2026-06-13,,,,,,,,,,waiting
+TX,coryell,pdf,https://coryellcountytax.com/elections/,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,11-03-2026 result placeholders unlinked,,,,,,,,,,n/a
+TX,dallas,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Dallas,,,,,,,,,,waiting
+TX,denton,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Denton,,,,,,,,,,waiting
+TX,dewitt,pdf,https://www.co.dewitt.tx.us/page/dewitt.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,Nov 3 rosters; newest results May 26 runoff,,,,,,,,,,n/a
+TX,ector,pdf,https://www.ectorcountytx.gov/271/Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,Nov 03 2026 tab exists; no results PDFs,,,,,,,,,,n/a
+TX,el paso,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug El_Paso,,,,,,,,,,waiting
+TX,ellis,lvt,https://www.livevoterturnout.com/ENR/ellistxenr/10/en/Index_10.html,,FALSE,FALSE,TRUE,FALSE,lvt,not_posted,,2026-10-23,lvt: ids 10-15 lack a 2026-11-03 page,,,,,,,,,,n/a
+TX,fort bend,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Fort_Bend,,,,,,,,,,waiting
+TX,galveston,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Galveston,,,,,,,,,,waiting
+TX,grayson,pdf,https://www.co.grayson.tx.us/page/elec.history,,FALSE,FALSE,TRUE,FALSE,pdf_summary,not_posted,,2026-10-23,newest May 2 2026,,,,,,,,,,n/a
+TX,gregg,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Gregg,,,,,,,,,,waiting
+TX,guadalupe,pdf,https://www.guadalupetx.gov/page/elections.election1,,FALSE,FALSE,TRUE,FALSE,pdf_summary,not_posted,,2026-10-23,/docs/110326/ has orders only,,,,,,,,,,n/a
+TX,hardin,custom,https://hcelectioncenter.hardincountytx.gov/results/election/13/,,FALSE,TRUE,TRUE,FALSE,hardin,live,https://hcelectioncenter.hardincountytx.gov/results/election/13/,2026-10-23,'General Election - November 3 2026' with 0 votes,pass,https://hcelectioncenter.hardincountytx.gov/results/election/13/,2026-10-23,19,"ts 2026_10_08_16_39_00; gov,house36,sen; methods all; votes 0",2026_10_08_16_39_00,7b87e39ee5d9cc11bbbc3595639db036,7b87e39ee5d9cc11bbbc3595639db036,2026-10-23,n/a
+TX,harris,custom,https://appfiles.harrisvotes.com/harrisvotes/prd/Data/1126,,TRUE,TRUE,TRUE,TRUE,harris,live,,,,pass,https://appfiles.harrisvotes.com/harrisvotes/prd/Data/1126,2026-10-23,1224,"ts 2026_09_17_13_15_00; gov,house18,house2,house22,house29,house36,house38,house7,house8,house9,sen; methods mail,early,eday; votes 0",2026_09_17_13_15_00,e4e734185b9a94eeabb6bf1c55136326,e4e734185b9a94eeabb6bf1c55136326,2026-10-23,current
+TX,harrison,pdf,https://www.harrisoncountytexas.gov/page/Elections-2026,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,Nov 3 rosters/orders only,,,,,,,,,,n/a
+TX,hays,pdf,https://www.hayscountytx.gov/873/November-3-2026-General-Election,,FALSE,FALSE,TRUE,FALSE,pdf_canvass,not_posted,,2026-10-23,Nov 3 page has turnout/notices only; Cloudflare to curl,,,,,,,,,,n/a
+TX,henderson,pdf,https://www.henderson-county.com/228/November-3-2026,,FALSE,FALSE,TRUE,FALSE,pdf_summary,not_posted,,2026-10-23,henderson-county.com/228/November-3-2026 exists; no PDF,,,,,,,,,,n/a
+TX,hidalgo,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Hidalgo,,,,,,,,,,waiting
+TX,hood,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Hood,,,,,,,,,,waiting
+TX,hunt,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Hunt,,,,,,,,,,waiting
+TX,jefferson,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Jefferson,,,,,,,,,,waiting
+TX,jim hogg,pdf,https://www.co.jim-hogg.tx.us/page/jim-hogg.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,'Unofficial Precinct Results.pdf' is May 2026 (generic name may be overwritten),,,,,,,,,,n/a
+TX,jim wells,pdf,https://jimwellscountyelections.gov/,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,no 2026 results links,,,,,,,,,,n/a
 TX,johnson,custom,https://www.johnsoncountytx.org/departments/elections-office/current-election-results,,FALSE,FALSE,TRUE,FALSE,none,blocked,,2026-10-23,Akamai 403 to scripts; all results are image scans. Recheck Nov 3 for text PDF or ENR link,,,,,,,,,,n/a
-TX,karnes,pdf,https://www.co.karnes.tx.us/page/karnes.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,kaufman,clarity,https://results.enr.clarityelections.com/TX/Kaufman/127485/,,TRUE,TRUE,TRUE,TRUE,clarity,live,,,,untested,,,,,2026_10_13_13_32_43,6ed71fe23fe7690f19a9e176aac1cebb,6ed71fe23fe7690f19a9e176aac1cebb,2026-10-19,current
-TX,kendall,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,lamar,clarity,127484,,TRUE,TRUE,TRUE,TRUE,clarity,live,,,,untested,,,,,2026_10_15_14_32_10,97d82545a50e4dce230dc86edd2c60a1,97d82545a50e4dce230dc86edd2c60a1,2026-10-19,current
-TX,liberty,pdf,https://www.co.liberty.tx.us/page/liberty.elections.2026-11-03,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,lubbock,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,midland,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,montague,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,montgomery,pdf,https://elections.mctx.org/pdf/GEN110326/Precinct%20Results.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,nacogdoches,pdf,https://www.nacogdochesco.gov/232/Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,navarro,pdf,https://newtools.cira.state.tx.us/page/navarro.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-TX,nueces,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,parker,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,potter,pdf,https://www.pottercountytexasvotes.gov/archived-election-results,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,randall,pdf,https://www.randallcounty.gov/183/Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_canvass,pending,,,,,,,,,,,,,n/a
-TX,robertson,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,rockwall,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,rusk,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,san patricio,pdf,https://www.co.san-patricio.tx.us/page/sanpatricio.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,starr,pdf,https://www.co.starr.tx.us/page/Elections.2026,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-TX,tarrant,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,tom green,pdf,https://www.tomgreencountytx.gov/page/ele.ElectionsResults,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,travis,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,van zandt,pdf,https://www.vanzandtcounty.org/page/vanzandt.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,victoria,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,pending,,,,,,,,,,,,,waiting
-TX,walker,pdf,https://www.co.walker.tx.us/department/division.php?structureid=140,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-TX,webb,pdf,https://www.webbcountytx.gov/698/Unofficial-Results-2026,,FALSE,FALSE,TRUE,FALSE,none,pending,,,,blocked,,2026-10-23,,"no PDF template mapping (Bee OCR scan, Webb custom table, Wichita Excel)",,,,,n/a
-TX,wichita,pdf,https://wichitacountytx.com/election_info/election-results/,,FALSE,FALSE,TRUE,FALSE,none,pending,,,,blocked,,2026-10-23,,"no PDF template mapping (Bee OCR scan, Webb custom table, Wichita Excel)",,,,,n/a
-TX,willacy,pdf,https://www.willacy.gov/page/willacy.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,pending,,,,,,,,,,,,,n/a
-TX,williamson,lvt,https://www.livevoterturnout.com/ENR/williamsontxenr/14/en/Index_14.html,,FALSE,FALSE,TRUE,TRUE,lvt,pending,,,,,,,,,,,,,waiting
-TX,wilson,pdf,https://www.wilsoncountytx.gov/page/wilson.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_summary,pending,,,,,,,,,,,,,n/a
-TX,wood,clarity,https://results.enr.clarityelections.com/TX/Wood/127355/,,TRUE,TRUE,TRUE,TRUE,clarity,live,,,,untested,,,,,2026_10_05_09_35_14,35939f0f76d6887c125346456c766912,35939f0f76d6887c125346456c766912,2026-10-19,current
-UT,,,https://electionresults.utah.gov/cdn/results/utah/export-general11052024.json,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
-VA,,ev,https://enr.elections.virginia.gov/cdn/results/Virginia/export-2026-November-General.json,,TRUE,TRUE,TRUE,TRUE,single,live,,,,untested,,,,,,,,,waiting
-WA,Cowlitz,ev,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,,TRUE,TRUE,TRUE,TRUE,single,live,,,,untested,,,,,,,,,waiting
-WA,Pacific,ev,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,,TRUE,TRUE,TRUE,TRUE,single,live,,,,untested,,,,,,,,,waiting
-WA,Skamania,ev,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,,TRUE,TRUE,TRUE,TRUE,single,live,,,,untested,,,,,,,,,waiting
-WA,Wahkiakum,ev,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,,TRUE,TRUE,TRUE,TRUE,single,live,,,,untested,,,,,,,,,waiting
-WI,Barron,,,,FALSE,FALSE,TRUE,FALSE,barron,pending,,,,,,,,,,,,,n/a
-WI,Dane,,,,FALSE,FALSE,TRUE,FALSE,dane,pending,,,,,,,,,,,,,n/a
-WI,Jefferson,,,,FALSE,FALSE,TRUE,FALSE,jefferson,pending,,,,,,,,,,,,,n/a
-WI,Kenosha,,,,FALSE,FALSE,TRUE,FALSE,kenosha,pending,,,,,,,,,,,,,n/a
-WI,Milwaukee,,,,FALSE,FALSE,TRUE,FALSE,milwaukee,pending,,,,,,,,,,,,,n/a
-WI,Oneida,,,,FALSE,FALSE,TRUE,FALSE,oneida,pending,,,,,,,,,,,,,n/a
-WI,Pierce,,,,FALSE,FALSE,TRUE,FALSE,pierce,pending,,,,,,,,,,,,,n/a
-WI,Polk,,,,FALSE,FALSE,TRUE,FALSE,polk,pending,,,,,,,,,,,,,n/a
-WI,Rock,,,,FALSE,FALSE,TRUE,FALSE,rock,pending,,,,,,,,,,,,,n/a
-WI,Vernon,,,,FALSE,FALSE,TRUE,FALSE,vernon,pending,,,,,,,,,,,,,n/a
-WI,Wood,,https://elections.woodcountywi.gov/Results?ElectionId=17,,TRUE,TRUE,TRUE,FALSE,wood,live,,,,untested,,,,,2026_08_31_15_25_06,3995da6e1741591fd47db543455d24a9,,,n/a
-WV,,clarity,,,FALSE,FALSE,FALSE,FALSE,single,pending,,,,,,,,,,,,,n/a
+TX,karnes,pdf,https://www.co.karnes.tx.us/page/karnes.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,Nov 3 orders; newest results May 26 runoff,,,,,,,,,,n/a
+TX,kaufman,clarity,https://results.enr.clarityelections.com/TX/Kaufman/127485/,,TRUE,TRUE,TRUE,TRUE,clarity,live,,,,pass,https://results.enr.clarityelections.com/TX/Kaufman/127485/,2026-10-23,37,"ts 2026_10_13_13_32_43; gov,house5,sen; methods mail,early,eday; votes 0",2026_10_13_13_32_43,6ed71fe23fe7690f19a9e176aac1cebb,6ed71fe23fe7690f19a9e176aac1cebb,2026-10-23,current
+TX,kendall,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Kendall,,,,,,,,,,waiting
+TX,lamar,clarity,127484,,TRUE,TRUE,TRUE,TRUE,clarity,live,,,,pass,127484,2026-10-23,25,"ts 2026_10_15_14_32_10; gov,house4,sen; methods mail,early,eday,prov; votes 0",2026_10_15_14_32_10,97d82545a50e4dce230dc86edd2c60a1,97d82545a50e4dce230dc86edd2c60a1,2026-10-23,current
+TX,liberty,pdf,https://www.co.liberty.tx.us/page/liberty.elections.2026-11-03,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,Nov 3 page has voter lists only,,,,,,,,,,n/a
+TX,lubbock,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Lubbock,,,,,,,,,,waiting
+TX,midland,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Midland,,,,,,,,,,waiting
+TX,montague,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Montague,,,,,,,,,,waiting
+TX,montgomery,pdf,https://elections.mctx.org/pdf/GEN110326/Precinct%20Results.pdf,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,elections.mctx.org/pdf/GEN110326/Precinct Results.pdf 404,,,,,,,,,,n/a
+TX,nacogdoches,pdf,https://www.nacogdochesco.gov/232/Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,newest 2026-05-26 runoff,,,,,,,,,,n/a
+TX,navarro,pdf,https://newtools.cira.state.tx.us/page/navarro.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_summary,not_posted,,2026-10-23,newest May 26 runoff,,,,,,,,,,n/a
+TX,nueces,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Nueces,,,,,,,,,,waiting
+TX,parker,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Parker,,,,,,,,,,waiting
+TX,potter,pdf,https://www.pottercountytexasvotes.gov/archived-election-results,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,no 2026 general results,,,,,,,,,,n/a
+TX,randall,pdf,https://www.randallcounty.gov/183/Election-Results,,FALSE,FALSE,TRUE,FALSE,pdf_canvass,not_posted,,2026-10-23,newest March 2026 canvass,,,,,,,,,,n/a
+TX,robertson,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Robertson,,,,,,,,,,waiting
+TX,rockwall,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Rockwall,,,,,,,,,,waiting
+TX,rusk,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Rusk,,,,,,,,,,waiting
+TX,san patricio,pdf,https://www.co.san-patricio.tx.us/page/sanpatricio.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,old path redirects; now sanpatriciocountytx.gov/page/elections.home; Nov 3 dates only,,,,,,,,,,n/a
+TX,starr,pdf,https://www.co.starr.tx.us/page/Elections.2026,,FALSE,FALSE,TRUE,FALSE,pdf_summary,not_posted,,2026-10-23,Nov 3 order only,,,,,,,,,,n/a
+TX,tarrant,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Tarrant,,,,,,,,,,waiting
+TX,tom green,pdf,https://www.tomgreencountytx.gov/page/ele.ElectionsResults,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,newest May 2026,,,,,,,,,,n/a
+TX,travis,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Travis,,,,,,,,,,waiting
+TX,van zandt,pdf,https://www.vanzandtcounty.org/page/vanzandt.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,orders only,,,,,,,,,,n/a
+TX,victoria,clarity,,,FALSE,FALSE,TRUE,TRUE,clarity,not_posted,,2026-10-23,clarity: no elections.json for slug Victoria,,,,,,,,,,waiting
+TX,walker,pdf,https://www.co.walker.tx.us/department/division.php?structureid=140,,FALSE,FALSE,TRUE,FALSE,pdf_summary,blocked,,2026-10-23,HTTP 418 maintenance page (browser too),,,,,,,,,,n/a
+TX,webb,pdf,https://www.webbcountytx.gov/698/Unofficial-Results-2026,,FALSE,FALSE,TRUE,FALSE,none,not_posted,,2026-10-23,Combined PDF View 2697 is March 2026 scan,blocked,,2026-10-23,,"no PDF template mapping (Bee OCR scan, Webb custom table, Wichita Excel)",,,,,n/a
+TX,wichita,pdf,https://wichitacountytx.com/election_info/election-results/,,FALSE,FALSE,TRUE,FALSE,none,not_posted,,2026-10-23,'Official Results: No posts found',blocked,,2026-10-23,,"no PDF template mapping (Bee OCR scan, Webb custom table, Wichita Excel)",,,,,n/a
+TX,willacy,pdf,https://www.willacy.gov/page/willacy.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_precinct_results,not_posted,,2026-10-23,orders/hand-count only,,,,,,,,,,n/a
+TX,williamson,lvt,https://www.livevoterturnout.com/ENR/williamsontxenr/14/en/Index_14.html,,FALSE,FALSE,TRUE,TRUE,lvt,not_posted,,2026-10-23,lvt: ids 14-19 lack a 2026-11-03 page,,,,,,,,,,waiting
+TX,wilson,pdf,https://www.wilsoncountytx.gov/page/wilson.Elections,,FALSE,FALSE,TRUE,FALSE,pdf_summary,not_posted,,2026-10-23,Nov 3 rosters; newest results May 26 runoff,,,,,,,,,,n/a
+TX,wood,clarity,https://results.enr.clarityelections.com/TX/Wood/127355/,,TRUE,TRUE,TRUE,TRUE,clarity,live,,,,pass,https://results.enr.clarityelections.com/TX/Wood/127355/,2026-10-23,26,"ts 2026_10_05_09_35_14; gov,house32,sen; methods mail,early,eday; votes 0",2026_10_05_09_35_14,35939f0f76d6887c125346456c766912,35939f0f76d6887c125346456c766912,2026-10-23,current
+UT,,,https://electionresults.utah.gov/cdn/results/utah/export-general11052024.json,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,API lists General11032026 (published 10-22) but export-General11032026.json 404; metadata path still 2024,,,,,,,,,,n/a
+VA,,ev,https://enr.elections.virginia.gov/cdn/results/Virginia/export-2026-November-General.json,,TRUE,TRUE,TRUE,TRUE,single,live,,,,fail,https://enr.elections.virginia.gov/cdn/results/Virginia/export-2026-November-General.json,2026-10-23,,source: EV lists 2026-November-General but export json 404 (not published yet),,,,,waiting
+WA,Cowlitz,ev,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,,TRUE,TRUE,TRUE,TRUE,single,live,,,,fail,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,2026-10-23,,source: WA EV export-20261103.json has no precinct results yet,,,,,waiting
+WA,Pacific,ev,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,,TRUE,TRUE,TRUE,TRUE,single,live,,,,fail,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,2026-10-23,,source: WA EV export-20261103.json has no precinct results yet,,,,,waiting
+WA,Skamania,ev,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,,TRUE,TRUE,TRUE,TRUE,single,live,,,,fail,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,2026-10-23,,source: WA EV export-20261103.json has no precinct results yet,,,,,waiting
+WA,Wahkiakum,ev,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,,TRUE,TRUE,TRUE,TRUE,single,live,,,,fail,https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json,2026-10-23,,source: WA EV export-20261103.json has no precinct results yet,,,,,waiting
+WI,Barron,,,,FALSE,FALSE,TRUE,FALSE,barron,not_posted,,2026-10-23,elections_2026_11.cfm file-not-found; newest elections_2026_08.cfm,,,,,,,,,,n/a
+WI,Dane,,https://elections.countyofdane.com/Election-Result,,FALSE,TRUE,TRUE,FALSE,dane,live,https://elections.countyofdane.com/Election-Result,2026-10-23,'2026 General Election Unofficial Results'; default path works,pass,https://elections.countyofdane.com/Election-Result,2026-10-23,282,"ts 2026_10_20_15_33_00; gov,house2; methods all; votes 0",2026_10_20_15_33_00,3568052b259c1ad5c44215a9f8a9f794,,,n/a
+WI,Jefferson,,,,FALSE,FALSE,TRUE,FALSE,jefferson,not_posted,,2026-10-23,results/11032026 not found; newest 8112026,,,,,,,,,,n/a
+WI,Kenosha,,,,FALSE,FALSE,TRUE,FALSE,kenosha,not_posted,,2026-10-23,eid=69 is Aug primary; eid 70+ empty (likely 70 on Nov 3),,,,,,,,,,n/a
+WI,Milwaukee,,,,FALSE,FALSE,TRUE,FALSE,milwaukee,not_posted,,2026-10-23,newest 8-11-26 primary page,,,,,,,,,,n/a
+WI,Oneida,,,,FALSE,FALSE,TRUE,FALSE,oneida,not_posted,,2026-10-23,no Nov 2026 page; newest Aug 11,,,,,,,,,,n/a
+WI,Pierce,,,,FALSE,FALSE,TRUE,FALSE,pierce,not_posted,,2026-10-23,posted election night after 8pm,,,,,,,,,,n/a
+WI,Polk,,,,FALSE,FALSE,TRUE,FALSE,polk,not_posted,,2026-10-23,unofficialresults.xlsx last-modified Aug 12 2026,,,,,,,,,,n/a
+WI,Rock,,https://elections.co.rock.wi.us/20261103.html,,FALSE,TRUE,TRUE,FALSE,rock,live,https://elections.co.rock.wi.us/20261103.html,2026-10-23,'November 3 2026 - General Election' 25 contests at 0 votes,pass,https://elections.co.rock.wi.us/20261103.html,2026-10-23,106,"ts 2026_10_18_14_26_00; gov,house1,house2; methods all; votes 0",2026_10_18_14_26_00,f768813777d10c8881183e96a94a8c91,,,n/a
+WI,Vernon,,,,FALSE,FALSE,TRUE,FALSE,vernon,not_posted,,2026-10-23,Nov 3 results entry present but unlinked,,,,,,,,,,n/a
+WI,Wood,,https://elections.woodcountywi.gov/Results?ElectionId=17,,TRUE,TRUE,TRUE,FALSE,wood,live,,,,pass,https://elections.woodcountywi.gov/Results?ElectionId=17,2026-10-23,50,"ts 2026_08_31_15_25_06; gov,house3,house7; methods all; votes 0",2026_08_31_15_25_06,3995da6e1741591fd47db543455d24a9,,,n/a
+WV,,clarity,,,FALSE,FALSE,FALSE,FALSE,single,not_posted,,2026-10-23,clarity: no elections.json for slug,,,,,,,,,,n/a
