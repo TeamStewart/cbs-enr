@@ -38,7 +38,9 @@ miss = setdiff(want, sc_of(have))
 if (length(miss)) stop("No results for: ", paste(miss, collapse = ", "), ". Run test_sim_night.R for them first.")
 want = c(intersect("tx_base", want), sort(setdiff(want, "tx_base")))
 # each scenario's default run first, then its labelled runs
-MODEL_RUNS = c("swing", "cory", "core", "both")   # labels that are models, not setting changes
+MODEL_RUNS = c("swing", "cory", "core")   # labels that are models, not setting changes
+# model_both is retired: its runs (sim_<scenario>__both_results.csv) are never shown
+have = have[!grepl("__both$", have)]
 # per scenario: model_medsl, then the other models in MODEL_RUNS order, then setting changes
 KEYS = unlist(lapply(want, \(sc) {
   k = have[sc_of(have) == sc]
@@ -111,8 +113,7 @@ night_list = function(df) df |>
 # display names: model_medsl = the full precinct model (model_turnout.R), model_simpleswing =
 # the standard uniform swing model, model_cory = enightmodels::model_legacy(),
 # model_core = the simpler model_core.R version
-MODEL_NAMES = c(trial = "model_medsl", model_y = "model_medsl", model_medsl = "model_medsl", both = "model_both",
-                model_both = "model_both", swing = "model_simpleswing",
+MODEL_NAMES = c(trial = "model_medsl", model_y = "model_medsl", model_medsl = "model_medsl", swing = "model_simpleswing",
                 model_simpleswing = "model_simpleswing", core = "model_core", model_core = "model_core",
                 cory = "model_cory", model_cory = "model_cory")
 model_of = function(d) {
@@ -150,13 +151,13 @@ calib = if (file.exists(p_cal)) {
 } else NULL
 
 # ---- statewide test nights (live/tests/sim_statewide.R), if any have run ----------------
-# live_statewide_<scenario>[_offset<x>][_<race>].csv: the models' statewide rows (scraped
+# SIM_statewide_<scenario>[_offset<x>][_<race>].csv: the models' statewide rows (scraped
 # counties + simulated CBS counties) and scraped-only rows, with the statewide truth
-sw_files = list.files(DIR_OUT, pattern = "^live_statewide_.*\\.csv$", full.names = TRUE)
+sw_files = list.files(DIR_OUT, pattern = "^SIM_statewide_.*\\.csv$", full.names = TRUE)
 statewide = if (length(sw_files)) {
   sw = bind_rows(lapply(sw_files, function(f)
     read_csv(f, show_col_types = FALSE, col_types = cols(time = "c", .default = col_guess())) |>
-      mutate(key = sub("_(gov|sen)$", "", sub("^live_statewide_(.*)\\.csv$", "\\1", basename(f)))))) |>
+      mutate(key = sub("_(gov|sen)$", "", sub("^SIM_statewide_(.*)\\.csv$", "\\1", basename(f)))))) |>
     filter(pred_type == "share", party == "dem") |>
     distinct(key, contest, model, geo, time, .keep_all = TRUE) |>
     mutate(t = format(as.POSIXct(time, tz = "America/New_York"), "%m-%d %H:%M"))

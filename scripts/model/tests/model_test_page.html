@@ -18,6 +18,7 @@
   --warn-bg: #fbecea;
   --note-bg: #fbf3d5;
   --ok-bg: #e8f1fa;
+  --m-medsl: #e3eefa; --m-swing: #e6f3e8; --m-cory: #fbf3d5; --m-other: #eef0f3;
   --font-display: "Newsreader", Georgia, "Times New Roman", serif;
   --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-data: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -27,12 +28,14 @@
     --bg: #12161d; --surface: #1a2029; --fg: #e6e9ef; --muted: #9aa3b2; --rule: #2e3643;
     --dem: #6ea8e8; --dem-band: rgba(110, 168, 232, 0.2); --rep: #e57373; --truth: #e6e9ef; --raw: #7d8594;
     --warn-bg: #3a2224; --ok-bg: #1d2c3d; --note-bg: #3a3420; color-scheme: dark;
+    --m-medsl: #1d2c3d; --m-swing: #1f3324; --m-cory: #3a3420; --m-other: #252b35;
   }
 }
 :root[data-theme="dark"] {
   --bg: #12161d; --surface: #1a2029; --fg: #e6e9ef; --muted: #9aa3b2; --rule: #2e3643;
   --dem: #6ea8e8; --dem-band: rgba(110, 168, 232, 0.2); --rep: #e57373; --truth: #e6e9ef; --raw: #7d8594;
   --warn-bg: #3a2224; --ok-bg: #1d2c3d; --note-bg: #3a3420; color-scheme: dark;
+    --m-medsl: #1d2c3d; --m-swing: #1f3324; --m-cory: #3a3420; --m-other: #252b35;
 }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
 .wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
@@ -44,9 +47,7 @@ p { margin: 0; }
 header { display: grid; gap: 12px; }
 .findings { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .findings li { padding: 12px 14px; border-radius: 6px; background: var(--surface); border: 1px solid var(--rule); }
-.findings li.bad { background: var(--warn-bg); border-color: transparent; }
-.findings li.good { background: var(--ok-bg); border-color: transparent; }
-.findings li.note { background: var(--note-bg); border-color: transparent; }
+.findings li.model { border-color: transparent; }
 .findings li .sc { display: block; margin-top: 4px; }
 table.rank td { text-align: left; vertical-align: top; white-space: normal; min-width: 14ch; }
 table.rank th { text-align: left; }
@@ -82,7 +83,7 @@ code { font-family: var(--font-data); font-size: 0.85em; }
 <header>
   <div class="eyebrow" id="stamp">CBS election desk · TX precinct model</div>
   <h1>How the TX precinct model behaves as votes come in (Bridget)</h1>
-  <p>Three election-night models run on Ethan's simulated night (<code>tx_base</code>) and two stress versions of it: <strong>model_medsl</strong>, the full precinct model (<code>scripts/model/model_turnout.R</code>); <strong>model_simpleswing</strong>, the standard uniform swing model; and <strong>model_cory</strong>, Cory's <code>model_legacy()</code> from enightmodels. Blue boxes: every 95% interval held the truth at 90%+ of checkpoints and was never confidently wrong; red: at least one race fell short; yellow: no interval to check. Each chart shows the model's estimate of the Democratic two-party share, its 95% interval, the raw share of votes counted so far, and the true final result.</p>
+  <p>Three election-night models run on Ethan's simulated night (<code>tx_base</code>) and two stress versions of it: <strong>model_medsl</strong>, the full precinct model (<code>scripts/model/model_turnout.R</code>); <strong>model_simpleswing</strong>, the standard uniform swing model; and <strong>model_cory</strong>, Cory's <code>model_legacy()</code> from enightmodels. Each model keeps one colour throughout: <strong>model_medsl</strong> blue, <strong>model_simpleswing</strong> green, <strong>model_cory</strong> yellow. Each box says how often that model's 95% interval held the truth and whether it was ever confidently wrong. Each chart shows the model's estimate of the Democratic two-party share, its 95% interval, the raw share of votes counted so far, and the true final result.</p>
   <ul class="findings" id="findings"></ul>
   <h2>How the models rank</h2>
   <p class="note">Each cell ranks the models on one quality for one scenario, best first, averaging Governor and Senate. A cell is filled with the colour of its top model's box above; it is left blank when the top two tie. "Right winner from" is the time from which the model had the right winner in both races and kept it; for a model with an interval that means the whole interval was on the right side of 50%, for model_cory (point estimates only) that its estimate was. Coverage is the share of checkpoints where the 95% interval held the true result. Errors and widths are in points of the two-party share, over checkpoints with any votes counted. Turnout is the 32-county total at 4am against the truth. All in the 32 counties except the last row.</p>
@@ -448,18 +449,17 @@ const summ = (model, scen) => {
 };
 const MODEL_BLURB = { model_medsl: "full precinct model (model_turnout.R)", model_simpleswing: "standard uniform swing model (feols, county fixed effects)",
                       model_cory: "Cory's enightmodels::model_legacy(), point estimates only" };
-const MODEL_CLASS = {};
+// one colour per model, used for its box and for the ranking cells it tops
+const MODEL_COLOR = { model_medsl: "var(--m-medsl)", model_simpleswing: "var(--m-swing)", model_cory: "var(--m-cory)" };
+const colorOf = m => MODEL_COLOR[m] || "var(--m-other)";
 const lis = modelKeys.map(m => {
   const parts = scenKeys.map(sc => [sc, summ(m, sc)]).filter(([, z]) => z);
-  const anyWrong = parts.some(([, z]) => z.wrong > 0), lowCov = parts.some(([, z]) => z.zs.some(zz => zz.hasInt && zz.cov / zz.n < 0.9));
-  const cls = parts.length && parts[0][1].cov === null ? "note" : (anyWrong || lowCov ? "bad" : "good");
   const lines = parts.map(([sc, z]) => `<span class="sc"><em>${sc}:</em> ` + z.races.map((r, i) => { const zz = z.zs[i];
       return `${RACE[r] || r} ` + (zz.hasInt ? `${zz.cov}/${zz.n} covered` : `no interval`) + `, error ${fmt(zz.err, 2)} pts` + (zz.wrong ? `, confidently wrong ${zz.wrong}×` : ""); }).join("; ") +
     `; right winner from ${when(z.first)}` + (z.turn !== null ? `; turnout ${z.turn > 0 ? "+" : ""}${fmt(z.turn, 1)}% at 4am` : "") + `.</span>`).join("");
-  MODEL_CLASS[m] = cls;
-  return [cls, `<strong>${m}</strong> — ${MODEL_BLURB[m] || ""}${lines}`];
+  return [m, `<strong>${m}</strong> — ${MODEL_BLURB[m] || ""}${lines}`];
 });
-document.getElementById("findings").innerHTML = lis.map(([c, h]) => `<li class="${c}">${h}</li>`).join("");
+document.getElementById("findings").innerHTML = lis.map(([m, h]) => `<li class="model" style="background:${colorOf(m)}">${h}</li>`).join("");
 
 const QUALITIES = [
   ["Earliest right winner from", z => z.first, (a, b) => (a < b ? -1 : 1), v => when(v)],
@@ -476,7 +476,7 @@ document.getElementById("rank-table").innerHTML = "<thead><tr><th>Quality</th>" 
     const none = vals.filter(([, v]) => v === null || v === undefined);
     // fill with the #1 model's box colour, unless the top two tie
     const tie = has.length > 1 && show(has[0][1]) === show(has[1][1]);
-    const bg = has.length && !tie ? { good: "var(--ok-bg)", bad: "var(--warn-bg)", note: "var(--note-bg)" }[MODEL_CLASS[has[0][0]]] : null;
+    const bg = has.length && !tie ? colorOf(has[0][0]) : null;
     return `<td${bg ? ` style="background:${bg}"` : ""}><ol>` + has.map(([m, v]) => `<li>${m} (${show(v)})</li>`).join("") + "</ol>" +
       (none.length ? `<span class="note">${name.startsWith("Earliest") ? "never right" : "n/a (no interval)"}: ${none.map(([m]) => m).join(", ")}</span>` : "") + "</td>";
   }).join("") + "</tr>").join("") + "</tbody>";

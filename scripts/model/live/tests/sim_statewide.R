@@ -37,7 +37,7 @@
 ##   Rscript scripts/model/live/tests/sim_statewide.R [scenario] [--models=swing,cory,medsl]
 ##           [--offset=<logit>] [--seed=<n>] [--checkpoints=all|calib] [--races=gov]
 ##           [--snapshots-only]   (write the simulated CBS feed + truth, don't run the models)
-## Writes 26_general/model_tests/live_statewide_<scenario>[_offset<x>][_<race>].csv
+## Writes 26_general/model_tests/SIM_statewide_<scenario>[_offset<x>][_<race>].csv
 # ========================================
 source("scripts/model/live/load.R")
 args = commandArgs(trailingOnly = TRUE)
@@ -186,7 +186,7 @@ res = res |>
          covers = truth >= pred_min & truth <= pred_max, scenario = basename(dir_sc),
          rest_offset = offsets[contest]) |>
   select(-t_dem, -t_rep, -t_tot)
-out_f = file.path(d26, "model_tests", sprintf("live_statewide_%s.csv", tag_run))
+out_f = file.path(d26, "model_tests", sprintf("SIM_statewide_%s.csv", tag_run))
 readr::write_csv(mutate(res, election = format(election), time = as.character(time)), out_f, na = "")
 
 cat(sprintf("\n%.1f minutes. Dem share of all votes, statewide (geo = all) vs the scraped counties only:\n",
