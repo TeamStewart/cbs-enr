@@ -107,3 +107,31 @@
   flex-wrap: wrap;
   gap: 1rem;
 }
+
+// precinct explorer toolbar: L2 crosswalk coverage, shown only when an L2 var is picked
+.l2-warn {
+  color: #8a5a00;
+  background: #fff3cd;
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+// chart image export button (added to card headers by index.qmd)
+.card-header:has(.dash-export), .card-toolbar:has(.dash-export) {
+  display: flex;
+  align-items: center;
+}
+
+.dash-export {
+  margin-left: auto;
+  padding: 0 0.4rem;
+  color: $text-muted;
+  border: 0;
+
+  &:hover { color: $body-color; }
+  &.dash-export-done { color: #198754; }
+}
+
+.card-toolbar:has(.dash-export) { flex: 1 1 auto; }

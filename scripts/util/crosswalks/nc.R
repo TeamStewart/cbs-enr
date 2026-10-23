@@ -23,7 +23,7 @@ nc_frame = read_frame("NC")
 # frame codes; `nc_frame` itself is untouched.
 nc_frame_names = frame_names("NC")
 
-nc_l2 = enightdata::read_local("input_data/l2/nc_20260901_precincts.parquet", parquet = TRUE) |>
+nc_l2 = enightdata::read_local(Sys.glob(election_path("input_data/l2/nc_*_precincts.parquet")) |> fs::path_rel(election_path()) |> max(), parquet = TRUE) |>
   select(state, county, precinct, n_l2 = n) |>
   mutate(precinct_l2 = precinct) |>
   arrange(county, precinct)

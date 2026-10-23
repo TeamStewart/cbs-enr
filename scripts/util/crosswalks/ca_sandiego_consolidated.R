@@ -37,7 +37,7 @@ source("scripts/util/crosswalks/helpers.R")
 frame_vars = c("turnout20", "turnout22", "turnout24", "turnoutPred", "age", "male",
                "pred.whi", "pred.bla", "pred.his", "pred.asi", "pred.oth", "pr_harris", "pr_trump")
 
-sd_frame = enightdata::read_local("input_data/yougov_precinct_frame.csv") |>
+sd_frame = enightdata::read_local("input_data/yougov_precinct_frame.parquet", parquet = TRUE) |>
   as_tibble() |>
   filter(state == "CA", county_name == "SAN DIEGO")
 stopifnot(all(str_detect(sd_frame$precinct26_id, "^\\d{6}\\.0$")))

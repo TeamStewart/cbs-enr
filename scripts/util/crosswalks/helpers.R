@@ -20,7 +20,7 @@ countyfips = enightmodels::cbs_counties |>
 # frame column used as precinct_yougov: precinct26_id (default; unique within
 # county x cd except MI) or precinct26_code (unique nationally).
 read_frame = function(st, id = "precinct26_id") {
-  enightdata::read_local("input_data/yougov_precinct_frame.csv") |>
+  enightdata::read_local("input_data/yougov_precinct_frame.parquet", parquet = TRUE) |>
     as_tibble() |>
     filter(state == st) |>
     select(state, county = county_name, cd, precinct_yougov = all_of(id)) |>

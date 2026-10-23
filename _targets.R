@@ -89,16 +89,18 @@ office_filter = NULL
 # ========================================
 ## PIPELINE
 # ========================================
+# all states/counties
+map_single = tar_map(
+  metadata,
+  tar_target(timestamp, get_timestamp(state, county, path_timestamp), cue = tar_cue(mode = "always")),
+  tar_target(data, get_data(state, county, timestamp, path, trust_stage)),
+  tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
+  tar_target(summary, make_summary(data, state, county)),
+  names = c(state, county)
+)
+
 list(
-  # all states/counties
-  tar_map(
-    metadata,
-    tar_target(timestamp, get_timestamp(state, county, path_timestamp), cue = tar_cue(mode = "always")),
-    tar_target(data, get_data(state, county, timestamp, path, trust_stage)),
-    tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
-    tar_target(summary, make_summary(data, state, county)),
-    names = c(state, county)
-  ),
+  map_single,
   # dashboard: contests shown are set by DASHBOARD_CONTESTS in scripts/util/globals.R
   tar_combine(dash_inputs, map_single[["summary"]], command = list(!!!.x)),
   tar_target(dashboard_data, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS)),
