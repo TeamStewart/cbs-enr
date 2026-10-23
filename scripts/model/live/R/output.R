@@ -29,7 +29,7 @@
 ## (no votes yet, or the model errored) are not in this table; they are in the STATUS
 ## table, one row per race x model per run: race_id, model, time, status ("ok",
 ## "no_votes", "error: ..."), statewide (whether statewide rows were added, or why not),
-## settings. So a broken model shows up there instead of
+## seconds (how long that model took on that race), settings. So a broken model shows up there instead of
 ## silently vanishing.
 ##
 ## Margins ("margin_share", "margin_vote") are left to the dashboard: enightmodels' schema
@@ -131,36 +131,78 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
     arrange(pred_type, desc(pred))
 }
 
-# every race x model in `returns`: list(pred = prediction table, status = one row per
-# race x model). A model that errors on a race is recorded in status and the rest carry on.
-# cbs: optional named list, race_id -> latest CBS county snapshot (read_cbs_latest()), and
-# base = county_baseline(state): adds statewide rows (geo = "all") for those races.
-predict_all = function(cells, returns, races = race_info(returns), models = MODELS,
-                       time = max(returns$time), level = 0.95, cbs = NULL, base = NULL) {
-  res = map(sort(unique(returns$race_id)), function(r) {
-    ret = filter(returns, race_id == r)
+# one race x one model: list(pred = its prediction rows (scraped, plus statewide when `cbs`
+# and `base` are given), status = one row). Never stops: a model that errors is recorded in
+# status and returns no rows.
+# ret: that race's returns; race: its one row of `races`; cbs: that race's latest CBS county
+# snapshot (read_cbs_latest()) or NULL; base: county_baseline(state) or NULL.
+predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, level = 0.95) {
+  r = race$race_id[1]; m = model
+  t0 = proc.time()[["elapsed"]]
+  fit = tryCatch(run_race(m, cells, ret), error = function(e) list(status = paste("error:", conditionMessage(e))))
+  pred = tryCatch(to_pred_data(fit, m, cells, ret, race, time, level),
+                  error = function(e) { fit$status <<- paste("error in output:", conditionMessage(e)); NULL })
+  st_status = NA_character_
+  if (!is.null(pred) && !is.null(base)) {
+    if (is.null(cbs)) st_status = "no CBS county snapshot yet" else {
+      st = tryCatch(state_pred_data(fit, m, cells, ret, race, time, cbs, base, level),
+                    error = function(e) { st_status <<- paste("error:", conditionMessage(e)); NULL })
+      if (!is.null(st)) { pred = bind_rows(pred, st); st_status = "ok" }
+    }
+  }
+  list(pred = pred,
+       status = tibble(race_id = r, model = unname(MODEL_NAMES[m]), time = time,
+                       status = if (is.null(fit$status)) "error: no status" else fit$status,
+                       statewide = st_status, seconds = round(proc.time()[["elapsed"]] - t0, 1),
+                       settings = if (is.null(fit$settings)) NA_character_ else fit$settings))
+}
+
+# lapply(x, f), in parallel forked processes when cores > 1 (macOS / Linux; on Windows it
+# runs one at a time)
+run_par = function(x, f, cores = 1) {
+  cores = max(1L, min(as.integer(cores), length(x)))
+  if (cores > 1 && .Platform$OS.type == "unix") parallel::mclapply(x, f, mc.cores = cores, mc.preschedule = FALSE)
+  else lapply(x, f)
+}
+
+# Run a list of predict_one() jobs, in parallel when cores > 1 (forked processes, so macOS
+# and Linux only; on Windows it runs one at a time). Each job is a list of predict_one()'s
+# arguments. Anything slow to set up (build_cells(), county_baseline(), medsl_setup()) must
+# be done BEFORE this is called: a forked process's caches are thrown away when it ends.
+run_jobs = function(jobs, cores = 1) {
+  one = function(j) tryCatch(do.call(predict_one, j), error = function(e)
+    list(pred = NULL, status = tibble(race_id = j$race$race_id[1], model = unname(MODEL_NAMES[j$model]), time = j$time,
+                                      status = paste("error:", conditionMessage(e)), statewide = NA_character_,
+                                      seconds = NA_real_, settings = NA_character_)))
+  res = run_par(jobs, one, cores)
+  # a forked process that died outright comes back as an error object, not a list
+  res = lapply(seq_along(res), function(i) if (is.list(res[[i]]) && !is.null(res[[i]]$status)) res[[i]] else
+    list(pred = NULL, status = tibble(race_id = jobs[[i]]$race$race_id[1], model = unname(MODEL_NAMES[jobs[[i]]$model]),
+                                      time = jobs[[i]]$time, status = paste("error: worker failed:", as.character(res[[i]])),
+                                      statewide = NA_character_, seconds = NA_real_, settings = NA_character_)))
+  list(pred = bind_rows(lapply(res, `[[`, "pred")), status = bind_rows(lapply(res, `[[`, "status")))
+}
+
+# the predict_one() jobs for every race x model in `returns` (one state's cells)
+make_jobs = function(cells, returns, races, models, time, cbs = NULL, base = NULL, level = 0.95) {
+  unlist(lapply(sort(unique(returns$race_id)), function(r) {
     race = filter(races, race_id == r)
     if (nrow(race) != 1) stop("races must have exactly one row for race_id ", r)
-    map(models, function(m) {
-      fit = tryCatch(run_race(m, cells, ret), error = function(e) list(status = paste("error:", conditionMessage(e))))
-      pred = tryCatch(to_pred_data(fit, m, cells, ret, race, time, level),
-                      error = function(e) { fit$status <<- paste("error in output:", conditionMessage(e)); NULL })
-      st_status = NA_character_
-      if (!is.null(pred) && !is.null(cbs) && !is.null(base)) {
-        if (is.null(cbs[[r]])) st_status = "no CBS county snapshot yet" else {
-          st = tryCatch(state_pred_data(fit, m, cells, ret, race, time, cbs[[r]], base, level),
-                        error = function(e) { st_status <<- paste("error:", conditionMessage(e)); NULL })
-          if (!is.null(st)) { pred = bind_rows(pred, st); st_status = "ok" }
-        }
-      }
-      list(pred = pred,
-           status = tibble(race_id = r, model = unname(MODEL_NAMES[m]), time = time,
-                           status = if (is.null(fit$status)) "error: no status" else fit$status,
-                           statewide = st_status,
-                           settings = if (is.null(fit$settings)) NA_character_ else fit$settings))
-    })
-  }) |> purrr::list_flatten()
-  list(pred = bind_rows(lapply(res, `[[`, "pred")), status = bind_rows(lapply(res, `[[`, "status")))
+    ret = filter(returns, race_id == r)
+    lapply(models, function(m) list(cells = cells, ret = ret, race = race, model = m, time = time,
+                                    cbs = if (is.null(cbs)) NULL else cbs[[r]], base = if (is.null(cbs)) NULL else base, level = level))
+  }), recursive = FALSE)
+}
+
+# every race x model in `returns`: list(pred = prediction table, status = one row per
+# race x model, with `seconds` each took). A model that errors on a race is recorded in
+# status and the rest carry on.
+# cbs: optional named list, race_id -> latest CBS county snapshot (read_cbs_latest()), and
+# base = county_baseline(state): adds statewide rows (geo = "all") for those races.
+# cores: run the race x model fits in parallel (see run_jobs()).
+predict_all = function(cells, returns, races = race_info(returns), models = MODELS,
+                       time = max(returns$time), level = 0.95, cbs = NULL, base = NULL, cores = 1) {
+  run_jobs(make_jobs(cells, returns, races, models, time, cbs, base, level), cores)
 }
 
 # Writes, for the predictions and the status table each:

@@ -23,7 +23,10 @@ cory_past_share = function(party, candidate, dem2, oth)
 
 # cells:   build_cells() output
 # returns: standard returns for ONE race (returns.R)
-fit_cory = function(cells, returns, cfg = NULL, past_share = cory_past_share) {
+# precincts: also return per-precinct predictions (`cells`). Off by default: nothing on
+#   election night uses them, and they cost a second full pass of model_legacy_total() /
+#   model_legacy_cand(), which doubles the model's run time.
+fit_cory = function(cells, returns, cfg = NULL, past_share = cory_past_share, precincts = FALSE) {
   if (!requireNamespace("enightmodels", quietly = TRUE))
     stop("model_cory needs Cory's enightmodels package (it is in the project's renv.lock)")
   if (is.null(cfg)) cfg = enightmodels::model_legacy_config()
@@ -49,11 +52,14 @@ fit_cory = function(cells, returns, cfg = NULL, past_share = cory_past_share) {
   dem = sum(pr$pred[pr$party == "dem"]); repv = sum(pr$pred[pr$party == "rep"])
 
   cc = cell_counts(cells, returns)
-  # per-precinct predictions: the same two functions model_legacy() calls internally
-  d_tot = enightmodels::model_legacy_total(dd, past, cfg)
-  prec = enightmodels::model_legacy_cand(dd, d_tot, past, cfg) |>
-    mutate(geo = as.character(geo), party = as.character(party)) |>
-    summarize(dem = sum(pred[party == "dem"]), rep = sum(pred[party == "rep"]), tot = sum(pred), .by = geo)
+  # per-precinct predictions, if asked for: the same two functions model_legacy() calls internally
+  prec = NULL
+  if (precincts) {
+    d_tot = enightmodels::model_legacy_total(dd, past, cfg)
+    prec = enightmodels::model_legacy_cand(dd, d_tot, past, cfg) |>
+      mutate(geo = as.character(geo), party = as.character(party)) |>
+      summarize(dem = sum(pred[party == "dem"]), rep = sum(pred[party == "rep"]), tot = sum(pred), .by = geo)
+  }
 
   list(model = "cory", status = "ok", settings = settings,
        race = tibble(status = "ok", est_twop = dem / (dem + repv), lo_twop = NA_real_, hi_twop = NA_real_,
@@ -61,7 +67,7 @@ fit_cory = function(cells, returns, cfg = NULL, past_share = cory_past_share) {
                      raw_twop = sum(cc$c_dem) / max(sum(cc$c_dem + cc$c_rep), 1), counted_votes = sum(cc$c_tot),
                      expected_votes = sum(cells$exp_votes),
                      obs_cells = sum(cc$c_tot > 0), complete_cells = sum(cc$c_tot > 0 & cc$complete)),
-       cells = prec,          # by precinct, not precinct x method
+       cells = prec,          # by precinct (NULL unless precincts = TRUE)
        draws = NULL,
        raw = out)
 }

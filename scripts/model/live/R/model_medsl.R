@@ -25,8 +25,12 @@
 ## at once) and as complete once that method is fully counted (`complete` in the returns;
 ## its turnout is used only then) -- test_sim_night.R's defaults (--cells=any
 ## --complete=feed).
-## Interval: the model's posterior draws (DRAWS, 500 by default), mean +/- z * sd as for
-## the other models.
+## Interval: the model's posterior draws, mean +/- z * sd as for the other models. The
+## number of draws is model_turnout.R's DRAWS (500) unless MEDSL_DRAWS is set, e.g.
+## MEDSL_DRAWS=250 in ~/.Renviron. Speed (TX, one race): about 6 s of fixed work plus
+## about 1 s per 100 draws, and the 95% interval moves by under 0.05 points between 250
+## and 500 draws. Memory grows with draws x precincts: CA (23,685 precincts) ran out of
+## 6.5 GB at 500 draws and took 29 s at 200.
 ##
 ## Inputs the model needs that a state's file lacks: YouGov race predictions
 ## (yg_pred_bla, yg_pred_his) are blank for some precincts in MI and CA; those are filled
@@ -121,10 +125,11 @@ medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refre
     stop("model_turnout.R no longer assigns covs_long / mode_hist at top level; update live/R/model_medsl.R")
   if (!exists("fit_stage", envir = env, inherits = FALSE)) stop("model_turnout.R no longer defines fit_stage()")
 
+  env$.draws = as.integer(Sys.getenv("MEDSL_DRAWS", unset = env$DRAWS))
   env$.settings = with(env, sprintf(paste0(
     "model_turnout.R (precinct x method: turnout, third-party and two-party equations); %d posterior draws; ",
     "bounded turnout %s (KAPPA %.2f, ref %s); Sigma %s/%s; county RE %s; mode offsets %s; gates %d cells / %d counties"),
-    DRAWS, USE_COMPOSE, KAPPA, REF_MODE, SIGMA_SOURCE, SIGMA_STRUCT, USE_COUNTY_RE,
+    .draws, USE_COMPOSE, KAPPA, REF_MODE, SIGMA_SOURCE, SIGMA_STRUCT, USE_COUNTY_RE,
     MODE_OFFSET_SOURCE, MIN_MODE_CELLS, MIN_MODE_CTY))
   if (nzchar(inp$note)) env$.settings = paste0(env$.settings, "; ", inp$note)
   .medsl_env[[state]] = env
@@ -163,7 +168,7 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
               votes_rep = if_else(rep_cell, c_rep, NA_real_),
               votes_oth = if_else(rep_cell, c_oth, NA_real_))
   if (!is.null(seed)) set.seed(seed)
-  f = suppressMessages(env$fit_stage(env$cells, ret_m, cross_mode = env$USE_CROSS_MODE))
+  f = suppressMessages(env$fit_stage(env$cells, ret_m, draws = env$.draws, cross_mode = env$USE_CROSS_MODE))
 
   dr = tibble(twop = f$S_2p, turnout = f$turn, dem = f$S_dem * f$turn, rep = f$S_rep * f$turn)
   ci = cred(dr$twop, level); ct = cred(dr$turnout, level)

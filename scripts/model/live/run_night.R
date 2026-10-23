@@ -24,6 +24,10 @@
 ##   --candidates  CONTRACT.md section 5 (race_id, candidate_id, name, party)
 ##   --cbs=test    CBS's test feed instead of live (default live)
 ##   --models=swing,cory,medsl   (default: all three)
+##   --cores=N     how many race x model fits run at once (default: all cores but one).
+##                 Every race x model in every state goes into one pool, so a refresh takes
+##                 about as long as the slowest single fit when there are enough cores.
+##                 --cores=1 runs them one at a time. macOS / Linux only; Windows runs 1.
 ##
 ## Test the whole path on one of Ethan's simulated nights, with the simulated CBS feed in
 ## 26_general/model_tests/statewide_sim/<scenario>/ (made by tests/sim_statewide.R):
@@ -35,20 +39,27 @@ args = commandArgs(trailingOnly = TRUE)
 opt = function(k, d = NA) { a = grep(paste0("^--", k, "="), args, value = TRUE); if (length(a)) sub("^[^=]*=", "", a[1]) else d }
 MODELS_RUN = strsplit(opt("models", paste(MODELS, collapse = ",")), ",")[[1]]
 SIM = opt("sim"); EVERY = as.numeric(opt("every", "0")); CBS_ENV = opt("cbs", "live")
+CORES = as.integer(opt("cores", max(1L, parallel::detectCores() - 1L)))
 TZ = "America/New_York"
 d26 = find_26_general()
 all_races = races_from_priors(d26)
 
 # ---- inputs that don't change during the night: loaded once per state ---------------
+# Loaded here, in the main process, before any fits are farmed out: a forked worker's
+# caches are thrown away when it finishes, so anything set up inside one is redone every time.
 cache = new.env()
 state_inputs = function(st) {
   if (is.null(cache[[st]])) {
     cells = tryCatch(build_cells(st, d26), error = function(e) e)
     base = tryCatch(county_baseline(st, d26), error = function(e) e)
-    cache[[st]] = list(cells = cells, base = base)
+    medsl = if ("medsl" %in% MODELS_RUN && !inherits(cells, "error"))
+      tryCatch(medsl_setup(st, d26), error = function(e) e) else NULL
+    cache[[st]] = list(cells = cells, base = base, medsl = medsl)
   }
   cache[[st]]
 }
+# load the packages the models use once, so each worker doesn't
+for (pk in c("fixest", "enightmodels")) suppressPackageStartupMessages(requireNamespace(pk, quietly = TRUE))
 
 # ---- the returns for this refresh ---------------------------------------------------
 if (!is.na(SIM)) {
@@ -81,26 +92,52 @@ refresh = function(at = NULL) {
   ret = get_returns(at)
   now = if (is.null(at)) max(ret$time, na.rm = TRUE) else at
   races = filter(all_races, race_id %in% unique(ret$race_id))
-  res = lapply(split(races, races$state), function(rs) {
-    st = rs$state[1]
-    inp = state_inputs(st)
-    if (inherits(inp$cells, "error"))
-      return(list(pred = NULL, status = tibble(race_id = rs$race_id, model = NA_character_, time = now,
-                                               status = paste("no precinct inputs:", conditionMessage(inp$cells)),
-                                               statewide = NA_character_, settings = NA_character_)))
-    cbs = if (is.na(SIM)) cbs_for_races(rs, env = CBS_ENV, dir_26 = dir_cbs)
-          else cbs_for_races(rs, env = "sim", at = now, dir_26 = dir_cbs)
-    base = if (inherits(inp$base, "error")) NULL else inp$base
-    out = predict_all(inp$cells, filter(ret, race_id %in% rs$race_id), races = rs, models = MODELS_RUN,
-                      time = now, cbs = cbs, base = base)
-    out$status = left_join(out$status, attr(cbs, "status"), by = "race_id")
-    if (is.null(base)) out$status$statewide = paste("no county history:", conditionMessage(inp$base))
-    out
-  })
-  res = list(pred = bind_rows(lapply(res, `[[`, "pred")), status = bind_rows(lapply(res, `[[`, "status")))
+  by_state = split(races, races$state)
+  inp = lapply(setNames(names(by_state), names(by_state)), state_inputs)
+  t_inp = Sys.time()
+
+  # CBS county results for every race, one state per worker (each pull is a web request)
+  cbs = run_par(names(by_state), function(st) tryCatch(
+    if (is.na(SIM)) cbs_for_races(by_state[[st]], env = CBS_ENV, dir_26 = dir_cbs)
+    else cbs_for_races(by_state[[st]], env = "sim", at = now, dir_26 = dir_cbs),
+    error = function(e) NULL), CORES)
+  names(cbs) = names(by_state)
+  cbs = lapply(cbs, function(x) if (is.list(x)) x else NULL)
+  t_cbs = Sys.time()
+
+  # every race x model in every state with precinct inputs, in one pool
+  no_inp = list()
+  jobs = unlist(lapply(names(by_state), function(st) {
+    rs = by_state[[st]]
+    if (inherits(inp[[st]]$cells, "error")) {
+      no_inp[[st]] <<- tibble(race_id = rs$race_id, model = NA_character_, time = now,
+                              status = paste("no precinct inputs:", conditionMessage(inp[[st]]$cells)),
+                              statewide = NA_character_, seconds = NA_real_, settings = NA_character_)
+      return(NULL)
+    }
+    base = if (inherits(inp[[st]]$base, "error")) NULL else inp[[st]]$base
+    make_jobs(inp[[st]]$cells, filter(ret, race_id %in% rs$race_id), races = rs, models = MODELS_RUN,
+              time = now, cbs = if (is.null(base)) NULL else cbs[[st]], base = base)
+  }), recursive = FALSE)
+  res = run_jobs(jobs, CORES)
+  t_fit = Sys.time()
+
+  # statewide status: why there are no statewide rows, where there aren't
+  cbs_status = bind_rows(lapply(cbs, function(x) attr(x, "status")))
+  res$status = bind_rows(res$status, bind_rows(no_inp))
+  if (nrow(cbs_status)) res$status = left_join(res$status, cbs_status, by = "race_id")
+  for (st in names(by_state)) if (inherits(inp[[st]]$base, "error")) {
+    i = res$status$race_id %in% by_state[[st]]$race_id
+    res$status$statewide[i] = paste("no county history:", conditionMessage(inp[[st]]$base))
+  }
   write_predictions(res, out_dir)
-  cat(sprintf("%s  %d races, %d prediction rows (%d statewide) in %.0fs -> %s\n", format(now, "%Y-%m-%d %H:%M:%S", tz = TZ),
-              nrow(races), nrow(res$pred), sum(res$pred$geo == "all"), as.numeric(difftime(Sys.time(), t0, units = "secs")), out_dir))
+  sec = function(a, b) as.numeric(difftime(b, a, units = "secs"))
+  cat(sprintf("%s  %d races x %d models, %d prediction rows (%d statewide) in %.0fs [inputs %.0fs, CBS %.0fs, models %.0fs on %d cores] -> %s\n",
+              format(now, "%Y-%m-%d %H:%M:%S", tz = TZ), nrow(races), length(MODELS_RUN), nrow(res$pred),
+              sum(res$pred$geo == "all"), sec(t0, Sys.time()), sec(t0, t_inp), sec(t_inp, t_cbs), sec(t_cbs, t_fit),
+              CORES, out_dir))
+  slow = res$status |> summarize(seconds = max(seconds, na.rm = TRUE), .by = model) |> filter(is.finite(seconds))
+  if (nrow(slow)) cat("  slowest fit per model:", paste(sprintf("%s %.0fs", slow$model, slow$seconds), collapse = ", "), "\n")
   bad = filter(res$status, status != "ok" | is.na(statewide) | statewide != "ok")
   if (nrow(bad)) print(as.data.frame(select(bad, race_id, model, status, statewide, any_of("cbs"))), right = FALSE)
   invisible(res)

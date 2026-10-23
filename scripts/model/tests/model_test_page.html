@@ -55,8 +55,11 @@ table.rank td.q { font-weight: 600; }
 table.rank ol { margin: 0; padding-left: 1.3em; }
 section { display: grid; gap: 14px; }
 figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+/* one column no wider than the figure: wide tables scroll inside .tbl instead of stretching the charts */
+figure { grid-template-columns: minmax(0, 1fr); }
+figure > *, #state-block > * { min-width: 0; max-width: 100%; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.seg { display: inline-flex; flex-wrap: wrap; max-width: 100%; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
 .seg button { font: inherit; font-size: 0.85rem; padding: 6px 12px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--rule); }
 .seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
@@ -185,9 +188,11 @@ code { font-family: var(--font-data); font-size: 0.85em; }
   <div class="eyebrow">Next</div>
   <h2>What this suggests</h2>
   <ul class="plain">
-    <li>Intervals need to widen when the counted precincts don't resemble the outstanding ones. One option is a geographic effect above the county (region or urban/rural) with a prior wide enough that the first counties can't pin it.</li>
-    <li>Turnout: on the simulated night model_medsl's predicted total for the 32 counties runs about 3–5% above the truth by the end of the night, with an interval far too narrow to cover it (see the turnout chart). The two-party share is unaffected, but turnout intervals should not be published until this is fixed.</li>
-    <li><strong>Statewide intervals.</strong> The statewide chart uses CBS's county returns for the other 222 counties as they come in (<code>live/R/counties.R</code>) and is scored against simulated statewide truth. After 11pm its intervals run somewhat narrow (see the phase table under the chart). Calibrating them properly needs many simulated nights with different rest-of-state swings, not three.</li>
+    <li><strong>Speed is not a problem.</strong> A full refresh of all three models on both TX races, scraped and statewide, takes about 10 seconds on Bridget's Mac (<code>live/tests/time_refresh.R</code>, five simulated scrapes), well inside the five-minute scrape cycle. <code>run_night.R</code> runs every race &times; model at once on all cores but one. The one state to watch is California (23,685 precincts, no live ids yet): model_cory takes about a minute per race there, and model_medsl needs fewer posterior draws (<code>MEDSL_DRAWS=200</code>) to fit in memory.</li>
+    <li><strong>Two-party share in the 32 counties: model_medsl is the best calibrated, model_simpleswing the tightest.</strong> On the seven scenarios without a partisan turnout tilt, model_medsl's 95% interval held the truth at 97&ndash;99% of checkpoints (72% on tx_turnout_demo) with an average error of 0.07&ndash;0.17 points (0.35 on tx_turnout_demo). model_simpleswing's held it at 88&ndash;93%, with intervals about half as wide (0.4&ndash;0.7 points against about 1.0) and similar error. model_cory misses by 0.25&ndash;0.29 points and gives no interval. No model was ever confidently wrong about the winner.</li>
+    <li><strong>The weak spot: turnout that differs by party.</strong> When Democratic (or Republican) precincts turn out 10% more than expected (<code>tx_turnout_partisan_D0.1</code> / <code>_R0.1</code>), every model misses by 0.3&ndash;0.7 points and the intervals are too narrow: model_medsl's held the truth at only 14&ndash;17% of checkpoints, model_simpleswing's at 17% and 69%. This is the case to fix before election night: the intervals need to widen when the counted precincts don't resemble the outstanding ones, for example with a geographic or partisan effect above the county whose prior is wide enough that the first counties can't pin it.</li>
+    <li><strong>Turnout totals.</strong> model_medsl's predicted total for the 32 counties at 4am is now within 1&ndash;2% of the truth in most scenarios (about 5% high in the runs before the current <code>model_turnout.R</code>), but still 7.5% high when turnout comes in 15% below expectation (<code>tx_turnout_low</code>; it was 20% high before), and its turnout interval did not hold the truth at 4am in any scenario. model_simpleswing is within 0.4% with intervals that do hold it; model_cory runs about 8% high. Only model_simpleswing's turnout interval is ready to publish.</li>
+    <li><strong>Statewide (32 counties + CBS county results).</strong> On the three scenarios tested statewide, model_medsl was the closest in all six race runs (average miss 0.04&ndash;0.19 points of Dem share of all votes), and its interval held the statewide truth at every checkpoint. model_simpleswing's held it in most runs but collapsed in <code>tx_urbanfirst</code> (2 of 35 checkpoints in the Senate race). The statewide test has not yet been run on the partisan-turnout scenarios, which is where it is most likely to fail.</li>
   </ul>
 </section>
 </div>

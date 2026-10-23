@@ -48,7 +48,7 @@ cbs_for_races = function(races, env = "live", pull = is.null(at), at = NULL, dir
     }
     if (is.null(snap)) {
       snap = read_cbs_latest(r$state, r$contest, r$district, env = env, at = at, dir_26 = dir_26)
-      s = paste0(s, if (is.null(snap)) "; no saved snapshot" else paste0("; using the snapshot saved ", format(max(snap$observed_at), "%Y-%m-%d %H:%M:%S UTC")))
+      s = paste0(s, if (is.null(snap)) "; no saved snapshot" else paste0("; using the snapshot saved ", format(as.POSIXct(max(snap$observed_at), tz = "UTC"), "%Y-%m-%d %H:%M:%S UTC")))
     }
     st[i] <<- s
     snap
