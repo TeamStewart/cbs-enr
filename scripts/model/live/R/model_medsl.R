@@ -47,11 +47,10 @@ MEDSL_SRC = "scripts/model/model_turnout.R"
 #   turnout22/24 <- L2 turnout22/24 (rates)  age           <- p_age_65_up (share 65+)
 #   male         <- p_male                   pred.bla/his  <- yg_pred_bla / yg_pred_his
 #   tp_raw       <- oth_base (third-party share; the model clamps it to [0, 0.25])
-medsl_inputs = function(state, dir_26 = find_26_general(), mode_election = "2022_general") {
+medsl_inputs = function(state, dir_26 = find_26_general(), mode_election = NULL) {
   dir_in = file.path(dir_26, "input_data", "model_inputs")
   inp = read_pq(file.path(dir_in, paste0(state, "_precinct.parquet")))
-  mh = read_pq(file.path(dir_in, paste0(state, "_precinct_mode_history.parquet"))) |>
-    filter(election == mode_election)
+  mh = mode_history(state, dir_26, mode_election)
   covs_wide = inp |>
     transmute(geo = as.character(geo), county = county_name, geostratum, stratum_demo, n, dem2,
               turnout22, turnout24, age = p_age_65_up, male = p_male,

@@ -207,7 +207,16 @@ prec = prec |>
 cli::cli_alert_info("Crosswalk joined on the YouGov precinct {if (XW_BY_CODE) 'code' else 'id'}")
 if (anyDuplicated(xw[c("county_name", "precinct26_id")])) cli::cli_abort("Crosswalk maps a YouGov precinct to more than one id")
 no_xw = anti_join(prec, xw, by = c("county_name", "precinct26_id"))
-if (nrow(no_xw) > 0) cli::cli_abort("{nrow(no_xw)} frame precincts are not in the crosswalk")
+# Precincts the crosswalk doesn't cover yet (e.g. counties newly added to the YouGov frame)
+# have no live id and no L2 match, so they are left out: their counties come from CBS's
+# county results in the statewide rows. Listed here and in the prep report.
+if (nrow(no_xw) > 0) {
+  by_cty = count(no_xw, county_name, sort = TRUE)
+  cli::cli_alert_warning(c("Skipping {nrow(no_xw)} frame precinct{?s} not in crosswalks/{tolower(STATE)}.csv ",
+                           "({nrow(by_cty)} count{?y/ies}: {head(by_cty$county_name, 12)}{if (nrow(by_cty) > 12) ', ...' else ''}). ",
+                           "Update the crosswalk and rerun to include them."))
+  prec = semi_join(prec, xw, by = c("county_name", "precinct26_id"))
+}
 
 prec = prec |> left_join(xw, by = c("county_name", "precinct26_id"))
 if (STATE == "AK") {
