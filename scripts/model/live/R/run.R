@@ -2,7 +2,7 @@
 ## run.R -- one way to call any model on any race.
 ##
 ##   run_race("swing", cells, returns_one_race)   -> the model's full result (list)
-##   run_all(cells, returns, models = c("swing", "cory"))
+##   run_all(cells, returns, models = c("swing", "cory", "medsl"))
 ##                                               -> one row per race x model
 ##
 ## Every model takes the same two inputs -- cells (cells.R) and standard returns
@@ -17,14 +17,13 @@
 ## add it to run_race() below.
 # ========================================
 
-MODELS = c("swing", "cory")      # model_y is not wired in yet -- see R/model_share.R
+MODELS = c("swing", "cory", "medsl")
 
 run_race = function(model, cells, returns, ...) {
   switch(model,
     swing = fit_swing(cells, cell_counts(cells, returns), ...),
     cory  = fit_cory(cells, returns, ...),
-    y     = stop("model_y is not wired in yet: R/model_share.R is an untouched copy of model_turnout.R ",
-                 "and still needs to be wrapped as fit_y(cells, returns)."),
+    medsl = fit_medsl(cells, returns, ...),
     stop("Unknown model '", model, "'. Choose from: ", paste(MODELS, collapse = ", "))
   )
 }

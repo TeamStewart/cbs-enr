@@ -24,7 +24,7 @@
 source("scripts/model/tests/model_test_common.R")
 args = commandArgs(trailingOnly = TRUE)
 PUBLISH = "--publish" %in% args
-# by default the page shows each scenario's run of each MODEL (model_y, model_simpleswing,
+# by default the page shows each scenario's run of each MODEL (model_medsl, model_simpleswing,
 # model_cory); runs that only change a model setting (e.g. __nc, __tx24, __stopped) are left
 # off unless --all-runs is given. Their results files stay in model_tests/.
 ALL_RUNS = "--all-runs" %in% args
@@ -39,7 +39,7 @@ if (length(miss)) stop("No results for: ", paste(miss, collapse = ", "), ". Run 
 want = c(intersect("tx_base", want), sort(setdiff(want, "tx_base")))
 # each scenario's default run first, then its labelled runs
 MODEL_RUNS = c("swing", "cory", "core", "both")   # labels that are models, not setting changes
-# per scenario: model_y, then the other models in MODEL_RUNS order, then setting changes
+# per scenario: model_medsl, then the other models in MODEL_RUNS order, then setting changes
 KEYS = unlist(lapply(want, \(sc) {
   k = have[sc_of(have) == sc]
   m = paste0(sc, "__", MODEL_RUNS)
@@ -108,10 +108,10 @@ night_list = function(df) df |>
       if (st) r2(g$stu_est) else NA, if (st) r2(g$stu_lo) else NA, if (st) r2(g$stu_hi) else NA)),
     st_exact = if (st) r2(g$st_exact[1]) else NULL, stu_exact = if (st) r2(g$stu_exact[1]) else NULL
   ) })
-# display names: model_y = the full precinct model (model_turnout.R), model_simpleswing =
+# display names: model_medsl = the full precinct model (model_turnout.R), model_simpleswing =
 # the standard uniform swing model, model_cory = enightmodels::model_legacy(),
 # model_core = the simpler model_core.R version
-MODEL_NAMES = c(trial = "model_y", model_y = "model_y", both = "model_both",
+MODEL_NAMES = c(trial = "model_medsl", model_y = "model_medsl", model_medsl = "model_medsl", both = "model_both",
                 model_both = "model_both", swing = "model_simpleswing",
                 model_simpleswing = "model_simpleswing", core = "model_core", model_core = "model_core",
                 cory = "model_cory", model_cory = "model_cory")
@@ -149,7 +149,47 @@ calib = if (file.exists(p_cal)) {
        updated = format(file.mtime(p_cal), "%b %d, %Y %H:%M"))
 } else NULL
 
-data = list(sims = sims, state = state, calib = calib,
+# ---- statewide test nights (live/tests/sim_statewide.R), if any have run ----------------
+# live_statewide_<scenario>[_offset<x>][_<race>].csv: the models' statewide rows (scraped
+# counties + simulated CBS counties) and scraped-only rows, with the statewide truth
+sw_files = list.files(DIR_OUT, pattern = "^live_statewide_.*\\.csv$", full.names = TRUE)
+statewide = if (length(sw_files)) {
+  sw = bind_rows(lapply(sw_files, function(f)
+    read_csv(f, show_col_types = FALSE, col_types = cols(time = "c", .default = col_guess())) |>
+      mutate(key = sub("_(gov|sen)$", "", sub("^live_statewide_(.*)\\.csv$", "\\1", basename(f)))))) |>
+    filter(pred_type == "share", party == "dem") |>
+    distinct(key, contest, model, geo, time, .keep_all = TRUE) |>
+    mutate(t = format(as.POSIXct(time, tz = "America/New_York"), "%m-%d %H:%M"))
+  late = function(t) t > "11-04 04:00"
+  phase = function(t) case_when(t < "11-03 21:00" ~ "8-9pm", t < "11-03 23:00" ~ "9-11pm", !late(t) ~ "11pm-4am", TRUE ~ "Nov 4-10")
+  r2 = function(x) round(100 * x, 2)
+  scen = lapply(split(sw, sw$key), function(k) {
+    off = unique(k$rest_offset)
+    list(label = if (grepl("_offset", k$key[1])) sprintf("stress: rest of state %+.2f logit", as.numeric(sub("^.*_offset", "", k$key[1])))
+                 else "base", 
+         races = lapply(split(k, k$contest), function(r) {
+           list(truth = r2(r$truth[r$geo == "all"][1]), truth32 = r2(r$truth[r$geo == "scraped"][1]),
+                offset = round(r$rest_offset[1], 3),
+                models = lapply(split(r, r$model), function(m) {
+                  a = filter(m, geo == "all") |> arrange(time); s32 = filter(m, geo == "scraped")
+                  a = left_join(a, select(s32, time, e32 = pred, lo32 = pred_min, hi32 = pred_max), by = "time")
+                  unname(Map(\(t, pc, e, lo, hi, e32, lo32, hi32) list(t, pc, e, lo, hi, e32, lo32, hi32),
+                             a$t, round(100 * a$pct_counted, 1), r2(a$pred), r2(a$pred_min), r2(a$pred_max),
+                             r2(a$e32), r2(a$lo32), r2(a$hi32)))
+                }))
+         }))
+  })
+  summ = sw |>
+    mutate(phase = phase(t), err = 100 * abs(pred - truth), width = 100 * (pred_max - pred_min)) |>
+    summarize(n = n(), mae = round(mean(err), 2), width = round(mean(width), 2),
+              cov = if (all(is.na(covers))) NA_real_ else round(100 * mean(covers, na.rm = TRUE)),
+              pct = round(100 * mean(pct_counted)), .by = c(key, contest, model, geo, phase)) |>
+    mutate(phase = factor(phase, c("8-9pm", "9-11pm", "11pm-4am", "Nov 4-10"))) |>
+    arrange(key, contest, model, desc(geo), phase) |> mutate(phase = as.character(phase))
+  list(scen = scen, summ = summ, updated = format(max(file.mtime(sw_files)), "%b %d, %Y %H:%M"))
+} else NULL
+
+data = list(sims = sims, state = state, calib = calib, statewide = statewide,
             run = format(Sys.time(), "%b %d, %Y %H:%M"))
 json = jsonlite::toJSON(data, auto_unbox = TRUE, digits = NA, null = "null", na = "null")
 

@@ -8,8 +8,9 @@
 ##               "share" = predicted final share of ALL votes cast in the race (as
 ##                         enightmodels::pred_convert(to = "share") defines it)
 ##   time        the returns snapshot the predictions are from
-##   model       "model_simpleswing", "model_cory", "model_y"
-##   model_conf  how the interval was made and its level, e.g. "county_bootstrap_95";
+##   model       "model_simpleswing", "model_cory", "model_medsl"
+##   model_conf  how the interval was made and its level, e.g. "county_bootstrap_95"
+##               (model_simpleswing) or "posterior_95" (model_medsl);
 ##               NA when the model gives no interval (model_cory)
 ##   pct_rep     share of the race's precincts with any votes counted -- the same
 ##               definition for every model, so the column lines up across models
@@ -40,7 +41,7 @@
 ##                                    run + "latest", for both tables
 # ========================================
 
-MODEL_NAMES = c(swing = "model_simpleswing", cory = "model_cory", y = "model_y")
+MODEL_NAMES = c(swing = "model_simpleswing", cory = "model_cory", medsl = "model_medsl")
 
 # one row per race_id with the enightmodels race columns. The default suits the sims
 # (race_id is the contest, e.g. "gov"); for live races pass a table built from the race
@@ -65,6 +66,13 @@ reported_by_candidate = function(returns) {
     summarize(rep = sum(votes), .by = c(candidate, party))
 }
 
+# predicted final votes c(dem, rep, tot) from a model with draws: its `point` if it gives
+# one (model_medsl: the posterior mean), else the sum of its cells (model_simpleswing)
+fit_point = function(fit) {
+  if (!is.null(fit$point)) return(fit$point[c("dem", "rep", "tot")])
+  c(dem = sum(fit$cells$dem), rep = sum(fit$cells$rep), tot = sum(fit$cells$tot))
+}
+
 # fit: one model's result for one race (run_race()); returns: that race's returns
 to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
   base = race |> select(state, election, jurisdiction, contest, district)
@@ -74,14 +82,15 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
 
   cand = reported_by_candidate(returns)
   conf = NA_character_
-  if (model == "swing") {
+  if (model %in% c("swing", "medsl")) {
     # point predictions by party; third-party votes split across third-party candidates
     # in proportion to their counted votes (equally if none counted yet)
-    pv = c(dem = sum(fit$cells$dem), rep = sum(fit$cells$rep))
-    oth_tot = sum(fit$cells$tot) - pv[["dem"]] - pv[["rep"]]
+    ptot = fit_point(fit)
+    pv = ptot[c("dem", "rep")]
+    oth_tot = ptot[["tot"]] - pv[["dem"]] - pv[["rep"]]
     dr = fit$draws
     tot_d = dr$turnout
-    conf = sprintf("county_bootstrap_%g", 100 * level)
+    conf = sprintf(if (model == "swing") "county_bootstrap_%g" else "posterior_%g", 100 * level)
     q = function(x) unname(cred(x, level))
     cand = cand |>
       mutate(w = if (sum(rep[party %in% c("oth", "ind")]) > 0) rep / sum(rep[party %in% c("oth", "ind")])
@@ -95,7 +104,7 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
       pw = if (p == "dem") mean(dr$dem > dr$rep) else if (p == "rep") mean(dr$rep > dr$dem) else NA_real_
       tibble(candidate = cand$candidate[i], party = p,
              pred_type = c("vote", "share"), rep = c(cand$rep[i], cand$rep[i] / max(sum(cand$rep), 1)),
-             pred = c(point, point / sum(fit$cells$tot)),
+             pred = c(point, point / ptot[["tot"]]),
              pred_min = pmax(c(ci_v[1], ci_s[1]), 0), pred_max = c(ci_v[2], ci_s[2]), p_win = pw)
     })
     out = bind_rows(rows)

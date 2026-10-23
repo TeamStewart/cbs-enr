@@ -26,7 +26,7 @@
 ## A county with nothing counted (p_c = 0) is all expectation: E_c votes at the Harris
 ## 2024 share moved by tonight's swing.
 ##
-## Intervals (models with draws, i.e. model_simpleswing): for each of the model's draws,
+## Intervals (models with draws: model_simpleswing, model_medsl): for each of the model's draws,
 ## the swing and turnout ratio come from that draw (so the rest of the state moves with
 ## the scraped counties), plus
 ##   REST_COMMON_SD  the rest of the state swinging differently from the scraped counties
@@ -139,14 +139,18 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
     left_join(base, by = "county_fips")
   h32 = sum(b32$pres24_dem) / max(sum(b32$pres24_dem + b32$pres24_rep), 1)
   e32 = sum(b32$exp_base)
+  # tonight's turnout ratio and swing are measured on the scraped counties' history, found
+  # through the CBS rows for those counties (CBS's feed lists every county)
+  if (!nrow(b32) || !(e32 > 0))
+    stop("The CBS snapshot has no rows for the scraped counties, so tonight's swing and turnout can't be carried to the rest of the state")
   lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
 
   cand = reported_by_candidate(returns)
-  if (model == "swing") {
+  if (model %in% c("swing", "medsl")) {
     dr = fit$draws
     D32 = dr$dem; R32 = dr$rep; T32 = dr$turnout
-    pt = c(dem = sum(fit$cells$dem), rep = sum(fit$cells$rep), tot = sum(fit$cells$tot))
-    conf = sprintf("county_bootstrap_%g_plus_rest", 100 * level)
+    pt = fit_point(fit)
+    conf = sprintf(if (model == "swing") "county_bootstrap_%g_plus_rest" else "posterior_%g_plus_rest", 100 * level)
   } else if (model == "cory") {
     pr = if (is.data.frame(fit$raw)) fit$raw else fit$raw$pred
     pr = mutate(pr, party = as.character(party))

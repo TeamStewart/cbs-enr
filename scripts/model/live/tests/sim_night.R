@@ -3,7 +3,7 @@
 ## run_all() used live.
 ##
 ## From the cbs-enr folder:
-##   Rscript scripts/model/live/tests/sim_night.R [scenario] [--models=swing,cory]
+##   Rscript scripts/model/live/tests/sim_night.R [scenario] [--models=swing,cory,medsl]
 ## scenario defaults to tx_base (26_sim/tx_base); --models defaults to every wired model.
 ##
 ## Writes 26_general/model_tests/live_sim_<scenario>.csv: one row per race x model x
