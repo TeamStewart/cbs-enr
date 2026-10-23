@@ -100,7 +100,7 @@ Reference implementation: `scripts/util/crosswalks/nc.R` (NC); shared code in `s
 
 ## Logged exception: San Diego consolidated precincts (2026-10-15)
 
-San Diego is the **only** place where the frame is aggregated to match ENR. This
+San Diego and Solano (below) are the **only** places where the frame is aggregated to match ENR. This
 breaks rule 3 on purpose, and only in the separate files listed below.
 `ca.csv` itself stays strictly 1:1, and San Diego ENR stays NA there.
 
@@ -131,3 +131,37 @@ breaks rule 3 on purpose, and only in the separate files listed below.
 - **Recheck on real results.** The ENR votes are placeholders as of
   2026-10-15. Ballots per consolidation should be <= `n` and roughly
   proportional to it. Replace the rule if the ROV publishes a membership list.
+
+## Logged exception: Solano consolidated precincts (2026-10-23)
+
+Same exception as San Diego, built the same way. `ca.csv` keeps Solano ENR NA.
+
+- **Why:** Solano ENR (LiveVoterTurnout) reports 196 consolidations named after
+  one base precinct (`17025`, labelled `17025 - BT-46` with its ballot type).
+  They cover 608 frame base precincts (`17005.00`). 185 of the 196 names are
+  frame base codes.
+- **Script:** `scripts/util/crosswalks/ca_solano_consolidated.R`. Run it after
+  `ca.R`.
+- **Outputs** (in `input_data/crosswalks/`): `ca_solano_members.csv` and
+  `ca_solano_frame_consolidated.csv`, laid out like the San Diego files, plus
+  `city_ok`.
+- **Membership is inferred, not official.** No list was found: solanocounty.gov
+  posts only polling places and maps, and LVT gives no per-precinct
+  registration.
+  - Rule `namesake_floor`: the San Diego range rule. Members share the
+    namesake's L2 place for 97.7% of voters; the ceiling alternative gives
+    94.8%. Bases below the first namesake (17005-17020, 2,715 voters) are
+    unassigned.
+  - Hard check `cd_ok`: weak, since Solano is 99.8% CA-08.
+  - Hard check `city_ok`: all members in one city (Benicia, Dixon, Fairfield,
+    Rio Vista, Suisun, Vacaville, Vallejo; L2 name prefix), or all
+    unincorporated. Each city has its own contests, so a consolidation can't
+    cross a city line. `use = cd_ok & city_ok`.
+- **Results:** 191 consolidations have frame members, and 176 have
+  `use = TRUE` (94.4% of 276,037 frame voters). The 15 that fail mix a city
+  with unincorporated areas or another city under the rule.
+- **Recheck on real results**, as for San Diego.
+- **Sonoma is not built this way.** Its 331 `07xxxxx` consolidations are
+  numbered separately from base precincts, so there is no namesake to range
+  over. It needs the ROV's membership list (see `crosswalk_todo.md`).
+

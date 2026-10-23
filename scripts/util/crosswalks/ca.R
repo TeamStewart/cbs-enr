@@ -34,8 +34,24 @@ enr_files = Sys.glob(election_path("CA/clean/*_latest.parquet")) |>
   str_remove(fixed(paste0(election_path(), "/")))
 stopifnot(length(enr_files) > 0)
 
+# Solano (196 ENR vs 608 frame precincts) also reports consolidations named after
+# one base precinct (Solano "17025" = frame "17025.00" plus neighbours), so it is
+# left NA for the same reason; see ca_solano_consolidated.R.
+# Sonoma ENR has two kinds of ids. 331 `07xxxxx` consolidations (97% of voters)
+# use their own numbering, with no link to frame base codes; they match nothing
+# here and no membership list is available. The other 72 are frame-style base
+# codes: the 50 that are frame bases have Clarity totalVoters equal to the frame
+# n (11,043 vs 11,040; ratios 0.67-1.11), so they are single precincts and join 1:1.
+# San Francisco ENR is "pct 1101" or "pct 1103 mb" (mail-ballot precinct), 1:1
+# with frame "1101"; ENR 9901-9904 have no frame row.
+ca_consolidated = c("SAN DIEGO", "SOLANO")
+
 ca_enr = read_enr(enr_files) |>
-  mutate(precinct = if_else(county == "SAN DIEGO", NA_character_, precinct)) |> # consolidations, see above
+  mutate(precinct = case_when(
+    county %in% ca_consolidated ~ NA_character_, # see above
+    county == "SAN FRANCISCO" ~ str_extract(precinct, "^pct (\\d+)( mb)?$", group = 1),
+    .default = precinct
+  )) |>
   filter(!is.na(precinct)) |>
   filter(n() == 1, .by = c(county, precinct))
 

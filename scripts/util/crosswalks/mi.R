@@ -50,6 +50,7 @@ muni_std = function(x) {
   x |>
     str_to_upper() |>
     str_replace("^CITY OF (.*)$", "\\1 CITY") |>  # ENR "City of Evart"
+    str_replace("^(?:CHARTER )?TOWNSHIP OF (.*)$", "\\1 TOWNSHIP") |>  # ENR Wayne "Charter Township of Canton"
     str_replace_all("\\bTWP\\b", "TOWNSHIP") |>
     str_remove_all("\\bCHARTER\\b") |>            # ENR/frame "Caledonia Charter Township" vs "CALEDONIA TOWNSHIP"
     str_replace_all("[.'-]", " ") |>
@@ -67,7 +68,10 @@ parse_l2 = function(x) {
 # "Muni Township, Ward 1, Precinct 2", "Muni Township, Precinct 2 C", "City of Evart",
 # or L2-style "AUSABLE TWP 1" (Roscommon)
 parse_enr = function(x) {
-  m = str_match(x, "^([^,]+)(?:, Ward (\\d+))?(?:, Precinct (\\d+(?: ?[A-Z])?))?$")
+  # Wayne: "The Village of Grosse Pointe Shores, a Michigan City" (frame GROSSE POINTE SHORES CITY);
+  # Inkster "District 1 Precinct 2" is the frame's ward/precinct.
+  x = str_replace(x, "^The Village of (.*), a Michigan City", "City of \\1")
+  m = str_match(x, "^([^,]+)(?:, (?:Ward|District) (\\d+))?(?:,? Precinct (\\d+(?: ?[A-Z])?))?$")
   out = tibble(muni = muni_std(m[, 2]), ward = pct_std(m[, 3]), pct = pct_std(m[, 4]))
   l2_style = str_detect(x, "^[A-Z .'-]+ (TWP|CITY) \\d+$")
   out[l2_style, ] = parse_l2(x[l2_style])

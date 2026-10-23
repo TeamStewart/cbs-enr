@@ -104,17 +104,17 @@ counties) and TX (Kaufman, Wood). NY also has Columbia but is not in the frame.
 |---|---|---|---|---|---|
 | NC | 100 (all) | 2,657 (31 blank) | nc_20261006 | `01`, `PR24`, `01-01` | done 2026-10-15 |
 | AK | 30 (all) | 402 | ak_20261008 | `748`, `002` (frame_name `DD-PPP`) | done 2026-10-15 |
-| AZ | 9 | 1,545 | az_20260901 | `0009`, `0133` | waiting |
-| CA | 17 | 23,685 (26,700 rows) | ca_20260901 | `47252`, `1204` | partial 2026-10-15 (L2 all counties; ENR San Diego only, 0 matched: consolidated precincts) |
-| FL | 31 | 3,764 (4,342 rows) | fl_20261011 | `8735`, `127` | partial 2026-10-20 (ENR: 18 frame counties; see Results) |
+| AZ | 9 | 1,545 | az_20260901 | `0009`, `0133` | partial 2026-10-23 (ENR: Cochise, Maricopa; L2 all 9 counties) |
+| CA | 17 | 23,685 (26,700 rows) | ca_20260901 | `47252`, `1204` | partial 2026-10-23 (L2 all counties; ENR San Francisco, Sonoma singletons; San Diego and Solano consolidated builds; Sonoma `07` consolidations NA) |
+| FL | 31 | 3,764 (4,342 rows) | fl_20261011 | `8735`, `127` | partial 2026-10-23 (ENR: 21 frame counties; see Results) |
 | GA | 159 (all) | 2,581 | ga_20261002 | `CP04A`, `029` | waiting |
 | IA | 99 (all) | 1,658 | ia_20260901 | `DOWS`, `FC2` (name-like) | waiting |
-| MI | 31 | 2,737 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-19 (ENR: Berrien, Branch, Clare, Isabella, Kent, Newaygo, Osceola, Roscommon, Saginaw, Van Buren) |
-| NE | 93 (all) | 1,321 | ne_20261002 | `03`, `16` | waiting |
+| MI | 31 | 2,737 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-23 (ENR: Berrien, Branch, Clare, Isabella, Kent, Newaygo, Osceola, Roscommon, Saginaw, Van Buren, Wayne) |
+| NE | 93 (all) | 1,321 | ne_20261002 | `03`, `16` | done 2026-10-23 |
 | NM | 33 (all) | 2,203 | nm_20260914 | `034`, `012` | waiting |
-| OH | 13 | 4,153 | oh_20260929 | `83AHA`, `31BLU` | waiting |
-| PA | 19 | 6,217 | pa_20260911 | `2403`, `1680100`, `011905S` | waiting |
-| TX | 32 | 6,153 (45 blank; 11,563 rows) | tx_20261011 | `2305`, `4608` | partial 2026-10-19 (ENR: Harris, Kaufman, Lamar, Wood) |
+| OH | 13 | 4,153 (4,524 rows) | oh_20260929 | `83AHA`, `31BLU` | partial 2026-10-23 (ENR: Franklin, Stark; L2 all counties) |
+| PA | 19 | 6,217 | pa_20260911 | `2403`, `1680100`, `011905S` | partial 2026-10-23 (ENR: Chester, Delaware, Philadelphia; L2 all 19 counties) |
+| TX | 32 | 6,153 (45 blank; 11,563 rows) | tx_20261011 | `2305`, `4608` | partial 2026-10-23 (ENR: Bexar, Harris, Kaufman, Lamar, Wood) |
 | VA | 133 (all) | 2,534 | va_20260901 | `0206`, `0412` | waiting |
 | WA | 4 | 167 | wa_20260917 | `0001` | waiting |
 
@@ -135,6 +135,150 @@ some counties only; list them in Results. `done` means built.
 > Results entry in `docs/crosswalk_todo.md`.
 
 ## Results
+
+Rerun of 2026-10-23 (ENR cycle: new clean files from `cycle.R verify`; L2 and
+frame unchanged). New state scripts `az.R`, `ne.R`, `oh.R`, `pa.R`; entries below.
+
+- TX: ENR 4,336 -> 5,514 rows (47.7%). New county Bexar: 744 of 842 frame
+  precincts (1,178 of 1,296 rows). All 98 misses also lack L2 (junk codes).
+  62 Bexar ENR precincts are not in the frame. The glob also reads non-frame
+  Hardin (harmless). Harris, Kaufman, Lamar and Wood are unchanged.
+- FL: ENR 2,141 -> 2,249 rows (51.8%). New counties Collier 78/78, DeSoto 16/16,
+  Hendry 14/14. New ENR recodes: Collier `PCT101` -> `101`; Hendry `1` -> `001`;
+  DeSoto keeps the leading code (`05A The House of God Church` -> `05`). DeSoto
+  ENR 05A/11A/15A pair 1:1 with frame and L2 05/11/15 and have no B parts.
+  Manatee (frame) found but its Precincts/Reports pages are not up yet.
+- MI: ENR 480 -> 1,198 rows (43.8%). New county Wayne 718 of 720. `muni_std`
+  maps `(Charter) Township of X` to `X TOWNSHIP`. `parse_enr` reads Inkster
+  `District N Precinct M` as ward/precinct, and maps `The Village of Grosse
+  Pointe Shores, a Michigan City` to the city. NA by design: Dearborn Heights 011
+  (frame splits it across MI-12/MI-13). Detroit absentee counting boards
+  (`CB 1`-`CB 48`) and Detroit Precinct 59 have no frame row.
+- CA: ENR 0 -> 600 rows (2.2%). New county San Francisco 543 of 545:
+  `pct 1101`/`pct 1103 mb` (mail-ballot precinct) -> `1101`. ENR 9901-9904 have
+  no frame row; frame 1152 and 9744 are not in ENR. Sonoma 57 of 1,393 rows
+  (50 base precincts) are unchanged, but are now verified as single precincts.
+  - Sonoma ENR has 331 `07xxxxx` consolidations (308k of 319k voters) numbered
+    separately from the base codes, plus 72 base-coded precincts. The 50 that
+    are frame bases have Clarity `totalVoters` equal to frame n (11,043 vs
+    11,040), so they join 1:1. The `07` consolidations stay NA: there is no
+    namesake to infer membership from, and no list was found (sonomacounty.gov,
+    2026-10-23). They need the ROV's consolidation list.
+  - Solano (196 ENR consolidations vs 608 frame bases) stays NA in `ca.csv` and
+    gets a San Diego-style build, `ca_solano_consolidated.R` (see
+    `docs/precinct_crosswalks.md`): 176 of 196 consolidations `use = TRUE`,
+    94.4% of 276,037 frame voters.
+  - `ca_sandiego_consolidated.R` was rerun and is unchanged (1,893
+    consolidations, 88.9% of SD frame voters).
+
+- AZ (2026-10-23, partial; ENR `AZ_Cochise_latest` 2026-10-21, `AZ_Maricopa_latest`
+  2026-09-21; L2 az_20260901): 1,545 frame rows. 64.6% have ENR (998), 100% have
+  L2, 64.6% have both. ENR: Cochise 54/54, Maricopa 944/944.
+  - Every source is parsed to (4-digit number, standardized name), and a match
+    needs both to agree. Frame names: `02 STONE BUTTE`, `40 - BELLEMONT`,
+    `PRECINCT 221`, and name-only in Cochise/Maricopa (the number is the id).
+    L2: `0216 NAME`, `BELLEMONT-40` (Coconino), bare numbers (Pima, Yuma). ENR:
+    `0783 SPUR`, `06 BI WARREN`. All ENR names equal the frame names.
+  - L2 tiers: `code_name` 1,235 (median ratio 1.01), `code_bare` 309 (Pima/Yuma,
+    1.00), `manual` 1 (Pinal 088 IRONWOOD CROSSING = frame 088 IRONWOOD CROSSING
+    WEST, 4,190/4,116). Pinal frame abbreviations (STV, CG, FLO, MAR, AJ) are
+    expanded; a trailing number equal to the precinct number is dropped (Coconino
+    `FLAGSTAFF-01` = `01 - FLAGSTAFF 1`).
+  - ENR precincts not in the frame (presumably no voters): Cochise 55 MONTEZUMA;
+    Maricopa 0564/0568/0569/0570/0576/0577 NVP, 0773-0777 SOUTH MTN PARK, 0860 UNO.
+  - No merges, splits or ambiguous cases. Ratio outliers are exact matches on
+    tiny precincts (Maricopa 0410, 0848; Pinal 0089, 0116) and Pinal 0137 AJ
+    RADIANCE at 1.29 (growth); all kept.
+  - Rerun when the other 7 frame counties get clean files, and check each new
+    county's id format against `parse_pct()`.
+- OH (2026-10-23, partial; ENR `OH_franklin_latest` 2026-10-23 from the county API,
+  `OH_stark_latest` 2026-10-22; votes still 0): 4,524 frame rows (4,153 precincts).
+  Overall 27.5% ENR, 99.96% L2, 27.5% both. In the ENR counties: Franklin 889/889
+  precincts (935 rows), Stark 274/274 (308 rows), no ENR leftovers on either side.
+  - Frame ids are SOS codes (`25ARA`); frame names carry the code (`COLS 74-C
+    (25-ARA)`). L2 and ENR have names only, so all matching is name-based.
+  - `oh_std()` (local): number words to digits (Fulton `DELTA TWO`), TOWNSHIP->TWP,
+    VILLAGE/VILL->VLG, drop Cuyahoga's `00` ward, plus a per-county `abbr` map for
+    frame abbreviations (Clark BETH/GERM/GREE/HARM/MFLD/MR/PLES, `CITY n` =
+    Springfield City, `T-n` = Springfield Twp; Franklin COLS/DUB/GAH/HILL/REYNS/UA/
+    WORTH/CANAL WIN/GRANDVIEW; Hamilton NO COLL HILL; Summit CUY FALLS/NFLD CTR).
+    Precinct counts per municipality agree on both sides for every entry.
+  - Tiers: `manual` 4, `name_exact` 1,906, `name_std` 2,447, `name_type` 165 (drop
+    TWP/VLG/CITY when unique on both sides: Carroll `BROWN TWP A` = `BROWN A`,
+    Montgomery `MIAMI A` = `MIAMI TWP A`). Median L2/frame ratio 1.09-1.14 per tier.
+    No match is below 0.85.
+  - ENR: Franklin ids are lowercase full names (`blendon township-a`); Stark ids are
+    short codes (`cc3a`, `laka`, `mlake`) decoded by `stark_pfx`. The script stops on
+    any other ENR county until its id format is checked.
+  - Manual L2 (only candidate on each side, ratio 1.07-1.18): Lake MENTOR-ON-THE-LAKE
+    CITY DD = frame 4A; Lucas RICHFIELD = RICHFIELD 1; Montgomery P/NEW LEB A =
+    PER/NEW LEBANON; Summit AKRON 07-1 = AKRON 7-I.
+  - NA: Summit AKRON 1-I and AKRON 3-I (890 and 590 frame voters), which have no L2
+    precinct.
+  - Check: 516 exact-name matches with ratio > 1.3, mostly Cincinnati, Cleveland,
+    Akron, Dayton and Columbus, probably a voter-file vintage difference. The largest
+    are Summit AKRON 1-L (4.5) and 3-L (2.5), Hamilton CINCINNATI 12-B and 13-H (3.5),
+    and Cuyahoga CLEVELAND 08-A (3.3).
+
+- NE (2026-10-23, ENR `NE_latest` as of 2026-10-06, statewide SOS GetMapData
+  feed, votes still 0): 1,321 frame rows, all coded. 100% have ENR, 99.8% have
+  L2, 99.8% have both.
+  - The ENR id is `StatePrecinctID`, a per-county sequence (0001, ...) unrelated
+    to the frame codes. Names come from the raw CSV of the same scrape
+    (`NE/raw/NE_{stamp}.csv`, keyed on county x `StatePrecinctID`); the script
+    stops if the matching timestamped clean parquet differs from `NE_latest`.
+    All 1,321 match frame names exactly, with no recodes. Douglas `0187` (07-33)
+    is in ENR but in neither the frame nor L2, probably a new precinct.
+    **Decision:** keep reading `raw/`, or have `scrape_ne()` carry `PrecinctName`
+    into `clean/`.
+  - L2 tiers: `name_exact` 477, `county_rule` 408 (Douglas `WARD 01 PCT 01` ->
+    `01-01`, Lancaster `01 A-01` -> `01A01`), `name_ne` 119 (ordinals and roman
+    numerals to digits, drop PRECINCT/TWP/AREA/CITY OF/VILLAGE OF), `name_std`
+    106, `code_exact` 101, `county_id` 38 (Buffalo and Hall leading number, Cass
+    trailing code), `code_std` 20, `manual` 15, `name_ne_strip` 13,
+    `name_ne_bag` 11, `name_ne_stripbag` 6, `name_ne_nospace` 4. Median ratios
+    are 1.01-1.05 per tier. The generic `name_nospace` tier is dropped because it
+    matched Hamilton `11` to `1 001`.
+  - NA by design for L2 (the frame precinct is two L2 precincts): Cedar `06` PCT
+    06 8-9 (1,337 = 1,208 + 144), Cuming `06` BGW (1,003 = 924 + 14), Dixon `01`
+    LOGAN-WAKEFIELD 3 (257 = 256 + 2).
+  - Check: Lancaster `03D00` <-> L2 `03 D`, ratio 1.52 (481 vs 317). It is the
+    only candidate on both sides, so it is kept as a code match.
+  - Manual one-offs: Cuming BCN/BL/SSGC (abbreviations of the L2 township lists),
+    Richardson `FC WARD n` = `FALLS CITY n`, Lincoln `07.NORTH PLATTE PRECINCT 7`
+    = `NORTH PLATTE 07B`, Holt ATKINSON WARD I and the SURRONUNDING typo, Garden
+    `OSHKOSH 1`, Fillmore GENEVA RURAL, Knox LSC, Seward M-BX, Butler 06. Ratios
+    are 0.99-1.04.
+
+- PA (2026-10-23, partial; ENR `PA_chester_latest` 2026-10-15 (LiveVoterTurnout),
+  `PA_delaware_latest` 2026-10-22 (Clarity), `PA_philadelphia_latest` 2026-10-17
+  (city feed); clean files written 2026-10-23, Chester and Philadelphia carry
+  nonzero test votes): 6,223 frame rows (6,217 precincts). Overall 37.2% ENR,
+  99.97% L2, 37.2% both. In the three ENR counties (2,316 rows): 100% ENR, 100%
+  L2, 100% both.
+  - ENR id formats differ by county: Chester `005 atglen` (leading code; name
+    checked loosely against the frame name), Philadelphia `01-01` -> `0101`,
+    Delaware names only (`UPPER DARBY TWP DISTRICT 07 PRECINCT 06`), matched to
+    frame names (`UPPER DARBY TOWNSHIP 7TH DIST 6TH PREC`) on a canonical
+    form. Philadelphia's three "Nth congressional" aggregate rows are dropped.
+    New county files get NA ENR until a rule is added in `pa.R`.
+  - L2 names follow one convention (`ASTON TWP 1`, `BETHEL PARK 7-2`); frame
+    names vary by county. A PA normalizer (`pa_norm`: abbreviations, ordinals,
+    ward/district words, Allegheny `00` tokens, Lancaster `X EAST TWP`) gives
+    name_exact 1,106, name_norm 4,978, name_notype 82 (Fayette/York names
+    without TWP/BORO/CITY), single_pct 23 (Allegheny `ALEPPO 00 01` vs
+    `ALEPPO`), manual 26 (Cambria Johnstown/Nanty Glo, Allegheny McDonald/
+    Pennsbury Vlg/Glen Osborne, Fayette PERRYOPOLIS = L2 `PERRY BORO`, etc.).
+    Median ratios 1.01-1.04; manual 0.96-1.07.
+  - NA by design: Lehigh 011905S (3 voters, no L2).
+  - Ambiguous, left NA: Lancaster 4906 HEMPFIELD EAST TWP SPRING (1,335) vs L2
+    EAST HEMPFIELD TWP-GOLDEN ACRES (1,356): the only leftovers in the township
+    with consistent counts, and the code's alphabetical position fits Golden
+    Acres, but the names share nothing.
+  - Ratio outliers kept (same-name matches): Radnor 2-2 and 7-3 (3.5x, 5.2x),
+    Lower Oxford E (1.7x), plus wards in Pittsburgh, Philadelphia and
+    Lancaster where L2 carries more voters; York City ward matches also run
+    1.09-1.19.
 
 Rerun of 2026-10-19 (frame now `input_data/yougov_precinct_frame.parquet`, rebuilt
 2026-10-18; `nc.R` and `ak.R` now pick the latest L2 file, like the others).

@@ -64,10 +64,15 @@ fl = read_enr(enr_files) |>
     .by = c(county, md_base)
   ) |>
   select(-md_base) |>
-  # "406 - Redemption Point AG" -> "406".
+  # "406 - Redemption Point AG" -> "406". Collier "PCT101" -> "101"; Hendry "1" ->
+  # "001". DeSoto "05A The House of God Church" -> "05": ENR 05A/11A/15A pair 1:1
+  # with frame and L2 05/11/15 (no B parts), so the letter is a label, not a split.
   mutate(
     precinct = case_when(
       county == "DIXIE" ~ str_pad(str_extract(precinct, "^[0-9]+"), 2, pad = "0"),
+      county == "COLLIER" ~ str_remove(precinct, "^PCT"),
+      county == "HENDRY" ~ str_pad(precinct, 3, pad = "0"),
+      county == "DESOTO" ~ str_extract(precinct, "^[0-9]+"),
       county %in% c("CITRUS", "COLUMBIA", "GLADES", "MONROE") ~ str_extract(precinct, "^[0-9]+"),
       county %in% c("GADSDEN", "LEVY") ~ unname(place_codes[paste(county, precinct, sep = "|")]),
       .default = precinct
