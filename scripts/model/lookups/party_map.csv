@@ -1,0 +1,16 @@
+state,year,raw_label,party,note
+TX,2024,DEM,dem,
+TX,2024,Dem,dem,
+TX,2024,D,dem,
+TX,2024,(D),dem,"Travis parenthesises the party, in BOTH candidate_name and candidate_party"
+TX,2024,REP,rep,
+TX,2024,Rep,rep,
+TX,2024,R,rep,
+TX,2024,(R),rep,Travis
+TX,2024,LIB,oth,Libertarian
+TX,2024,Lib,oth,
+TX,2024,L,oth,
+TX,2024,(L),oth,Travis
+TX,2024,GRN,oth,Green
+TX,2024,NON,oth,"write-in rows; keep in oth, do NOT drop -- they are real votes"
+TX,2024,IND,oth,

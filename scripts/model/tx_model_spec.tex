@@ -1,0 +1,223 @@
+% ============================================================================
+%  Election-night model: specification
+%  Precinct x vote-mode model for live returns.
+%  Compile: pdflatex tx_model_spec.tex
+% ============================================================================
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\setlist[itemize]{itemsep=2pt, topsep=4pt}
+\newcommand{\dem}{\mathrm{dem}}
+\newcommand{\rep}{\mathrm{rep}}
+\newcommand{\oth}{\mathrm{oth}}
+\newcommand{\refm}{\mathrm{ref}}
+\newcommand{\logit}{\operatorname{logit}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\ICC}{\mathrm{ICC}}
+\newcommand{\var}[1]{\texttt{#1}}
+
+\title{Election-night model: specification}
+\author{Young-Kyung Kim}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Outcomes}
+
+The model estimates three outcomes at the precinct level, separately by vote mode, giving
+nine equations in total. Each equation is estimated separately, but the errors are
+modeled jointly through a $9 \times 9$ covariance matrix $\Sigma$.
+
+Let $m \in \{\text{mail}, \text{early}, \text{eday}\}$, and let
+$v^{\dem}_{im}$, $v^{\rep}_{im}$, $v^{\oth}_{im}$ denote votes cast in mode $m$ in
+precinct $i$ for the Democratic candidate, the Republican candidate, and all others.
+
+\begin{itemize}
+  \item Three equations for $\tau_{im}$, total votes cast (turnout) in the cell;
+  \item Three equations for $tp_{im}$, the third-party share of the cell;
+  \item Three equations for $s_{im}$, the two-party Democratic share of the cell.
+\end{itemize}
+
+\paragraph{What $\Sigma$ does.}
+Each equation is estimated separately; since they share a design matrix, seemingly
+unrelated regression coincides with equation-by-equation estimation, so $\Sigma$ does not
+change $\hat\beta$. It should improve prediction; the aggregate is jointly nonlinear in $(\tau, tp, s)$, so the predictive variance depends on their correlation. With the plausibility of correlation between vote shares and turnout by vote modes in precincts, this should mean the conditional covariance is smaller
+than the unconditional one. Knowing that we might want individual precinct predictions also motivated this modeling choice: I'd prefer to have more information to pull into those more weakly powered estimates. 
+
+\section{The factorization}
+
+Predicting $v^{\dem}$, $v^{\rep}$ and $v^{\oth}$ separately and summing them can produce
+impossible values --- shares that do not sum to one, negative counts. Clamping such
+values afterwards would spend researcher degrees of freedom we would rather not spend.
+Instead we change variables. The map
+\begin{equation*}
+  \tau_{im} = v^{\dem}_{im} + v^{\rep}_{im} + v^{\oth}_{im}, \qquad
+  tp_{im}   = \frac{v^{\oth}_{im}}{\tau_{im}}, \qquad
+  s_{im}    = \frac{v^{\dem}_{im}}{v^{\dem}_{im} + v^{\rep}_{im}}
+\end{equation*}
+is a bijection, so the quantity we care about can be written as a function of
+$(\tau, tp, s)$ and recovered exactly. Every draw is a valid election outcome by
+construction, with no clamping and no renormalizing.
+
+\section{Link functions}
+
+The two share outcomes are bounded in $[0,1]$, so both are modeled on the logit scale:
+\begin{equation*}
+  y^{tp}_{im} = \logit\!\left(\frac{v^{\oth}_{im} + \tfrac{1}{2}}{\tau_{im} + 1}\right),
+  \qquad
+  y^{s}_{im} = \logit\!\left(\frac{v^{\dem}_{im} + \tfrac{1}{2}}
+                                  {v^{\dem}_{im} + v^{\rep}_{im} + 1}\right).
+\end{equation*}
+The $\tfrac{1}{2}$ offsets keep the transform finite where a third-party candidate
+receives no votes in a precinct, which is common.
+
+Turnout is modeled on a log scale, because precinct-level mode-specific turnout is
+right-skewed. Where the composition is disabled the outcome is simply
+$y^{\tau}_{im} = \log(\tau_{im} + 0.1)$, the offset keeping cells with zero counted votes
+finite. Getting this scale right mattered more than expected.
+
+\section{Turnout: total and composition}
+
+By default turnout is reparameterized rather than modeled as three free log-levels,
+because turnout has a known ceiling and the three modes must add up. Writing $T_i$ for
+the precinct total and $p_{im}$ for its split across modes,
+\begin{equation}
+  \theta_i = \logit\!\left(\frac{T_i}{\kappa n_i}\right), \qquad
+  \eta_{im} = \log\frac{p_{im}}{p_{i,\refm}} \quad (m \neq \refm), \qquad
+  p_i = \softmax(\eta_i), \qquad
+  \tau_{im} = T_i\, p_{im},
+  \label{eq:compose}
+\end{equation}
+with $\kappa = 1.25$ and $n_i$ the precinct's registrants. The fitted outcomes are
+$\theta_i$ in the reference mode's slot and the $\eta_{im}$ in the other two, so the
+equation count is unchanged at $1 + (M-1) + 2M = 3M$.
+
+This buys two guarantees. First, $\sum_m p_{im} = 1$ gives $\sum_m \tau_{im} = T_i$
+exactly, so a surplus in one mode can no longer inflate the precinct total. Second,
+$0 < T_i < \kappa n_i$. An earlier version of the model predicted turnout at 184\% of
+truth; under \eqref{eq:compose} that is arithmetically impossible rather than something
+detected after the fact.
+
+Setting $\refm = \text{early}$ is an identifiability normalization; early is chosen
+because it reports first and is the best-measured mode.
+
+\section{Partial counts}
+
+Treating an incomplete snapshot as final, or thresholding it as ``complete enough,''
+produces strange behavior, and the problem compounds when the decision is made per
+precinct-mode rather than per precinct. We therefore model partial counts as a mixture.
+With $c_{im}$ the ballots already counted in a cell and $r_{im}$ those remaining,
+\begin{equation}
+  r_{im} = \tau_{im} - c_{im}, \qquad
+  \dem_{im} = c^{\dem}_{im} + r_{im}\,(1 - tp_{im})\,s_{im}.
+  \label{eq:mixture}
+\end{equation}
+A counted-out cell has $r_{im} \approx 0$, so its observed share is pinned automatically;
+a barely-started cell is mostly predicted. No completeness classifier is required.
+
+Partial counts also impose their own restrictions, and these are inequalities. The floor
+must act on the precinct \emph{total}: flooring each cell at its own count destroys the
+adding-up property the parameterization exists for. So we floor the total and hand the
+remainder only to modes short of their composition-implied share, in proportion to how
+short they are:
+\begin{equation}
+  \begin{aligned}
+    T_i &\leftarrow \max\Big(T_i,\ \textstyle\sum_m c_{im}\Big),
+    &\qquad
+    \text{short}_{im} &= \max\big(T_i\, p_{im} - c_{im},\, 0\big), \\[4pt]
+    r_{im} &= \Big(T_i - \textstyle\sum_{m'} c_{im'}\Big)
+              \frac{\text{short}_{im}}{\sum_{m'} \text{short}_{im'}}.
+  \end{aligned}
+  \label{eq:alloc}
+\end{equation}
+This preserves both $\sum_m \tau_{im} = T_i$ and $\tau_{im} \geq c_{im}$.
+
+\paragraph{Known limitation.}
+$\tau_{im} = T_i\, p_{im}$ holds only when no mode has over-reported relative to its
+composition share, and $T_i < \kappa n_i$ only when $\sum_m c_{im} < \kappa n_i$. Both
+can fail empirically; the unconditional invariants are $\sum_m \tau_{im} = T_i$ and
+$\tau_{im} \geq c_{im}$.
+
+\section{Covariates and the county effect}
+
+\begin{itemize}
+  \item \textbf{Turnout and share:}
+        $\{\log n,\ \var{turnout22},\ \var{turnout24},\ p_{\text{male}},\ p_{65+},\
+        p_{\text{black}},\ p_{\text{hisp}},\ p_{\text{col}},\ \var{dem2}\}$
+  \item \textbf{Third party:}
+        $\{\log n,\ p_{\text{male}},\ p_{65+},\ \var{dem2},\ \var{tp\_prior\_raw}\}$ ---
+        kept deliberately small, since third-party share is a weak and stable signal that
+        overfits easily.
+\end{itemize}
+
+We also include a county random effect to account for dependence across precincts.
+Ignoring it is not a minor misspecification: measured across nine states, county
+intraclass correlations run from $0.09$ to $0.43$, which corresponds to standard errors
+understated by a factor of roughly $2.4$ to $5.1$.
+
+\section{Estimation}
+
+Each equation takes the form
+\begin{equation}
+  y^{k}_{im} = x_i' \beta^{k}_{m} + u^{k}_{m,c(i)} + \epsilon^{k}_{im},
+  \qquad
+  u^{k}_{m,c} \sim N\!\left(0,\ \sigma_k^2 / \lambda_k\right),
+  \qquad
+  \lambda_k = \frac{1 - \ICC_k}{\ICC_k}.
+  \label{eq:model}
+\end{equation}
+
+Covariates from the voter file and polling priors supply a fitted prior value for every
+precinct and mode. We then follow the Bayesian data-augmentation approach used in the
+NYC mayoral model, with the county random effect added.
+
+Write $X$ for the covariate block and $C$ for the county indicator block. The design
+stacks $N$ $g$-prior rows $(X, \mathbf{0})$ at weight $n_k / N$, the $n_{\text{obs}}$
+reported rows $(X_{\text{obs}}, C_{\text{obs}})$ at weight $w_{\text{obs}}$, and $J$
+ridge rows $(\mathbf{0}, I_J)$ at weight $\lambda_k$, against the response
+$(\tilde{y}^{k},\ y^{k}_{\text{obs}},\ \mathbf{0})$:
+\begin{equation}
+  A = \begin{bmatrix}
+        X & \mathbf{0} \\
+        X_{\text{obs}} & C_{\text{obs}} \\
+        \mathbf{0} & I_J
+      \end{bmatrix},
+  \qquad
+  y = \begin{bmatrix} \tilde{y}^{k} \\ y^{k}_{\text{obs}} \\ \mathbf{0} \end{bmatrix},
+  \qquad
+  W = \operatorname{diag}\!\left(\tfrac{n_k}{N}\mathbf{1}_N,\ w_{\text{obs}},\
+      \lambda_k \mathbf{1}_J\right).
+  \label{eq:design}
+\end{equation}
+
+The first block is the $g$-prior, with the county columns zeroed so that it affects
+$\beta$ only. The second is the reported data, with the share equations weighted by
+counted ballots --- normalized to mean one, so $n_k$ keeps its interpretation in
+precinct-equivalents --- and the turnout equation unweighted. The third shrinks $u$
+toward zero with weight $\lambda_k$; it is these rows, not $C$ itself, that make the
+county coefficients a random effect. The whole system is one weighted least squares
+solve, which keeps conjugacy and closed-form draws.
+
+\paragraph{The covariance matrix.}
+$\Sigma$ is assembled as $D\,\mathcal{C}\,D$: the nine per-equation residual standard
+deviations $D$ come from the current night's fits, while the correlations $\mathcal{C}$
+are supplied from past elections, because the modes report in sequence and the cross-mode
+blocks are never estimable from tonight's data. The measured within-mode correlation
+between turnout and share varies in sign across modes, so a single pooled value will not
+do.
+
+\section{Prediction}
+
+Take 500 posterior draws. Transform each draw into the relevant units ---
+$\kappa n_i \cdot \logit^{-1}(\theta)$ for the precinct total, $\softmax$ for the mode
+composition, and $\logit^{-1}$ for the two shares --- so that every draw satisfies the
+adding-up and bound constraints by construction. Then combine counted and remaining votes
+per cell using \eqref{eq:mixture} and \eqref{eq:alloc}, and aggregate.
+
+\end{document}

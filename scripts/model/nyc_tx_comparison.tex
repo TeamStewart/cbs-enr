@@ -1,0 +1,368 @@
+\documentclass[11pt]{article}
+
+%% ============================================================
+%% Comparison memo: the two existing CBS election-night models
+%%   NYC 2025 general  (scripts/model/modeling-cory/nyc)
+%%   TX 2026 primary   (scripts/model/modeling-cory/tx-prim-26)
+%% Built from ~/Work/papers/memo-template.
+%% Compile: pdflatex nyc_tx_comparison.tex  (twice, for refs)
+%% ============================================================
+
+\usepackage{amsmath}
+\usepackage{mypaperfonts}
+\usepackage{microtype}
+\usepackage[margin=1in]{geometry}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\definecolor{memolink}{RGB}{0,60,120}
+\usepackage[hyphens]{url}
+\usepackage[colorlinks=true, linkcolor=memolink, citecolor=memolink,
+            urlcolor=memolink]{hyperref}
+\usepackage{enumitem}
+\setlist{noitemsep, topsep=2pt}
+
+\usepackage{csquotes}
+
+\usepackage[most]{tcolorbox}
+\definecolor{memoalert}{RGB}{155,28,49}
+\newtcolorbox{memobox}[2][]{%
+  enhanced, breakable,
+  colback=memoalert!4!white, colframe=memoalert!85!black,
+  colbacktitle=memoalert!85!black, coltitle=white,
+  fonttitle=\bfseries\small, fontupper=\small,
+  title={#2},
+  boxrule=0.6pt, arc=1.5pt, titlerule=0pt,
+  left=7pt, right=7pt, top=6pt, bottom=6pt,
+  before skip=10pt, after skip=10pt,
+  #1}
+
+\newcommand{\memoheader}[2]{%
+  \noindent{\bfseries #1 \textperiodcentered\ Young-Kyung Kim \textperiodcentered\ #2}%
+  \par\vspace{2pt}\hrule\vspace{1.2\baselineskip}%
+}
+
+\usepackage{titlesec}
+\titleformat{\section}{\normalsize\bfseries}{\thesection.}{0.5em}{}
+\titlespacing{\section}{0pt}{1.1\baselineskip}{0.35\baselineskip}
+\titleformat{\subsection}{\normalsize\itshape\bfseries}{\thesubsection.}{0.5em}{}
+\titlespacing{\subsection}{0pt}{0.9\baselineskip}{0.25\baselineskip}
+
+\newcommand{\logit}{\operatorname{logit}}
+\newcommand{\Norm}{\mathcal{N}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\begin{document}
+
+\memoheader{Two election-night models compared: NYC 2025 general vs.\ TX 2026 primary}{October 18, 2026}
+
+\noindent Both pipelines in \texttt{scripts/model/modeling-cory} forecast an outcome from
+partial precinct returns, both were run live, and they share an author and a utility
+package. Architecturally they have almost nothing else in common. This memo sets them
+side by side --- outcome, likelihood, prior, estimation, uncertainty --- and records what
+each one measurably did on the night. All diagnostics quoted here were computed from the
+committed code and its logged output; sources are given in \S\ref{sec:prov}.
+
+\section{What each system was}\label{sec:what}
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}L{3.0cm}L{5.4cm}L{5.4cm}@{}}
+\toprule
+ & \textbf{NYC} & \textbf{TX} \\
+\midrule
+Contest & 2025 NYC mayoral, \emph{general} & 2026 TX \emph{primaries} (Senate, House) \\
+Election day & 4 November 2025 & 3 March 2026 \\
+Unit & election district (precinct) & precinct $\times$ vote method \\
+Units modeled & 4{,}061 & 6{,}079 (Senate GOP) \\
+Candidates & 3 (Mamdani, Cuomo, Sliwa) & up to 8 per contest \\
+Live runs logged & 24, 21:31--00:27 EST & 21, 01:38--21:14 \\
+Estimator lives in & \texttt{enightmodels} (binary dep.) & the repo itself \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent One asymmetry is worth noting up front: TX's model is fully readable in the
+repository, whereas NYC's core is a compiled dependency
+(\texttt{CoryMcCartan/enightmodels}, pinned at \texttt{f3edb6e}) whose source tree is not
+checked in. The only copy on disk is the installed build, readable via \texttt{lazyLoad}
+on its database.
+
+\section{Outcome and likelihood}\label{sec:like}
+
+This is the deepest divergence, and most of the others follow from it.
+
+\paragraph{NYC: Gaussian, turnout and share modeled separately.} Two kinds of equation,
+sharing one control formula:
+\begin{equation}
+  \log(\tau_i + 0.1) = x_i'\beta^{\tau} + \varepsilon^{\tau}_i,
+  \qquad
+  s_{ij} = x_i'\beta_j + \varepsilon_{ij}, \quad j = 1,\dots,3 .
+  \label{eq:nyc}
+\end{equation}
+The share equations are linear in the \emph{level} of the share --- no logit, no
+multinomial --- and are fit independently. Predictions are clamped to $[0,1]$, observed
+values substituted for reported precincts, and then normalized so the three shares sum to
+one. That division is the only thing coupling the candidates.
+
+\paragraph{TX: Poisson on counts, turnout implicit.} One model per candidate per method:
+\begin{equation}
+  \log \mathbb{E}[v_{icm}] = \beta_0 + \beta_1 \log(\widehat{\textrm{est}}_{icm} + 0.1)
+  + f(\textrm{covariates}) + u_{\textrm{stratum}} + u_{\textrm{geostratum}} .
+  \label{eq:tx}
+\end{equation}
+Because counts are modeled, turnout is implied ($\tau_{im} = \sum_j v_{ijm}$) rather than
+estimated, and shares are formed afterwards as $(0.1 + \hat v)/(0.1 + \sum_j \hat v)$.
+Note $\log(\widehat{\textrm{est}})$ enters as a free-coefficient covariate, not a fixed
+offset, so the relationship to expected turnout is a fitted power law.
+
+\begin{memobox}{On this axis, TX is structurally closer to right}
+Modelling counts per candidate \emph{per mode} is implicitly a joint turnout-and-share
+model, which matters because a precinct's overall share is a turnout-weighted mixture over
+modes, $s_{ij} = \sum_m s_{ijm}\tau_{im} / \sum_m \tau_{im}$. If mail splits one way and
+election day another, the precinct's share is determined by the \emph{mix}. NYC can treat
+turnout and share as separable only because it drops mode entirely --- it reads
+\texttt{vote\_mode} and then discards it, absorbing the effect into covariates such as
+\texttt{prim25\_cvr\_eday} and an early-vote threshold. For a general election whose
+reporting order is mode-driven, that is the weaker choice.
+\end{memobox}
+
+\section{The prior}\label{sec:prior}
+
+\paragraph{NYC: a strong, informative $g$-prior.} The distinctive feature of the whole
+pipeline. The prior is placed on \emph{fitted values}, not coefficients, and implemented by
+stacking all $N$ precincts as pseudo-observations with weight $w = n_0/N$ on top of the
+reported rows. The implied prior is exactly Zellner's $g$-prior,
+\begin{equation}
+  \beta \sim \Norm\!\big((X'X)^{-1}X'\tilde y,\; \sigma^2 (w X'X)^{-1}\big),
+\end{equation}
+with the location being the OLS projection of the prior fitted values. (``$g$-prior'' names
+Zellner's structure, in which the prior covariance is proportional to $(X'X)^{-1}$; it is
+not shorthand for ``Gaussian prior,'' and a ridge prior $\Norm(0,\lambda^{-1}I)$ is
+Gaussian but not a $g$-prior. The proportionality to $X'X$ is what makes $n_0$ readable as
+an effective sample size --- and also why no choice of $n_0$ improves the conditioning of
+the design.) Those fitted values
+come from a vendor likely-voter file (per-precinct \texttt{pred.turnout},
+\texttt{pred.mamdani}, \texttt{pred.cuomo}, \texttt{pred.sliwa}, as of 9 October 2025),
+rescaled by a single logit shift so that weighted aggregates hit exogenous targets:
+borough turnout totals, and citywide shares of $0.47/0.38/0.12$.
+
+\paragraph{TX: deliberately uninformative about candidates.} There is no candidate-level
+prior at all. Each candidate's baseline is expected party turnout divided by the number of
+candidates,
+\begin{equation}
+  \widehat{\textrm{est}}_{icm} = \textrm{est}_{im} \cdot \frac{\textrm{tr}}{n_{\textrm{cand}}},
+\end{equation}
+i.e.\ a flat split. Every candidate-level signal has to come from reported precincts. For a
+primary with no precinct-level polling this is the right call, and it is a genuine design
+difference rather than an omission.
+
+\paragraph{Consequence: the two models move for different reasons.} In NYC the prior's
+relative weight decays automatically as $n_0/(n_0 + n_{\textrm{obs}})$, so the forecast
+walks from the vendor prediction toward the data. In TX there is nothing to walk from:
+early-night behavior rests entirely on $\log(\widehat{\textrm{est}})$ and a turnout-ratio
+adjustment.
+
+\section{Estimation}\label{sec:est}
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}L{3.6cm}L{5.1cm}L{5.1cm}@{}}
+\toprule
+ & \textbf{NYC} & \textbf{TX} \\
+\midrule
+Inference & conjugate Bayes, closed form & penalised ML \\
+Machinery & one weighted QR per equation & \texttt{lme4::glmer}, Laplace approx. \\
+Fallback & --- & \texttt{glmnet} Poisson, fixed $\lambda = 10$ \\
+Returns & full posterior & point estimate \\
+Draws & 500 per equation & none \\
+Regularisation & $n_0$ pseudo-rows (hand-set) & random intercepts; lasso at $\lambda=10$ \\
+Iterates? & no & yes (IRLS / coordinate descent) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The Poisson log-likelihood $\sum_i\{v_i x_i'\beta - e^{x_i'\beta}\}$ is not
+quadratic in $\beta$, so no finite-dimensional conjugate family exists. (Gamma conjugacy
+applies to a free rate $\lambda_i$; imposing $\lambda_i = e^{x_i'\beta}$ with $\beta$
+shared across precincts destroys it.) TX must therefore optimise, which yields a point
+estimate and no posterior --- and that single fact explains its uncertainty machinery,
+\S\ref{sec:unc}.
+
+\begin{memobox}{The \texttt{glmnet} fallback has an uncontrolled prior}
+\texttt{glm\_minnorm} calls \texttt{glmnet(X, y, family, lambda = 10)} with no
+\texttt{alpha}, so it is \emph{lasso}. On a representative Poisson fit (Cornyn counts,
+4{,}221 precincts, the model's own demographic covariates) $\lambda = 10$ zeroes five of
+eight coefficients --- including \texttt{dem24\_est}, the 2024 partisan baseline, and both
+race covariates --- against $\lambda_{\max} = 73.5$ for that data. The structural problem
+is not the magnitude but that $\lambda$ is a fixed absolute number while $\lambda_{\max}$
+is data-dependent: effective prior strength then varies unpredictably across contests and
+across the night. At fifty-state scale this is unmanageable.
+\end{memobox}
+
+\section{Uncertainty}\label{sec:unc}
+
+\paragraph{NYC: posterior draws, two intervals.} Coefficients are drawn as
+$\beta^{(d)} = \hat\beta + R^{-1}z^{(d)}$ with $z^{(d)} \sim \Norm(0, \sigma^{(d)2}I)$ and
+$\sigma^{(d)}$ from a scaled inverse-$\chi^2$; predictive noise resamples
+leverage-corrected residuals $e_i/(1-h_i)$ once more than 25 precincts report. Aggregation
+is draw-wise, $S_j = \sum_i s_{ij}\tau_i / \sum_i \tau_i$, so turnout and share uncertainty
+propagate jointly. Both a credible interval and an anytime-valid confidence sequence are
+reported at level $0.9999$.
+
+\paragraph{TX: conformal residual quantiles.} With no posterior, intervals are built from
+the cross-precinct spread of within-precinct share errors,
+\begin{equation}
+  r_{ic} = \frac{v_{ic}}{\sum_{c'} v_{ic'}} - \frac{\hat\mu_{ic}}{\sum_{c'}\hat\mu_{ic'}},
+  \label{eq:conf}
+\end{equation}
+whose $\alpha/2$ and $1-\alpha/2$ quantiles across precincts are then added to
+\emph{every} unreported precinct's share and summed.
+
+\begin{memobox}{The TX interval assumes perfectly correlated precinct errors}
+Adding the same quantile to all $\sim$6{,}000 precincts and summing is algebraically the
+assumption that precinct-level errors move together as one common shock. A measure of
+\emph{cross-sectional dispersion among} precincts is thereby reported as \emph{uncertainty
+about their sum}. Under independence the aggregate error would scale as $\sigma_p/\sqrt{N}$,
+roughly $77\times$ narrower; the truth lies between, but nowhere near $1\times$. Two
+further problems in the same block: the residuals are \emph{in-sample} (predicted on the
+very precincts used to fit), so there is no calibration split and no coverage guarantee ---
+hence the \texttt{approx\_} label --- and \texttt{conf\_level} defaults to $0.95$ while the
+output field is hardcoded \texttt{"approx\_conform\_99"}, so consumers are told 99\% while
+95\% quantiles are computed.
+\end{memobox}
+
+\noindent The consequence is visible in the logs. For the Senate GOP contest the point
+estimate was stable all night (Cornyn $40.6$--$43.9\%$), but the interval \emph{widened}
+from $46.4$ to a peak of $63.5$ percentage points as counting progressed, because $q_{\min},q_{\max}$
+are re-estimated each run from an increasingly heterogeneous conformity set and that growth
+swamps the narrowing from substituted precincts. At the final logged run Cornyn's interval
+was $[25.0,\,73.2]$ around a point estimate of $43.1\%$ --- fully overlapping Paxton's
+$[21.3,\,69.8]$.
+
+By contrast NYC's widths behave as theory predicts: the confidence sequence runs
+$1.33$--$1.45\times$ the credible interval at the final snapshot, the premium one pays for
+validity under roughly a hundred looks.
+
+\section{Ensembles and specifications}\label{sec:ens}
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}L{3.0cm}L{5.4cm}L{5.4cm}@{}}
+\toprule
+ & \textbf{NYC} & \textbf{TX} \\
+\midrule
+Count & 4 specs, all reported & 7 specs in 4 fallback chains, + county legacy \\
+Selection & none; consumers choose & \texttt{map\_until} takes the first that does not error \\
+Complexity & 2 to 21 covariates & intercept-only to a 43-term spline \\
+Prior strength & $n_0$ from $1.0$ to $15.5$, by eye & n/a \\
+Nonlinearity & none, all linear & $\textrm{dem24\_est}^2$, thin-plate spline \\
+Spatial & 64-term Fourier basis, \emph{disabled} & \texttt{geostratum} effects, active \\
+Partial pooling & none & \texttt{stratum\_demo} $\times$ \texttt{geostratum} random effects \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent NYC leans on many hand-picked covariates plus a strong prior; TX on few
+covariates plus strata and splines with no candidate prior. For hundreds of races the TX
+approach is the one that generalises --- one cannot hand-curate 21 covariates per contest
+--- and its $5 \times 6$ strata cross is already the partial-pooling skeleton that sparse
+legislative districts would need.
+
+\section{Two measured problems specific to each}\label{sec:probs}
+
+\paragraph{NYC: the prior is lossy in one spec, and silently so.} Because the $g$-prior
+location is the projection of $\tilde y$ onto $\operatorname{col}(X)$, only the component
+the covariates can express survives. Measuring the centered $R^2$ of each vendor prediction
+on each spec's own column span:
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+spec & Mamdani & Cuomo & Sliwa \\
+\midrule
+\texttt{simple\_pres} & $0.544$ & $\mathbf{0.073}$ & $0.711$ \\
+\texttt{simple\_pred}, \texttt{simple\_mult} & $1.000$ & $1.000$ & $1.000$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Turnout is always safe, since $\log(\textrm{pred\_turn})$ is a covariate
+everywhere. But \texttt{simple\_pres} does not contain the vendor share predictions, so its
+prior on Cuomo's share is effectively a constant: $93\%$ of the vendor's precinct-level
+Cuomo signal is annihilated by the projection. The four specs are therefore not a
+$n_0$ ladder over a common prior --- they encode materially \emph{different} priors, and
+since the prior predictive feeds the confidence sequence, that propagates into the
+reported bands.
+
+\paragraph{TX: two mechanisms never engaged.} The turnout-ratio adjustment filters on
+\texttt{stage >= 6}, but the precinct feed emits only stages $0$, $2$ and $5$ (counts
+$20/1511/2776$). The lookup table is therefore always empty and every run silently used the
+hardcoded \texttt{turn\_ratio = 0.95}. Separately, \texttt{pct\_rep} in the logs is
+non-monotonic --- $0.997 \to 0.269 \to 0.364$ --- so the feed regressed and the model's
+reported base collapsed mid-count. Both are plumbing faults rather than modeling errors,
+and both are invisible without reading the logs.
+
+\section{Where each one's design should carry into 2026}\label{sec:impl}
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}L{5.6cm}L{3.3cm}L{3.3cm}@{}}
+\toprule
+Component & Take from & Rationale \\
+\midrule
+$g$-prior on fitted values, $n_0$ in precinct-equivalents & NYC & interpretable, decays correctly, exact conjugacy \\
+Anytime-valid confidence sequence & NYC & the only honest interval under continuous monitoring \\
+Draw-wise turnout-weighted aggregation & NYC & propagates both uncertainties jointly \\
+Two-gate reporting logic (\texttt{obs} / \texttt{obs\_turn}) & NYC & separates ``votes in'' from ``count complete'' \\
+Vote mode as a dimension of the unit & TX & the composition mechanism is structural \\
+Strata + partial pooling & TX & required once districts are small \\
+Small, fixed covariate set & TX & the only thing that scales to hundreds of races \\
+\midrule
+Post-hoc normalization of independent share fits & \emph{neither} & deflates predictive variance; induces rather than estimates correlation \\
+Conformal residual quantiles & \emph{neither} & assumes perfect cross-precinct correlation \\
+Hardcoded $\lambda$ & \emph{neither} & effective strength varies with data scale \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The trial model in \texttt{tx\_gov\_trial.R} (documented separately in
+\texttt{tx\_gov\_model.tex}) is an attempt at the top half of that table: a Gaussian,
+conjugate, $g$-prior system in which vote mode is a dimension of the unit and the
+composition is factored rather than normalized after the fact.
+
+\section{Provenance of the diagnostics}\label{sec:prov}
+
+\begin{itemize}
+  \item NYC run log: \texttt{nyc/reports/data-out/nyc\_small\_history.json}, 24 records
+        2025-11-05 02:31--05:27 UTC plus one at 19:48.
+  \item NYC final snapshot and interval widths: \texttt{nyc\_current.json}.
+  \item NYC projection losses: centered $R^2$ of each \texttt{pred\_*} column on each
+        spec's design, computed on \texttt{nyc/data/nyc/nyc\_pre.parquet} (4{,}061 rows).
+  \item NYC estimator internals: \texttt{forecast\_prec}, \texttt{lm\_bayes},
+        \texttt{sim\_fitted}, \texttt{cred\_int}, \texttt{conf\_seq}, \texttt{fit\_t},
+        read from the installed \texttt{enightmodels} lazy-load database.
+  \item TX run log and interval widths: \texttt{tx-prim-26/data-out/log\_preds.ndjson},
+        21 records 2026-03-04 01:38--21:14. Confirmed real data (\texttt{src = 0}): the
+        logged times match none of the 31 hardcoded \texttt{fake\_times} on 2026-03-03.
+  \item TX stage distribution: \texttt{tx-prim-26/data-out/precincts.csv}.
+  \item \texttt{glmnet} shrinkage: Poisson fit on Cornyn counts from the same file.
+\end{itemize}
+
+\noindent One caveat on the NYC interval diagnostics: \texttt{fit\_t} computes
+\texttt{MASS::fitdistr(x, "t")} and then discards the result, always returning
+$(\textrm{mean}, \textrm{sd}, \textrm{df} = \infty)$. Both NYC intervals are therefore
+Gaussian approximations rather than the $t$-fits the function name implies, and
+\texttt{cred\_int} measures roughly $283\times$ slower than a plain quantile call entirely
+on discarded computation. \texttt{cred\_int} also has no $[0,1]$ clamp, so a small
+candidate's lower bound can print negative, though it did not at the final snapshot.
+
+\end{document}
