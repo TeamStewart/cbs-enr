@@ -17,16 +17,23 @@ suppressPackageStartupMessages({
 })
 source("scripts/sim/sim_snapshot.R")
 
+### Setting knobs
+SCENARIO = if (length(args) >= 1) args[1] else "turnout_partisan_R0.1"
+PATH_DROPBOX = Sys.getenv("PATH_DROPBOX", unset = "/Users/dskinnion/MIT Dropbox/Dominic Skinnion/2024 Election Results")
+Sys.setenv(TURNOUT_DEMO = "lean=-0.1")
+
+
 args = commandArgs(trailingOnly = TRUE)
-SCENARIO = if (length(args) >= 1) args[1] else "tx_base"
+# SCENARIO = if (length(args) >= 1) args[1] else "tx_base"
 SEED     = if (length(args) >= 2) as.integer(args[2]) else 2026L
 
-PATH_DROPBOX = Sys.getenv("PATH_DROPBOX", unset = "~/Library/CloudStorage/Dropbox/2024 Election Results")
+# PATH_DROPBOX = Sys.getenv("PATH_DROPBOX", unset = "~/Library/CloudStorage/Dropbox/2024 Election Results")
 DIR_IN   = file.path(PATH_DROPBOX, "26_general", "input_data", "model_inputs")
 DIR_OUT  = file.path(Sys.getenv("SIM_OUT", unset = file.path(PATH_DROPBOX, "26_sim")), SCENARIO)
 STATE    = "TX"
 ELECTION = ymd("2026-11-03")
 MODES    = c("mail", "early", "eday")
+
 
 # ========================================
 ## Parameters (logit-scale SDs unless noted)
@@ -64,7 +71,7 @@ P = list(
   # is the case that flatters the simple model; this is the case that should not.
   # Env: TURNOUT_DEMO="his=-0.4,col=0.2" (log scale per unit share, omitted = 0).
   turnout_demo      = {
-    z = c(his = 0, bla = 0, col = 0, age = 0)
+    z = c(his = 0, bla = 0, col = 0, age = 0, lean = 0)
     spec = Sys.getenv("TURNOUT_DEMO", unset = "")
     if (nzchar(spec)) for (kv in strsplit(spec, ",")[[1]]) {
       p2 = strsplit(trimws(kv), "=")[[1]]
@@ -207,7 +214,8 @@ geos = prec |>
     demo_lp  = P$turnout_demo[["his"]] * (yg_pred_his - weighted.mean(yg_pred_his, est_turnout)) +
                P$turnout_demo[["bla"]] * (yg_pred_bla - weighted.mean(yg_pred_bla, est_turnout)) +
                P$turnout_demo[["col"]] * (p_col       - weighted.mean(p_col,       est_turnout)) +
-               P$turnout_demo[["age"]] * (p_age_65_up - weighted.mean(p_age_65_up, est_turnout)),
+               P$turnout_demo[["age"]] * (p_age_65_up - weighted.mean(p_age_65_up, est_turnout)) +
+               P$turnout_demo[["lean"]] * (lz - weighted.mean(lz, est_turnout)),
     demo_m   = exp(demo_lp) / weighted.mean(exp(demo_lp), est_turnout),   # preserves the total
     ballots  = pmin(est_turnout * P$turnout_ratio * demo_m *
                       exp(turn + rnorm(n(), 0, P$precinct_turnout_sd)),
