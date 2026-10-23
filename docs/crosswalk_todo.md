@@ -5,6 +5,11 @@ Goal: for every state in `input_data/yougov_precinct_frame.parquet`, write
 Follow `docs/precinct_crosswalks.md` (rules and tiers) and use
 `scripts/util/crosswalks/nc.R` as the reference implementation.
 
+The crosswalk queue (frame counties whose ENR precincts changed since the
+state's last build) comes from `cycle.R status`; see `docs/enr_cycle.md`.
+After rebuilding a state, run
+`Rscript scripts/util/enr_cycle/cycle.R xwalk-done {ST}`.
+
 **Only build a state once it has 26_general ENR data.** The ENR source is
 `26_general/{ST}/clean/` and nothing else: do not use `26_primaries/`,
 `26_dashtest/` or older folders. States without that data stay in `waiting`.
