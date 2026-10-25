@@ -122,3 +122,39 @@ done, what is half-finished, what to do next.
 - 2026-10-23 10:09 xwalk-done PA: 3 rows (chester, delaware, philadelphia)
 - 2026-10-23 10:10 SESSION end: done - discovery for all 338 rows (0 pending; FL electionsfl ID scan found 21 counties; Maricopa, NE, Wayne, Franklin, MN, Allegan, Hardin, Dane, Rock, Angelina found); verify 85+5 rows; enightdata fixes uncommitted on nov26-scrapers (write_local creates clean/ dir, NE general race IDs, Wayne TotalVote CON/ST pages, EV nameless option = write-in; document+test clean); crosswalks rebuilt TX FL MI CA (+SD consolidated) and new AZ NE OH PA scripts, all xwalk-done; sheet --apply wrote 47 cells, no conflicts. half-done - 19 verify fails are source-side (FL Bay/Clay/Hamilton/Manatee/Pasco/St. Lucie Precincts/Reports 404; AZ Pima, MI Midland, WA x4, VA EV no precinct data; CA contra costa unpublished version; MI Allegan no report links; NY Columbia premature path). next - recheck those fails and not_posted rows (daily from Nov 1); UT path (General11032026 export 404); Mason: decide NE crosswalk raw/ dependency, Solano/Sonoma consolidated build, test votes in PA chester/philadelphia and MI Wayne (trust_stage/build), Angelina TX moved off PDF (county totals only), commit docs/enr_cycle + crosswalk scripts + enightdata.
 - 2026-10-23 10:34 
+- 2026-10-25 16:58 probe all : 133 rows, 0 found
+- 2026-10-25 16:59 verify UT : pass (ts 2026_10_22_11_45_30; house1,house2,house3,house4; methods all; votes 0)
+- 2026-10-25 16:59 verify AZ Pima: fail (No target races (zero rows) for AZ; check the race names or the source.)
+- 2026-10-25 16:59 verify MI Allegan: fail (subscript out of bounds)
+- 2026-10-25 16:59 verify MI Midland: fail (`scrape_ev()` found no precinct results in <https://app.enhancedvoting.com/cdn/results/midland-county-mi/export-November_3_2026.json> (site has not posted precinct data yet).)
+- 2026-10-25 16:59 verify VA : fail (cannot open the connection)
+- 2026-10-25 16:59 verify WA Cowlitz: fail (`scrape_ev()` found no precinct results in <https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json> (site has not posted precinct data yet).)
+- 2026-10-25 16:59 verify WA Pacific: fail (`scrape_ev()` found no precinct results in <https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json> (site has not posted precinct data yet).)
+- 2026-10-25 16:59 verify WA Skamania: fail (`scrape_ev()` found no precinct results in <https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json> (site has not posted precinct data yet).)
+- 2026-10-25 16:59 verify WA Wahkiakum: fail (`scrape_ev()` found no precinct results in <https://app.enhancedvoting.com/cdn/results/washington/export-20261103.json> (site has not posted precinct data yet).)
+- 2026-10-25 16:59 verify CA contra costa: fail (HTTP 405 Method Not Allowed.)
+- 2026-10-25 16:59 verify FL Bay: fail (HTTP 404 Not Found.)
+- 2026-10-25 16:59 verify FL Clay: fail (HTTP 404 Not Found.)
+- 2026-10-25 17:00 verify FL Hamilton: fail (HTTP 404 Not Found.)
+- 2026-10-25 17:00 verify FL Manatee: fail (HTTP 404 Not Found.)
+- 2026-10-25 17:00 verify FL Pasco: fail (HTTP 404 Not Found.)
+- 2026-10-25 17:00 verify NY Columbia: fail (cannot open the connection)
+- 2026-10-25 17:00 verify AL Madison: fail (HTTP 405 Method Not Allowed.)
+- 2026-10-25 17:00 verify FL St. Lucie: fail (HTTP 404 Not Found.)
+- 2026-10-25 17:00 verify CA sonoma: fail (HTTP 405 Method Not Allowed.)
+- 2026-10-25 17:02 verify VA : pass (ts 2026_10_23_17_15_29; house1,house10,house11,house2,house3,house4,house5,house6,house7,house8,house9,sen; methods mail,early,eday,prov; votes 0)
+- 2026-10-25 17:07 xwalk-done VA: 1 rows ()
+- 2026-10-25 17:07 sheet --apply: wrote 3 cells (UT  path; UT  updated; VA  path); metadata.csv refreshed
+- 2026-10-25 17:08 verify VA : pass (ts 2026_10_23_17_15_29; house1,house10,house11,house2,house3,house4,house5,house6,house7,house8,house9,sen; methods mail,early,eday,prov; votes 0)
+- 2026-10-25 17:10 verify GA : pass (ts 2026_10_23_14_24_23; gov,house1,house10,house11,house12,house13,house14,house2,house3,house4,house5,house6,house7,house8,house9,sen; methods mail,early,eday,prov; votes 0)
+- 2026-10-25 17:13 verify GA : pass (ts 2026_10_23_14_24_23; gov,house1,house10,house11,house12,house13,house14,house2,house3,house4,house5,house6,house7,house8,house9,sen; methods mail,early,eday,prov; votes 0)
+- 2026-10-25 17:16 verify GA : fail (Can't select columns that don't exist. ✖ Column `precinct_results` doesn't exist.)
+- 2026-10-25 17:18 verify GA : pass (ts 2026_10_23_14_24_23; gov,house1,house10,house11,house12,house13,house14,house2,house3,house4,house5,house6,house7,house8,house9,sen; methods mail,early,eday,prov; votes 0)
+- 2026-10-25 17:23 xwalk-done GA: 1 rows ()
+- 2026-10-25 17:23 sheet --apply: wrote 2 cells (GA  path; GA  updated); metadata.csv refreshed
+- 2026-10-25 17:24 verify UT : pass (ts 2026_10_22_11_45_30; house1,house2,house3,house4; methods all; votes 0)
+- 2026-10-25 17:24 SESSION end: done - probe 133 rows (0 found; Clarity results unreliable, see below); hand-found UT (cdn/results/Utah/ capital U), VA (lowercase virginia/ path), GA (11032026GeneralAndSpecialElection); FL Broward (LVT id 1 is a November Mock), Seminole, OH lake rechecked not_posted; verify 17 queue rows + UT/VA/GA: UT, VA, GA pass, rest source-side as on 10-23; enightdata fixes uncommitted on nov26-scrapers (scrape_ev keeps EV precinct id as precinct_code and no longer breaks when hoist drops precinct_results; scrape_ga keys geo on EV id; .ga_candidates clement rep->ind; tests added, document+test clean, 771 pass); new crosswalks va.R (99.3% ENR+L2) and ga.R (99.1% ENR, 99.1% L2), xwalk-done VA GA; sheet --apply wrote 5 cells (UT path+updated, VA path, GA path+updated), no conflicts. half-done - Clarity (results.enr.clarityelections.com) returns HTTP 405 AWS WAF captcha to every request from this IP since this session's probe; CA sonoma (passed 10-23) now fails, contra costa and AL Madison untestable, and today's Clarity not_posted results are not trustworthy. next - rerun Clarity probe/verify from another IP or after the block lifts; recheck source-side fails and not_posted rows daily from Nov 1. Mason: check Clarity block before election night (automation.R needs Clarity from its host); decide GA crosswalk raw/ JSON dependency (same question as NE); GA geo now EV ids (affects anything keyed on old GA name geos); McIntosh GA South Darien has empty EV id; NE raw/, Solano/Sonoma, test votes PA chester/philadelphia MI Wayne, Angelina TX still open; commit docs/enr_cycle + crosswalk scripts (va.R, ga.R) + enightdata.
+- 2026-10-25 17:31 verify CA sonoma: pass (ts 2026_10_15_19_50_07; gov,house1,house2,house4; methods mail,eday; votes 0)
+- 2026-10-25 17:31 verify CA contra costa: fail (Clarity returned no rows for CA; the site may not publish reports/detailxml.zip (summary only).)
+- 2026-10-25 17:31 verify AL Madison: fail (No target races (zero rows) for AL; check the race names or the source.)
+- 2026-10-25 17:32 SESSION addendum: Clarity WAF block lifted by ~2026-10-25 evening (curl 200, no cookie needed); CA sonoma verify pass again (403 geos); contra costa still source-side (version 382053, detailxml.zip invalid); AL Madison still runoff EID. Today's Clarity probe not_posted results still suspect; rerun Clarity probe at a slower rate.

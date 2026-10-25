@@ -107,7 +107,7 @@ counties) and TX (Kaufman, Wood). NY also has Columbia but is not in the frame.
 | AZ | 9 | 1,545 | az_20260901 | `0009`, `0133` | partial 2026-10-23 (ENR: Cochise, Maricopa; L2 all 9 counties) |
 | CA | 17 | 23,685 (26,700 rows) | ca_20260901 | `47252`, `1204` | partial 2026-10-23 (L2 all counties; ENR San Francisco, Sonoma singletons; San Diego and Solano consolidated builds; Sonoma `07` consolidations NA) |
 | FL | 31 | 3,764 (4,342 rows) | fl_20261011 | `8735`, `127` | partial 2026-10-23 (ENR: 21 frame counties; see Results) |
-| GA | 159 (all) | 2,581 | ga_20261002 | `CP04A`, `029` | waiting |
+| GA | 159 (all) | 2,581 (2,618 rows) | ga_20261006 | `CP04A`, `029` | done 2026-10-25 |
 | IA | 99 (all) | 1,658 | ia_20260901 | `DOWS`, `FC2` (name-like) | waiting |
 | MI | 31 | 2,737 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-23 (ENR: Berrien, Branch, Clare, Isabella, Kent, Newaygo, Osceola, Roscommon, Saginaw, Van Buren, Wayne) |
 | NE | 93 (all) | 1,321 | ne_20261002 | `03`, `16` | done 2026-10-23 |
@@ -115,7 +115,7 @@ counties) and TX (Kaufman, Wood). NY also has Columbia but is not in the frame.
 | OH | 13 | 4,153 (4,524 rows) | oh_20260929 | `83AHA`, `31BLU` | partial 2026-10-23 (ENR: Franklin, Stark; L2 all counties) |
 | PA | 19 | 6,217 | pa_20260911 | `2403`, `1680100`, `011905S` | partial 2026-10-23 (ENR: Chester, Delaware, Philadelphia; L2 all 19 counties) |
 | TX | 32 | 6,153 (45 blank; 11,563 rows) | tx_20261011 | `2305`, `4608` | partial 2026-10-23 (ENR: Bexar, Harris, Kaufman, Lamar, Wood) |
-| VA | 133 (all) | 2,534 | va_20260901 | `0206`, `0412` | waiting |
+| VA | 133 (all) | 2,534 (2,541 rows) | va_20261006 | `0206`, `0412` | done 2026-10-25 |
 | WA | 4 | 167 | wa_20260917 | `0001` | waiting |
 
 Statuses: `waiting` means no 26_general ENR data yet. `ready` means data has
@@ -135,6 +135,61 @@ some counties only; list them in Results. `done` means built.
 > Results entry in `docs/crosswalk_todo.md`.
 
 ## Results
+
+Run of 2026-10-25 (ENR cycle): new state scripts `va.R` and `ga.R`.
+
+- GA (2026-10-25, ENR `GA_latest` as of 2026-10-23, statewide SOS Enhanced
+  Voting export, votes still 0; L2 ga_20261006): 2,618 frame rows (2,581
+  precincts). 99.1% have ENR, 99.1% have L2, 98.3% have both.
+  - `scrape_ga()` now keys geo on the EV precinct `id` (the official code)
+    instead of the `name` label ("Allgood Elem" for DeKalb AA, "001 Harbins A"
+    for Gwinnett 001), enightdata change uncommitted. With ids, 2,362 frame
+    precincts join directly; ENR tiers add `upper` 19 (Fulton `04i`), `std` 121
+    (zero-padding, Troup `01-Broad St`), `num` 9 (Clayton `MO1`), `lead` 47
+    (Henry `25` = `25 LOCUST GROVE`, White `011`).
+  - `ga.R` reads the EV labels from the raw JSON of the same scrape
+    (`GA/raw/GA_{stamp}.json`), as `ne.R` does, to bridge L2 names to codes
+    (Cobb `ACWORTH 1A`, Clayton `LOVE JOY 1`). L2 tiers: `code_exact` 1,338,
+    `paren_code` 552, `std` 254, `enr_name` 205, `paren_lead` 48, `enr_name1` 46,
+    `lead_sfx` 34, `lead_code` 24, `num_trim` 20, `head_code` 17, `enr_nospace`
+    10, `lead_pnum` 8, `lead_lead` 4. Median ratios 0.99-1.02 per tier.
+  - NA by design: Burke ENR (renumbered for 2026: ENR has 1, 16, 17 and lacks
+    9, 14, while frame and L2 agree on 02-15). L2 merges that ENR still splits:
+    Dougherty 02 (L2 5,074 = frame 01 + 02) and Cobb WG02 (WADE GREEN 2 4,457 =
+    WG01 + WG02), so L2 is NA there (and for the absorbed 01/WG01).
+  - Left NA, unresolved: Morgan (ENR `46026`, `02`, `03`, `05` vs frame
+    BUCKHEAD, CENTENNIAL, GIBBS, REC), Dodge ENR `PLAIN`/`PONDT` vs frame
+    PLAINFIELD/RHINE, Fayette frame 20A vs ENR 20, Newton 23FV/25HB, Forsyth
+    21, Gordon 849-B, Lanier 300 (1 voter); L2 misses Jackson 1000-4000 (L2
+    `1`-`4`), Cobb Mount Bethel/CA01/SF01 and a few singletons.
+  - ENR precincts not in the frame: Fulton 08F2, SC08A, UC01C, UC033; McIntosh
+    "South Darien" has an empty EV id (geo ends in `_`).
+
+
+- VA (2026-10-25, ENR `VA_latest` as of 2026-10-23, statewide Enhanced Voting
+  export, votes still 0; L2 va_20261006): 2,541 frame rows (2,534 precincts; 7
+  split across two CDs). 99.3% have ENR, 99.3% have L2, 99.3% have both.
+  - County names: ENR (via `cbs_counties`) drops " CITY" from independent cities
+    unless a county of the same name exists, and spells out KING AND QUEEN; L2
+    adds " COUNTY". `va.R` maps both to the frame names.
+  - ENR ids are `102-RICH CREEK`; the leading number zero-padded to 4 is the
+    frame code. A code match is kept only if the names also agree (ignoring
+    spacing and punctuation), plus 3 checked renames: Campbell 402 COURTHOUSE,
+    Emporia 601/701 (frame DISTRICT 6/7, ENR and L2 PRECINCT 6-1/7-1, ratios
+    0.96-0.99).
+  - L2 tiers: `name_exact` 2,424, `name_std` 81, `code_lead` 18 (leading number;
+    renames such as Bristol FIRST PRECINCT -> FIRST WARD, Spotsylvania 102
+    BERKELEY -> BLAYDES CORNER, all ratios 0.95-1.05), `name_key` 4.
+  - NA by design (merges and splits since the frame vintage, ENR and L2 both
+    NA): Buchanan 0103 (+0102 BLACKEY) and 0403 (+0405 GRUNDY); Highland 0001
+    (+0003); Rockbridge 0101 (+0102), 0302 (+0303), 0401 (+0403); Russell 0101
+    and 0103 (+ parts of 0102); Amherst 0201 (split into new 203 TOWN OF
+    AMHERST) and Norfolk 0405 (split into new 416 NORFOLK STATE). The absorbed
+    frame precincts have no ENR or L2 row.
+  - Check on real results: Halifax 0603 MT CARMEL is in the frame and L2 (1,629
+    vs 1,659) but missing from the ENR export. Charlottesville 0202 TRAILBLAZER
+    is an exact match with ratio 1.32 (4,355 vs 3,305) and no unmatched
+    neighbour, probably a boundary shift; kept.
 
 Rerun of 2026-10-23 (ENR cycle: new clean files from `cycle.R verify`; L2 and
 frame unchanged). New state scripts `az.R`, `ne.R`, `oh.R`, `pa.R`; entries below.
