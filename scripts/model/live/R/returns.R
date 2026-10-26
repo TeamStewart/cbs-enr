@@ -184,6 +184,111 @@ report_dropped = function(d, label = NULL, n_show = 6) {
   invisible(d)
 }
 
+# ---- county x mode observations from the bucket rows -------------------------------
+# The rows returns_dropped() calls `unknown_geo` are not noise: for AK and NC they are the
+# county/site-level reports that carry 31% of the state's vote. This turns them into one
+# observation per (county, mode) so something downstream can use them, instead of only
+# counting them as a loss.
+#
+# DELIBERATELY NARROW, because every one of these qualifiers has a counterexample in the
+# repo and getting any of them wrong produces an UP-ONLY error that no turnout metric sees:
+#
+#   bucket rows only      a row qualifies only if its geo is ABSENT from `cells` AND its
+#                         label classifies as a bucket. Both conditions, not either. The
+#                         set-difference catches Caswell `PROVI` and Henderson `EV`, which
+#                         are real NC PRECINCTS whose labels look like buckets
+#                         (make_reporting_levels.R's own scoring calls them out) -- they
+#                         are in `cells`, so they are excluded here and their votes stay
+#                         where they belong, in cell_counts().
+#   never `all` or `adv`  an aggregate must never be summed beside its parts. `all` sits
+#                         on KNOWN precincts (returns.R's unknown_method class), so the
+#                         set-difference already drops it; bucket_class() returns NA for it
+#                         as a second line of defence. 512 CA precincts in county 038 file
+#                         `all` AND mail AND eday simultaneously, so this is live.
+#   the GEO's county      keyed on the 3-digit code in the geo, never on `cells$county`.
+#                         In AK those are DIFFERENT PARTITIONS: 40 geo codes against 30
+#                         borough names, 13 codes spanning more than one borough (code 037
+#                         spans 7) and 11 boroughs spanning more than one code, with no
+#                         containment either way. Grouping AK buckets by borough would
+#                         require splitting them, which is the allocation assumption this
+#                         is supposed to avoid.
+#   one race              asserted, like cell_counts(). The headline 153,478 AK figure is a
+#                         sum across all three AK contests; used as one race's total it
+#                         would be 3x.
+#   folded to MODES       prov and transfer are not modes (BUCKET_FOLD in vote_modes.R).
+#
+# Returns one row per (county, mode): c_dem, c_rep, c_oth, c_tot, n_geo, complete.
+# `attr(., "unmatched")` carries the dropped geos that did NOT qualify, so a caller can
+# tell "no buckets" from "buckets we failed to parse" -- the distinction that makes an
+# empty result safe to act on.
+bucket_counts = function(cells, returns) {
+  if (n_distinct(returns$race_id) > 1) stop("bucket_counts() takes one race at a time")
+  known = unique(as.character(cells$geo))
+  r = returns |>
+    mutate(geo = as.character(geo), method = as.character(method)) |>
+    filter(!geo %in% known)
+  empty = tibble(county = character(), mode = character(), c_dem = numeric(),
+                 c_rep = numeric(), c_oth = numeric(), c_tot = numeric(),
+                 n_geo = integer(), complete = logical())
+  if (!nrow(r)) return(structure(empty, unmatched = r[0, ]))
+  r = r |>
+    mutate(county = geo_county(geo), label = geo_label(geo), bk = bucket_class(label))
+  # An unknown geo whose label does NOT look like a bucket is a SPINE failure -- a precinct
+  # id that was never reconciled -- not a county-level report. Absorbing it into a county
+  # total would silently convert a join bug into extra votes, so it is returned separately.
+  ok = !is.na(r$bk) & !is.na(r$county)
+  unmatched = r[!ok, ]
+  r = r[ok, ] |> mutate(mode = unname(BUCKET_FOLD[bk]))
+  if (any(is.na(r$mode)))
+    stop("bucket_class() returned a class with no BUCKET_FOLD entry: ",
+         paste(unique(r$bk[is.na(r$mode)]), collapse = ", "))
+  out = r |>
+    summarize(c_dem = sum(votes[party == "dem"], na.rm = TRUE),
+              c_rep = sum(votes[party == "rep"], na.rm = TRUE),
+              c_oth = sum(votes[!party %in% c("dem", "rep")], na.rm = TRUE),
+              n_geo = n_distinct(geo),
+              complete = all(complete),
+              .by = c(county, mode)) |>
+    mutate(c_tot = c_dem + c_rep + c_oth) |>
+    arrange(county, mode)
+  structure(out, unmatched = unmatched)
+}
+
+# Prints nothing when there are no buckets. Reports the unmatched set even when it is the
+# only thing present, because "we found no buckets" and "we could not parse the buckets we
+# found" must not look the same.
+report_buckets = function(b, cells = NULL, label = NULL) {
+  um = attr(b, "unmatched")
+  tag = if (is.null(label)) "" else paste0(" [", label, "]")
+  if (nrow(b)) {
+    cli::cli_alert_info(paste0(
+      "bucket_counts{tag}: {prettyNum(sum(b$c_tot), big.mark = ',')} votes on ",
+      "{sum(b$n_geo)} county/site geo{?s} -> {nrow(b)} county x mode observation{?s} ",
+      "({n_distinct(b$county)} county(ies))"))
+    for (m in sort(unique(b$mode))) {
+      z = b[b$mode == m, ]
+      cli::cli_alert_info(paste0("  {m}: {nrow(z)} county(ies), ",
+        "{prettyNum(sum(z$c_tot), big.mark = ',')} votes, ",
+        "{sum(z$complete)} flagged complete"))
+    }
+    if (!is.null(cells)) {
+      miss = setdiff(unique(b$county), geo_county(cells$geo))
+      if (length(miss))
+        cli::cli_alert_danger(paste0("  {length(miss)} bucket county(ies) are not ",
+          "in `cells` ({.val {miss}}) -- their votes belong to no modelled ",
+          "precinct and must NOT be used as a county total."))
+    }
+  }
+  if (nrow(um)) {
+    g = unique(um$geo)
+    cli::cli_alert_warning(paste0(
+      "bucket_counts{tag}: {prettyNum(sum(um$votes, na.rm = TRUE), big.mark = ',')} votes ",
+      "on {length(g)} unknown geo{?s} that do NOT look like buckets -- these are ",
+      "unreconciled precinct ids, not county reports: {.val {utils::head(g, 6)}}"))
+  }
+  invisible(b)
+}
+
 # ---- down to precinct x method counts ---------------------------------------------
 # One race's returns -> one row per row of `cells`, in the same order:
 #   c_dem, c_rep, c_oth, c_tot, complete

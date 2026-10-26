@@ -40,33 +40,12 @@ MIN_METHOD_SHARE   = 2 / 3   # share of evidence counties carrying a method, to 
 MIN_LEVEL_SHARE    = 2 / 3   # agreement among them on the level, to infer it
 
 # ---- the bucket-label vocabulary --------------------------------------------------
-# A reporting bucket is a geo whose precinct id is not a precinct: an early-voting site,
-# a county mail/absentee pile, a provisional pile, a transfer pile. Matching order is the
-# one lookups/README.md already fixes for vote_mode_map.csv -- mail -> prov -> early ->
-# eday -- so `EV MAIL` reaches mail and `EARLY VOTING PROVISIONAL` reaches prov.
-#
-# VALIDATED, not guessed: scored against `virtual_precinct` on all 2,908 distinct
-# (county, precinct_id) labels in NC 2024 Governor it gets 249 of 250 virtual labels
-# (missing only Hoke's `ROCKFISH`, an EV site named after a place) with 2 false positives
-# (Caswell `PROVI` and Henderson `EV`, both of which look like buckets and are flagged
-# virtual = FALSE upstream). Re-score it with the block at the bottom of this file after
-# any edit.
-BUCKET_RX = c(
-  mail     = "(^|[^A-Z])(ABS|ABSEN[A-Z]*|MAIL|BY[ -]?MAIL)([^A-Z]|$)",
-  prov     = "(^|[^A-Z])(PROV[A-Z]*|PROVSIONAL|QUESTION[A-Z]*|CHALLENGE[A-Z]*)([^A-Z]|$)",
-  early    = "(^|[^A-Z])(EV|EARLY[A-Z]*|ONE ?STOP|BOE|CURBSIDE)([^A-Z]|$)|^EV[A-Z]{2,4}$",
-  transfer = "(^|[^A-Z])(TRANS[A-Z]*)([^A-Z]|$)"
-)
-
-# NA for anything that looks like a precinct.
-bucket_class = function(label) {
-  u = toupper(label)
-  case_when(str_detect(u, BUCKET_RX[["mail"]])     ~ "mail",
-            str_detect(u, BUCKET_RX[["prov"]])     ~ "prov",
-            str_detect(u, BUCKET_RX[["early"]])    ~ "early",
-            str_detect(u, BUCKET_RX[["transfer"]]) ~ "transfer",
-            TRUE ~ NA_character_)
-}
+# BUCKET_RX / bucket_class() now live in live/R/vote_modes.R, because they are needed at
+# RUN time too (returns.R::bucket_counts turns tonight's dropped bucket rows into county x
+# mode observations). Two copies of a regex that decides where 31% of AK's and NC's votes
+# go is not a risk worth taking. score_classifier() at the bottom of this file is still the
+# way to re-score it after an edit.
+source("scripts/model/live/R/vote_modes.R")
 
 # 2024 clean `vote_mode` -> canonical method. DROP is not a vote (CONTRACT.md section 7).
 MODE_2024 = c("Election Day" = "eday", "Early Voting" = "early", "Absentee/Mail" = "mail",

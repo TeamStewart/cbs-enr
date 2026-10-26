@@ -26,6 +26,6 @@ suppressPackageStartupMessages({
 local({
   here = "scripts/model/live/R"
   if (!dir.exists(here)) stop("Run from the cbs-enr folder (scripts/model/live/R not found from ", getwd(), ")")
-  for (f in c("paths.R", "cells.R", "returns.R", "model_swing.R", "model_cory.R", "model_medsl.R", "model_cpois.R", "model_cprec.R", "run.R", "output.R", "counties.R", "races.R", "cbs_county_pull.R"))
+  for (f in c("paths.R", "vote_modes.R", "cells.R", "returns.R", "model_swing.R", "model_cory.R", "model_medsl.R", "model_cpois.R", "model_cprec.R", "run.R", "output.R", "counties.R", "races.R", "cbs_county_pull.R"))
     source(file.path(here, f))
 })
