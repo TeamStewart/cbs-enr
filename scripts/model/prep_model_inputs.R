@@ -83,8 +83,14 @@ find_26_general = function() {
 }
 DIR_26 = find_26_general()
 DIR_IN = file.path(DIR_26, "input_data")
-DIR_OUT = file.path(DIR_IN, "model_inputs")
-dir.create(DIR_OUT, showWarnings = FALSE)
+# MODEL_INPUTS_OUT redirects the WRITES only; every read still comes from DIR_26. That
+# makes a dry run possible: this script's outputs are shared artifacts in Dropbox that
+# other people's work joins against, so "run it and see" is otherwise destructive.
+DIR_OUT = Sys.getenv("MODEL_INPUTS_OUT", unset = file.path(DIR_IN, "model_inputs"))
+dir.create(DIR_OUT, showWarnings = FALSE, recursive = TRUE)
+if (DIR_OUT != file.path(DIR_IN, "model_inputs"))
+  cli::cli_alert_warning("MODEL_INPUTS_OUT set -- writing to {.path {DIR_OUT}}, \
+                          NOT the shared model_inputs folder")
 
 path_frame   = file.path(DIR_IN, "yougov_precinct_frame.parquet")
 path_method  = file.path(DIR_IN, "yougov_precinct_frame_method.parquet")
@@ -490,6 +496,78 @@ mode_hist = prec |>
   pivot_longer(-geo, names_to = c("yy", "method"), names_pattern = "^vote(\\d{2})_(mail|early|eday)$", values_to = "voters") |>
   left_join(elections, by = "yy") |>
   transmute(geo, election, method, voters = as.integer(voters), is_midterm)
+
+# ---- OFFICIAL county x mode composition, where L2's split is known WRONG ------------
+# L2's mode columns are not uniformly trustworthy. For NC they are wrong in three of five
+# elections, including 2022 -- the one the model uses, because 2026 is a midterm:
+#
+#   NC 2022      mail    early    eday
+#   L2           0.579   0.000    0.421
+#   OFFICIAL     0.049   0.531    0.416
+#
+# Note WHAT is wrong: L2's election-day share is almost exactly right and its per-precinct
+# TOTAL is sound (3,437,858 across 2,619 precincts against an actual ~3.78M). The whole
+# error is that early's 53% was coded into mail. So this replaces the SPLIT ONLY and keeps
+# every precinct's L2 total -- it is a reallocation, not a new vote count, and the state's
+# total voters are unchanged by construction (asserted below).
+#
+# Applied per state from lookups/mode_composition.csv where `replaces_l2` is TRUE, which
+# today is NC alone: AK, CA and MI were checked against the same official returns and
+# their L2 splits agree to within ~0.01 (see make_mode_composition.R's header for the
+# numbers). Do not widen this without that measurement for the state in question.
+#
+# County grain, applied to every precinct in the county, because the official source joins
+# at county level for all 100 NC counties but only 17% at precinct level (CONTRACT.md's
+# priority-states table). That is a smaller concession than it sounds: the real variation
+# is mostly BETWEEN counties (NC eday 0.269-0.721, median 0.428), and both
+# cells_from_inputs() and derive_mode_priors() already shrink a precinct toward its
+# county, so a county split is what they would mostly end up using anyway.
+P_MODE_COMP = "scripts/model/lookups/mode_composition.csv"
+comp = if (!file.exists(P_MODE_COMP)) NULL else
+  readr::read_csv(P_MODE_COMP, show_col_types = FALSE, progress = FALSE) |>
+    filter(state == STATE, replaces_l2)
+if (!is.null(comp) && nrow(comp)) {
+  el_comp = paste0(unique(comp$year), "_general")
+  if (length(el_comp) != 1) cli::cli_abort("mode_composition.csv has >1 year for {STATE}")
+  if (!el_comp %in% mode_hist$election)
+    cli::cli_abort("mode_composition.csv covers {el_comp}, which is not in the L2 history")
+  sh = comp |> transmute(ckey = county_key(county_name), method, share)
+  before_tot = sum(mode_hist$voters[mode_hist$election == el_comp], na.rm = TRUE)
+  keep = filter(mode_hist, election != el_comp)
+  old  = filter(mode_hist, election == el_comp)
+  im   = old$is_midterm[1]
+  # each precinct's L2 TOTAL for that election, re-split by its county's official shares
+  pt = old |> summarize(tot = sum(voters, na.rm = TRUE), .by = geo) |>
+    left_join(select(prec, geo, county_name), by = "geo") |>
+    mutate(ckey = county_key(county_name))
+  miss = pt |> filter(!ckey %in% sh$ckey)
+  if (nrow(miss))
+    cli::cli_alert_warning("{nrow(miss)} {STATE} precinct(s) in {nrow(distinct(miss, ckey))} \
+                            county(ies) are absent from mode_composition.csv -- they KEEP \
+                            their L2 split: {.val {head(unique(miss$county_name), 4)}}")
+  redone = pt |>
+    inner_join(sh, by = "ckey", relationship = "many-to-many") |>
+    transmute(geo, election = el_comp, method,
+              voters = as.integer(round(tot * share)), is_midterm = im)
+  mode_hist = bind_rows(keep, filter(old, !geo %in% redone$geo), redone)
+  after_tot = sum(mode_hist$voters[mode_hist$election == el_comp], na.rm = TRUE)
+  # a reallocation must not move the total. Integer rounding per cell is the only slack.
+  if (abs(after_tot - before_tot) > nrow(redone))
+    cli::cli_abort("re-splitting {el_comp} moved {STATE}'s total from \
+                    {before_tot} to {after_tot} -- that is a reallocation bug, not rounding")
+  newsh = redone |> summarize(v = sum(voters), .by = method) |> mutate(sh = v / sum(v))
+  cli::cli_alert_success("{STATE} {el_comp} mode split replaced from official returns on \
+                          {n_distinct(redone$geo)} precinct(s): \
+                          {paste(sprintf('%s %.3f', newsh$method, newsh$sh), collapse = '  ')} \
+                          (total {format(after_tot, big.mark = ',')}, was \
+                          {format(before_tot, big.mark = ',')})")
+  # The model reads ONE election (MODE_ELECTION / mode_election, default 2022_general).
+  # The other elections still carry L2's numbers, and for NC 2020 and 2024 those are also
+  # wrong -- so say so here rather than let a future backtest discover it.
+  cli::cli_alert_warning("only {el_comp} was replaced; {STATE}'s other elections still \
+                          carry L2's split. Do not point mode_election at them without \
+                          checking it first.")
+}
 
 cli::cli_h2("Mode history ({n_distinct(mode_hist$geo)} precincts)")
 mode_tot = l2 |>
