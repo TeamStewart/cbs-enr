@@ -1,0 +1,186 @@
+% ============================================================================
+%  model_cory: specification
+%  enightmodels::model_legacy(), as called with model_legacy_config() defaults.
+%  Source: enightmodels:::model_legacy_total and :::model_legacy_cand.
+%  Compile: pdflatex cory_model_spec.tex
+% ============================================================================
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\setlist[itemize]{itemsep=2pt, topsep=4pt}
+\newcommand{\var}[1]{\texttt{#1}}
+\newcommand{\clamp}{\operatorname{clamp}}
+
+\title{\texttt{model\_cory}: specification}
+\author{Young-Kyung Kim}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\noindent
+This documents \texttt{enightmodels::model\_legacy()} as it is called on the model test
+page, with \texttt{model\_legacy\_config()} defaults. It is the production legacy model
+and the second of the two baselines the precinct $\times$ vote-mode model is compared
+against. Sections follow the same order as the main model's specification. The source is
+\texttt{enightmodels:::model\_legacy\_total} and
+\texttt{enightmodels:::model\_legacy\_cand}; this document describes those functions, not
+a reimplementation of them.
+
+\paragraph{Configuration.} The \texttt{model\_legacy\_config()} defaults in force:
+
+\begin{center}
+\small
+\begin{tabular}{@{}ll@{\hspace{2.5em}}ll@{}}
+\var{by\_method} & \var{TRUE}        & \var{min\_unit\_rep} & $0.05$ \\
+\var{strata}     & \var{geostratum}  & \var{tr\_pre}        & $1$    \\
+\var{stage\_complete} & $6$          & \var{tr\_min}        & $0.25$ \\
+\var{min\_complete\_per\_stratum} & $1$ & \var{tr\_max}     & $4$    \\
+\end{tabular}
+\end{center}
+
+\section{Outcomes}
+
+The model runs in two stages. The first predicts \textbf{total votes} per
+geo $\times$ mode; the second predicts \textbf{each candidate's votes} using the first
+stage's reporting fractions. Both are ratio estimators against a past-election baseline
+$\var{past}$, computed within a stratum. The stratum is the \var{geostratum}, not the
+county.
+
+Unlike the other two models, nothing is estimated on a share scale and nothing is
+modeled as a share: the model predicts candidate \emph{vote counts} directly.
+
+\section{Turnout: total votes}
+
+\paragraph{Global pre-scale.} Before anything else, the baseline is rescaled so that its
+statewide total matches what has been counted so far, floored at one:
+\begin{equation}
+  t = \max\!\left(\frac{\sum_{\text{all cells}} \text{votes}}{\sum_{\text{all cells}} \var{past}},\ 1\right),
+  \qquad
+  \var{past} \leftarrow \var{past} \cdot t .
+  \label{eq:prescale}
+\end{equation}
+The floor at $1$ means the baseline is never scaled \emph{down}. Early in the night the
+counted total is small, so $t = 1$ and the step is inert; it becomes active only once
+counting is far enough along that the running total exceeds the baseline.
+
+\paragraph{Completeness.} Cells are aggregated to
+geo $\times$ mode $\times$ stratum, and a unit is complete when
+$\var{stage} \geq 6$. This is a reported flag, not something inferred from the counts.
+
+\paragraph{Stratum inflation.} Strata containing at least one complete unit get a single
+inflation factor per mode,
+\begin{equation}
+  \begin{aligned}
+  \var{infl}_{\sigma m}
+    &= \clamp\!\left(
+      \frac{\sum_{i \in \sigma} \var{past}_{im} \cdot (\text{votes}_{im} / \var{past}_{im})}
+           {\sum_{i \in \sigma} \var{past}_{im}},\ 0.25,\ 4
+    \right) \\[4pt]
+    &= \clamp\!\left(
+      \frac{\sum_{i \in \sigma} \text{votes}_{im}}{\sum_{i \in \sigma} \var{past}_{im}},\ 0.25,\ 4
+    \right),
+  \end{aligned}
+  \label{eq:infl}
+\end{equation}
+a $\var{past}$-weighted mean of the votes-to-baseline ratio. Strata with no complete unit
+take $\var{infl} = 1$. Prediction then substitutes the count where a unit is complete and
+inflates the baseline where it is not:
+\begin{equation}
+  \widehat{T}_{im} =
+  \begin{cases}
+    \text{votes}_{im} & \text{complete,}\\
+    \var{past}_{im} \cdot \var{infl}_{\sigma(i) m} & \text{otherwise.}
+  \end{cases}
+  \label{eq:predtot}
+\end{equation}
+
+\paragraph{Excess redistribution.} A final per-geo pass reconciles predictions against
+counts that have overtaken them. With $x_{im} = \max(\text{votes}_{im} - \widehat{T}_{im},\,0)$
+the overshoot in a cell, given $5\%$ headroom when the unit is not complete,
+\begin{equation}
+  \widehat{T}_{im} \leftarrow \max\!\left(\frac{\sum_{m'} \text{votes}_{im'}}{\sum_{m'} \widehat{T}_{im'}},\ 1\right) \widehat{T}_{im},
+  \qquad
+  \widehat{T}_{im} \leftarrow \widehat{T}_{im} +
+  \begin{cases}
+    x_{im} & x_{im} > 0,\\[3pt]
+    -\dfrac{\widehat{T}_{im}}{\sum_{x=0} \widehat{T}} \displaystyle\sum_{m'} x_{im'} & x_{im} = 0 .
+  \end{cases}
+  \label{eq:excess}
+\end{equation}
+Cells that have overshot are raised to their counted value; the cost is taken
+proportionally from the cells that have not. The geo total is conserved by construction.
+This is the model's one adding-up guarantee, and it operates on overshoot only --- there
+is no corresponding treatment of cells that are short.
+
+\section{Candidates}
+
+The second stage uses the first stage's reporting fraction
+$\rho_{im} = \text{votes}_{im} / \widehat{T}_{im}$ to scale each candidate's past votes.
+Within a stratum $\times$ mode $\times$ candidate, over units that have reported at least
+$\var{min\_unit\_rep} = 5\%$,
+\begin{equation}
+  \var{ratio}_{\sigma m k} =
+  \frac{\sum_{i} \text{votes}_{imk} / \rho_{im}}{\sum_{i} \var{past}_{imk}},
+  \qquad
+  \widehat{v}_{imk} =
+  \begin{cases}
+    \text{votes}_{imk} & \var{stage} \geq 6,\\
+    \var{past}_{imk} \cdot \var{ratio}_{\sigma m k} & \text{otherwise,}
+  \end{cases}
+  \label{eq:cand}
+\end{equation}
+with the fallback $\var{ratio} = \widehat{T}_{im} / \sum_k \var{past}_{imk}$ where a
+stratum has no qualifying unit. Dividing by $\rho_{im}$ grosses each reporting unit up to
+its implied final count before the ratio is formed, so partially-counted units contribute
+on the same footing as complete ones.
+
+\section{Uncertainty}
+
+\textbf{There is none.} \texttt{model\_legacy()} returns \var{pred\_min} and
+\var{pred\_max} as \texttt{NA}, and no draws, interval or variance are produced anywhere
+in either stage. On the model test page every \texttt{model\_cory} interval column is
+consequently set to \texttt{NA}, and the model contributes a point estimate only.
+
+\section*{Limitations}
+\addcontentsline{toc}{section}{Limitations}
+
+Stated plainly. Several of these are deliberate: this is a long-serving production model
+whose simplicity and predictability are part of its value.
+
+\begin{itemize}
+  \item \textbf{No uncertainty at all.} The model cannot be assessed on coverage or
+        interval width, and cannot contribute a probability of winning. Any comparison
+        against it is necessarily a point-accuracy comparison.
+  \item \textbf{No ceiling.} Nothing bounds predicted votes by registrants. The clamp in
+        \eqref{eq:infl} bounds the \emph{ratio} at $4\times$ the baseline, which is a
+        loose constraint and not a registrant-based one.
+  \item \textbf{Candidate predictions need not sum to the turnout prediction.} The two
+        stages are separate ratio estimators, and \eqref{eq:cand} applies a per-candidate
+        factor with no constraint tying $\sum_k \widehat{v}_{imk}$ to $\widehat{T}_{im}$.
+  \item \textbf{The inflation factor is computed over all units in a qualifying
+        stratum.} A stratum qualifies on having one complete unit, but \eqref{eq:infl}
+        then averages over every unit in it, including barely-started ones whose
+        votes-to-baseline ratio is near zero. This biases $\var{infl}$ \emph{downward}
+        early in the night, when few units are complete --- the opposite direction to the
+        usual partial-count failure.
+  \item \textbf{Clamping rather than flagging.} $\clamp(\cdot, 0.25, 4)$ in
+        \eqref{eq:infl} silently transforms an out-of-range ratio. A ratio outside
+        $[0.25, 4]$ is a strong signal that the baseline is wrong for that stratum, or
+        that the feed is misaligned; clamping discards that signal rather than surfacing
+        it.
+  \item \textbf{Completeness is load-bearing.} Both stages branch on
+        $\var{stage} \geq 6$, so the model depends on a feed-supplied flag that in
+        production arrives late, uses different vocabulary per state, and can move
+        backwards. There is no fallback that degrades gracefully if the flag is wrong.
+  \item \textbf{The stratum is the geostratum, not the county.} Dependence between
+        precincts in the same county is not addressed, and no shrinkage is applied to
+        stratum effects: \eqref{eq:infl} is an unpenalized stratum mean.
+\end{itemize}
+
+\end{document}
