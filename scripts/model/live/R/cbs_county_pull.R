@@ -90,12 +90,63 @@ pull_cbs_race = function(state, contest, district = NA, env = "live", dir_26 = f
   observed_at = lubridate::now(tzone = "UTC")
   if (verbose) cli::cli_h1("CBS county pull: {tag} ({env} feed) at {format(observed_at, '%Y-%m-%d %H:%M:%S')} UTC")
 
+  # by_method: cbsapi ffe4e9d (2026-10-26) returns one row per county x method x candidate.
+  # reassign_prov: distributes county provisionals across the remaining methods in
+  #   proportion to expected method counts and drops the `prov` rows. Verified on NC:
+  #   1,164 -> 1,160 rows with total votes preserved exactly. It introduces FRACTIONAL
+  #   votes, so nothing downstream may assume integers.
   raw = cbsapi::cbs_election_data(CBS_ELECTION, state, contest, district = district,
-                                  county = TRUE, addl = TRUE, env = env)
+                                  county = TRUE, addl = TRUE, by_method = TRUE,
+                                  reassign_prov = TRUE, env = env)
   if (nrow(raw) == 0)
     cli::cli_abort("CBS returned no county results for {tag} on the {env} feed (not published yet, or wrong contest/district).")
 
-  fips = sort(unique(stringr::str_pad(raw$geo, 5, pad = "0")))
+  # KEY ON `fips`, NOT `geo`. Since ffe4e9d, `geo` is an AP REPORTING-UNIT ID whose leading
+  # digits are not the state FIPS -- measured on the test feed: NC geo 34001 vs fips 37001
+  # (34 is New Jersey), TX 44001 vs 48001 (44 is Rhode Island), MI 23018 vs 26035 (23 is
+  # Maine). The old `str_pad(geo, 5)` therefore produced valid-looking out-of-state FIPS
+  # codes. cbs_county_lookup() aborts on unknown FIPS so it failed loudly rather than
+  # silently, but it failed for every race.
+  if (!"fips" %in% names(raw))
+    cli::cli_abort(c("CBS response has no {.field fips} column, so county rows cannot be placed.",
+                     "i" = "addl = TRUE is required for it. If cbsapi changed, re-read its county branch."))
+  raw = dplyr::mutate(raw, .fips5 = stringr::str_pad(as.character(fips), 5, pad = "0"))
+  # AK's county feed returns a single reporting unit with method `all` and fips NA (probed
+  # 2026-10-26), so there is nothing to place. Fail with that, not with a FIPS lookup error.
+  n_nofips = sum(is.na(raw$fips) | !nzchar(as.character(raw$fips)))
+  if (n_nofips == nrow(raw))
+    cli::cli_abort(c("Every CBS row for {tag} has an empty {.field fips} -- no county breakdown is published.",
+                     "i" = "Seen for AK, whose county feed is one statewide unit. Nothing to save."))
+  if (n_nofips > 0) {
+    cli::cli_alert_warning("{n_nofips} CBS row(s) have no fips and are dropped.")
+    raw = dplyr::filter(raw, !is.na(fips), nzchar(as.character(fips)))
+  }
+
+  # NEVER SUM AGGREGATES WITH PER-METHOD ROWS. `all` is every method; `adv` is early+mail
+  # COMBINED. Probed per county on the test feed: a county returns either `adv`+`eday` or
+  # `early`+`eday`+`mail`, never both -- but the STATE-level set contains all four because
+  # counties differ (TX 207 adv-counties / 47 split, MI 60/23, NC 90/9, NY 37/25). So a
+  # statewide per-method total is NOT comparable across counties, and summing `adv`
+  # alongside `early`/`mail` within one county would double-count.
+  if ("method" %in% names(raw)) {
+    ms = raw |> dplyr::distinct(.fips5, method) |>
+      dplyr::summarise(set = paste(sort(unique(as.character(method))), collapse = "+"), .by = .fips5)
+    both = ms$set[grepl("adv", ms$set) & grepl("early|mail", ms$set)]
+    if (length(both))
+      cli::cli_abort(c("{length(both)} county(ies) return BOTH `adv` and `early`/`mail`, which double-counts.",
+                       "i" = "Method sets seen: {paste(unique(both), collapse = ', ')}",
+                       "x" = "cbsapi's own guard should prevent this -- do not sum these; report upstream."))
+    # `all` alongside per-method rows is the same trap one level up. cbsapi keeps `all` only
+    # where a unit has no method breakdown (and drops it when reassign_prov finds a
+    # destination), so a mixed county means the response is not what we think it is.
+    mixed_all = ms$set[grepl("(^|\\+)all(\\+|$)", ms$set) & grepl("eday|early|mail|adv", ms$set)]
+    if (length(mixed_all))
+      cli::cli_abort(c("{length(mixed_all)} county(ies) return `all` AND per-method rows; summing them double-counts.",
+                       "i" = "Method sets seen: {paste(unique(mixed_all), collapse = ', ')}"))
+    if (verbose) cli::cli_alert_info("county method sets: {paste(sprintf('%s(%d)', names(table(ms$set)), table(ms$set)), collapse = '  ')}")
+  }
+
+  fips = sort(unique(raw$.fips5))
   fips_map = cbs_county_lookup(state, fips, dir_26)
   known = enightmodels::cbs_counties |>
     filter(state == !!state) |>
@@ -116,22 +167,69 @@ pull_cbs_race = function(state, contest, district = NA, env = "live", dir_26 = f
   cty = raw |>
     transmute(
       state, contest, district,
-      county_fips = stringr::str_pad(geo, 5, pad = "0"),
+      county_fips = .fips5,
+      cbs_unit_id = as.character(geo),   # AP reporting-unit id, kept for provenance only
+      method = if ("method" %in% names(raw)) as.character(method) else NA_character_,
       candidate, party, votes,
+      # per-method counted / expected votes across candidates. exp_method is FLOORED to
+      # rep_method when CBS supplies no expectation for that method -- and `prov` has no
+      # expectation field at all -- so an implied fraction of exactly 1 means "no
+      # expectation available", NOT "counted out". Measured on the test feed: exp > rep in
+      # 65% (NC) to 97% (CA) of rows, so the usable signal is real but not universal.
+      rep_method = if ("rep_method" %in% names(raw)) as.numeric(rep_method) else NA_real_,
+      exp_method = if ("exp_method" %in% names(raw)) as.numeric(exp_method) else NA_real_,
       county_total_vote = as.numeric(totalVote),
       county_pct_exp_vote = as.numeric(pctExpVote),
       county_precincts_in = as.numeric(precinctsIn),
       county_precincts_of = as.numeric(precinctsOf),
       county_ts = lubridate::ymd_hms(ts, tz = "UTC", quiet = TRUE),
-      race_last_updated = time, race_pct_in = pctIn, race_call = call,
-      env = env, observed_at = observed_at) |>
+      race_last_updated = time,
+      # `pctIn` is RACE-level only and is absent from the county response since ffe4e9d
+      # (cbsapi's own docs: pct_rep comes "from pctIn for race results and pctExpVote for
+      # county results"). Leaving it NA rather than substituting the per-county figure,
+      # which is a different quantity and would silently mislabel it.
+      race_pct_in = if ("pctIn" %in% names(raw)) as.numeric(pctIn) else NA_real_,
+      # the per-county equivalent, 0-1, which the new API does supply
+      county_pct_rep = if ("pct_rep" %in% names(raw)) as.numeric(pct_rep) else NA_real_,
+      race_call = call,
+      env = env, observed_at = observed_at,
+      # Bumped whenever these columns change, so a reader never has to sniff values the way
+      # read_cbs_latest() currently sniffs `party` to detect pre-2026-10-22 snapshots.
+      #   1 = pre-by_method (no method/rep_method/exp_method; county_fips from `geo`)
+      #   2 = by_method + reassign_prov, county_fips from `fips`
+      schema_version = 2L) |>
     mutate(party_cbs = party, party = cbs_party(party), .after = party) |>
     left_join(fips_map, by = "county_fips") |>
     left_join(known, by = "county_cbs") |>
     relocate(county_cbs, county_name, .after = county_fips)
 
-  dupes = count(cty, county_cbs, candidate, party) |> filter(n > 1)
-  if (nrow(dupes) > 0) cli::cli_abort("Duplicate county x candidate rows in the CBS response ({nrow(dupes)}).")
+  # method is now part of the key: one county x candidate has a row per method.
+  dupes = count(cty, county_cbs, candidate, party, method) |> filter(n > 1)
+  if (nrow(dupes) > 0)
+    cli::cli_abort("Duplicate county x candidate x method rows in the CBS response ({nrow(dupes)}).")
+
+  # RECONCILIATION: do the per-method rows account for the county's whole vote?
+  # MEASURED on the test feed, TX gov 2026-10-26: they do NOT. 243 of 254 counties
+  # disagree; statewide the method rows carry 7,141,818 against a county total of
+  # 7,988,244 -- 846,426 votes (10.6%) attributed to NO method, and unevenly: ratio 0.881
+  # in early+eday+mail counties vs 0.974 in adv+eday ones. It is not missing candidates
+  # (the three candidates' race totals sum exactly to the county total).
+  # WARN, do not abort: this is a property of the feed, not of this code, and a snapshot
+  # with a known shortfall is more useful than no snapshot. But anything building a
+  # county x mode composition from these rows is missing that share, so the figure is
+  # recorded on the snapshot rather than only printed.
+  recon = cty |>
+    summarize(method_votes = sum(votes, na.rm = TRUE),
+              total_vote = dplyr::first(county_total_vote), .by = county_cbs) |>
+    mutate(ratio = method_votes / pmax(total_vote, 1))
+  shortfall = 1 - sum(recon$method_votes) / pmax(sum(recon$total_vote), 1)
+  n_off = sum(abs(recon$ratio - 1) > 0.005, na.rm = TRUE)
+  cty$method_shortfall = round(shortfall, 4)
+  if (n_off > 0)
+    cli::cli_alert_warning("per-method rows do not sum to county totals in {n_off} of \\
+                            {nrow(recon)} counties; {round(100 * shortfall, 1)}% of the \\
+                            statewide vote is attributed to no method. Recorded as \\
+                            `method_shortfall`; do NOT treat the method split as complete.")
 
   if (verbose) {
     n_cty = n_distinct(cty$county_cbs)
