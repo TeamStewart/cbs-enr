@@ -598,7 +598,13 @@ cli::cli_inform("2024 mode shares in the YouGov method frame (same counties): {p
 # ========================================
 ## 6. live-id round trip (data contract §14.1): do live/zero-file ids join to geo?
 # ========================================
-live_files = Sys.glob(file.path(dir_live, glue("{STATE}_*_latest.parquet")))
+# BOTH filename shapes. AK and NC file STATEWIDE as {ST}_latest.parquet; CA/FL/MI/TX file
+# PER COUNTY as {ST}_{County}_latest.parquet. The glob used to cover only the per-county
+# shape, so this entire check was silently SKIPPED for the two statewide states -- which
+# are the two with county/site reporting, i.e. the ones it most needed to run on.
+live_files = unique(c(
+  Sys.glob(file.path(dir_live, glue("{STATE}_latest.parquet"))),
+  Sys.glob(file.path(dir_live, glue("{STATE}_*_latest.parquet")))))
 live_files = live_files[file.size(live_files) > 0]
 cli::cli_h2("Live id check ({length(live_files)} files in {STATE}/clean)")
 if (length(live_files) > 0) {
