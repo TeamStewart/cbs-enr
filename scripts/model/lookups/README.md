@@ -232,40 +232,6 @@ see the `vote_mode_map.csv` provenance note above), so for them source 2 is sile
 
 NY is out of scope: statewide-only, no precinct inputs.
 
-## What the model does with it: the structural-absence mask
-
-`model_precincts.csv` carries one `level_{mode}` column per method, joined down from this
-table by `make_model_reference.R`. `model_turnout.R` reads those columns at setup
-(`USE_MODE_EXISTS`, default on) and builds an `EXISTS` matrix of precinct x mode. A cell
-marked `county_site` **does not exist**: its composition weight is set to exactly 0 before
-the per-precinct renormalisation, it contributes no row to that mode's equation, and it is
-excluded from the all-modes-counted test. `""` / NA **keeps** the cell — unknown must never
-remove one, because wrongly dropping a mode throws its returns away while wrongly keeping
-one just reproduces the old behaviour.
-
-Only AK and NC carry any `county_site`, so CA/FL/MI/TX are bit-identical with the mask on
-or off (verified per draw on the precinct frame and both statewide draw matrices).
-
-What it fixes, measured at 50% of precincts reporting with every reporting precinct counted
-out, where the right answer for a reported precinct is exactly its counted vote:
-
-| | AK before | AK after | NC before | NC after |
-|---|---|---|---|---|
-| max `q_share` reached | 0.917 | **1.000** | 1.000 | 1.000 |
-| reported precincts that can pin | **0 of 201** | 201 of 201 | 799 of 1,316 | **1,316 of 1,316** |
-| est / counted on reported precincts | **1.558** | 1.000 | **1.266** | 1.000 |
-
-So a fully-counted AK precinct was predicted 56% above its own final count, and it could
-never pin because `q_share` could not reach `PIN_MIN_SHARE` — it was still waiting for mail
-and early cells that report at district level and never arrive. The statewide total hid
-this almost perfectly (100.0% of prior either way), which is why it had to be measured per
-precinct.
-
-**A mode with NO precinct support anywhere is a `mode_scope.csv` error and aborts.** `M =
-length(MODES)` is baked into Sigma, the residual array and the softmax before `fit_stage`
-is called, so it cannot be dropped later. AK is the live case and its `modes` is now `eday`
-alone; its district-level mail and early have to come back through the county add-on.
-
 ---
 
 # `precinct_geo_crosswalk.csv` and `precinct_geo_match_rates.csv`

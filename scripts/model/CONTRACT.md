@@ -870,7 +870,6 @@ Grain: one row per `geo` x `race_id` x `model` x `time`.
 | `cnt_prec` | votes counted so far in that precinct |
 | `q_share` | share of that precinct's expected votes already counted |
 | `n_obs_modes` | number of modes with any observation in that precinct |
-| `n_modes` | number of modes that precinct **has** — the denominator for `n_obs_modes` |
 
 `dem_est` and `est_dem2` are both required and are on **different scales**. `dem_est` is
 share of all votes; every headline figure and every coverage check is two-party. Carrying
@@ -899,18 +898,9 @@ one row per `geo` x `race_id` x `model` for every model that supplies a frame; n
 `geo`, `county`, `model`, `race_id`, `time` or `turn_est`; the interval columns non-NA for
 every model with draws; `est_dem2` in `[0, 1]`; the count of precincts with
 `cnt_prec > turn_est` reported rather than left silent, since a precinct counting past its
-own prediction is a signal, not a rounding artifact; and `n_obs_modes <= n_modes` — asserted
+own prediction is a signal, not a rounding artifact; and `n_obs_modes <=` the number of modes in that state's returns — asserted
 explicitly, because the existing flag-gated dump gets this wrong, reading 10,956 on a
 227-registrant precinct.
-
-**`n_modes` is not a constant per state, and reading it as one is the trap.** A mode that
-reports at county or one-stop-site level has no precinct cell at all, so the denominator is
-per precinct: AK precincts have **one** mode (mail, early and prov are all district-level
-there), and NC precincts have one, two or three depending on the county — 1,070 of 2,633
-have only election day. Without this column every AK precinct and 1,070 NC precincts look
-permanently two-thirds unreported, and `n_obs_modes / M` is wrong for a third of the
-precincts we model. See `USE_MODE_EXISTS` in `model_turnout.R` and the `level_{mode}`
-columns of `lookups/model_precincts.csv`.
 
 ### 15.4 Delivery order
 

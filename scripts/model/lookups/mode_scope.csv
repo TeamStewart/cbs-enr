@@ -1,5 +1,5 @@
 state,year,ref_mode,modes,note
-AK,2026,eday,eday,"ONE MODE. AK reports mail, early and prov at HOUSE-DISTRICT level for all 402 precincts (31.1% of the vote mass), so eday is the only mode with a precinct-level cell -- a mail or early equation would be fitted on no precinct and predicted onto every one. The district-level modes come back through the county add-on, not through precinct cells. 2022 split was eday 66.6 / mail 19.3 / early 14.2, which is what that add-on has to account for. With USE_MODE_EXISTS=0 set modes=mail|early|eday to reproduce the old behaviour."
+AK,2026,eday,mail|early|eday,"2022 split eday 66.6 / mail 19.3 / early 14.2; prov folded into eday"
 CA,2026,mail,mail|eday,"2022 mail 89.7 / eday 8.8 / early 1.6. NO early in the zero files, so early is dropped from MODES entirely; 77.7% of filed geos are all-only and route to the mode-free path"
 FL,2026,mail,mail|early|eday,"2022 mail 36.8 / eday 35.8 / early 27.5 -- near-even, and 2024 would instead favour early (47.5). Revisit if FL's 2026 cadence shows mail reporting later than early; prov folded into eday"
 MI,2026,eday,mail|early|eday,"2022 eday 57.8 / mail 42.2 / early 0.0. MI had no in-person early voting until 2024, so early is genuinely new in 2026 and its history is uninformative"

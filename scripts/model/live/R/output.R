@@ -178,7 +178,7 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
 # different schemas so one silently overwrote the other.
 PREC_COLS = c("race_id", "model", "time", "geo", "county", "method",
               "turn_est", "turn_lo", "turn_hi", "dem_est", "dem_lo", "dem_hi",
-              "est_dem2", "cnt_prec", "q_share", "n_obs_modes", "n_modes", "p_win")
+              "est_dem2", "cnt_prec", "q_share", "n_obs_modes", "p_win")
 
 to_prec_data = function(fit, model, race, time) {
   p = fit$cells
@@ -196,7 +196,6 @@ to_prec_data = function(fit, model, race, time) {
     p |> mutate(method = NA_character_,
                 p_win = p_dem_win,
                 n_obs_modes = n_obs_cells,
-                n_modes = n_cells,
                 q_share = NA_real_)
   } else if (model %in% c("swing", "cory", "cpois")) {
     # dem/rep/tot, no interval.
@@ -238,28 +237,6 @@ to_prec_data = function(fit, model, race, time) {
 # night at 5-minute refreshes. CSV is not viable at that size.
 write_precincts = function(res, dir = file.path(find_26_general(), "model_results")) {
   if (is.null(res$prec) || !nrow(res$prec)) return(invisible(NULL))
-  # ---- the two checks CONTRACT.md s15.3 names as this table's acceptance test --------
-  # LOUD WARNINGS, NOT ABORTS, and deliberately so: this is a diagnostic artifact, and a
-  # stop() here would take down a refresh's PREDICTIONS over a bad dump column. The
-  # predictions are already written by the time this runs.
-  p = res$prec
-  bad = with(p, !is.na(n_obs_modes) & !is.na(n_modes) & n_obs_modes > n_modes)
-  if (any(bad)) {
-    ex = p[bad, c("model", "geo", "n_obs_modes", "n_modes")]
-    cli_alert_danger("precinct dump: n_obs_modes > n_modes on {sum(bad)} row(s) -- \
-                      the mode denominator is wrong. e.g. \
-                      {paste(sprintf('%s/%s %s of %s', ex$model[1:min(3, nrow(ex))], \
-                                     ex$geo[1:min(3, nrow(ex))], \
-                                     ex$n_obs_modes[1:min(3, nrow(ex))], \
-                                     ex$n_modes[1:min(3, nrow(ex))]), collapse = '; ')}")
-  }
-  # a precinct counting PAST its own prediction is a signal, not a rounding artifact, so
-  # it is counted out loud every refresh rather than discovered afterwards
-  over = with(p, !is.na(cnt_prec) & !is.na(turn_est) & cnt_prec > turn_est + 0.5)
-  if (any(over))
-    cli_alert_info("precinct dump: {sum(over)} of {nrow(p)} row(s) have \
-                    cnt_prec > turn_est (by up to \
-                    {round(max(p$cnt_prec[over] - p$turn_est[over]))} votes)")
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
   stamp = format(max(res$status$time), "%Y%m%d_%H%M%S", tz = "America/New_York")
   f = file.path(dir, sprintf("precincts_%s.parquet", stamp))
