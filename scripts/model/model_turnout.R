@@ -517,6 +517,45 @@ MODES = local({
   if (is.null(mode_scope)) c("mail", "early", "eday") else mode_scope$modes
 })
 stopifnot("REF_MODE must be one of MODES" = REF_MODE %in% MODES)
+
+# ---- STRUCTURAL ABSENCE: which (precinct, mode) CELLS EXIST ---------------------
+# MODES says which modes the STATE has. It does not say which modes a given PRECINCT
+# has, and in two states those are not the same thing:
+#   AK  mail, early and prov report at DISTRICT level for all 402 precincts -- 31.1% of
+#       the vote mass. Only eday is precinct-level.
+#   NC  early reports at one-stop SITE level in 1,105 of 2,633 precincts and mail at
+#       county level in 1,351. Only eday is precinct-level everywhere.
+# Those cells are not "unreported", they are NOT THERE. Carrying them anyway is not a
+# neutral choice, it is three compounding errors:
+#   - prior_tau puts the mode's expected votes on a precinct that will never count them,
+#     so the precinct's prior total is right but its composition is fiction
+#   - obs_turn is FALSE forever, so `all_done` never fires and q_share caps below 1.
+#     An AK precinct tops out at q_share ~ 0.666 and can NEVER pin, so the one state
+#     where eday alone IS the whole precinct is the one where the model never believes
+#     a precinct is finished
+#   - the returns for those modes land on bucket geos and are dropped by cell_counts(),
+#     so the mode's equation is fitted on the precincts where it DOES exist and then
+#     predicted onto the ones where it does not
+# The fix is to make the cell set per precinct rather than per state: a mode that does
+# not exist for a precinct gets composition weight EXACTLY 0, contributes no row to that
+# mode's equation, and is excluded from the all-modes-counted test. The precinct total
+# then splits over the modes it actually has, which is what the softmax is for.
+#
+# Source: lookups/model_precincts.csv, columns level_{mode}, built by
+# make_model_reference.R from lookups/reporting_levels.csv. Three values:
+#   "precinct"     the mode reports per precinct      -> cell EXISTS
+#   "county_site"  it reports at county/site level    -> cell DOES NOT EXIST
+#   "" / NA        no evidence for that county x mode -> cell EXISTS (see below)
+#
+# UNKNOWN KEEPS THE CELL, and the asymmetry is the whole argument. Wrongly dropping a
+# mode that does report per precinct throws its returns away -- a real loss, and one
+# only the drop diagnostic would catch. Wrongly keeping a mode that reports at county
+# level reproduces TODAY's behaviour exactly. So unknown must never remove a cell. This
+# also makes the change surgical: only AK and NC carry any "county_site" at all, so
+# CA/FL/MI/TX are bit-identical and tx24_backtest.R is untouched.
+MODE_LEVEL_PATH = Sys.getenv("MODE_LEVEL_PATH",
+                             unset = "scripts/model/lookups/model_precincts.csv")
+USE_MODE_EXISTS = Sys.getenv("USE_MODE_EXISTS", unset = "1") == "1"
 #
 # If `path_mode_hist` exists, the turnout split, the partisan offset and Sigma are all
 # DERIVED from it (derive_mode_priors() below) and the constants here are ignored.
@@ -848,6 +887,64 @@ warn_uncalibrated_modes = function(mode_priors) {
   }
 }
 
+# ---- structural-absence lookup (see USE_MODE_EXISTS) -----------------------------
+# Returns a geo x mode logical frame, or NULL when the mask is off or the lookup has
+# nothing for this state -- in which case every cell exists and behaviour is unchanged.
+load_mode_exists = function(path, state, geos, modes) {
+  if (!USE_MODE_EXISTS) return(NULL)
+  if (!file.exists(path)) {
+    cli_alert_warning("{.path {path}} not found -- every precinct x mode cell assumed \\
+                       to EXIST. AK and NC will carry cells that can never report.")
+    return(NULL)
+  }
+  lv = readr::read_csv(path, show_col_types = FALSE, progress = FALSE) |>
+    filter(.data$state == !!state)
+  if (!nrow(lv)) {
+    cli_alert_info("no rows for {state} in {.path {basename(path)}} -- \\
+                    every cell assumed to exist")
+    return(NULL)
+  }
+  want = paste0("level_", modes)
+  miss = setdiff(want, names(lv))
+  if (length(miss))
+    cli_abort("{.path {basename(path)}} has no {miss} column(s); MODES is \\
+               {paste(modes, collapse = ', ')}. Rebuild it with make_model_reference.R.")
+  ex = lv |>
+    select(geo, all_of(want)) |>
+    distinct(geo, .keep_all = TRUE) |>
+    mutate(geo = as.character(geo),
+           # ONLY an explicit county_site removes a cell. "" / NA is no evidence and
+           # keeps it; see the asymmetry argument at USE_MODE_EXISTS.
+           across(all_of(want), \(x) !identical_chr(x, "county_site")))
+  names(ex) = c("geo", modes)
+  # precincts absent from the lookup keep every mode
+  unknown = setdiff(geos, ex$geo)
+  if (length(unknown)) {
+    cli_alert_warning("{length(unknown)} of {length(geos)} {state} precinct(s) are not \\
+                       in {.path {basename(path)}} -- every mode assumed to exist for \\
+                       them (e.g. {paste(utils::head(unknown, 3), collapse = ', ')})")
+    add = as_tibble(setNames(
+      c(list(unknown), rep(list(rep(TRUE, length(unknown))), length(modes))),
+      c("geo", modes)))
+    ex = bind_rows(ex, add)
+  }
+  ex = filter(ex, geo %in% geos)
+  n_off = sum(!as.matrix(ex[, modes, drop = FALSE]))
+  if (n_off == 0) {
+    cli_alert_success("structural-absence mask: {state} has no county/site-level modes \\
+                       -- every cell exists")
+    return(NULL)                                    # identical to the mask being off
+  }
+  per_mode = vapply(modes, \(m) sum(!ex[[m]]), 0L)
+  cli_alert_info("structural-absence mask: {state} drops {n_off} of \\
+                  {nrow(ex) * length(modes)} precinct x mode cells \\
+                  ({paste(sprintf('%s %d', modes, per_mode), collapse = ' ')})")
+  ex
+}
+# vectorised equality that treats NA as "not that value" (NA == "x" would give NA, and
+# an NA in the mask would silently poison the composition)
+identical_chr = function(x, v) !is.na(x) & x == v
+
 # ---- 2. expand to precinct x mode cells, build mode-specific priors -------------
 mode_priors = derive_mode_priors(mode_hist, prec)
 warn_uncalibrated_modes(mode_priors)
@@ -866,8 +963,24 @@ cells = tidyr::expand_grid(prec, mode = MODES) |>
           off_b = mode_priors$offset[mode, "b"]
         )
     } }() |>
+  { \(x) {
+      ex = load_mode_exists(MODE_LEVEL_PATH, STATE, unique(as.character(x$geo)), MODES)
+      if (is.null(ex)) return(mutate(x, mode_exists = TRUE))
+      exl = ex |> tidyr::pivot_longer(all_of(MODES), names_to = "mode",
+                                      values_to = "mode_exists")
+      x |>
+        mutate(geo = as.character(geo)) |>
+        left_join(exl, by = c("geo", "mode")) |>
+        mutate(mode_exists = coalesce(mode_exists, TRUE))
+    } }() |>
   mutate(
-    mode_turn_share = mode_turn_share / sum(mode_turn_share), .by = geo
+    # ZERO, not small: a non-existent cell must contribute exactly nothing to the
+    # composition, so the renormalisation below hands its share to the modes the
+    # precinct actually has. prior_tau then comes out 0 and q_share can reach 1.
+    mode_turn_share = if_else(mode_exists, mode_turn_share, 0)
+  ) |>
+  mutate(
+    mode_turn_share = mode_turn_share / pmax(sum(mode_turn_share), 1e-12), .by = geo
   ) |>
   mutate(
     prior_tau = est_tot * mode_turn_share,
@@ -893,6 +1006,51 @@ cells = tidyr::expand_grid(prec, mode = MODES) |>
       log(pmax(mode_turn_share, 1e-6) / pmax(ref_share, 1e-6)))
   )
 N_PREC = nrow(prec); M = length(MODES)
+
+# ---- the mask as an N_PREC x M matrix, in prec order ----------------------------
+# Built once here rather than re-pivoted inside fit_stage, because it is read in five
+# places (the equation subset, all_done, the softmax, the pin, SD_UNREP) and a
+# silently mis-ordered copy in any one of them is the kind of bug that shows up as a
+# plausible number.
+EXISTS = local({
+  w = cells |> select(geo, mode, mode_exists) |>
+    tidyr::pivot_wider(names_from = mode, values_from = mode_exists) |>
+    arrange(match(geo, prec$geo))
+  stopifnot("EXISTS rows must be prec order" = identical(as.character(w$geo),
+                                                         as.character(prec$geo)))
+  as.matrix(w[, MODES, drop = FALSE])
+})
+# THE REFERENCE MODE CARRIES THETA, the precinct total. If it does not exist for a
+# precinct there is nothing to carry it and the log-ratios have no denominator, so this
+# is an abort, not a fallback -- a per-precinct reference mode would mean a different
+# parameterization per precinct. In practice mode_scope.csv already respects this
+# (eday for AK and NC, the two masked states, and eday is precinct-level in every county
+# of both), so this fires only if the lookup and the scope file disagree.
+if (!all(EXISTS[, match(REF_MODE, MODES)])) {
+  bad = prec$geo[!EXISTS[, match(REF_MODE, MODES)]]
+  cli_abort("REF_MODE '{REF_MODE}' does not report at precinct level in \\
+             {length(bad)} {STATE} precinct(s) (e.g. {paste(utils::head(bad, 3), collapse = ', ')}). \\
+             Pick a reference mode that does, in lookups/mode_scope.csv.")
+}
+stopifnot("every precinct must keep at least one mode" = all(rowSums(EXISTS) >= 1))
+# A MODE WITH NO PRECINCT SUPPORT AT ALL is a mode_scope.csv error, not something to work
+# around. M = length(MODES) is baked into Sigma, eps, the conditional-MVN grouping and the
+# softmax before fit_stage is ever called, so it cannot be dropped later -- and carrying it
+# means 3 of the 3M equations are fitted on nothing and then predicted onto every precinct.
+# AK is the live case: mail, early and prov are ALL district-level there, so AK's only
+# precinct-level mode is eday and its MODES must be `eday` alone. The county-level modes
+# come back through the county add-on, not through a precinct cell that cannot report.
+if (any(colSums(EXISTS) == 0)) {
+  dead = MODES[colSums(EXISTS) == 0]
+  cli_abort("mode(s) {dead} report at county/site level in EVERY {STATE} precinct, so \\
+             they have no precinct-level cell to fit. Set modes={paste(setdiff(MODES, dead), collapse = '|')} \\
+             for {STATE} in lookups/mode_scope.csv (USE_MODE_EXISTS=0 restores the old \\
+             behaviour, in which those equations are fitted on no data).")
+}
+# the per-geo renormalisation cannot have produced a degenerate composition
+stopifnot("masked composition must still sum to 1 per precinct" =
+            all(abs(tapply(cells$mode_turn_share, cells$geo, sum) - 1) < 1e-8))
+
 # county indicator matrix for the random effect (one column per county, in prec order)
 CTY_MAT = if (!USE_COUNTY_RE) matrix(0, nrow(prec), 0) else {
   mk = function(v, pre) {
@@ -1055,7 +1213,11 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   d = d |>
     mutate(
       cnt_prec  = sum(if_else(obs, tau, 0), na.rm = TRUE),   # counted so far, precinct
-      all_done  = all(obs_turn),                             # every mode counted out
+      # EVERY MODE THE PRECINCT HAS, not every mode the state has. Without the
+      # `| !mode_exists` an AK precinct -- which only ever reports eday -- can never be
+      # all_done, so it never pins and its q_share tops out near 0.666. That is the
+      # single most consequential line of the structural-absence mask.
+      all_done  = all(obs_turn | !mode_exists),
       T_final   = sum(if_else(obs_turn, tau, 0), na.rm = TRUE),
       # SECOND, independent signal that counting has stopped: how much of the precinct's
       # PRIOR expected total is already in. q_share is only as good as the completeness
@@ -1165,6 +1327,24 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
 
   for (m in MODES) {
     dm = filter(d, mode == m)
+    # --- STRUCTURAL ABSENCE: drop the rows where this mode does not exist ----------
+    # Not cosmetic. fit_conj_re() puts ONE g-prior pseudo-row per row of `dm` at
+    # prior_loc = y_<out>_prior, and for a masked cell that prior is log(1e-6/ref_share)
+    # ~ -13 (mode_turn_share is 0 by then). On NC's mail equation that is 1,351 of 2,633
+    # pseudo-rows at -13 pulling the statewide mail level down -- the equation would be
+    # fitted mostly on precincts that do not exist. prior_eff = pn / nrow(dm) then
+    # divides the prior's weight by the right denominator too.
+    # `prec_m` / `CTY_m` keep the design aligned: dm is in prec order (cells is
+    # expand_grid(prec, mode)), so the same logical subsets all three.
+    # mu[[k]] is still PREDICTED for every precinct from the full prec/CTY_MAT below --
+    # only the FIT is subset -- and those predictions are multiplied by zero in the
+    # softmax, so nothing downstream needs to know about this.
+    keep_m = dm$mode_exists
+    dm_all = dm                             # unsubset, for prior_loc_mat (see below)
+    dm     = dm[keep_m, , drop = FALSE]
+    prec_m = prec[keep_m, , drop = FALSE]
+    CTY_m  = CTY_MAT[keep_m, , drop = FALSE]
+    if (!nrow(dm)) cli_abort("mode {m} exists in no precinct (checked at EXISTS)")
     # --- MODE SUPPORT GATE ---------------------------------------------------------
     # A mode whose only reported cells come from a handful of precincts in one or two
     # counties is not evidence about that mode statewide, and treating it as such is
@@ -1232,9 +1412,9 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       if (USE_COUNTY_RE) {
         icc = switch(out, tau = ICC_TURN, tp = ICC_TP, s = ICC_SHARE)
         lam = (1 - icc) / icc
-        Xcov = cbind(1, as.matrix(prec[, covs, drop = FALSE]))
+        Xcov = cbind(1, as.matrix(prec_m[, covs, drop = FALSE]))
         fit = fit_conj_re(
-          y = dm[[ycol]], Xcov = Xcov, Cty = CTY_MAT, obs = ob,
+          y = dm[[ycol]], Xcov = Xcov, Cty = CTY_m, obs = ob,
           prior_loc = dm[[pcol]], prior_eff = pn / nrow(dm),
           lambda = lam, wts = wt,
           sd_level = if (SD_SYS_LEVEL > 0) SD_SYS_LEVEL else NULL,
@@ -1251,7 +1431,10 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       fits[[paste(m, out, sep = "_")]] = fit
       n_fit[[paste(m, out, sep = "_")]] = sum(ob)
       pl = rep(NA_real_, N_PREC)
-      pl[geo_idx[dm$geo]] = dm[[pcol]]
+      # dm_all, not dm: when an equation falls below MIN_FIT_OBS, mu[[k]] becomes this
+      # vector for every precinct. A masked precinct left at NA would give NA * 0 = NA
+      # in the softmax and take the whole state's draw with it.
+      pl[geo_idx[dm_all$geo]] = dm_all[[pcol]]
       prior_loc_mat[[paste(m, out, sep = "_")]] = pl
       r = rep(NA_real_, N_PREC)
       r[geo_idx[dm$geo[ob]]] = fit$residuals
@@ -1449,7 +1632,11 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # instead left the late stages untouched -- at 92.7% reported the width moved
       # 0.59 -> 0.60pp -- because by then almost every cell has SOME report, while the
       # remaining VOTES still sat inside half-counted cells.
-      unrep = !mask_turn[, mi]
+      # & EXISTS: a non-existent cell is not "unreported", and although its tau is
+      # zeroed in the softmax anyway, widening a slot that contributes nothing would
+      # make the county-level shock z[, ci] land on a different set of precincts than
+      # the one it was measured on.
+      unrep = !mask_turn[, mi] & EXISTS[, mi]
       if (!any(unrep)) next
       z = matrix(rnorm(draws * n_cty, 0, SD_UNREP), draws, n_cty)
       eps[, unrep, k + 3] = eps[, unrep, k + 3] + z[, ci[unrep], drop = FALSE]
@@ -1482,6 +1669,14 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       k = K_OUT * (mi - 1)
       ex[[mi]] = if (mi == ref_i) matrix(1, draws, N_PREC)
                  else exp(pmin(mu[[k + 1]] + eps[, , k + 1], 20))
+      # STRUCTURAL ABSENCE, applied here and nowhere else in the draw. Zeroing the
+      # softmax NUMERATOR is exact: p_im = 0, tau_im = 0, and sum_m p_im = 1 still holds
+      # over the modes that remain, so adding-up survives untouched. Doing it this way
+      # also means the mode's mu and eps can stay whatever the fit produced -- they are
+      # multiplied by zero -- so no part of the draw machinery needs a special case.
+      # The reference mode is never masked (asserted at EXISTS).
+      if (mi != ref_i && !all(EXISTS[, mi]))
+        ex[[mi]][, !EXISTS[, mi]] = 0
       den_p = den_p + ex[[mi]]
     }
     # THE FLOOR MUST ACT ON THE PRECINCT TOTAL, NOT PER CELL.
@@ -1500,7 +1695,10 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     if (PIN_DONE) {
       # q_share in prec order; all_done implies q_share == 1, so this is a superset
       qs_prec = d |> distinct(geo, q_share) |> arrange(match(geo, prec$geo)) |> pull(q_share)
-      done_prec = (rowSums(mask_turn) == M) | (qs_prec >= PIN_MIN_SHARE)
+      # `| !EXISTS`: a precinct with no mail and no early cell is finished when
+      # its eday cell is. Without it an AK precinct can NEVER be pinned to its
+      # own known total -- rowSums(mask_turn) tops out at 1 of 3 forever.
+      done_prec = (rowSums(mask_turn | !EXISTS) == M) | (qs_prec >= PIN_MIN_SHARE)
       if (any(done_prec)) {
         # direct assignment, not dplyr::if_else -- vctrs rejects matrices
         T_draw[, done_prec] <- cnt_tot[, done_prec, drop = FALSE]
@@ -1599,6 +1797,10 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     county   = prec$county,
     q_share  = qs_out,
     n_obs_modes = rowSums(mask),
+    # the DENOMINATOR for n_obs_modes, which is not M once the structural-absence mask
+    # is on: an AK precinct reads 1 of 1, not 1 of 3, and without this column the dump
+    # makes every AK and masked-NC precinct look two-thirds unreported forever.
+    n_modes  = rowSums(EXISTS),
     cnt_prec = cnt_out,
     turn_est = colMeans(pden),
     # turnout had a point estimate and no interval while share had all four, even though

@@ -240,7 +240,12 @@ cprec_precincts = function(f, d, counts, level = 0.95, cands = c("s_dem", "s_rep
   a_t = ag(Tp); a_d = ag(Dp)
   d2 = Dp / pmax(Dp + Rp, 1e-9); a_2 = ag(d2)
   sh = Dp / pmax(Tp, 1e-9); a_s = ag(sh)
-  key = d |> summarize(county = county[1], n_obs_cells = sum(obs), n_done_cells = sum(obs_turn),
+  # n_cells is the DENOMINATOR for n_obs_cells, and it is not a constant: forecast_prec's
+  # frame carries one row per precinct x method that actually exists, so a precinct whose
+  # early and mail report at county/site level has fewer cells than its neighbours. Without
+  # it the dump cannot tell "1 of 1, finished" from "1 of 3, two still to come".
+  key = d |> summarize(county = county[1], n_cells = n(),
+                       n_obs_cells = sum(obs), n_done_cells = sum(obs_turn),
                        exp_votes = sum(exp_votes), .by = geo)
   cnt = counts |> summarize(cnt_prec = sum(c_tot), .by = geo)
   tibble(geo = levels(g)) |>
