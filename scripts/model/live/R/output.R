@@ -345,8 +345,64 @@ predict_all = function(cells, returns, races = race_info(returns), models = MODE
 #                                         via a temporary file so a reader never sees half a file
 # dir defaults to 26_general/model_results in the shared Dropbox, where the dashboard reads
 # from. Point test runs somewhere else (e.g. tempdir()) so they never mix with the night's.
+# ---- the schema gate (CONTRACT.md section 15's acceptance test) ---------------------
+# enightmodels::check_pred_data() CANNOT RETURN, for any input. Its last block is
+#     if (isTRUE(pred)) assert(identical(names(d), COLS_PRED), ...)
+# and `pred` is not one of its arguments -- formals() is just `d`, and `pred` is not an
+# object in the namespace either. It is a copy-paste from the sibling check_elec_data(d,
+# full, strict), whose IDENTICAL block is guarded by `strict`, a real argument defaulting
+# FALSE: `strict` was renamed to `pred` on the way across and never added to the signature.
+# So every call ends `object 'pred' not found` -- AFTER all ten substantive checks have run
+# and passed, because the block is last.
+#
+# Reported upstream. NOT patched locally: renv.lock pins enightmodels to RemoteSha
+# c99797a66 and the installed copy ships no .R sources (only .rdb/.rdx), so a local patch
+# would be undone by the next renv::restore() -- i.e. precisely on a fresh checkout on the
+# night, which is when it would matter. Upstream needs two tokens:
+#     check_pred_data = function(d, strict = FALSE)   and   if (isTRUE(strict))
+# `strict` MUST default to FALSE. Defaulting it TRUE would assert identical() over ALL of
+# names(d), which rejects our own output -- section 15 permits the extras p_win, geo and
+# cbs_as_of -- and is almost certainly why the sibling has it off.
+#
+# SECOND, SEPARATE BUG, AND IT IS OURS. `district` is NA for every statewide race, and a
+# column that is entirely NA carries no type in a CSV -- so readr types it `logical` on
+# read-back and the package's `is.integer(d$district)` assertion fails. Measured on our own
+# predictions_latest.csv: 160 of 160 rows NA, class logical, and check_pred_data() aborts on
+# `district column must be a positive integer` BEFORE it ever reaches the `pred` bug. So the
+# section 15 acceptance test -- check_pred_data(read_csv(predictions_latest.csv)) -- fails
+# on the read, not on the data. Writing it as integer cannot help: NA_integer_ still writes
+# as an empty field. So this coerces exactly that provable case and nothing else; a logical
+# `district` with any non-NA value is a real violation and must still fail.
+CHECK_PRED_BUG = "object 'pred' not found"
+
+check_pred = function(d, cols = enightmodels::COLS_PRED) {
+  if ("district" %in% names(d) && is.logical(d$district) && all(is.na(d$district)))
+    d$district = NA_integer_                      # CSV round-trip artifact, see above
+  tryCatch(enightmodels::check_pred_data(d),
+           error = function(e) if (!identical(conditionMessage(e), CHECK_PRED_BUG)) stop(e))
+  # what the unreachable block would have checked, scoped to the CORE columns. It cannot be
+  # identical() over all of names(d) because section 15 permits extras AFTER the 16 -- which
+  # also catches extras placed BEFORE them, since that reorders the core block.
+  if (!identical(names(d)[seq_along(cols)], cols))
+    stop("predictions: the first ", length(cols), " columns are not COLS_PRED in order.",
+         "\n  expected: ", paste(cols, collapse = ", "),
+         "\n  got:      ", paste(utils::head(names(d), length(cols)), collapse = ", "))
+  # Narrow on purpose. A broad tryCatch would turn this gate into decoration and a schema
+  # break would surface as a broken dashboard at 20:00 instead of a failed test now. It
+  # also retires itself silently once upstream is fixed: the tryCatch simply stops firing.
+  invisible(TRUE)
+}
+
 write_predictions = function(res, dir = file.path(find_26_general(), "model_results")) {
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+  # WARN, do not abort. If the table is malformed the dashboard is in trouble either way,
+  # but one bad row -- say one race with an unexpected party string -- must not stop the
+  # other eleven races' predictions from being written. The test harness calls check_pred()
+  # directly and DOES abort; that is where a schema break should stop the world.
+  if (!is.null(res$pred) && nrow(res$pred))
+    tryCatch(check_pred(res$pred),
+             error = function(e) cli::cli_alert_danger("predictions FAIL the schema gate: \
+                                  {conditionMessage(e)}"))
   stamp = format(max(res$status$time), "%Y%m%d_%H%M%S", tz = "America/New_York")
   put = function(d, name) {
     if (!is.null(d) && nrow(d)) d = mutate(d, across(any_of("time"), \(x) format(x, "%Y-%m-%dT%H:%M:%S%z")),

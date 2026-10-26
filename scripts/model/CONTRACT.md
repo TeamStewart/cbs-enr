@@ -779,6 +779,19 @@ defines the legal `pred_type` values, the `[0, 1]` bound on `pct_rep`, and the
 non-negativity of `rep`/`pred`/`pred_min`/`pred_max`. Do not duplicate those constraints
 here or anywhere else; a second copy is a second thing to get out of date.
 
+**Call it through `check_pred()` in `live/R/output.R`, not directly**, for two measured
+reasons that the wrapper documents in full:
+1. `check_pred_data()` cannot return for ANY input — its last block reads
+   `if (isTRUE(pred))` and `pred` is not one of its arguments. All ten substantive checks
+   run and pass first, so the wrapper swallows that one message and re-raises everything
+   else. Reported upstream; not patched locally, because `renv.lock` pins the package by
+   SHA and the installed copy has no R sources, so a patch would evaporate on a fresh
+   checkout — which is the night.
+2. `district` is NA for every statewide race, and an all-NA column carries no type in a
+   CSV, so `readr` reads it back as `logical` and the package's `is.integer` assertion
+   fails. The wrapper coerces exactly that case. **Writing it as integer does not help:**
+   `NA_integer_` still writes as an empty field.
+
 **Emit `pred_type` `"vote"` and `"share"` only.** `check_pred_data()` also accepts
 `"margin_vote"` and `"margin_share"`, but it requires `pred >= 0`, so a margin row for the
 trailing party fails validation. **Margins are the dashboard's job** — it differences the
@@ -819,8 +832,9 @@ CBS remainder and is not the same object.
 sequence. **Pick one and name it;** emitting both would duplicate every row, and an
 unlabelled choice makes two models' intervals look comparable when they are not.
 
-*Acceptance:* `check_pred_data(read_csv("predictions_latest.csv"))` passes;
-`identical(names(d)[1:16], enightmodels::COLS_PRED)`;
+*Acceptance:* `check_pred(read_csv("predictions_latest.csv"))` passes — it folds in the
+column-order assertion below, so this is one call, and it is the call to use rather than
+`check_pred_data()` directly (see above);
 `setdiff(names(d), c(COLS_PRED, "p_win", "geo", "cbs_as_of"))` is empty;
 `unique(d$pred_type)` is a subset of `{vote, share}`; `unique(d$geo)` is a subset of
 `{scraped, all}`; and every row with `geo == "all"` has a non-NA `cbs_as_of` and a
@@ -837,6 +851,12 @@ unlabelled choice makes two models' intervals look comparable when they are not.
 | `statewide` | whether `geo = "all"` rows were added, or why not |
 | `seconds` | wall-clock for that model on that race |
 | `settings` | the model's resolved settings, enough to reproduce the fit |
+| `cbs` | provenance of the county snapshot used, e.g. `"not pulled; using the snapshot saved 2026-11-04 03:00:00 UTC"` |
+
+`race_id` here is `priors.csv`'s key (`TX_gov`), **not** §15.1's `contest` (`gov`). Joining
+the two tables needs `paste(state, contest, sep = "_")`; joining `contest` to `race_id`
+directly matches nothing, and an anti-join then reports every row missing rather than
+erroring.
 
 **The invariant this table exists for: a race x model with no prediction appears here,
 never silently vanishes.** A model that errors, or that has no votes to work with, produces
