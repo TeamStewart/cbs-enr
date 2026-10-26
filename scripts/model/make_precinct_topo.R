@@ -378,15 +378,13 @@ if (nrow(thin) > 0)
                     {100*MIN_STATE_OURS}% of OUR precincts -- geometry vintage, \\
                     not a key problem. Topojson NOT written for these states.")
 
-if (length(fails) > 0) {
-  cli_h1("GATE FAILED")
-  cli_bullets(set_names(fails, rep("x", length(fails))))
-  cli_abort("{length(fails)} match-rate gate failure(s) -- refusing to emit a map with holes.")
-}
-
-# ---- persist the lookup ---------------------------------------------------------
-## Keyed on (state, year) like `vote_mode_map.csv`, with `rule` as the provenance column
-## so any single row's join can be traced to the rule that made it.
+# WRITE THE CROSSWALK FIRST, THEN GATE. The gate protects the MAP -- a topojson with
+# holes is worse than none -- but the crosswalk is a different artifact: a reviewable,
+# per-row-attributed record of which `geo` matched which `unit_id` and by what rule. It is
+# exactly what someone needs in order to FIX a gate failure, so withholding it on a gate
+# failure is backwards, and it left model_precincts.csv joined against a stale crosswalk
+# (AK read 312 of 402 after the ENR id fix changed its geos, purely because this file had
+# not been rewritten).
 write_csv(xwalk |> arrange(state, county_fips, geo), P_XWALK, na = "")
 write_csv(cty |> select(state, year, county_fips, vh_county, county_name, n_names,
                         our_n, vh_n, attainable, matched, pct_ours, pct_attainable) |>
@@ -401,6 +399,16 @@ if (SKIP_TOPO) { cli_alert_info("SKIP_TOPO set -- stopping before geometry"); qu
 ## Unmatched polygons are KEPT, with `geo` null. A dropped polygon is a hole in the
 ## state outline that reads as "no votes here"; a null-`geo` polygon renders as no-data
 ## and is honest about what it is.
+
+if (length(fails) > 0) {
+  cli_h1("GATE FAILED")
+  cli_bullets(set_names(fails, rep("x", length(fails))))
+  cli_abort("{length(fails)} match-rate gate failure(s) -- refusing to emit a map with holes.")
+}
+
+# ---- persist the lookup ---------------------------------------------------------
+## Keyed on (state, year) like `vote_mode_map.csv`, with `rule` as the provenance column
+## so any single row's join can be traced to the rule that made it.
 cli_h1("topojson")
 
 emit_one <- function(r) {
