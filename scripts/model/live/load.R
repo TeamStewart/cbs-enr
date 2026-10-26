@@ -23,6 +23,16 @@ suppressPackageStartupMessages({
   library(dplyr); library(tidyr); library(purrr); library(readr); library(stringr)
 })
 
+# Shared repo config (paths, ELECTION_DATE, ELECTION_FOLDER), BEFORE paths.R so that
+# find_26_general() can use PATH_DROPBOX when a machine sets it. Sourced rather than
+# duplicated: races.R used to carry its own ELECTION_DATE, which differed from this one in
+# both value and type, and whichever file was sourced second would have won silently.
+local({
+  g = "scripts/util/globals.R"
+  if (file.exists(g)) source(g) else
+    cli::cli_alert_warning("{.path {g}} not found -- PATH_DROPBOX / ELECTION_FOLDER unset")
+})
+
 local({
   here = "scripts/model/live/R"
   if (!dir.exists(here)) stop("Run from the cbs-enr folder (scripts/model/live/R not found from ", getwd(), ")")
