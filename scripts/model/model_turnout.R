@@ -207,6 +207,42 @@ SD_UNREP       = as.numeric(Sys.getenv("SD_UNREP", unset = "0.25"))
 # gating the BOUND on completeness is what makes HY_COUNTY inert, and the two must not be
 # conflated. Raise it as its own change.
 CTY_BOUND      = Sys.getenv("CTY_BOUND", unset = "1") == "1"
+# COUNTY-LEVEL ANALOGUE OF PIN_DONE (CTY_SUBSTITUTE=0 to ablate).
+# The bound above is ONE-SIDED, and that is what costs it 2-6pp when the prior is already
+# right: E[max(0, C_c - T_c)] > 0 even when E[T_c] = C_c, so flooring a noisy county total
+# biases the mean up and puts an ATOM on the county. It is the same defect PIN_DONE exists
+# to remove one level down -- "a precinct with every mode counted out has a KNOWN total:
+# substitute it rather than flooring, or the draw contributes one-sided excess on a quantity
+# with no uncertainty left" -- so the fix is the same: once a county's total is KNOWN,
+# substitute it, in both directions, instead of flooring it.
+#
+# A county's total is known when (a) every pile it reports is flagged complete AND (b) every
+# mode it reports AT PRECINCT level is counted out in every one of its precincts. (b) is
+# checked on the modes that actually have precinct-level votes rather than on the mode
+# vocabulary, because BUCKET_FOLD sends provisional piles into `eday` -- so in AK all three
+# of MODES have a pile and a vocabulary test would vacuously pass while election day was
+# still counting.
+#
+# (b) IS VACUOUS EARLY, and closing that is what the third condition is for. Before any
+# precinct-level votes arrive there are no precinct-reported modes to check, so (a) alone
+# would substitute a county down to its piles while election day had not started. So (c):
+# the county must HAVE precinct-level votes. At 20:30 an AK county with its piles in and no
+# election-day votes fails (c) and is floored, not substituted.
+#
+# A RATIO GATE IS DELIBERATELY *NOT* THE COMPLETENESS TEST, and the first draft of this got
+# it wrong. Requiring the county's observed total to reach 0.95 of its expected total looks
+# like the county-level analogue of PIN_MIN_RPRIOR, but it conflates "still counting" with
+# "turnout came in below expectation" -- which are indistinguishable from a ratio and have
+# opposite correct responses. Measured: with the bucket truth at 0.7x the prior, the ratio
+# is 0.90, a 0.95 gate refuses, and substitution does nothing in precisely the regime where
+# it is the only thing that can help (a lower bound cannot pull an estimate DOWN). So
+# CTY_SUB_MIN_RPRIOR is loose and exists only to catch a county whose observed total is
+# wildly below its expectation, which is an id-join failure rather than low turnout.
+#
+# Below the gate nothing changes: the county is floored exactly as before. So this can only
+# ever REPLACE a floor with an equality, never introduce a correction of its own.
+CTY_SUBSTITUTE = Sys.getenv("CTY_SUBSTITUTE", unset = "1") == "1"
+CTY_SUB_MIN_RPRIOR = as.numeric(Sys.getenv("CTY_SUB_MIN_RPRIOR", unset = "0.5"))
 # PIN A FINISHED PRECINCT AT ITS COUNT (PIN_DONE=0 to ablate).
 # The prediction step floors the total: T = pmax(kappa*n*invlogit(theta), cnt_prec). For a
 # precinct still counting that is right. For one that has FINISHED it is not -- the total
@@ -1709,10 +1745,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
         # statewide constraint ran -- that block re-shifts every precinct and only re-floors
         # at cnt_d, so it destroys the pin's equality itself -- so the check is only
         # meaningful with that block off.
-        # exists() for the same reason as PIN_MIN_RPRIOR above: STATE_TURNOUT is the other
-        # author's in-flight work, so this block must not require it to be present.
-        st_on = exists("STATE_TURNOUT") && !is.na(STATE_TURNOUT) && STATE_TURNOUT > 0
-        if (any(pin_v) && !st_on &&
+        if (any(pin_v) && !(!is.na(STATE_TURNOUT) && STATE_TURNOUT > 0) &&
             max(abs(T_draw[, pin_v, drop = FALSE] - cnt_tot[, pin_v, drop = FALSE])) > 1e-6)
           cli_warn("county bound: the recomputed PIN_DONE gate does not match the \\
             pin actually applied -- the exemption is on the wrong precincts. Reconcile with \\
@@ -1722,7 +1755,33 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # shift cannot raise it (capv * plogis(.) < capv <= cnt_v, and the floor then puts it
       # back), so leaving it in the free set only makes the target unreachable.
       fixed_v = pin_v | (cnt_v >= capv)
-      n_unreach = 0L; logs = list(); refused = character()
+      # ---- which counties have a KNOWN total (see CTY_SUBSTITUTE) --------------------
+      sub_ok = rep(FALSE, nrow(obs_c))
+      if (CTY_SUBSTITUTE && nrow(obs_c)) {
+        piles_done = county_obs |> summarize(ok = all(complete), .by = county)
+        # each precinct's own expected total, in prec order, for the r_prior gate
+        exp_v = d |> summarize(E = sum(prior_tau, na.rm = TRUE), .by = geo) |>
+          arrange(match(geo, prec$geo)) |> pull(E)
+        for (ci in seq_len(nrow(obs_c))) {
+          cc  = obs_c$county[ci]
+          j   = match(cc, piles_done$county)
+          if (is.na(j) || !isTRUE(piles_done$ok[j])) next      # a pile still arriving
+          idx = which(cty_v == cc)
+          # Modes this county reports AT PRECINCT level = those that actually have
+          # precinct-level votes. Read from the votes rather than from the mode vocabulary
+          # because BUCKET_FOLD sends provisional piles into `eday`, so in AK all three of
+          # MODES have a pile and a vocabulary test would pass vacuously.
+          pm  = which(colSums(cnt_tau[idx, , drop = FALSE]) > 0)
+          # NO precinct-level votes at all => nothing has been counted here except the
+          # piles. Substituting would pin the county to its piles alone.
+          if (!length(pm)) next
+          if (!all(mask_turn[idx, pm, drop = FALSE])) next
+          E = sum(exp_v[idx])
+          r = (sum(cnt_v[idx]) + obs_c$B[ci]) / max(E, 1)
+          sub_ok[ci] = is.finite(r) && r >= CTY_SUB_MIN_RPRIOR
+        }
+      }
+      n_unreach = 0L; logs = list(); refused = character(); n_floorfight = 0L
       for (ci in seq_len(nrow(obs_c))) {
         idx  = which(cty_v == obs_c$county[ci])
         free = idx[!fixed_v[idx]]
@@ -1743,14 +1802,25 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
           # ratio hit the 1e-9 clamp disagreeing with f(0) by a hair, and uniroot() then
           # errors on a bracket it was told was valid.
           cur = sum(cf * plogis(th))
-          if (cur >= targ) next                      # ONE-SIDED: only when it binds
+          # ONE-SIDED unless the county's total is KNOWN, in which case solve in both
+          # directions -- that is the whole of the PIN_DONE analogue.
+          if (cur >= targ && !sub_ok[ci]) next
           f  = function(del) sum(cf * plogis(th + del)) - targ
-          # f is increasing and f(0) = cur - targ < 0 here, so only the upper end can fail.
-          # +50 on the logit scale reaches the cap from the 1e-9 clamp (logit = -20.7).
-          if (f(50) < 0) { n_unreach = n_unreach + 1L; next }
-          del = stats::uniroot(f, c(0, 50), tol = 1e-8)$root
-          # floor re-applied for symmetry with the statewide block; a no-op for del >= 0
-          T_draw[dd, free] <- pmax(cf * plogis(th + del), cnf)
+          lo = if (sub_ok[ci]) -50 else 0
+          # f is increasing. +/-50 on the logit scale spans the clamp (logit 1e-9 = -20.7)
+          # to the cap, so an unreachable target means the county total is inconsistent with
+          # this county's registrants, not that the bracket is too tight.
+          if (f(50) < 0 || f(lo) > 0) { n_unreach = n_unreach + 1L; next }
+          del = stats::uniroot(f, c(lo, 50), tol = 1e-8)$root
+          Tn = cf * plogis(th + del)
+          # The per-precinct counted floor still wins: a precinct cannot finish below its
+          # own count. For a SUBSTITUTED county with del < 0 that can push the county back
+          # above its known total -- the same fight the statewide block describes, where
+          # "the constraint and the floor fight and the floor wins silently". It is counted
+          # here rather than left silent, because a county that cannot reach its own known
+          # total means the deficit sits in precincts that are individually already over it.
+          if (del < 0 && any(Tn < cnf - 1e-9)) n_floorfight = n_floorfight + 1L
+          T_draw[dd, free] <- pmax(Tn, cnf)
           hit = hit + 1L; short_v = c(short_v, targ - cur)
         }
         if (hit) logs[[length(logs) + 1L]] = tibble(
@@ -1762,6 +1832,10 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
         tibble(county = character(), n_free = integer(), n_fixed = integer(), bucket = numeric(),
                cnt_prec = numeric(), target = numeric(), draws_bound = integer(),
                mean_short = numeric(), max_short = numeric())
+      if (n_floorfight > 0)
+        cli_warn("county bound: the per-precinct counted floor overrode a SUBSTITUTED \
+          county total on {n_floorfight} county-draw(s) -- those counties finish above \
+          their own observed total because individual precincts are already past it")
       if (length(refused))
         cli_warn("county bound: REFUSED on {length(refused)} county(ies) with \\
           bucket votes and no unpinned, uncapped precinct ({.val {refused}}) -- the bound \\
