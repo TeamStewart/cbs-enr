@@ -1691,14 +1691,15 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # later common logit shift would move it again, so the pinned precincts are HELD and
       # their mass is subtracted from the target instead (which is what using sum(cnt_v)
       # over the FREE set only amounts to). The gate is recomputed here rather than threaded
-      # out of the PIN_DONE block above because that block is another author's in-flight
-      # work; the equality check below is what catches the two drifting apart.
+      # out of the PIN_DONE block above because that block has UNCOMMITTED changes in the
+      # working tree (the PIN_MIN_RPRIOR corroboration, from the 2026-10-21 session); the
+      # equality check below is what catches the two drifting apart once they land.
       pin_v = rep(FALSE, N_PREC)
       if (PIN_DONE) {
         qs_p = d |> distinct(geo, q_share) |> arrange(match(geo, prec$geo)) |> pull(q_share)
-        # PIN_MIN_RPRIOR and `r_prior` are the corroboration half of the pin's gate and are
-        # in flight above; defaulted so this block keeps working whichever way that lands
-        # (no r_prior => the flag-only gate, which is what the pin was before).
+        # PIN_MIN_RPRIOR and `r_prior` are the corroboration half of the pin's gate and
+        # are uncommitted above; defaulted so this block works whether or not they are
+        # present (no r_prior => the flag-only gate, which is what the pin was before).
         rp_min = if (exists("PIN_MIN_RPRIOR")) PIN_MIN_RPRIOR else 0
         rp_p   = rep(Inf, N_PREC)
         if ("r_prior" %in% names(d))
