@@ -47,6 +47,9 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(glue)
 })
+# bucket_class() / geo_label(): section 6 needs them to exclude county/site reporting geos
+# from the live-id join rate, since a bucket is SUPPOSED not to match a precinct.
+source("scripts/model/live/R/vote_modes.R")
 
 args = commandArgs(trailingOnly = TRUE)
 STATE = toupper(c(args, "TX")[1])
@@ -112,12 +115,47 @@ cat(glue("Prep run {format(Sys.time())} by {Sys.info()[['user']]}\n26_general: {
 read_pq = function(p) as_tibble(nanoparquet::read_parquet(p))
 
 # ---- precinct id normalization ------------------------------------------------------
-# One rule for every source: trim, uppercase, drop leading zeros ("0007" -> "7",
-# "001A" -> "1A"). Live-scraper ids are unpadded (checked on Harris, Kaufman, Wood).
+# TWO rules, because the two sources are not the same kind of thing.
+#
+# norm_prec_id() is for ids we have to RECONCILE -- YouGov / raw state ids, where the
+# padding is arbitrary and dropping it is what makes them join: trim, uppercase, drop
+# leading zeros ("0007" -> "7", "001A" -> "1A"). Validated on Harris, Kaufman and Wood,
+# all three TEXAS counties, where a precinct id is a zero-padded pure number.
 norm_prec_id = function(x) {
   x = str_squish(toupper(as.character(x)))
   x = str_remove(x, "\\.0$")              # ids stored as numbers upstream ("860.0", FL ENR ids)
   x = str_remove(x, "^0+(?=\\d)")
+  if_else(x == "", NA_character_, x)
+}
+# norm_enr_id() is for the LIVE FEED's own ids (`precinct_enr`). It does NOT drop leading
+# zeros, and that is the whole point.
+#
+# WHY. An ENR id is the key the feed will send on the night. There is nothing to
+# reconcile -- we already have it exactly right -- so normalizing it REWRITES the join
+# key. Applying the TX-validated rule state-blind corrupted every compound id:
+#     AK  09-115 -> 9-115    the 09 is HOUSE DISTRICT 9, not padding
+#     NC  02-04  -> 2-04     the 02 is a ward number
+#     NC  001    -> 1        the feed sends 001
+# Measured 2026-10-26 on {ST}_latest.csv, exact join as cell_counts() does it: AK 312 of
+# 402 precinct geos joined (77.6%), NC 2,005 of 2,625 (76.4%). Using the ENR id verbatim
+# takes AK to 402 of 402 and NC to 2,616 of 2,625, with ZERO collisions and zero orphan
+# cells. In votes that is 32,051 of AK's 164,303 in the governor contest -- 19.5% -- that
+# production was silently dropping, on geos that look like precincts because they ARE
+# precincts (ak_001_01-600, nc_001_035).
+#
+# Section 6's live-id round trip did not catch it because it applied norm_geo() to the
+# LIVE side too (see the note there), so it compared the mangled id against the mangled
+# id and reported 100.0% for AK while production joined 77.6%.
+#
+# Scope: this changes `geo` only where `precinct_enr` is populated -- AK 100%, NC 99.4%,
+# FL 50.2%, MI 43.9%, TX 0.7%, CA 0%. TX and CA are unaffected. FL's and MI's ENR ids
+# cannot be checked against a feed yet (no {ST}_latest.csv), so verify them the moment one
+# lands; the direction is right either way, since verbatim is by definition what the feed
+# sends. The `.0$` strip and the squish/uppercase are KEPT: those fix how a value was
+# stored, not what the id is.
+norm_enr_id = function(x) {
+  x = str_squish(toupper(as.character(x)))
+  x = str_remove(x, "\\.0$")              # "001.0" -> "001": a storage artifact, not padding
   if_else(x == "", NA_character_, x)
 }
 norm_geo = function(geo) {
@@ -226,7 +264,9 @@ if (anyNA(prec$county_cbs) || anyNA(prec$geostratum))
 prec = prec |>
   mutate(
     geo_yougov = paste(st, county_cbs, norm_prec_id(precinct_local), sep = "_"),
-    geo = if_else(!is.na(precinct_enr), paste(st, county_cbs, norm_prec_id(precinct_enr), sep = "_"), geo_yougov)
+    # VERBATIM for the live id (norm_enr_id), reconciled for the YouGov one. See the
+    # note at norm_enr_id: normalizing an ENR id rewrote the key the feed sends.
+    geo = if_else(!is.na(precinct_enr), paste(st, county_cbs, norm_enr_id(precinct_enr), sep = "_"), geo_yougov)
   )
 if (anyDuplicated(prec$geo)) cli::cli_abort("Duplicate geo ids: {head(prec$geo[duplicated(prec$geo)])}")
 cli::cli_h2("Crosswalk")
@@ -470,13 +510,37 @@ live_files = Sys.glob(file.path(dir_live, glue("{STATE}_*_latest.parquet")))
 live_files = live_files[file.size(live_files) > 0]
 cli::cli_h2("Live id check ({length(live_files)} files in {STATE}/clean)")
 if (length(live_files) > 0) {
+  # COMPARE THE IDS AS PRODUCTION DOES -- raw, exact. cell_counts() joins on `geo`
+  # verbatim with no crosswalk, so any transform applied here that production does not
+  # apply makes this check LIE. It used to call norm_geo() on the live side, which is the
+  # same transform the frame's own geo had already been through, so it compared a mangled
+  # id against a mangled id: it reported 100.0% for AK while production joined 77.6% and
+  # dropped 19.5% of the state's votes. A check that normalizes both sides cannot fail.
+  # `geo_norm` is kept alongside purely to SHOW how much of any gap normalization would
+  # close -- it is a diagnostic, never the pass criterion.
   live = map(live_files, \(f) read_pq(f) |> distinct(geo) |> mutate(file = basename(f))) |>
     bind_rows() |>
-    mutate(geo = norm_geo(geo), county_cbs = str_extract(geo, "(?<=^[a-z]{2}_)\\d{3}"))
+    mutate(geo = as.character(geo), geo_norm = norm_geo(geo),
+           county_cbs = str_extract(geo, "(?<=^[a-z]{2}_)\\d{3}"))
   live |>
-    summarize(live_ids = n(), live_in_frame = round(mean(geo %in% prec$geo), 3), .by = c(file, county_cbs)) |>
+    summarize(live_ids = n(),
+              live_in_frame = round(mean(geo %in% prec$geo), 3),          # what production gets
+              if_normalized = round(mean(geo_norm %in% prec$geo), 3),     # diagnostic only
+              .by = c(file, county_cbs)) |>
     left_join(prec |> summarize(frame_ids = n(), frame_in_live = round(mean(geo %in% live$geo), 3), .by = county_cbs), by = "county_cbs") |>
     print()
+  # Buckets are SUPPOSED not to join (they are county/site reports, not precincts), so
+  # they must not be counted against the rate -- see live/R/bucket_counts().
+  lp = filter(live, is.na(bucket_class(str_replace(geo, "^[a-z]{2}_[0-9]+_", ""))))
+  rate = if (nrow(lp)) mean(lp$geo %in% prec$geo) else NA_real_
+  cli::cli_alert_info("live PRECINCT ids joining geo exactly: {round(100 * rate, 1)}% \\
+                       ({sum(lp$geo %in% prec$geo)} of {nrow(lp)}); \\
+                       {sum(!is.na(bucket_class(str_replace(live$geo, '^[a-z]{2}_[0-9]+_', ''))))} \\
+                       bucket geo(s) excluded")
+  if (!is.na(rate) && rate < 0.99)
+    cli::cli_alert_danger("Only {round(100 * rate, 1)}% of live precinct ids join. \\
+                           cell_counts() will DROP the rest with no counter. Fix the id \\
+                           rule or add crosswalk entries before the night.")
 } else {
   cli::cli_alert_info("No readable *_latest.parquet files (make TX/clean available offline to run this check)")
 }
