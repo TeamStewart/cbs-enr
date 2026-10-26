@@ -261,7 +261,35 @@ ATOM_CEIL      = as.numeric(Sys.getenv("ATOM_CEIL",  unset = "0.98"))
 # USE_COMPOSE=0 restores the old independent-log-normal turnout equations.
 USE_COMPOSE    = Sys.getenv("USE_COMPOSE", unset = "1") == "1"
 KAPPA          = as.numeric(Sys.getenv("KAPPA", unset = "1.25"))
-REF_MODE       = Sys.getenv("REF_MODE", unset = "early")
+# ---- PER-STATE MODE SCOPE -------------------------------------------------------
+# REF_MODE carries theta (the precinct TOTAL); every other mode is a log-ratio to it. So
+# the reference must be a mode that is OBSERVED, early and everywhere, in this state. The
+# old hardcoded "early" is a TX fact (65.1% of 2022 voters) and is wrong elsewhere:
+# measured on the live path, NC's ref_share is 0 at the median and the non-reference
+# y_tau_prior sits at ~13 (= log(share / 1e-6), the floor), because NC's mode history says
+# early = 0. MI is 0.0% early in 2022 and CA 1.6%, with no `early` in CA's feed at all.
+#
+# Rule: the largest mode in the 2022 midterm, the same analogue MODE_TURN_SHARE uses.
+# NC is a documented exception -- see the note column in the lookup.
+# PRECEDENCE: env var > lookup row for (STATE, year) > the legacy TX default. The env
+# override is what the backtests set, so they are unaffected.
+MODE_SCOPE_PATH = Sys.getenv("MODE_SCOPE_PATH",
+                             unset = "scripts/model/lookups/mode_scope.csv")
+MODE_SCOPE_YEAR = as.integer(Sys.getenv("MODE_SCOPE_YEAR", unset = "2026"))
+mode_scope = local({
+  if (!file.exists(MODE_SCOPE_PATH)) return(NULL)
+  d = utils::read.csv(MODE_SCOPE_PATH, colClasses = "character")
+  r = d[d$state == STATE & d$year == as.character(MODE_SCOPE_YEAR), , drop = FALSE]
+  if (!nrow(r)) return(NULL)
+  list(ref_mode = trimws(r$ref_mode[1]),
+       modes = trimws(strsplit(r$modes[1], "|", fixed = TRUE)[[1]]))
+})
+if (is.null(mode_scope))
+  cli_alert_warning("No {.path {basename(MODE_SCOPE_PATH)}} row for {STATE}/{MODE_SCOPE_YEAR} \\
+                     -- falling back to the legacy TX scope (ref early, mail/early/eday). \\
+                     Add a row rather than relying on this.")
+REF_MODE       = Sys.getenv("REF_MODE",
+                            unset = if (is.null(mode_scope)) "early" else mode_scope$ref_mode)
 # Prior sd on the STATEWIDE LEVEL, in logit units, decoupled from PRIOR_N_*.
 # MEASURED (calibrate_swing.R, 9 states x 37 contest pairs): the statewide two-party Dem
 # share moves 0.22-0.26 logit between a prior contest and its target, against the ~0.098
@@ -478,8 +506,17 @@ TP_SHRINK_N  = 2000       # registrants at which the precinct tp signal gets hal
 TP_RANGE     = c(0.001, 0.15)   # clamp for the third-party prior
 
 # ---- MODE PRIORS ----------------------------------------------------------------
-# Three canonical modes (keys from enightmodels::VOTE_METHODS).
-MODES = c("mail", "early", "eday")
+# Canonical mode keys from enightmodels::VOTE_METHODS. THESE ARE THE MODEL'S MODES, i.e.
+# what survives folding -- `prov` folds into `eday` and is never its own equation, and a
+# state whose feed carries no `early` (CA) drops it rather than carrying a dead slot whose
+# ref_share would be 0. Set per state in lookups/mode_scope.csv; MODES= overrides.
+# M = length(MODES) flows into Sigma, eps, the conditional-MVN grouping and the softmax,
+# so changing it changes the equation count: 3 modes x 3 outcomes = 9 equations, 2 x 3 = 6.
+MODES = local({
+  if (nzchar(Sys.getenv("MODES"))) return(trimws(strsplit(Sys.getenv("MODES"), ",")[[1]]))
+  if (is.null(mode_scope)) c("mail", "early", "eday") else mode_scope$modes
+})
+stopifnot("REF_MODE must be one of MODES" = REF_MODE %in% MODES)
 #
 # If `path_mode_hist` exists, the turnout split, the partisan offset and Sigma are all
 # DERIVED from it (derive_mode_priors() below) and the constants here are ignored.
@@ -586,6 +623,22 @@ MODE_HIST_PREFER = cov_env("MODE_HIST_PREFER", c("2022_general", "2024_general")
 # --------------------------------------------------------------------------------
 
 
+
+# The fallback constants above are written for the legacy mail/early/eday scope. When a
+# state's MODES differ (CA drops `early`), subset and RENORMALISE so the fallback still
+# sums to 1, rather than tripping the assertion below with a scope mismatch. Only the
+# fallback is touched -- a derived per-precinct split (derive_mode_priors) is renormalised
+# per geo in the `cells` block regardless.
+if (!setequal(names(MODE_TURN_SHARE), MODES)) {
+  miss = setdiff(MODES, names(MODE_TURN_SHARE))
+  if (length(miss)) cli_abort("MODES names {miss} with no MODE_TURN_SHARE fallback value.")
+  dropped = setdiff(names(MODE_TURN_SHARE), MODES)
+  MODE_TURN_SHARE = MODE_TURN_SHARE[MODES]
+  MODE_TURN_SHARE = MODE_TURN_SHARE / sum(MODE_TURN_SHARE)
+  MODE_SHARE_OFFSET = MODE_SHARE_OFFSET[MODES, , drop = FALSE]
+  cli_alert_info("{STATE}: mode scope drops {dropped}; fallback MODE_TURN_SHARE \\
+                  renormalised to {paste(sprintf('%s %.3f', MODES, MODE_TURN_SHARE), collapse = ' ')}")
+}
 
 stopifnot(
   "MODE_TURN_SHARE must sum to 1"   = abs(sum(MODE_TURN_SHARE) - 1) < 1e-9,

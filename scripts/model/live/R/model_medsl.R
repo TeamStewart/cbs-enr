@@ -122,17 +122,23 @@ medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refre
   env = new.env(parent = globalenv())
   assign("covs_long", inp$covs_long, envir = env)
   assign("mode_hist", inp$mode_hist, envir = env)
+  # model_turnout.R hardcodes STATE = "TX" (its own default driver is the TX trial), and
+  # nothing here used to override it -- so every state ran with STATE == "TX". Harmless
+  # while STATE only fed unread file paths and a cli header, but anything keyed on it (the
+  # per-state REF_MODE / MODES lookup) would silently read TX for all six states. Inject it
+  # and skip the model's own assignment, exactly as covs_long / mode_hist are handled.
+  assign("STATE", state, envir = env)
   skipped = character()
   suppressMessages(for (i in seq_along(ex)) {
     e = ex[[i]]; line = sr[[i]][1]
-    if (lhs(e) %in% c("covs_long", "mode_hist")) { skipped = c(skipped, lhs(e)); next }
+    if (lhs(e) %in% c("covs_long", "mode_hist", "STATE")) { skipped = c(skipped, lhs(e)); next }
     if (!(line < cut_ret || (line < cut_run && is_fun(e)))) next
     # source(model_core.R) goes into the model's environment, not the global one
     if (is_source(e)) e[["local"]] = env
     eval(e, envir = env)
   })
-  if (!setequal(skipped, c("covs_long", "mode_hist")))
-    stop("model_turnout.R no longer assigns covs_long / mode_hist at top level; update live/R/model_medsl.R")
+  if (!setequal(skipped, c("covs_long", "mode_hist", "STATE")))
+    stop("model_turnout.R no longer assigns covs_long / mode_hist / STATE at top level; update live/R/model_medsl.R")
   if (!exists("fit_stage", envir = env, inherits = FALSE)) stop("model_turnout.R no longer defines fit_stage()")
 
   env$.draws = as.integer(Sys.getenv("MEDSL_DRAWS", unset = env$DRAWS))
