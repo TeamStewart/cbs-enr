@@ -31,11 +31,26 @@
 #   "party"      add up dem / rep / third-party first, then round (what the swing model
 #                got). Only differs when a party has more than one candidate (e.g. a
 #                minor-party candidate plus write-ins), by at most 1 vote per cell.
-read_sim = function(dir_sc, tz = "America/New_York") {
+# state: NULL auto-detects from the {ST}_truth.parquet in the scenario directory, so a
+# non-TX scenario needs no argument and no naming convention. The filenames used to be
+# hardcoded to TX, which silently limited every sim run to one state.
+read_sim = function(dir_sc, tz = "America/New_York", state = NULL) {
+  if (is.null(state)) {
+    f = list.files(dir_sc, pattern = "_truth\\.parquet$")
+    if (length(f) != 1)
+      stop("expected exactly one *_truth.parquet in ", dir_sc, ", found ", length(f),
+           if (length(f)) paste0(": ", paste(f, collapse = ", ")) else "")
+    state = sub("_truth\\.parquet$", "", f)
+  }
+  p = function(suffix) {
+    f = file.path(dir_sc, paste0(state, suffix))
+    if (!file.exists(f)) stop("sim scenario is missing ", basename(f))
+    f
+  }
   list(
-    truth = read_pq(file.path(dir_sc, "TX_truth.parquet")) |>
+    truth = read_pq(p("_truth.parquet")) |>
       mutate(across(c(geo, county_cbs), as.character)),
-    sched = read_pq(file.path(dir_sc, "TX_schedule.parquet")) |>
+    sched = read_pq(p("_schedule.parquet")) |>
       mutate(geo = as.character(geo), t = lubridate::with_tz(t, tz))
   )
 }

@@ -64,10 +64,24 @@ for (pk in c("fixest", "enightmodels")) suppressPackageStartupMessages(requireNa
 # ---- the returns for this refresh ---------------------------------------------------
 if (!is.na(SIM)) {
   dir_sc = if (dir.exists(SIM)) SIM else file.path(dirname(d26), "26_sim", SIM)
-  sim = read_sim(dir_sc)
+  # opt() returns NA when the flag is absent, and read_sim() auto-detects on NULL -- so NA
+  # has to become NULL or it looks for a file literally called NA_truth.parquet.
+  ST_OPT = { s = opt("state"); if (is.na(s)) NULL else toupper(s) }
+  sim = read_sim(dir_sc, state = ST_OPT)
   dir_cbs = file.path(d26, "model_tests", "statewide_sim", basename(dir_sc))
   out_dir = file.path(d26, "model_tests", "run_night_sim", basename(dir_sc))
-  st_sim = toupper(substr(basename(dir_sc), 1, 2))
+  # Resolve the sim's state from, in order: an explicit --state, the truth frame's own
+  # `state` column, then the scenario-name prefix. The prefix was the ONLY rule, which
+  # meant every scenario had to be named {st}_* and in practice limited the sim path to TX
+  # -- so none of the cross-state work could be exercised through run_night.R at all.
+  st_sim = toupper(
+    if (!is.null(ST_OPT)) ST_OPT
+    else if ("state" %in% names(sim$truth) && length(unique(sim$truth$state)) == 1)
+      unique(sim$truth$state)[1]
+    else substr(basename(dir_sc), 1, 2))
+  if (!st_sim %in% all_races$state)
+    stop("sim state '", st_sim, "' has no races in priors.csv (have: ",
+         paste(sort(unique(all_races$state)), collapse = ", "), "). Pass --state= to override.")
   get_returns = function(at) {
     cells = state_inputs(st_sim)$cells
     bind_rows(lapply(sort(unique(sim$truth$contest)), \(r) returns_from_sim(sim, r, at, geos = cells$geo))) |>
