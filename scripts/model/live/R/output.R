@@ -164,6 +164,65 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
 # status and returns no rows.
 # ret: that race's returns; race: its one row of `races`; cbs: that race's latest CBS county
 # snapshot (read_cbs_latest()) or NULL; base: county_baseline(state) or NULL.
+# ---- the per-precinct dump -----------------------------------------------------------
+# Normalise each model's `cells` slot to one schema. That slot is NOT uniform: model_medsl
+# returns an 18-column frame keyed by geo, model_swing a precinct x METHOD frame with
+# dem/rep/tot, model_cory a precinct frame with dem/rep/tot and only when
+# precincts = TRUE, and model_cory_pois nothing at all (it summarises geo away). So this is
+# a per-model adapter, not a passthrough.
+#
+# Two defects in the pre-existing flag-gated dumps are deliberately NOT inherited:
+# `n_done_modes`, which summed an ambient vector and read 10,956 on a 227-registrant
+# precinct (use q_share), and the trial/swing branches writing IDENTICAL filenames with
+# different schemas so one silently overwrote the other.
+PREC_COLS = c("race_id", "model", "time", "geo", "county", "method",
+              "turn_est", "turn_lo", "turn_hi", "dem_est", "dem_lo", "dem_hi",
+              "est_dem2", "cnt_prec", "q_share", "n_obs_modes", "p_win")
+
+to_prec_data = function(fit, model, race, time) {
+  p = fit$cells
+  if (!identical(fit$status, "ok") || is.null(p) || !nrow(p)) return(NULL)
+  blank = function(d, cols) { for (c in setdiff(cols, names(d))) d[[c]] = NA_real_; d }
+  out = if (model == "medsl") {
+    # already the richest shape; est_dem2/p_win/cnt_prec added to prec_out for this
+    p |> mutate(method = NA_character_)
+  } else if (model %in% c("swing", "cory")) {
+    # dem/rep/tot, no interval. swing is precinct x method and keeps `method`; cory has
+    # aggregated it away and has no county either.
+    p |> mutate(
+      method   = if ("method" %in% names(p)) as.character(method) else NA_character_,
+      county   = if ("county" %in% names(p)) as.character(county) else NA_character_,
+      turn_est = tot,
+      dem_est  = dem / pmax(tot, 1e-9),
+      est_dem2 = dem / pmax(dem + rep, 1e-9))
+  } else return(NULL)   # cory_pois summarises geo away; nothing to dump
+  # Identity columns FIRST, then blank the rest. blank() creates every missing PREC_COL as
+  # NA, so if it ran first it would create `model` and `time` as NA columns and the mutate
+  # below would read those NAs out of the data mask instead of the function arguments --
+  # silently stamping every row with model = NA.
+  nm = unname(MODEL_NAMES[model]); tm = time
+  out |>
+    mutate(race_id = race$race_id[1], model = nm, time = tm, geo = as.character(geo)) |>
+    blank(PREC_COLS) |>
+    select(all_of(PREC_COLS))
+}
+
+# Mirrors write_predictions() exactly -- same timestamp rule, same atomic .tmp + rename,
+# same stamped-plus-`latest` pair -- but PARQUET. Volume is why: precincts x races is about
+# 52.8k rows per model per refresh, so ~211k across four models and ~30M over a 12-hour
+# night at 5-minute refreshes. CSV is not viable at that size.
+write_precincts = function(res, dir = file.path(find_26_general(), "model_results")) {
+  if (is.null(res$prec) || !nrow(res$prec)) return(invisible(NULL))
+  dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+  stamp = format(max(res$status$time), "%Y%m%d_%H%M%S", tz = "America/New_York")
+  f = file.path(dir, sprintf("precincts_%s.parquet", stamp))
+  write_pq(res$prec, f)
+  tmp = file.path(dir, ".precincts_latest.parquet.tmp")
+  write_pq(res$prec, tmp)
+  file.rename(tmp, file.path(dir, "precincts_latest.parquet"))
+  invisible(f)
+}
+
 predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, level = 0.95) {
   r = race$race_id[1]; m = model
   t0 = proc.time()[["elapsed"]]
@@ -178,7 +237,8 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
       if (!is.null(st)) { pred = bind_rows(pred, st); st_status = "ok" }
     }
   }
-  list(pred = pred,
+  prec = tryCatch(to_prec_data(fit, m, race, time), error = function(e) NULL)
+  list(pred = pred, prec = prec,
        status = tibble(race_id = r, model = unname(MODEL_NAMES[m]), time = time,
                        status = if (is.null(fit$status)) "error: no status" else fit$status,
                        statewide = st_status, seconds = round(proc.time()[["elapsed"]] - t0, 1),
@@ -211,7 +271,9 @@ run_jobs = function(jobs, cores = 1) {
     list(pred = NULL, status = tibble(race_id = jobs[[i]]$race$race_id[1], model = unname(MODEL_NAMES[jobs[[i]]$model]),
                                       time = jobs[[i]]$time, status = paste("error: worker failed:", as.character(res[[i]])),
                                       statewide = NA_character_, seconds = NA_real_, settings = NA_character_)))
-  list(pred = bind_rows(lapply(res, `[[`, "pred")), status = bind_rows(lapply(res, `[[`, "status")))
+  list(pred = bind_rows(lapply(res, `[[`, "pred")),
+       prec = bind_rows(lapply(res, `[[`, "prec")),
+       status = bind_rows(lapply(res, `[[`, "status")))
 }
 
 # The counties the feed covers for a race: those with at least one of their precincts in the

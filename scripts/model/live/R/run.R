@@ -22,7 +22,11 @@ MODELS = c("swing", "cory", "medsl", "cpois")
 run_race = function(model, cells, returns, ...) {
   switch(model,
     swing = fit_swing(cells, cell_counts(cells, returns), ...),
-    cory  = fit_cory(cells, returns, ...),
+    # precincts = TRUE so model_cory contributes rows to the precinct dump
+    # (write_precincts()); it returns cells = NULL without it. Costs an extra run of both
+    # model_legacy stages per race -- watch it in tests/time_models.R, since model_cory is
+    # already the slowest in CA at ~58s.
+    cory  = fit_cory(cells, returns, precincts = TRUE, ...),
     medsl = fit_medsl(cells, returns, ...),
     cpois = fit_cpois(cells, returns, ...),
     stop("Unknown model '", model, "'. Choose from: ", paste(MODELS, collapse = ", "))

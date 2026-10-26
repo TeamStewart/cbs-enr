@@ -990,7 +990,7 @@ make_stages = function(cells, truth, frac) {
 # overlap are left at zero (conservative: no conditioning through that block).
 
 fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
-                     Sigma_hist = NULL) {
+                     Sigma_hist = NULL, level = 0.95) {
   has_complete = "complete" %in% names(returns)
   if (!has_complete)
     cli_alert_warning("returns carry no `complete` flag -- falling back to \\
@@ -1459,8 +1459,13 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   # --- 4d. invert, substitute observed, aggregate WITHIN each draw ---
   num_d = num_r = num_o = den = numeric(draws)
   cell_s_hat = matrix(NA_real_, N_PREC, M, dimnames = list(NULL, MODES))
-  # PER-PRECINCT accumulators (draws x N_PREC), for precinct-level output
-  pnum_d = matrix(0, draws, N_PREC); pden = matrix(0, draws, N_PREC)
+  # PER-PRECINCT accumulators (draws x N_PREC), for precinct-level output.
+  # pnum_r is accumulated so the precinct dump can report a TWO-PARTY share. Without it
+  # only `dem_est` (Dem share of ALL votes) is available, which is a different quantity
+  # from every headline and every `covers` check in the harnesses -- so the old dump's
+  # estimate and its own `truth_dem2` column were on different scales.
+  pnum_d = matrix(0, draws, N_PREC); pnum_r = matrix(0, draws, N_PREC)
+  pden = matrix(0, draws, N_PREC)
   # ---- reconstruct turnout from the TOTAL and the COMPOSITION ---------------------
   # tau_im = T_i * p_im with sum_m p_im = 1, so sum_m tau_im = T_i EXACTLY and
   # T_i < KAPPA * n_i by construction. Phantom ballots in one mode can no longer inflate
@@ -1570,19 +1575,53 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     num_o = num_o + rowSums(v_oth)
     den   = den   + rowSums(v_dem + v_rep + v_oth)
     pnum_d = pnum_d + v_dem
+    pnum_r = pnum_r + v_rep
     pden   = pden + v_dem + v_rep + v_oth
   }
   # precinct-level Dem share of ALL votes, summarized across draws
   pshare = pnum_d / pmax(pden, 1e-9)
+  # q_share per precinct, in prec order -- the pin's gate, so downstream diagnostics can
+  # measure how often it fires instead of inferring it from the stricter all_done counts
+  qs_out = d |> distinct(geo, q_share) |> arrange(match(geo, prec$geo)) |> pull(q_share)
+  # counted votes per precinct, in prec order. Exported rather than left in `d` because
+  # every harness was otherwise re-deriving its own `c_tot` from its own returns -- which is
+  # how the `n_done_modes` defect got in (test_sim_night.R summed an ambient vector and read
+  # 10,956 on a 227-registrant precinct). One source, computed once.
+  cnt_out = d |> distinct(geo, cnt_prec) |> arrange(match(geo, prec$geo)) |> pull(cnt_prec)
+  # TWO-PARTY share per precinct, the scale every headline and `covers` check uses.
+  p2 = pnum_d / pmax(pnum_d + pnum_r, 1e-9)
+  # interval ends from `level` rather than hardcoded 0.025/0.975 -- the rest of the codebase
+  # threads a level (output.R, cred()), and a dump whose interval silently ignored it could
+  # not be compared against anything else.
+  qlo = 0.5 * (1 - level); qhi = 0.5 * (1 + level)
   prec_out = tibble(
     geo      = prec$geo,
     county   = prec$county,
+    q_share  = qs_out,
     n_obs_modes = rowSums(mask),
+    cnt_prec = cnt_out,
     turn_est = colMeans(pden),
-    dem_est  = colMeans(pshare),
+    # turnout had a point estimate and no interval while share had all four, even though
+    # pden was already in hand.
+    # EXPECTED, do not "fix": turn_est can sit slightly ABOVE turn_hi. The counted-votes
+    # floor (T_draw = pmax(T_draw, cnt_tot)) puts an ATOM at cnt_prec holding more than
+    # 97.5% of the draws, so both quantiles land exactly on the floor while the mean is
+    # pulled up by the thin tail above it. Measured on tx_base at 22:00: a handful of
+    # precincts, max gap 0.47 votes. turn_est stays the MEAN so it matches how the race
+    # level reports est_turnout; consistency beats a bracketing guarantee that the atom
+    # makes impossible.
+    turn_sd  = apply(pden, 2, sd),
+    turn_lo  = apply(pden, 2, quantile, qlo),
+    turn_hi  = apply(pden, 2, quantile, qhi),
+    dem_est  = colMeans(pshare),            # Dem share of ALL votes
     dem_sd   = apply(pshare, 2, sd),
-    dem_lo   = apply(pshare, 2, quantile, 0.025),
-    dem_hi   = apply(pshare, 2, quantile, 0.975)
+    dem_lo   = apply(pshare, 2, quantile, qlo),
+    dem_hi   = apply(pshare, 2, quantile, qhi),
+    est_dem2 = colMeans(p2),                # Dem share of the TWO-PARTY vote
+    dem2_lo  = apply(p2, 2, quantile, qlo),
+    dem2_hi  = apply(p2, 2, quantile, qhi),
+    p_win    = colMeans(p2 > 0.5),          # P(Dem leads two-party) in this precinct
+    level    = level
   )
   den = pmax(den, 1e-9)
   list(

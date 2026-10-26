@@ -131,6 +131,7 @@ refresh = function(at = NULL) {
     res$status$statewide[i] = paste("no county history:", conditionMessage(inp[[st]]$base))
   }
   write_predictions(res, out_dir)
+  write_precincts(res, out_dir)
   sec = function(a, b) as.numeric(difftime(b, a, units = "secs"))
   cat(sprintf("%s  %d races x %d models, %d prediction rows (%d statewide) in %.0fs [inputs %.0fs, CBS %.0fs, models %.0fs on %d cores] -> %s\n",
               format(now, "%Y-%m-%d %H:%M:%S", tz = TZ), nrow(races), length(MODELS_RUN), nrow(res$pred),
