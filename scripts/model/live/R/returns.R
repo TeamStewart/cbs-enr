@@ -15,6 +15,8 @@
 ##   returns_from_live()  the live feed in the CONTRACT.md section 8 shape
 ## and one way down to the precinct x method counts the swing model uses:
 ##   cell_counts()
+## plus the drop diagnostic that watches it:
+##   returns_dropped()  /  report_dropped()
 # ========================================
 
 # ---- simulated nights -------------------------------------------------------------
@@ -95,12 +97,90 @@ returns_from_live = function(live, candidates, state, election, at = NULL, compl
               votes, stage, complete = stage >= complete_stage, frac = NA_real_, time = observed_at)
 }
 
+# ---- drop detection ---------------------------------------------------------------
+# cell_counts() joins FROM `cells`, so every returns row whose (geo, method) is not a cell
+# is discarded. Two distinct loss modes, and before this diagnostic both were silent:
+#
+#   unknown_geo     the `geo` is not in `cells` at all. Either a non-precinct reporting
+#                   bucket -- an early-voting SITE (`nc_032_EV DUKE`, `ak_004_04-early`)
+#                   or a county-level mail/provisional bucket (`nc_003_ABSENTEE`,
+#                   `ak_001_01-ABSENTEE`) -- or a precinct id that was never reconciled to
+#                   the spine. scripts/model/lookups/reporting_levels.csv is the
+#                   pre-election expectation of which (state, county, method) send these.
+#   unknown_method  the `geo` is a known precinct but the method is not one of its cells.
+#                   Every state's feed carries `prov` (and CA/MI/FL/TX carry `all`) while
+#                   build_cells() defaults to early/eday/mail, so these are votes on
+#                   precincts we do model, in a bucket we did not ask for.
+#
+# This is not an edge case and not a rounding error. Measured on NC 2024 Governor,
+# 1,743,117 of 5,591,547 votes -- 31.2% -- sat on non-precinct geo ids; on the AK August
+# 2026 primary (26_general/AK/clean/AK_latest.parquet, all three contests), 153,478 of
+# 493,117 -- 31.1% -- sat on the per-district `NN-EARLY`, `NN-ABSENTEE` and `NN-QUESTION`
+# buckets, which is AK's ENTIRE early, mail and provisional vote. Both vanished with no
+# counter and no warning.
+#
+# Returns one row per (drop, method): n_geo, n_rows, votes, share of all returns votes.
+# `attr(., "geos")` carries the distinct dropped geos (drop, method, geo, votes) so a
+# caller can name them; `attr(., "total_votes")` the denominator.
+returns_dropped = function(cells, returns) {
+  known_geo = unique(as.character(cells$geo))
+  known_cell = paste0(as.character(cells$geo), "\r", as.character(cells$method))
+  r = returns |>
+    transmute(geo = as.character(geo), method = as.character(method), votes,
+              drop = case_when(!geo %in% known_geo ~ "unknown_geo",
+                               !paste0(geo, "\r", method) %in% known_cell ~ "unknown_method",
+                               TRUE ~ NA_character_)) |>
+    filter(!is.na(drop))
+  tot = sum(returns$votes, na.rm = TRUE)
+  geos = r |> summarize(votes = sum(votes, na.rm = TRUE), .by = c(drop, method, geo)) |>
+    arrange(drop, method, desc(votes))
+  out = r |>
+    summarize(n_geo = n_distinct(geo), n_rows = n(), votes = sum(votes, na.rm = TRUE),
+              .by = c(drop, method)) |>
+    mutate(share = if (tot > 0) votes / tot else NA_real_) |>
+    arrange(drop, desc(votes))
+  structure(out, geos = geos, total_votes = tot)
+}
+
+# Prints nothing when nothing is dropped. Deliberately NOT behind a flag or a verbosity
+# option: the failure mode this exists to catch is a silent 31% loss, so the only way it
+# can do its job is to be on by default.
+report_dropped = function(d, label = NULL, n_show = 6) {
+  if (nrow(d) == 0) return(invisible(d))
+  tot = attr(d, "total_votes")
+  v = sum(d$votes)
+  tag = if (is.null(label)) "" else paste0(" [", label, "]")
+  n_geo = n_distinct(attr(d, "geos")$geo[attr(d, "geos")$drop == "unknown_geo"])
+  n_cell = sum(d$n_rows[d$drop == "unknown_method"])
+  pct = function(x) if (is.na(x)) "n/a" else sprintf("%.1f%%", 100 * x)
+  cli::cli_alert_warning(paste0(
+    "cell_counts() dropped {prettyNum(v, big.mark = ',')} of ",
+    "{prettyNum(tot, big.mark = ',')} returns votes ",
+    "({pct(if (tot > 0) v / tot else NA_real_)})", tag, ": ",
+    "{n_geo} geo{?s} absent from cells, {n_cell} row{?s} on an unmodelled method."))
+  for (i in seq_len(nrow(d))) {
+    cli::cli_alert_info(paste0(
+      "  {d$drop[i]} / {d$method[i]}: {d$n_geo[i]} geo{?s}, ",
+      "{prettyNum(d$votes[i], big.mark = ',')} votes ",
+      "({pct(d$share[i])} of all returns votes so far)"))
+  }
+  ex = attr(d, "geos") |> filter(drop == "unknown_geo") |> head(n_show)
+  if (nrow(ex)) cli::cli_alert_info("  e.g. {.val {ex$geo}}")
+  invisible(d)
+}
+
 # ---- down to precinct x method counts ---------------------------------------------
 # One race's returns -> one row per row of `cells`, in the same order:
 #   c_dem, c_rep, c_oth, c_tot, complete
 # Cells with no returns rows get zeros and complete = FALSE.
+# Returns rows that are NOT a cell are dropped -- see returns_dropped() above; the shape
+# and column names of the return value are unchanged, other models depend on them.
 cell_counts = function(cells, returns) {
   if (n_distinct(returns$race_id) > 1) stop("cell_counts() takes one race at a time")
+  tt = suppressWarnings(max(returns$time, na.rm = TRUE))
+  report_dropped(returns_dropped(cells, returns),
+                 label = paste0(returns$race_id[1],
+                                if (is.finite(tt)) paste0(" @ ", format(tt)) else ""))
   cc = returns |>
     summarize(c_dem = sum(votes[party == "dem"]), c_rep = sum(votes[party == "rep"]),
               c_oth = sum(votes[!party %in% c("dem", "rep")]), complete = all(complete),
