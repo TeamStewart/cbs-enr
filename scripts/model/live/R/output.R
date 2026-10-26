@@ -76,7 +76,17 @@ fit_point = function(fit) {
 
 # fit: one model's result for one race (run_race()); returns: that race's returns
 to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
-  base = race |> select(state, election, jurisdiction, contest, district)
+  # race_id is carried as a permitted extra (section 15.1), NOT reconstructed downstream.
+  # It is `<STATE>_<contest>[_<district>]` and COLS_PRED has no slot for it, so it gets
+  # decomposed into state/contest/district -- and that decomposition is NOT INVERTIBLE:
+  # parse_race_id() SYNTHESISES district = 1 for house races in at-large states, so
+  # AK_house arrives as contest "house" + district 1 with no district in its id. Measured
+  # on the current 12 races: paste(state, contest) recovers race_id 12 of 12 but
+  # paste(state, contest, district) only 11 of 12, and a districted id like NY_house_12
+  # breaks the first rule. So NO paste rule covers both shapes, and the wrong one fails
+  # SILENTLY -- an anti-join reports every row missing rather than erroring. Carrying the
+  # key costs one column and removes the whole class.
+  base = race |> select(race_id, state, election, jurisdiction, contest, district)
   name = unname(MODEL_NAMES[model])
   pct = pct_reporting(cells, returns)
   if (!identical(fit$status, "ok")) return(NULL)
@@ -156,7 +166,7 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
     mutate(time = time, model = name, model_conf = conf, pct_rep = pct, geo = "scraped",
            election = as.Date(election), district = as.integer(district)) |>
     relocate(state, election, jurisdiction, contest, district, candidate, party, pred_type, time,
-             model, model_conf, pct_rep, rep, pred, pred_min, pred_max, p_win, geo) |>
+             model, model_conf, pct_rep, rep, pred, pred_min, pred_max, p_win, geo, race_id) |>
     arrange(pred_type, desc(pred))
 }
 

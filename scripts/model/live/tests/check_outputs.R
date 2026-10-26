@@ -50,7 +50,7 @@ if (!file.exists(f_pred)) stop("missing ", f_pred)
 pred = readr::read_csv(f_pred, show_col_types = FALSE, progress = FALSE)
 cli::cli_h2("15.1 predictions ({nrow(pred)} rows, {ncol(pred)} cols)")
 ck_try(check_pred(pred), "check_pred() passes (schema + COLS_PRED order)")
-EXTRA_OK = c("p_win", "geo", "cbs_as_of")
+EXTRA_OK = c("p_win", "geo", "cbs_as_of", "race_id")
 extra = setdiff(names(pred), c(enightmodels::COLS_PRED, EXTRA_OK))
 ck(!length(extra), paste0("no columns beyond COLS_PRED + ", paste(EXTRA_OK, collapse = "/"),
                           if (length(extra)) paste0(" -- found: ", paste(extra, collapse = ", "))))
@@ -82,10 +82,11 @@ ck(!anyNA(stat$status), "no NA status")
 # every race x model that produced predictions must have a status row. The converse is
 # allowed: a model that failed appears in status with no prediction rows, which is the
 # whole point of 15.2.
-# JOIN KEY: predictions carry `state` + `contest` ("TX" + "gov") while status carries
-# `race_id` ("TX_gov"), which is priors.csv's key. Joining contest to race_id directly
-# matches nothing and silently reports every row missing.
-pm = pred |> distinct(race_id = paste(state, contest, sep = "_"), model)
+# JOIN ON race_id, which predictions now carry as a permitted extra. Do NOT reconstruct it
+# from state/contest: that decomposition is not invertible (see output.R::to_pred_data) and
+# the wrong rule fails silently -- this anti-join would report every row missing.
+ck("race_id" %in% names(pred), "predictions carry race_id, so the two tables join directly")
+pm = pred |> distinct(race_id, model)
 miss = anti_join(pm, distinct(stat, race_id, model), by = c("race_id", "model"))
 ck(!nrow(miss), paste0("every predicted race x model has a status row",
    if (nrow(miss)) paste0(" -- missing: ", nrow(miss))))

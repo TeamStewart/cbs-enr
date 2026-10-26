@@ -252,10 +252,12 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
   n_prec = n_distinct(cells$geo)
   pct = (pct_reporting(cells, returns) * n_prec + sum(rest$prec_in, na.rm = TRUE)) /
     (n_prec + sum(rest$prec_of, na.rm = TRUE))
-  bind_cols(race[rep(1, nrow(out)), c("state", "election", "jurisdiction", "contest", "district")], out) |>
+  # race_id carried, not reconstructed -- see the note in output.R::to_pred_data()
+  bind_cols(race[rep(1, nrow(out)), c("race_id", "state", "election", "jurisdiction",
+                                      "contest", "district")], out) |>
     mutate(time = time, model = unname(MODEL_NAMES[model]), model_conf = conf, pct_rep = pct, geo = "all",
            cbs_as_of = max(cbs$observed_at), election = as.Date(election), district = as.integer(district)) |>
     relocate(state, election, jurisdiction, contest, district, candidate, party, pred_type, time,
-             model, model_conf, pct_rep, rep, pred, pred_min, pred_max, p_win, geo) |>
+             model, model_conf, pct_rep, rep, pred, pred_min, pred_max, p_win, geo, race_id) |>
     arrange(pred_type, desc(pred))
 }

@@ -798,16 +798,28 @@ trailing party fails validation. **Margins are the dashboard's job** — it diff
 `dem` and `rep` rows itself. Do not emit margin rows and do not clamp one to zero to make
 it pass.
 
-**Extras beyond the 16 are permitted by the schema; exactly three are sanctioned.**
+**Extras beyond the 16 are permitted by the schema; exactly four are sanctioned.**
 
 | extra | meaning |
 |---|---|
 | `p_win` | probability the candidate finishes ahead of the other major-party candidate. NA without draws, and on third-party rows |
 | `geo` | which counties the row covers — see below |
 | `cbs_as_of` | the time of the CBS county snapshot used, on statewide rows only |
+| `race_id` | `priors.csv`'s key for the race, so §15.2 joins without reconstruction |
 
-A fourth extra requires this section to be updated first. The point of naming them is that
+A fifth extra requires this section to be updated first. The point of naming them is that
 a consumer can reject an unexpected column rather than silently ignore it.
+
+**`race_id` is carried, not reconstructed, and that is deliberate.** It is
+`<STATE>_<contest>[_<district>]`, and `COLS_PRED` has no slot for it, so `parse_race_id()`
+(`live/R/races.R`) decomposes it into `state` / `contest` / `district`. **That decomposition
+is not invertible:** it SYNTHESISES `district = 1` for house races in at-large states, so
+`AK_house` arrives as contest `house` with district `1` and no district in its id. Measured
+on the current 12 races, `paste(state, contest, sep = "_")` recovers `race_id` 12 of 12
+while `paste(state, contest, district, sep = "_")` recovers 11 of 12 — and a districted id
+such as `NY_house_12` breaks the first rule. No paste rule covers both shapes, and picking
+the wrong one fails *silently*: an anti-join reports every row as missing rather than
+erroring. One column removes the class.
 
 **`geo` takes two literals and nothing else: `"scraped"` and `"all"`.** `"scraped"` is the
 counties we scrape precinct by precinct — the models themselves. `"all"` is statewide: the
@@ -835,7 +847,7 @@ unlabelled choice makes two models' intervals look comparable when they are not.
 *Acceptance:* `check_pred(read_csv("predictions_latest.csv"))` passes — it folds in the
 column-order assertion below, so this is one call, and it is the call to use rather than
 `check_pred_data()` directly (see above);
-`setdiff(names(d), c(COLS_PRED, "p_win", "geo", "cbs_as_of"))` is empty;
+`setdiff(names(d), c(COLS_PRED, "p_win", "geo", "cbs_as_of", "race_id"))` is empty;
 `unique(d$pred_type)` is a subset of `{vote, share}`; `unique(d$geo)` is a subset of
 `{scraped, all}`; and every row with `geo == "all"` has a non-NA `cbs_as_of` and a
 `model_conf` ending `_plus_rest` or NA.
@@ -853,10 +865,9 @@ column-order assertion below, so this is one call, and it is the call to use rat
 | `settings` | the model's resolved settings, enough to reproduce the fit |
 | `cbs` | provenance of the county snapshot used, e.g. `"not pulled; using the snapshot saved 2026-11-04 03:00:00 UTC"` |
 
-`race_id` here is `priors.csv`'s key (`TX_gov`), **not** §15.1's `contest` (`gov`). Joining
-the two tables needs `paste(state, contest, sep = "_")`; joining `contest` to `race_id`
-directly matches nothing, and an anti-join then reports every row missing rather than
-erroring.
+`race_id` here is `priors.csv`'s key (`TX_gov`), **not** §15.1's `contest` (`gov`). §15.1
+carries `race_id` as a sanctioned extra precisely so the two tables join on it directly —
+do not reconstruct it from `state` and `contest`, for the reason given there.
 
 **The invariant this table exists for: a race x model with no prediction appears here,
 never silently vanishes.** A model that errors, or that has no votes to work with, produces
