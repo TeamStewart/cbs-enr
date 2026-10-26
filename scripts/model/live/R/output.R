@@ -186,16 +186,29 @@ to_prec_data = function(fit, model, race, time) {
   out = if (model == "medsl") {
     # already the richest shape; est_dem2/p_win/cnt_prec added to prec_out for this
     p |> mutate(method = NA_character_)
-  } else if (model %in% c("swing", "cory")) {
-    # dem/rep/tot, no interval. swing is precinct x method and keeps `method`; cory has
-    # aggregated it away and has no county either.
-    p |> mutate(
-      method   = if ("method" %in% names(p)) as.character(method) else NA_character_,
-      county   = if ("county" %in% names(p)) as.character(county) else NA_character_,
-      turn_est = tot,
-      dem_est  = dem / pmax(tot, 1e-9),
-      est_dem2 = dem / pmax(dem + rep, 1e-9))
-  } else return(NULL)   # cory_pois summarises geo away; nothing to dump
+  } else if (model %in% c("swing", "cory", "cpois")) {
+    # dem/rep/tot, no interval.
+    #
+    # COLLAPSED TO PRECINCT. swing and cpois both fit at precinct x METHOD and return that
+    # grain natively; cory already aggregates it away. Summing dem/rep/tot over methods
+    # makes one row per precinct for every model, so the dump is comparable across models
+    # and a row count per precinct is 1 rather than 1-or-3. It also matters for volume: at
+    # full scale the method grain was 3x for two of four models -- 158,340 of 263,900 rows
+    # per refresh, about 38M over a 12-hour night at 5-minute refreshes.
+    #
+    # What this discards: the per-mode split, and for swing specifically its `swing` and
+    # `log_turnout_ratio` columns (the fitted county x method swing and log turnout ratio),
+    # which are its most diagnostic output. If those are wanted later, the cheap route is
+    # per-mode COLUMNS at precinct grain rather than a return to per-mode rows.
+    p |>
+      summarize(across(c(dem, rep, tot), sum), .by = any_of(c("geo", "county"))) |>
+      mutate(
+        method   = NA_character_,
+        county   = if ("county" %in% names(p)) as.character(county) else NA_character_,
+        turn_est = tot,
+        dem_est  = dem / pmax(tot, 1e-9),
+        est_dem2 = dem / pmax(dem + rep, 1e-9))
+  } else return(NULL)
   # Identity columns FIRST, then blank the rest. blank() creates every missing PREC_COL as
   # NA, so if it ran first it would create `model` and `time` as NA columns and the mutate
   # below would read those NAs out of the data mask instead of the function arguments --

@@ -312,7 +312,24 @@ fit_cpois = function(cells, returns, formulas = CPOIS_FORMULAS, stage_done = 6L,
          # share WITHIN a cell, and the cell total (tot_pred) carries no uncertainty, so
          # summing pred_min / pred_max over candidates returns the point total.
          lo_turnout = NA_real_, hi_turnout = NA_real_), counted),
-       cells = NULL,   # model_prec_pois() summarises geo away; no precinct frame to give
+       # Per-precinct frame for write_precincts(). model_prec_pois()'s final summarize()
+       # collapses geo away, so prec_model.R now also returns the frame from just BEFORE
+       # that step (a local, additive divergence from Cory's upstream -- send it to him).
+       # Aggregate candidate rows to dem/rep/tot per geo x method, taking party from the
+       # RETURNS: the pooled covariate frame labels every row party = "all", so grouping on
+       # raw party would collapse both majors into one bucket. Same trap as in
+       # to_pred_data() and state_pred_data().
+       cells = if (is.null(res$prec)) NULL else {
+         pty = returns |> distinct(candidate, party) |>
+           mutate(across(everything(), as.character))
+         res$prec |>
+           mutate(candidate = as.character(candidate), geo = as.character(geo)) |>
+           left_join(pty, by = "candidate", suffix = c("", ".ret")) |>
+           mutate(.p = coalesce(party.ret, "oth")) |>
+           summarize(dem = sum(pred[.p == "dem"]), rep = sum(pred[.p == "rep"]),
+                     tot = sum(pred),
+                     .by = any_of(c("geo", "county", "method")))
+       },
        draws = NULL,
        point = c(dem = dem, rep = rp, tot = sum(pr$pred)),
        raw = res)      # list(pred =, coef =), the same shape fit_cory() returns in `raw`
