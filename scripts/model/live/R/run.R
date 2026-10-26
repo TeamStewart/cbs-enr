@@ -17,13 +17,14 @@
 ## add it to run_race() below.
 # ========================================
 
-MODELS = c("swing", "cory", "medsl")
+MODELS = c("swing", "cory", "medsl", "cpois")
 
 run_race = function(model, cells, returns, ...) {
   switch(model,
     swing = fit_swing(cells, cell_counts(cells, returns), ...),
     cory  = fit_cory(cells, returns, ...),
     medsl = fit_medsl(cells, returns, ...),
+    cpois = fit_cpois(cells, returns, ...),
     stop("Unknown model '", model, "'. Choose from: ", paste(MODELS, collapse = ", "))
   )
 }

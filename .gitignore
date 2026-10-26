@@ -71,3 +71,10 @@ scripts/util/clarity_search/discovered_elections.csv
 
 # generated precinct geometry -- rebuild with scripts/model/make_precinct_topo.R (~55s)
 scripts/model/topo/
+
+# Cory's vendored working repo: the tx-prim-26 R sources are committed (model_cpois.R
+# sources prec_model.R and utils.R from them); the zips and data snapshots are not.
+scripts/model/modeling-cory/*.zip
+scripts/model/modeling-cory/*/data/
+scripts/model/modeling-cory/*/data-out/
+scripts/model/modeling-cory/nyc/

@@ -41,7 +41,8 @@
 ##                                    run + "latest", for both tables
 # ========================================
 
-MODEL_NAMES = c(swing = "model_simpleswing", cory = "model_cory", medsl = "model_medsl")
+MODEL_NAMES = c(swing = "model_simpleswing", cory = "model_cory", medsl = "model_medsl",
+                cpois = "model_cory_pois")
 
 # one row per race_id with the enightmodels race columns. The default suits the sims
 # (race_id is the contest, e.g. "gov"); for live races pass a table built from the race
@@ -120,6 +121,33 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
       mutate(pr, pred_type = "vote"),
       mutate(pr, pred_type = "share", rep = rep / max(sum(rep), 1), pred = pred / tot)) |>
       mutate(pred_min = NA_real_, pred_max = NA_real_, p_win = NA_real_)
+  } else if (model == "cpois") {
+    # model_cory_pois: like cory in shape (per-candidate point predictions in raw$pred,
+    # no draws) but it DOES carry interval ends -- split-conformal on the within-cell share
+    # scale, summed over methods. So aggregate pred/pred_min/pred_max together.
+    # TAKE `party` FROM THE RETURNS, NOT FROM raw$pred. fit_cpois runs model_prec_pois in
+    # its `party_est = "pooled"` mode, which labels every d_cov row party = "all" so one
+    # covariate frame serves all candidates -- and that label propagates into raw$pred. If
+    # we aggregated on it, every candidate would come out party = "all", which is not a
+    # legal COLS_PRED party and destroys the dem/rep split the dashboard differences for
+    # margins. `cand` (reported_by_candidate) carries the authoritative party.
+    pr = (if (is.data.frame(fit$raw)) fit$raw else fit$raw$pred) |>
+      mutate(candidate = as.character(candidate)) |>
+      summarize(across(c(pred, pred_min, pred_max), sum), .by = candidate) |>
+      left_join(select(cand, candidate, party, rep), by = "candidate") |>
+      mutate(rep = coalesce(rep, 0), party = coalesce(as.character(party), "oth"))
+    tot = sum(pr$pred)
+    conf = sprintf("approx_conform_%g", 100 * level)
+    # The share bounds are pred_min/tot, i.e. a VOTE bound divided by the point total. That
+    # is approximate for the same reason fit_cpois's lo_twop/hi_twop are: a conformal bound
+    # on a candidate's votes is not a conformal bound on that candidate's share, because the
+    # denominator carries no uncertainty of its own. Direction is right, width is not exact.
+    # Flagged rather than hidden -- `model_conf` says `approx_`.
+    out = bind_rows(
+      mutate(pr, pred_type = "vote"),
+      mutate(pr, pred_type = "share", rep = rep / max(sum(rep), 1),
+             across(c(pred, pred_min, pred_max), ~ .x / tot))) |>
+      mutate(pred_min = pmax(pred_min, 0), pred_max = pmax(pred_max, 0), p_win = NA_real_)
   } else {
     stop("to_pred_data() has no rule for model '", model, "' yet")
   }

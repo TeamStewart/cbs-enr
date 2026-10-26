@@ -178,6 +178,33 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
     pt = c(dem = sum(pr$pred[pr$party == "dem"]), rep = sum(pr$pred[pr$party == "rep"]), tot = sum(pr$pred))
     D32 = pt[["dem"]]; R32 = pt[["rep"]]; T32 = pt[["tot"]]
     conf = NA_character_
+  } else if (model == "cpois") {
+    # model_cory_pois has no draws, so the statewide composition follows the `cory` path:
+    # a point estimate carried to the rest of the state, with NO interval.
+    #
+    # It DOES carry conformal bounds on the scraped counties, and they are deliberately not
+    # used here. project_rest() propagates an interval by taking the swing and turnout ratio
+    # from each DRAW, so the rest of the state moves with the scraped counties. With only a
+    # lo/hi pair there is nothing to propagate: running project_rest() at the bounds would
+    # compose a conformal bound on scraped-county votes with a point projection of the
+    # remainder, which is not a calibrated interval on the statewide share. An honest NA
+    # beats a number nobody can defend on air. (Its scraped-county interval is also ~12x
+    # model_medsl's width and does not tighten as the count comes in -- see model_cpois.R.)
+    #
+    # TAKE `party` FROM THE RETURNS. fit_cpois runs in `party_est = "pooled"` mode, which
+    # labels every row party = "all"; `sum(pred[party == "dem"])` would be 0 for both
+    # majors and T32 would divide by zero. Same trap as in to_pred_data().
+    pr = (if (is.data.frame(fit$raw)) fit$raw else fit$raw$pred) |>
+      mutate(candidate = as.character(candidate)) |>
+      summarize(pred = sum(pred), .by = candidate) |>
+      left_join(select(cand, candidate, party), by = "candidate") |>
+      mutate(party = coalesce(as.character(party), "oth"))
+    pt = c(dem = sum(pr$pred[pr$party == "dem"]), rep = sum(pr$pred[pr$party == "rep"]),
+           tot = sum(pr$pred))
+    if (!(pt[["dem"]] + pt[["rep"]] > 0))
+      stop("cpois: no dem/rep votes after joining party from the returns -- check the candidate join")
+    D32 = pt[["dem"]]; R32 = pt[["rep"]]; T32 = pt[["tot"]]
+    conf = NA_character_
   } else stop("state_pred_data() has no rule for model '", model, "' yet")
 
   # rest of the state: point (no noise, from the point fit) and per-draw
