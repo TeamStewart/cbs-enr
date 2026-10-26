@@ -165,6 +165,13 @@ row_platform = function(state, county) {
 }
 
 cmd_sync = function() {
+  # frames are filtered to metadata.csv places; rebuild them when metadata.csv is newer
+  if (fs::file_info(fs::path(ROOT, "metadata.csv"))$modification_time > fs::file_info(fs::path(ROOT, "input_data/yougov_precinct_frame.parquet"))$modification_time) {
+    cli::cli_alert_info("metadata.csv is newer than the frame; rerunning input_data/create_frame.R")
+    suppressMessages(pkgload::load_all(PATH_ENIGHTDATA, quiet = TRUE, export_all = FALSE))
+    # create_frame.R paths are relative to the repo root
+    source(fs::path(ROOT, "input_data/create_frame.R"), local = new.env())
+  }
   meta = read_meta()
   tr = read_tracker()
   fk = frame_keys()
@@ -291,7 +298,39 @@ get_url = function(url) {
   list(status = httr2::resp_status(resp), body = tryCatch(httr2::resp_body_string(resp), error = \(e) ""))
 }
 
-probe_clarity = function(st, cty, path) {
+# Clarity's AWS WAF blocks an IP for hours after a burst (HTTP 405 captcha), as on
+# 2026-10-25 and 10-26, when the EID scan sent ~7k requests in a few minutes. So a
+# county with a hidden election list (elections.json is []) is only flagged for a
+# web search by hand; the EID scan runs only with `probe --deep`. Every Clarity
+# request goes one at a time at CLARITY_RATE per second, the EID window stays close
+# to the known 2026-general EIDs, a deep scan of a county repeats at most every
+# CLARITY_RESCAN_DAYS (daily from 2 days before the election), and after the first
+# 405 the run sends no more Clarity requests and leaves the remaining rows as they were.
+CLARITY_RATE = 2
+CLARITY_RESCAN_DAYS = 3
+CLARITY_BLOCKED = FALSE
+
+clarity_get = function(url) {
+  if (CLARITY_BLOCKED) return(list(status = 405L, body = ""))
+  resp = tryCatch(
+    httr2::request(url) |>
+      httr2::req_user_agent(UA) |>
+      httr2::req_timeout(20) |>
+      httr2::req_throttle(rate = CLARITY_RATE, realm = "clarity") |>
+      httr2::req_error(is_error = \(r) FALSE) |>
+      httr2::req_perform(),
+    error = \(e) NULL
+  )
+  if (is.null(resp)) return(list(status = NA_integer_, body = ""))
+  if (httr2::resp_status(resp) == 405) {
+    CLARITY_BLOCKED <<- TRUE
+    cli::cli_alert_danger("Clarity returned HTTP 405 (WAF block); no more Clarity requests this run.")
+  }
+  list(status = httr2::resp_status(resp), body = tryCatch(httr2::resp_body_string(resp), error = \(e) ""))
+}
+
+# Returns NULL (leave the row as it is) when blocked or when a deep EID scan is not due.
+probe_clarity = function(st, cty, path, deep = FALSE, scan = deep) {
   base = "https://results.enr.clarityelections.com"
   slugs = if (str_detect(path, "clarityelections\\.com/[A-Z]{2}/[^/0-9]+/")) {
     str_match(path, "clarityelections\\.com/[A-Z]{2}/([^/0-9][^/]*)/")[, 2]
@@ -303,12 +342,16 @@ probe_clarity = function(st, cty, path) {
   }
   for (s in slugs) {
     u = if (s == "") glue::glue("{base}/{st}/elections.json") else glue::glue("{base}/{st}/{s}/elections.json")
-    r = get_url(u)
+    r = clarity_get(u)
+    if (CLARITY_BLOCKED) return(NULL)
     if (!identical(r$status, 200L)) next
     el = tryCatch(jsonlite::fromJSON(r$body), error = \(e) NULL)
     if (is.list(el) && !is.data.frame(el) && length(el) == 0) {
-      # many large counties hide their list; scan the EID window instead
+      # many large counties hide their list: web search by hand, or scan the EID window (--deep)
+      if (!deep) return(list(status = "not_posted", path = "", note = glue::glue("clarity {s}: elections.json empty; web search by hand (probe --deep scans EIDs)")))
+      if (!scan) return(NULL)
       hit = clarity_scan(st, s)
+      if (CLARITY_BLOCKED) return(NULL)
       if (!is.null(hit)) return(list(status = "found", path = glue::glue("{base}/{st}/{s}/{hit}/"), note = "clarity: EID scan"))
       return(list(status = "not_posted", path = "", note = glue::glue("clarity {s}: elections.json empty; EID scan {paste(range(CLARITY_WINDOW), collapse = '-')} found none")))
     }
@@ -329,15 +372,13 @@ CLARITY_WINDOW = integer(0)
 clarity_scan = function(st, slug) {
   if (!length(CLARITY_WINDOW)) return(NULL)
   base = glue::glue("https://results.enr.clarityelections.com/{st}/{slug}")
-  reqs = map(CLARITY_WINDOW, \(e) httr2::request(glue::glue("{base}/{e}/current_ver.txt")) |>
-    httr2::req_user_agent(UA) |> httr2::req_timeout(20) |> httr2::req_error(is_error = \(r) FALSE))
-  resps = httr2::req_perform_parallel(reqs, on_error = "continue", max_active = 8, progress = FALSE)
-  ok = map_lgl(resps, \(r) inherits(r, "httr2_response") && httr2::resp_status(r) == 200)
-  for (j in which(ok)) {
-    v = str_trim(httr2::resp_body_string(resps[[j]]))
-    r = get_url(glue::glue("{base}/{CLARITY_WINDOW[j]}/{v}/json/en/electionsettings.json"))
+  for (e in CLARITY_WINDOW) {
+    r = clarity_get(glue::glue("{base}/{e}/current_ver.txt"))
+    if (CLARITY_BLOCKED) return(NULL)
+    if (!identical(r$status, 200L)) next
+    r = clarity_get(glue::glue("{base}/{e}/{str_trim(r$body)}/json/en/electionsettings.json"))
     d = str_match(r$body, '"electiondate":"([^"]+)"')[, 2]
-    if (!is.na(d) && lubridate::mdy(d, quiet = TRUE) %in% ELEC) return(CLARITY_WINDOW[j])
+    if (!is.na(d) && lubridate::mdy(d, quiet = TRUE) %in% ELEC) return(e)
   }
   NULL
 }
@@ -346,7 +387,7 @@ probe_ev = function(st, cty, path) {
   m = str_match(path, "^(https?://[^/]+)/cdn/results/([^/]+)/")
   host = m[, 2]; slug = m[, 3]
   if (is.na(slug)) {
-    if (cty == "") return(list(status = "pending", path = "", note = "ev: no path to derive slug; check by hand"))
+    if (cty == "") return(NULL) # no path to derive the slug: hand-check row
     host = "https://app.enhancedvoting.com"
     slug = paste0(str_replace_all(str_to_lower(cty), " ", "-"), "-county-", str_to_lower(st))
   }
@@ -366,7 +407,7 @@ probe_ev = function(st, cty, path) {
 
 probe_lvt = function(st, cty, path) {
   m = str_match(path, "^(.*/ENR/[^/]+/)(\\d+)/en/")
-  if (is.na(m[, 3])) return(list(status = "pending", path = "", note = "lvt: no path to derive site; check by hand"))
+  if (is.na(m[, 3])) return(NULL) # no path to derive the site: hand-check row
   n0 = as.integer(m[, 3])
   pat = regex(paste0(format(ELEC, "%B"), "\\s+", lubridate::day(ELEC), ",?\\s+", lubridate::year(ELEC), "|",
                      lubridate::month(ELEC), "/0?", lubridate::day(ELEC), "/", lubridate::year(ELEC)), TRUE)
@@ -382,7 +423,7 @@ probe_lvt = function(st, cty, path) {
 
 probe_type = function(tr) ifelse(tr$platform %in% c("clarity", "ev", "lvt"), tr$platform, tr$type)
 
-cmd_probe = function(st = NULL, cty = NULL) {
+cmd_probe = function(st = NULL, cty = NULL, deep = FALSE) {
   tr = read_tracker()
   todo = which(
     tr$disc_status %in% c("pending", "not_posted") &
@@ -392,23 +433,38 @@ cmd_probe = function(st = NULL, cty = NULL) {
   )
   known = effective_path(tr)[probe_type(tr) == "clarity" & tr$disc_status %in% c("live", "found")] |>
     str_extract("\\d{5,6}(?=/?$)") |> as.integer() |> na.omit()
-  if (length(known)) CLARITY_WINDOW <<- seq(min(known) - 150L, max(known) + 400L)
+  if (length(known)) CLARITY_WINDOW <<- seq(min(known) - 100L, max(known) + 250L)
+  rescan = if (Sys.Date() >= ELEC - 2) 1 else CLARITY_RESCAN_DAYS
   cli::cli_alert_info("Probing {length(todo)} rows.")
+  skipped = 0
   for (i in todo) {
-    f = switch(probe_type(tr)[i], clarity = probe_clarity, ev = probe_ev, lvt = probe_lvt)
-    res = f(tr$state[i], tr$county[i], tr$path[i])
+    res = switch(probe_type(tr)[i],
+      clarity = probe_clarity(tr$state[i], tr$county[i], tr$path[i], deep = deep,
+        # a not_posted row's disc_checked is its last full check (skipped scans leave it alone)
+        scan = deep && !str_detect(tr$disc_note[i], "EID scan .* found none") ||
+          is.na(as.Date(tr$disc_checked[i], optional = TRUE)) ||
+          Sys.Date() - as.Date(tr$disc_checked[i]) >= rescan),
+      ev = probe_ev(tr$state[i], tr$county[i], tr$path[i]),
+      lvt = probe_lvt(tr$state[i], tr$county[i], tr$path[i])
+    )
+    if (is.null(res)) {
+      skipped = skipped + 1
+      cli::cli_text("{tr$state[i]} {tr$county[i]} [{probe_type(tr)[i]}]: unchanged (hand-check row, Clarity blocked, or EID scan not due)")
+      next
+    }
     tr$disc_status[i] = res$status
     tr$disc_checked[i] = TODAY
     tr$disc_note[i] = as.character(res$note)
     if (res$path != "") tr$disc_path[i] = as.character(res$path)
     cli::cli_text("{tr$state[i]} {tr$county[i]} [{probe_type(tr)[i]}]: {res$status} {res$path} {res$note}")
-    Sys.sleep(0.3)
+    if (probe_type(tr)[i] != "clarity") Sys.sleep(0.3)
   }
   tr = tr |>
     mutate(scr_status = if_else(effective_path(pick(everything())) != "" & scr_status == "", "untested", scr_status))
   write_tracker(tr)
   n = sum(tr$disc_status[todo] == "found")
-  append_log(glue::glue("probe {st %||% 'all'} {cty %||% ''}: {length(todo)} rows, {n} found"))
+  blk = if (CLARITY_BLOCKED) "; Clarity WAF 405, later Clarity rows left unchanged" else ""
+  append_log(glue::glue("probe {st %||% 'all'} {cty %||% ''}: {length(todo)} rows, {n} found, {skipped} unchanged{blk}"))
 }
 
 # ========================================
@@ -582,10 +638,12 @@ cmd_sheet = function(apply = FALSE) {
 
 args = commandArgs(trailingOnly = TRUE)
 if (!length(args)) args = "status"
+deep = "--deep" %in% args # probe: also scan Clarity EIDs for list-empty counties
+args = setdiff(args, "--deep")
 switch(args[1],
   sync = cmd_sync(),
   status = cmd_status(args[2] %|% NULL),
-  probe = cmd_probe(if (length(args) > 1) args[2], if (length(args) > 2) args[3]),
+  probe = cmd_probe(if (length(args) > 1) args[2], if (length(args) > 2) args[3], deep = deep),
   verify = cmd_verify(args[2], args[3], if (length(args) > 3) args[4]),
   set = cmd_set(args[2], args[3], args[-(1:3)]),
   `xwalk-done` = cmd_xwalk_done(args[2]),

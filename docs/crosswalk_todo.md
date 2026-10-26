@@ -106,15 +106,15 @@ counties) and TX (Kaufman, Wood). NY also has Columbia but is not in the frame.
 | AK | 30 (all) | 402 | ak_20261008 | `748`, `002` (frame_name `DD-PPP`) | done 2026-10-15 |
 | AZ | 9 | 1,545 | az_20260901 | `0009`, `0133` | partial 2026-10-23 (ENR: Cochise, Maricopa; L2 all 9 counties) |
 | CA | 17 | 23,685 (26,700 rows) | ca_20260901 | `47252`, `1204` | partial 2026-10-23 (L2 all counties; ENR San Francisco, Sonoma singletons; San Diego and Solano consolidated builds; Sonoma `07` consolidations NA) |
-| FL | 31 | 3,764 (4,342 rows) | fl_20261011 | `8735`, `127` | partial 2026-10-23 (ENR: 21 frame counties; see Results) |
+| FL | 65 | 5,459 codes (6,257 rows) | fl_20261011 | `8735`, `127` | partial 2026-10-26 (ENR: 32 frame counties; Franklin, Gulf, Jackson, Liberty NA; see Results) |
 | GA | 159 (all) | 2,581 (2,618 rows) | ga_20261006 | `CP04A`, `029` | done 2026-10-25 |
 | IA | 99 (all) | 1,658 | ia_20260901 | `DOWS`, `FC2` (name-like) | waiting |
-| MI | 31 | 2,737 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-23 (ENR: Berrien, Branch, Clare, Isabella, Kent, Newaygo, Osceola, Roscommon, Saginaw, Van Buren, Wayne) |
+| MI | 73 | 3,722 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-26 (ENR: Berrien, Branch, Clare, Isabella, Kent, Newaygo, Osceola, Roscommon, Saginaw, Shiawassee, St. Clair, St. Joseph, Van Buren, Wayne) |
 | NE | 93 (all) | 1,321 | ne_20261002 | `03`, `16` | done 2026-10-23 |
 | NM | 33 (all) | 2,203 | nm_20260914 | `034`, `012` | waiting |
-| OH | 13 | 4,153 (4,524 rows) | oh_20260929 | `83AHA`, `31BLU` | partial 2026-10-23 (ENR: Franklin, Stark; L2 all counties) |
-| PA | 19 | 6,217 | pa_20260911 | `2403`, `1680100`, `011905S` | partial 2026-10-23 (ENR: Chester, Delaware, Philadelphia; L2 all 19 counties) |
-| TX | 32 | 6,153 (45 blank; 11,563 rows) | tx_20261011 | `2305`, `4608` | partial 2026-10-23 (ENR: Bexar, Harris, Kaufman, Lamar, Wood) |
+| OH | 13 | 4,153 (4,524 rows) | oh_20260929 | `83AHA`, `31BLU` | partial 2026-10-26 (ENR: Carroll, Franklin, Stark, Summit; L2 all counties) |
+| PA | 20 | 6,378 rows | pa_20260911 | `2403`, `1680100`, `011905S` | partial 2026-10-26 (ENR: Chester, Delaware, Philadelphia; L2 all 20 counties incl. Northampton) |
+| TX | 71 | 15,084 rows | tx_20261011 | `2305`, `4608` | partial 2026-10-26 (ENR: Bexar, Hardin, Harris, Kaufman, Lamar, Wood; L2 weak in many of the 39 new counties, see Results) |
 | VA | 133 (all) | 2,534 (2,541 rows) | va_20261006 | `0206`, `0412` | done 2026-10-25 |
 | WA | 4 | 167 | wa_20260917 | `0001` | waiting |
 
@@ -135,6 +135,60 @@ some counties only; list them in Results. `done` means built.
 > Results entry in `docs/crosswalk_todo.md`.
 
 ## Results
+
+Second rerun of 2026-10-26 (10 Clarity counties found once the WAF block lifted,
+plus Oakland and Genesee by web search):
+
+- FL: ENR 2,874 rows (45.9%). Martin 30/30 (`1` -> `01`, added to the
+  Alachua/Hardee pad-2 rule).
+- MI: ENR 1,935 rows (52.0%). Genesee 141/143; Oakland 404/406: ENR names
+  cities bare (`Auburn Hills, Precinct 1`), so `parse_enr` adds CITY to a
+  municipality with no type word, plus three renames (Lathrup Village, Orchard
+  Lake Village and Village of Clarkston cities). Oakland Independence Township 7
+  is left NA. Ottawa 78/100: the 22 NA frame precincts are townships split by
+  school district in ENR (`Allendale Charter Township, Precinct 5 - APS` / `-
+  HPS`), so each is a sum (NA by design).
+- OH: ENR 2,317 rows (51.2%). Hamilton 644/644: ids `3206 fr pk f`; new
+  `hamilton_pfx` map of 47 municipality codes, and `harr` is Harrison city for
+  codes 34xx and Harrison Township for 76xx.
+- TX: ENR 6,483 rows (43.0%). The split rule now leaves an id NA only when
+  several ENR units share a base; Galveston labels every unit with a ballot
+  style (`137 - BS1`), so single-unit precincts match: 114/128. Bastrop 34/35,
+  Denton 364/382, El Paso 405/462, Rusk 29/36 match with the default rule;
+  unmatched ENR ids (Denton 9100-9201, El Paso 183/184/...) have no frame row.
+  Bexar, Harris, Hardin, Kaufman, Lamar and Wood are unchanged.
+
+Rerun of 2026-10-26 (ENR cycle). `cycle.R sync` rebuilt the frame from the newer
+`metadata.csv` (17:04), so FL (now 6,257 rows) and MI (3,722) have more frame
+counties than on 10-23, and the percentages are not comparable with earlier runs.
+
+- FL: ENR 2,844 rows (45.5%), L2 97.8%, both 44.4%. Eight counties with clean
+  files had no ENR recode and matched nothing; they now do: Alachua 65/66 and
+  Hardee 12/12 (leading number padded to 2: `1-Waldo Branch Library` -> `01`),
+  Nassau 18/18, Santa Rosa 41/41, Sumter 34/34, Wakulla 12/12 (leading number),
+  Washington 11/12 (`0001 Caryville` -> `1`), St. Johns 63/63 (`PCT 211` -> `211`).
+  - Left NA: Washington ENR `0010 Ebro City Hall` (frame and L2 have 15, no 10);
+    Alachua frame `1` (frame also has `01`).
+  - Franklin (8), Gulf (10), Jackson (14) and Liberty (8) ENR geos are polling
+    place names only (`Eastpoint`, `Rock Bluff`). They need a place -> code list
+    like Gadsden/Levy's `place_codes`; all NA for now.
+- MI: ENR 1,312 rows (35.2%), L2 97.1%. New county Shiawassee 30/30; others
+  unchanged.
+- OH: ENR 1,673 rows (37.0%), L2 99.96%. New counties Summit 371/371 precincts
+  (407 rows; EV `001 akron 1-a`, leading sequence number dropped) and Carroll
+  23/23 (LVT `brown a 004`, trailing sequence number dropped). Both match on
+  `name_std` with no leftovers on either side.
+- The `sheet --apply` at 17:35 rebuilt the frame again: the sheet now spells PA
+  `northampton` (was `northhampton`), so Northampton joined the PA frame. `pa.R`
+  and `tx.R` were rerun because their crosswalks no longer covered the frame.
+  - PA: 6,378 rows, 20 counties. ENR 2,316 rows (36.3%, unchanged); L2 99.9%
+    (Northampton 98.1% of 155 rows).
+  - TX: 15,084 rows, 71 counties (was 11,563 and 32). ENR 5,537 (36.7%; Hardin
+    is now a frame county, 23/25). L2 87.9%, down from 93.5%: `tx.R` has no L2
+    rules for many of the 39 new counties. Lowest: Van Zandt 11%, Grayson 19%,
+    Ellis 20%, Wood 33%, Burnet 38%, Gregg/San Patricio/Kaufman/Coryell 56-57%,
+    Bell 63%, Guadalupe 66%, Randall 70%, Travis 75%. **To do**: check those
+    counties' L2 id formats in `tx.R`, separating them from junk frame codes.
 
 Run of 2026-10-25 (ENR cycle): new state scripts `va.R` and `ga.R`.
 

@@ -73,6 +73,10 @@ parse_enr = function(x) {
   x = str_replace(x, "^The Village of (.*), a Michigan City", "City of \\1")
   m = str_match(x, "^([^,]+)(?:, (?:Ward|District) (\\d+))?(?:,? Precinct (\\d+(?: ?[A-Z])?))?$")
   out = tibble(muni = muni_std(m[, 2]), ward = pct_std(m[, 3]), pct = pct_std(m[, 4]))
+  # Oakland names cities bare ("Auburn Hills, Precinct 1" = frame AUBURN HILLS CITY)
+  out$muni = if_else(!is.na(out$muni) & !str_detect(out$muni, "\\b(TOWNSHIP|CITY|VILLAGE)$"), paste(out$muni, "CITY"), out$muni)
+  out$muni = recode(out$muni, "LATHRUP VILLAGE" = "LATHRUP VILLAGE CITY", "ORCHARD LAKE CITY" = "ORCHARD LAKE VILLAGE CITY",
+                    "CLARKSTON CITY" = "VILLAGE OF CLARKSTON CITY")
   l2_style = str_detect(x, "^[A-Z .'-]+ (TWP|CITY) \\d+$")
   out[l2_style, ] = parse_l2(x[l2_style])
   out

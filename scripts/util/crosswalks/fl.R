@@ -74,6 +74,12 @@ fl = read_enr(enr_files) |>
       county == "HENDRY" ~ str_pad(precinct, 3, pad = "0"),
       county == "DESOTO" ~ str_extract(precinct, "^[0-9]+"),
       county %in% c("CITRUS", "COLUMBIA", "GLADES", "MONROE") ~ str_extract(precinct, "^[0-9]+"),
+      # 2026-10-26: "1-Waldo Branch Library" (Alachua, Hardee: frame pads to 2),
+      # "29 West Navarre", Washington "0001 Caryville" (frame "1"), St. Johns "PCT 211".
+      county %in% c("ALACHUA", "HARDEE", "MARTIN") ~ str_pad(str_extract(precinct, "^[0-9]+"), 2, pad = "0"),
+      county %in% c("NASSAU", "SANTA ROSA", "SUMTER", "WAKULLA") ~ str_extract(precinct, "^[0-9]+"),
+      county == "WASHINGTON" ~ as.character(as.integer(str_extract(precinct, "^[0-9]+"))),
+      county == "ST JOHNS" ~ str_remove(precinct, "^PCT "),
       county %in% c("GADSDEN", "LEVY") ~ unname(place_codes[paste(county, precinct, sep = "|")]),
       .default = precinct
     )

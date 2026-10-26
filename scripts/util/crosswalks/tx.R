@@ -26,14 +26,17 @@ pad4 = function(x) if_else(str_detect(x, "^[0-9A-Z]{1,4}$"), str_pad(x, 4, pad =
 # "33 - Joint ESD2", "33 - Hawk ESD2"). Every unit appears in the federal and
 # state contests, so the frame precinct is the *sum* of the base row and its
 # sub-units. That is not 1:1, so the base id and all its sub-units stay NA.
+# Galveston labels every unit with its ballot style ("137 - BS1", "142 - BS2"):
+# a precinct with a single unit is 1:1 with the frame; one with several units
+# (a sum) stays NA, as in Wood.
 
 enr_files = fs::path_rel(Sys.glob(election_path("TX/clean/*_latest.parquet")), election_path())
 stopifnot(length(enr_files) > 0)
 
 tx = read_enr(enr_files) |>
-  mutate(base = str_match(precinct, "^(\\S+) - .+$")[, 2]) |>
-  mutate(split = precinct %in% base[!is.na(base)] | !is.na(base), .by = county) |>
-  mutate(precinct = if_else(split, NA_character_, pad4(precinct))) |>
+  mutate(base = coalesce(str_match(precinct, "^(\\S+) - .+$")[, 2], precinct)) |>
+  mutate(split = n() > 1, .by = c(county, base)) |>
+  mutate(precinct = if_else(split, NA_character_, pad4(base))) |>
   select(-base, -split)
 
 stopifnot(!anyDuplicated(filter(tx, !is.na(precinct))[c("county", "precinct")]))

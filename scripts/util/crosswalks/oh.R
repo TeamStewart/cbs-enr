@@ -76,13 +76,36 @@ fr_keys = oh_frame_names |>
 # Stark: short codes ("cc3a" = CANTON CITY 3-A, "lak17" = LAKE 17, "laka" =
 #   LAKE A). `stark_pfx` spells out the prefix; the per-prefix precinct counts
 #   and suffixes are identical to the frame's.
+# Summit (Enhanced Voting): sequence number + name ("001 akron 1-a").
+# Carroll (LiveVoterTurnout): name + sequence number ("brown a 004").
+# Hamilton (Clarity): code + short municipality + precinct ("3206 fr pk f" =
+#   FOREST PARK F); `hamilton_pfx` spells out the municipality. "harr" is
+#   Harrison city for codes 34xx and Harrison Township for 76xx.
 # Any other county: stop until its id format has been checked.
 
 enr_files = fs::path_rel(Sys.glob(election_path("OH/clean/OH_*_latest.parquet")), election_path())
 stopifnot(length(enr_files) > 0)
 
 oh = read_enr(enr_files)
-stopifnot(all(oh$county %in% c("FRANKLIN", "STARK")))
+stopifnot(all(oh$county %in% c("FRANKLIN", "STARK", "SUMMIT", "CARROLL", "HAMILTON")))
+
+hamilton_pfx = c(
+  addy = "ADDYSTON", amber = "AMBERLEY", and = "ANDERSON", arln = "ARLINGTON HGTS", blue = "BLUE ASH",
+  chev = "CHEVIOT", cin = "CINCINNATI", cleve = "CLEVES", cole = "COLERAIN", colum = "COLUMBIA",
+  crosb = "CROSBY", delhi = "DELHI", `dr pk` = "DEER PARK", elmw = "ELMWOOD", even = "EVENDALE",
+  fairfx = "FAIRFAX", `fr pk` = "FOREST PARK", glen = "GLENDALE", golf = "GOLF MANOR", `gr hl` = "GREENHILLS",
+  green = "GREEN", `ind hll` = "INDIAN HILL", `lin ht` = "LINCOLN HGTS", lock = "LOCKLAND", love = "LOVELAND",
+  madra = "MADEIRA", marmt = "MARIEMONT", miami = "MIAMI TWP", milf = "MILFORD", mont = "MONTGOMERY",
+  mthy = "MT HEALTHY", nch = "NO COLL HILL", newt = "NEWTOWN", `no bend` = "NORTH BEND", norw = "NORWOOD",
+  read = "READING", shar = "SHARONVILLE", silvt = "SILVERTON", spdale = "SPRINGDALE", spfld = "SPRINGFIELD",
+  `st bn` = "ST BERNARD", sycam = "SYCAMORE", symm = "SYMMES", `ter pk` = "TERRACE PARK", whwtr = "WHITEWATER",
+  wood = "WOODLAWN", wyom = "WYOMING"
+)
+hamilton_name = function(x) {
+  m = str_match(x, paste0("^(\\d{4}) (", paste(c(names(hamilton_pfx), "harr"), collapse = "|"), ")(?: (.+))?$"))
+  muni = if_else(m[, 3] == "harr", if_else(str_starts(m[, 2], "34"), "HARRISON", "HARR TWP"), unname(hamilton_pfx[m[, 3]]))
+  if_else(is.na(m[, 1]), NA_character_, str_squish(paste(muni, str_to_upper(coalesce(m[, 4], "")))))
+}
 
 stark_pfx = c(
   alli = "ALLIANCE", bet = "BETHLEHEM", can = "CANTON TWP", cc = "CANTON CITY", cnful = "CANAL FULTON",
@@ -100,7 +123,13 @@ stark_name = function(x) {
 
 enr_keys = oh |>
   mutate(
-    name = if_else(county == "STARK", stark_name(precinct), precinct),
+    name = case_when(
+      county == "STARK" ~ stark_name(precinct),
+      county == "SUMMIT" ~ str_remove(precinct, "^\\d+ "),
+      county == "CARROLL" ~ str_remove(precinct, " \\d+$"),
+      county == "HAMILTON" ~ hamilton_name(precinct),
+      .default = precinct
+    ),
     n_l2 = NA_integer_, precinct_l2 = precinct_enr,
     k_std = oh_std(county, name), k_type = drop_type(k_std)
   )

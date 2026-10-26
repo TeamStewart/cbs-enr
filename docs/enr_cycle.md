@@ -42,7 +42,7 @@ Sheet" below), which then refreshes `metadata.csv` from the sheet.
 ## Start of every session
 
 ```sh
-Rscript scripts/util/enr_cycle/cycle.R sync      # pull in metadata.csv, frame, clean/ files
+Rscript scripts/util/enr_cycle/cycle.R sync      # pull in metadata.csv, frame (rebuilt if metadata.csv is newer), clean/ files
 Rscript scripts/util/enr_cycle/cycle.R status    # queues + last log lines
 ```
 
@@ -84,11 +84,27 @@ Rscript scripts/util/enr_cycle/cycle.R probe TX bexar   # one row
 ```
 
 - Clarity: `/{ST}/{County}/elections.json`, looking for an election dated
-  2026-11-03. Many large counties return `[]`; then it scans
-  `/{ST}/{County}/{EID}/current_ver.txt` over the EID window around the 2026
-  general EIDs already known and confirms `electiondate` in
-  `electionsettings.json` (~7 s per county). A county not on the standard
-  Clarity domain or slug needs a hand check.
+  2026-11-03. Many large counties return `[]`; those rows get the note
+  "elections.json empty; web search by hand". For each, web-search for the
+  county's results page (exact-match queries such as
+  `"clarityelections.com/MI/Oakland"`, or "<County> County election night
+  results November 3, 2026"), open the county elections page (curl, or
+  Playwright if 403), and look for a `clarityelections.com/{ST}/{County}/{EID}`
+  link. Confirm a candidate EID with `current_ver.txt` and the `electiondate`
+  in `json/en/electionsettings.json`, then `set ... disc_status=found`.
+  Counties often link the general's EID before election night (Oakland and
+  Genesee did by 10-26).
+- `probe --deep` (only when Mason asks for a deep search) also scans
+  `/{ST}/{County}/{EID}/current_ver.txt` over the EID window around the known
+  2026 general EIDs (-100/+250) for list-empty counties. A county not on the
+  standard Clarity domain or slug needs a hand check.
+- Clarity rate limits: its AWS WAF blocks the IP for hours (HTTP 405 on every
+  URL) after a burst; the old 8-way parallel scan triggered it on 10-25 and
+  10-26. So Clarity requests go one at a time at 2/s (`CLARITY_RATE`; a deep
+  scan takes about 5 min per county). A deep scan of a county repeats at most
+  every 3 days (`CLARITY_RESCAN_DAYS`; daily from Nov 1). After the first 405
+  the run sends no more Clarity requests and leaves the remaining Clarity rows
+  as they were; wait or use another IP.
 - EV: `{host}/results/public/api/jurisdictions/{slug}`, the election with
   `electionDate` 2026-11-03, giving `export-{publicElectionId}.json`. The slug
   comes from the current path or `{county}-county-{st}`.
