@@ -42,7 +42,7 @@
 # ========================================
 
 MODEL_NAMES = c(swing = "model_simpleswing", cory = "model_cory", medsl = "model_medsl",
-                cpois = "model_cory_pois")
+                cpois = "model_cory_pois", cprec = "model_cory_prec")
 
 # one row per race_id with the enightmodels race columns. The default suits the sims
 # (race_id is the contest, e.g. "gov"); for live races pass a table built from the race
@@ -83,7 +83,7 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
 
   cand = reported_by_candidate(returns)
   conf = NA_character_
-  if (model %in% c("swing", "medsl")) {
+  if (model %in% c("swing", "medsl", "cprec")) {
     # point predictions by party; third-party votes split across third-party candidates
     # in proportion to their counted votes (equally if none counted yet)
     ptot = fit_point(fit)
@@ -91,7 +91,8 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
     oth_tot = ptot[["tot"]] - pv[["dem"]] - pv[["rep"]]
     dr = fit$draws
     tot_d = dr$turnout
-    conf = sprintf(if (model == "swing") "county_bootstrap_%g" else "posterior_%g", 100 * level)
+    conf = sprintf(switch(model, swing = "county_bootstrap_%g", medsl = "posterior_%g",
+                          cprec = "cred_int_%g"), 100 * level)
     q = function(x) unname(cred(x, level))
     cand = cand |>
       mutate(w = if (sum(rep[party %in% c("oth", "ind")]) > 0) rep / sum(rep[party %in% c("oth", "ind")])
@@ -186,6 +187,16 @@ to_prec_data = function(fit, model, race, time) {
   out = if (model == "medsl") {
     # already the richest shape; est_dem2/p_win/cnt_prec added to prec_out for this
     p |> mutate(method = NA_character_)
+  } else if (model == "cprec") {
+    # forecast_prec gives a frame as rich as medsl's -- turnout and share intervals,
+    # est_dem2 and cnt_prec are all already there -- but under its own names, and with
+    # cell counts where medsl has mode counts. Only renames, no derivation.
+    # It has no q_share: that is the pin's gate in model_turnout.R and has no analogue
+    # here, so it stays NA rather than being faked from n_done_cells.
+    p |> mutate(method = NA_character_,
+                p_win = p_dem_win,
+                n_obs_modes = n_obs_cells,
+                q_share = NA_real_)
   } else if (model %in% c("swing", "cory", "cpois")) {
     # dem/rep/tot, no interval.
     #

@@ -167,11 +167,13 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
   lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
 
   cand = reported_by_candidate(returns)
-  if (model %in% c("swing", "medsl")) {
+  if (model %in% c("swing", "medsl", "cprec")) {
     dr = fit$draws
     D32 = dr$dem; R32 = dr$rep; T32 = dr$turnout
     pt = fit_point(fit)
-    conf = sprintf(if (model == "swing") "county_bootstrap_%g_plus_rest" else "posterior_%g_plus_rest", 100 * level)
+    conf = sprintf(switch(model, swing = "county_bootstrap_%g_plus_rest",
+                          medsl = "posterior_%g_plus_rest",
+                          cprec = "cred_int_%g_plus_rest"), 100 * level)
   } else if (model == "cory") {
     pr = if (is.data.frame(fit$raw)) fit$raw else fit$raw$pred
     pr = mutate(pr, party = as.character(party))

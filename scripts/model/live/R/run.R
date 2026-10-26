@@ -17,7 +17,7 @@
 ## add it to run_race() below.
 # ========================================
 
-MODELS = c("swing", "cory", "medsl", "cpois")
+MODELS = c("swing", "cory", "medsl", "cpois", "cprec")
 
 run_race = function(model, cells, returns, ...) {
   switch(model,
@@ -29,6 +29,7 @@ run_race = function(model, cells, returns, ...) {
     cory  = fit_cory(cells, returns, precincts = TRUE, ...),
     medsl = fit_medsl(cells, returns, ...),
     cpois = fit_cpois(cells, returns, ...),
+    cprec = fit_cprec(cells, returns, ...),
     stop("Unknown model '", model, "'. Choose from: ", paste(MODELS, collapse = ", "))
   )
 }
