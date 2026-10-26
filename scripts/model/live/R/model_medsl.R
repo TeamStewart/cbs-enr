@@ -202,7 +202,38 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
   draws = min(env$.draws, max(50L, floor(max_pd / nrow(env$prec))))
   if (draws < env$.draws) settings = paste0(settings, sprintf("; draws cut to %d for %d precincts (MEDSL_MAX_PRECINCT_DRAWS)", draws, nrow(env$prec)))
   if (!is.null(seed)) set.seed(seed)
-  f = suppressMessages(env$fit_stage(env$cells, ret_m, draws = draws, cross_mode = env$USE_CROSS_MODE))
+  # ---- county x mode observations for the votes that land on NO precinct ------------
+  # cell_counts() joins FROM `cells`, so AK's house-district mail/early/provisional piles
+  # and NC's county mail and one-stop-site piles -- 31% of each state's vote -- are dropped
+  # before the model sees them. bucket_counts() turns exactly those rows into one (county,
+  # mode) observation each, and fit_stage()'s CTY_BOUND uses the county totals as a LOWER
+  # BOUND on the county's drawn turnout. This is the only wiring that makes it reach air.
+  # CA, FL, MI and TX have zero bucket vote mass, so there it returns 0 rows and the bound
+  # is inert by construction, not by a state test.
+  # The `known` precinct set is the UNION of the feed's cells and the model's: a geo that is
+  # a real precinct in either must never be read as a county pile (NC has precincts actually
+  # named `PROVI` and `EV`), and the two frames can differ when the feed covers a subset of
+  # counties.
+  known_cells = tibble(geo = union(as.character(cells$geo), as.character(env$cells$geo)))
+  cty_obs = bucket_counts(known_cells, returns)
+  report_buckets(cty_obs, cells = known_cells, label = unique(returns$race_id)[1])
+  f = suppressMessages(env$fit_stage(env$cells, ret_m, draws = draws, cross_mode = env$USE_CROSS_MODE,
+                                     county_obs = cty_obs))
+  # fit_stage() is run under suppressMessages (the model is chatty), which would also eat
+  # the county bound's per-county log -- and that log is the only way to tell a bound that
+  # binds on real votes from one that binds on an id join error. So it is re-emitted here
+  # from the returned frame.
+  if (!is.null(f$cty_bound) && nrow(f$cty_bound)) {
+    cb = f$cty_bound
+    cli::cli_alert_info(paste0(
+      "county turnout bound: binds in {nrow(cb)} county(ies), raising the county total by ",
+      "{prettyNum(round(sum(cb$mean_short)), big.mark = ',')} votes in total ",
+      "(max {prettyNum(round(max(cb$max_short)), big.mark = ',')} in one county)"))
+    for (i in seq_len(nrow(cb))) cli::cli_alert_info(paste0(
+      "  county {cb$county[i]}: +{round(cb$mean_short[i])} mean on ",
+      "{cb$draws_bound[i]} draw{?s}, bucket {prettyNum(round(cb$bucket[i]), big.mark = ',')}, ",
+      "counted {prettyNum(round(cb$cnt_prec[i]), big.mark = ',')}"))
+  }
 
   dr = tibble(twop = f$S_2p, turnout = f$turn, dem = f$S_dem * f$turn, rep = f$S_rep * f$turn)
   ci = cred(dr$twop, level); ct = cred(dr$turnout, level)

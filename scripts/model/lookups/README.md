@@ -194,6 +194,48 @@ MI and TX zero files use a completely different precinct-id vocabulary from
 `mi_063_ROCHESTER HILLS CITY_W01_P006`), so a join-based test reports those states as
 100% bucket. That is unreconciled ids, a different problem.
 
+## What consumes this at RUN time: the county turnout lower bound
+
+Until 2026-10-26 this table was a pre-election expectation only — something to check the
+feed against. It is now also the run-time route for the 31% of AK's and NC's vote that
+lands on no precinct:
+
+```
+feed rows whose geo is NOT in `cells`
+  -> live/R/returns.R::bucket_counts()        one row per (county_code, mode)
+  -> live/R/model_medsl.R                     county_obs =
+  -> model_turnout.R::fit_stage()             CTY_BOUND
+```
+
+**It is a LOWER BOUND, not an estimate.** Turnout is censored and share is sampled, and
+this is the censored half: a partial county × mode total bounds that county's final total
+from below, so it enters the draw as a one-sided constraint — one common logit shift
+`delta_c` solving `sum_{i in c} kappa*n_i*invlogit(theta_i + delta_c) = C_c`, applied only
+when it binds. Being a bound it needs **no completeness gate**, which is the whole
+difference from `model_hybrid.R`'s `HY_COUNTY` arm (an exact constraint gated at 99%
+reported, and therefore inert through the entire broadcast window). The partisan columns
+`bucket_counts()` also returns are for the SHARE half, which is a prior re-centring with
+different semantics and is **not implemented**.
+
+Three properties of the table that the bound depends on, and that an edit must preserve:
+
+- **`county_cbs` is the 3-digit code in the geo, not the county name.** In AK they are
+  different partitions: 40 geo codes against 30 borough names, code `037` spanning 7
+  boroughs, 11 boroughs spanning more than one code, no containment either way. The bound
+  keys on the code at both ends.
+- **One source per county.** A scraped county's bucket geos and its CBS county-feed rows
+  are the SAME votes; summing them would double-count ~31% of two states. The bound reads
+  only the bucket geos and never the CBS feed. `fit_stage()` additionally warns when a
+  (county, mode) has both a pile and precinct-level votes — AK trips this legitimately,
+  because its `NN-question` provisional piles fold into `eday` while `eday` itself reports
+  per precinct.
+- **Off-spine is not the same as bucket.** A row qualifies only if its geo is absent from
+  `cells` AND `bucket_class()` recognises its label. Unreconciled precinct ids fail the
+  second test and are returned separately (`attr(., "unmatched")`) instead of being
+  absorbed into a county total, which would turn a join bug into extra votes. On the AK
+  August 2026 file that is 90 geos and 32,051 votes — 19.5% of the contest — and it needs
+  an id owner, not a model change.
+
 ## `transfer` and `*` are not vote methods
 
 Two `method` values are deliberately outside `enightmodels::VOTE_METHODS`:

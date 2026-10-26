@@ -75,6 +75,17 @@ suppressPackageStartupMessages({
 # Fitting primitives live in model_core.R so the backtests cannot drift from the model.
 # Run from the cbs-enr folder, or set MODEL_CORE to an explicit path.
 source(Sys.getenv("MODEL_CORE", unset = "scripts/model/model_core.R"))
+# geo_county(): the 3-digit county code inside a canonical geo (`{st}_{county_cbs}_{prec}`).
+# CTY_BOUND needs it to map each precinct to the partition `bucket_counts()` keys on, and
+# that mapping must be the SAME rule in both places: in AK the geo code and the borough
+# name in `cells$county` are DIFFERENT partitions (40 codes against 30 names, code 037
+# spanning 7 boroughs, no containment either way), so a second copy of the rule that drifts
+# would reassign 31% of the state's votes to the wrong county silently. It lives in
+# live/R/vote_modes.R, which live/load.R sources into the global environment -- the parent
+# of the per-state environment model_medsl.R runs this file in -- so under the live stack it
+# is already here and this is a no-op. The source() is only for running this file standalone.
+if (!exists("geo_county", mode = "function"))
+  source(Sys.getenv("VOTE_MODES", unset = "scripts/model/live/R/vote_modes.R"))
 
 set.seed(as.integer(Sys.getenv("SEED", unset = "20260303")))
 
@@ -128,6 +139,74 @@ COMPLETE_FRAC  = as.numeric(Sys.getenv("COMPLETE_FRAC", unset = "1.1"))
 # (county, mode). Measured on TX 2024 at 0.26-0.45 raw / 0.15-0.30 vote-weighted; 0.25 is
 # the starting point. SD_UNREP=0 disables it (ablation). See the block in fit_stage.
 SD_UNREP       = as.numeric(Sys.getenv("SD_UNREP", unset = "0.25"))
+# COUNTY TURNOUT LOWER BOUND (CTY_BOUND=0 to ablate; inert unless fit_stage() is given
+# `county_obs`).
+# 31% of AK's and NC's vote never lands on a precinct: AK reports mail, early and
+# provisional at house-district level for all 402 precincts (153,478 of 493,117 in the 2026
+# primary file), NC reports mail at county level in 1,351 of 2,633 precincts and early at
+# one-stop-site level in 1,105 (3,518,519 of 7,772,169 in 2024). `cell_counts()` joins FROM
+# `cells`, so every one of those rows is dropped and the model's ONLY channel for that 31%
+# is `mode_turn_share`, a 2022 L2 registration split that is never checked against tonight.
+# CA, FL, MI and TX have ZERO bucket vote mass, so this is an AK + NC change by construction
+# and must be bit-identical elsewhere.
+#
+# WHAT IT IS, and what it deliberately is not. A partial county x mode total is a LOWER
+# BOUND on that county's final total, not an estimate of it -- turnout is censored, share is
+# sampled, and this is the censored half. So it enters as a one-sided constraint on the
+# draw, the same argument as T_draw = pmax(T_draw, cnt_tot), and it needs NO completeness
+# gate: a partial total is a valid bound at 20:38 as much as at 23:49. That is the whole
+# difference from model_hybrid.R's HY_COUNTY arm, which treats a county total as an EXACT
+# constraint gated at CTY_MIN_PCT = 99 and is therefore inert through the entire broadcast
+# window (NC's early vote is 1.1% in at 19:57, 53.0% at 21:02, 95.0% only at 22:20).
+#
+# HOW. Per county c, C_c = votes observed in c = (precinct-level counted, already in
+# cnt_tot) + (bucket votes on no precinct, from live/R/returns.R::bucket_counts). If the
+# draw's county total falls short, solve for one common logit shift delta_c with
+#     sum_{i in c} kappa*n_i*invlogit(theta_id + delta_c) = C_c
+# exactly as the statewide constraint does. AGGREGATE on purpose: allocating C_cm down to
+# precincts by the prior mode weight would import precisely the prior error this exists to
+# correct. The cost is that it cannot say WHICH precinct was short -- it spreads the deficit
+# by a common shift, right on average and wrong per precinct.
+#
+# WHERE THE INCREMENT LANDS, stated because it is not where you would want it. The bound
+# raises T_draw; `rem_tot = T_draw - cnt_tot` is then split across modes by `short`, which
+# is pmax(T_draw * share - cnt_tau, 0) and so hands part of the increment to modes that are
+# already counted OUT. That leak is deliberate and measured: on TX at 60% reporting, 1,865
+# of 7,360 counted-out cells (25.3%) already carry positive `rem`, 25,833 votes = 0.86% of
+# their counted total. With the completeness flag TRUTHFUL, zeroing `short` on mask_turn is
+# perfect (total cell error 25,833 -> 0); with the flag LYING at 85% in, zeroing is 2.5x
+# WORSE (180,333 -> 451,124), because the leak then covers 60% of the missing votes.
+# Production lives in the lying regime through the broadcast window, so `short` is left
+# alone. Consequence to keep in view: with per-mode partisan offsets switched on, the leak
+# moves mass OUT of the still-counting bucket modes and INTO counted-out election day, which
+# in NC (mail at +0.707 logit) is a Republican-leaning shift. That is the gate on the share
+# half of this add-on, and it is not implemented here.
+#
+# WHAT IT COSTS, MEASURED 2026-10-26, and it is NOT free. A one-sided constraint on a noisy
+# draw biases the mean UP: the increment is E[max(0, C_c - T_c)], so the bias is about
+# 0.4 x the model's own per-county turnout error dispersion. Synthetic AK and NC nights
+# (truth drawn from the composition, then the BUCKET modes' truth scaled by g so the prior
+# is wrong by construction; precinct modes to precinct geos, county_site modes to bucket
+# geos), statewide turnout as % of truth with the piles 90% / 100% in:
+#   g      AK off      AK on          NC off      NC on
+#   0.7    111.4       111.9 / 112.2    --          --
+#   1.0    100.1       102.5 / 103.9   97.1       100.7 / 103.0
+#   1.3     91.0        97.5 / 100.8   88.4        98.3 / 102.0
+# So when the prior UNDERSTATES the bucket modes it removes 6-10pp of error, when the prior
+# is RIGHT it adds 2-6pp, and when the prior OVERSTATES them it can do nothing (a lower
+# bound cannot pull an estimate down) and adds ~0.5pp. Mean |error| over the three AK arms:
+# 6.8 off, 5.6 on. It also never moves two-party share the wrong way (AK |err| 2.84 -> 2.76,
+# 3.74 -> 3.53, 4.48 -> 4.11 pp). At 20% of the pile in, on vs off agree to 0.1pp -- the
+# bound is correctly silent while the count is still well below the prediction.
+# This cost is exactly the atom PIN_DONE exists to remove, one level up: the bound floors a
+# county at its count without ever substituting it, so where it binds on nearly every draw
+# the county total becomes an ATOM and the statewide turnout interval collapses (AK g=1.3,
+# pile 100%: 95% width 0.66% of truth off, 0.25% on). The county-level analogue of PIN_DONE
+# -- substitute, do not floor, once the county's piles are flagged `complete` -- would
+# remove it, and `bucket_counts()` already carries that flag. Deliberately NOT done here:
+# gating the BOUND on completeness is what makes HY_COUNTY inert, and the two must not be
+# conflated. Raise it as its own change.
+CTY_BOUND      = Sys.getenv("CTY_BOUND", unset = "1") == "1"
 # PIN A FINISHED PRECINCT AT ITS COUNT (PIN_DONE=0 to ablate).
 # The prediction step floors the total: T = pmax(kappa*n*invlogit(theta), cnt_prec). For a
 # precinct still counting that is right. For one that has FINISHED it is not -- the total
@@ -989,8 +1068,13 @@ make_stages = function(cells, truth, frac) {
 # Pairwise covariance from an incomplete residual matrix. Blocks with too little
 # overlap are left at zero (conservative: no conditioning through that block).
 
+# county_obs: optional county x mode observations for the votes that land on NO precinct,
+#   one row per (county, mode) with `county` the 3-DIGIT GEO CODE and `c_tot` its votes --
+#   i.e. live/R/returns.R::bucket_counts() output, unmodified. NULL (the default) makes the
+#   county bound inert, so every existing caller is unchanged. Only `county` and `c_tot` are
+#   read: the partisan columns belong to the share half, which is not implemented here.
 fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
-                     Sigma_hist = NULL, level = 0.95) {
+                     Sigma_hist = NULL, level = 0.95, county_obs = NULL) {
   has_complete = "complete" %in% names(returns)
   if (!has_complete)
     cli_alert_warning("returns carry no `complete` flag -- falling back to \\
@@ -1472,6 +1556,15 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   # the precinct total, and 184%-of-truth turnout is arithmetically impossible rather
   # than something detected afterwards.
   ref_i = match(REF_MODE, MODES)
+  # Filled by the county bound below and returned, so a harness can test WHERE it bound
+  # instead of parsing the log. NULL = the bound never ran (switch off, no county_obs, or no
+  # bucket votes at all -- the TX/CA/FL/MI case, where bucket_counts() returns 0 rows); a
+  # 0-row frame = it ran over real county observations and never bound, which is the correct
+  # state for a model that is already predicting at least what has been counted.
+  cty_bound_log = NULL
+  if (CTY_BOUND && !is.null(county_obs) && nrow(county_obs) && !USE_COMPOSE)
+    cli_alert_warning("CTY_BOUND needs USE_COMPOSE -- there is no precinct total to bound \\
+                       in the per-cell parameterization. County observations ignored.")
   if (USE_COMPOSE) {
     k_ref = K_OUT * (ref_i - 1)
     capm  = matrix(KAPPA * pmax(prec$n, 1), draws, N_PREC, byrow = TRUE)  # cap lives on `cells`
@@ -1504,6 +1597,191 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       if (any(done_prec)) {
         # direct assignment, not dplyr::if_else -- vctrs rejects matrices
         T_draw[, done_prec] <- cnt_tot[, done_prec, drop = FALSE]
+      }
+    }
+    # ---- COUNTY TURNOUT LOWER BOUND (see CTY_BOUND) --------------------------------
+    # ORDERED LAST, and the order is not cosmetic. The statewide block above ends with
+    # pmax(capv * plogis(th_d + del), cnt_d), which re-floors at the PER-PRECINCT counted
+    # votes only and knows nothing about bucket votes -- so a county bound applied before
+    # it is solved away without trace. Same for PIN_DONE, which substitutes cnt_tot.
+    # Running last means a county's observed total can push that draw's statewide total
+    # above its own S_d. That is correct, not a violation: S_d is a draw from a PRIOR and a
+    # county's counted votes are an OBSERVATION, and a prior must not override an
+    # observation. (It also means the statewide block's floor, max(STATE_TURNOUT * ...,
+    # sum(cnt_d)), understates what has actually been counted by up to 31% in AK and NC,
+    # since cnt_d excludes bucket votes. Both want the fuller count -- raise it with
+    # whoever owns that block rather than changing it here.)
+    #
+    # Stated as a floor on the county's REMAINDER, which is what it really is:
+    #   sum_{i in c} (T_i - c_i) >= B_c,   B_c = bucket votes in c
+    # so the target for the common shift is sum_{i in c} c_i + B_c and no precinct-level
+    # counted total is ever re-derived from the county figure.
+    if (CTY_BOUND && !is.null(county_obs) && nrow(county_obs)) {
+      if (!all(c("county", "c_tot") %in% names(county_obs)))
+        cli_abort("county_obs needs `county` (3-digit geo code) and `c_tot`; \\
+                   got {.val {names(county_obs)}}")
+      # KEYED ON THE GEO'S CODE, NEVER prec$county. In AK those are different partitions:
+      # 40 geo codes against 30 borough names, code 037 spanning 7 boroughs, 11 boroughs
+      # spanning more than one code, and no containment in either direction (measured on
+      # AK_precinct.parquet). prec$county is a NAME; bucket_counts() keys on the code.
+      cty_v = geo_county(prec$geo)
+      capv  = capm[1, ]                  # kappa*n_i, same every draw
+      cnt_v = cnt_tot[1, ]               # precinct-level counted, same every draw
+      # A precinct whose geo carries no county code belongs to no county here, so it is
+      # simply never in a county's free set (which == drops NA) and never receives the
+      # bound. Warned rather than fatal: going inert statewide over a few malformed ids
+      # would throw away the bound in every well-formed county too.
+      if (anyNA(cty_v))
+        cli_warn("county bound: {sum(is.na(cty_v))} precinct geo{?s} carry no 3-digit \\
+                  county code ({.val {utils::head(prec$geo[is.na(cty_v)], 5)}}) -- they are \\
+                  excluded from every county total, so their counties' bounds understate")
+      # ONE SOURCE PER COUNTY. bucket_counts() returns one row per (county, mode) by
+      # construction; re-asserted because a duplicated key is the one way the same votes
+      # could enter C_c twice. The other route -- summing bucket geos AND the CBS county
+      # feed, which are the SAME votes -- is prevented by never reading the CBS feed here.
+      key = if ("mode" %in% names(county_obs)) paste0(county_obs$county, "\r", county_obs$mode)
+            else county_obs$county
+      if (anyDuplicated(key))
+        cli_abort("county_obs has {sum(duplicated(key))} duplicated (county, mode) key{?s} \\
+                   -- the same votes would be counted twice in the county total")
+      # DOUBLE-COUNT SIGNATURE. reporting_levels.csv assigns each (county, method) to ONE
+      # level, so a county reporting a mode as a pile should have no precinct-level votes in
+      # that same mode. Both present means either a mixed-level county or the feed sending
+      # the same votes twice, and C_c cannot tell them apart. Reported, not fatal: refusing
+      # to model the state over it would be worse than modelling it with the warning shown.
+      # AK trips this legitimately on eday, and it is worth knowing: AK's `NN-question`
+      # provisional piles fold to eday (BUCKET_FOLD) while eday itself reports per precinct,
+      # so all 40 AK districts show both. They are different votes, so the county total is
+      # right -- but the same line would appear if the feed were duplicating, which is why it
+      # names the pairs and the magnitudes rather than just counting them.
+      # Raised as a WARNING, not a cli message: fit_stage() runs under suppressMessages() in
+      # live/R/model_medsl.R, which would silently eat it.
+      if ("mode" %in% names(county_obs)) {
+        dbl = Filter(Negate(is.null), lapply(which(county_obs$mode %in% MODES), function(k) {
+          ov = sum(cnt_tau[cty_v == county_obs$county[k], match(county_obs$mode[k], MODES)],
+                   na.rm = TRUE)
+          if (ov > 0) tibble(county = county_obs$county[k], mode = county_obs$mode[k],
+                             bucket = county_obs$c_tot[k], precinct = ov) else NULL
+        }))
+        if (length(dbl)) {
+          z = bind_rows(dbl)
+          cli_warn("county bound: {nrow(z)} (county, mode) pair{?s} have BOTH a \\
+            county pile and precinct-level votes ({prettyNum(sum(z$bucket), big.mark = ',')} \\
+            bucket + {prettyNum(sum(z$precinct), big.mark = ',')} precinct votes) -- if the \\
+            feed is reporting the same votes at both levels the county total is inflated: \\
+            {.val {paste0(z$county, '/', z$mode)}}")
+        }
+      }
+      obs_c = county_obs |> summarize(B = sum(c_tot, na.rm = TRUE), .by = county)
+      # A bucket county with no modelled precinct has votes belonging to no precinct the
+      # shift can move; using it as a county total would make the solve unreachable and
+      # look exactly like a binding bound. Dropped loudly -- it is an id-reconciliation
+      # failure, not a modelling one.
+      miss = setdiff(obs_c$county, cty_v)
+      if (length(miss)) {
+        mv = sum(obs_c$B[obs_c$county %in% miss])
+        cli_warn("county bound: {length(miss)} bucket county(ies) have no precinct \\
+          in `cells` ({.val {miss}}), {prettyNum(mv, big.mark = ',')} votes -- DROPPED, \\
+          not used as a county total")
+        obs_c = obs_c |> filter(!county %in% miss)
+      }
+      obs_c = obs_c |> filter(B > 0)
+      # EXEMPT THE PINNED SET. PIN_DONE substitutes T_draw = cnt_tot outright for a
+      # finished precinct -- an EQUALITY on a quantity with no uncertainty left -- and a
+      # later common logit shift would move it again, so the pinned precincts are HELD and
+      # their mass is subtracted from the target instead (which is what using sum(cnt_v)
+      # over the FREE set only amounts to). The gate is recomputed here rather than threaded
+      # out of the PIN_DONE block above because that block is another author's in-flight
+      # work; the equality check below is what catches the two drifting apart.
+      pin_v = rep(FALSE, N_PREC)
+      if (PIN_DONE) {
+        qs_p = d |> distinct(geo, q_share) |> arrange(match(geo, prec$geo)) |> pull(q_share)
+        # PIN_MIN_RPRIOR and `r_prior` are the corroboration half of the pin's gate and are
+        # in flight above; defaulted so this block keeps working whichever way that lands
+        # (no r_prior => the flag-only gate, which is what the pin was before).
+        rp_min = if (exists("PIN_MIN_RPRIOR")) PIN_MIN_RPRIOR else 0
+        rp_p   = rep(Inf, N_PREC)
+        if ("r_prior" %in% names(d))
+          rp_p = d |> distinct(geo, r_prior) |> arrange(match(geo, prec$geo)) |> pull(r_prior)
+        pin_v = (rowSums(mask_turn) == M) | (qs_p >= PIN_MIN_SHARE & rp_p >= rp_min)
+        # A pinned precinct must be sitting exactly at its count. It will NOT be if the
+        # statewide constraint ran -- that block re-shifts every precinct and only re-floors
+        # at cnt_d, so it destroys the pin's equality itself -- so the check is only
+        # meaningful with that block off.
+        # exists() for the same reason as PIN_MIN_RPRIOR above: STATE_TURNOUT is the other
+        # author's in-flight work, so this block must not require it to be present.
+        st_on = exists("STATE_TURNOUT") && !is.na(STATE_TURNOUT) && STATE_TURNOUT > 0
+        if (any(pin_v) && !st_on &&
+            max(abs(T_draw[, pin_v, drop = FALSE] - cnt_tot[, pin_v, drop = FALSE])) > 1e-6)
+          cli_warn("county bound: the recomputed PIN_DONE gate does not match the \\
+            pin actually applied -- the exemption is on the wrong precincts. Reconcile with \\
+            the PIN_DONE block before trusting the bound.")
+      }
+      # Also held: a precinct already counted at or above its own cap kappa*n_i. The common
+      # shift cannot raise it (capv * plogis(.) < capv <= cnt_v, and the floor then puts it
+      # back), so leaving it in the free set only makes the target unreachable.
+      fixed_v = pin_v | (cnt_v >= capv)
+      n_unreach = 0L; logs = list(); refused = character()
+      for (ci in seq_len(nrow(obs_c))) {
+        idx  = which(cty_v == obs_c$county[ci])
+        free = idx[!fixed_v[idx]]
+        targ = sum(cnt_v[free]) + obs_c$B[ci]
+        if (!length(free)) {
+          # REFUSE rather than pick one. Every precinct in the county is pinned or capped,
+          # so there is nowhere for the bucket votes to go that does not contradict an
+          # equality we have already asserted. Silently shifting a pinned precinct would
+          # make the bound look as if it had worked.
+          refused = c(refused, obs_c$county[ci]); next
+        }
+        cf = capv[free]; cnf = cnt_v[free]
+        hit = 0L; short_v = numeric(0)
+        for (dd in seq_len(draws)) {
+          th = qlogis(pmin(pmax(T_draw[dd, free] / cf, 1e-9), 1 - 1e-9))
+          # `cur` is read back through the clamp rather than from T_draw directly, so that
+          # f(0) = cur - targ EXACTLY. Taking it from T_draw instead leaves a precinct whose
+          # ratio hit the 1e-9 clamp disagreeing with f(0) by a hair, and uniroot() then
+          # errors on a bracket it was told was valid.
+          cur = sum(cf * plogis(th))
+          if (cur >= targ) next                      # ONE-SIDED: only when it binds
+          f  = function(del) sum(cf * plogis(th + del)) - targ
+          # f is increasing and f(0) = cur - targ < 0 here, so only the upper end can fail.
+          # +50 on the logit scale reaches the cap from the 1e-9 clamp (logit = -20.7).
+          if (f(50) < 0) { n_unreach = n_unreach + 1L; next }
+          del = stats::uniroot(f, c(0, 50), tol = 1e-8)$root
+          # floor re-applied for symmetry with the statewide block; a no-op for del >= 0
+          T_draw[dd, free] <- pmax(cf * plogis(th + del), cnf)
+          hit = hit + 1L; short_v = c(short_v, targ - cur)
+        }
+        if (hit) logs[[length(logs) + 1L]] = tibble(
+          county = obs_c$county[ci], n_free = length(free), n_fixed = length(idx) - length(free),
+          bucket = obs_c$B[ci], cnt_prec = sum(cnt_v[idx]), target = targ,
+          draws_bound = hit, mean_short = mean(short_v), max_short = max(short_v))
+      }
+      cty_bound_log = if (length(logs)) bind_rows(logs) |> arrange(desc(mean_short)) else
+        tibble(county = character(), n_free = integer(), n_fixed = integer(), bucket = numeric(),
+               cnt_prec = numeric(), target = numeric(), draws_bound = integer(),
+               mean_short = numeric(), max_short = numeric())
+      if (length(refused))
+        cli_warn("county bound: REFUSED on {length(refused)} county(ies) with \\
+          bucket votes and no unpinned, uncapped precinct ({.val {refused}}) -- the bound \\
+          would have had to move a precinct whose total is already asserted known")
+      if (n_unreach > 0)
+        cli_warn("county bound unreachable on {n_unreach} (county, draw) pair{?s} \\
+                           -- the county's observed votes exceed kappa * sum(n_i) there; \\
+                           left unconstrained (suspect an id join, not real votes)")
+      # EVERY binding county, with how much. A bound that binds on a join error looks
+      # identical to one that binds on real votes, so the only way to tell them apart is to
+      # read the counties and the magnitudes -- which means printing them, not a count.
+      cli_inform("county bound: {nrow(cty_bound_log)} of {nrow(obs_c)} county(ies) bind, \\
+                  {prettyNum(round(sum(obs_c$B)), big.mark = ',')} bucket votes observed")
+      for (i in seq_len(nrow(cty_bound_log))) {
+        z = cty_bound_log[i, ]
+        cli_inform("  {z$county}: +{round(z$mean_short)} votes mean \\
+                    (max {round(z$max_short)}) on {z$draws_bound}/{draws} draws; \\
+                    {z$n_free} free + {z$n_fixed} held precincts, counted \\
+                    {prettyNum(round(z$cnt_prec), big.mark = ',')} + bucket \\
+                    {prettyNum(round(z$bucket), big.mark = ',')} = target \\
+                    {prettyNum(round(z$target), big.mark = ',')}")
       }
     }
     rem_tot = T_draw - cnt_tot
@@ -1631,7 +1909,12 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     S_2p  = num_d / pmax(num_d + num_r, 1e-9),
     turn  = den, Sigma = Sigma, resid = resid_mat, n_obs_cells = n_obs_cells,
     cell_s = cell_s_hat, cell_obs = mask,
-    prec = prec_out
+    prec = prec_out,
+    # NULL when the county bound never ran, a 0-row frame when it ran and never bound.
+    # The distinction is what the TX/CA/FL/MI inertness check needs: those states have zero
+    # bucket vote mass, so "ran and never bound" is the expected state there, and a count
+    # alone could not tell it from "was never wired in".
+    cty_bound = cty_bound_log
   )
 }
 
