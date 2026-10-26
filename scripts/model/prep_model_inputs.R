@@ -148,11 +148,25 @@ norm_prec_id = function(x) {
 # id and reported 100.0% for AK while production joined 77.6%.
 #
 # Scope: this changes `geo` only where `precinct_enr` is populated -- AK 100%, NC 99.4%,
-# FL 50.2%, MI 43.9%, TX 0.7%, CA 0%. TX and CA are unaffected. FL's and MI's ENR ids
-# cannot be checked against a feed yet (no {ST}_latest.csv), so verify them the moment one
-# lands; the direction is right either way, since verbatim is by definition what the feed
-# sends. The `.0$` strip and the squish/uppercase are KEPT: those fix how a value was
-# stored, not what the id is.
+# FL 50.2%, MI 43.9%, TX 0.7%, CA 0%.
+#
+# VERIFIED ON ALL SIX STATES against their feed files, exact join, no transform either
+# side. AK and NC file statewide ({ST}_latest.csv); FL/MI/TX/CA file PER COUNTY
+# ({ST}_{County}_latest.csv), scored over the counties that have filed:
+#     AK  77.6% -> 100.0%    (90 geos changed)
+#     NC  76.4% ->  99.7%    (611)
+#     FL  38.8% ->  39.9%    (67)
+#     MI   0.9% ->   0.9%    (0 -- MI's ENR ids carry no leading zeros)
+#     TX  92.2% ->  92.2%    (0 -- 0.7% populated, so it never took this path)
+#     CA   0.0% ->   0.0%    (0 -- no ENR ids at all)
+# ZERO regressions: no geo that joined before fails to join after, in any state.
+#
+# Read FL/MI/CA's rates as the warning they are: they are low for reasons that have
+# NOTHING to do with this rule, and that is the larger problem. Do not read 39.9% as this
+# fix underperforming.
+#
+# The `.0$` strip and the squish/uppercase are KEPT: those fix how a value was stored, not
+# what the id is.
 norm_enr_id = function(x) {
   x = str_squish(toupper(as.character(x)))
   x = str_remove(x, "\\.0$")              # "001.0" -> "001": a storage artifact, not padding
