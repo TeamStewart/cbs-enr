@@ -17,7 +17,27 @@
 ## add it to run_race() below.
 # ========================================
 
+# Every model that is IMPLEMENTED and runnable. run_race() dispatches on this, and
+# --models= validates against it, so a name here can always be asked for explicitly.
 MODELS = c("swing", "cory", "medsl", "cpois", "cprec")
+
+# What actually runs on a refresh unless --models= says otherwise. These are NOT the same
+# list, and cprec is the reason.
+#
+# model_cory_prec is OUT OF THE DEFAULT RUN ON COST, not correctness. Measured on tx_base
+# at 22:00, 2 races x 5 models: the whole refresh took 425s and cprec was 423s of it --
+# model_medsl 37s, model_cory_pois 30s, model_cory 20s, model_simpleswing 12s. Its runtime
+# is flat in draws and LINEAR IN CELLS, so the frame expansion makes it worse, not better:
+# TX went from 6,134 precincts to 15,084 and CA is 26,700, which puts a single CA race in
+# the thousands of seconds against a 300s refresh cadence. One model cannot be allowed to
+# decide whether the other four are published on time.
+#
+# It stays wired, sourced and tested -- `--models=...,cprec` runs it, and that is how to
+# re-measure it if someone makes it cheaper (the obvious lever is that it fits one
+# conjugate regression per candidate over every cell, so a cell-count cap or a per-state
+# draw cap would be the place to look, as MEDSL_MAX_PRECINCT_DRAWS already does for
+# model_medsl).
+MODELS_DEFAULT = setdiff(MODELS, "cprec")
 
 run_race = function(model, cells, returns, ...) {
   switch(model,

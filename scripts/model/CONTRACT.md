@@ -767,7 +767,7 @@ re-specifying it.
 | `candidate`, `party` | one row per candidate |
 | `pred_type` | `"vote"` = predicted final votes; `"share"` = predicted final share of ALL votes cast in the race, as `pred_convert(to = "share")` defines it |
 | `time` | the returns snapshot the predictions are from |
-| `model` | `model_simpleswing`, `model_cory`, `model_medsl`, `model_cory_prec` |
+| `model` | `model_simpleswing`, `model_cory`, `model_cory_pois`, `model_medsl` by default; `model_cory_prec` only when asked for (see below) |
 | `model_conf` | how the interval was made and at what level — see below |
 | `pct_rep` | share of the race's precincts with any votes counted. **The same definition for every model**, so the column lines up across them |
 | `rep` | reported so far (votes, or share of the votes counted so far) |
@@ -839,6 +839,13 @@ CBS remainder and is not the same object.
 | `model_medsl` | `posterior_95` |
 | `model_cory` | NA — the model gives no interval, and hardcodes `pred_min`/`pred_max`/`model_conf` to NA |
 | `model_cory_prec` | `cred_int_95` or `conf_seq_95`, from `enightmodels::forecast_intervals()` |
+
+**`model_cory_prec` is implemented but NOT in the default run**, on cost rather than
+correctness. Measured on `tx_base` at 22:00 with 2 races x 5 models, the refresh took 425s
+and cprec was **423s** of it (medsl 37s, cpois 30s, cory 20s, simpleswing 12s). Its runtime
+is flat in draws and linear in cells, so the frame expansion worsens it — TX went 6,134 →
+15,084 precincts and CA is 26,700 — against a 300s cadence. `MODELS` in `live/R/run.R` is
+the implemented set; `MODELS_DEFAULT` is what runs. `--models=...,cprec` still reaches it.
 
 `forecast_intervals()` returns both a credible interval and an anytime-valid confidence
 sequence. **Pick one and name it;** emitting both would duplicate every row, and an

@@ -37,7 +37,12 @@
 source("scripts/model/live/load.R")
 args = commandArgs(trailingOnly = TRUE)
 opt = function(k, d = NA) { a = grep(paste0("^--", k, "="), args, value = TRUE); if (length(a)) sub("^[^=]*=", "", a[1]) else d }
-MODELS_RUN = strsplit(opt("models", paste(MODELS, collapse = ",")), ",")[[1]]
+# MODELS_DEFAULT, not MODELS: cprec is implemented but out of the default run on cost
+# (see run.R). --models= still reaches it, and is validated against the full MODELS.
+MODELS_RUN = strsplit(opt("models", paste(MODELS_DEFAULT, collapse = ",")), ",")[[1]]
+if (length(bad <- setdiff(MODELS_RUN, MODELS)))
+  stop("unknown model(s) in --models=: ", paste(bad, collapse = ", "),
+       ". Choose from: ", paste(MODELS, collapse = ", "))
 SIM = opt("sim"); EVERY = as.numeric(opt("every", "0")); CBS_ENV = opt("cbs", "live")
 CORES = as.integer(opt("cores", max(1L, parallel::detectCores() - 1L)))
 TZ = "America/New_York"
