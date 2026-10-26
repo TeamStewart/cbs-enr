@@ -20,8 +20,10 @@
 ##     diag     no cross-mode correlation (SIGMA_STRUCT=diag)
 ##     nore     no county random effect (USE_COUNTY_RE=0)
 ##     swing    the standard uniform swing model (feols with county fixed effects)
-##     both     model_both.R -- swing-style theta prior on the precinct x mode model.
-##              UNVALIDATED; present so it can be compared, not because it is recommended
+##     hybrid   model_hybrid.R -- the precinct x mode model with its turnout LEVEL, mode
+##              COMPOSITION and vote SHARE priors re-centred from the returns on
+##              county^mode fixed effects. Arms ablatable with HY_LEVEL / HY_COMP /
+##              HY_SHARE / HY_COUNTY (all 0 reproduces the default run bit for bit)
 ##     cory     model_cory: enightmodels::model_legacy() (Cory), default configuration
 ##     core     the simpler model_core.R version
 ##   Add "default" to the list to rerun the default settings too, e.g. --variants=default,nc
@@ -49,12 +51,19 @@ VARIANTS = list(
   core    = list(env = character(), flags = "--model=core"),
   swing   = list(env = character(), flags = "--model=swing"),
   cory    = list(env = character(), flags = "--model=cory"),
-  # model_both.R: the trial model with a swing-style theta prior. UNVALIDATED -- it is
-  # here so it can be stress-tested alongside the others, not because it is recommended.
-  # On tx_turnout_low it fixes LATE turnout (106.5% -> 100.8% of truth) and costs share
-  # (0.148 -> 0.250 pp); on the early night it barely moves, because its per-cell level
-  # fit needs counted-out cells. See scripts/model/model_both.R for its acceptance tests.
-  both    = list(env = character(), flags = "--model=both")
+  # model_hybrid.R: the trial model with its turnout-level, composition and share priors
+  # re-centred from the returns. On tx_turnout_low the level arm takes statewide turnout
+  # from 112-119% of truth (the prior echoed back) to within 0.3% from 21:00 on. The
+  # three single-arm variants below are the ablation; see scripts/model/model_hybrid.R
+  # for the acceptance tests.
+  hybrid  = list(env = character(), flags = "--model=hybrid"),
+  hyblvl  = list(env = c("HY_COMP=0", "HY_SHARE=0", "HY_COUNTY=0"), flags = "--model=hybrid"),
+  hybcomp = list(env = c("HY_SHARE=0", "HY_COUNTY=0"), flags = "--model=hybrid"),
+  # the covariate ablation: the level/composition estimator becomes the pure uniform
+  # swing fit (lr ~ 1 | county^mode) while the MODEL keeps its own COVS_TURN, so exactly
+  # one thing changes
+  hybnocov = list(env = c("HY_COVS_TURN=none", "HY_SHARE=0", "HY_COUNTY=0"),
+                  flags = "--model=hybrid")
 )
 sim_flags = grep("^--(model|cells|complete)=", args, value = TRUE)
 var_arg = grep("^--variants=", args, value = TRUE)

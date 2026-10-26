@@ -22,6 +22,12 @@
 ##                    Turnout the same way (log ratio of counted to expected votes, county and
 ##                    method fixed effects, fully counted cells only). Interval: bootstrap
 ##                    over counties. Needs the fixest package.
+##   hybrid           model_hybrid.R: the same model as `trial`, with the turnout LEVEL,
+##                    MODE COMPOSITION and VOTE SHARE priors re-centred from the returns
+##                    (log(counted / prior) and logit(share) - logit(prior) on
+##                    county^mode fixed effects, gated per county x mode). Arms ablatable
+##                    with HY_LEVEL / HY_COMP / HY_SHARE / HY_COUNTY; with all four 0 it
+##                    reproduces `trial` bit for bit.
 ##   cory             model_cory: Cory McCartan's model_legacy() from the enightmodels package,
 ##                    called as is with its default configuration (model_legacy_config():
 ##                    by method, strata = geostratum, stage_complete = 6). Its input is the
@@ -58,16 +64,19 @@
 ## sim_<scenario>__<name>_results.csv, so it sits beside the default run instead of
 ## replacing it; the page shows each as its own row.
 ## Run from the cbs-enr folder:
-##   Rscript scripts/model/tests/test_sim_night.R [scenario] [--model=trial|core]
+##   Rscript scripts/model/tests/test_sim_night.R [scenario] [--model=trial|hybrid|core|swing|cory]
 ##       [--cells=any|complete] [--complete=feed|stopped] [--label=name]
 # ========================================
 source("scripts/model/tests/model_test_common.R")
 args = commandArgs(trailingOnly = TRUE)
 MODEL = sub("^--model=", "", c(grep("^--model=", args, value = TRUE), "--model=trial")[1])
-# "both" is the trial model with model_both.R's swing-style theta prior: same cells, same
-# fit_stage, one extra step that re-centres theta's prior from a per-cell level fit.
-IS_BOTH = MODEL == "both"
-if (IS_BOTH) MODEL = "trial"
+# "hybrid" is the trial model with model_hybrid.R's swing-style prior re-centring: same
+# cells, same fit_stage, one extra step that re-centres the TURNOUT LEVEL, the MODE
+# COMPOSITION and the VOTE SHARE priors from the returns (and, where a CBS county
+# snapshot is supplied, from county x method aggregate constraints). Its arms are
+# individually ablatable: HY_LEVEL / HY_COMP / HY_SHARE / HY_COUNTY.
+IS_HYBRID = MODEL == "hybrid"
+if (IS_HYBRID) MODEL = "trial"
 # --dump-prec=HH:MM[,HH:MM] writes PRECINCT-level predictions at those checkpoints to
 # 26_general/model_tests/prec_<scenario>[__<label>]_<HHMM>.csv. Diagnostic only: an
 # aggregate run yields ONE number (the statewide bias) while a dump yields ~6,100
@@ -232,9 +241,10 @@ if (MODEL == "trial") {
                      "county RE %s | mode offsets %s | gates %d cells / %d counties\n"),
               DRAWS, USE_COMPOSE, KAPPA, REF_MODE, SIGMA_SOURCE, SIGMA_STRUCT, USE_COUNTY_RE,
               MODE_OFFSET_SOURCE, MIN_MODE_CELLS, MIN_MODE_CTY))
-  if (IS_BOTH) {
-    source("scripts/model/model_both.R")   # defines fit_stage_swingtheta; does not re-source
-    cli_alert_info("model=both: swing-style theta prior from model_both.R")
+  if (IS_HYBRID) {
+    source("scripts/model/model_hybrid.R")  # defines fit_stage_hybrid; does not re-source
+    cli_alert_info("model=hybrid: prior re-centring from model_hybrid.R \\
+                    [level {HY_LEVEL} / comp {HY_COMP} / share {HY_SHARE} / county {HY_COUNTY}]")
   }
   d0 = prior_draws(cells)          # reference prior for the confidence sequence
   # rough statewide estimate (see statewide_tx.R); NULL if its inputs are missing
@@ -289,8 +299,8 @@ if (MODEL == "trial") {
                   votes_rep = if_else(rep_cell, c_rep, NA_real_),
                   votes_oth = if_else(rep_cell, c_oth, NA_real_))
       f = suppressMessages(
-        if (IS_BOTH) fit_stage_swingtheta(cells, returns, cross_mode = USE_CROSS_MODE)
-        else         fit_stage(cells, returns, cross_mode = USE_CROSS_MODE))
+        if (IS_HYBRID) fit_stage_hybrid(cells, returns, cross_mode = USE_CROSS_MODE)
+        else           fit_stage(cells, returns, cross_mode = USE_CROSS_MODE))
       if (length(DUMP_PREC) && format(tm, "%H:%M") %in% DUMP_PREC) {
         # truth per precinct at this checkpoint, so the dump is self-contained
         tr_p = fin |> summarize(t_dem = sum(dem), t_rep = sum(rep),
@@ -574,7 +584,7 @@ if (MODEL == "cory") {
 # ======================================================================
 t0 = Sys.time()
 res = map_dfr(sort(unique(final$contest)), function(r) { cat("  fitting", r, "...\n"); run_contest(r) }) |>
-  mutate(model = if (IS_BOTH) "model_both" else
+  mutate(model = if (IS_HYBRID) "model_hybrid" else
                  c(trial = "model_y", swing = "model_simpleswing", core = "model_core", cory = "model_cory")[[MODEL]],
          covers = truth_twop >= lo_twop & truth_twop <= hi_twop,
          confident_wrong = (truth_twop > 0.5 & hi_twop < 0.5) | (truth_twop < 0.5 & lo_twop > 0.5))
@@ -603,9 +613,11 @@ if (MODEL == "swing") {
                                        CELLS, COMPLETE, BOOT))
 }
 if (MODEL == "trial") {
-  res = mutate(res, settings = sprintf("cells %s; complete %s; bounded turnout %s (KAPPA %.2f); Sigma %s/%s; county RE %s; mode offsets %s; draws %d",
+  res = mutate(res, settings = sprintf("cells %s; complete %s; bounded turnout %s (KAPPA %.2f); Sigma %s/%s; county RE %s; mode offsets %s; draws %d%s",
                                        CELLS, COMPLETE, USE_COMPOSE, KAPPA, SIGMA_SOURCE, SIGMA_STRUCT,
-                                       USE_COUNTY_RE, MODE_OFFSET_SOURCE, DRAWS))
+                                       USE_COUNTY_RE, MODE_OFFSET_SOURCE, DRAWS,
+                                       if (IS_HYBRID) sprintf("; hybrid re-centring level %s / comp %s / share %s / county %s",
+                                                              HY_LEVEL, HY_COMP, HY_SHARE, HY_COUNTY) else ""))
 }
 
 out = if (nzchar(OUT_FILE)) OUT_FILE else
