@@ -159,4 +159,4 @@ Three agents, each owning separate files, so none waits on or overwrites another
 
 Item 9 is a few minutes of work for whoever finishes last, after Mason has read B's
 coverage report. Still needing Mason's decision: 6 (default intervals) and 9 (deletions). Decided: 4 (Cory's
-equal split) and 1 (Young-Kyung's files may be edited).
+equal split) and 1 (model_turnout.R and model_hybrid.R are ours to edit).
