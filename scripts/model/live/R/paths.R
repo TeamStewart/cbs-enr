@@ -1,6 +1,5 @@
 # ========================================
 ## paths.R -- where the shared Dropbox data lives, and small read/write helpers.
-## Same lookup as scripts/model/tests/model_test_common.R and prep_tx_model_inputs.R.
 ## If it fails on your machine, add this line to ~/.Renviron and restart R:
 ##   CBS_26_GENERAL="/full/path/to/26_general"
 # ========================================
@@ -40,8 +39,8 @@ read_pq = function(p) {
 }
 write_pq = function(d, p) nanoparquet::write_parquet(d, p)
 
-# interval from draws: mean +/- z * sd (same as cred() in model_test_common.R, and what
-# enightmodels::cred_int() returns with param = TRUE)
+# interval from draws: mean +/- z * sd (what enightmodels::cred_int() returns with
+# param = TRUE)
 cred = function(x, level = 0.95) {
   z = qnorm(1 - (1 - level) / 2)
   c(lower = mean(x) - z * sd(x), upper = mean(x) + z * sd(x))

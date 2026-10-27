@@ -24,8 +24,8 @@
 \maketitle
 
 \noindent
-This documents \texttt{enightmodels::model\_legacy()} as it is called on the model test
-page, with \texttt{model\_legacy\_config()} defaults. It is the production legacy model
+This documents \texttt{enightmodels::model\_legacy()} as it is called by
+\texttt{scripts/model/live/R/model\_cory.R}, with \texttt{model\_legacy\_config()} defaults. It is the production legacy model
 and the second of the two baselines the precinct $\times$ vote-mode model is compared
 against. Sections follow the same order as the main model's specification. The source is
 \texttt{enightmodels:::model\_legacy\_total} and
@@ -144,8 +144,7 @@ on the same footing as complete ones.
 
 \textbf{There is none.} \texttt{model\_legacy()} returns \var{pred\_min} and
 \var{pred\_max} as \texttt{NA}, and no draws, interval or variance are produced anywhere
-in either stage. On the model test page every \texttt{model\_cory} interval column is
-consequently set to \texttt{NA}, and the model contributes a point estimate only.
+in either stage. Every \texttt{model\_cory} interval column is consequently \texttt{NA}, and the model contributes a point estimate only.
 
 \section*{Limitations}
 \addcontentsline{toc}{section}{Limitations}

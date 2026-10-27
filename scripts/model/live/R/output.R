@@ -8,7 +8,7 @@
 ##               "share" = predicted final share of ALL votes cast in the race (as
 ##                         enightmodels::pred_convert(to = "share") defines it)
 ##   time        the returns snapshot the predictions are from
-##   model       "model_simpleswing", "model_cory", "model_medsl"
+##   model       MODEL_NAMES below
 ##   model_conf  how the interval was made and its level, e.g. "county_bootstrap_95"
 ##               (model_simpleswing) or "posterior_95" (model_medsl);
 ##               NA when the model gives no interval (model_cory)
@@ -138,37 +138,14 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
              pred_min = pmax(c(ci_v[1], ci_s[1]), 0), pred_max = c(ci_v[2], ci_s[2]), p_win = pw)
     })
     out = bind_rows(rows)
-  } else if (model == "cory") {
-    pr = cory_by_candidate(fit) |>    # with any virtual-precinct votes (virtual.R)
+  } else if (model %in% c("cory", "cpois")) {
+    # per-candidate point predictions (fit$pred); model_cory_pois also has conformal bounds,
+    # whose share version (bound / point total) is approximate, hence "approx_conform"
+    pr = fit$pred |>
       left_join(select(cand, candidate, rep), by = "candidate") |>
       mutate(rep = coalesce(rep, 0))
     tot = sum(pr$pred)
-    out = bind_rows(
-      mutate(pr, pred_type = "vote"),
-      mutate(pr, pred_type = "share", rep = rep / max(sum(rep), 1), pred = pred / tot)) |>
-      mutate(pred_min = NA_real_, pred_max = NA_real_, p_win = NA_real_)
-  } else if (model == "cpois") {
-    # model_cory_pois: like cory in shape (per-candidate point predictions in raw$pred,
-    # no draws) but it DOES carry interval ends -- split-conformal on the within-cell share
-    # scale, summed over methods. So aggregate pred/pred_min/pred_max together.
-    # TAKE `party` FROM THE RETURNS, NOT FROM raw$pred. fit_cpois runs model_prec_pois in
-    # its `party_est = "pooled"` mode, which labels every d_cov row party = "all" so one
-    # covariate frame serves all candidates -- and that label propagates into raw$pred. If
-    # we aggregated on it, every candidate would come out party = "all", which is not a
-    # legal COLS_PRED party and destroys the dem/rep split the dashboard differences for
-    # margins. `cand` (reported_by_candidate) carries the authoritative party.
-    pr = (if (is.data.frame(fit$raw)) fit$raw else fit$raw$pred) |>
-      mutate(candidate = as.character(candidate)) |>
-      summarize(across(c(pred, pred_min, pred_max), sum), .by = candidate) |>
-      left_join(select(cand, candidate, party, rep), by = "candidate") |>
-      mutate(rep = coalesce(rep, 0), party = coalesce(as.character(party), "oth"))
-    tot = sum(pr$pred)
-    conf = sprintf("approx_conform_%g", 100 * level)
-    # The share bounds are pred_min/tot, i.e. a VOTE bound divided by the point total. That
-    # is approximate for the same reason fit_cpois's lo_twop/hi_twop are: a conformal bound
-    # on a candidate's votes is not a conformal bound on that candidate's share, because the
-    # denominator carries no uncertainty of its own. Direction is right, width is not exact.
-    # Flagged rather than hidden -- `model_conf` says `approx_`.
+    if (model == "cpois") conf = sprintf("approx_conform_%g", 100 * level)
     out = bind_rows(
       mutate(pr, pred_type = "vote"),
       mutate(pr, pred_type = "share", rep = rep / max(sum(rep), 1),
@@ -185,22 +162,8 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
     arrange(pred_type, desc(pred))
 }
 
-# one race x one model: list(pred = its prediction rows (scraped, plus statewide when `cbs`
-# and `base` are given), status = one row). Never stops: a model that errors is recorded in
-# status and returns no rows.
-# ret: that race's returns; race: its one row of `races`; cbs: that race's latest CBS county
-# snapshot (read_cbs_latest()) or NULL; base: county_baseline(state) or NULL.
 # ---- the per-precinct dump -----------------------------------------------------------
-# Normalise each model's `cells` slot to one schema. That slot is NOT uniform: model_medsl
-# returns an 18-column frame keyed by geo, model_swing a precinct x METHOD frame with
-# dem/rep/tot, model_cory a precinct frame with dem/rep/tot and only when
-# precincts = TRUE, and model_cory_pois nothing at all (it summarises geo away). So this is
-# a per-model adapter, not a passthrough.
-#
-# Two defects in the pre-existing flag-gated dumps are deliberately NOT inherited:
-# `n_done_modes`, which summed an ambient vector and read 10,956 on a 227-registrant
-# precinct (use q_share), and the trial/swing branches writing IDENTICAL filenames with
-# different schemas so one silently overwrote the other.
+# Each model's `cells` slot, normalised to one schema (PREC_COLS), one row per precinct.
 PREC_COLS = c("race_id", "model", "time", "geo", "county", "method",
               "turn_est", "turn_lo", "turn_hi", "dem_est", "dem_lo", "dem_hi",
               "est_dem2", "cnt_prec", "q_share", "n_obs_modes", "p_win")
@@ -213,29 +176,12 @@ to_prec_data = function(fit, model, race, time) {
     # already the richest shape; est_dem2/p_win/cnt_prec added to prec_out for this
     p |> mutate(method = NA_character_)
   } else if (model == "cprec") {
-    # forecast_prec gives a frame as rich as medsl's -- turnout and share intervals,
-    # est_dem2 and cnt_prec are all already there -- but under its own names, and with
-    # cell counts where medsl has mode counts. Only renames, no derivation.
-    # It has no q_share: that is the pin's gate in model_turnout.R and has no analogue
-    # here, so it stays NA rather than being faked from n_done_cells.
     p |> mutate(method = NA_character_,
                 p_win = p_dem_win,
                 n_obs_modes = n_obs_cells,
                 q_share = NA_real_)
   } else if (model %in% c("swing", "cory", "cpois")) {
-    # dem/rep/tot, no interval.
-    #
-    # COLLAPSED TO PRECINCT. swing and cpois both fit at precinct x METHOD and return that
-    # grain natively; cory already aggregates it away. Summing dem/rep/tot over methods
-    # makes one row per precinct for every model, so the dump is comparable across models
-    # and a row count per precinct is 1 rather than 1-or-3. It also matters for volume: at
-    # full scale the method grain was 3x for two of four models -- 158,340 of 263,900 rows
-    # per refresh, about 38M over a 12-hour night at 5-minute refreshes.
-    #
-    # What this discards: the per-mode split, and for swing specifically its `swing` and
-    # `log_turnout_ratio` columns (the fitted county x method swing and log turnout ratio),
-    # which are its most diagnostic output. If those are wanted later, the cheap route is
-    # per-mode COLUMNS at precinct grain rather than a return to per-mode rows.
+    # dem/rep/tot, no interval; summed over methods to one row per precinct
     p |>
       summarize(across(c(dem, rep, tot), sum), .by = any_of(c("geo", "county"))) |>
       mutate(
@@ -272,6 +218,11 @@ write_precincts = function(res, dir = file.path(find_26_general(), "model_result
   invisible(f)
 }
 
+# one race x one model: list(pred = its prediction rows (scraped, plus statewide when `cbs`
+# and `base` are given), status = one row). Never stops: a model that errors is recorded in
+# status and returns no rows.
+# ret: that race's returns; race: its one row of `races`; cbs: that race's latest CBS county
+# snapshot (read_cbs_latest()) or NULL; base: county_baseline(state) or NULL.
 predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, level = 0.95) {
   r = race$race_id[1]; m = model
   t0 = proc.time()[["elapsed"]]
@@ -288,16 +239,7 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
                      length(mc), n_all)
     }
   }
-  # votes reported in virtual precincts (NC's county-level early / absentee batches) are
-  # fit around and added back at county level for model_simpleswing and model_cory
-  # (virtual.R). The other models are left as they are: model_medsl takes those votes as
-  # county x mode observations itself (bucket_counts(), returns.R).
-  fit = tryCatch({
-    if (m %in% VIRTUAL_MODELS) {
-      vs = virtual_split(cells, ret)
-      add_virtual(run_race(m, vs$cells, vs$returns), m, vs)
-    } else run_race(m, cells, ret)
-  }, error = function(e) list(status = paste("error:", conditionMessage(e))))
+  fit = tryCatch(fit_model(m, cells, ret), error = function(e) list(status = paste("error:", conditionMessage(e))))
   if (!is.null(note) && !is.null(fit$settings) && !is.na(fit$settings)) fit$settings = paste0(fit$settings, note)
   pred = tryCatch(to_pred_data(fit, m, cells, ret, race, time, level),
                   error = function(e) { fit$status <<- paste("error in output:", conditionMessage(e)); NULL })

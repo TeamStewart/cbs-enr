@@ -5,7 +5,7 @@
 ## good shape, so this sizes the turnout variance components on real TX midterm data
 ## instead of the three hardcoded ICC constants in the repo (ICC_TURN = 0.200 in
 ## model_turnout.R:326, 0.269 share in the comment table at model_turnout.R:286-311, 0.302
-## in tests/model_test_common.R:44). None of them is reproducible from a script today.
+## in the retired tests/model_test_common.R). None of them is reproducible from a script today.
 ##
 ## WHAT THE CONSTANT ACTUALLY GOVERNS. model_core.R appends J ridge rows of weight
 ## lambda targeting zero, which is exactly u_c ~ N(0, sigma^2/lambda) with

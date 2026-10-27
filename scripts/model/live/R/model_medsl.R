@@ -4,18 +4,17 @@
 ##
 ## model_turnout.R is NOT copied or edited here. Its own code runs, from its own file, each
 ## time the models are loaded for a state, so a change Young-Kyung makes there is picked
-## up with no edit to live/. This is the same way scripts/model/tests/test_sim_night.R
-## (section A, "trial") runs it:
+## up with no edit to live/:
 ##   - every top-level statement of its sections 1-2 runs (config, functions, `prec`, mode
 ##     priors, `cells`, CTY_MAT), and sections 3-5 contribute only their functions
 ##     (fit_stage(), prior_draws(), ...). Its synthetic run (section 6) never runs.
 ##   - its two file reads (`covs_long`, `mode_hist`) are replaced by frames built here from
 ##     the state's model inputs, {ST}_precinct.parquet and {ST}_precinct_mode_history.parquet
-##     (prep_model_inputs.R), with the same column mapping test_sim_night.R uses.
+##     (prep_model_inputs.R); the column mapping is below.
 ##   - it runs in its own environment, one per state, so its `cells`, `prec` etc. never
 ##     collide with live/'s objects or with another state's.
 ##   - MODE_OFFSET_SOURCE defaults to "zero" (our mode history has turnout by method but
-##     not by party), as in test_sim_night.R. Any of the model's own switches can still be
+##     not by party). Any of the model's own switches can still be
 ##     set as environment variables before loading (e.g. MODE_OFFSET_SOURCE=nc,
 ##     USE_COUNTY_RE=0, SIGMA_STRUCT=diag).
 ##
@@ -23,8 +22,7 @@
 ##   fit_medsl(cells, returns)   cells from build_cells(), one race's standard returns
 ## A cell (precinct x method) counts as reported once it has any votes (its shares are used
 ## at once) and as complete once that method is fully counted (`complete` in the returns;
-## its turnout is used only then) -- test_sim_night.R's defaults (--cells=any
-## --complete=feed).
+## its turnout is used only then).
 ## Interval: the model's posterior draws, mean +/- z * sd as for the other models. The
 ## number of draws is model_turnout.R's DRAWS (500) unless MEDSL_DRAWS is set, e.g.
 ## MEDSL_DRAWS=250 in ~/.Renviron. Speed (TX, one race): about 6 s of fixed work plus
@@ -42,7 +40,7 @@ MEDSL_SRC = "scripts/model/model_turnout.R"
 .medsl_env = new.env()   # cache: one model environment per state
 
 # model_turnout.R's input frame (`covs_long`, long by party) and mode history, from our
-# model inputs. Column mapping (as in test_sim_night.R section A):
+# model inputs. Column mapping:
 #   county       <- county_name              est (dem/rep) <- est_turnout x dem2 / (1 - dem2)
 #   turnout22/24 <- L2 turnout22/24 (rates)  age           <- p_age_65_up (share 65+)
 #   male         <- p_male                   pred.bla/his  <- yg_pred_bla / yg_pred_his
@@ -185,8 +183,8 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
                 cells = NULL, draws = NULL, point = NULL))
   }
 
-  # the model's returns: one row per precinct x mode (test_sim_night.R --cells=any
-  # --complete=feed): reported once it has votes, complete once that method is counted out
+  # the model's returns: one row per precinct x mode, reported once it has votes, complete
+  # once that method is counted out
   rep_cell = counts$c_tot > 0
   ret_m = counts |>
     transmute(geo, mode = method,

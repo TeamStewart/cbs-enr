@@ -22,8 +22,7 @@
 # ---- simulated nights -------------------------------------------------------------
 # sim: list(truth = TX_truth.parquet, sched = TX_schedule.parquet), read by read_sim().
 # A cell's counted votes are its final votes x the share of the cell counted by `time`
-# (cum_frac); censored precincts never report. Same rules as counted_at() / frac_at() in
-# scripts/model/tests/test_sim_night.R.
+# (cum_frac); censored precincts never report.
 #
 # round_by: the original harness rounds counted votes in two different ways --
 #   "candidate"  round each candidate's votes (what model_cory got; also what a real feed
@@ -55,8 +54,7 @@ read_sim = function(dir_sc, tz = "America/New_York", state = NULL) {
   )
 }
 
-# the checkpoints the sim tests refit at: every 15 minutes 8pm-4am ET, then four later
-# times (same as scripts/model/tests/test_sim_night.R)
+# the checkpoints the sim tests refit at: every 15 minutes 8pm-4am ET, then four later times
 sim_checkpoints = function(tz = "America/New_York") {
   c(seq(as.POSIXct("2026-11-03 20:00", tz = tz), as.POSIXct("2026-11-04 04:00", tz = tz), by = "15 min"),
     as.POSIXct(c("2026-11-04 12:00", "2026-11-05 12:00", "2026-11-07 12:00", "2026-11-10 12:00"), tz = tz))

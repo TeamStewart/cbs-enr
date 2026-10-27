@@ -1,10 +1,6 @@
 # ========================================
 ## model_swing.R -- model_simpleswing: the standard uniform swing model.
 ##
-## Moved from section C of scripts/model/tests/test_sim_night.R (2026-modeling-initial,
-## commit dc7a4d4). The fitting code is unchanged; check_against_original.R confirms it
-## reproduces the original's output exactly.
-##
 ## Cell c = precinct p x method m, in county k. D_p = dem2, w_p = oth, E_c = exp_votes
 ## (cells.R); d_c, r_c, t_c = Dem, Rep and total votes counted so far (returns.R).
 ## A cell is REPORTING if d_c + r_c > 0, and COMPLETE if reporting and fully counted.
@@ -60,7 +56,7 @@ swing_once = function(d, cw) {
 # cells:  build_cells() output
 # counts: cell_counts(cells, returns) -- same rows, same order
 # seed:   set before the bootstrap so the same snapshot always gives the same interval;
-#         NULL leaves the random-number stream alone (used by check_against_original.R)
+#         NULL leaves the random-number stream alone
 fit_swing = function(cells, counts, boot = 100, level = 0.95, seed = 2026) {
   if (!requireNamespace("fixest", quietly = TRUE))
     stop('The uniform swing model needs the fixest package. In R: install.packages("fixest")')

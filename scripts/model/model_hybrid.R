@@ -175,17 +175,15 @@
 ## picked up here with no edits.
 ##
 ## Run:  Rscript scripts/model/model_hybrid.R                    (prints the self-check)
-##       Rscript scripts/model/tests/test_sim_night.R tx_turnout_low --model=hybrid
-##       Rscript scripts/model/tests/run_model_tests.R tx_turnout_low \
-##         --variants=hybrid,hyblvl,hybcomp,hybnocov                (the ablation)
+##       Not wired into live/ and its sim harness (tests/test_sim_night.R) is retired, so the
+##       acceptance tests (b) and (d) at the bottom need a new harness to run.
 ## Use:  source this file, then call
 ##         fit_stage_hybrid(cells, returns, cbs_county = <snapshot or NULL>)
 ##       wherever fit_stage(cells, returns) is called today.
 # ========================================
 
-# Source the model only if it is not already loaded. test_sim_night.R loads
-# model_turnout.R by its own parse-and-eval (replacing the two file reads), so
-# re-sourcing here would clobber the harness's `cells` and `prec`.
+# Source the model only if it is not already loaded (a harness that loads model_turnout.R
+# by its own parse-and-eval would otherwise have its `cells` and `prec` clobbered).
 if (!exists("fit_stage", mode = "function")) {
   Sys.setenv(SOURCE_ONLY = "1")
   source("scripts/model/model_turnout.R")
@@ -882,12 +880,12 @@ if (sys.nframe() == 0L) {
 ##     identical(recentre_prior(cells, off), cells) and identical() on fit_stage's
 ##     output. Re-run this after ANY model_turnout.R change -- it is the one test that
 ##     catches drift, and it is cheap.
-## (b) run_model_tests.R tx_turnout_low --variants=hyblvl    against the base run, and
+## (b) [retired harness] run_model_tests.R tx_turnout_low --variants=hyblvl    against the base run, and
 ##     against sim_tx_turnout_low__stateoracle_results.csv, which is the ceiling.
 ## (c) PLOT=0 Rscript scripts/model/tx24_backtest.R           for the baseline, FIRST,
 ##     then the same with fit_stage -> fit_stage_hybrid. Always re-baseline: that file
 ##     reads whatever model_turnout.R is on disk, and it moved twice on 2026-10-26.
-## (d) run_model_tests.R tx_turnout_demo --variants=hyblvl,hybnocov --dump-prec=04:00,
+## (d) [retired harness] run_model_tests.R tx_turnout_demo --variants=hyblvl,hybnocov --dump-prec=04:00,
 ##     then median |log(turn_est / t_tot)| on rows with c_tot == 0.
 ## (f) Apply a cbs_county_pull.R snapshot via CTY_SNAPSHOT and assert the AGGREGATE, not
 ##     the aggregate's effect: sum_{i in c} prior_tau_im over a constrained county x mode
