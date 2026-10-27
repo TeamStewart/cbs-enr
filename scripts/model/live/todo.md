@@ -62,12 +62,18 @@ Not done, and why:
   overfitting the file already warns about for the third-party equation. Ask Young-Kyung
   before trying.
 
-### 2. One input signature
+### 2. One input signature -- DONE (83dd36f8)
+`fit_swing(cells, returns, ...)`; no swing special case in `run_race()`. compare_runs.R: 0.
+
+Original item:
 `fit_swing()` takes `cell_counts()`; every other model takes returns. Make it
 `fit_swing(cells, returns, demo, interval, ...)` like the rest, and drop the special case
 (and the `state =` / `returns =` arguments) in `run_race()` (`R/run.R`). No estimate change.
 
-### 3. One precinct schema
+### 3. One precinct schema -- DONE (aa2a3b4a)
+`PREC_COLS`, `prec_rows()`, `votes_precincts()` in `R/results.R`; `to_prec_data()` has no branches. medsl_sur's rows go through `prec_rows()` as they are (item 1 can return them in that shape directly). compare_runs.R: 0, tables identical().
+
+Original item:
 Each model's `cells` slot has a different shape: swing gives one row per cell with dem /
 rep / tot, ratio_strata one row per precinct, pois_bayes and lm_bayes `draws_precincts()`'s
 columns, medsl_sur its own. `to_prec_data()` (`R/output.R`) has one branch per shape. Have
@@ -75,7 +81,10 @@ every model return `PREC_COLS`-shaped precinct rows (one helper in `R/results.R`
 delete the branches. No estimate change; the precinct file's columns must stay as they are
 (CONTRACT.md section 15.3).
 
-### 4. One rule for splitting votes among candidates
+### 4. One rule for splitting votes among candidates -- DONE (8066387d)
+`cand_split()` (`R/results.R`) used by `cand_from_party()`, `to_pred_data()` and `state_pred_data()`; `past_share()` uses Cory's equal split. Only ratio_strata moves: tx_base gov 5e-10 votes (noise); nc_base sen up to +1,040 votes per candidate, Dem share of all votes -6e-5 (the old rule gave a race with no write-in line only 85% of the third-party baseline). `add_party_votes()` (`R/virtual.R`) still splits third-party votes by their predictions.
+
+Original item:
 ratio_strata's `past_share()` (`R/model_ratio_strata.R`) splits the third-party baseline
 85 / 15 between named minor candidates and the write-in line, per cell. The other models
 split their third-party total by counted votes, and that logic is written twice:
@@ -92,7 +101,10 @@ ratio_strata's third-party (and so its total) estimates**; expect `compare_runs.
 differences for ratio_strata only, and report them in the commit. Update README's "Cory's
 third-party split" note.
 
-### 5. Statewide intervals for conf_seq and conformal
+### 5. Statewide intervals for conf_seq and conformal -- DONE (f152ccf1)
+`project_rest_bounds()` (`R/counties.R`), used by `state_pred_data()` and `add_virtual()`. Defaults unchanged; the 6 bound variants now have statewide intervals (`..._plus_rest`); NC virtual units' scraped bounds in those variants move up to 665 votes at 21:15.
+
+Original item:
 Fits with bounds instead of draws (`fit$pred`) get a point and NA `model_conf` in the
 statewide rows (`state_pred_data()`, `R/counties.R`), and `add_virtual()` (`R/virtual.R`)
 moves their bounds only roughly. Carry the bounds through `project_rest()` so every interval
@@ -110,13 +122,19 @@ default interval to Mason; **don't change `MODEL_INTERVALS` defaults without his
 changes what the dashboard shows). lm_bayes takes 2-4 minutes per fit with 7 in parallel;
 budget for it or leave it out.
 
-### 7. One place for draws and seeds
+### 7. One place for draws and seeds -- DONE (e32227c8)
+`DRAWS`, `SEED`, `cap_draws()` in `R/results.R`. Left: swing's `boot = 100` (500 would change its intervals and cost 5x); `MEDSL_DRAWS`, `MEDSL_MAX_PRECINCT_DRAWS` and medsl's `seed =` are in `R/model_medsl.R`, outside this item's files: still to switch to `DRAWS`, `SEED`, `cap_draws()` (DRAWS matches model_turnout.R's 500, so no estimate change expected). compare_runs.R: 0.
+
+Original item:
 Today: `POIS_BAYES_DRAWS`, `LM_BAYES_DRAWS` (+ `LM_BAYES_MAX_CELL_DRAWS`), `MEDSL_DRAWS`
 (+ `MEDSL_MAX_PRECINCT_DRAWS`), swing's `boot`, and a `seed` argument on each model. Make
 one `DRAWS` and one `SEED` (in `R/results.R` or `R/run.R`), keeping the memory caps. No
 estimate change if the values stay the same.
 
-### 8. Cory's style of run list
+### 8. Cory's style of run list -- DONE (46465590)
+`RUN` (what runs) and `MODELS` (implemented, validated against) in `R/run.R`. `RUN` is a plain vector: its entries are the published labels, so names would add nothing. compare_runs.R: 0.
+
+Original item:
 Replace `MODELS` / `MODELS_DEFAULT` (`R/run.R`) with one named list of what runs on the
 night, as in Cory's tx-prim-26 `specs`, e.g.
 `RUN = c(swing = "swing", ratio = "ratio_strata", pois = "pois_bayes", sur = "medsl_sur")`,
