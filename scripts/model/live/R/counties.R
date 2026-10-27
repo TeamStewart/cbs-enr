@@ -153,7 +153,7 @@ project_rest = function(rest, swing, turn_ratio, noise = TRUE) {
 # Statewide rows (geo = "all") for one race x model, in the same format as to_pred_data().
 # fit: run_race() result; cbs: latest CBS snapshot for the race; base: county_baseline().
 state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, level = 0.95) {
-  if (!identical(fit$status, "ok") || is.null(cbs) || !nrow(cbs)) return(NULL)
+  if (!fit_ok(fit) || is.null(cbs) || !nrow(cbs)) return(NULL)
   rest = rest_of_state(cbs, base, cells)
   sc = scraped_counties(cells)
   b32 = cbs |> distinct(county_fips, county_cbs) |> filter(county_cbs %in% sc) |>

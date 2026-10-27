@@ -866,7 +866,7 @@ column-order assertion below, so this is one call, and it is the call to use rat
 | `race_id` | the race |
 | `model` | the model |
 | `time` | the returns snapshot attempted |
-| `status` | `"ok"`, `"no_votes"`, or `"error: ..."` with the message |
+| `status` | `"ok"`, `"ok (partial prior: ...)"`, `"prior_only: ..."`, `"no_votes"`, or `"error: ..."` with the message |
 | `statewide` | whether `geo = "all"` rows were added, or why not |
 | `seconds` | wall-clock for that model on that race |
 | `settings` | the model's resolved settings, enough to reproduce the fit |
@@ -875,6 +875,20 @@ column-order assertion below, so this is one call, and it is the call to use rat
 `race_id` here is `priors.csv`'s key (`TX_gov`), **not** §15.1's `contest` (`gov`). §15.1
 carries `race_id` as a sanctioned extra precisely so the two tables join on it directly —
 do not reconstruct it from `state` and `contest`, for the reason given there.
+
+**`prior_only` is not a flavour of `ok`.** A fit whose equations have all fallen back to
+their prior returns the same columns, the same point estimates and the same intervals as a
+real one — nothing in §15.1 distinguishes them. So the degradation is reported here instead,
+in three levels:
+
+| status | meaning |
+|---|---|
+| `ok` | every equation was fitted on tonight's returns |
+| `ok (partial prior: N of M equations[; modes gated: ...])` | some equations fell below `MIN_FIT_OBS` or a mode was held at prior by the support gate. Normal early in the night — in TX the reference mode's turnout equation sits at prior until mail reports, because it needs `q_share >= MIN_MODE_SHARE`. |
+| `prior_only: N of M equations at prior, K observed cells of C` | **the output carries no information from tonight, and NO PREDICTION ROWS ARE EMITTED.** The race x model appears here with the reason and nowhere in §15.1, which is "no prediction and we say why" rather than a silent gap. |
+
+A consumer should test `fit$prior_only$all_prior` rather than parse the string; `fit_medsl()`
+returns the structured ledger alongside the status.
 
 **The invariant this table exists for: a race x model with no prediction appears here,
 never silently vanishes.** A model that errors, or that has no votes to work with, produces

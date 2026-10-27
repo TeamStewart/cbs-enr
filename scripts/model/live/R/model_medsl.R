@@ -237,8 +237,45 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
 
   dr = tibble(twop = f$S_2p, turnout = f$turn, dem = f$S_dem * f$turn, rep = f$S_rep * f$turn)
   ci = cred(dr$twop, level); ct = cred(dr$turnout, level)
-  list(model = "medsl", status = "ok", settings = settings,
-       race = bind_cols(tibble(status = "ok", est_twop = mean(dr$twop), lo_twop = ci[["lower"]], hi_twop = ci[["upper"]],
+  # ---- THE SILENT-PRIOR ALARM ------------------------------------------------------
+  # A fit that is entirely its own prior returns the same columns and the same intervals as
+  # a real one. Nothing in the output distinguishes them, so on the night a state whose feed
+  # does not join would publish a row labelled `model_medsl` that is just the 2024 baseline
+  # echoed back. MI is the live case: its geos join `cells` at 0.6% and its reporting
+  # counties send `method = "all"` for which there is no cell, so it reaches ~0 observed
+  # cells and every equation falls back to prior_loc.
+  #
+  # fit_stage() counts the three degradation paths (whole-fit below 30 observed cells, a
+  # single equation below MIN_FIT_OBS, a mode held at prior by the support gate) and returns
+  # them in `prior_only`, because its own cli messages are eaten by the suppressMessages()
+  # above. Re-emitted here, and -- the part that matters -- carried in `status`, so it
+  # reaches the status table and the dashboard rather than only the log.
+  po = f$prior_only
+  st = "ok"
+  if (!is.null(po)) {
+    if (isTRUE(po$all_prior)) {
+      st = sprintf("prior_only: %d of %d equations at prior, %d observed cells of %d",
+                   po$eq_prior, po$eq_total, po$n_obs_cells, po$n_cells)
+      cli::cli_alert_danger(paste0(
+        "{state}: THIS FIT IS ITS PRIOR. {po$n_obs_cells} observed cell(s) of ",
+        "{po$n_cells}; {po$eq_prior} of {po$eq_total} equations at prior. The numbers ",
+        "below carry no information from tonight -- do not read them as a forecast."))
+    } else if (po$eq_prior > 0 || length(po$gated_modes)) {
+      st = sprintf("ok (partial prior: %d of %d equations%s)", po$eq_prior, po$eq_total,
+                   if (length(po$gated_modes))
+                     paste0("; modes gated: ", paste(po$gated_modes, collapse = "/")) else "")
+      cli::cli_alert_warning(paste0(
+        "{state}: {po$eq_prior} of {po$eq_total} equations are at their prior",
+        if (length(po$gated_modes))
+          " and mode(s) {.val {po$gated_modes}} are held at prior by the support gate"
+        else "", " -- partial fit."))
+    }
+  }
+  list(model = "medsl", status = st, settings = settings,
+       # the structured ledger as well as the status string, so a consumer can test
+       # `fit$prior_only$all_prior` rather than parse prose
+       prior_only = po,
+       race = bind_cols(tibble(status = st, est_twop = mean(dr$twop), lo_twop = ci[["lower"]], hi_twop = ci[["upper"]],
                                p_dem_win = mean(dr$twop > 0.5), est_turnout = mean(dr$turnout),
                                lo_turnout = ct[["lower"]], hi_turnout = ct[["upper"]]), counted),
        cells = f$prec,                       # precinct: turn_est, dem_est (share of all votes), interval

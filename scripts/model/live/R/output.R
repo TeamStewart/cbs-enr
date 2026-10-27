@@ -75,6 +75,24 @@ fit_point = function(fit) {
 }
 
 # fit: one model's result for one race (run_race()); returns: that race's returns
+# Did the fit succeed? `status` CARRIES DETAIL now -- "ok (partial prior: 2 of 9
+# equations)" -- so an exact match on "ok" drops a model's entire output. That is not
+# hypothetical: the first time the prior-only alarm landed, predictions went 128 -> 96 rows
+# because all three call sites tested identical(fit$status, "ok") and model_medsl silently
+# produced nothing, with `statewide` NA and no precinct rows either. The prefix is the
+# contract (CONTRACT.md section 15.2): anything starting "ok" is a usable fit.
+#
+# AND THEREFORE `prior_only` EMITS NO PREDICTIONS -- deliberately, not as a side effect of
+# the prefix. A prior-only fit returns the same columns, point estimates and intervals as a
+# real one, so publishing them means publishing the 2024 baseline labelled as a model
+# estimate. Nothing downstream could tell the difference. Section 15.2's invariant is
+# satisfied either way: the race x model still appears in `status`, with the reason, so this
+# is "no prediction and we say why" rather than a silent gap.
+# The trade is a hole in the dashboard for an unjoined state versus a misleading number in
+# it. MI is the live case (0.6% geo join, `method = "all"` with no cell). If the hole turns
+# out to be worse, the change is to publish with a flag column, NOT to relax this test.
+fit_ok = function(fit) !is.null(fit$status) && grepl("^ok", fit$status)
+
 to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
   # race_id is carried as a permitted extra (section 15.1), NOT reconstructed downstream.
   # It is `<STATE>_<contest>[_<district>]` and COLS_PRED has no slot for it, so it gets
@@ -89,7 +107,7 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
   base = race |> select(race_id, state, election, jurisdiction, contest, district)
   name = unname(MODEL_NAMES[model])
   pct = pct_reporting(cells, returns)
-  if (!identical(fit$status, "ok")) return(NULL)
+  if (!fit_ok(fit)) return(NULL)
 
   cand = reported_by_candidate(returns)
   conf = NA_character_
@@ -192,7 +210,7 @@ PREC_COLS = c("race_id", "model", "time", "geo", "county", "method",
 
 to_prec_data = function(fit, model, race, time) {
   p = fit$cells
-  if (!identical(fit$status, "ok") || is.null(p) || !nrow(p)) return(NULL)
+  if (!fit_ok(fit) || is.null(p) || !nrow(p)) return(NULL)
   blank = function(d, cols) { for (c in setdiff(cols, names(d))) d[[c]] = NA_real_; d }
   out = if (model == "medsl") {
     # already the richest shape; est_dem2/p_win/cnt_prec added to prec_out for this

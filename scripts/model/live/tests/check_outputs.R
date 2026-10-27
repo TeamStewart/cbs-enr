@@ -93,6 +93,27 @@ ck(!nrow(miss), paste0("every predicted race x model has a status row",
 bad = filter(stat, !grepl("^ok", status), race_id %in% pm$race_id & model %in% pm$model)
 if (nrow(bad)) cli::cli_alert_info("{nrow(bad)} race x model(s) have a non-ok status: \\
                                     {paste(unique(bad$status), collapse = '; ')}")
+# PRIOR-ONLY IS THE LOUD ONE. Those rows have predictions that look exactly like a real
+# fit's and contain nothing from tonight, so they must not pass quietly. Not a FAILURE --
+# a state whose feed has not joined is a data problem, not a schema one -- but it has to be
+# impossible to miss, which is the whole point of the status carrying it.
+po = filter(stat, grepl("^prior_only", status))
+if (nrow(po))
+  cli::cli_alert_danger(paste0("{nrow(po)} race x model(s) are PRIOR ONLY -- their ",
+    "predictions carry no information from tonight: ",
+    "{paste(sprintf('%s/%s', po$race_id, po$model), collapse = ', ')}"))
+pp = filter(stat, grepl("^ok \\(partial prior", status))
+if (nrow(pp)) cli::cli_alert_warning("{nrow(pp)} race x model(s) are a PARTIAL prior fit")
+# THE CONVERSE OF THE 15.2 INVARIANT, and the one that was missing. 15.2 guarantees a
+# race x model with no prediction still appears in `status`; this asserts the other
+# direction -- a race x model whose status says it SUCCEEDED must have produced rows.
+# Without it a model can report "ok" and emit nothing, which is exactly what happened when
+# `status` gained detail and three call sites were still testing identical(status, "ok").
+okm = stat |> filter(grepl("^ok", status)) |> distinct(race_id, model)
+silent = anti_join(okm, pm, by = c("race_id", "model"))
+ck(!nrow(silent), paste0("every race x model with an ok status produced prediction rows",
+   if (nrow(silent)) paste0(" -- SILENT: ",
+     paste(sprintf("%s/%s", silent$race_id, silent$model), collapse = ", "))))
 
 # ---- 15.3 precincts ---------------------------------------------------------------
 f_prec = file.path(DIR, "precincts_latest.parquet")

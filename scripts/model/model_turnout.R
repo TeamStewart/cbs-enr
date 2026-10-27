@@ -1306,9 +1306,18 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     )
 
   n_obs_cells = sum(d$obs)
-  if (n_obs_cells < 30) {
-    cli_alert_info("only {n_obs_cells} observed cells -- returning prior only")
-  }
+  # ---- DEGRADATION LEDGER (see `prior_only` in the return value) --------------------
+  # A fit that is ENTIRELY its own prior produces numbers indistinguishable from a real
+  # one: same columns, same intervals, no flag. It has to be counted and carried OUT,
+  # because fit_medsl() runs this function under suppressMessages() -- so every
+  # cli_alert_info below is swallowed and no operator ever sees it. The ledger is read and
+  # re-emitted by the caller.
+  # cli_warn, not cli_alert_info, for the same reason: warnings survive suppressMessages.
+  gated_modes = character(0)       # held at prior by the MODE SUPPORT GATE
+  prior_eqs   = character(0)       # equations below MIN_FIT_OBS, so sitting at prior_loc
+  if (n_obs_cells < 30)
+    cli_warn("only {n_obs_cells} observed cell(s) -- this fit IS its prior, not a \
+              forecast. Every number it returns comes from the 2024 baseline.")
 
   # --- 4a. per-(mode, outcome) conjugate fits ---
   fits = list(); n_fit = list(); prior_loc_mat = list()
@@ -1338,6 +1347,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       cli_alert_info("mode {m}: only {n_c} cell(s) in {n_cty} county(ies) \\
                       -- below the support gate ({MIN_MODE_CELLS} cells / \\
                       {MIN_MODE_CTY} counties), holding the mode at its prior")
+      gated_modes = c(gated_modes, m)
       dm$obs = FALSE; dm$obs_turn = FALSE
       dm$o_tau = dm$o_tp = dm$o_s = NA_real_
     }
@@ -1481,6 +1491,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     # mail with no counted-out cells. Holding the mode at its prior has to mean the
     # prior, not an unconstrained fit to nothing.
     if (n_fit[[k]] < MIN_FIT_OBS) {
+      prior_eqs <<- c(prior_eqs, k)   # <<- : mu is built inside lapply()
       return(matrix(prior_loc_mat[[k]], draws, N_PREC, byrow = TRUE))
     }
     if (USE_COUNTY_RE) {
@@ -2048,6 +2059,14 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     # two-party share, which is what decides the race
     S_2p  = num_d / pmax(num_d + num_r, 1e-9),
     turn  = den, Sigma = Sigma, resid = resid_mat, n_obs_cells = n_obs_cells,
+    # How much of this fit is its own prior. `all_prior` TRUE means the output carries no
+    # information from tonight at all, and the caller must not present it as a forecast.
+    prior_only = list(
+      n_obs_cells = n_obs_cells, n_cells = nrow(d),
+      eq_total = length(keys), eq_prior = length(unique(prior_eqs)),
+      eq_prior_names = sort(unique(prior_eqs)), gated_modes = sort(unique(gated_modes)),
+      all_prior = n_obs_cells < 30 || length(unique(prior_eqs)) == length(keys)
+    ),
     cell_s = cell_s_hat, cell_obs = mask,
     prec = prec_out,
     # NULL when the county bound never ran, a 0-row frame when it ran and never bound.
