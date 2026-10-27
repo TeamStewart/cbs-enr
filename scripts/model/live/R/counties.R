@@ -198,15 +198,11 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
 
   # reported: scraped counties from our returns, the rest from CBS
   rep_rest = c(dem = sum(rest$d), rep = sum(rest$r), oth = sum(rest$o))
-  oth_c = cand$party %in% c("oth", "ind")
-  w = if (any(oth_c)) {
-    ww = if (sum(cand$rep[oth_c]) > 0) cand$rep / sum(cand$rep[oth_c]) else rep(1 / sum(oth_c), nrow(cand))
-    if_else(oth_c, ww, NA_real_)
-  } else rep(NA_real_, nrow(cand))
+  cand = cand_split(cand)
   q = function(x) unname(cred(x, level))
   rows = lapply(seq_len(nrow(cand)), function(i) {
-    pty = if (oth_c[i]) "oth" else cand$party[i]
-    k = if (oth_c[i]) w[i] else 1
+    pty = cand$grp[i]
+    k = cand$w[i]
     rp = cand$rep[i] + k * rep_rest[[pty]]
     point = k * P[[pty]]
     if (has_draws) {

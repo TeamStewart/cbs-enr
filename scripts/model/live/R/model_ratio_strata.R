@@ -11,19 +11,14 @@
 ## Interval: none (default) or conformal, on the fitted cell shares past x ratio (results.R).
 # ========================================
 
-# Expected share of a cell's votes for each candidate: dem2 / oth baseline, with the
-# third-party share split 85 / 15 between named minor candidates and the write-in line (as in
-# Ethan's sims), the 85 shared equally if there are several minors.
+# Expected share of a cell's votes for each candidate, Cory's rule (tx-prim-26
+# run_model_cty(): the party's expected votes / its number of candidates): the dem2 / oth
+# baseline share of each party split equally across its candidates, the third-party share
+# equally across every third-party candidate, the write-in line included.
 past_share = function(party, candidate, dem2, oth) {
-    writein = candidate == "write-in"
-    minor = !party %in% c("dem", "rep") & !writein
-    n_minor = max(n_distinct(candidate[minor]), 1)
-    case_when(
-        party == "dem" ~ (1 - oth) * dem2,
-        party == "rep" ~ (1 - oth) * (1 - dem2),
-        writein ~ oth * 0.15,
-        TRUE ~ oth * 0.85 / n_minor
-    )
+    grp = if_else(party %in% c("dem", "rep"), as.character(party), "oth")
+    n = as.vector(tapply(candidate, grp, n_distinct)[grp])
+    case_when(grp == "dem" ~ (1 - oth) * dem2, grp == "rep" ~ (1 - oth) * (1 - dem2), TRUE ~ oth) / n
 }
 
 # contest and district for enightmodels' RACE_ID. Live ids are "<ST>_<contest>[_<district>]"

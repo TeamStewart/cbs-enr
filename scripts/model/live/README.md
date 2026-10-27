@@ -166,9 +166,12 @@ Speed, one race per refresh on a slow 2-core test server: swing 4-7 s, medsl_sur
   turnout. medsl_sur uses turnout only from complete cells too, so the same applies.
   Sim results therefore overstate how much these models learn about turnout live. Tested: with the completeness flags made equal, the live and sim paths give
   identical estimates.
-- **Cory's third-party split.** ratio_strata's `past` gives the write-in line 15% of the
-  third-party baseline and splits the other 85% equally across the named minor candidates,
-  as in Ethan's sims. The write-in candidate must be named exactly `write-in`.
+- **Splitting votes among candidates.** ratio_strata's `past` uses Cory's equal split
+  (tx-prim-26 `run_model_cty()`): each party's baseline share goes equally to its candidates,
+  and the third-party share equally to every third-party candidate, the write-in line
+  included (`past_share()`). The other models split their party totals with `cand_split()`
+  (`R/results.R`): equally within a party, third-party votes in proportion to their counted
+  votes (equally until any are counted).
 - **Races with no vote-method split.** No method split is ever assumed. If a state's vote-method history has no votes for one of the methods (MI: no early in-person in any L2 year), `build_cells()` gives one cell per precinct and the state is modeled without method; likewise if any of a race's returns lack a usable method (precinct totals only, `adv`, or missing), the race is modeled without method: swing on precinct totals (county fixed effects only), ratio_strata with `model_legacy_config(by_method = FALSE)`, lm_bayes on precinct totals (as in NYC), and medsl_sur is skipped (status says why), since its equations are by method. `abs` is read as mail and `prov` as Election Day. When only some counties' results lack a method split (a county scraper with precinct totals only, e.g. TX Hardin, MI Wayne, most of CA), medsl_sur is fit on the counties that do split and the others come from CBS's county results in the statewide rows (`METHOD_ONLY_MODELS`, `predict_one()`); `settings` says how many counties. Decided per race at every refresh (`shape_for_method()` in `R/run.R`); `settings` in the status file says when a fit was without method.
 - **Virtual precincts (NC).** Votes a county reports in county-level batches instead of by precinct (NC's early-voting sites and absentee piles) match no precinct. For every model but medsl_sur, a county x method that was mostly reported this way in 2024 (`{ST}_virtual_history.parquet`) is taken out of the precinct fit and added back as one county-level unit: counted votes once the batch is in, projected from 2024 at tonight's swing until then (`R/virtual.R`). medsl_sur uses the same rows as county x mode observations (`bucket_counts()` in `R/returns.R`).
 - **NC vote-method split.** `{ST}_precinct_mode_results.parquet` (`scripts/model/make_mode_results.R`) gives every model the same split: each county's 2022 split (official county returns) with the 2024 precinct pattern within the county. Rerun it after rerunning `prep_model_inputs.R NC`.

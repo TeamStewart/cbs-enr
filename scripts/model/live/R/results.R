@@ -68,17 +68,21 @@ pred_by_cand = function(pred, returns) {
         mutate(party = coalesce(party, "oth"))
 }
 
-# Per-candidate point predictions from party totals v = c(dem, rep, oth): a party's votes split
-# equally across its candidates, third-party votes (ind and oth) in proportion to their counted
-# votes (equally if none counted yet). No bounds.
-cand_from_party = function(v, returns) {
-    cand = returns |>
-        mutate(candidate = as.character(candidate), party = if_else(party %in% c("dem", "rep", "ind"), party, "oth")) |>
-        summarize(rep = sum(votes), .by = c(candidate, party)) |>
-        mutate(grp = if_else(party %in% c("dem", "rep"), party, "oth"))
+# How a model's party totals are split among candidates. cand: candidate, party (dem / rep /
+# ind / oth) and rep (counted votes), as reported_by_candidate() (output.R). Adds grp (dem, rep
+# or oth: every third party) and w, each candidate's share of grp's votes: a party's votes
+# split equally across its candidates, third-party votes in proportion to their counted
+# votes (equally if none counted yet).
+cand_split = function(cand) {
     cand |>
-        mutate(w = if (sum(rep) > 0) rep / sum(rep) else 1 / n(), .by = grp) |>
-        mutate(w = if_else(grp == "oth", w, 1 / n()), .by = grp) |>
+        mutate(grp = if_else(party %in% c("dem", "rep"), party, "oth")) |>
+        mutate(w = if (grp[1] == "oth" && sum(rep) > 0) rep / sum(rep) else 1 / n(), .by = grp)
+}
+
+# Per-candidate point predictions from party totals v = c(dem, rep, oth) (cand_split()). No bounds.
+cand_from_party = function(v, returns) {
+    reported_by_candidate(mutate(returns, candidate = as.character(candidate))) |>
+        cand_split() |>
         transmute(candidate, party, pred = unname(v[grp]) * w, pred_min = NA_real_, pred_max = NA_real_)
 }
 

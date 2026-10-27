@@ -106,22 +106,18 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
   cand = reported_by_candidate(returns)
   conf = fit$conf %||% NA_character_
   if (is.null(fit$pred)) {
-    # point predictions by party; third-party votes split across third-party candidates
-    # in proportion to their counted votes (equally if none counted yet)
+    # point predictions and draws by party, split among candidates by cand_split() (results.R)
     ptot = fit_point(fit)
-    pv = ptot[c("dem", "rep")]
-    oth_tot = ptot[["tot"]] - pv[["dem"]] - pv[["rep"]]
+    pt = c(dem = ptot[["dem"]], rep = ptot[["rep"]], oth = ptot[["tot"]] - ptot[["dem"]] - ptot[["rep"]])
     dr = fit$draws
     tot_d = dr$turnout
+    dv = list(dem = dr$dem, rep = dr$rep, oth = tot_d - dr$dem - dr$rep)
     q = function(x) unname(cred(x, level))
-    cand = cand |>
-      mutate(w = if (sum(rep[party %in% c("oth", "ind")]) > 0) rep / sum(rep[party %in% c("oth", "ind")])
-                 else 1 / sum(party %in% c("oth", "ind")), .by = NULL) |>
-      mutate(w = if_else(party %in% c("oth", "ind"), w, NA_real_))
+    cand = cand_split(cand)
     rows = lapply(seq_len(nrow(cand)), function(i) {
-      p = cand$party[i]
-      v = if (p == "dem") dr$dem else if (p == "rep") dr$rep else cand$w[i] * (tot_d - dr$dem - dr$rep)
-      point = if (p %in% c("dem", "rep")) pv[[p]] else cand$w[i] * oth_tot
+      p = cand$party[i]; g = cand$grp[i]
+      v = cand$w[i] * dv[[g]]
+      point = cand$w[i] * pt[[g]]
       ci_v = q(v); ci_s = q(v / tot_d)
       pw = if (p == "dem") mean(dr$dem > dr$rep) else if (p == "rep") mean(dr$rep > dr$dem) else NA_real_
       tibble(candidate = cand$candidate[i], party = p,
