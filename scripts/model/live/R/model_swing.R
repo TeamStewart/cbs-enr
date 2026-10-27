@@ -61,23 +61,21 @@ swing_once = function(d, cw, x = character()) {
          rep = if_else(done, d$c_rep, d$c_rep + rem2 * (1 - s)), tot = tot)
 }
 
-# cells:  build_cells() output
-# counts: cell_counts(cells, returns) -- same rows, same order
+# cells:  build_cells() output; returns: standard returns for ONE race (returns.R)
 # seed:   set before the bootstrap so the same snapshot always gives the same interval;
 #         NULL leaves the random-number stream alone
-# demo:   demographic spec (demos.R); state: whose precinct covariates, needed unless "ratio"
-# interval: "bootstrap" or "conformal" (results.R); conformal needs `returns` for the candidates
-fit_swing = function(cells, counts, boot = 100, level = 0.95, seed = 2026, demo = DEMO_DEFAULT$swing, state = NULL,
-                     interval = "bootstrap", returns = NULL) {
+# demo:   demographic spec (demos.R)
+# interval: "bootstrap" or "conformal" (results.R)
+fit_swing = function(cells, returns, boot = 100, level = 0.95, seed = 2026, demo = DEMO_DEFAULT$swing,
+                     interval = "bootstrap") {
   if (!requireNamespace("fixest", quietly = TRUE))
     stop('The uniform swing model needs the fixest package. In R: install.packages("fixest")')
-  stopifnot("counts must line up row-for-row with cells (use cell_counts())" =
-              nrow(counts) == nrow(cells) && all(counts$geo == cells$geo) && all(counts$method == cells$method))
+  counts = cell_counts(cells, returns)
   d = bind_cols(select(cells, geo, method, county, dem2, oth, exp_votes),
                 select(counts, c_dem, c_rep, c_oth, c_tot, complete)) |>
     mutate(y = c_dem / pmax(c_dem + c_rep, 1) - dem2,
            lr = log(pmax(c_tot, 0.5) / exp_votes))
-  X = if (demo == "ratio") matrix(numeric(), nrow(d), 0) else demo_design(demo_frame(cells, state), check_demo(demo), drop = "geostratum")
+  X = if (demo == "ratio") matrix(numeric(), nrow(d), 0) else demo_design(demo_frame(cells, returns$state[1]), check_demo(demo), drop = "geostratum")
   d = bind_cols(d, as_tibble(X))
   x = colnames(X)
 

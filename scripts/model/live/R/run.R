@@ -29,7 +29,7 @@
 ## own) and model_cory_pois (R/model_cpois.R, not loaded: pois_bayes with a spec and
 ## /conformal covers it).
 ##
-## To add a model: write fit_<name>(cells, returns_or_counts, ...) returning that list, and
+## To add a model: write fit_<name>(cells, returns, demo, interval, ...) returning that list, and
 ## add it to run_race() below.
 # ========================================
 
@@ -138,8 +138,7 @@ run_race = function(model, cells, returns, ...) {
     status = if (returns_by_method(returns)) paste0("skipped: the state's vote-method history has no split (see build_cells()), which ", m, " needs") else
       paste0("skipped: this race's results have no vote-method split, which ", m, " needs"))
   fit = switch(base,
-    swing = fit_swing(sh$cells, cell_counts(sh$cells, sh$returns), demo = demo, interval = interval,
-                      state = returns$state[1], returns = sh$returns, ...),
+    swing = fit_swing(sh$cells, sh$returns, demo = demo, interval = interval, ...),
     ratio_strata = fit_ratio_strata(sh$cells, sh$returns, config = enightmodels::model_legacy_config(by_method = sh$by_method),
                                     demo = demo, interval = interval, ...),
     pois_bayes = fit_pois_bayes(sh$cells, sh$returns, demo = demo, interval = interval, ...),
