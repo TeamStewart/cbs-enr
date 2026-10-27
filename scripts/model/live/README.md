@@ -93,9 +93,9 @@ and interval.
 | `ratio_strata` | Cory's legacy ratio model, ratios pooled within strata | `ratio`, `strat_g` (default), `strat_d`, `strat_dg` | none, conformal |
 | `pois_bayes` | Bayesian Poisson precinct model (`pois_bayes()`) | all, as fixed effects; default `strat_dg_cov` | credible, conf_seq, conformal |
 | `lm_bayes` | Cory's NYC forecaster (`forecast_prec()`) | all, added to NYC's `simple_pres` spec; default `ratio` | credible, conf_seq, conformal |
-| `medsl_sur` | Young-Kyung's model with `model_hybrid.R` | none (its own covariates; see todo.md item 1) | credible, conf_seq, conformal |
+| `medsl_sur` | Young-Kyung's model with `model_hybrid.R` | all: covariates after `log_n` in place of its own, strata as its random-effect grouping in place of county; default `medsl_cov` (its own design) | credible, conf_seq, conformal |
 
-**Specs** (`R/demos.R`, Cory's tx-prim-26 `model_specs`):
+**Specs** (`R/demos.R`, Cory's tx-prim-26 `model_specs` plus `medsl_cov`):
 
 | spec | terms |
 |---|---|
@@ -107,6 +107,7 @@ and interval.
 | `strat_dg_cov` | strat_dg + the same |
 | `tpsob` | 43-column thin-plate basis of those covariates plus Black and Hispanic (`bases::b_tpsob`, CRAN) |
 | `tpsob_g` | tpsob + geostratum |
+| `medsl_cov` | medsl_sur's own covariates: dem2, 2022 and 2024 turnout, ages 65+, male, YouGov Black / Hispanic (not one of Cory's) |
 
 **Intervals** (`R/results.R`; `model_conf` in the output):
 

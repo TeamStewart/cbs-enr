@@ -39,28 +39,19 @@ Done:
   `run_jobs()` and the test runners for every model; no runner or `output.R` checks for
   "medsl_sur" to set it up. Still model-specific, on purpose: `predict_one()` passes
   `cbs_county` only to medsl_sur (no other fit takes it) and `METHOD_ONLY_MODELS`.
-- Intervals: `medsl_sur/conformal` (Cory's approximate conformal, from `fit_stage()`'s new
+- Intervals: `medsl_sur/conformal` (Cory's approximate conformal, from `fit_stage()`'s
   `cell_votes` slot in `scripts/model/model_turnout.R`: per-cell final votes and fitted
-  shares). Default `medsl_sur` unchanged (`compare_runs.R`: 0 differences).
-
-Not done, and why:
-- **conf_seq.** `conf_seq_bounds()` needs prior draws of each party's votes and turnout.
-  `model_turnout.R`'s `prior_draws()` returns only the Dem share of all votes, its spreads
-  (`sd_sys_*`, `sd_idio_*`) were tuned for that one quantity, and it draws from the
-  unshifted priors, not model_hybrid.R's re-centred ones. Adding it means writing a new
-  prior predictive in Young-Kyung's file and choosing its spreads, which is a modelling
-  decision, not a refactor.
-- **Demographic specs.** The model's covariates are `COVS_TURN` / `COVS_SHARE` / `COVS_TP`
-  in `model_turnout.R`: global constants read from the environment once per state set-up,
-  naming numeric columns of its own `covs_long` frame, which it standardizes. A spec would
-  have to (a) become part of the set-up cache key, so each spec costs its own set-up and
-  memory; (b) turn strata into dummy columns, since the model has no grouping terms but its
-  county random effect, so `(1 | geostratum)` cannot be written as Cory specifies it; and
-  (c) decide whether the spec replaces Young-Kyung's covariates (turnout22/24, age, male,
-  YouGov race predictions) or adds to them. Replacing them makes a different model; adding
-  43 tpsob columns to each per-mode equation of a SUR with `MIN_FIT_OBS` gates risks the
-  overfitting the file already warns about for the third-party equation. Ask Young-Kyung
-  before trying.
+  shares) and `medsl_sur/conf_seq` (against `prior_totals()` in `model_turnout.R`: prior
+  predictive draws of each party's votes and turnout on the model's own priors, not
+  model_hybrid.R's re-centred ones, with `prior_draws()`'s spreads).
+- Demographic specs: every spec in `R/demos.R`, plus a new one, `medsl_cov` (medsl_sur's
+  own covariates, usable by the other models too), which is medsl_sur's default. A spec is
+  applied when the model is set up for a state (`medsl_spec()`, `R/model_medsl.R`): its
+  covariates go into `COVS_TURN` / `COVS_SHARE` after `log_n`, replacing the model's own,
+  and its strata become `RE_GROUPING` (geostratum, stratum_demo, or both = "cory") in
+  place of the county effect; specs without strata keep the county effect. `COVS_TP` (the
+  third-party equation) is unchanged. Each spec is its own cached set-up.
+- Default `medsl_sur` unchanged throughout (`compare_runs.R`: 0 differences).
 
 ### 2. One input signature -- DONE (83dd36f8)
 `fit_swing(cells, returns, ...)`; no swing special case in `run_race()`. compare_runs.R: 0.

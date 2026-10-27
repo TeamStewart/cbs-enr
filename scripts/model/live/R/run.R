@@ -18,7 +18,7 @@
 ## A model name is "<model>[/<demo>][/<interval>]": <demo> a demographic spec from demos.R,
 ## <interval> one of results.R's INTERVALS, e.g. "pois_bayes/strat_d/conformal". Left out,
 ## the model runs its DEMO_DEFAULT and the first of its MODEL_INTERVALS. The name is also the
-## published label, written in that order. medsl_sur takes no spec.
+## published label, written in that order.
 ##
 ##   swing         uniform swing, county x method fixed effects (model_swing.R)
 ##   ratio_strata  Cory's legacy ratio model, ratios pooled within strata (model_ratio_strata.R)
@@ -46,11 +46,12 @@ MODELS = c("swing", "ratio_strata", "pois_bayes", "lm_bayes", "medsl_sur")
 
 # Slow set-up a model caches for the session, run in the main process before fits are forked
 # (run_jobs(), the runners): a forked worker's caches are thrown away when it ends, and see
-# load.R's BLAS note. model -> function(cells, state).
-MODEL_SETUP = list(medsl_sur = function(cells, state) fit_medsl_setup_for(cells, state, hybrid = TRUE))
+# load.R's BLAS note. model -> function(cells, state, demo).
+MODEL_SETUP = list(medsl_sur = function(cells, state, demo) fit_medsl_setup_for(cells, state, hybrid = TRUE, demo = demo))
 setup_model = function(model, cells, state) {
-  f = MODEL_SETUP[[model_base(model)]]
-  if (!is.null(f) && nrow(cells)) f(cells, state)
+  p = model_parts(model)
+  f = MODEL_SETUP[[p$base]]
+  if (!is.null(f) && nrow(cells)) f(cells, state, p$demo %||% DEMO_DEFAULT[[p$base]])
   invisible(NULL)
 }
 
@@ -155,7 +156,7 @@ run_race = function(model, cells, returns, ...) {
                                     demo = demo, interval = interval, ...),
     pois_bayes = fit_pois_bayes(sh$cells, sh$returns, demo = demo, interval = interval, ...),
     lm_bayes = fit_lm_bayes(sh$cells, sh$returns, demo = demo, interval = interval, ...),
-    medsl_sur = if (sh$by_method) fit_medsl_sur(sh$cells, sh$returns, interval = interval, ...) else needs_method("medsl_sur")
+    medsl_sur = if (sh$by_method) fit_medsl_sur(sh$cells, sh$returns, demo = demo, interval = interval, ...) else needs_method("medsl_sur")
   )
   if (!sh$by_method && !is.null(fit$settings) && !is.na(fit$settings))
     fit$settings = paste0(fit$settings, "; fit WITHOUT vote method (the feed gave precinct totals only)")

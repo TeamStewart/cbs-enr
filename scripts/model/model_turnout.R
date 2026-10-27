@@ -608,7 +608,8 @@ USE_COUNTY_RE = Sys.getenv("USE_COUNTY_RE", unset = "1") == "1"
 # (1|stratum_demo) + (1|geostratum), i.e. 5 and 6 levels -- for comparison. NC says a
 # coarse stratification recovers only 3-7% of the county effect (R^2 of the county effect
 # on 5 or 6 lean strata = 0.045 / 0.034), so this is expected to under-cover.
-RE_GROUPING = Sys.getenv("RE_GROUPING", unset = "county")   # county | cory | geostratum
+# "stratum_demo" alone is there for the live wrapper's demographic specs (live/R/demos.R).
+RE_GROUPING = Sys.getenv("RE_GROUPING", unset = "county")   # county | cory | geostratum | stratum_demo
 ICC_TURN  = as.numeric(Sys.getenv("ICC_TURN",  unset = "0.200"))   # TX 2022, L2
 ICC_SHARE = as.numeric(Sys.getenv("ICC_SHARE", unset = "0.269"))   # TX 2022, MEDSL
 ICC_TP    = as.numeric(Sys.getenv("ICC_TP",    unset = "0.269"))   # unmeasured; share proxy
@@ -1051,6 +1052,7 @@ CTY_MAT = if (!USE_COUNTY_RE) matrix(0, nrow(prec), 0) else {
   switch(RE_GROUPING,
     county     = mk(prec$county, "cty_"),
     geostratum = mk(prec$geostratum, "geo_"),
+    stratum_demo = mk(prec$stratum_demo, "sd_"),
     cory       = cbind(mk(prec$stratum_demo, "sd_"), mk(prec$geostratum, "geo_")),
     cli_abort("unknown RE_GROUPING {RE_GROUPING}"))
 }

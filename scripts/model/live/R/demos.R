@@ -12,12 +12,17 @@
 ##   tpsob         z: 43-column thin-plate spline basis (bases::b_tpsob) of dem2, ages 18-29
 ##                 and 65+, white college / non-college, Black, Hispanic
 ##   tpsob_g       z + geostratum
+##   medsl_cov     medsl_sur's own covariates: dem2, 2022 and 2024 turnout (L2 rates), ages
+##                 65+, male, YouGov Black and Hispanic predictions (not one of Cory's)
 ##
 ## Pick one with `demo =` on any fit_*(), or on the command line as "<model>/<demo>", e.g.
 ## --models=swing,swing/strat_d_cov (run.R). How each model uses a spec:
 ##   swing, lm_bayes, pois_bayes   as fixed effects (demo_design()): each (1 | x) becomes dummies
 ##   ratio_strata   ratio within strata: only ratio and the strat_* specs without covariates
-##   medsl_sur      none (Young-Kyung's own covariates)
+##   medsl_sur      at set-up (medsl_spec(), model_medsl.R): covariates go into model_turnout.R's
+##                  COVS_TURN / COVS_SHARE after log_n, (1 | x) terms (and tpsob_g's geostratum)
+##                  become its random-effect grouping in place of county; default medsl_cov,
+##                  which is the model's own design unchanged
 ##   (retired model_cory_pois, R/model_cpois.R: as written, lme4::glmer() with the (1 | x)
 ##   terms, ridge GLM without; its default is the cpois cascade below)
 # ========================================
@@ -26,6 +31,7 @@ DEMO_COVS = c("dem2", "I(dem2^2)", "p_age_18_29", "p_age_65_up", "p_white_noncol
 TPSOB_VARS = c("dem2", "p_age_18_29", "p_age_65_up", "p_white_col", "p_white_noncol", "p_black", "p_hisp")
 TPSOB_P = 43L
 TPSOB_Z = sprintf("z_%02d", seq_len(TPSOB_P))
+MEDSL_COVS = c("dem2", "turnout22", "turnout24", "p_age_65_up", "p_male", "yg_pred_bla", "yg_pred_his")
 
 DEMOS = list(
     ratio        = ~1,
@@ -35,12 +41,13 @@ DEMOS = list(
     strat_d_cov  = reformulate(c("(1 | stratum_demo)", DEMO_COVS)),
     strat_dg_cov = reformulate(c("(1 | stratum_demo)", "(1 | geostratum)", DEMO_COVS)),
     tpsob        = reformulate(TPSOB_Z),
-    tpsob_g      = reformulate(c(TPSOB_Z, "geostratum"))
+    tpsob_g      = reformulate(c(TPSOB_Z, "geostratum")),
+    medsl_cov    = reformulate(MEDSL_COVS)
 )
 
 # the spec each model runs when none is given (cpois, retired: Cory's strat_lin cascade)
 DEMO_DEFAULT = list(swing = "ratio", ratio_strata = "strat_g", pois_bayes = "strat_dg_cov", lm_bayes = "ratio",
-                    cpois = c("strat_dg_cov", "strat_d_cov", "ratio"))
+                    medsl_sur = "medsl_cov", cpois = c("strat_dg_cov", "strat_d_cov", "ratio"))
 
 check_demo = function(demo) {
     bad = setdiff(demo, names(DEMOS))
@@ -51,14 +58,14 @@ check_demo = function(demo) {
 
 .demos = new.env()
 
-# One row per precinct: stratum_demo, the covariates (a missing value gets the state mean)
+# One row per precinct: stratum_demo, the covariates of every spec (a missing value gets the state mean)
 # and the thin-plate basis z_01..z_43, built over the whole state. Cached per state.
 demo_covs = function(state, dir_26 = find_26_general()) {
     if (!is.null(.demos[[state]])) return(.demos[[state]])
     f = file.path(dir_26, "input_data", "model_inputs", paste0(state, "_precinct.parquet"))
     d = read_pq(f) |>
         transmute(geo = as.character(geo), stratum_demo = coalesce(as.character(stratum_demo), "none"),
-                  across(all_of(TPSOB_VARS), \(x) coalesce(x, mean(x, na.rm = TRUE))))
+                  across(all_of(union(TPSOB_VARS, MEDSL_COVS)), \(x) coalesce(x, mean(x, na.rm = TRUE))))
     z = do.call(bases::b_tpsob, c(unname(as.list(d[TPSOB_VARS])), p = TPSOB_P))
     .demos[[state]] = bind_cols(select(d, -dem2), as_tibble(setNames(as.data.frame(z[, seq_len(TPSOB_P)]), TPSOB_Z)))
     .demos[[state]]
