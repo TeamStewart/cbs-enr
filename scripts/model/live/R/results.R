@@ -5,7 +5,7 @@
 ## lo_twop, hi_twop, p_dem_win, est_turnout, lo_turnout, hi_turnout + what is counted), and
 ##   draws  race-level draws (dem, rep, turnout, twop), when the interval comes from draws
 ##   pred   per candidate: pred, pred_min, pred_max, when it doesn't (or there is none)
-##   cells  per-precinct projections; point c(dem, rep, tot); coef
+##   cells  per-precinct rows, PREC_COLS's columns (prec_rows()); point c(dem, rep, tot); coef
 ## output.R, counties.R and virtual.R use `pred` when a fit has it, else the draws.
 ##
 ## Intervals (`interval =` on a fit, or "<model>/<interval>" in a model name; run.R):
@@ -178,7 +178,29 @@ draws_result = function(model, interval, settings, counted, dr, level, returns,
     res(est = pred_race_est(pred), pred = pred, point = point)
 }
 
-# Per-precinct summaries from cell-level draws (draws x cells matrices of total, Dem and Rep
+# The precinct file's columns (CONTRACT.md section 15.3). Every model's `cells` slot has them
+# all but race_id, model and time, which output.R adds.
+PREC_COLS = c("race_id", "model", "time", "geo", "county", "method",
+              "turn_est", "turn_lo", "turn_hi", "dem_est", "dem_lo", "dem_hi",
+              "est_dem2", "cnt_prec", "q_share", "n_obs_modes", "p_win")
+
+# per-precinct rows in that shape: p has geo and any of the other columns; the rest are NA
+prec_rows = function(p) {
+    cols = setdiff(PREC_COLS, c("race_id", "model", "time"))
+    for (c in setdiff(cols, names(p))) p[[c]] = if (c %in% c("county", "method")) NA_character_ else NA_real_
+    mutate(p, geo = as.character(geo), county = as.character(county)) |> select(all_of(cols))
+}
+
+# Per-precinct rows from cell-level final votes (d: geo, dem, rep, tot, and county if known),
+# summed over methods; no interval. Used by swing and ratio_strata.
+votes_precincts = function(d) {
+    d |>
+        summarize(across(c(dem, rep, tot), sum), .by = any_of(c("geo", "county"))) |>
+        mutate(turn_est = tot, dem_est = dem / pmax(tot, 1e-9), est_dem2 = dem / pmax(dem + rep, 1e-9)) |>
+        prec_rows()
+}
+
+# Per-precinct rows from cell-level draws (draws x cells matrices of total, Dem and Rep
 # votes), summing each precinct's methods within a draw. d: one row per cell with geo,
 # county, obs, c_tot. Used by lm_bayes and pois_bayes.
 draws_precincts = function(tot, dem, rep, d, level = 0.95) {
@@ -189,10 +211,11 @@ draws_precincts = function(tot, dem, rep, d, level = 0.95) {
     msd = function(M) list(m = rowMeans(M), s = apply(M, 1, sd))
     t_ = msd(tot); s_ = msd(dem / pmax(tot, 1e-9)); d2 = dem / pmax(dem + rep, 1e-9)
     d |>
-        summarize(county = county[1], n_obs_cells = sum(obs), cnt_prec = sum(c_tot), .by = geo) |>
+        summarize(county = county[1], n_obs_modes = sum(obs), cnt_prec = sum(c_tot), .by = geo) |>
         mutate(
             turn_est = t_$m, turn_lo = pmax(t_$m - z * t_$s, 0), turn_hi = t_$m + z * t_$s,
             dem_est = s_$m, dem_lo = pmax(s_$m - z * s_$s, 0), dem_hi = pmin(s_$m + z * s_$s, 1),
-            est_dem2 = rowMeans(d2), p_dem_win = rowMeans(d2 > 0.5)
-        )
+            est_dem2 = rowMeans(d2), p_win = rowMeans(d2 > 0.5)
+        ) |>
+        prec_rows()
 }

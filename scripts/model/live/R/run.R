@@ -11,7 +11,7 @@
 ##   model, status, settings, conf (how the interval was made; results.R)
 ##   race   one row: est_twop, lo_twop, hi_twop, p_dem_win, est_turnout, lo_turnout,
 ##          hi_turnout, raw_twop, counted_votes, expected_votes, obs_cells, complete_cells
-##   cells  projections below the race level (precinct x method, or precinct)
+##   cells  one row per precinct, the precinct file's columns (prec_rows(), results.R)
 ##   draws  simulation / bootstrap draws (twop, turnout, dem, rep), when the interval is from them
 ##   pred   per-candidate predictions (candidate, party, pred, pred_min, pred_max), when it isn't
 #

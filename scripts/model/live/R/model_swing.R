@@ -87,13 +87,14 @@ fit_swing = function(cells, returns, boot = 100, level = 0.95, seed = 2026, demo
 
   ctys = unique(d$county)
   pt = swing_once(d, setNames(rep(1, length(ctys)), ctys), x)
+  point = c(dem = sum(pt$dem), rep = sum(pt$rep), tot = sum(pt$tot))
   if (interval == "conformal") {
     fc = mutate(d, fin_dem = pt$dem, fin_rep = pt$rep, fin_oth = pt$tot - pt$dem - pt$rep,
                 fit_dem = (1 - oth) * pt$s2, fit_rep = (1 - oth) * (1 - pt$s2), fit_oth = oth)
     v = c(dem = sum(pt$dem), rep = sum(pt$rep), oth = sum(pt$tot - pt$dem - pt$rep))
     pred = cand_bounds(cand_from_party(v, returns), conformal_party(fc, level))
-    return(model_result("swing", "ok", settings, counted, est = pred_race_est(pred), pred = pred, cells = pt,
-                        interval = interval, level = level))
+    return(model_result("swing", "ok", settings, counted, est = pred_race_est(pred), pred = pred, cells = votes_precincts(pt),
+                        point = point, interval = interval, level = level))
   }
   rep_ctys = unique(d$county[d$c_tot > 0])
   if (!is.null(seed)) set.seed(seed)
@@ -117,6 +118,6 @@ fit_swing = function(cells, returns, boot = 100, level = 0.95, seed = 2026, demo
                est = list(est_twop = mean(S2), lo_twop = ci[["lower"]], hi_twop = ci[["upper"]],
                           p_dem_win = mean(S2 > 0.5), est_turnout = mean(TT),
                           lo_turnout = ct[["lower"]], hi_turnout = ct[["upper"]]),
-               cells = pt, draws = tibble(twop = S2, turnout = TT, dem = DV, rep = RV),
+               cells = votes_precincts(pt), point = point, draws = tibble(twop = S2, turnout = TT, dem = DV, rep = RV),
                interval = interval, level = level)
 }

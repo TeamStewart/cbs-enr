@@ -93,7 +93,8 @@ fit_ratio_strata = function(cells, returns, config = enightmodels::model_legacy_
     prec = if (precincts) {
         d_cand |>
             mutate(geo = as.character(geo), party = as.character(party)) |>
-            summarize(dem = sum(pred[party == "dem"]), rep = sum(pred[party == "rep"]), tot = sum(pred), .by = geo)
+            summarize(dem = sum(pred[party == "dem"]), rep = sum(pred[party == "rep"]), tot = sum(pred), .by = geo) |>
+            votes_precincts()
     }
     coef = distinct(d_cand, candidate, party, method, across(all_of(strata)), ratio)
 

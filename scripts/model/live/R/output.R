@@ -65,12 +65,8 @@ reported_by_candidate = function(returns) {
     summarize(rep = sum(votes), .by = c(candidate, party))
 }
 
-# predicted final votes c(dem, rep, tot) from a model with draws: its `point` if it gives
-# one (medsl_sur: the posterior mean), else the sum of its cells (swing)
-fit_point = function(fit) {
-  if (!is.null(fit$point)) return(fit$point[c("dem", "rep", "tot")])
-  c(dem = sum(fit$cells$dem), rep = sum(fit$cells$rep), tot = sum(fit$cells$tot))
-}
+# predicted final votes c(dem, rep, tot) from a model with draws
+fit_point = function(fit) fit$point[c("dem", "rep", "tot")]
 
 # fit: one model's result for one race (run_race()); returns: that race's returns
 # Did the fit succeed? `status` CARRIES DETAIL now -- "ok (partial prior: 2 of 9
@@ -156,43 +152,13 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
 }
 
 # ---- the per-precinct dump -----------------------------------------------------------
-# Each model's `cells` slot, normalised to one schema (PREC_COLS), one row per precinct.
-PREC_COLS = c("race_id", "model", "time", "geo", "county", "method",
-              "turn_est", "turn_lo", "turn_hi", "dem_est", "dem_lo", "dem_hi",
-              "est_dem2", "cnt_prec", "q_share", "n_obs_modes", "p_win")
-
+# Each model's `cells` slot is already one row per precinct in PREC_COLS's shape (results.R);
+# this adds the race, model and time.
 to_prec_data = function(fit, model, race, time) {
   p = fit$cells
   if (!fit_ok(fit) || is.null(p) || !nrow(p)) return(NULL)
-  nm = model_label(model); model = model_base(model)
-  blank = function(d, cols) { for (c in setdiff(cols, names(d))) d[[c]] = NA_real_; d }
-  out = if (model == "medsl_sur") {
-    # already the richest shape; est_dem2/p_win/cnt_prec added to prec_out for this
-    p |> mutate(method = NA_character_)
-  } else if (model %in% c("lm_bayes", "pois_bayes")) {
-    p |> mutate(method = NA_character_,
-                p_win = p_dem_win,
-                n_obs_modes = n_obs_cells,
-                q_share = NA_real_)
-  } else if (model %in% c("swing", "ratio_strata")) {
-    # dem/rep/tot, no interval; summed over methods to one row per precinct
-    p |>
-      summarize(across(c(dem, rep, tot), sum), .by = any_of(c("geo", "county"))) |>
-      mutate(
-        method   = NA_character_,
-        county   = if ("county" %in% names(p)) as.character(county) else NA_character_,
-        turn_est = tot,
-        dem_est  = dem / pmax(tot, 1e-9),
-        est_dem2 = dem / pmax(dem + rep, 1e-9))
-  } else return(NULL)
-  # Identity columns FIRST, then blank the rest. blank() creates every missing PREC_COL as
-  # NA, so if it ran first it would create `model` and `time` as NA columns and the mutate
-  # below would read those NAs out of the data mask instead of the function arguments --
-  # silently stamping every row with model = NA.
-  tm = time
-  out |>
-    mutate(race_id = race$race_id[1], model = nm, time = tm, geo = as.character(geo)) |>
-    blank(PREC_COLS) |>
+  prec_rows(p) |>
+    mutate(race_id = race$race_id[1], model = model_label(model), time = time) |>
     select(all_of(PREC_COLS))
 }
 
