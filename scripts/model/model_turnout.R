@@ -268,8 +268,44 @@ CTY_SUB_MIN_RPRIOR = as.numeric(Sys.getenv("CTY_SUB_MIN_RPRIOR", unset = "0.5"))
 # composition prior's reliability, but fails SAFE in a way the gross-up did not --
 # substituting cnt_prec can only move the estimate DOWN toward the observed count, never
 # fabricate votes above it.
+# STATEWIDE TURNOUT CONSTRAINT (STATE_TURNOUT unset = off).
+# Every bound in this model is PER PRECINCT -- 0 < T_i < kappa*n_i, and T_i >= C_i --
+# and kappa = 1.25 binds on about 1% of them. NOTHING constrains sum_i T_i, which is the
+# only quantity anyone reports.
+# That is the wrong place for the bounds. Independent precinct errors cancel in a sum;
+# COMMON-MODE errors do not, and a wrong est_turnout is exactly common-mode -- all 6,134
+# precincts high together, and the sum preserves it perfectly. It is also why every
+# precinct-level fix failed: when theta's equation is empty, sum_i T_i = sum_i est_tot_i
+# EXACTLY, and no per-precinct machinery can see that.
+# A statewide turnout prior is also far easier to come by than a precinct one: historical
+# midterm turnout, registration growth, early-vote totals as a share of final.
+#
+# HOW. Per draw, sample a statewide total from the prior, floor it at what has actually
+# been counted statewide, then solve for the single logit-scale shift delta that makes
+# the precinct totals sum to it:
+#     sum_i kappa*n_i*invlogit(theta_id + delta_d) = S_d
+# A COMMON shift, so relative precinct structure is untouched; on the logit scale, so
+# every precinct stays inside (0, kappa*n_i) however large delta is. The counted-votes
+# floor is re-applied afterwards, which is why S_d is floored first -- otherwise the
+# constraint and the floor fight and the floor wins silently.
+# As counting proceeds the floor increasingly binds and the constraint does less, which
+# is the correct behaviour: the data should take over from the prior.
+STATE_TURNOUT     = suppressWarnings(as.numeric(Sys.getenv("STATE_TURNOUT", unset = NA)))
+STATE_TURNOUT_SD  = as.numeric(Sys.getenv("STATE_TURNOUT_SD", unset = "0.05"))  # log scale
 PIN_DONE       = Sys.getenv("PIN_DONE", unset = "1") == "1"
 PIN_MIN_SHARE  = as.numeric(Sys.getenv("PIN_MIN_SHARE", unset = "0.95"))
+# CORROBORATION. q_share rests on the completeness flag, which in production is a plateau
+# proxy -- three snapshots with no growth. A mode that merely PAUSED clears it, so a
+# precinct can reach q_share >= 0.95 with real votes still outstanding, and pinning then
+# DISCARDS them. Measured per precinct on the real TX 2024 cadence:
+#   23:00  fires on   78 of 2,415 (3.2%)   turnout err 0.0343 -> 0.0537  WORSE
+#   03:00  fires on  328 of 2,415 (13.6%)  turnout err 0.0450 -> 0.0045  10x better
+# So the pin is harmful in broadcast hours and excellent late, and the aggregate hid it
+# because 78 precincts cannot move a statewide number.
+# r_prior = cnt_prec / est_tot needs NO flag: it asks whether the precinct has actually
+# counted its expected vote. Requiring both means a paused mode no longer qualifies on
+# its own. PIN_MIN_RPRIOR = 0 restores the flag-only behaviour.
+PIN_MIN_RPRIOR = as.numeric(Sys.getenv("PIN_MIN_RPRIOR", unset = "0.95"))
 # Right-censoring of the turnout equation (USE_CENSOR=0 to ablate). See the block in the
 # fit loop and the EM in model_core.R::fit_conj_re.
 # DEFAULT OFF on the headline metric, but the picture is genuinely split -- see the log.
@@ -1629,11 +1665,40 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     if (PIN_DONE) {
       # q_share in prec order; all_done implies q_share == 1, so this is a superset
       qs_prec = d |> distinct(geo, q_share) |> arrange(match(geo, prec$geo)) |> pull(q_share)
-      done_prec = (rowSums(mask_turn) == M) | (qs_prec >= PIN_MIN_SHARE)
+      rp_prec = d |> distinct(geo, r_prior) |> arrange(match(geo, prec$geo)) |> pull(r_prior)
+      # all_done is exact and needs no corroboration; the q_share route does.
+      done_prec = (rowSums(mask_turn) == M) |
+                  (qs_prec >= PIN_MIN_SHARE & rp_prec >= PIN_MIN_RPRIOR)
       if (any(done_prec)) {
         # direct assignment, not dplyr::if_else -- vctrs rejects matrices
         T_draw[, done_prec] <- cnt_tot[, done_prec, drop = FALSE]
       }
+    }
+    # ---- STATEWIDE TURNOUT CONSTRAINT (see STATE_TURNOUT) --------------------------
+    if (!is.na(STATE_TURNOUT) && STATE_TURNOUT > 0) {
+      capv  = capm[1, ]                                  # kappa*n_i, same every draw
+      n_hit <- 0L
+      for (dd in seq_len(draws)) {
+        cnt_d <- cnt_tot[dd, ]
+        # the target: a draw from the statewide prior, floored at what is already
+        # counted (an unreachable target would just be eaten by the floor below)
+        S_d <- max(STATE_TURNOUT * exp(stats::rnorm(1, 0, STATE_TURNOUT_SD)), sum(cnt_d))
+        th_d <- qlogis(pmin(pmax(T_draw[dd, ] / capv, 1e-9), 1 - 1e-9))
+        f <- function(del) sum(capv * plogis(th_d + del)) - S_d
+        # bracket: +/-10 on the logit scale spans essentially (0, kappa*n) statewide
+        lo <- -10; hi <- 10
+        if (f(lo) > 0 || f(hi) < 0) { n_hit <- n_hit + 1L; next }   # unreachable, leave as-is
+        del <- stats::uniroot(f, c(lo, hi), tol = 1e-8)$root
+        T_draw[dd, ] <- pmax(capv * plogis(th_d + del), cnt_d)      # floor re-applied
+      }
+      if (n_hit > 0)
+        cli_alert_warning("statewide constraint unreachable on {n_hit} of {draws} draws \
+                           -- left unconstrained")
+      cnt_tot_chk <- rowSums(cnt_tau)
+      cli_inform("statewide constraint: target {format(round(STATE_TURNOUT), big.mark = ',')} \
+                  (sd {STATE_TURNOUT_SD} log), counted \
+                  {format(round(cnt_tot_chk[1] * 0 + sum(cnt_tau)), big.mark = ',')}, \
+                  mean drawn total {format(round(mean(rowSums(T_draw))), big.mark = ',')}")
     }
     # ---- COUNTY TURNOUT LOWER BOUND (see CTY_BOUND) --------------------------------
     # ORDERED LAST, and the order is not cosmetic. The statewide block above ends with

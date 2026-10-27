@@ -44,6 +44,8 @@ ARM  <- Sys.getenv("ARM",  unset = "delta0")
 HIST <- Sys.getenv("HIST", unset = "2020")
 P_RET   <- "scripts/model/tx24_returns_panel.parquet"
 P_TRUTH <- "scripts/model/tx24_truth.parquet"
+DUMP_PREC <- { z <- Sys.getenv("DUMP_PREC", unset = "")
+               if (nzchar(z)) strsplit(z, ",")[[1]] else character(0) }
 
 # ---- arm -> (which mode history, where delta_m comes from) -----------------------
 # delta0  what ships today: real turnout split, delta_m = 0
@@ -107,20 +109,34 @@ cty_ts <- ret |> distinct(cty, ts) |> arrange(cty, ts)
 # to the counted total exactly.
 # Requiring TWO static intervals rather than one guards against a cell that merely
 # pauses between batches.
+# PLATEAU_N: how many consecutive snapshots must agree before a cell counts as
+# complete. The default 3 means "two intervals with no growth", which a cell that merely
+# PAUSED clears -- measured per precinct, that is what makes PIN_DONE harmful at 23:00
+# (turnout error 0.0345 -> 0.0598 on the precincts it fires on) and excellent at 03:00.
+# A longer plateau is a stricter, purely data-side test: no flag, no prior, just more
+# evidence that counting has actually stopped.
+PLATEAU_N <- max(2L, as.integer(Sys.getenv("PLATEAU_N", unset = "3")))
+
 as_of <- function(t) {
-  pick <- cty_ts |> filter(ts <= t) |> slice_max(ts, n = 3, by = cty) |>
-    mutate(lag = dense_rank(desc(ts)), .by = cty)       # 1 = current, 2/3 = previous
+  pick <- cty_ts |> filter(ts <= t) |> slice_max(ts, n = PLATEAU_N, by = cty) |>
+    mutate(lag = dense_rank(desc(ts)), .by = cty)       # 1 = current, 2..N = previous
   if (!nrow(pick)) return(NULL)
   h <- ret |> inner_join(pick, by = c("cty", "ts")) |>
     transmute(geo, mode = method, lag, v = dem + rep + oth, dem, rep, oth) |>
     pivot_wider(names_from = lag, values_from = c(v, dem, rep, oth), names_sep = "")
-  for (cl in c("v2", "v3")) if (!cl %in% names(h)) h[[cl]] <- NA_real_
+  vcols <- paste0("v", seq_len(PLATEAU_N))
+  for (cl in vcols[-1]) if (!cl %in% names(h)) h[[cl]] <- NA_real_
+  # cumulative counts are naturally v1 >= v2 >= ... ; testing <= across every adjacent
+  # pair therefore forces EQUALITY, i.e. a genuine plateau over PLATEAU_N snapshots.
+  flat <- Reduce(`&`, lapply(seq_len(PLATEAU_N - 1L),
+                             function(k) !is.na(h[[vcols[k + 1L]]]) &
+                                         h[[vcols[k]]] <= h[[vcols[k + 1L]]]))
   h |>
     transmute(geo, mode,
               stage = if_else(v1 > 0, STAGE_DONE, 0L),
-              # plateaued across both available intervals; a county with fewer than
-              # three snapshots so far cannot qualify, which is the conservative side
-              complete = v1 > 0 & !is.na(v2) & !is.na(v3) & v1 <= v2 & v2 <= v3,
+              # a county with fewer than PLATEAU_N snapshots cannot qualify -- the
+              # conservative side
+              complete = v1 > 0 & flat,
               votes_dem = if_else(stage >= STAGE_DONE, dem1, NA_real_),
               votes_rep = if_else(stage >= STAGE_DONE, rep1, NA_real_),
               votes_oth = if_else(stage >= STAGE_DONE, oth1, NA_real_))
@@ -149,6 +165,26 @@ run_stage <- function(t) {
   cd <- sum(counted$votes_dem); cr <- sum(counted$votes_rep); co <- sum(counted$votes_oth)
   ctot <- cd + cr + co
   f <- fit_stage(cells, r)
+  # PRECINCT-LEVEL DUMP (DUMP_PREC="HH:MM,HH:MM"). The aggregate cannot distinguish
+  # "a mechanism fires on few precincts" from "it fires widely and the errors cancel in
+  # the sum" -- both look like a small aggregate change. This writes one row per precinct
+  # so that question is answerable, and carries q_share so the pin's firing rate is
+  # measurable rather than inferred from the all_done counters (which are a DIFFERENT,
+  # stricter condition: early+eday alone gives q_share ~ 0.956 without mail).
+  if (length(DUMP_PREC) && format(t, "%H:%M") %in% DUMP_PREC) {
+    tr_p <- truth_cells |> summarize(t_dem = sum(dem), t_rep = sum(rep),
+                                     t_tot = sum(dem + rep + oth), .by = geo)
+    cn_p <- counted |> summarize(c_tot = sum(votes_dem + votes_rep + votes_oth),
+                                 n_rep_modes = n(), .by = geo)
+    dmp <- f$prec |>
+      left_join(tr_p, by = "geo") |> left_join(cn_p, by = "geo") |>
+      mutate(c_tot = coalesce(c_tot, 0), time = format(t, "%H:%M"))
+    dir.create("quality_reports", showWarnings = FALSE)
+    fp <- file.path("quality_reports", sprintf("btprec_%s_%s.csv",
+                    Sys.getenv("BT_LABEL", unset = "run"), format(t, "%H%M")))
+    readr::write_csv(dmp, fp)
+    cat("  dumped", nrow(dmp), "precincts ->", basename(fp), "\n")
+  }
   ci   <- cred_int(f$S_dem, level = LEVEL)
   ci2p <- cred_int(f$S_2p,  level = LEVEL)
   tibble(
