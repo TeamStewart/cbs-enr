@@ -142,6 +142,47 @@ read_history <- function(state) {
   mutate(h, across(c(geo, method, contest, party, county), as.character), district = as.integer(district))
 }
 
+# enightmodels output in {ELECTION_FOLDER}/model_results: every predictions_*.csv run
+# stacked into a time series (later files win on duplicate rows), and each
+# race/model's most recent status_*.csv row
+read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_results")) {
+  read_runs = \(prefix) {
+    # "latest" sorts after the timestamped files, so it wins ties
+    files = sort(fs::dir_ls(dir, regexp = glue("/{prefix}_[^/]*\\.csv$"), fail = FALSE))
+    if (length(files) == 0) return(NULL)
+    map(files, \(f) readr::read_csv(f, col_types = readr::cols(.default = "c"), progress = FALSE)) |>
+      bind_rows(.id = "file") |>
+      mutate(file = match(file, files))
+  }
+
+  pred = read_runs("predictions")
+  if (!is.null(pred)) {
+    pred = pred |>
+      mutate(
+        time = lubridate::ymd_hms(time, quiet = TRUE),
+        district = as.integer(as.numeric(district)),
+        across(c(pct_rep, rep, pred, pred_min, pred_max), as.numeric)
+      ) |>
+      filter(!is.na(time)) |>
+      arrange(desc(file)) |>
+      distinct(race_id, state, contest, district, model, geo, pred_type, party, candidate, time, .keep_all = TRUE) |>
+      select(race_id, state, contest, district, model, model_conf, geo, pred_type, party, candidate,
+             time, pct_rep, rep, pred, pred_min, pred_max) |>
+      arrange(time)
+  }
+
+  status = read_runs("status")
+  if (!is.null(status)) {
+    status = status |>
+      arrange(desc(file)) |>
+      distinct(race_id, model, .keep_all = TRUE) |>
+      transmute(race_id, model, time = lubridate::ymd_hms(time, quiet = TRUE), status,
+                statewide = cli::ansi_strip(statewide), settings = cli::ansi_strip(settings))
+  }
+
+  list(pred = pred, status = status)
+}
+
 read_summaries <- function(state, keys) {
   files = fs::dir_ls(fs::path(PATH_DROPBOX, ELECTION_FOLDER, state, "summaries"), regexp = "summary_.*\\.parquet$", fail = FALSE)
   if (length(files) == 0) return(NULL)
@@ -203,8 +244,9 @@ read_l2 <- function(state) {
 }
 
 # Build everything index.qmd needs for each row of `contests`.
-# `dash` is a list of make_summary() outputs (one per jurisdiction).
-build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
+# `dash` is a list of make_summary() outputs (one per jurisdiction);
+# `models` is read_model_results() output (NULL for no modeling).
+build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = NULL) {
   contests = contests |>
     mutate(
       key = if_else(is.na(district), paste0(state, "-", contest), paste0(state, "-", contest, "-", district)),
@@ -227,6 +269,17 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
   summaries = map(states, \(s) read_summaries(s, keys_by_state[[s]])) |> set_names(states)
   histories = map(states, read_history) |> set_names(states)
   l2s = map(states, read_l2) |> set_names(states)
+
+  mp_empty = tibble(
+    race_id = character(), state = character(), contest = character(), district = integer(),
+    model = character(), model_conf = character(), geo = character(),
+    pred_type = character(), party = character(), candidate = character(), time = as.POSIXct(character()),
+    pct_rep = numeric(), rep = numeric(), pred = numeric(), pred_min = numeric(), pred_max = numeric()
+  )
+  ms_empty = tibble(race_id = character(), model = character(), time = as.POSIXct(character()),
+                    status = character(), statewide = character(), settings = character())
+  mp_all = bind_rows(mp_empty, models$pred)
+  ms_all = bind_rows(ms_empty, models$status)
 
   out = pmap(contests, \(state, contest, district, key, label, hist_contest, ...) {
     p = filter(prec_all, .env$state == .data$state, .env$contest == .data$contest)
@@ -335,9 +388,18 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
       }
     }
 
+    # model rows: statewide contests may carry NA or the same dummy district as the ENR data
+    mp = filter(mp_all, .env$state == .data$state, .env$contest == .data$contest,
+                .data$district %in% unique(c(district, dist)))
+    race_ids = unique(c(mp$race_id, paste(state, contest, sep = "_"),
+                        if (!is.na(district)) paste(state, contest, district, sep = "_")))
+    ms = filter(ms_all, race_id %in% race_ids)
+
     list(
       meta = meta,
       ts = mutate(ts, key = key, .before = 1),
+      models = mp |> select(-any_of(c("state", "contest", "district", "race_id"))) |> mutate(key = key, .before = 1),
+      model_status = select(ms, -race_id) |> mutate(key = key, .before = 1),
       prec = mutate(prec, key = key, .before = 1),
       l2 = mutate(l2, key = key, .before = 1)
     )
@@ -348,6 +410,8 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
     ts = map(out, "ts") |> bind_rows(),
     prec = map(out, "prec") |> bind_rows(),
     l2 = map(out, "l2") |> bind_rows(),
+    models = map(out, "models") |> bind_rows(),
+    model_status = map(out, "model_status") |> bind_rows(),
     title = DASHBOARD_TITLE
   )
 }

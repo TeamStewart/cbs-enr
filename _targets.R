@@ -103,6 +103,8 @@ list(
   map_single,
   # dashboard: contests shown are set by DASHBOARD_CONTESTS in scripts/util/globals.R
   tar_combine(dash_inputs, map_single[["summary"]], command = list(!!!.x)),
-  tar_target(dashboard_data, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS)),
+  # enightmodels output, re-read every run ({ELECTION_FOLDER}/model_results)
+  tar_target(model_results, read_model_results(), cue = tar_cue(mode = "always")),
+  tar_target(dashboard_data, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS, model_results)),
   tar_quarto(dashboard, "index.qmd", quiet = FALSE)
 )

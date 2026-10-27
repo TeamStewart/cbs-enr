@@ -28,9 +28,13 @@ ojs_define(
   ts = transform(dd$ts, time = to_ms(time)),
   prec = dd$prec,
   l2 = if (is.null(dd$l2)) data.frame(key = character(), geo = character(), mode = character()) else dd$l2,
+  models = if (is.null(dd$models)) data.frame(key = character(), model = character(), time = numeric()) else transform(dd$models, time = to_ms(time)),
+  model_status = if (is.null(dd$model_status)) data.frame(key = character(), model = character()) else transform(dd$model_status, time = to_ms(time)),
   dash_title = dd$title
 )
 ```
+
+# Results
 
 ## Overview {height="88px"}
 
@@ -41,6 +45,8 @@ M = transpose(meta)
 TS = transpose(ts).map(d => ({ ...d, time: new Date(d.time) }))
 P = transpose(prec)
 L2 = transpose(l2)
+MP = transpose(models).map(d => ({ ...d, time: new Date(d.time) }))
+MS = transpose(model_status)
 
 // L2 precinct shares, joined to ENR geos through input_data/crosswalks (see read_l2() in functions.R)
 L2_COLS = ["l2_n", "l2_turnout20", "l2_turnout22", "l2_turnout24", "l2_male", "l2_white", "l2_black", "l2_hispanic", "l2_asian"]
@@ -480,5 +486,163 @@ viewof prec_mode = {
   ]
   }, `Precincts: ${prec_y} vs ${prec_x} (${prec_mode})`);
   return Plot.plot({ x: s.x, y: s.y, marks: s.marks });
+}
+```
+
+# Models
+
+```{ojs model-setup}
+//| output: false
+
+// enightmodels predictions for the selected contest (read_model_results() in functions.R)
+mpc = MP.filter(d => d.key === sel)
+msc = MS.filter(d => d.key === sel)
+// models with predictions first, then ones that only appear in status (failed runs)
+modelsOk = [...new Set(mpc.map(d => d.model))].sort()
+modelList = [...modelsOk, ...[...new Set(msc.map(d => d.model))].filter(m => !modelsOk.includes(m)).sort()]
+noModels = mpc.length === 0
+noModelsMsg = () => empty(html`<div>No model results for ${cur.label}.</div>
+  ${msc.length ? html`<div class="model-status-list">${msc.map(d => html`<div><b>${d.model}</b>: ${d.status}</div>`)}</div>` : ""}`)
+
+GEO_LABELS = { return { scraped: "Scraped", all: "Statewide (all)" } }
+partyName = p => p === "dem" ? (cur.dem_name ?? "Dem") : (cur.rep_name ?? "Rep")
+modelColor = { return { type: "categorical", domain: [partyName("dem"), partyName("rep")], range: [DEM, REP], legend: true } }
+
+model_pick = mctl.model
+hasAll = mpc.some(d => d.model === model_pick && d.geo === "all")
+modelRows = mpc
+  .filter(d => d.model === model_pick && (d.geo === "scraped" || (d.geo === "all" && mctl.all)))
+  .filter(d => +d.time >= mctl.from && +d.time <= mctl.to)
+  .map(d => ({ ...d, series: `${partyName(d.party)} · ${GEO_LABELS[d.geo] ?? d.geo}`, pname: partyName(d.party) }))
+  .sort((a, b) => a.time - b.time)
+
+// turnout: every party's predicted votes summed per run (no interval)
+turnoutRows = d3.rollups(modelRows.filter(d => d.pred_type === "vote"),
+  v => ({ time: v[0].time, geo: v[0].geo, pct_rep: v[0].pct_rep, pred: d3.sum(v, d => d.pred), rep: d3.sum(v, d => d.rep),
+          series: `Total · ${GEO_LABELS[v[0].geo] ?? v[0].geo}` }),
+  d => d.geo, d => +d.time).flatMap(([, g]) => g.map(([, r]) => r)).sort((a, b) => a.time - b.time)
+
+// solid line = prediction, ribbon = interval, dotted = reported; "all" draws dashed with a lighter ribbon
+modelSpec = (rows, opts) => {
+  const geo = g => rows.filter(d => d.geo === g);
+  const marks = [];
+  for (const g of ["scraped", "all"]) {
+    const r = geo(g);
+    if (r.length === 0) continue;
+    const dash = g === "all" ? "6,3" : null;
+    marks.push(
+      Plot.areaY(r.filter(d => d.pred_min != null && d.pred_max != null), { x: "time", y1: "pred_min", y2: "pred_max", z: "series", fill: opts.stroke, fillOpacity: g === "all" ? 0.08 : 0.18, curve: "monotone-x" }),
+      Plot.lineY(r, { x: "time", y: "rep", z: "series", stroke: opts.stroke, strokeWidth: 1, strokeDasharray: "1,3", strokeOpacity: 0.8 }),
+      Plot.lineY(r, { x: "time", y: "pred", z: "series", stroke: opts.stroke, strokeWidth: 2, strokeDasharray: dash }),
+      Plot.dot(r, { x: "time", y: "pred", fill: opts.stroke, r: 2 })
+    );
+  }
+  if (opts.rule != null) marks.push(Plot.ruleY([opts.rule], { stroke: "#999", strokeDasharray: "4,4" }));
+  marks.push(
+    Plot.ruleX(rows, Plot.pointerX({ x: "time", stroke: "#999" })),
+    Plot.tip(rows, Plot.pointerX({ x: "time", y: "pred", title: d => `${d.series}\n${fmtTime(d.time)} · ${pct(d.pct_rep)} reporting\n` +
+      `Predicted ${opts.fmt(d.pred)}${d.pred_min != null ? ` (${opts.fmt(d.pred_min)} to ${opts.fmt(d.pred_max)})` : ""}\nReported ${opts.fmt(d.rep)}` }))
+  );
+  return {
+    marginBottom: 30,
+    x: { label: null, ticks: 5 },
+    y: { grid: true, label: opts.label, tickFormat: opts.tickFormat },
+    color: opts.color,
+    marks
+  };
+}
+```
+
+## Row {height="85%"}
+
+### Model Plots {.tabset}
+
+```{ojs}
+//| title: Predicted Share
+{
+  if (noModels) return noModelsMsg();
+  const s = exportable("Predicted Share", modelSpec(modelRows.filter(d => d.pred_type === "share" && ["dem", "rep"].includes(d.party)), {
+    label: "Share of all votes", tickFormat: ".0%", stroke: "pname", color: modelColor, rule: 0.5, fmt: pct
+  }), `Predicted share: ${model_pick}`);
+  return Plot.plot({ marginBottom: s.marginBottom, x: s.x, y: s.y, color: s.color, marks: s.marks });
+}
+```
+
+```{ojs}
+//| title: Predicted Votes
+{
+  if (noModels) return noModelsMsg();
+  const s = exportable("Predicted Votes", modelSpec(modelRows.filter(d => d.pred_type === "vote" && ["dem", "rep"].includes(d.party)), {
+    label: "Votes", tickFormat: "~s", stroke: "pname", color: modelColor, fmt: fmt
+  }), `Predicted votes: ${model_pick}`);
+  return Plot.plot({ marginBottom: s.marginBottom, x: s.x, y: s.y, color: s.color, marks: s.marks });
+}
+```
+
+```{ojs}
+//| title: Predicted Turnout
+{
+  if (noModels) return noModelsMsg();
+  const s = exportable("Predicted Turnout", modelSpec(turnoutRows, {
+    label: "Total votes (all candidates)", tickFormat: "~s", stroke: () => INK, fmt: fmt
+  }), `Predicted turnout: ${model_pick}`);
+  return Plot.plot({ marginBottom: s.marginBottom, x: s.x, y: s.y, color: s.color, marks: s.marks });
+}
+```
+
+## Row {height="15%"}
+
+### Model
+
+```{ojs model-controls}
+// one form for model, statewide overlay, and time window; value = { model, all, from, to }
+viewof mctl = {
+  // default to the first model that reports intervals; failed models (status only) are listed but disabled
+  const start = modelsOk.find(m => mpc.some(d => d.model === m && d.pred_min != null)) ?? modelsOk[0] ?? null;
+  const runTimes = m => [...new Set(mpc.filter(d => d.model === m).map(d => +d.time))].sort((a, b) => a - b);
+  const form = html`<form class="model-ctl">
+    <label>Model <select name="model" class="form-select form-select-sm"></select></label>
+    <label name="all-wrap"><input type="checkbox" name="all" class="form-check-input"> Statewide projection (all counties)</label>
+    <label>From <select name="from" class="form-select form-select-sm"></select></label>
+    <label>To <select name="to" class="form-select form-select-sm"></select></label>
+  </form>`;
+  const { model, all, from, to } = form.elements;
+  // set option properties directly: html`` writes disabled=${false} as a present attribute
+  model.replaceChildren(...modelList.map(m => {
+    const ok = modelsOk.includes(m);
+    return Object.assign(document.createElement("option"), { value: m, text: ok ? m : `${m} (failed)`, disabled: !ok });
+  }));
+  const allWrap = form.querySelector("[name=all-wrap]");
+  // window ends are limited to the picked model's run times, and can't cross
+  const limit = () => {
+    for (const o of from.options) o.disabled = +o.value > +to.value;
+    for (const o of to.options) o.disabled = +o.value < +from.value;
+  };
+  const setModel = () => {
+    const t = runTimes(model.value);
+    for (const s of [from, to]) s.replaceChildren(...t.map(x => html`<option value=${x}>${fmtTime(x)}</option>`));
+    from.value = t[0]; to.value = t.at(-1);
+    allWrap.hidden = !mpc.some(d => d.model === model.value && d.geo === "all");
+    if (allWrap.hidden) all.checked = false;
+    limit();
+  };
+  const update = () => { form.value = { model: model.value || null, all: all.checked, from: +from.value, to: +to.value }; };
+  model.addEventListener("input", setModel);
+  from.addEventListener("input", limit);
+  to.addEventListener("input", limit);
+  form.addEventListener("input", update);
+  form.addEventListener("submit", e => e.preventDefault());
+  form.hidden = noModels;
+  model.value = start;
+  if (!noModels) setModel();
+  update();
+  return form;
+}
+{
+  if (noModels) return html`<div class="model-note">${msc.length ? "No model has produced predictions for this contest yet." : "This contest is not modeled."}</div>`;
+  const confs = [...new Set(modelRows.map(d => d.model_conf).filter(c => c != null))];
+  return html`<div class="model-note">
+    <div>Solid: prediction · band: interval (${confs.length ? confs.join(", ") : "none for this model"}) · dotted: reported${hasAll ? " · dashed: statewide (all counties)" : ""}</div>
+  </div>`;
 }
 ```

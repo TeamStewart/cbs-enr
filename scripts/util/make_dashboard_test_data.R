@@ -5,7 +5,8 @@
 ## Dem-vs-Rep contest (sen_dem + sen_rep -> sen), replays every snapshot through
 ## make_summary() into {TEST_FOLDER}/{STATE}/summaries, writes fake history files
 ## for GA (no methods) and NC (with methods), copies the dashboard states' crosswalks
-## and L2 files from 26_general/input_data, and saves the dashboard data rds.
+## and L2 files from 26_general/input_data, writes fake enightmodels runs to
+## {TEST_FOLDER}/model_results, and saves the dashboard data rds.
 ##
 ## Usage (from project root):
 ##   CBS_ELECTION_FOLDER=26_dashtest Rscript scripts/util/make_dashboard_test_data.R
@@ -122,6 +123,95 @@ nanoparquet::write_parquet(fake_history("GA", FALSE), fs::path(PATH_DROPBOX, ELE
 nanoparquet::write_parquet(fake_history("NC", TRUE), fs::path(PATH_DROPBOX, ELECTION_FOLDER, "history", "NC_history.parquet"))
 
 dd = build_dashboard_data(unname(dash))
+
+# fake enightmodels output (one predictions/status csv per summary time), shaped like
+# 26_general/model_tests/run_night_sim: GA-sen has scraped + all, NC-sen scraped only,
+# PA-gov scraped only with model_medsl failing; other contests get no models
+FAKE_MODELS = tribble(
+  ~model, ~conf_scraped, ~conf_all, ~width,
+  "model_simpleswing", "county_bootstrap_95", "county_bootstrap_95_plus_rest", 0.04,
+  "model_cory", NA, NA, NA,
+  "model_medsl", "posterior_95", "posterior_95_plus_rest", 0.06,
+  "model_cory_pois", "approx_conform_95", NA, 0.15
+)
+FAKE_RACES = tribble(
+  ~key, ~geos, ~failed,
+  "GA-sen", c("scraped", "all"), NA,
+  "NC-sen", "scraped", NA,
+  "PA-gov", "scraped", "model_medsl"
+)
+
+fake_models <- function(key, geos, failed) {
+  m = filter(dd$meta, .data$key == .env$key)
+  tot = filter(dd$ts, .data$key == .env$key) |>
+    summarise(across(c(dem, rep, total), sum), .by = time) |>
+    filter(total > 0) |>
+    arrange(time)
+  fin = slice_tail(tot, n = 1)
+  cand = c(dem = str_to_lower(m$dem_name), rep = str_to_lower(m$rep_name), oth = "write-in")
+  mods = filter(FAKE_MODELS, !model %in% failed)
+
+  pred = expand_grid(tot, mods, geo = geos) |>
+    mutate(
+      # "all" adds unscraped counties: less reported, final result a bit more Rep
+      cover = if_else(geo == "all", 0.75, 0.97),
+      pct_rep = pmin(total / fin$total * cover, 1),
+      final_dem = fin$dem / fin$total - if_else(geo == "all", 0.03, 0) + rnorm(n(), 0, 0.004),
+      final_rep = fin$rep / fin$total + if_else(geo == "all", 0.03, 0) + rnorm(n(), 0, 0.004),
+      final_n = fin$total / cover * runif(n(), 0.97, 1.03),
+      err = (1 - pct_rep) * rnorm(n(), 0, 0.03),
+      half = coalesce(width, 0) * (1 - pct_rep) + 0.004,
+      conf = if_else(geo == "all", conf_all, conf_scraped)
+    ) |>
+    rowwise() |>
+    reframe(
+      time, model, geo, pct_rep,
+      model_conf = conf, party = c("dem", "rep", "oth"),
+      share_rep = c(dem, rep, total - dem - rep) / total,
+      share = c(final_dem + err, final_rep - err, 1 - final_dem - final_rep),
+      half = half * c(1, 1, 0.2),
+      n = final_n, n_rep = total * c(dem, rep, total - dem - rep) / total
+    ) |>
+    mutate(candidate = cand[party])
+
+  pred = bind_rows(
+    transmute(pred, time, model, model_conf, geo, party, candidate, pred_type = "share", pct_rep,
+              rep = share_rep, pred = share, pred_min = share - half, pred_max = share + half),
+    transmute(pred, time, model, model_conf, geo, party, candidate, pred_type = "vote", pct_rep,
+              rep = n_rep, pred = share * n, pred_min = (share - half) * n, pred_max = (share + half) * n)
+  ) |>
+    mutate(
+      state = m$state, election = ELECTION_DATE, jurisdiction = m$state, contest = m$contest, district = m$district,
+      race_id = paste(m$state, m$contest, sep = "_"),
+      across(c(pred_min, pred_max), \(x) if_else(is.na(model_conf), NA_real_, x))
+    )
+
+  status = expand_grid(time = tot$time, model = FAKE_MODELS$model) |>
+    mutate(
+      race_id = paste(m$state, m$contest, sep = "_"),
+      status = if_else(model %in% failed, "error: fake failure for testing", "ok"),
+      statewide = if_else("all" %in% geos, "fake county snapshot", "no CBS county snapshot yet"),
+      settings = "fake model output from make_dashboard_test_data.R"
+    )
+  list(pred = pred, status = status)
+}
+
+model_dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_results")
+fs::dir_delete(model_dir) |> try(silent = TRUE)
+fs::dir_create(model_dir)
+fm = pmap(FAKE_RACES, fake_models)
+fm_pred = map(fm, "pred") |> bind_rows()
+fm_status = map(fm, "status") |> bind_rows()
+iso = \(t) format(t, "%Y-%m-%dT%H:%M:%S%z", tz = "UTC")
+stamp = \(t) format(t, "%Y%m%d_%H%M%S", tz = "UTC")
+for (t in sort(unique(fm_pred$time))) {
+  t = as.POSIXct(t, tz = "UTC")
+  readr::write_csv(mutate(filter(fm_pred, time == t), time = iso(time)), fs::path(model_dir, glue("predictions_{stamp(t)}.csv")), na = "")
+  readr::write_csv(mutate(filter(fm_status, time == t), time = iso(time)), fs::path(model_dir, glue("status_{stamp(t)}.csv")), na = "")
+}
+cli::cli_inform("fake model results: {n_distinct(fm_pred$time)} runs in {model_dir}")
+
+dd = build_dashboard_data(unname(dash), models = read_model_results(model_dir))
 saveRDS(dd, fs::path(PATH_DROPBOX, ELECTION_FOLDER, "dashboard_data.rds"))
 # committed copy; pushing it to main redeploys GitHub Pages (.github/workflows/pages.yml)
 saveRDS(dd, "data/dashboard/dashtest_data.rds")
