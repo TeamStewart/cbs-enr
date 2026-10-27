@@ -16,6 +16,9 @@
 ## A race or model that fails is recorded in the status table; the rest carry on.
 ##
 ## From the cbs-enr folder:
+##   Rscript scripts/model/live/run_night.R                 # one refresh, from the scrapers'
+##                                                         # 26_general/{ST}/clean/*_latest.parquet
+##   Rscript scripts/model/live/run_night.R --every=5       # every 5 minutes until stopped
 ##   Rscript scripts/model/live/run_night.R --returns=<file> --candidates=<file>   # one refresh
 ##   Rscript scripts/model/live/run_night.R --returns=<file> --candidates=<file> --every=5
 ##                                                         # every 5 minutes until stopped
@@ -94,10 +97,16 @@ if (!is.na(SIM)) {
   }
 } else {
   f_ret = opt("returns"); f_cand = opt("candidates")
-  if (is.na(f_ret) || is.na(f_cand)) stop("Give --returns=<file> and --candidates=<file> (or --sim=<scenario> to test)")
   dir_cbs = d26; out_dir = file.path(d26, "model_results")
   read_any = function(p) if (grepl("\\.parquet$", p)) read_pq(p) else readr::read_csv(p, show_col_types = FALSE)
-  get_returns = function(at) {
+  # default: the scrapers' clean files, 26_general/{ST}/clean/*_latest.parquet (returns.R),
+  # their geo ids matched to each state's precinct inputs
+  if (is.na(f_ret)) get_returns = function(at) {
+    geos = unlist(lapply(unique(all_races$state), function(st) {
+      cl = state_inputs(st)$cells; if (inherits(cl, "error")) NULL else unique(cl$geo) }))
+    returns_from_clean(all_races, d26, geos = geos)
+  } else get_returns = function(at) {
+    if (is.na(f_cand)) stop("--returns=<file> needs --candidates=<file> too (CONTRACT.md sections 8 and 5)")
     live = read_any(f_ret); cand = read_any(f_cand)
     bind_rows(lapply(split(all_races, all_races$state), function(r)
       returns_from_live(filter(live, race_id %in% r$race_id), cand, state = r$state[1],

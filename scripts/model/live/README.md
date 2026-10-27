@@ -16,8 +16,9 @@ run_all(cells, returns)                           # every race x every model, on
 ## On election night
 
 ```
-Rscript scripts/model/live/run_night.R --returns=<scraped returns file> --candidates=<candidates file> --every=5
+Rscript scripts/model/live/run_night.R --every=5
 ```
+reads the scrapers' clean files, `26_general/{ST}/clean/*_latest.parquet` (`returns_from_clean()` in `R/returns.R`, which matches their precinct ids to our inputs). `--returns=<file> --candidates=<file>` reads a CONTRACT.md section 8 file instead.
 Every 5 minutes: pulls fresh CBS county results for each race in `priors.csv`, runs every
 model on every race, and writes `26_general/model_results/predictions_latest.csv` (scraped
 counties, `geo = "scraped"`, and statewide, `geo = "all"`) and `status_latest.csv`. Drop
@@ -68,6 +69,7 @@ snapshot for any race whose pull fails.
 | `R/run.R` | `run_race()`, `run_all()`, and the list of wired models |
 | `R/output.R` | `predict_all()` and `write_predictions()`: results in enightmodels' prediction format for the dashboard |
 | `R/counties.R` | statewide rows: scraped counties from the models + CBS county results for the rest |
+| `R/virtual.R` | NC's county-level "virtual precinct" batches for model_simpleswing and model_cory: `virtual_split()`, `add_virtual()` |
 | `R/races.R` | the races we cover, from `26_general/input_data/priors.csv`: `races_from_priors()`, `cbs_for_races()` |
 | `tests/sim_night.R` | runs the models on one of Ethan's simulated nights through `run_all()` |
 | `tests/check_against_original.R` | confirms the moved models reproduce `scripts/model/tests/test_sim_night.R` |
@@ -117,6 +119,8 @@ The originals in `scripts/model/` and `scripts/model/tests/` are untouched. Spee
   candidate 85% of the third-party baseline, as in Ethan's sims. Two minor candidates
   would each get 85%. The write-in candidate must be named exactly `write-in`.
 - **Races with no vote-method split.** No method split is ever assumed. If a state's vote-method history has no votes for one of the methods (MI: no early in-person in any L2 year), `build_cells()` gives one cell per precinct and the state is modeled without method; likewise if any of a race's returns lack a usable method (precinct totals only, `adv`, or missing), the race is modeled without method: model_simpleswing on precinct totals (county fixed effects only), model_cory with `model_legacy_config(by_method = FALSE)`, and model_medsl is skipped (status says why), since its equations are by method. `abs` is read as mail and `prov` as Election Day. Decided per race at every refresh (`shape_for_method()` in `R/run.R`); `settings` in the status file says when a fit was without method.
+- **Virtual precincts (NC).** Votes a county reports in county-level batches instead of by precinct (NC's early-voting sites and absentee piles) match no precinct. For model_simpleswing and model_cory, a county x method that was mostly reported this way in 2024 (`{ST}_virtual_history.parquet`) is taken out of the precinct fit and added back as one county-level unit: counted votes once the batch is in, projected from 2024 at tonight's swing until then (`R/virtual.R`). model_medsl uses the same rows as county x mode observations (`bucket_counts()` in `R/returns.R`); model_cory_pois and model_cory_prec do not use them yet.
+- **NC vote-method split.** `{ST}_precinct_mode_results.parquet` (`scripts/model/make_mode_results.R`) gives every model the same split: each county's 2022 split (official county returns) with the 2024 precinct pattern within the county. Rerun it after rerunning `prep_model_inputs.R NC`.
 - **Counties the feed doesn't cover.** The models fit only the counties with at least one precinct in the race's returns (`feed_cells()` in `R/output.R`); every other county, including counties in our precinct inputs whose live ids we don't have, comes from CBS's county results in the statewide rows. As of 2026-10-22 the crosswalks have live ids for FL 18 of 31 counties, MI 10 of 31, TX 4 of 32 and CA none.
 - **County history for CA and NY.** votehub has no county results for CA or NY, so their statewide rows read `26_general/input_data/county_history/{ST}_county_history.csv` (2024 presidential by county), built by `scripts/model/make_county_history.R` (outside live/; run it again only to rebuild those files or add a state).
 - **Statewide rows** come from `R/counties.R` (scraped counties from each model + CBS county

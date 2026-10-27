@@ -121,17 +121,23 @@ medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refre
   env = new.env(parent = globalenv())
   assign("covs_long", inp$covs_long, envir = env)
   assign("mode_hist", inp$mode_hist, envir = env)
+  # model_turnout.R hardcodes STATE = "TX" (its own default driver is the TX trial), and
+  # nothing here used to override it -- so every state ran with STATE == "TX". Harmless
+  # while STATE only fed unread file paths and a cli header, but anything keyed on it (the
+  # per-state REF_MODE / MODES lookup) would silently read TX for all six states. Inject it
+  # and skip the model's own assignment, exactly as covs_long / mode_hist are handled.
+  assign("STATE", state, envir = env)
   skipped = character()
   suppressMessages(for (i in seq_along(ex)) {
     e = ex[[i]]; line = sr[[i]][1]
-    if (lhs(e) %in% c("covs_long", "mode_hist")) { skipped = c(skipped, lhs(e)); next }
+    if (lhs(e) %in% c("covs_long", "mode_hist", "STATE")) { skipped = c(skipped, lhs(e)); next }
     if (!(line < cut_ret || (line < cut_run && is_fun(e)))) next
     # source(model_core.R) goes into the model's environment, not the global one
     if (is_source(e)) e[["local"]] = env
     eval(e, envir = env)
   })
-  if (!setequal(skipped, c("covs_long", "mode_hist")))
-    stop("model_turnout.R no longer assigns covs_long / mode_hist at top level; update live/R/model_medsl.R")
+  if (!setequal(skipped, c("covs_long", "mode_hist", "STATE")))
+    stop("model_turnout.R no longer assigns covs_long / mode_hist / STATE at top level; update live/R/model_medsl.R")
   if (!exists("fit_stage", envir = env, inherits = FALSE)) stop("model_turnout.R no longer defines fit_stage()")
 
   env$.draws = as.integer(Sys.getenv("MEDSL_DRAWS", unset = env$DRAWS))
@@ -195,12 +201,80 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
   draws = min(env$.draws, max(50L, floor(max_pd / nrow(env$prec))))
   if (draws < env$.draws) settings = paste0(settings, sprintf("; draws cut to %d for %d precincts (MEDSL_MAX_PRECINCT_DRAWS)", draws, nrow(env$prec)))
   if (!is.null(seed)) set.seed(seed)
-  f = suppressMessages(env$fit_stage(env$cells, ret_m, draws = draws, cross_mode = env$USE_CROSS_MODE))
+  # ---- county x mode observations for the votes that land on NO precinct ------------
+  # cell_counts() joins FROM `cells`, so AK's house-district mail/early/provisional piles
+  # and NC's county mail and one-stop-site piles -- 31% of each state's vote -- are dropped
+  # before the model sees them. bucket_counts() turns exactly those rows into one (county,
+  # mode) observation each, and fit_stage()'s CTY_BOUND uses the county totals as a LOWER
+  # BOUND on the county's drawn turnout. This is the only wiring that makes it reach air.
+  # CA, FL, MI and TX have zero bucket vote mass, so there it returns 0 rows and the bound
+  # is inert by construction, not by a state test.
+  # The `known` precinct set is the UNION of the feed's cells and the model's: a geo that is
+  # a real precinct in either must never be read as a county pile (NC has precincts actually
+  # named `PROVI` and `EV`), and the two frames can differ when the feed covers a subset of
+  # counties.
+  known_cells = tibble(geo = union(as.character(cells$geo), as.character(env$cells$geo)))
+  cty_obs = bucket_counts(known_cells, returns)
+  report_buckets(cty_obs, cells = known_cells, label = unique(returns$race_id)[1])
+  f = suppressMessages(env$fit_stage(env$cells, ret_m, draws = draws, cross_mode = env$USE_CROSS_MODE,
+                                     county_obs = cty_obs))
+  # fit_stage() is run under suppressMessages (the model is chatty), which would also eat
+  # the county bound's per-county log -- and that log is the only way to tell a bound that
+  # binds on real votes from one that binds on an id join error. So it is re-emitted here
+  # from the returned frame.
+  if (!is.null(f$cty_bound) && nrow(f$cty_bound)) {
+    cb = f$cty_bound
+    cli::cli_alert_info(paste0(
+      "county turnout bound: binds in {nrow(cb)} county(ies), raising the county total by ",
+      "{prettyNum(round(sum(cb$mean_short)), big.mark = ',')} votes in total ",
+      "(max {prettyNum(round(max(cb$max_short)), big.mark = ',')} in one county)"))
+    for (i in seq_len(nrow(cb))) cli::cli_alert_info(paste0(
+      "  county {cb$county[i]}: +{round(cb$mean_short[i])} mean on ",
+      "{cb$draws_bound[i]} draw{?s}, bucket {prettyNum(round(cb$bucket[i]), big.mark = ',')}, ",
+      "counted {prettyNum(round(cb$cnt_prec[i]), big.mark = ',')}"))
+  }
 
   dr = tibble(twop = f$S_2p, turnout = f$turn, dem = f$S_dem * f$turn, rep = f$S_rep * f$turn)
   ci = cred(dr$twop, level); ct = cred(dr$turnout, level)
-  list(model = "medsl", status = "ok", settings = settings,
-       race = bind_cols(tibble(status = "ok", est_twop = mean(dr$twop), lo_twop = ci[["lower"]], hi_twop = ci[["upper"]],
+  # ---- THE SILENT-PRIOR ALARM ------------------------------------------------------
+  # A fit that is entirely its own prior returns the same columns and the same intervals as
+  # a real one. Nothing in the output distinguishes them, so on the night a state whose feed
+  # does not join would publish a row labelled `model_medsl` that is just the 2024 baseline
+  # echoed back. MI is the live case: its geos join `cells` at 0.6% and its reporting
+  # counties send `method = "all"` for which there is no cell, so it reaches ~0 observed
+  # cells and every equation falls back to prior_loc.
+  #
+  # fit_stage() counts the three degradation paths (whole-fit below 30 observed cells, a
+  # single equation below MIN_FIT_OBS, a mode held at prior by the support gate) and returns
+  # them in `prior_only`, because its own cli messages are eaten by the suppressMessages()
+  # above. Re-emitted here, and -- the part that matters -- carried in `status`, so it
+  # reaches the status table and the dashboard rather than only the log.
+  po = f$prior_only
+  st = "ok"
+  if (!is.null(po)) {
+    if (isTRUE(po$all_prior)) {
+      st = sprintf("prior_only: %d of %d equations at prior, %d observed cells of %d",
+                   po$eq_prior, po$eq_total, po$n_obs_cells, po$n_cells)
+      cli::cli_alert_danger(paste0(
+        "{state}: THIS FIT IS ITS PRIOR. {po$n_obs_cells} observed cell(s) of ",
+        "{po$n_cells}; {po$eq_prior} of {po$eq_total} equations at prior. The numbers ",
+        "below carry no information from tonight -- do not read them as a forecast."))
+    } else if (po$eq_prior > 0 || length(po$gated_modes)) {
+      st = sprintf("ok (partial prior: %d of %d equations%s)", po$eq_prior, po$eq_total,
+                   if (length(po$gated_modes))
+                     paste0("; modes gated: ", paste(po$gated_modes, collapse = "/")) else "")
+      cli::cli_alert_warning(paste0(
+        "{state}: {po$eq_prior} of {po$eq_total} equations are at their prior",
+        if (length(po$gated_modes))
+          " and mode(s) {.val {po$gated_modes}} are held at prior by the support gate"
+        else "", " -- partial fit."))
+    }
+  }
+  list(model = "medsl", status = st, settings = settings,
+       # the structured ledger as well as the status string, so a consumer can test
+       # `fit$prior_only$all_prior` rather than parse prose
+       prior_only = po,
+       race = bind_cols(tibble(status = st, est_twop = mean(dr$twop), lo_twop = ci[["lower"]], hi_twop = ci[["upper"]],
                                p_dem_win = mean(dr$twop > 0.5), est_turnout = mean(dr$turnout),
                                lo_turnout = ct[["lower"]], hi_turnout = ct[["upper"]]), counted),
        cells = f$prec,                       # precinct: turn_est, dem_est (share of all votes), interval

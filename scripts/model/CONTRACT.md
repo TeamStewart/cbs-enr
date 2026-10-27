@@ -727,3 +727,246 @@ reliable, because the model no longer depends on it.
 3. §14.4 `dem2`
 4. §14.3 mode history series
 5. §13 backtest data for NC and GA, with T1-T6
+
+---
+
+## 15. Model outputs — what the model emits
+
+**Why this section exists.** §1-§14 run one way: they specify data the model must be
+*given*. Nothing in them says what it *produces*, so the output spec has lived in three
+unversioned places — `enightmodels::COLS_PRED`, `live/README.md`, and the header of
+`live/R/output.R` — and a dashboard author or a new model author has had nothing to build
+against. This section is that document. Consumer: the dashboard (`index.qmd`) and anyone
+reading the night's files afterwards. Producer: `live/R/output.R`.
+
+Three artifacts, written to `26_general/model_results/` in the shared Dropbox:
+
+| artifact | schema | written by |
+|---|---|---|
+| `predictions_{stamp}.csv` + `predictions_latest.csv` | `enightmodels::COLS_PRED` + the extras in §15.1 | `write_predictions()` |
+| `status_{stamp}.csv` + `status_latest.csv` | §15.2 | `write_predictions()` |
+| `precincts_{stamp}.parquet` + `precincts_latest.parquet` | §15.3 — **new** | `write_precincts()` |
+
+`{stamp}` is `max(status$time)` as `%Y%m%d_%H%M%S` in `America/New_York`. The stamped file
+is never overwritten, so the night's history is kept; the `_latest` copy is written to a
+hidden `.tmp` and renamed, so a reader never sees half a file. Both forms exist for all
+three artifacts — a consumer polling `_latest` and a consumer reconstructing the night
+from the stamped series must see the same thing. Test runs point `dir` elsewhere
+(`tempdir()`), never at `model_results/`.
+
+### 15.1 `predictions` — the prediction table
+
+**The schema is `enightmodels::COLS_PRED`: exactly 16 columns, in that order.** The
+package is the single source of truth. The list below is for readability only; where it
+and `COLS_PRED` disagree, the package wins, and nothing in this section may be read as
+re-specifying it.
+
+| column | meaning |
+|---|---|
+| `state`, `election`, `jurisdiction`, `contest`, `district` | the race (enightmodels `RACE_ID`) |
+| `candidate`, `party` | one row per candidate |
+| `pred_type` | `"vote"` = predicted final votes; `"share"` = predicted final share of ALL votes cast in the race, as `pred_convert(to = "share")` defines it |
+| `time` | the returns snapshot the predictions are from |
+| `model` | `model_simpleswing`, `model_cory`, `model_cory_pois`, `model_medsl` by default; `model_cory_prec` only when asked for (see below) |
+| `model_conf` | how the interval was made and at what level — see below |
+| `pct_rep` | share of the race's precincts with any votes counted. **The same definition for every model**, so the column lines up across them |
+| `rep` | reported so far (votes, or share of the votes counted so far) |
+| `pred` | predicted final value |
+| `pred_min`, `pred_max` | interval ends; NA for a model with no interval |
+
+Every row must pass `enightmodels::check_pred_data()`. That function, not this document,
+defines the legal `pred_type` values, the `[0, 1]` bound on `pct_rep`, and the
+non-negativity of `rep`/`pred`/`pred_min`/`pred_max`. Do not duplicate those constraints
+here or anywhere else; a second copy is a second thing to get out of date.
+
+**Call it through `check_pred()` in `live/R/output.R`, not directly**, for two measured
+reasons that the wrapper documents in full:
+1. `check_pred_data()` cannot return for ANY input — its last block reads
+   `if (isTRUE(pred))` and `pred` is not one of its arguments. All ten substantive checks
+   run and pass first, so the wrapper swallows that one message and re-raises everything
+   else. Reported upstream; not patched locally, because `renv.lock` pins the package by
+   SHA and the installed copy has no R sources, so a patch would evaporate on a fresh
+   checkout — which is the night.
+2. `district` is NA for every statewide race, and an all-NA column carries no type in a
+   CSV, so `readr` reads it back as `logical` and the package's `is.integer` assertion
+   fails. The wrapper coerces exactly that case. **Writing it as integer does not help:**
+   `NA_integer_` still writes as an empty field.
+
+**Emit `pred_type` `"vote"` and `"share"` only.** `check_pred_data()` also accepts
+`"margin_vote"` and `"margin_share"`, but it requires `pred >= 0`, so a margin row for the
+trailing party fails validation. **Margins are the dashboard's job** — it differences the
+`dem` and `rep` rows itself. Do not emit margin rows and do not clamp one to zero to make
+it pass.
+
+**Extras beyond the 16 are permitted by the schema; exactly four are sanctioned.**
+
+| extra | meaning |
+|---|---|
+| `p_win` | probability the candidate finishes ahead of the other major-party candidate. NA without draws, and on third-party rows |
+| `geo` | which counties the row covers — see below |
+| `cbs_as_of` | the time of the CBS county snapshot used, on statewide rows only |
+| `race_id` | `priors.csv`'s key for the race, so §15.2 joins without reconstruction |
+
+A fifth extra requires this section to be updated first. The point of naming them is that
+a consumer can reject an unexpected column rather than silently ignore it.
+
+**`race_id` is carried, not reconstructed, and that is deliberate.** It is
+`<STATE>_<contest>[_<district>]`, and `COLS_PRED` has no slot for it, so `parse_race_id()`
+(`live/R/races.R`) decomposes it into `state` / `contest` / `district`. **That decomposition
+is not invertible:** it SYNTHESISES `district = 1` for house races in at-large states, so
+`AK_house` arrives as contest `house` with district `1` and no district in its id. Measured
+on the current 12 races, `paste(state, contest, sep = "_")` recovers `race_id` 12 of 12
+while `paste(state, contest, district, sep = "_")` recovers 11 of 12 — and a districted id
+such as `NY_house_12` breaks the first rule. No paste rule covers both shapes, and picking
+the wrong one fails *silently*: an anti-join reports every row as missing rather than
+erroring. One column removes the class.
+
+**`geo` takes two literals and nothing else: `"scraped"` and `"all"`.** `"scraped"` is the
+counties we scrape precinct by precinct — the models themselves. `"all"` is statewide: the
+scraped counties from the model plus every other county from CBS's county results
+(`counties.R`). **`geo` is not a precinct key**, despite being the name §0 gives the
+canonical precinct id everywhere else in this contract. Nothing in this table is ever at
+precinct grain; that is precisely why §15.3 exists as a separate artifact. Anyone joining
+`predictions.geo` to a precinct spine has made a mistake, and it will join at 0%.
+
+**`model_conf` is `{method}_{level}`, and `{method}_{level}_plus_rest` on statewide rows**
+(`geo = "all"`), because a statewide interval is the model's interval composed with the
+CBS remainder and is not the same object.
+
+| model | `model_conf` |
+|---|---|
+| `model_simpleswing` | `county_bootstrap_95` |
+| `model_medsl` | `posterior_95` |
+| `model_cory` | NA — the model gives no interval, and hardcodes `pred_min`/`pred_max`/`model_conf` to NA |
+| `model_cory_prec` | `cred_int_95` or `conf_seq_95`, from `enightmodels::forecast_intervals()` |
+
+**`model_cory_prec` is implemented but NOT in the default run**, on cost rather than
+correctness. Measured on `tx_base` at 22:00 with 2 races x 5 models, the refresh took 425s
+and cprec was **423s** of it (medsl 37s, cpois 30s, cory 20s, simpleswing 12s). Its runtime
+is flat in draws and linear in cells, so the frame expansion worsens it — TX went 6,134 →
+15,084 precincts and CA is 26,700 — against a 300s cadence. `MODELS` in `live/R/run.R` is
+the implemented set; `MODELS_DEFAULT` is what runs. `--models=...,cprec` still reaches it.
+
+`forecast_intervals()` returns both a credible interval and an anytime-valid confidence
+sequence. **Pick one and name it;** emitting both would duplicate every row, and an
+unlabelled choice makes two models' intervals look comparable when they are not.
+
+*Acceptance:* `check_pred(read_csv("predictions_latest.csv"))` passes — it folds in the
+column-order assertion below, so this is one call, and it is the call to use rather than
+`check_pred_data()` directly (see above);
+`setdiff(names(d), c(COLS_PRED, "p_win", "geo", "cbs_as_of", "race_id"))` is empty;
+`unique(d$pred_type)` is a subset of `{vote, share}`; `unique(d$geo)` is a subset of
+`{scraped, all}`; and every row with `geo == "all"` has a non-NA `cbs_as_of` and a
+`model_conf` ending `_plus_rest` or NA.
+
+### 15.2 `status` — one row per race x model, always
+
+| column | meaning |
+|---|---|
+| `race_id` | the race |
+| `model` | the model |
+| `time` | the returns snapshot attempted |
+| `status` | `"ok"`, `"ok (partial prior: ...)"`, `"prior_only: ..."`, `"no_votes"`, or `"error: ..."` with the message |
+| `statewide` | whether `geo = "all"` rows were added, or why not |
+| `seconds` | wall-clock for that model on that race |
+| `settings` | the model's resolved settings, enough to reproduce the fit |
+| `cbs` | provenance of the county snapshot used, e.g. `"not pulled; using the snapshot saved 2026-11-04 03:00:00 UTC"` |
+
+`race_id` here is `priors.csv`'s key (`TX_gov`), **not** §15.1's `contest` (`gov`). §15.1
+carries `race_id` as a sanctioned extra precisely so the two tables join on it directly —
+do not reconstruct it from `state` and `contest`, for the reason given there.
+
+**`prior_only` is not a flavour of `ok`.** A fit whose equations have all fallen back to
+their prior returns the same columns, the same point estimates and the same intervals as a
+real one — nothing in §15.1 distinguishes them. So the degradation is reported here instead,
+in three levels:
+
+| status | meaning |
+|---|---|
+| `ok` | every equation was fitted on tonight's returns |
+| `ok (partial prior: N of M equations[; modes gated: ...])` | some equations fell below `MIN_FIT_OBS` or a mode was held at prior by the support gate. Normal early in the night — in TX the reference mode's turnout equation sits at prior until mail reports, because it needs `q_share >= MIN_MODE_SHARE`. |
+| `prior_only: N of M equations at prior, K observed cells of C` | **the output carries no information from tonight, and NO PREDICTION ROWS ARE EMITTED.** The race x model appears here with the reason and nowhere in §15.1, which is "no prediction and we say why" rather than a silent gap. |
+
+A consumer should test `fit$prior_only$all_prior` rather than parse the string; `fit_medsl()`
+returns the structured ledger alongside the status.
+
+**The invariant this table exists for: a race x model with no prediction appears here,
+never silently vanishes.** A model that errors, or that has no votes to work with, produces
+no rows in §15.1 — the only way to tell that apart from "we never tried" is a status row.
+So `status` is written on every run, for every race x model in the run, including the
+successful ones, and it is written even when `predictions` is empty.
+
+*Acceptance:* for one run, every race in `priors.csv` x every model in `MODELS` has exactly
+one `status` row; `nrow(status) == n_races * length(MODELS)`; and every race x model absent
+from `predictions_latest.csv` has a `status` that is not `"ok"`.
+
+### 15.3 `precincts` — the per-precinct dump
+
+**New artifact.** A precinct-level prediction frame already exists in memory every refresh
+(`fit$cells`) and `output.R` drops it on the floor. This writes it.
+
+Grain: one row per `geo` x `race_id` x `model` x `time`.
+
+| column | meaning |
+|---|---|
+| `geo` | canonical precinct id (§0). **Here it is a precinct key** — unlike §15.1's `geo` |
+| `county` | county, as the spine carries it |
+| `model` | which model produced the row (§15.1's values) |
+| `race_id` | the race |
+| `time` | the returns snapshot |
+| `turn_est` | predicted final turnout, in votes |
+| `turn_sd`, `turn_lo`, `turn_hi` | its sd and interval ends |
+| `dem_est` | predicted Dem share of **ALL** votes cast |
+| `dem_sd`, `dem_lo`, `dem_hi` | its sd and interval ends |
+| `est_dem2` | predicted **two-party** Dem share |
+| `cnt_prec` | votes counted so far in that precinct |
+| `q_share` | share of that precinct's expected votes already counted |
+| `n_obs_modes` | number of modes with any observation in that precinct |
+
+`dem_est` and `est_dem2` are both required and are on **different scales**. `dem_est` is
+share of all votes; every headline figure and every coverage check is two-party. Carrying
+only one of them is how an estimate gets compared against truth on the wrong scale.
+
+Interval ends come from the `level` threaded through the call, not a hardcoded
+`0.025`/`0.975`, and they are at the same level as §15.1's `model_conf`.
+
+**Parquet, not CSV, and this is not a preference.** Precincts x races is about 52,800 rows
+per model per refresh (CA alone is 23,685 x 1), so ~211k rows per refresh across four
+models and ~30M rows over a 12-hour night at a 5-minute cadence. Partition by state and
+stamp.
+
+A model that cannot supply a precinct frame emits **no rows** and a note in §15.2 — not
+NA-filled rows. A consumer must be able to tell "this model has no precinct view" from
+"this precinct has no estimate".
+
+**Residuals are deliberately not in this round.** No truth column, no residual, no error.
+The point of this pass is to look at the dump before deciding what to measure on it;
+adding a residual now fixes a comparison scale before we know which one is right. Same for
+a per-precinct `p_win`: either it is computed from retained draws or this section says we
+do not have it — for this round, we do not.
+
+*Acceptance:* one `run_night.R --sim` pass writes `precincts_latest.parquet` with exactly
+one row per `geo` x `race_id` x `model` for every model that supplies a frame; no NA in
+`geo`, `county`, `model`, `race_id`, `time` or `turn_est`; the interval columns non-NA for
+every model with draws; `est_dem2` in `[0, 1]`; the count of precincts with
+`cnt_prec > turn_est` reported rather than left silent, since a precinct counting past its
+own prediction is a signal, not a rounding artifact; and `n_obs_modes <=` the number of modes in that state's returns — asserted
+explicitly, because the existing flag-gated dump gets this wrong, reading 10,956 on a
+227-registrant precinct.
+
+### 15.4 Delivery order
+
+1. **§15.1 and §15.2** — these describe what `output.R` already emits, so the work is the
+   assertions, not the writer: the sanctioned-extras check, the `geo`-literals check, and
+   the race x model completeness check. Cheap, and they are what catches a schema drift
+   introduced by a later model.
+2. **§15.3** — new writer (`write_precincts()`), plus the `prec_out` columns it needs that
+   do not exist yet: `turn_sd`/`turn_lo`/`turn_hi`, `est_dem2`, `cnt_prec`, and `level`
+   threaded instead of hardcoded. Per-model adapters, because the `cells` slot is not
+   uniform across models today.
+3. **`model_cory_prec`'s `model_conf`** — decide `cred_int_95` vs `conf_seq_95` on its
+   first real run and record the choice in §15.1's table. Until it is recorded, that
+   model's intervals are not comparable to `model_medsl`'s.
+
+Deferred: residuals and per-precinct `p_win` in §15.3; margin rows anywhere (§15.1 — the
+dashboard's job, permanently).

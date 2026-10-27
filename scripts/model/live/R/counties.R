@@ -153,7 +153,7 @@ project_rest = function(rest, swing, turn_ratio, noise = TRUE) {
 # Statewide rows (geo = "all") for one race x model, in the same format as to_pred_data().
 # fit: run_race() result; cbs: latest CBS snapshot for the race; base: county_baseline().
 state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, level = 0.95) {
-  if (!identical(fit$status, "ok") || is.null(cbs) || !nrow(cbs)) return(NULL)
+  if (!fit_ok(fit) || is.null(cbs) || !nrow(cbs)) return(NULL)
   rest = rest_of_state(cbs, base, cells)
   sc = scraped_counties(cells)
   b32 = cbs |> distinct(county_fips, county_cbs) |> filter(county_cbs %in% sc) |>
@@ -167,15 +167,43 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
   lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
 
   cand = reported_by_candidate(returns)
-  if (model %in% c("swing", "medsl")) {
+  if (model %in% c("swing", "medsl", "cprec")) {
     dr = fit$draws
     D32 = dr$dem; R32 = dr$rep; T32 = dr$turnout
     pt = fit_point(fit)
-    conf = sprintf(if (model == "swing") "county_bootstrap_%g_plus_rest" else "posterior_%g_plus_rest", 100 * level)
+    conf = sprintf(switch(model, swing = "county_bootstrap_%g_plus_rest",
+                          medsl = "posterior_%g_plus_rest",
+                          cprec = "cred_int_%g_plus_rest"), 100 * level)
   } else if (model == "cory") {
-    pr = if (is.data.frame(fit$raw)) fit$raw else fit$raw$pred
-    pr = mutate(pr, party = as.character(party))
+    pr = cory_by_candidate(fit)    # with any virtual-precinct votes (virtual.R)
     pt = c(dem = sum(pr$pred[pr$party == "dem"]), rep = sum(pr$pred[pr$party == "rep"]), tot = sum(pr$pred))
+    D32 = pt[["dem"]]; R32 = pt[["rep"]]; T32 = pt[["tot"]]
+    conf = NA_character_
+  } else if (model == "cpois") {
+    # model_cory_pois has no draws, so the statewide composition follows the `cory` path:
+    # a point estimate carried to the rest of the state, with NO interval.
+    #
+    # It DOES carry conformal bounds on the scraped counties, and they are deliberately not
+    # used here. project_rest() propagates an interval by taking the swing and turnout ratio
+    # from each DRAW, so the rest of the state moves with the scraped counties. With only a
+    # lo/hi pair there is nothing to propagate: running project_rest() at the bounds would
+    # compose a conformal bound on scraped-county votes with a point projection of the
+    # remainder, which is not a calibrated interval on the statewide share. An honest NA
+    # beats a number nobody can defend on air. (Its scraped-county interval is also ~12x
+    # model_medsl's width and does not tighten as the count comes in -- see model_cpois.R.)
+    #
+    # TAKE `party` FROM THE RETURNS. fit_cpois runs in `party_est = "pooled"` mode, which
+    # labels every row party = "all"; `sum(pred[party == "dem"])` would be 0 for both
+    # majors and T32 would divide by zero. Same trap as in to_pred_data().
+    pr = (if (is.data.frame(fit$raw)) fit$raw else fit$raw$pred) |>
+      mutate(candidate = as.character(candidate)) |>
+      summarize(pred = sum(pred), .by = candidate) |>
+      left_join(select(cand, candidate, party), by = "candidate") |>
+      mutate(party = coalesce(as.character(party), "oth"))
+    pt = c(dem = sum(pr$pred[pr$party == "dem"]), rep = sum(pr$pred[pr$party == "rep"]),
+           tot = sum(pr$pred))
+    if (!(pt[["dem"]] + pt[["rep"]] > 0))
+      stop("cpois: no dem/rep votes after joining party from the returns -- check the candidate join")
     D32 = pt[["dem"]]; R32 = pt[["rep"]]; T32 = pt[["tot"]]
     conf = NA_character_
   } else stop("state_pred_data() has no rule for model '", model, "' yet")
@@ -223,10 +251,12 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
   n_prec = n_distinct(cells$geo)
   pct = (pct_reporting(cells, returns) * n_prec + sum(rest$prec_in, na.rm = TRUE)) /
     (n_prec + sum(rest$prec_of, na.rm = TRUE))
-  bind_cols(race[rep(1, nrow(out)), c("state", "election", "jurisdiction", "contest", "district")], out) |>
+  # race_id carried, not reconstructed -- see the note in output.R::to_pred_data()
+  bind_cols(race[rep(1, nrow(out)), c("race_id", "state", "election", "jurisdiction",
+                                      "contest", "district")], out) |>
     mutate(time = time, model = unname(MODEL_NAMES[model]), model_conf = conf, pct_rep = pct, geo = "all",
            cbs_as_of = max(cbs$observed_at), election = as.Date(election), district = as.integer(district)) |>
     relocate(state, election, jurisdiction, contest, district, candidate, party, pred_type, time,
-             model, model_conf, pct_rep, rep, pred, pred_min, pred_max, p_win, geo) |>
+             model, model_conf, pct_rep, rep, pred, pred_min, pred_max, p_win, geo, race_id) |>
     arrange(pred_type, desc(pred))
 }

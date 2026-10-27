@@ -17,7 +17,27 @@
 ## add it to run_race() below.
 # ========================================
 
-MODELS = c("swing", "cory", "medsl")
+# Every model that is IMPLEMENTED and runnable. run_race() dispatches on this, and
+# --models= validates against it, so a name here can always be asked for explicitly.
+MODELS = c("swing", "cory", "medsl", "cpois", "cprec")
+
+# What actually runs on a refresh unless --models= says otherwise. These are NOT the same
+# list, and cprec is the reason.
+#
+# model_cory_prec is OUT OF THE DEFAULT RUN ON COST, not correctness. Measured on tx_base
+# at 22:00, 2 races x 5 models: the whole refresh took 425s and cprec was 423s of it --
+# model_medsl 37s, model_cory_pois 30s, model_cory 20s, model_simpleswing 12s. Its runtime
+# is flat in draws and LINEAR IN CELLS, so the frame expansion makes it worse, not better:
+# TX went from 6,134 precincts to 15,084 and CA is 26,700, which puts a single CA race in
+# the thousands of seconds against a 300s refresh cadence. One model cannot be allowed to
+# decide whether the other four are published on time.
+#
+# It stays wired, sourced and tested -- `--models=...,cprec` runs it, and that is how to
+# re-measure it if someone makes it cheaper (the obvious lever is that it fits one
+# conjugate regression per candidate over every cell, so a cell-count cap or a per-state
+# draw cap would be the place to look, as MEDSL_MAX_PRECINCT_DRAWS already does for
+# model_medsl).
+MODELS_DEFAULT = setdiff(MODELS, "cprec")
 
 # Vote methods the models know (early / eday / mail), and how the feed's other labels map
 # onto them (CONTRACT.md's taxonomy: abs = absentee by mail, prov = provisional, cast on
@@ -62,13 +82,22 @@ shape_for_method = function(cells, returns) {
 # is skipped with a status saying why.
 run_race = function(model, cells, returns, ...) {
   sh = shape_for_method(cells, returns)
+  # models whose equations are by method; without a method split they are skipped, not fit
+  needs_method = function(m) list(model = m, settings = NA_character_,
+    status = if (returns_by_method(returns)) paste0("skipped: the state's vote-method history has no split (see build_cells()), which model_", m, " needs") else
+      paste0("skipped: this race's results have no vote-method split, which model_", m, " needs"))
   fit = switch(model,
     swing = fit_swing(sh$cells, cell_counts(sh$cells, sh$returns), ...),
-    cory  = fit_cory(sh$cells, sh$returns,
+    # precincts = TRUE so model_cory contributes rows to the precinct dump
+    # (write_precincts()); it returns cells = NULL without it. Costs an extra run of both
+    # model_legacy stages per race -- watch it in tests/time_models.R, since model_cory is
+    # already the slowest in CA at ~58s.
+    cory  = fit_cory(sh$cells, sh$returns, precincts = TRUE,
                      cfg = if (sh$by_method) NULL else enightmodels::model_legacy_config(by_method = FALSE), ...),
-    medsl = if (sh$by_method) fit_medsl(sh$cells, sh$returns, ...) else
-      list(model = "medsl", settings = NA_character_,
-           status = if (returns_by_method(returns)) "skipped: the state's vote-method history has no split (see build_cells()), which model_medsl needs" else "skipped: this race's results have no vote-method split, which model_medsl needs"),
+    medsl = if (sh$by_method) fit_medsl(sh$cells, sh$returns, ...) else needs_method("medsl"),
+    # not yet tested without a method split, so skipped there rather than risked
+    cpois = if (sh$by_method) fit_cpois(sh$cells, sh$returns, ...) else needs_method("cpois"),
+    cprec = if (sh$by_method) fit_cprec(sh$cells, sh$returns, ...) else needs_method("cprec"),
     stop("Unknown model '", model, "'. Choose from: ", paste(MODELS, collapse = ", "))
   )
   if (!sh$by_method && !is.null(fit$settings) && !is.na(fit$settings))
