@@ -275,6 +275,19 @@ write_precincts = function(res, dir = file.path(find_26_general(), "model_result
 predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, level = 0.95) {
   r = race$race_id[1]; m = model
   t0 = proc.time()[["elapsed"]]
+  # a by-method model on a race where only some counties' results are split by method:
+  # fit it on those counties; the rest count as unscraped and come from CBS (run.R)
+  note = NULL
+  if (m %in% METHOD_ONLY_MODELS && nrow(ret) && !returns_by_method(ret) && !all(cells$method == "all")) {
+    mc = method_counties(ret)
+    n_all = n_distinct(geo_county(ret$geo))
+    if (length(mc) && any(geo_county(cells$geo) %in% mc)) {
+      cells = filter(cells, geo_county(geo) %in% mc)
+      ret = filter(ret, geo_county(geo) %in% mc)
+      note = sprintf("; fit on the %d of %d scraped counties whose results are split by vote method (the others come from CBS county results)",
+                     length(mc), n_all)
+    }
+  }
   # votes reported in virtual precincts (NC's county-level early / absentee batches) are
   # fit around and added back at county level for model_simpleswing and model_cory
   # (virtual.R). The other models are left as they are: model_medsl takes those votes as
@@ -285,6 +298,7 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
       add_virtual(run_race(m, vs$cells, vs$returns), m, vs)
     } else run_race(m, cells, ret)
   }, error = function(e) list(status = paste("error:", conditionMessage(e))))
+  if (!is.null(note) && !is.null(fit$settings) && !is.na(fit$settings)) fit$settings = paste0(fit$settings, note)
   pred = tryCatch(to_pred_data(fit, m, cells, ret, race, time, level),
                   error = function(e) { fit$status <<- paste("error in output:", conditionMessage(e)); NULL })
   st_status = NA_character_

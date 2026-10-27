@@ -50,7 +50,8 @@ virtual_split = function(cells, returns, dir_26 = find_26_general()) {
   ret = mutate(returns, method = unname(METHOD_MAP[as.character(method)]))
   cells = mutate(cells, county_cbs = geo_county(geo))
   vh = virtual_history(st, dir_26)
-  main = if (is.null(vh)) tibble(county_cbs = character(), method = character()) else
+  main = if (is.null(vh)) tibble(county_cbs = character(), method = character(), votes = numeric(),
+                                 dem = numeric(), rep = numeric(), oth = numeric(), virt_share = numeric()) else
     filter(vh, virt_share >= VIRTUAL_MIN_SHARE, county_cbs %in% cells$county_cbs)
   in_model = paste(ret$geo, ret$method) %in% paste(cells$geo, cells$method)
   in_model = in_model & !paste(geo_county(ret$geo), ret$method) %in% paste(main$county_cbs, main$method)
@@ -63,12 +64,16 @@ virtual_split = function(cells, returns, dir_26 = find_26_general()) {
     mutate(county_cbs = geo_county(geo), party = if_else(party %in% c("dem", "rep"), party, "oth")) |>
     summarize(d = sum(votes[party == "dem"]), r = sum(votes[party == "rep"]), o = sum(votes[party == "oth"]),
               .by = c(county_cbs, method))
-  expect = dropped |> summarize(exp_base = sum(exp_votes), .by = c(county_cbs, method)) |>
+  # lean of a projected unit: the history's batch lean when it has one, else the precinct
+  # baseline of the cells it replaces (AK's history comes from a primary, so it has none)
+  expect = dropped |> summarize(base_d = sum(exp_votes * dem2) / max(sum(exp_votes), 1),
+                                base_o = sum(exp_votes * oth) / max(sum(exp_votes), 1),
+                                exp_base = sum(exp_votes), .by = c(county_cbs, method)) |>
     left_join(transmute(main, county_cbs, method, h24 = dem / pmax(dem + rep, 1), oth24 = oth / pmax(votes, 1)),
               by = c("county_cbs", "method"))
   units = full_join(expect, counted, by = c("county_cbs", "method")) |>
     mutate(across(c(d, r, o, exp_base), \(x) coalesce(x, 0)),
-           h24 = coalesce(h24, 0.5), oth24 = coalesce(oth24, 0),
+           h24 = coalesce(h24, base_d, 0.5), oth24 = coalesce(oth24, base_o, 0),
            p = 1)        # counted votes are taken as final (see header); project_rest() ignores p when nothing is counted
   list(cells = cells_m, returns = ret[in_model, ], units = units)
 }
@@ -102,7 +107,7 @@ add_virtual = function(fit, model, vs) {
                       est_turnout = est_turnout + sum(vp[1, ]))
   }
   u = vs$units
-  fit$settings = paste0(fit$settings, sprintf("; plus %d county-level virtual-precinct units (%d reported, %d projected from 2024)",
+  fit$settings = paste0(fit$settings, sprintf("; plus %d county-level virtual-precinct units (%d reported, %d projected)",
                                               nrow(u), sum(u$d + u$r + u$o > 0), sum(u$d + u$r + u$o == 0 & u$exp_base > 0)))
   fit
 }

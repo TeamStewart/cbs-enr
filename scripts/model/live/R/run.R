@@ -80,6 +80,21 @@ shape_for_method = function(cells, returns) {
 # and model_cory are fit on precinct totals (swing: county fixed effects only; cory:
 # model_legacy_config(by_method = FALSE)) and model_medsl, whose equations are by method,
 # is skipped with a status saying why.
+# Models whose equations are by method. When only SOME counties' results come split by
+# method (a county scraper that gives precinct totals only, e.g. TX Hardin, MI Wayne, most
+# of CA), predict_one() fits these on the counties that do split, and the others come from
+# CBS's county results in the statewide rows -- rather than skipping the whole race.
+METHOD_ONLY_MODELS = c("medsl", "cpois", "cprec")
+
+# the counties (3-digit code in the geo) whose every returns row has a usable method
+method_counties = function(returns) {
+  returns |>
+    mutate(cty = geo_county(geo), ok = !is.na(method) & as.character(method) %in% names(METHOD_MAP)) |>
+    summarize(ok = all(ok), .by = cty) |>
+    filter(ok, !is.na(cty)) |>
+    pull(cty)
+}
+
 run_race = function(model, cells, returns, ...) {
   sh = shape_for_method(cells, returns)
   # models whose equations are by method; without a method split they are skipped, not fit
