@@ -102,20 +102,21 @@ counties) and TX (Kaufman, Wood). NY also has Columbia but is not in the frame.
 
 | state | frame counties | frame precincts | L2 file | sample frame ids | status |
 |---|---|---|---|---|---|
-| NC | 100 (all) | 2,657 (31 blank) | nc_20261006 | `01`, `PR24`, `01-01` | done 2026-10-15 |
+| NC | 100 (all) | 3,539 rows | nc_20261006 | `01`, `PR24`, `01-01` | done 2026-10-15 |
 | AK | 30 (all) | 402 | ak_20261008 | `748`, `002` (frame_name `DD-PPP`) | done 2026-10-15 |
 | AZ | 9 | 1,545 | az_20260901 | `0009`, `0133` | partial 2026-10-23 (ENR: Cochise, Maricopa; L2 all 9 counties) |
-| CA | 17 | 23,685 (26,700 rows) | ca_20260901 | `47252`, `1204` | partial 2026-10-23 (L2 all counties; ENR San Francisco, Sonoma singletons; San Diego and Solano consolidated builds; Sonoma `07` consolidations NA) |
-| FL | 65 | 5,459 codes (6,257 rows) | fl_20261011 | `8735`, `127` | partial 2026-10-26 (ENR: 32 frame counties; Franklin, Gulf, Jackson, Liberty NA; see Results) |
+| CA | 17 | 26,682 rows | ca_20260901 | `47252`, `1204` | partial 2026-10-27 (L2 all counties; ENR San Francisco, Sonoma singletons, Ventura; San Diego and Solano consolidated builds; Sonoma `07` consolidations NA) |
+| FL | 65 | 6,252 rows | fl_20261011 | `8735`, `127` | partial 2026-10-27 (ENR: 34 frame counties incl. Osceola; Franklin, Gulf, Jackson, Liberty NA; see Results) |
 | GA | 159 (all) | 2,581 (2,618 rows) | ga_20261006 | `CP04A`, `029` | done 2026-10-25 |
 | IA | 99 (all) | 1,658 | ia_20260901 | `DOWS`, `FC2` (name-like) | waiting |
-| MI | 73 | 3,722 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-26 (ENR: Berrien, Branch, Clare, Isabella, Kent, Newaygo, Osceola, Roscommon, Saginaw, Shiawassee, St. Clair, St. Joseph, Van Buren, Wayne) |
+| MI | 73 | 3,722 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-27 (ENR: Berrien, Branch, Clare, Emmet, Genesee, Gratiot, Ingham, Iosco, Isabella, Kalamazoo, Kent, Macomb, Monroe, Newaygo, Oakland, Osceola, Ottawa, Roscommon, Saginaw, Shiawassee, St. Clair, St. Joseph, Van Buren, Wayne) |
+| MN | 87 (all) | 4,080 | mn_20261009 | `0115`, `0005` | done 2026-10-27 |
 | NE | 93 (all) | 1,321 | ne_20261002 | `03`, `16` | done 2026-10-23 |
 | NM | 33 (all) | 2,203 | nm_20260914 | `034`, `012` | waiting |
-| OH | 13 | 4,153 (4,524 rows) | oh_20260929 | `83AHA`, `31BLU` | partial 2026-10-26 (ENR: Carroll, Franklin, Stark, Summit; L2 all counties) |
-| PA | 20 | 6,378 rows | pa_20260911 | `2403`, `1680100`, `011905S` | partial 2026-10-26 (ENR: Chester, Delaware, Philadelphia; L2 all 20 counties incl. Northampton) |
-| TX | 71 | 15,084 rows | tx_20261011 | `2305`, `4608` | partial 2026-10-26 (ENR: Bexar, Hardin, Harris, Kaufman, Lamar, Wood; L2 weak in many of the 39 new counties, see Results) |
-| VA | 133 (all) | 2,534 (2,541 rows) | va_20261006 | `0206`, `0412` | done 2026-10-25 |
+| OH | 13 | 4,535 rows | oh_20260929 | `83AHA`, `31BLU` | partial 2026-10-27 (ENR: Carroll, Franklin, Hamilton, Stark, Summit; L2 all counties) |
+| PA | 20 | 6,378 rows | pa_20260911 | `2403`, `1680100`, `011905S` | partial 2026-10-27 (ENR: Allegheny, Chester, Dauphin, Delaware, Erie, Philadelphia, Washington; L2 all 20 counties incl. Northampton) |
+| TX | 71 | 10,840 rows | tx_20261011 | `2305`, `4608` | partial 2026-10-27 (ENR: Bastrop, Bexar, Denton, El Paso, Galveston, Hardin, Harris, Kaufman, Lamar, Parker, Rusk, Victoria, Wood; L2 94.8%, see Results) |
+| VA | 133 (all) | 2,538 rows | va_20261006 | `0206`, `0412` | done 2026-10-25 |
 | WA | 4 | 167 | wa_20260917 | `0001` | waiting |
 
 Statuses: `waiting` means no 26_general ENR data yet. `ready` means data has
@@ -135,6 +136,65 @@ some counties only; list them in Results. `done` means built.
 > Results entry in `docs/crosswalk_todo.md`.
 
 ## Results
+
+Rerun of 2026-10-27 (ENR cycle). The voter-file frame moved to
+`vf_frame_current_202610` (the 202609 folder is gone; `create_frame.R` reads
+202610), and `cycle.R sync` rebuilt `yougov_precinct_frame.parquet` at 10:53.
+`helpers.R` `frame_names()` and `mi.R` now read 202610. Row counts changed for
+TX (15,084 -> 10,840; e.g. Harris 4,233 -> 1,636, Galveston 128 -> 216), CA
+(26,700 -> 26,682), FL (6,257 -> 6,252), OH (4,524 -> 4,535), NC (3,529 ->
+3,539) and VA (2,541 -> 2,538), so every state script was rerun; all exit
+cleanly and match their frame row counts. Percentages are not comparable with
+earlier runs.
+
+- CA: ENR 1,853 rows (6.9%), up from 600. Ventura 1,254/1,254 with the default
+  rule. L2 88.9%.
+- FL: ENR 3,029 (48.4%). Osceola 155/155, default rule.
+- MI: ENR 2,467 (66.3%). New EV counties Gratiot 21/21, Ingham 81/81, Iosco
+  16/16, Kalamazoo 85/85, Monroe 62/63; Clarity Emmet 19/22. Macomb 248/249:
+  ENR writes `Warren, Pct 12`, so `parse_enr()` now also reads `Pct`. Macomb
+  Grosse Pointe Shores 002 is left NA (ENR `Grosse Pointe Shores 1`).
+- PA: ENR 4,101 (64.3%), up from 2,316; L2 99.9% (unchanged). New name rule for
+  Allegheny 1,323/1,328, Dauphin 158/158, Erie 149/149 and Washington 155/156:
+  `pa_norm()` of the ENR and frame names, exact and unique, then a leftover pass
+  without type words or spaces. Left NA: Allegheny BRADFORDWOOD, MCDONALD 00 05,
+  ROSSLYN FARM, SEWICKLEY HT, PENNSBURY VLG 00 02 (spelling or no ENR row);
+  Washington `WASH.-8TH WARD -1ST` (ENR has a single `WASHINGTON 8W`).
+- TX: ENR 3,988 (36.8%), L2 94.8% (was 87.9% on the 15,084-row frame). Parker
+  104/106 and Victoria 52/53 match with the default rule; Harris 1,636/1,636,
+  Bexar 1,117/1,117, El Paso 304/304, Galveston 213/216, Denton 338/339.
+- OH 2,323 (51.2%), NC 3,505 (99.0%), VA 2,525 (99.5%): reruns on the new frame,
+  no rule changes. AK, AZ, GA, NE unchanged.
+- PA Dauphin and Erie report nonzero test votes at stage 6 before election day
+  (5,372 and 25,155); precinct ids are fine.
+
+Run of 2026-10-27: new state script `mn.R`.
+
+- MN (ENR `MN_latest` 2026-10-23, statewide SOS allracesbyprecinct feed, votes
+  still mostly 0; L2 mn_20261009): 4,080 frame rows, 87 counties, all coded.
+  100% have ENR, 99.9% have L2, 99.9% have both.
+  - ENR geo is `mn_{SOS county id}_{4-digit SOS code}`; the code is the frame
+    id. The feed has no names, so each code join is checked against the SOS
+    precinct table for the election (`PrctTbl.txt`, cached as
+    `MN/raw/PrctTbl_20261103.txt`): all 4,080 names agree (Rice 0065 MORRISTOWN
+    vs MORRISTOWN CITY) and so do all CDs. The table and ENR have the same 4,105
+    codes.
+  - 25 ENR precincts have no frame row and no L2 precinct (no registered
+    voters), e.g. Becker 0052 DETROIT TWP P-2, Benton 0113 SAUK RAPIDS P-6,
+    Ramsey 0050 BLAINE W-1 P-10, Stearns 0300 ST CLOUD W2 P8. Their neighbours
+    are kept as 1:1 code matches. **Check on real results**: ballots in these 25
+    should be about 0.
+  - L2 tiers: `name_exact` 2,650, `name_std` 1,379 (`mn_std`: TOWNSHIP->TWP,
+    VILLAGE->VLG, PREC/PRCT/PCT->PRECINCT, Olmsted `W1 P01`->`W1 P1`, Crow Wing
+    `PRECINCT 3 - UNORG. TERR.` = `UNORGANIZED 3`), `name_type` 22 (drop CITY /
+    CITY OF / bare trailing PCT), `name_nospace` 16 (`ST CLOUD W-2 P-1`,
+    `SARTELL P-6`, `LA PORTE`), `name_bag` 2 (Isanti Cambridge), `manual` 8
+    (Becker DETROIT TWP = P-1, Cass LIMA TWP = LIMA UNORG, Crow Wing CROSBY /
+    CROSSLAKE PCT 1, Itasca TACONITE P-1, Pipestone FOUNTAIN PRAIRIE, St. Louis
+    GREAT SCOTT TWP P-1 and RICE LAKE TWP; ratios 0.97-0.99). Median ratio
+    0.99 in every tier.
+  - NA by design (L2): Douglas IDA TWP. P-1/P-2 (L2 has one IDA TWP, 1,232 =
+    1,108 + 130). Benton 0067 ROYALTON (1 frame voter) has no L2 precinct.
 
 Second rerun of 2026-10-26 (10 Clarity counties found once the WAF block lifted,
 plus Oakland and Genesee by web search):

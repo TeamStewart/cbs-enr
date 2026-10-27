@@ -4,7 +4,8 @@ source("scripts/util/crosswalks/helpers.R")
 # Process and general rules: docs/precinct_crosswalks.md. Reference: nc.R.
 #
 # PA is partial: ENR comes as per-county files (`PA_{county}_latest.parquet`);
-# as of 2026-10-23 only Chester, Delaware and Philadelphia have 26_general data.
+# as of 2026-10-27 Allegheny, Chester, Dauphin, Delaware, Erie, Philadelphia and
+# Washington have 26_general data.
 # New county files are picked up by the glob, but each new county's id format
 # must be checked and given a rule in `enr_to_frame()` (unknown formats stay NA).
 #
@@ -103,12 +104,44 @@ stopifnot(length(enr_files) > 0)
 pa = read_enr(enr_files)
 print(count(pa, county))
 
+# - ALLEGHENY, DAUPHIN, ERIE, WASHINGTON (Clarity; Dauphin's own site): names
+#   only ("Aspinwall Dist 1", "City--1st Ward, 1st Precinct", "ERIE WARD 01
+#   DISTRICT 01", "AMWELL 1"). Matched on pa_norm() of both names, exact and
+#   unique on both sides, then a pass on the leftovers that also drops type
+#   words and spaces ("CRANESVILLE BOR" / "CRANESVILLE", "O'Hara" / "OHARA").
+#   Allegheny single-district municipalities have no number in ENR ("Aleppo" /
+#   "ALEPPO 00 01"); Dauphin's "City--" is Harrisburg; Washington frame names
+#   shorten Monongahela to "MONON.". Added 2026-10-27.
+name_counties = c("ALLEGHENY", "DAUPHIN", "ERIE", "WASHINGTON")
+enr_name_key = function(county, x, keep_type) {
+  k = pa_norm(if_else(county == "DAUPHIN", str_replace(x, "^City--", "HARRISBURG "), x), keep_type)
+  if_else(county == "ALLEGHENY" & !str_detect(k, "\\d"), paste(k, "1"), k)
+}
+frame_name_key = function(county, x, keep_type) {
+  pa_norm(if_else(county == "WASHINGTON", str_replace(x, "^MONON\\.", "MONONGAHELA "), x), keep_type)
+}
+name_match = function(e, f, keep_type) {
+  squash = if (keep_type) identity else \(k) str_remove_all(k, " ")
+  e = mutate(e, key = squash(enr_name_key(county, precinct_enr, keep_type))) |> filter(n() == 1, .by = c(county, key))
+  f = mutate(f, key = squash(frame_name_key(county, frame_name, keep_type))) |> filter(n() == 1, .by = c(county, key))
+  inner_join(e, f, join_by(county, key)) |> select(county, precinct_enr, precinct_yougov)
+}
+name_enr = filter(pa, county %in% name_counties)
+name_fr = filter(pa_frame_names, county %in% name_counties)
+name_xw = name_match(name_enr, name_fr, TRUE)
+name_xw = bind_rows(name_xw, name_match(
+  anti_join(name_enr, name_xw, join_by(county, precinct_enr)),
+  anti_join(name_fr, name_xw, join_by(county, precinct_yougov)),
+  FALSE
+))
+
 pa = pa |>
   mutate(
     precinct = case_when(
       county == "CHESTER" & str_detect(precinct_enr, "^\\d{3} ") ~ str_extract(precinct_enr, "^\\d{3}"),
       county == "PHILADELPHIA" & str_detect(precinct_enr, "^\\d{2}-\\d{2}$") ~ str_remove(precinct_enr, "-"),
       county == "DELAWARE" ~ del_frame$precinct_yougov[match(del_canon(precinct_enr), del_frame$key)],
+      county %in% name_counties ~ name_xw$precinct_yougov[match(paste(county, precinct_enr), paste(name_xw$county, name_xw$precinct_enr))],
       .default = NA_character_ # unknown county format: check and add a rule
     )
   )

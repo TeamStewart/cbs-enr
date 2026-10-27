@@ -30,7 +30,7 @@ read_frame = function(st, id = "precinct26_id") {
 # Precinct names + voter counts for the frame codes, from the voter file the
 # frame was built from (see input_data/create_frame.R).
 frame_names = function(st) {
-  open_dataset(election_path(paste0("input_data/vf_frame_current_202609/state=", st))) |>
+  open_dataset(election_path(paste0("input_data/vf_frame_current_202610/state=", st))) |>
     count(county = county_name, precinct_yougov = precinct26_id, frame_name = precinct26_name, name = "n_frame") |>
     collect() |>
     filter(!is.na(precinct_yougov))

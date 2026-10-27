@@ -37,7 +37,7 @@ mi_l2 = enightdata::read_local(l2_file, parquet = TRUE) |>
 
 # Voter-file names by frame row. frame_names() drops cd, which MI needs because
 # the frame rows are keyed on cd.
-mi_vf = open_dataset(election_path(paste0("input_data/vf_frame_current_202609/state=", st))) |>
+mi_vf = open_dataset(election_path(paste0("input_data/vf_frame_current_202610/state=", st))) |>
   count(county = county_name, cd, precinct_yougov = precinct26_code, frame_name = precinct26_name, name = "n_frame") |>
   collect() |>
   filter(!is.na(precinct_yougov), county %in% mi_frame$county)
@@ -71,7 +71,8 @@ parse_enr = function(x) {
   # Wayne: "The Village of Grosse Pointe Shores, a Michigan City" (frame GROSSE POINTE SHORES CITY);
   # Inkster "District 1 Precinct 2" is the frame's ward/precinct.
   x = str_replace(x, "^The Village of (.*), a Michigan City", "City of \\1")
-  m = str_match(x, "^([^,]+)(?:, (?:Ward|District) (\\d+))?(?:,? Precinct (\\d+(?: ?[A-Z])?))?$")
+  # Macomb writes "Warren, Pct 12"
+  m = str_match(x, "^([^,]+)(?:, (?:Ward|District) (\\d+))?(?:,? (?:Precinct|Pct) (\\d+(?: ?[A-Z])?))?$")
   out = tibble(muni = muni_std(m[, 2]), ward = pct_std(m[, 3]), pct = pct_std(m[, 4]))
   # Oakland names cities bare ("Auburn Hills, Precinct 1" = frame AUBURN HILLS CITY)
   out$muni = if_else(!is.na(out$muni) & !str_detect(out$muni, "\\b(TOWNSHIP|CITY|VILLAGE)$"), paste(out$muni, "CITY"), out$muni)

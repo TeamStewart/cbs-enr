@@ -371,7 +371,8 @@ CLARITY_WINDOW = integer(0)
 
 clarity_scan = function(st, slug) {
   if (!length(CLARITY_WINDOW)) return(NULL)
-  base = glue::glue("https://results.enr.clarityelections.com/{st}/{slug}")
+  # statewide rows have no county slug: /{ST}/{EID}, not /{ST}//{EID}
+  base = sub("/$", "", glue::glue("https://results.enr.clarityelections.com/{st}/{slug}"))
   for (e in CLARITY_WINDOW) {
     r = clarity_get(glue::glue("{base}/{e}/current_ver.txt"))
     if (CLARITY_BLOCKED) return(NULL)
