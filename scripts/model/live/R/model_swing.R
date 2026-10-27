@@ -62,11 +62,9 @@ swing_once = function(d, cw, x = character()) {
 }
 
 # cells:  build_cells() output; returns: standard returns for ONE race (returns.R)
-# seed:   set before the bootstrap so the same snapshot always gives the same interval;
-#         NULL leaves the random-number stream alone
 # demo:   demographic spec (demos.R)
 # interval: "bootstrap" or "conformal" (results.R)
-fit_swing = function(cells, returns, boot = 100, level = 0.95, seed = 2026, demo = DEMO_DEFAULT$swing,
+fit_swing = function(cells, returns, boot = 100, level = 0.95, demo = DEMO_DEFAULT$swing,
                      interval = "bootstrap") {
   if (!requireNamespace("fixest", quietly = TRUE))
     stop('The uniform swing model needs the fixest package. In R: install.packages("fixest")')
@@ -97,7 +95,7 @@ fit_swing = function(cells, returns, boot = 100, level = 0.95, seed = 2026, demo
                         point = point, interval = interval, level = level))
   }
   rep_ctys = unique(d$county[d$c_tot > 0])
-  if (!is.null(seed)) set.seed(seed)
+  set.seed(SEED)
   draws = lapply(seq_len(boot), function(b) {
     cw = setNames(rep(1, length(ctys)), ctys)
     if (length(rep_ctys) > 1) {

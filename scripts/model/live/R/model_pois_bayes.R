@@ -30,8 +30,6 @@
 ## votes, as if nothing were counted); conformal on the fitted party shares of each cell.
 # ========================================
 
-POIS_BAYES_DRAWS = 500L
-
 # one row per cell: counts, completeness, and the demographic spec's design (demos.R) as
 # columns `x`, continuous ones centred and scaled (weighted by expected votes), dummies 0/1
 pois_bayes_inputs = function(cells, counts, state, demo) {
@@ -122,7 +120,8 @@ pois_bayes_method = function(d, form, draws, pr, prior = FALSE) {
 # cells: build_cells() output; returns: standard returns for ONE race (returns.R)
 # demo: demographic spec (demos.R); interval: "credible", "conf_seq" or "conformal"
 fit_pois_bayes = function(cells, returns, prior_sd = 0.2, demo = DEMO_DEFAULT$pois_bayes, interval = "credible",
-                          draws = POIS_BAYES_DRAWS, level = 0.95, precincts = TRUE, seed = 2026) {
+                          level = 0.95, precincts = TRUE) {
+    draws = DRAWS
     counts = cell_counts(cells, returns)
     counted = race_counted(cells, counts)
     settings = sprintf(paste0(
@@ -138,7 +137,7 @@ fit_pois_bayes = function(cells, returns, prior_sd = 0.2, demo = DEMO_DEFAULT$po
     form = if (length(inp$x)) reformulate(inp$x) else ~1
     pr = list(sd = prior_sd)
 
-    set.seed(seed)
+    set.seed(SEED)
     zero = function() list(dem = matrix(0, draws, nrow(d)), rep = matrix(0, draws, nrow(d)), oth = matrix(0, draws, nrow(d)))
     V = zero(); P = zero(); fit = list(dem = numeric(nrow(d)), rep = numeric(nrow(d)), oth = numeric(nrow(d)))
     for (m in unique(d$method)) {

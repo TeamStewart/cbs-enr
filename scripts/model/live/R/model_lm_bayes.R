@@ -25,13 +25,6 @@
 # ========================================
 
 LM_BAYES_FORM = ~ log_s(prior_turn) + dem2
-LM_BAYES_DRAWS = 500L
-
-# draws are cut for big states so draws x cells stays under LM_BAYES_MAX_CELL_DRAWS (memory)
-lm_bayes_draws = function(n_cell, draws = LM_BAYES_DRAWS) {
-    budget = as.numeric(Sys.getenv("LM_BAYES_MAX_CELL_DRAWS", unset = "2e7"))
-    max(50L, min(as.integer(draws), as.integer(budget %/% max(n_cell, 1))))
-}
 
 # one row per cell: turnout, the three share columns, their priors, obs flags, method dummies
 lm_bayes_inputs = function(cells, counts, obs_min = 0.6) {
@@ -60,7 +53,7 @@ lm_bayes_inputs = function(cells, counts, obs_min = 0.6) {
 # demo: demographic spec (demos.R) added to ctrl_form
 # interval: "credible", "conf_seq" or "conformal"
 fit_lm_bayes = function(cells, returns, ctrl_form = LM_BAYES_FORM, prior_n_turn = 0.5, prior_n_cands = 1.5,
-                        obs_min = 0.6, draws = LM_BAYES_DRAWS, level = 0.95, precincts = TRUE, seed = 2026,
+                        obs_min = 0.6, level = 0.95, precincts = TRUE,
                         demo = DEMO_DEFAULT$lm_bayes, interval = "credible") {
     counts = cell_counts(cells, returns)
     counted = race_counted(cells, counts)
@@ -68,7 +61,8 @@ fit_lm_bayes = function(cells, returns, ctrl_form = LM_BAYES_FORM, prior_n_turn 
     X = if (check_demo(demo) == "ratio") matrix(numeric(), nrow(cells), 0) else
         demo_design(demo_frame(cells, returns$state[1]), demo, drop = all.vars(ctrl_form))
     d = bind_cols(inp$d, as_tibble(X))
-    nd = lm_bayes_draws(nrow(d), draws)
+    # draws cut for big states so draws x cells stays under LM_BAYES_MAX_CELL_DRAWS (memory)
+    nd = cap_draws(nrow(d), as.numeric(Sys.getenv("LM_BAYES_MAX_CELL_DRAWS", unset = "2e7")))
 
     form = reformulate(c(attr(terms(ctrl_form), "term.labels"), colnames(X), inp$dummies))
     environment(form) = list2env(list(log_s = enightmodels::log_s), parent = globalenv())
@@ -76,7 +70,7 @@ fit_lm_bayes = function(cells, returns, ctrl_form = LM_BAYES_FORM, prior_n_turn 
                        demo, deparse1(form), prior_n_turn, prior_n_cands, obs_min, nd, interval, 100 * level)
     if (!any(counts$c_tot > 0)) return(model_result("lm_bayes", "no_votes", settings, counted, interval = interval, level = level))
 
-    set.seed(seed)
+    set.seed(SEED)
     f = enightmodels::forecast_prec(
         data = d, cands = c(s_dem, s_rep, s_oth), turn = turn, obs = obs, obs_turn = obs_turn,
         ctrl_form = form, prior_turn = prior_turn, prior_cands = c(prior_dem, prior_rep, prior_oth),

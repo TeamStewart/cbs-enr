@@ -25,6 +25,15 @@
 ## statewide rows (counties.R) are a point, as for any model without draws.
 # ========================================
 
+# Posterior / simulation draws per fit, and the seed set before them, so the same snapshot
+# always gives the same interval. swing's county bootstrap refits the model each time, so it
+# runs its own 100 (`boot`, model_swing.R).
+DRAWS = 500L
+SEED = 2026L
+
+# DRAWS cut so draws x n (cells or precincts) stays under `budget`, for memory; at least 50
+cap_draws = function(n, budget) max(50L, min(DRAWS, as.integer(budget %/% max(n, 1))))
+
 INTERVALS = c("bootstrap", "credible", "conf_seq", "conformal", "none")
 # what each model can give; the first is its default
 MODEL_INTERVALS = list(swing = c("bootstrap", "conformal"), ratio_strata = c("none", "conformal"),
