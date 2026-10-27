@@ -146,8 +146,14 @@ returns_from_clean = function(races, dir_26 = find_26_general(), files = NULL, c
   if (is.null(files)) files = unlist(lapply(unique(races$state), function(st)
     list.files(file.path(dir_26, st, "clean"), pattern = paste0("^", st, "(_.*)?_latest\\.parquet$"), full.names = TRUE)))
   if (!length(files)) stop("No *_latest.parquet in 26_general/<ST>/clean for ", paste(unique(races$state), collapse = ", "))
+  # a 0-byte file is online-only in Dropbox: skip it (with a warning) rather than stop the
+  # whole refresh, so one county's file can't take down every race
   empty = files[file.size(files) == 0]
-  if (length(empty)) stop("Online-only (0-byte) in Dropbox, make available offline: ", paste(basename(empty), collapse = ", "))
+  if (length(empty)) {
+    cli::cli_alert_warning("Skipping {length(empty)} online-only (0-byte) file{?s}; make {?it/them} available offline in Dropbox: {head(basename(empty), 8)}{if (length(empty) > 8) ', ...' else ''}")
+    files = setdiff(files, empty)
+  }
+  if (!length(files)) stop("Every *_latest.parquet for ", paste(unique(races$state), collapse = ", "), " is online-only in Dropbox; make 26_general available offline")
   x = bind_rows(lapply(files, function(f) read_pq(f) |> mutate(across(where(is.factor), as.character),
                                                                district = as.integer(district))))
   x |>

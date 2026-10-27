@@ -27,6 +27,7 @@
 ##   --candidates  CONTRACT.md section 5 (race_id, candidate_id, name, party)
 ##   --cbs=test    CBS's test feed instead of live (default live)
 ##   --models=swing,cory,medsl   (default: all three)
+##   --states=NC,TX  only these states' races (default: every race in priors.csv)
 ##   --cores=N     how many race x model fits run at once (default: all cores but one).
 ##                 Every race x model in every state goes into one pool, so a refresh takes
 ##                 about as long as the slowest single fit when there are enough cores.
@@ -51,6 +52,11 @@ CORES = as.integer(opt("cores", max(1L, parallel::detectCores() - 1L)))
 TZ = "America/New_York"
 d26 = find_26_general()
 all_races = races_from_priors(d26)
+if (!is.na(opt("states"))) {
+  ST_RUN = toupper(strsplit(opt("states"), ",")[[1]])
+  all_races = filter(all_races, state %in% ST_RUN)
+  if (!nrow(all_races)) stop("--states=", opt("states"), " matches no race in priors.csv")
+}
 
 # ---- inputs that don't change during the night: loaded once per state ---------------
 # Loaded here, in the main process, before any fits are farmed out: a forked worker's
