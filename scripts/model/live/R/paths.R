@@ -6,9 +6,17 @@
 # ========================================
 
 find_26_general = function() {
+  # PATH_DROPBOX: this session's if set, else what globals.R says for this machine (the
+  # PATH_DROPBOX env var, then its per-user list), read without touching the caller's env
+  pd = if (exists("PATH_DROPBOX") && nzchar(PATH_DROPBOX)) PATH_DROPBOX else local({
+    e = new.env()
+    if (file.exists("scripts/util/globals.R"))
+      try(suppressMessages(sys.source("scripts/util/globals.R", envir = e)), silent = TRUE)
+    if (exists("PATH_DROPBOX", envir = e, inherits = FALSE)) e$PATH_DROPBOX else ""
+  })
   cands = c(
     Sys.getenv("CBS_26_GENERAL", unset = ""),
-    if (exists("PATH_DROPBOX") && nzchar(PATH_DROPBOX)) file.path(PATH_DROPBOX, "26_general"),
+    if (nzchar(pd)) path.expand(file.path(pd, "26_general")),
     path.expand("~/Dropbox/2024 Election Results/26_general"),
     Sys.glob(path.expand("~/MIT Dropbox/*/CBS-MIT Election Data/26_general")),
     Sys.glob(path.expand("~/Library/CloudStorage/Dropbox*/*/CBS-MIT Election Data/26_general")),
@@ -19,6 +27,11 @@ find_26_general = function() {
   if (length(cands) == 0) stop('Can\'t find 26_general. Add CBS_26_GENERAL="/path/to/26_general" to ~/.Renviron and restart R.')
   normalizePath(cands[1])
 }
+
+# the shared folder that holds 26_general, 24_general, 26_sim, ... (what older scripts
+# call PATH_DROPBOX). Scripts that only need this can call it without the helpers below:
+#   PATH_DROPBOX = local({ source("scripts/model/live/R/paths.R", local = TRUE); find_dropbox() })
+find_dropbox = function() dirname(find_26_general())
 
 read_pq = function(p) {
   if (!file.exists(p)) stop("Missing: ", p)

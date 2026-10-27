@@ -92,10 +92,8 @@ set.seed(as.integer(Sys.getenv("SEED", unset = "20260303")))
 # ---- CONFIG ---------------------------------------------------------------------
 STATE          = "TX"
 ELECTION_FOLDER = "26_general"
-PATH_DROPBOX   = Sys.getenv(
-  "PATH_DROPBOX",
-  unset = "~/Library/CloudStorage/Dropbox-MIT/Young-Kyung Kim/Contracting/2024 Election Results"
-)
+# PATH_DROPBOX env var if set, else this machine's Dropbox (live/R/paths.R)
+PATH_DROPBOX   = local({ source("scripts/model/live/R/paths.R", local = TRUE); find_dropbox() })
 # PATH_COVS override lets a backtest driver swap in a panel whose covariates are all
 # pre-treatment for its target election (see tx24_backtest.R).
 path_covs      = Sys.getenv(

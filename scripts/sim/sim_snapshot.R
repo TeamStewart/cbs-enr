@@ -72,26 +72,53 @@ sim_snapshot_rows = function(truth, schedule, time, zero_post) {
     )
 }
 
-# Write per-county clean files the way cbs-enr does:
-# {dir}/{ST}/clean/{ST}_{county}_{timestamp}.parquet, one per county each time its
-# posting time changes, plus {ST}_{county}_latest.parquet. County names are lowercase,
-# as in metadata.csv.
-sim_write_clean = function(truth, schedule, times, dir, zero_post = "19:00") {
+# Write clean files the way cbs-enr does, into {dir}/{ST}/clean/:
+#   statewide feed  {ST}_{timestamp}.parquet each time any county posts, plus
+#                   {ST}_latest.parquet (AK, GA, IA, MN, NC: metadata.csv has one row for
+#                   the state, with no county)
+#   county feeds    {ST}_{county}_{timestamp}.parquet each time that county posts, plus
+#                   {ST}_{county}_latest.parquet, with the county spelt as metadata.csv
+#                   spells it ("MI_St. Clair", "TX_el paso")
+# metadata: a data frame or path; NULL uses 26_general/metadata.csv when sim_config.R has
+# set DIR_26. With no metadata row for the state, county feeds with lowercase names.
+# A statewide file's timestamp is its latest county posting.
+sim_write_clean = function(truth, schedule, times, dir, zero_post = "19:00", metadata = NULL) {
   st = truth$state[1]
   out_dir = file.path(dir, st, "clean")
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  if (is.null(metadata) && exists("DIR_26")) metadata = file.path(DIR_26, "metadata.csv")
+  if (is.character(metadata)) metadata = if (file.exists(metadata)) utils::read.csv(metadata, colClasses = "character") else NULL
+  meta = if (is.null(metadata)) NULL else metadata[metadata$state == st, , drop = FALSE]
+  statewide = !is.null(meta) && nrow(meta) > 0 && all(is.na(meta$county) | meta$county == "")
+  key = function(x) gsub("[^A-Z]", "", toupper(x))
+  file_county = function(county_name) {
+    m = if (is.null(meta)) NA_character_ else meta$county[match(key(county_name), key(meta$county))]
+    if (is.na(m)) tolower(county_name) else m
+  }
+  write_one = function(d, prefix, ts) {
+    d = enightmodels::coerce_elec_data(dplyr::select(d, dplyr::all_of(enightmodels::COLS_ELEC)))
+    nanoparquet::write_parquet(d, file.path(out_dir, paste0(prefix, "_", ts, ".parquet")))
+    nanoparquet::write_parquet(d, file.path(out_dir, paste0(prefix, "_latest.parquet")))
+  }
+  stamp = function(t) format(lubridate::with_tz(t, SIM_TZ), "%Y_%m_%d_%H_%M_%S")
+
   times = sort(sim_time(times, truth$election[1]))
   last = character()
   for (i in seq_along(times)) {
     snap = sim_snapshot_rows(truth, schedule, times[i], zero_post)
+    if (statewide) {
+      ts = stamp(max(snap$time))
+      if (identical(last[st], ts)) next
+      last[st] = ts
+      write_one(snap, st, ts)
+      next
+    }
     for (d in split(snap, snap$county_name)) {
-      county = tolower(d$county_name[1])
-      ts = format(lubridate::with_tz(d$time[1], SIM_TZ), "%Y_%m_%d_%H_%M_%S")
+      county = file_county(d$county_name[1])
+      ts = stamp(d$time[1])
       if (identical(last[county], ts)) next
       last[county] = ts
-      d = enightmodels::coerce_elec_data(dplyr::select(d, dplyr::all_of(enightmodels::COLS_ELEC)))
-      nanoparquet::write_parquet(d, file.path(out_dir, paste0(st, "_", county, "_", ts, ".parquet")))
-      nanoparquet::write_parquet(d, file.path(out_dir, paste0(st, "_", county, "_latest.parquet")))
+      write_one(d, paste0(st, "_", county), ts)
     }
   }
   invisible(out_dir)

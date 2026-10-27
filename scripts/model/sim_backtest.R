@@ -33,8 +33,8 @@ source("scripts/sim/sim_snapshot.R")
 CONTEST  <- Sys.getenv("CONTEST",  unset = "gov")
 STAGE_TRUST <- Sys.getenv("STAGE_TRUST", unset = "1") == "1"
 SCENARIO <- Sys.getenv("SCENARIO", unset = "tx_base")
-PATH_DROPBOX <- Sys.getenv("PATH_DROPBOX",
-  unset = "~/Library/CloudStorage/Dropbox-MIT/Young-Kyung Kim/Contracting/2024 Election Results")
+# PATH_DROPBOX env var if set, else this machine's Dropbox (live/R/paths.R)
+PATH_DROPBOX <- local({ source("scripts/model/live/R/paths.R", local = TRUE); find_dropbox() })
 DIR_IN  <- path.expand(file.path(PATH_DROPBOX, "26_general/input_data/model_inputs"))
 DIR_SIM <- file.path(Sys.getenv("SIM_OUT", unset = file.path(path.expand(PATH_DROPBOX), "26_sim")), SCENARIO)
 SP      <- Sys.getenv("SIM_WORK", unset = tempdir())

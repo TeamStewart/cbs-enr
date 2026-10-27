@@ -18,7 +18,7 @@ MODELS_RUN = strsplit(sub("^--models=", "", c(grep("^--models=", args, value = T
 DIR_26 = find_26_general()
 dir_sc = if (dir.exists(SCENARIO)) SCENARIO else file.path(dirname(DIR_26), "26_sim", SCENARIO)
 sim = read_sim(dir_sc)
-cells = build_cells("TX", DIR_26)
+cells = build_cells(sim$truth$state[1], DIR_26)
 cat(sprintf("Scenario %s: %d precincts x %d methods; models: %s\n",
             basename(dir_sc), n_distinct(cells$geo), n_distinct(cells$method), paste(MODELS_RUN, collapse = ", ")))
 

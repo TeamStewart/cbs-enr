@@ -18,7 +18,7 @@ suppressPackageStartupMessages({
   library(dplyr); library(readr); library(stringr); library(cli)
   library(nanoparquet, lib.loc = "renv/library/macos/R-4.5/aarch64-apple-darwin20")
 })
-DB <- "~/Library/CloudStorage/Dropbox-MIT/Young-Kyung Kim/Contracting/2024 Election Results"
+DB <- local({ source("scripts/model/live/R/paths.R", local = TRUE); find_dropbox() })
 p_l2 <- file.path(DB, "26_general/input_data/l2_precinct_frame_method.parquet")
 p_vh <- file.path(DB, "26_general/input_data/votehub-shapefiles/estimated_past_results.csv")
 out  <- "scripts/model/tx_backtest_panel.parquet"
