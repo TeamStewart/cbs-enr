@@ -230,12 +230,11 @@ run_par = function(x, f, cores = 1) {
 
 # Run a list of predict_one() jobs, in parallel when cores > 1 (forked processes, so macOS
 # and Linux only; on Windows it runs one at a time). Each job is a list of predict_one()'s
-# arguments. Anything slow to set up (build_cells(), county_baseline(), medsl_setup()) must
-# be done BEFORE this is called: a forked process's caches are thrown away when it ends.
+# arguments. Anything slow to set up (build_cells(), county_baseline()) must be done BEFORE
+# this is called: a forked process's caches are thrown away when it ends.
 run_jobs = function(jobs, cores = 1) {
-  # medsl_sur's set-up for each state x county set, here before forking (see above)
-  for (j in jobs) if (model_base(j$model) == "medsl_sur" && nrow(j$cells) && is.null(j$fail))
-    try(fit_medsl_setup_for(j$cells, j$ret, hybrid = TRUE), silent = TRUE)
+  # each model's own set-up (MODEL_SETUP, run.R) for each state x county set, before forking
+  for (j in jobs) if (is.null(j$fail)) try(setup_model(j$model, j$cells, j$race$state[1]), silent = TRUE)
   one = function(j) tryCatch(if (!is.null(j$fail)) stop(j$fail) else do.call(predict_one, j[setdiff(names(j), "fail")]), error = function(e)
     list(pred = NULL, status = tibble(race_id = j$race$race_id[1], model = model_label(j$model), time = j$time,
                                       status = paste("error:", conditionMessage(e)), statewide = NA_character_,

@@ -42,6 +42,16 @@ MODELS = c("swing", "ratio_strata", "pois_bayes", "lm_bayes", "medsl_sur")
 # gov at 22:00: 38s on the 32 scraped counties, 18,402 cells; 133s on all 26,313).
 MODELS_DEFAULT = setdiff(MODELS, "lm_bayes")
 
+# Slow set-up a model caches for the session, run in the main process before fits are forked
+# (run_jobs(), the runners): a forked worker's caches are thrown away when it ends, and see
+# load.R's BLAS note. model -> function(cells, state).
+MODEL_SETUP = list(medsl_sur = function(cells, state) fit_medsl_setup_for(cells, state, hybrid = TRUE))
+setup_model = function(model, cells, state) {
+  f = MODEL_SETUP[[model_base(model)]]
+  if (!is.null(f) && nrow(cells)) f(cells, state)
+  invisible(NULL)
+}
+
 # "pois_bayes/strat_d/conformal" -> list(base = "pois_bayes", demo = "strat_d",
 # interval = "conformal"); demo / interval NULL when not given
 model_parts = function(model) {

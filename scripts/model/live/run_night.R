@@ -66,10 +66,8 @@ state_inputs = function(st) {
   if (is.null(cache[[st]])) {
     cells = tryCatch(build_cells(st, d26), error = function(e) e)
     base = tryCatch(county_baseline(st, d26), error = function(e) e)
-    medsl = if ("medsl_sur" %in% model_base(MODELS_RUN) && !inherits(cells, "error"))
-      tryCatch(medsl_setup(st, d26, hybrid = TRUE), error = function(e) e) else NULL
     try(demo_covs(st, d26), silent = TRUE)          # precinct demographics (R/demos.R)
-    cache[[st]] = list(cells = cells, base = base, medsl = medsl)
+    cache[[st]] = list(cells = cells, base = base)
   }
   cache[[st]]
 }

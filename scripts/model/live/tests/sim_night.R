@@ -3,7 +3,7 @@
 ## fit_model(), as predict_one() fits it on the night.
 ##
 ## From the cbs-enr folder:
-##   Rscript scripts/model/live/tests/sim_night.R [scenario] [--models=swing,cory,medsl] [--out=<dir>] [--cores=<n>]
+##   Rscript scripts/model/live/tests/sim_night.R [scenario] [--models=swing,medsl_sur] [--out=<dir>] [--cores=<n>]
 ## scenario defaults to tx_base (26_sim/tx_base); --models defaults to every wired model.
 ## "<model>[/<demo>][/<interval>]" runs a model with a demographic spec (R/demos.R) and an
 ## interval (R/results.R), e.g. --models=swing,swing/strat_d_cov,pois_bayes/tpsob/conformal
@@ -42,13 +42,11 @@ rets = lapply(sim_checkpoints(), function(tm)
 rets = rets[vapply(rets, \(x) sum(x$votes) > 0, NA)]
 jobs = tidyr::expand_grid(i = seq_along(rets), race_id = sort(unique(sim$truth$contest)), model = MODELS_RUN)
 
-# one-time set-up in this process, before forking, so the workers inherit it: model_medsl /
-# medsl_sur's model environment and the covariate caches
+# one-time set-up in this process, before forking, so the workers inherit it: each model's
+# own set-up (MODEL_SETUP, run.R) and the covariate caches
 st = sim$truth$state[1]
-invisible({
-  if ("medsl_sur" %in% model_base(MODELS_RUN)) fit_medsl_setup_for(cells, rets[[1]], hybrid = TRUE)
-  demo_covs(st)
-})
+for (m in MODELS_RUN) setup_model(m, cells, st)
+invisible(demo_covs(st))
 cat(sprintf("%d checkpoints with votes, %d jobs on %d core(s)\n", length(rets), nrow(jobs), CORES))
 
 t0 = Sys.time()

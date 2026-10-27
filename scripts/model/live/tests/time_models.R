@@ -43,7 +43,7 @@ for (st in states) {
   t0 = proc.time()[["elapsed"]]
   cells = tryCatch(build_cells(st, d26), error = function(e) NULL)
   if (is.null(cells)) { cat(st, ": no precinct inputs, skipped\n"); next }
-  if ("medsl_sur" %in% MODELS) invisible(medsl_setup(st, d26, hybrid = TRUE))
+  for (m in MODELS) setup_model(m, cells, st)
   setup = proc.time()[["elapsed"]] - t0
   ret = fake_returns(cells, st)
   race = tibble(race_id = ret$race_id[1], state = st, election = as.Date("2026-11-03"), jurisdiction = st,

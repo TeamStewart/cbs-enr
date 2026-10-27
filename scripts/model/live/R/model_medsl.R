@@ -162,10 +162,8 @@ medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refre
 }
 
 # the model environment for the counties in `cells` (all of the state's counties -> the
-# state-wide cached set-up)
-fit_medsl_setup_for = function(cells, returns, dir_26 = find_26_general(), hybrid = FALSE) {
-  state = unique(returns$state)
-  if (length(state) != 1) stop("fit_medsl() takes one race (one state) at a time")
+# state-wide cached set-up). Also run before forking, through MODEL_SETUP (run.R).
+fit_medsl_setup_for = function(cells, state, dir_26 = find_26_general(), hybrid = FALSE) {
   key = paste0("counties_", state)
   if (is.null(.medsl_env[[key]])) .medsl_env[[key]] =
     unique(read_pq(file.path(dir_26, "input_data", "model_inputs", paste0(state, "_precinct.parquet")))$county_name)
@@ -183,7 +181,7 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
   if (length(state) != 1) stop("fit_medsl() takes one race (one state) at a time")
   name = if (hybrid) "medsl_sur" else "medsl"
   # fit the counties in `cells` (the ones the feed covers; see feed_cells())
-  env = fit_medsl_setup_for(cells, returns, dir_26, hybrid)
+  env = fit_medsl_setup_for(cells, state, dir_26, hybrid)
   counts = cell_counts(cells, returns)
 
   counted = race_counted(cells, counts)
