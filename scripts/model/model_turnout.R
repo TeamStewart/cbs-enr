@@ -2100,9 +2100,14 @@ calibrate_sigma = function(cells, returns_full) {
 }
 
 # ---- 5. prior-only draws (reference measure for conf_seq) ----------------------
-prior_draws = function(cells, draws = DRAWS,
-                       sd_sys_s = 0.10, sd_sys_tau = 0.12,
-                       sd_idio_s = 0.40, sd_idio_tau = 0.30) {
+# Prior predictive draws of the race TOTALS, as if nothing were counted: a tibble with one
+# row per draw of dem, rep, oth and turnout (all votes). `cells` should carry the model's
+# own priors (prior_tau, prior_s, prior_tp), NOT priors re-centred on tonight's returns
+# (model_hybrid.R's recentre_prior()): a reference measure that has seen the data is not
+# a reference measure. Same terms and spreads as prior_draws(), which is this summarised.
+prior_totals = function(cells, draws = DRAWS,
+                        sd_sys_s = 0.10, sd_sys_tau = 0.12,
+                        sd_idio_s = 0.40, sd_idio_tau = 0.30) {
   # CRITICAL: the systematic terms are what make this a usable reference measure.
   # Idiosyncratic per-cell noise averages out over ~13.5k cells (1/sqrt(n)), so a
   # prior built from it alone is ABSURDLY tight at the statewide level -- tighter
@@ -2112,7 +2117,7 @@ prior_draws = function(cells, draws = DRAWS,
   sys_s   = rnorm(draws, 0, sd_sys_s)
   sys_tau = rnorm(draws, 0, sd_sys_tau)
   sys_tp  = rnorm(draws, 0, sd_sys_s)
-  num = den = numeric(draws)
+  dem = rep = oth = numeric(draws)
   for (m in MODES) {
     cm  = filter(cells, mode == m)
     nc  = nrow(cm)
@@ -2122,9 +2127,17 @@ prior_draws = function(cells, draws = DRAWS,
                    sys_s + matrix(rnorm(draws * nc, 0, sd_idio_s), draws))
     tp  = invlogit(matrix(logit(cm$prior_tp), draws, nc, byrow = TRUE) +
                    sys_tp + matrix(rnorm(draws * nc, 0, sd_idio_s), draws))
-    num = num + rowSums(tau * (1 - tp) * s); den = den + rowSums(tau)
+    dem = dem + rowSums(tau * (1 - tp) * s)
+    rep = rep + rowSums(tau * (1 - tp) * (1 - s))
+    oth = oth + rowSums(tau * tp)
   }
-  num / pmax(den, 1e-9)   # prior predictive for the DEM SHARE OF ALL VOTES
+  tibble::tibble(dem = dem, rep = rep, oth = oth, turnout = dem + rep + oth)
+}
+
+# prior predictive for the DEM SHARE OF ALL VOTES (the same draws as prior_totals())
+prior_draws = function(cells, draws = DRAWS, ...) {
+  p = prior_totals(cells, draws = draws, ...)
+  p$dem / pmax(p$turnout, 1e-9)
 }
 
 # ---- 6. run --------------------------------------------------------------------

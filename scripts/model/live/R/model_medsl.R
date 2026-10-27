@@ -25,11 +25,10 @@
 ## A cell (precinct x method) counts as reported once it has any votes (its shares are used
 ## at once) and as complete once that method is fully counted (`complete` in the returns;
 ## its turnout is used only then).
-## Interval (results.R): credible (default), the posterior draws' equal-tailed interval; or
-## conformal, from fit_stage()'s per-cell final votes and fitted shares (`cell_votes`). No
-## conf_seq: model_turnout.R's prior_draws() gives only the Dem share of all votes (conf_seq
-## needs prior draws of each party's votes and turnout) and ignores model_hybrid.R's
-## re-centred priors. No demographic spec: see todo.md item 1. The
+## Interval (results.R): credible (default), the posterior draws' equal-tailed interval;
+## conf_seq, against model_turnout.R's prior_totals() on the model's own (not re-centred)
+## priors, drawn after the fit so the default's random numbers are unchanged; or
+## conformal, from fit_stage()'s per-cell final votes and fitted shares (`cell_votes`). The
 ## number of draws is model_turnout.R's DRAWS (500) unless MEDSL_DRAWS is set, e.g.
 ## MEDSL_DRAWS=250 in ~/.Renviron. Speed (TX, one race): about 6 s of fixed work plus
 ## about 1 s per 100 draws, and the 95% interval moves by under 0.05 points between 250
@@ -178,7 +177,7 @@ fit_medsl_setup_for = function(cells, state, dir_26 = find_26_general(), hybrid 
 # cells:   build_cells() output (used for the precinct x method counts and the counted
 #          totals, so they match the other models exactly)
 # returns: one race's standard returns (returns.R)
-# interval: "credible" or "conformal" (results.R)
+# interval: "credible", "conf_seq" or "conformal" (results.R)
 # hybrid / cbs_county: see fit_medsl_sur()
 fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26_general(),
                      hybrid = FALSE, cbs_county = NULL, interval = "credible") {
@@ -290,7 +289,11 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
       mutate(across(c(c_dem, c_rep, c_oth, c_tot), \(x) coalesce(x, 0)),
              across(starts_with("fin_") | starts_with("fit_"), \(x) coalesce(x, 0)))
   }
-  res = draws_result(name, interval, settings, counted, dr, level, returns, fc = fc, cells = prec_rows(f$prec))
+  # conf_seq: prior predictive draws of the race totals, nothing counted (env$cells holds
+  # the model's own priors; fit_stage_hybrid() re-centres a copy)
+  prior = if (interval == "conf_seq") env$prior_totals(env$cells, draws = draws)
+  res = draws_result(name, interval, settings, counted, dr, level, returns, prior = prior, fc = fc,
+                     cells = prec_rows(f$prec))
   res$status = res$race$status = st
   # the structured ledger as well as the status string, so a consumer can test
   # `fit$prior_only$all_prior` rather than parse prose

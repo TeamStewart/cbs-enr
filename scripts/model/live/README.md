@@ -93,7 +93,7 @@ and interval.
 | `ratio_strata` | Cory's legacy ratio model, ratios pooled within strata | `ratio`, `strat_g` (default), `strat_d`, `strat_dg` | none, conformal |
 | `pois_bayes` | Bayesian Poisson precinct model (`pois_bayes()`) | all, as fixed effects; default `strat_dg_cov` | credible, conf_seq, conformal |
 | `lm_bayes` | Cory's NYC forecaster (`forecast_prec()`) | all, added to NYC's `simple_pres` spec; default `ratio` | credible, conf_seq, conformal |
-| `medsl_sur` | Young-Kyung's model with `model_hybrid.R` | none (its own covariates; see todo.md item 1) | credible, conformal |
+| `medsl_sur` | Young-Kyung's model with `model_hybrid.R` | none (its own covariates; see todo.md item 1) | credible, conf_seq, conformal |
 
 **Specs** (`R/demos.R`, Cory's tx-prim-26 `model_specs`):
 

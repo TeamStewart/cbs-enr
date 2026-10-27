@@ -39,7 +39,7 @@ INTERVALS = c("bootstrap", "credible", "conf_seq", "conformal", "none")
 # what each model can give; the first is its default
 MODEL_INTERVALS = list(swing = c("bootstrap", "conformal"), ratio_strata = c("none", "conformal"),
                        pois_bayes = c("credible", "conf_seq", "conformal"),
-                       lm_bayes = c("credible", "conf_seq", "conformal"), medsl_sur = c("credible", "conformal"))
+                       lm_bayes = c("credible", "conf_seq", "conformal"), medsl_sur = c("credible", "conf_seq", "conformal"))
 CONF_LABEL = c(bootstrap = "county_bootstrap_%g", credible = "posterior_%g", conf_seq = "conf_seq_%g",
                conformal = "approx_conform_%g")
 
