@@ -23,7 +23,8 @@
 ##                            votes added as they are, nothing projected
 ##
 ## Every model but medsl_sur is adjusted (VIRTUAL_MODELS; output.R predict_one()):
-## fits with draws in every draw, the others in their point prediction and bounds.
+## fits with draws in every draw, fits with bounds in their point and bounds (each end
+## projected at the fit's own interval ends, project_rest_bounds() in counties.R).
 ## medsl_sur gets the same rows as county x mode observations from bucket_counts()
 ## (returns.R) inside its own fit.
 ## Only for races fit by vote method. A state with no {ST}_virtual_history.parquet and no
@@ -106,15 +107,17 @@ add_virtual = function(fit, model, vs) {
                       p_dem_win = mean(fit$draws$twop > 0.5), est_turnout = mean(fit$draws$turnout),
                       lo_turnout = ct[["lower"]], hi_turnout = ct[["upper"]])
   } else {
-    # no draws: the virtual units' point projection is added to the prediction and its bounds
+    # bounds instead of draws: the virtual units' point and bounds (project_rest_bounds(),
+    # counties.R) added to the prediction and its bounds
     pr = fit$pred
-    d = sum(pr$pred[pr$party == "dem"]); r = sum(pr$pred[pr$party == "rep"])
-    vp = project_rest(vs$units, lg(d / (d + r)) - lg(base_s), sum(pr$pred) / E, noise = FALSE)
-    fit$pred = add_party_votes(pr, vp[1, ])
+    pt = c(dem = sum(pr$pred[pr$party == "dem"]), rep = sum(pr$pred[pr$party == "rep"]), tot = sum(pr$pred))
+    sb = fit_swing_bounds(fit, pt, base_s, E)
+    vb = project_rest_bounds(vs$units, sb$swing, sb$turn_ratio)
+    fit$pred = add_party_votes(pr, vb)
     est = pred_race_est(fit$pred)
     fit$race = mutate(fit$race, est_twop = est$est_twop, lo_twop = est$lo_twop, hi_twop = est$hi_twop,
-                      est_turnout = est$est_turnout, lo_turnout = lo_turnout + sum(vp[1, ]),
-                      hi_turnout = hi_turnout + sum(vp[1, ]))
+                      est_turnout = est$est_turnout, lo_turnout = lo_turnout + sum(vb$pred_min),
+                      hi_turnout = hi_turnout + sum(vb$pred_max))
   }
   u = vs$units
   fit$settings = paste0(fit$settings, sprintf("; plus %d county-level virtual-precinct units (%d reported, %d projected)",
@@ -122,15 +125,18 @@ add_virtual = function(fit, model, vs) {
   fit
 }
 
-# per-candidate predictions (fit$pred) plus party totals v = c(dem, rep, oth), added to pred
-# and to its bounds: a party's votes split equally across its candidates, third-party votes in
-# proportion to their predictions
+# per-candidate predictions (fit$pred) plus party totals and bounds (v: party, pred, pred_min,
+# pred_max), each added to the same column: a party's votes split equally across its
+# candidates, third-party votes in proportion to their predictions
 add_party_votes = function(pr, v) {
   oth = !pr$party %in% c("dem", "rep")
   w = if (any(oth)) pr$pred[oth] / max(sum(pr$pred[oth]), 1) else numeric()
-  add = case_when(pr$party == "dem" ~ v[["dem"]] / max(sum(pr$party == "dem"), 1),
-                  pr$party == "rep" ~ v[["rep"]] / max(sum(pr$party == "rep"), 1),
-                  TRUE ~ 0)
-  if (any(oth)) add[oth] = v[["oth"]] * (if (sum(w) > 0) w else 1 / sum(oth))
-  mutate(pr, across(any_of(c("pred", "pred_min", "pred_max")), \(x) x + add))
+  if (any(oth) && sum(w) == 0) w = rep(1 / sum(oth), sum(oth))
+  share = case_when(pr$party == "dem" ~ 1 / max(sum(pr$party == "dem"), 1),
+                    pr$party == "rep" ~ 1 / max(sum(pr$party == "rep"), 1), TRUE ~ 0)
+  share[oth] = w
+  grp = if_else(oth, "oth", pr$party)
+  i = match(grp, v$party)
+  mutate(pr, pred = pred + share * v$pred[i], pred_min = pred_min + share * v$pred_min[i],
+         pred_max = pred_max + share * v$pred_max[i])
 }

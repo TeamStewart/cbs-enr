@@ -21,8 +21,9 @@
 ##              in-sample and the sum treats cells as perfectly correlated, so it is
 ##              conservative. Turnout is a point.                       approx_conform_95
 ##   none       point predictions only                                   NA
-## conf_seq and conformal give bounds, not draws, so their fits have no p_dem_win and their
-## statewide rows (counties.R) are a point, as for any model without draws.
+## conf_seq and conformal give bounds, not draws, so their fits have no p_dem_win; their
+## statewide rows carry the bounds through to the rest of the state (project_rest_bounds(),
+## counties.R).
 # ========================================
 
 # Posterior / simulation draws per fit, and the seed set before them, so the same snapshot

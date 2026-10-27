@@ -118,7 +118,7 @@ and interval.
 | conformal | Cory's approximate split-conformal: residuals of counted vs fitted cell shares by party x method, applied to each cell's remaining votes and summed (conservative; turnout a point) | `approx_conform_95` |
 | none | point only | NA |
 
-conf_seq and conformal give bounds, not draws: no `p_win`, and their statewide rows are a point.
+conf_seq and conformal give bounds, not draws: no `p_win`. Their statewide rows carry the bounds to the rest of the state: each end of a party's interval projects the other counties at the scraped interval ends worst for that party, plus the rest-of-state noise quantiles (`project_rest_bounds()`, `R/counties.R`; NC virtual units the same way).
 On tx_base (TX governor, 61-80% counted) the 95% two-party intervals were about: swing
 bootstrap 0.4-0.7 points and pois_bayes credible 0.4-0.7 (both missed the truth at 22:00 or
 later), lm_bayes credible 1.4; pois_bayes conf_seq 2-3, lm_bayes conf_seq 8; conformal 2-4
