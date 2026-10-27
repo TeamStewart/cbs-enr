@@ -37,7 +37,12 @@
 source("scripts/model/live/load.R")
 args = commandArgs(trailingOnly = TRUE)
 opt = function(k, d = NA) { a = grep(paste0("^--", k, "="), args, value = TRUE); if (length(a)) sub("^[^=]*=", "", a[1]) else d }
-MODELS_RUN = strsplit(opt("models", paste(MODELS, collapse = ",")), ",")[[1]]
+# MODELS_DEFAULT, not MODELS: cprec is implemented but out of the default run on cost
+# (see run.R). --models= still reaches it, and is validated against the full MODELS.
+MODELS_RUN = strsplit(opt("models", paste(MODELS_DEFAULT, collapse = ",")), ",")[[1]]
+if (length(bad <- setdiff(MODELS_RUN, MODELS)))
+  stop("unknown model(s) in --models=: ", paste(bad, collapse = ", "),
+       ". Choose from: ", paste(MODELS, collapse = ", "))
 SIM = opt("sim"); EVERY = as.numeric(opt("every", "0")); CBS_ENV = opt("cbs", "live")
 CORES = as.integer(opt("cores", max(1L, parallel::detectCores() - 1L)))
 TZ = "America/New_York"
@@ -64,10 +69,24 @@ for (pk in c("fixest", "enightmodels")) suppressPackageStartupMessages(requireNa
 # ---- the returns for this refresh ---------------------------------------------------
 if (!is.na(SIM)) {
   dir_sc = if (dir.exists(SIM)) SIM else file.path(dirname(d26), "26_sim", SIM)
-  sim = read_sim(dir_sc)
+  # opt() returns NA when the flag is absent, and read_sim() auto-detects on NULL -- so NA
+  # has to become NULL or it looks for a file literally called NA_truth.parquet.
+  ST_OPT = { s = opt("state"); if (is.na(s)) NULL else toupper(s) }
+  sim = read_sim(dir_sc, state = ST_OPT)
   dir_cbs = file.path(d26, "model_tests", "statewide_sim", basename(dir_sc))
   out_dir = file.path(d26, "model_tests", "run_night_sim", basename(dir_sc))
-  st_sim = toupper(substr(basename(dir_sc), 1, 2))
+  # Resolve the sim's state from, in order: an explicit --state, the truth frame's own
+  # `state` column, then the scenario-name prefix. The prefix was the ONLY rule, which
+  # meant every scenario had to be named {st}_* and in practice limited the sim path to TX
+  # -- so none of the cross-state work could be exercised through run_night.R at all.
+  st_sim = toupper(
+    if (!is.null(ST_OPT)) ST_OPT
+    else if ("state" %in% names(sim$truth) && length(unique(sim$truth$state)) == 1)
+      unique(sim$truth$state)[1]
+    else substr(basename(dir_sc), 1, 2))
+  if (!st_sim %in% all_races$state)
+    stop("sim state '", st_sim, "' has no races in priors.csv (have: ",
+         paste(sort(unique(all_races$state)), collapse = ", "), "). Pass --state= to override.")
   get_returns = function(at) {
     cells = state_inputs(st_sim)$cells
     bind_rows(lapply(sort(unique(sim$truth$contest)), \(r) returns_from_sim(sim, r, at, geos = cells$geo))) |>
@@ -131,6 +150,7 @@ refresh = function(at = NULL) {
     res$status$statewide[i] = paste("no county history:", conditionMessage(inp[[st]]$base))
   }
   write_predictions(res, out_dir)
+  write_precincts(res, out_dir)
   sec = function(a, b) as.numeric(difftime(b, a, units = "secs"))
   cat(sprintf("%s  %d races x %d models, %d prediction rows (%d statewide) in %.0fs [inputs %.0fs, CBS %.0fs, models %.0fs on %d cores] -> %s\n",
               format(now, "%Y-%m-%d %H:%M:%S", tz = TZ), nrow(races), length(MODELS_RUN), nrow(res$pred),

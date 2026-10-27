@@ -1,0 +1,7 @@
+state,poll_close,poll_close_late,note
+TX,20:00,EL PASO=21:00,"From make_sim_tx.R. 19:00 CT = 20:00 ET; El Paso is Mountain and heavily Hispanic/Democratic, so a late close correlates reporting TIME with PARTISANSHIP -- any mechanism that weights precincts by how early they finish inherits that as a share bias. Keep it."
+AK,,,"NEEDS FILLING. Poll close is 20:00 AKT, so roughly 24:00 ET, and AK has its own late-close areas. Times here are EASTERN, as P$poll_close is."
+CA,,,"NEEDS FILLING. 20:00 PT = 23:00 ET."
+FL,,,"NEEDS FILLING. FL spans two zones: most of the state 19:00 ET, the panhandle 20:00 ET. The panhandle is the Republican end, so this is the mirror of TX's El Paso case and matters for the same reason."
+MI,,,"NEEDS FILLING. Most of MI 20:00 ET; the four Upper Peninsula counties on Central time close 21:00 ET."
+NC,,,"NEEDS FILLING. Single zone, close is not on the hour."

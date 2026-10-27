@@ -47,6 +47,9 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(glue)
 })
+# bucket_class() / geo_label(): section 6 needs them to exclude county/site reporting geos
+# from the live-id join rate, since a bucket is SUPPOSED not to match a precinct.
+source("scripts/model/live/R/vote_modes.R")
 
 args = commandArgs(trailingOnly = TRUE)
 STATE = toupper(c(args, "TX")[1])
@@ -80,8 +83,14 @@ find_26_general = function() {
 }
 DIR_26 = find_26_general()
 DIR_IN = file.path(DIR_26, "input_data")
-DIR_OUT = file.path(DIR_IN, "model_inputs")
-dir.create(DIR_OUT, showWarnings = FALSE)
+# MODEL_INPUTS_OUT redirects the WRITES only; every read still comes from DIR_26. That
+# makes a dry run possible: this script's outputs are shared artifacts in Dropbox that
+# other people's work joins against, so "run it and see" is otherwise destructive.
+DIR_OUT = Sys.getenv("MODEL_INPUTS_OUT", unset = file.path(DIR_IN, "model_inputs"))
+dir.create(DIR_OUT, showWarnings = FALSE, recursive = TRUE)
+if (DIR_OUT != file.path(DIR_IN, "model_inputs"))
+  cli::cli_alert_warning("MODEL_INPUTS_OUT set -- writing to {.path {DIR_OUT}}, \
+                          NOT the shared model_inputs folder")
 
 path_frame   = file.path(DIR_IN, "yougov_precinct_frame.parquet")
 path_method  = file.path(DIR_IN, "yougov_precinct_frame_method.parquet")
@@ -112,12 +121,61 @@ cat(glue("Prep run {format(Sys.time())} by {Sys.info()[['user']]}\n26_general: {
 read_pq = function(p) as_tibble(nanoparquet::read_parquet(p))
 
 # ---- precinct id normalization ------------------------------------------------------
-# One rule for every source: trim, uppercase, drop leading zeros ("0007" -> "7",
-# "001A" -> "1A"). Live-scraper ids are unpadded (checked on Harris, Kaufman, Wood).
+# TWO rules, because the two sources are not the same kind of thing.
+#
+# norm_prec_id() is for ids we have to RECONCILE -- YouGov / raw state ids, where the
+# padding is arbitrary and dropping it is what makes them join: trim, uppercase, drop
+# leading zeros ("0007" -> "7", "001A" -> "1A"). Validated on Harris, Kaufman and Wood,
+# all three TEXAS counties, where a precinct id is a zero-padded pure number.
 norm_prec_id = function(x) {
   x = str_squish(toupper(as.character(x)))
   x = str_remove(x, "\\.0$")              # ids stored as numbers upstream ("860.0", FL ENR ids)
   x = str_remove(x, "^0+(?=\\d)")
+  if_else(x == "", NA_character_, x)
+}
+# norm_enr_id() is for the LIVE FEED's own ids (`precinct_enr`). It does NOT drop leading
+# zeros, and that is the whole point.
+#
+# WHY. An ENR id is the key the feed will send on the night. There is nothing to
+# reconcile -- we already have it exactly right -- so normalizing it REWRITES the join
+# key. Applying the TX-validated rule state-blind corrupted every compound id:
+#     AK  09-115 -> 9-115    the 09 is HOUSE DISTRICT 9, not padding
+#     NC  02-04  -> 2-04     the 02 is a ward number
+#     NC  001    -> 1        the feed sends 001
+# Measured 2026-10-26 on {ST}_latest.csv, exact join as cell_counts() does it: AK 312 of
+# 402 precinct geos joined (77.6%), NC 2,005 of 2,625 (76.4%). Using the ENR id verbatim
+# takes AK to 402 of 402 and NC to 2,616 of 2,625, with ZERO collisions and zero orphan
+# cells. In votes that is 32,051 of AK's 164,303 in the governor contest -- 19.5% -- that
+# production was silently dropping, on geos that look like precincts because they ARE
+# precincts (ak_001_01-600, nc_001_035).
+#
+# Section 6's live-id round trip did not catch it because it applied norm_geo() to the
+# LIVE side too (see the note there), so it compared the mangled id against the mangled
+# id and reported 100.0% for AK while production joined 77.6%.
+#
+# Scope: this changes `geo` only where `precinct_enr` is populated -- AK 100%, NC 99.4%,
+# FL 50.2%, MI 43.9%, TX 0.7%, CA 0%.
+#
+# VERIFIED ON ALL SIX STATES against their feed files, exact join, no transform either
+# side. AK and NC file statewide ({ST}_latest.csv); FL/MI/TX/CA file PER COUNTY
+# ({ST}_{County}_latest.csv), scored over the counties that have filed:
+#     AK  77.6% -> 100.0%    (90 geos changed)
+#     NC  76.4% ->  99.7%    (611)
+#     FL  38.8% ->  39.9%    (67)
+#     MI   0.9% ->   0.9%    (0 -- MI's ENR ids carry no leading zeros)
+#     TX  92.2% ->  92.2%    (0 -- 0.7% populated, so it never took this path)
+#     CA   0.0% ->   0.0%    (0 -- no ENR ids at all)
+# ZERO regressions: no geo that joined before fails to join after, in any state.
+#
+# Read FL/MI/CA's rates as the warning they are: they are low for reasons that have
+# NOTHING to do with this rule, and that is the larger problem. Do not read 39.9% as this
+# fix underperforming.
+#
+# The `.0$` strip and the squish/uppercase are KEPT: those fix how a value was stored, not
+# what the id is.
+norm_enr_id = function(x) {
+  x = str_squish(toupper(as.character(x)))
+  x = str_remove(x, "\\.0$")              # "001.0" -> "001": a storage artifact, not padding
   if_else(x == "", NA_character_, x)
 }
 norm_geo = function(geo) {
@@ -235,7 +293,9 @@ if (anyNA(prec$county_cbs) || anyNA(prec$geostratum))
 prec = prec |>
   mutate(
     geo_yougov = paste(st, county_cbs, norm_prec_id(precinct_local), sep = "_"),
-    geo = if_else(!is.na(precinct_enr), paste(st, county_cbs, norm_prec_id(precinct_enr), sep = "_"), geo_yougov)
+    # VERBATIM for the live id (norm_enr_id), reconciled for the YouGov one. See the
+    # note at norm_enr_id: normalizing an ENR id rewrote the key the feed sends.
+    geo = if_else(!is.na(precinct_enr), paste(st, county_cbs, norm_enr_id(precinct_enr), sep = "_"), geo_yougov)
   )
 if (anyDuplicated(prec$geo)) cli::cli_abort("Duplicate geo ids: {head(prec$geo[duplicated(prec$geo)])}")
 cli::cli_h2("Crosswalk")
@@ -446,6 +506,78 @@ mode_hist = prec |>
   left_join(elections, by = "yy") |>
   transmute(geo, election, method, voters = as.integer(voters), is_midterm)
 
+# ---- OFFICIAL county x mode composition, where L2's split is known WRONG ------------
+# L2's mode columns are not uniformly trustworthy. For NC they are wrong in three of five
+# elections, including 2022 -- the one the model uses, because 2026 is a midterm:
+#
+#   NC 2022      mail    early    eday
+#   L2           0.579   0.000    0.421
+#   OFFICIAL     0.049   0.531    0.416
+#
+# Note WHAT is wrong: L2's election-day share is almost exactly right and its per-precinct
+# TOTAL is sound (3,437,858 across 2,619 precincts against an actual ~3.78M). The whole
+# error is that early's 53% was coded into mail. So this replaces the SPLIT ONLY and keeps
+# every precinct's L2 total -- it is a reallocation, not a new vote count, and the state's
+# total voters are unchanged by construction (asserted below).
+#
+# Applied per state from lookups/mode_composition.csv where `replaces_l2` is TRUE, which
+# today is NC alone: AK, CA and MI were checked against the same official returns and
+# their L2 splits agree to within ~0.01 (see make_mode_composition.R's header for the
+# numbers). Do not widen this without that measurement for the state in question.
+#
+# County grain, applied to every precinct in the county, because the official source joins
+# at county level for all 100 NC counties but only 17% at precinct level (CONTRACT.md's
+# priority-states table). That is a smaller concession than it sounds: the real variation
+# is mostly BETWEEN counties (NC eday 0.269-0.721, median 0.428), and both
+# cells_from_inputs() and derive_mode_priors() already shrink a precinct toward its
+# county, so a county split is what they would mostly end up using anyway.
+P_MODE_COMP = "scripts/model/lookups/mode_composition.csv"
+comp = if (!file.exists(P_MODE_COMP)) NULL else
+  readr::read_csv(P_MODE_COMP, show_col_types = FALSE, progress = FALSE) |>
+    filter(state == STATE, replaces_l2)
+if (!is.null(comp) && nrow(comp)) {
+  el_comp = paste0(unique(comp$year), "_general")
+  if (length(el_comp) != 1) cli::cli_abort("mode_composition.csv has >1 year for {STATE}")
+  if (!el_comp %in% mode_hist$election)
+    cli::cli_abort("mode_composition.csv covers {el_comp}, which is not in the L2 history")
+  sh = comp |> transmute(ckey = county_key(county_name), method, share)
+  before_tot = sum(mode_hist$voters[mode_hist$election == el_comp], na.rm = TRUE)
+  keep = filter(mode_hist, election != el_comp)
+  old  = filter(mode_hist, election == el_comp)
+  im   = old$is_midterm[1]
+  # each precinct's L2 TOTAL for that election, re-split by its county's official shares
+  pt = old |> summarize(tot = sum(voters, na.rm = TRUE), .by = geo) |>
+    left_join(select(prec, geo, county_name), by = "geo") |>
+    mutate(ckey = county_key(county_name))
+  miss = pt |> filter(!ckey %in% sh$ckey)
+  if (nrow(miss))
+    cli::cli_alert_warning("{nrow(miss)} {STATE} precinct(s) in {nrow(distinct(miss, ckey))} \
+                            county(ies) are absent from mode_composition.csv -- they KEEP \
+                            their L2 split: {.val {head(unique(miss$county_name), 4)}}")
+  redone = pt |>
+    inner_join(sh, by = "ckey", relationship = "many-to-many") |>
+    transmute(geo, election = el_comp, method,
+              voters = as.integer(round(tot * share)), is_midterm = im)
+  mode_hist = bind_rows(keep, filter(old, !geo %in% redone$geo), redone)
+  after_tot = sum(mode_hist$voters[mode_hist$election == el_comp], na.rm = TRUE)
+  # a reallocation must not move the total. Integer rounding per cell is the only slack.
+  if (abs(after_tot - before_tot) > nrow(redone))
+    cli::cli_abort("re-splitting {el_comp} moved {STATE}'s total from \
+                    {before_tot} to {after_tot} -- that is a reallocation bug, not rounding")
+  newsh = redone |> summarize(v = sum(voters), .by = method) |> mutate(sh = v / sum(v))
+  cli::cli_alert_success("{STATE} {el_comp} mode split replaced from official returns on \
+                          {n_distinct(redone$geo)} precinct(s): \
+                          {paste(sprintf('%s %.3f', newsh$method, newsh$sh), collapse = '  ')} \
+                          (total {format(after_tot, big.mark = ',')}, was \
+                          {format(before_tot, big.mark = ',')})")
+  # The model reads ONE election (MODE_ELECTION / mode_election, default 2022_general).
+  # The other elections still carry L2's numbers, and for NC 2020 and 2024 those are also
+  # wrong -- so say so here rather than let a future backtest discover it.
+  cli::cli_alert_warning("only {el_comp} was replaced; {STATE}'s other elections still \
+                          carry L2's split. Do not point mode_election at them without \
+                          checking it first.")
+}
+
 cli::cli_h2("Mode history ({n_distinct(mode_hist$geo)} precincts)")
 mode_tot = l2 |>
   semi_join(filter(prec, l2_matched), by = c("county_name", "precinct_l2")) |>
@@ -475,17 +607,47 @@ cli::cli_inform("2024 mode shares in the YouGov method frame (same counties): {p
 # ========================================
 ## 6. live-id round trip (data contract §14.1): do live/zero-file ids join to geo?
 # ========================================
-live_files = Sys.glob(file.path(dir_live, glue("{STATE}_*_latest.parquet")))
+# BOTH filename shapes. AK and NC file STATEWIDE as {ST}_latest.parquet; CA/FL/MI/TX file
+# PER COUNTY as {ST}_{County}_latest.parquet. The glob used to cover only the per-county
+# shape, so this entire check was silently SKIPPED for the two statewide states -- which
+# are the two with county/site reporting, i.e. the ones it most needed to run on.
+live_files = unique(c(
+  Sys.glob(file.path(dir_live, glue("{STATE}_latest.parquet"))),
+  Sys.glob(file.path(dir_live, glue("{STATE}_*_latest.parquet")))))
 live_files = live_files[file.size(live_files) > 0]
 cli::cli_h2("Live id check ({length(live_files)} files in {STATE}/clean)")
 if (length(live_files) > 0) {
+  # COMPARE THE IDS AS PRODUCTION DOES -- raw, exact. cell_counts() joins on `geo`
+  # verbatim with no crosswalk, so any transform applied here that production does not
+  # apply makes this check LIE. It used to call norm_geo() on the live side, which is the
+  # same transform the frame's own geo had already been through, so it compared a mangled
+  # id against a mangled id: it reported 100.0% for AK while production joined 77.6% and
+  # dropped 19.5% of the state's votes. A check that normalizes both sides cannot fail.
+  # `geo_norm` is kept alongside purely to SHOW how much of any gap normalization would
+  # close -- it is a diagnostic, never the pass criterion.
   live = map(live_files, \(f) read_pq(f) |> distinct(geo) |> mutate(file = basename(f))) |>
     bind_rows() |>
-    mutate(geo = norm_geo(geo), county_cbs = str_extract(geo, "(?<=^[a-z]{2}_)\\d{3}"))
+    mutate(geo = as.character(geo), geo_norm = norm_geo(geo),
+           county_cbs = str_extract(geo, "(?<=^[a-z]{2}_)\\d{3}"))
   live |>
-    summarize(live_ids = n(), live_in_frame = round(mean(geo %in% prec$geo), 3), .by = c(file, county_cbs)) |>
+    summarize(live_ids = n(),
+              live_in_frame = round(mean(geo %in% prec$geo), 3),          # what production gets
+              if_normalized = round(mean(geo_norm %in% prec$geo), 3),     # diagnostic only
+              .by = c(file, county_cbs)) |>
     left_join(prec |> summarize(frame_ids = n(), frame_in_live = round(mean(geo %in% live$geo), 3), .by = county_cbs), by = "county_cbs") |>
     print()
+  # Buckets are SUPPOSED not to join (they are county/site reports, not precincts), so
+  # they must not be counted against the rate -- see live/R/bucket_counts().
+  lp = filter(live, is.na(bucket_class(str_replace(geo, "^[a-z]{2}_[0-9]+_", ""))))
+  rate = if (nrow(lp)) mean(lp$geo %in% prec$geo) else NA_real_
+  cli::cli_alert_info("live PRECINCT ids joining geo exactly: {round(100 * rate, 1)}% \\
+                       ({sum(lp$geo %in% prec$geo)} of {nrow(lp)}); \\
+                       {sum(!is.na(bucket_class(str_replace(live$geo, '^[a-z]{2}_[0-9]+_', ''))))} \\
+                       bucket geo(s) excluded")
+  if (!is.na(rate) && rate < 0.99)
+    cli::cli_alert_danger("Only {round(100 * rate, 1)}% of live precinct ids join. \\
+                           cell_counts() will DROP the rest with no counter. Fix the id \\
+                           rule or add crosswalk entries before the night.")
 } else {
   cli::cli_alert_info("No readable *_latest.parquet files (make TX/clean available offline to run this check)")
 }

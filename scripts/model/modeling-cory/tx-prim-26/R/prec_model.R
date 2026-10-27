@@ -154,7 +154,18 @@ model_prec_pois <- function(
         mutate(
             pred_min = tot_pred * if_else(use_pred, pmax(share + q_min, 0), share),
             pred_max = tot_pred * if_else(use_pred, pmin(share + q_max, 1), share),
-        ) |>
+        )
+
+    # ADDED (MEDSL, 2026-10-26): keep the per-precinct frame before the summarize below
+    # collapses geo away, and return it as `prec`. Nothing above is changed and `pred` is
+    # byte-identical; this only stops a frame that already exists from being discarded.
+    # scripts/model/live/R/model_cpois.R needs it for the precinct dump
+    # (write_precincts() in live/R/output.R), and the alternative was to reimplement this
+    # whole block there, which would drift.
+    # NOTE this is a local divergence from Cory's upstream tx-prim-26 -- send it to him.
+    d_prec = d_pred
+
+    d_pred = d_prec |>
         summarize(
             model = model_spec[1],
             rep = sum(votes[!is.na(votes)]),
@@ -174,6 +185,7 @@ model_prec_pois <- function(
 
     list(
         pred = d_pred,
-        coef = d_coef
+        coef = d_coef,
+        prec = d_prec
     )
 }

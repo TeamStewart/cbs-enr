@@ -1,0 +1,1245 @@
+state,year,county_fips,county_cbs,county_name,method,level,provenance,level_priority,level_zero_2026,level_actual_2024,sources,disagree,n_geo_precinct,n_geo_bucket,votes_precinct_2026,votes_bucket_2026,votes_precinct_2024,votes_bucket_2024,share_bucket_2024,in_spine,state_evidence_coverage,bucket_labels
+AK,2026,02001,1,ED01 SOUTHEAST PANHANDLE,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,10,1,0,36,,,,TRUE,1,01-early
+AK,2026,02001,1,ED01 SOUTHEAST PANHANDLE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,8779,,,,,TRUE,1,
+AK,2026,02001,1,ED01 SOUTHEAST PANHANDLE,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,10,1,0,1987,,,,TRUE,1,01-absentee
+AK,2026,02001,1,ED01 SOUTHEAST PANHANDLE,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,10,1,0,643,,,,TRUE,1,01-question
+AK,2026,02002,2,ED02 CENTRALNORTH PANHANDLE,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,15,1,0,92,,,,TRUE,1,02-early
+AK,2026,02002,2,ED02 CENTRALNORTH PANHANDLE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,15,0,9269,,,,,TRUE,1,
+AK,2026,02002,2,ED02 CENTRALNORTH PANHANDLE,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,15,1,0,4047,,,,TRUE,1,02-absentee
+AK,2026,02002,2,ED02 CENTRALNORTH PANHANDLE,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,15,1,0,192,,,,TRUE,1,02-question
+AK,2026,02003,3,ED03 NORTHEAST PANHANDLE,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,10,1,0,4084,,,,TRUE,1,03-early
+AK,2026,02003,3,ED03 NORTHEAST PANHANDLE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,11345,,,,,TRUE,1,
+AK,2026,02003,3,ED03 NORTHEAST PANHANDLE,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,10,1,0,1959,,,,TRUE,1,03-absentee
+AK,2026,02003,3,ED03 NORTHEAST PANHANDLE,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,10,1,0,736,,,,TRUE,1,03-question
+AK,2026,02004,4,ED04 GREATER JUNEAU,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,8,1,0,4824,,,,TRUE,1,04-early
+AK,2026,02004,4,ED04 GREATER JUNEAU,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,8,0,8927,,,,,TRUE,1,
+AK,2026,02004,4,ED04 GREATER JUNEAU,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,8,1,0,1313,,,,TRUE,1,04-absentee
+AK,2026,02004,4,ED04 GREATER JUNEAU,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,8,1,0,877,,,,TRUE,1,04-question
+AK,2026,02005,5,ED05 KODIAKPRWILLIAM SOUND,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,12,1,0,48,,,,TRUE,1,05-early
+AK,2026,02005,5,ED05 KODIAKPRWILLIAM SOUND,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,8239,,,,,TRUE,1,
+AK,2026,02005,5,ED05 KODIAKPRWILLIAM SOUND,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,12,1,0,2424,,,,TRUE,1,05-absentee
+AK,2026,02005,5,ED05 KODIAKPRWILLIAM SOUND,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,12,1,0,289,,,,TRUE,1,05-question
+AK,2026,02006,6,ED06 SOUTH KENAI PENINSULA,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,9,1,0,4409,,,,TRUE,1,06-early
+AK,2026,02006,6,ED06 SOUTH KENAI PENINSULA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,9,0,13319,,,,,TRUE,1,
+AK,2026,02006,6,ED06 SOUTH KENAI PENINSULA,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,9,1,0,1771,,,,TRUE,1,06-absentee
+AK,2026,02006,6,ED06 SOUTH KENAI PENINSULA,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,9,1,0,460,,,,TRUE,1,06-question
+AK,2026,02007,7,ED07 CENTRAL KENAI PENINSULA,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,1930,,,,TRUE,1,07-early
+AK,2026,02007,7,ED07 CENTRAL KENAI PENINSULA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,6,0,9178,,,,,TRUE,1,
+AK,2026,02007,7,ED07 CENTRAL KENAI PENINSULA,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,1020,,,,TRUE,1,07-absentee
+AK,2026,02007,7,ED07 CENTRAL KENAI PENINSULA,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,501,,,,TRUE,1,07-question
+AK,2026,02008,8,ED08 NORTHEAST KENAI PENIN,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,11,1,0,1426,,,,TRUE,1,08-early
+AK,2026,02008,8,ED08 NORTHEAST KENAI PENIN,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,11,0,12939,,,,,TRUE,1,
+AK,2026,02008,8,ED08 NORTHEAST KENAI PENIN,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,11,1,0,1540,,,,TRUE,1,08-absentee
+AK,2026,02008,8,ED08 NORTHEAST KENAI PENIN,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,11,1,0,241,,,,TRUE,1,08-question
+AK,2026,02009,9,ED09 FAR SOUTH ANCH BOROUGH,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,9,1,0,3644,,,,TRUE,1,09-early
+AK,2026,02009,9,ED09 FAR SOUTH ANCH BOROUGH,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,9,0,14303,,,,,TRUE,1,
+AK,2026,02009,9,ED09 FAR SOUTH ANCH BOROUGH,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,9,1,0,2678,,,,TRUE,1,09-absentee
+AK,2026,02009,9,ED09 FAR SOUTH ANCH BOROUGH,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,9,1,0,485,,,,TRUE,1,09-question
+AK,2026,02010,10,ED10 SCENTRAL ANCH SUBURBS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,1979,,,,TRUE,1,10-early
+AK,2026,02010,10,ED10 SCENTRAL ANCH SUBURBS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,6,0,9497,,,,,TRUE,1,
+AK,2026,02010,10,ED10 SCENTRAL ANCH SUBURBS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,1560,,,,TRUE,1,10-absentee
+AK,2026,02010,10,ED10 SCENTRAL ANCH SUBURBS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,257,,,,TRUE,1,10-question
+AK,2026,02011,11,ED11 SE ANCHORAGE SUBURBS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,2509,,,,TRUE,1,11-early
+AK,2026,02011,11,ED11 SE ANCHORAGE SUBURBS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,7,0,10898,,,,,TRUE,1,
+AK,2026,02011,11,ED11 SE ANCHORAGE SUBURBS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,2136,,,,TRUE,1,11-absentee
+AK,2026,02011,11,ED11 SE ANCHORAGE SUBURBS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,286,,,,TRUE,1,11-question
+AK,2026,02012,12,ED12 SCENTRAL ANCH SUBURBS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,2170,,,,TRUE,1,12-early
+AK,2026,02012,12,ED12 SCENTRAL ANCH SUBURBS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,6,0,8214,,,,,TRUE,1,
+AK,2026,02012,12,ED12 SCENTRAL ANCH SUBURBS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,1592,,,,TRUE,1,12-absentee
+AK,2026,02012,12,ED12 SCENTRAL ANCH SUBURBS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,202,,,,TRUE,1,12-question
+AK,2026,02013,13,ED13 CENTRAL ANCH SUBURBS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,1782,,,,TRUE,1,13-early
+AK,2026,02013,13,ED13 CENTRAL ANCH SUBURBS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,5,0,6810,,,,,TRUE,1,
+AK,2026,02013,13,ED13 CENTRAL ANCH SUBURBS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,1331,,,,TRUE,1,13-absentee
+AK,2026,02013,13,ED13 CENTRAL ANCH SUBURBS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,292,,,,TRUE,1,13-question
+AK,2026,02014,14,ED14 MIDTOWN ANCHORAGE,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,3188,,,,TRUE,1,14-early
+AK,2026,02014,14,ED14 MIDTOWN ANCHORAGE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,7,0,6440,,,,,TRUE,1,
+AK,2026,02014,14,ED14 MIDTOWN ANCHORAGE,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,1618,,,,TRUE,1,14-absentee
+AK,2026,02014,14,ED14 MIDTOWN ANCHORAGE,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,547,,,,TRUE,1,14-question
+AK,2026,02015,15,ED15 SW ANCHORAGE SUBURBS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,2136,,,,TRUE,1,15-early
+AK,2026,02015,15,ED15 SW ANCHORAGE SUBURBS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,6,0,10156,,,,,TRUE,1,
+AK,2026,02015,15,ED15 SW ANCHORAGE SUBURBS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,1946,,,,TRUE,1,15-absentee
+AK,2026,02015,15,ED15 SW ANCHORAGE SUBURBS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,406,,,,TRUE,1,15-question
+AK,2026,02016,16,ED16 WEST ANCHORAGE SUBURBS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,3065,,,,TRUE,1,16-early
+AK,2026,02016,16,ED16 WEST ANCHORAGE SUBURBS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,7,0,10778,,,,,TRUE,1,
+AK,2026,02016,16,ED16 WEST ANCHORAGE SUBURBS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,2052,,,,TRUE,1,16-absentee
+AK,2026,02016,16,ED16 WEST ANCHORAGE SUBURBS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,419,,,,TRUE,1,16-question
+AK,2026,02017,17,ED17 DOWNTOWN ANCHORAGE,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,4106,,,,TRUE,1,17-early
+AK,2026,02017,17,ED17 DOWNTOWN ANCHORAGE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,7,0,6587,,,,,TRUE,1,
+AK,2026,02017,17,ED17 DOWNTOWN ANCHORAGE,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,2000,,,,TRUE,1,17-absentee
+AK,2026,02017,17,ED17 DOWNTOWN ANCHORAGE,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,495,,,,TRUE,1,17-question
+AK,2026,02018,18,ED18 NE ANCHORAGE CITY,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,569,,,,TRUE,1,18-early
+AK,2026,02018,18,ED18 NE ANCHORAGE CITY,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,5,0,1841,,,,,TRUE,1,
+AK,2026,02018,18,ED18 NE ANCHORAGE CITY,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,558,,,,TRUE,1,18-absentee
+AK,2026,02018,18,ED18 NE ANCHORAGE CITY,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,143,,,,TRUE,1,18-question
+AK,2026,02019,19,ED19 NORTH ANCHORAGE CITY,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,1248,,,,TRUE,1,19-early
+AK,2026,02019,19,ED19 NORTH ANCHORAGE CITY,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,5,0,4378,,,,,TRUE,1,
+AK,2026,02019,19,ED19 NORTH ANCHORAGE CITY,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,859,,,,TRUE,1,19-absentee
+AK,2026,02019,19,ED19 NORTH ANCHORAGE CITY,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,378,,,,TRUE,1,19-question
+AK,2026,02020,20,ED20 ECENTRAL ANCH CITY,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,1879,,,,TRUE,1,20-early
+AK,2026,02020,20,ED20 ECENTRAL ANCH CITY,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,5,0,6441,,,,,TRUE,1,
+AK,2026,02020,20,ED20 ECENTRAL ANCH CITY,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,1394,,,,TRUE,1,20-absentee
+AK,2026,02020,20,ED20 ECENTRAL ANCH CITY,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,474,,,,TRUE,1,20-question
+AK,2026,02021,21,ED21 EAST ANCHORAGE CITY,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,2326,,,,TRUE,1,21-early
+AK,2026,02021,21,ED21 EAST ANCHORAGE CITY,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,5,0,9099,,,,,TRUE,1,
+AK,2026,02021,21,ED21 EAST ANCHORAGE CITY,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,2077,,,,TRUE,1,21-absentee
+AK,2026,02021,21,ED21 EAST ANCHORAGE CITY,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,410,,,,TRUE,1,21-question
+AK,2026,02022,22,ED22 NE ANCHORAGE CITY,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,4,1,0,920,,,,TRUE,1,22-early
+AK,2026,02022,22,ED22 NE ANCHORAGE CITY,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,4,0,4545,,,,,TRUE,1,
+AK,2026,02022,22,ED22 NE ANCHORAGE CITY,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,4,1,0,799,,,,TRUE,1,22-absentee
+AK,2026,02022,22,ED22 NE ANCHORAGE CITY,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,4,1,0,112,,,,TRUE,1,22-question
+AK,2026,02023,23,ED23 NORTH ANCHORAGE BOROUGH,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,3562,,,,TRUE,1,23-early
+AK,2026,02023,23,ED23 NORTH ANCHORAGE BOROUGH,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,6,0,9563,,,,,TRUE,1,
+AK,2026,02023,23,ED23 NORTH ANCHORAGE BOROUGH,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,2053,,,,TRUE,1,23-absentee
+AK,2026,02023,23,ED23 NORTH ANCHORAGE BOROUGH,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,268,,,,TRUE,1,23-question
+AK,2026,02024,24,ED24 FARNORTH ANCHORAGE BORO,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,2919,,,,TRUE,1,24-early
+AK,2026,02024,24,ED24 FARNORTH ANCHORAGE BORO,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,7,0,9791,,,,,TRUE,1,
+AK,2026,02024,24,ED24 FARNORTH ANCHORAGE BORO,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,1547,,,,TRUE,1,24-absentee
+AK,2026,02024,24,ED24 FARNORTH ANCHORAGE BORO,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,462,,,,TRUE,1,24-question
+AK,2026,02025,25,ED25 MATSU  PALMER AREA,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,3627,,,,TRUE,1,25-early
+AK,2026,02025,25,ED25 MATSU  PALMER AREA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,7,0,10050,,,,,TRUE,1,
+AK,2026,02025,25,ED25 MATSU  PALMER AREA,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,1193,,,,TRUE,1,25-absentee
+AK,2026,02025,25,ED25 MATSU  PALMER AREA,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,648,,,,TRUE,1,25-question
+AK,2026,02026,26,ED26 MATSU VALLEY SOUTH,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,2853,,,,TRUE,1,26-early
+AK,2026,02026,26,ED26 MATSU VALLEY SOUTH,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,7,0,7969,,,,,TRUE,1,
+AK,2026,02026,26,ED26 MATSU VALLEY SOUTH,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,965,,,,TRUE,1,26-absentee
+AK,2026,02026,26,ED26 MATSU VALLEY SOUTH,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,282,,,,TRUE,1,26-question
+AK,2026,02027,27,ED27 MATSU  WASILLA,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,3586,,,,TRUE,1,27-early
+AK,2026,02027,27,ED27 MATSU  WASILLA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,5,0,5971,,,,,TRUE,1,
+AK,2026,02027,27,ED27 MATSU  WASILLA,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,998,,,,TRUE,1,27-absentee
+AK,2026,02027,27,ED27 MATSU  WASILLA,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,5,1,0,181,,,,TRUE,1,27-question
+AK,2026,02028,28,ED28 MATSU  EAST WASILLA,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,2999,,,,TRUE,1,28-early
+AK,2026,02028,28,ED28 MATSU  EAST WASILLA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,7,0,7365,,,,,TRUE,1,
+AK,2026,02028,28,ED28 MATSU  EAST WASILLA,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,1001,,,,TRUE,1,28-absentee
+AK,2026,02028,28,ED28 MATSU  EAST WASILLA,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,7,1,0,391,,,,TRUE,1,28-question
+AK,2026,02029,29,ED29 MATSU VALLEY EAST,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,9,1,0,2505,,,,TRUE,1,29-early
+AK,2026,02029,29,ED29 MATSU VALLEY EAST,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,9,0,10487,,,,,TRUE,1,
+AK,2026,02029,29,ED29 MATSU VALLEY EAST,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,9,1,0,1490,,,,TRUE,1,29-absentee
+AK,2026,02029,29,ED29 MATSU VALLEY EAST,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,9,1,0,364,,,,TRUE,1,29-question
+AK,2026,02030,30,ED30 MATSU  PARKS HIGHWAY,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,12,1,0,1514,,,,TRUE,1,30-early
+AK,2026,02030,30,ED30 MATSU  PARKS HIGHWAY,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,10530,,,,,TRUE,1,
+AK,2026,02030,30,ED30 MATSU  PARKS HIGHWAY,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,12,1,0,1801,,,,TRUE,1,30-absentee
+AK,2026,02030,30,ED30 MATSU  PARKS HIGHWAY,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,12,1,0,478,,,,TRUE,1,30-question
+AK,2026,02031,31,ED31 DOWNTOWN FAIRBANKS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,4,1,0,1788,,,,TRUE,1,31-early
+AK,2026,02031,31,ED31 DOWNTOWN FAIRBANKS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,4,0,7099,,,,,TRUE,1,
+AK,2026,02031,31,ED31 DOWNTOWN FAIRBANKS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,4,1,0,882,,,,TRUE,1,31-absentee
+AK,2026,02031,31,ED31 DOWNTOWN FAIRBANKS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,4,1,0,334,,,,TRUE,1,31-question
+AK,2026,02032,32,ED32 EAST FAIRBANKS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,4,1,0,800,,,,TRUE,1,32-early
+AK,2026,02032,32,ED32 EAST FAIRBANKS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,4,0,4642,,,,,TRUE,1,
+AK,2026,02032,32,ED32 EAST FAIRBANKS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,4,1,0,329,,,,TRUE,1,32-absentee
+AK,2026,02032,32,ED32 EAST FAIRBANKS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,4,1,0,201,,,,TRUE,1,32-question
+AK,2026,02033,33,ED33 NORTH POLE AREA,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,992,,,,TRUE,1,33-early
+AK,2026,02033,33,ED33 NORTH POLE AREA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,6,0,9244,,,,,TRUE,1,
+AK,2026,02033,33,ED33 NORTH POLE AREA,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,701,,,,TRUE,1,33-absentee
+AK,2026,02033,33,ED33 NORTH POLE AREA,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,6,1,0,227,,,,TRUE,1,33-question
+AK,2026,02034,34,ED34 E FAIRBANKS OUTSKIRTS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,8,1,0,2465,,,,TRUE,1,34-early
+AK,2026,02034,34,ED34 E FAIRBANKS OUTSKIRTS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,8,0,10906,,,,,TRUE,1,
+AK,2026,02034,34,ED34 E FAIRBANKS OUTSKIRTS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,8,1,0,902,,,,TRUE,1,34-absentee
+AK,2026,02034,34,ED34 E FAIRBANKS OUTSKIRTS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,8,1,0,321,,,,TRUE,1,34-question
+AK,2026,02035,35,ED35 W FAIRBANKS OUTSKIRTS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,8,1,0,2589,,,,TRUE,1,35-early
+AK,2026,02035,35,ED35 W FAIRBANKS OUTSKIRTS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,8,0,12266,,,,,TRUE,1,
+AK,2026,02035,35,ED35 W FAIRBANKS OUTSKIRTS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,8,1,0,831,,,,TRUE,1,35-absentee
+AK,2026,02035,35,ED35 W FAIRBANKS OUTSKIRTS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,8,1,0,444,,,,TRUE,1,35-question
+AK,2026,02036,36,ED36 INTERIOR ALASKA,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,40,1,0,963,,,,TRUE,1,36-early
+AK,2026,02036,36,ED36 INTERIOR ALASKA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,40,0,11173,,,,,TRUE,1,
+AK,2026,02036,36,ED36 INTERIOR ALASKA,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,40,1,0,1705,,,,TRUE,1,36-absentee
+AK,2026,02036,36,ED36 INTERIOR ALASKA,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,40,1,0,533,,,,TRUE,1,36-question
+AK,2026,02037,37,ED37 BRISTOL BAYALEUTIANS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,35,1,0,105,,,,TRUE,1,37-early
+AK,2026,02037,37,ED37 BRISTOL BAYALEUTIANS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,35,0,6032,,,,,TRUE,1,
+AK,2026,02037,37,ED37 BRISTOL BAYALEUTIANS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,35,1,0,803,,,,TRUE,1,37-absentee
+AK,2026,02037,37,ED37 BRISTOL BAYALEUTIANS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,35,1,0,240,,,,TRUE,1,37-question
+AK,2026,02038,38,ED38 BERING COAST,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,24,1,0,48,,,,TRUE,1,38-early
+AK,2026,02038,38,ED38 BERING COAST,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,24,0,4438,,,,,TRUE,1,
+AK,2026,02038,38,ED38 BERING COAST,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,24,1,0,392,,,,TRUE,1,38-absentee
+AK,2026,02038,38,ED38 BERING COAST,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,24,1,0,171,,,,TRUE,1,38-question
+AK,2026,02039,39,ED39 BERING STRAITS,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,28,1,0,304,,,,TRUE,1,39-early
+AK,2026,02039,39,ED39 BERING STRAITS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,28,0,6125,,,,,TRUE,1,
+AK,2026,02039,39,ED39 BERING STRAITS,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,28,1,0,212,,,,TRUE,1,39-absentee
+AK,2026,02039,39,ED39 BERING STRAITS,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,28,1,0,230,,,,TRUE,1,39-question
+AK,2026,02040,40,ED40 ARCTIC,early,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,20,1,0,30,,,,TRUE,1,40-early
+AK,2026,02040,40,ED40 ARCTIC,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,20,0,4006,,,,,TRUE,1,
+AK,2026,02040,40,ED40 ARCTIC,mail,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,20,1,0,159,,,,TRUE,1,40-absentee
+AK,2026,02040,40,ED40 ARCTIC,prov,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,20,1,0,214,,,,TRUE,1,40-question
+CA,2026,06001,1,ALAMEDA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06003,2,ALPINE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06005,3,AMADOR,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06007,4,BUTTE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06009,5,CALAVERAS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06011,6,COLUSA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06013,7,CONTRA COSTA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06015,8,DEL NORTE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06017,9,EL DORADO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06019,10,FRESNO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06021,11,GLENN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06023,12,HUMBOLDT,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06025,13,IMPERIAL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06027,14,INYO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06029,15,KERN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06031,16,KINGS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06033,17,LAKE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06035,18,LASSEN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06037,19,LOS ANGELES,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06039,20,MADERA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06041,21,MARIN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06043,22,MARIPOSA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06045,23,MENDOCINO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06047,24,MERCED,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06049,25,MODOC,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06051,26,MONO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06053,27,MONTEREY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06055,28,NAPA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06057,29,NEVADA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06059,30,ORANGE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06061,31,PLACER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06063,32,PLUMAS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06065,33,RIVERSIDE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06067,34,SACRAMENTO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06069,35,SAN BENITO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06071,36,SAN BERNARDINO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06073,37,SAN DIEGO,all,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,2994,0,0,,,,,TRUE,0.069,
+CA,2026,06075,38,SAN FRANCISCO,all,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,2,0,0,,,,,TRUE,0.069,
+CA,2026,06075,38,SAN FRANCISCO,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,514,0,0,,,,,TRUE,0.069,
+CA,2026,06075,38,SAN FRANCISCO,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,514,0,0,,,,,TRUE,0.069,
+CA,2026,06077,39,SAN JOAQUIN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06079,40,SAN LUIS OBISPO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06081,41,SAN MATEO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06083,42,SANTA BARBARA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06085,43,SANTA CLARA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06087,44,SANTA CRUZ,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06089,45,SHASTA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06091,46,SIERRA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06093,47,SISKIYOU,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06095,48,SOLANO,all,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,196,0,0,,,,,TRUE,0.069,
+CA,2026,06097,49,SONOMA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,403,0,0,,,,,TRUE,0.069,
+CA,2026,06097,49,SONOMA,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,403,0,0,,,,,TRUE,0.069,
+CA,2026,06099,50,STANISLAUS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06101,51,SUTTER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06103,52,TEHAMA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06105,53,TRINITY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06107,54,TULARE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06109,55,TUOLUMNE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06111,56,VENTURA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.069,
+CA,2026,06113,57,YOLO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+CA,2026,06115,58,YUBA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.069,
+FL,2026,12001,1,ALACHUA,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,63,0,0,,,,,FALSE,0.5075,
+FL,2026,12001,1,ALACHUA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,63,0,0,,,,,FALSE,0.5075,
+FL,2026,12001,1,ALACHUA,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,63,0,0,,,,,FALSE,0.5075,
+FL,2026,12001,1,ALACHUA,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,63,0,0,,,,,FALSE,0.5075,
+FL,2026,12003,2,BAKER,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12003,2,BAKER,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12003,2,BAKER,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12005,3,BAY,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12005,3,BAY,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12005,3,BAY,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12007,4,BRADFORD,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,13,0,0,,,,,TRUE,0.5075,
+FL,2026,12007,4,BRADFORD,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,13,0,0,,,,,TRUE,0.5075,
+FL,2026,12007,4,BRADFORD,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,13,0,0,,,,,TRUE,0.5075,
+FL,2026,12007,4,BRADFORD,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,13,0,0,,,,,TRUE,0.5075,
+FL,2026,12009,5,BREVARD,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12009,5,BREVARD,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12009,5,BREVARD,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12011,6,BROWARD,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12011,6,BROWARD,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12011,6,BROWARD,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12013,7,CALHOUN,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12013,7,CALHOUN,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12013,7,CALHOUN,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12015,8,CHARLOTTE,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12015,8,CHARLOTTE,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12015,8,CHARLOTTE,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12017,9,CITRUS,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,31,0,0,,,,,TRUE,0.5075,
+FL,2026,12017,9,CITRUS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,31,0,0,,,,,TRUE,0.5075,
+FL,2026,12017,9,CITRUS,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,31,0,0,,,,,TRUE,0.5075,
+FL,2026,12019,10,CLAY,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12019,10,CLAY,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12019,10,CLAY,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12021,11,COLLIER,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,67,0,0,,,,,TRUE,0.5075,
+FL,2026,12021,11,COLLIER,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,67,0,0,,,,,TRUE,0.5075,
+FL,2026,12021,11,COLLIER,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,67,0,0,,,,,TRUE,0.5075,
+FL,2026,12023,12,COLUMBIA,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,28,0,0,,,,,TRUE,0.5075,
+FL,2026,12023,12,COLUMBIA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,28,0,0,,,,,TRUE,0.5075,
+FL,2026,12023,12,COLUMBIA,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,28,0,0,,,,,TRUE,0.5075,
+FL,2026,12086,13,MIAMI-DADE,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,773,0,0,,,,,TRUE,0.5075,
+FL,2026,12086,13,MIAMI-DADE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,773,0,0,,,,,TRUE,0.5075,
+FL,2026,12086,13,MIAMI-DADE,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,773,0,0,,,,,TRUE,0.5075,
+FL,2026,12027,14,DESOTO,all,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,15,0,0,,,,,TRUE,0.5075,
+FL,2026,12029,15,DIXIE,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,TRUE,0.5075,
+FL,2026,12029,15,DIXIE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,TRUE,0.5075,
+FL,2026,12029,15,DIXIE,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,TRUE,0.5075,
+FL,2026,12029,15,DIXIE,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,TRUE,0.5075,
+FL,2026,12031,16,DUVAL,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,159,0,0,,,,,FALSE,0.5075,
+FL,2026,12031,16,DUVAL,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,159,0,0,,,,,FALSE,0.5075,
+FL,2026,12031,16,DUVAL,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,159,0,0,,,,,FALSE,0.5075,
+FL,2026,12031,16,DUVAL,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,159,0,0,,,,,FALSE,0.5075,
+FL,2026,12033,17,ESCAMBIA,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12033,17,ESCAMBIA,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12033,17,ESCAMBIA,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12035,18,FLAGLER,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12035,18,FLAGLER,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12035,18,FLAGLER,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12037,19,FRANKLIN,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12037,19,FRANKLIN,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12037,19,FRANKLIN,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12039,20,GADSDEN,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,25,0,0,,,,,TRUE,0.5075,
+FL,2026,12039,20,GADSDEN,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,25,0,0,,,,,TRUE,0.5075,
+FL,2026,12039,20,GADSDEN,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,25,0,0,,,,,TRUE,0.5075,
+FL,2026,12039,20,GADSDEN,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,25,0,0,,,,,TRUE,0.5075,
+FL,2026,12041,21,GILCHRIST,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12041,21,GILCHRIST,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12041,21,GILCHRIST,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12043,22,GLADES,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,13,0,0,,,,,TRUE,0.5075,
+FL,2026,12043,22,GLADES,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,13,0,0,,,,,TRUE,0.5075,
+FL,2026,12043,22,GLADES,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,13,0,0,,,,,TRUE,0.5075,
+FL,2026,12043,22,GLADES,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,13,0,0,,,,,TRUE,0.5075,
+FL,2026,12045,23,GULF,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,FALSE,0.5075,
+FL,2026,12045,23,GULF,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,FALSE,0.5075,
+FL,2026,12045,23,GULF,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,FALSE,0.5075,
+FL,2026,12045,23,GULF,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,FALSE,0.5075,
+FL,2026,12047,24,HAMILTON,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12047,24,HAMILTON,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12047,24,HAMILTON,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12049,25,HARDEE,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+FL,2026,12049,25,HARDEE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+FL,2026,12049,25,HARDEE,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+FL,2026,12049,25,HARDEE,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+FL,2026,12051,26,HENDRY,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,TRUE,0.5075,
+FL,2026,12051,26,HENDRY,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,TRUE,0.5075,
+FL,2026,12051,26,HENDRY,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,TRUE,0.5075,
+FL,2026,12051,26,HENDRY,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,10,0,0,,,,,TRUE,0.5075,
+FL,2026,12053,27,HERNANDO,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,32,0,0,,,,,TRUE,0.5075,
+FL,2026,12053,27,HERNANDO,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,32,0,0,,,,,TRUE,0.5075,
+FL,2026,12053,27,HERNANDO,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,32,0,0,,,,,TRUE,0.5075,
+FL,2026,12055,28,HIGHLANDS,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12055,28,HIGHLANDS,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12055,28,HIGHLANDS,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12057,29,HILLSBOROUGH,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,446,0,0,,,,,TRUE,0.5075,
+FL,2026,12057,29,HILLSBOROUGH,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,446,0,0,,,,,TRUE,0.5075,
+FL,2026,12057,29,HILLSBOROUGH,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,446,0,0,,,,,TRUE,0.5075,
+FL,2026,12059,30,HOLMES,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12059,30,HOLMES,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12059,30,HOLMES,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12061,31,INDIAN RIVER,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,36,0,0,,,,,TRUE,0.5075,
+FL,2026,12061,31,INDIAN RIVER,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,36,0,0,,,,,TRUE,0.5075,
+FL,2026,12061,31,INDIAN RIVER,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,36,0,0,,,,,TRUE,0.5075,
+FL,2026,12063,32,JACKSON,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,14,0,0,,,,,FALSE,0.5075,
+FL,2026,12063,32,JACKSON,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,14,0,0,,,,,FALSE,0.5075,
+FL,2026,12063,32,JACKSON,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,14,0,0,,,,,FALSE,0.5075,
+FL,2026,12063,32,JACKSON,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,14,0,0,,,,,FALSE,0.5075,
+FL,2026,12065,33,JEFFERSON,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,16,0,0,,,,,FALSE,0.5075,
+FL,2026,12065,33,JEFFERSON,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,16,0,0,,,,,FALSE,0.5075,
+FL,2026,12065,33,JEFFERSON,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,16,0,0,,,,,FALSE,0.5075,
+FL,2026,12065,33,JEFFERSON,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,16,0,0,,,,,FALSE,0.5075,
+FL,2026,12067,34,LAFAYETTE,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12067,34,LAFAYETTE,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12067,34,LAFAYETTE,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12069,35,LAKE,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,92,0,0,,,,,TRUE,0.5075,
+FL,2026,12069,35,LAKE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,92,0,0,,,,,TRUE,0.5075,
+FL,2026,12069,35,LAKE,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,92,0,0,,,,,TRUE,0.5075,
+FL,2026,12071,36,LEE,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12071,36,LEE,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12071,36,LEE,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12073,37,LEON,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,134,0,0,,,,,FALSE,0.5075,
+FL,2026,12073,37,LEON,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,134,0,0,,,,,FALSE,0.5075,
+FL,2026,12073,37,LEON,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,134,0,0,,,,,FALSE,0.5075,
+FL,2026,12075,38,LEVY,all,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,13,0,4446,,,,,TRUE,0.5075,
+FL,2026,12077,39,LIBERTY,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12077,39,LIBERTY,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12077,39,LIBERTY,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12079,40,MADISON,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12079,40,MADISON,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12079,40,MADISON,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12081,41,MANATEE,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12081,41,MANATEE,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12081,41,MANATEE,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12083,42,MARION,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,106,0,0,,,,,TRUE,0.5075,
+FL,2026,12083,42,MARION,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,106,0,0,,,,,TRUE,0.5075,
+FL,2026,12083,42,MARION,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,106,0,0,,,,,TRUE,0.5075,
+FL,2026,12085,43,MARTIN,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12085,43,MARTIN,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12085,43,MARTIN,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12087,44,MONROE,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,33,0,0,,,,,TRUE,0.5075,
+FL,2026,12087,44,MONROE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,33,0,0,,,,,TRUE,0.5075,
+FL,2026,12087,44,MONROE,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,33,0,0,,,,,TRUE,0.5075,
+FL,2026,12087,44,MONROE,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,33,0,0,,,,,TRUE,0.5075,
+FL,2026,12089,45,NASSAU,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,18,0,0,,,,,FALSE,0.5075,
+FL,2026,12089,45,NASSAU,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,18,0,0,,,,,FALSE,0.5075,
+FL,2026,12089,45,NASSAU,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,18,0,0,,,,,FALSE,0.5075,
+FL,2026,12091,46,OKALOOSA,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12091,46,OKALOOSA,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12091,46,OKALOOSA,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12093,47,OKEECHOBEE,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,11,0,0,,,,,TRUE,0.5075,
+FL,2026,12093,47,OKEECHOBEE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,11,0,0,,,,,TRUE,0.5075,
+FL,2026,12093,47,OKEECHOBEE,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,11,0,0,,,,,TRUE,0.5075,
+FL,2026,12093,47,OKEECHOBEE,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,11,0,0,,,,,TRUE,0.5075,
+FL,2026,12095,48,ORANGE,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12095,48,ORANGE,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12095,48,ORANGE,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12097,49,OSCEOLA,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12097,49,OSCEOLA,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12097,49,OSCEOLA,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12099,50,PALM BEACH,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12099,50,PALM BEACH,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12099,50,PALM BEACH,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12101,51,PASCO,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12101,51,PASCO,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12101,51,PASCO,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12103,52,PINELLAS,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12103,52,PINELLAS,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12103,52,PINELLAS,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12105,53,POLK,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,177,0,0,,,,,TRUE,0.5075,
+FL,2026,12105,53,POLK,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,177,0,0,,,,,TRUE,0.5075,
+FL,2026,12105,53,POLK,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,177,0,0,,,,,TRUE,0.5075,
+FL,2026,12107,54,PUTNAM,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12107,54,PUTNAM,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12107,54,PUTNAM,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12109,55,ST. JOHNS,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,55,0,0,,,,,FALSE,0.5075,
+FL,2026,12109,55,ST. JOHNS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,55,0,0,,,,,FALSE,0.5075,
+FL,2026,12109,55,ST. JOHNS,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,55,0,0,,,,,FALSE,0.5075,
+FL,2026,12111,56,ST. LUCIE,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12111,56,ST. LUCIE,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12111,56,ST. LUCIE,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12113,57,SANTA ROSA,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,41,0,0,,,,,FALSE,0.5075,
+FL,2026,12113,57,SANTA ROSA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,41,0,0,,,,,FALSE,0.5075,
+FL,2026,12113,57,SANTA ROSA,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,41,0,0,,,,,FALSE,0.5075,
+FL,2026,12115,58,SARASOTA,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,98,0,0,,,,,TRUE,0.5075,
+FL,2026,12115,58,SARASOTA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,98,0,0,,,,,TRUE,0.5075,
+FL,2026,12115,58,SARASOTA,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,98,0,0,,,,,TRUE,0.5075,
+FL,2026,12115,58,SARASOTA,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,98,0,0,,,,,TRUE,0.5075,
+FL,2026,12117,59,SEMINOLE,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12117,59,SEMINOLE,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12117,59,SEMINOLE,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12119,60,SUMTER,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,33,0,0,,,,,FALSE,0.5075,
+FL,2026,12119,60,SUMTER,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,33,0,0,,,,,FALSE,0.5075,
+FL,2026,12119,60,SUMTER,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,33,0,0,,,,,FALSE,0.5075,
+FL,2026,12119,60,SUMTER,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,33,0,0,,,,,FALSE,0.5075,
+FL,2026,12121,61,SUWANNEE,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12121,61,SUWANNEE,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12121,61,SUWANNEE,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12123,62,TAYLOR,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12123,62,TAYLOR,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12123,62,TAYLOR,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,TRUE,0.5075,
+FL,2026,12125,63,UNION,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12125,63,UNION,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12125,63,UNION,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12127,64,VOLUSIA,early,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12127,64,VOLUSIA,eday,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12127,64,VOLUSIA,mail,precinct,state_modal,precinct,,,state_modal,FALSE,,,,,,,,FALSE,0.5075,
+FL,2026,12129,65,WAKULLA,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+FL,2026,12129,65,WAKULLA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+FL,2026,12129,65,WAKULLA,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+FL,2026,12129,65,WAKULLA,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+FL,2026,12131,66,WALTON,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,22,0,0,,,,,TRUE,0.5075,
+FL,2026,12131,66,WALTON,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,22,0,0,,,,,TRUE,0.5075,
+FL,2026,12131,66,WALTON,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,22,0,0,,,,,TRUE,0.5075,
+FL,2026,12133,67,WASHINGTON,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+FL,2026,12133,67,WASHINGTON,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+FL,2026,12133,67,WASHINGTON,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+FL,2026,12133,67,WASHINGTON,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,12,0,0,,,,,FALSE,0.5075,
+MI,2026,26001,1,ALCONA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26003,2,ALGER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26005,3,ALLEGAN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26007,4,ALPENA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26009,5,ANTRIM,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26011,6,ARENAC,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26013,7,BARAGA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26015,8,BARRY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26017,9,BAY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26019,10,BENZIE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26021,11,BERRIEN,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,55,0,0,,,,,TRUE,0.2048,
+MI,2026,26021,11,BERRIEN,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,55,0,0,,,,,TRUE,0.2048,
+MI,2026,26021,11,BERRIEN,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,55,0,0,,,,,TRUE,0.2048,
+MI,2026,26023,12,BRANCH,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,21,0,0,,,,,TRUE,0.2048,
+MI,2026,26023,12,BRANCH,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,21,0,0,,,,,TRUE,0.2048,
+MI,2026,26023,12,BRANCH,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,21,0,0,,,,,TRUE,0.2048,
+MI,2026,26025,13,CALHOUN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26027,14,CASS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26029,15,CHARLEVOIX,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26031,16,CHEBOYGAN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26033,17,CHIPPEWA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26035,18,CLARE,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,19,0,0,,,,,TRUE,0.2048,
+MI,2026,26035,18,CLARE,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,19,0,0,,,,,TRUE,0.2048,
+MI,2026,26035,18,CLARE,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,19,0,0,,,,,TRUE,0.2048,
+MI,2026,26037,19,CLINTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26039,20,CRAWFORD,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26041,21,DELTA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26043,22,DICKINSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26045,23,EATON,early,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,22868,0,0,TRUE,0.2048,
+MI,2026,26045,23,EATON,eday,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,54511,0,0,TRUE,0.2048,
+MI,2026,26045,23,EATON,mail,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,52458,0,0,TRUE,0.2048,
+MI,2026,26047,24,EMMET,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26049,25,GENESEE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26051,26,GLADWIN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26053,27,GOGEBIC,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26055,28,GRAND TRAVERSE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26057,29,GRATIOT,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26059,30,HILLSDALE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26061,31,HOUGHTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26063,32,HURON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26065,33,INGHAM,early,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,64983,0,0,TRUE,0.2048,
+MI,2026,26065,33,INGHAM,eday,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,101973,0,0,TRUE,0.2048,
+MI,2026,26065,33,INGHAM,mail,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,128359,0,0,TRUE,0.2048,
+MI,2026,26067,34,IONIA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26069,35,IOSCO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26071,36,IRON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26073,37,ISABELLA,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,24,0,0,,,,,TRUE,0.2048,
+MI,2026,26073,37,ISABELLA,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,24,0,0,,,,,TRUE,0.2048,
+MI,2026,26073,37,ISABELLA,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,24,0,0,,,,,TRUE,0.2048,
+MI,2026,26075,38,JACKSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26077,39,KALAMAZOO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26079,40,KALKASKA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26081,41,KENT,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,202,0,0,,,,,TRUE,0.2048,
+MI,2026,26081,41,KENT,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,202,0,0,,,,,TRUE,0.2048,
+MI,2026,26081,41,KENT,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,202,0,0,,,,,TRUE,0.2048,
+MI,2026,26083,42,KEWEENAW,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26085,43,LAKE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26087,44,LAPEER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26089,45,LEELANAU,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26091,46,LENAWEE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26093,47,LIVINGSTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26095,48,LUCE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26097,49,MACKINAC,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26099,50,MACOMB,early,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,119062,0,0,TRUE,0.2048,
+MI,2026,26099,50,MACOMB,eday,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,190628,0,0,TRUE,0.2048,
+MI,2026,26099,50,MACOMB,mail,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,190100,0,0,TRUE,0.2048,
+MI,2026,26101,51,MANISTEE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26103,52,MARQUETTE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26105,53,MASON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26107,54,MECOSTA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26109,55,MENOMINEE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26111,56,MIDLAND,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26113,57,MISSAUKEE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26115,58,MONROE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26117,59,MONTCALM,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26119,60,MONTMORENCY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26121,61,MUSKEGON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26123,62,NEWAYGO,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,29,0,0,,,,,TRUE,0.2048,
+MI,2026,26123,62,NEWAYGO,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,29,0,0,,,,,TRUE,0.2048,
+MI,2026,26123,62,NEWAYGO,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,29,0,0,,,,,TRUE,0.2048,
+MI,2026,26125,63,OAKLAND,early,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,304907,0,0,TRUE,0.2048,
+MI,2026,26125,63,OAKLAND,eday,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,534730,0,0,TRUE,0.2048,
+MI,2026,26125,63,OAKLAND,mail,precinct,actual_2024,precinct,,precinct,actual_2024,FALSE,,,,,698473,0,0,TRUE,0.2048,
+MI,2026,26127,64,OCEANA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26129,65,OGEMAW,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26131,66,ONTONAGON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26133,67,OSCEOLA,all,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,18,0,0,,,,,TRUE,0.2048,
+MI,2026,26135,68,OSCODA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26137,69,OTSEGO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26139,70,OTTAWA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26141,71,PRESQUE ISLE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26143,72,ROSCOMMON,all,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,56,0,0,,,,,TRUE,0.2048,
+MI,2026,26145,73,SAGINAW,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,71,0,0,,,,,TRUE,0.2048,
+MI,2026,26145,73,SAGINAW,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,71,0,0,,,,,TRUE,0.2048,
+MI,2026,26145,73,SAGINAW,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,71,0,0,,,,,TRUE,0.2048,
+MI,2026,26147,74,ST. CLAIR,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,62,0,0,,,,,FALSE,0.2048,
+MI,2026,26147,74,ST. CLAIR,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,62,0,0,,,,,FALSE,0.2048,
+MI,2026,26147,74,ST. CLAIR,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,62,0,0,,,,,FALSE,0.2048,
+MI,2026,26149,75,ST. JOSEPH,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,23,0,0,,,,,FALSE,0.2048,
+MI,2026,26149,75,ST. JOSEPH,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,23,0,0,,,,,FALSE,0.2048,
+MI,2026,26149,75,ST. JOSEPH,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,23,0,0,,,,,FALSE,0.2048,
+MI,2026,26151,76,SANILAC,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26153,77,SCHOOLCRAFT,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+MI,2026,26155,78,SHIAWASSEE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26157,79,TUSCOLA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26159,80,VAN BUREN,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,32,0,0,,,,,TRUE,0.2048,
+MI,2026,26159,80,VAN BUREN,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,32,0,0,,,,,TRUE,0.2048,
+MI,2026,26159,80,VAN BUREN,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,32,0,0,,,,,TRUE,0.2048,
+MI,2026,26161,81,WASHTENAW,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.2048,
+MI,2026,26163,82,WAYNE,all,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,770,0,165114,,,,,TRUE,0.2048,
+MI,2026,26165,83,WEXFORD,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.2048,
+NC,2026,37001,1,ALAMANCE,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,39,0,0,,128469,0,0,TRUE,1,
+NC,2026,37001,1,ALAMANCE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,39,0,0,,40200,0,0,TRUE,1,
+NC,2026,37001,1,ALAMANCE,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,39,0,0,,8694,0,0,TRUE,1,
+NC,2026,37001,1,ALAMANCE,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,39,0,0,,813,0,0,TRUE,1,
+NC,2026,37003,2,ALEXANDER,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,32682,0,0,TRUE,1,
+NC,2026,37003,2,ALEXANDER,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,7274,0,0,TRUE,1,
+NC,2026,37003,2,ALEXANDER,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,968,0,0,TRUE,1,
+NC,2026,37003,2,ALEXANDER,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,100,0,0,TRUE,1,
+NC,2026,37005,3,ALLEGHANY,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,4,1,0,0,0,9713,1,TRUE,1,EARLY VOTING
+NC,2026,37005,3,ALLEGHANY,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,4,0,0,,2614,0,0,TRUE,1,ABSENTEE BY MAIL; EARLY VOTING; PROVSIONAL; TRANSFER
+NC,2026,37005,3,ALLEGHANY,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,4,1,0,0,0,471,1,TRUE,1,ABSENTEE
+NC,2026,37005,3,ALLEGHANY,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,4,1,0,0,0,25,1,TRUE,1,PROVISIONAL
+NC,2026,37005,3,ALLEGHANY,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37007,4,ANSON,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,14410,0,0,TRUE,1,
+NC,2026,37007,4,ANSON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,6688,0,0,TRUE,1,
+NC,2026,37007,4,ANSON,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,464,0,0,TRUE,1,
+NC,2026,37007,4,ANSON,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,72,0,0,TRUE,1,
+NC,2026,37009,5,ASHE,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,22196,0,0,TRUE,1,
+NC,2026,37009,5,ASHE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,8480,0,0,TRUE,1,
+NC,2026,37009,5,ASHE,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,1194,0,0,TRUE,1,
+NC,2026,37009,5,ASHE,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,162,0,0,TRUE,1,
+NC,2026,37011,6,AVERY,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,19,1,0,0,0,12510,1,TRUE,1,EARLY VOTING
+NC,2026,37011,6,AVERY,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,19,0,0,,5169,0,0,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37011,6,AVERY,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,19,1,0,0,0,805,1,TRUE,1,ABSENTEE
+NC,2026,37011,6,AVERY,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,19,1,0,0,0,232,1,TRUE,1,PROVISONAL
+NC,2026,37011,6,AVERY,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37013,7,BEAUFORT,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,21,4,0,0,0,38346,1,TRUE,1,EV-AUR; EV-BEL; EV-BOE; EV-CHO
+NC,2026,37013,7,BEAUFORT,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,12369,0,0,TRUE,1,ABSENTEE; EV-AUR; EV-BEL; EV-BOE; EV-CHO; PROVISIONAL; TRANSFER
+NC,2026,37013,7,BEAUFORT,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,21,1,0,0,0,1650,1,TRUE,1,ABSENTEE
+NC,2026,37013,7,BEAUFORT,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,21,1,0,0,0,258,1,TRUE,1,PROVISIONAL
+NC,2026,37013,7,BEAUFORT,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37015,8,BERTIE,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,12,3,0,0,0,13055,1,TRUE,1,EV-LOB; EV-LW; EV-POW
+NC,2026,37015,8,BERTIE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,12,0,0,,4719,0,0,TRUE,1,ABSENTEE; EV-LOB; EV-LW; EV-POW; PROVISIONAL; TRANSFER
+NC,2026,37015,8,BERTIE,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,12,1,0,0,0,326,1,TRUE,1,ABSENTEE
+NC,2026,37015,8,BERTIE,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,12,1,0,0,0,115,1,TRUE,1,PROVISIONAL
+NC,2026,37015,8,BERTIE,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37017,9,BLADEN,early,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,17,0,0,,0,25093,1,TRUE,1,ABSENTEE; EV CENTRAL; EV EAST ARCADIA; EV NATIONAL GUARD; EV SPAULDING MONROE; EV TAR HEEL RESCUE; PROVISIONAL; TRANSFER
+NC,2026,37017,9,BLADEN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,7203,0,0,TRUE,1,ABSENTEE; EV CENTRAL; EV EAST ARCADIA; EV NATIONAL GUARD; EV SPAULDING MONROE; EV TAR HEEL RESCUE; PROVISIONAL; TRANSFER
+NC,2026,37017,9,BLADEN,mail,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,17,0,0,,0,881,1,TRUE,1,ABSENTEE; EV CENTRAL; EV EAST ARCADIA; EV NATIONAL GUARD; EV SPAULDING MONROE; EV TAR HEEL RESCUE; PROVISIONAL; TRANSFER
+NC,2026,37017,9,BLADEN,prov,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,17,0,0,,0,94,1,TRUE,1,ABSENTEE; EV CENTRAL; EV EAST ARCADIA; EV NATIONAL GUARD; EV SPAULDING MONROE; EV TAR HEEL RESCUE; PROVISIONAL; TRANSFER
+NC,2026,37019,10,BRUNSWICK,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,27,0,0,,172754,0,0,TRUE,1,
+NC,2026,37019,10,BRUNSWICK,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,27,0,0,,28745,0,0,TRUE,1,
+NC,2026,37019,10,BRUNSWICK,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,27,0,0,,13714,0,0,TRUE,1,
+NC,2026,37019,10,BRUNSWICK,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,27,0,0,,850,0,0,TRUE,1,
+NC,2026,37021,11,BUNCOMBE,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,80,0,0,,229241,0,0,TRUE,1,
+NC,2026,37021,11,BUNCOMBE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,80,0,0,,63605,0,0,TRUE,1,
+NC,2026,37021,11,BUNCOMBE,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,80,0,0,,24020,0,0,TRUE,1,
+NC,2026,37021,11,BUNCOMBE,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,80,0,0,,1299,0,0,TRUE,1,
+NC,2026,37023,12,BURKE,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,31,0,0,,70250,0,0,TRUE,1,
+NC,2026,37023,12,BURKE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,31,0,0,,17305,0,0,TRUE,1,
+NC,2026,37023,12,BURKE,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,31,0,0,,3105,0,0,TRUE,1,
+NC,2026,37023,12,BURKE,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,31,0,0,,216,0,0,TRUE,1,
+NC,2026,37025,13,CABARRUS,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,38,1,0,0,0,162392,1,TRUE,1,EARLY VOTING
+NC,2026,37025,13,CABARRUS,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,38,0,0,,59920,0,0,TRUE,1,ABSENTEE; EV-CAE; EV-KTD; EV-LOB; EV-NGA; PROVISIONAL; TRANSFER
+NC,2026,37025,13,CABARRUS,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,38,1,0,0,0,14564,1,TRUE,1,ABSENTEE
+NC,2026,37025,13,CABARRUS,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,38,1,0,0,0,1062,1,TRUE,1,PROVISIONAL
+NC,2026,37025,13,CABARRUS,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37027,14,CALDWELL,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,15,2,0,0,0,68628,1,TRUE,1,EV CRC; EV SRC
+NC,2026,37027,14,CALDWELL,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,14365,0,0,TRUE,1,ABSENTEE; EV-CRC; EV-SRC; PROVISIONAL; TRANSFER
+NC,2026,37027,14,CALDWELL,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,15,1,0,0,0,3003,1,TRUE,1,ABSENTEE
+NC,2026,37027,14,CALDWELL,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,15,1,0,0,0,280,1,TRUE,1,PROVISIONAL
+NC,2026,37027,14,CALDWELL,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37029,15,CAMDEN,early,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,3,0,0,,0,8600,1,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37029,15,CAMDEN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,3,0,0,,3475,0,0,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37029,15,CAMDEN,mail,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,3,0,0,,0,386,1,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37029,15,CAMDEN,prov,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,3,0,0,,0,24,1,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37031,16,CARTERET,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,26,0,0,,70044,0,0,TRUE,1,
+NC,2026,37031,16,CARTERET,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,26,0,0,,16226,0,0,TRUE,1,
+NC,2026,37031,16,CARTERET,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,26,0,0,,3916,0,0,TRUE,1,
+NC,2026,37031,16,CARTERET,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,26,0,0,,319,0,0,TRUE,1,
+NC,2026,37033,17,CASWELL,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,8,0,0,,16339,0,0,TRUE,1,
+NC,2026,37033,17,CASWELL,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,8,0,0,,6788,0,0,TRUE,1,
+NC,2026,37033,17,CASWELL,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,8,0,0,,718,0,0,TRUE,1,
+NC,2026,37033,17,CASWELL,prov,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,8,1,0,0,20,0,0,TRUE,1,PROVI
+NC,2026,37035,18,CATAWBA,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,40,0,0,,133339,0,0,TRUE,1,
+NC,2026,37035,18,CATAWBA,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,40,0,0,,31754,0,0,TRUE,1,
+NC,2026,37035,18,CATAWBA,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,40,0,0,,7219,0,0,TRUE,1,
+NC,2026,37035,18,CATAWBA,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,40,0,0,,420,0,0,TRUE,1,
+NC,2026,37037,19,CHATHAM,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,18,0,0,,84804,0,0,TRUE,1,
+NC,2026,37037,19,CHATHAM,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,18,0,0,,11998,0,0,TRUE,1,
+NC,2026,37037,19,CHATHAM,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,18,0,0,,6637,0,0,TRUE,1,
+NC,2026,37037,19,CHATHAM,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,18,0,0,,198,0,0,TRUE,1,
+NC,2026,37039,20,CHEROKEE,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,23900,0,0,TRUE,1,
+NC,2026,37039,20,CHEROKEE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,9897,0,0,TRUE,1,
+NC,2026,37039,20,CHEROKEE,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,1490,0,0,TRUE,1,
+NC,2026,37039,20,CHEROKEE,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,125,0,0,TRUE,1,
+NC,2026,37041,21,CHOWAN,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,11411,0,0,TRUE,1,
+NC,2026,37041,21,CHOWAN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,3093,0,0,TRUE,1,
+NC,2026,37041,21,CHOWAN,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,449,0,0,TRUE,1,
+NC,2026,37041,21,CHOWAN,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,42,0,0,TRUE,1,
+NC,2026,37043,22,CLAY,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,11403,0,0,TRUE,1,
+NC,2026,37043,22,CLAY,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,3275,0,0,TRUE,1,
+NC,2026,37043,22,CLAY,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,615,0,0,TRUE,1,
+NC,2026,37043,22,CLAY,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,32,0,0,TRUE,1,
+NC,2026,37045,23,CLEVELAND,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,76771,0,0,TRUE,1,
+NC,2026,37045,23,CLEVELAND,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,21595,0,0,TRUE,1,
+NC,2026,37045,23,CLEVELAND,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,3397,0,0,TRUE,1,
+NC,2026,37045,23,CLEVELAND,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,472,0,0,TRUE,1,
+NC,2026,37047,24,COLUMBUS,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,16,0,0,,36700,0,0,TRUE,1,
+NC,2026,37047,24,COLUMBUS,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,16,0,0,,13967,0,0,TRUE,1,
+NC,2026,37047,24,COLUMBUS,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,16,0,0,,1495,0,0,TRUE,1,
+NC,2026,37047,24,COLUMBUS,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,16,0,0,,71,0,0,TRUE,1,
+NC,2026,37049,25,CRAVEN,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,84195,0,0,TRUE,1,
+NC,2026,37049,25,CRAVEN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,20972,0,0,TRUE,1,
+NC,2026,37049,25,CRAVEN,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,5665,0,0,TRUE,1,
+NC,2026,37049,25,CRAVEN,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,323,0,0,TRUE,1,
+NC,2026,37051,26,CUMBERLAND,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,77,0,0,,195079,0,0,TRUE,1,
+NC,2026,37051,26,CUMBERLAND,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,77,0,0,,67683,0,0,TRUE,1,
+NC,2026,37051,26,CUMBERLAND,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,77,0,0,,14276,0,0,TRUE,1,
+NC,2026,37051,26,CUMBERLAND,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,77,0,0,,1385,0,0,TRUE,1,
+NC,2026,37053,27,CURRITUCK,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,19574,0,0,TRUE,1,
+NC,2026,37053,27,CURRITUCK,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,14601,0,0,TRUE,1,
+NC,2026,37053,27,CURRITUCK,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,1432,0,0,TRUE,1,
+NC,2026,37053,27,CURRITUCK,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,191,0,0,TRUE,1,
+NC,2026,37055,28,DARE,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,17,3,0,0,0,35827,1,TRUE,1,EV BOE; EV FANX; EV KDH TH
+NC,2026,37055,28,DARE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,11265,0,0,TRUE,1,ABSENTEE BY MAIL; ABSENTEE SUP; EARLY VOTING BOE; EARLY VOTING FANX; EARLY VOTING KDH; PROVISIONAL; TRANSFER
+NC,2026,37055,28,DARE,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,17,2,0,0,0,2800,1,TRUE,1,ABSENTEE; ABSENTEE SUP
+NC,2026,37055,28,DARE,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,17,1,0,0,0,81,1,TRUE,1,PROVISIONAL
+NC,2026,37055,28,DARE,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37057,29,DAVIDSON,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,43,0,0,,134066,0,0,TRUE,1,ABSENTEE; CURBSIDE; EV-ARC; EV-BOE; EV-DLIB; EV-MID; EV-TLIB; EV-WEST; PROVISIONAL; TRANSFER
+NC,2026,37057,29,DAVIDSON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,43,0,0,,42350,0,0,TRUE,1,ABSENTEE; CURBSIDE; EV-ARC; EV-BOE; EV-DLIB; EV-MID; EV-TLIB; EV-WEST; PROVISIONAL; TRANSFER
+NC,2026,37057,29,DAVIDSON,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,43,1,0,0,0,8340,1,TRUE,1,ABSENTEE
+NC,2026,37057,29,DAVIDSON,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,43,1,0,0,0,747,1,TRUE,1,PROVISIONAL
+NC,2026,37057,29,DAVIDSON,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37059,30,DAVIE,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,14,0,0,,39765,0,0,TRUE,1,ABSENTEE; PROVISIONAL; TRANSFER
+NC,2026,37059,30,DAVIE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,14,0,0,,11118,0,0,TRUE,1,ABSENTEE; PROVISIONAL; TRANSFER
+NC,2026,37059,30,DAVIE,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,14,1,0,0,0,2081,1,TRUE,1,ABSENTEE
+NC,2026,37059,30,DAVIE,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,14,1,0,0,0,259,1,TRUE,1,PROVISIONAL
+NC,2026,37059,30,DAVIE,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37061,31,DUPLIN,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,30255,0,0,TRUE,1,
+NC,2026,37061,31,DUPLIN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,13499,0,0,TRUE,1,
+NC,2026,37061,31,DUPLIN,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,1350,0,0,TRUE,1,
+NC,2026,37061,31,DUPLIN,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,192,0,0,TRUE,1,
+NC,2026,37063,32,DURHAM,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,58,10,0,0,0,289041,1,TRUE,1,EV BOE; EV DUKE; EV ENO; EV ERL; EV LRC; EV MAIN; EV NCCU; EV NRL; EV SHS; EV SRL
+NC,2026,37063,32,DURHAM,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,58,0,0,,48691,0,0,TRUE,1,ABS; EV BOE; EV CMCC; EV DTCC; EV DUKE; EV EAST; EV ENO; EV MAIN; EV NCCU; EV NORTH; EV SHS; EV SOUTH; EV ZAKAT; PROV; TRANSFER
+NC,2026,37063,32,DURHAM,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,58,1,0,0,0,20593,1,TRUE,1,ABSENTEE
+NC,2026,37063,32,DURHAM,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,58,1,0,0,0,1754,1,TRUE,1,PROVISIONAL
+NC,2026,37063,32,DURHAM,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37065,33,EDGECOMBE,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,21,3,0,0,0,36668,1,TRUE,1,EV-BOE; EV-PINETOPS; EV-ROCKY MT
+NC,2026,37065,33,EDGECOMBE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,10686,0,0,TRUE,1,ABSENTEE; EARLY VOTING 1; EARLY VOTING 2; EARLY VOTING 3; PROVISIONAL; TRANSFER
+NC,2026,37065,33,EDGECOMBE,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,21,1,0,0,0,985,1,TRUE,1,ABSENTEE
+NC,2026,37065,33,EDGECOMBE,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,21,1,0,0,0,184,1,TRUE,1,PROVISIONAL
+NC,2026,37065,33,EDGECOMBE,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37067,34,FORSYTH,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,108,0,0,,306001,0,0,TRUE,1,
+NC,2026,37067,34,FORSYTH,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,108,0,0,,71215,0,0,TRUE,1,
+NC,2026,37067,34,FORSYTH,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,108,0,0,,24412,0,0,TRUE,1,
+NC,2026,37067,34,FORSYTH,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,108,0,0,,3204,0,0,TRUE,1,
+NC,2026,37069,35,FRANKLIN,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,18,0,0,,64627,0,0,TRUE,1,
+NC,2026,37069,35,FRANKLIN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,18,0,0,,16562,0,0,TRUE,1,
+NC,2026,37069,35,FRANKLIN,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,18,0,0,,3262,0,0,TRUE,1,
+NC,2026,37069,35,FRANKLIN,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,18,0,0,,293,0,0,TRUE,1,
+NC,2026,37071,36,GASTON,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,40,0,0,,175105,0,0,TRUE,1,
+NC,2026,37071,36,GASTON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,40,0,0,,50037,0,0,TRUE,1,
+NC,2026,37071,36,GASTON,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,40,0,0,,9741,0,0,TRUE,1,
+NC,2026,37071,36,GASTON,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,40,0,0,,860,0,0,TRUE,1,
+NC,2026,37073,37,GATES,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,7307,0,0,TRUE,1,
+NC,2026,37073,37,GATES,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,4002,0,0,TRUE,1,
+NC,2026,37073,37,GATES,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,257,0,0,TRUE,1,
+NC,2026,37073,37,GATES,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,58,0,0,TRUE,1,
+NC,2026,37075,38,GRAHAM,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,4,0,0,,6524,0,0,TRUE,1,
+NC,2026,37075,38,GRAHAM,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,4,0,0,,2504,0,0,TRUE,1,
+NC,2026,37075,38,GRAHAM,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,4,0,0,,354,0,0,TRUE,1,
+NC,2026,37075,38,GRAHAM,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,4,0,0,,50,0,0,TRUE,1,
+NC,2026,37077,39,GRANVILLE,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,50492,0,0,TRUE,1,
+NC,2026,37077,39,GRANVILLE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,10456,0,0,TRUE,1,
+NC,2026,37077,39,GRANVILLE,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,2384,0,0,TRUE,1,
+NC,2026,37077,39,GRANVILLE,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,368,0,0,TRUE,1,
+NC,2026,37079,40,GREENE,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,11831,0,0,TRUE,1,
+NC,2026,37079,40,GREENE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,4277,0,0,TRUE,1,
+NC,2026,37079,40,GREENE,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,559,0,0,TRUE,1,
+NC,2026,37079,40,GREENE,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,93,0,0,TRUE,1,
+NC,2026,37081,41,GUILFORD,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,165,1,0,0,0,430308,1,TRUE,1,EARLYVOTE
+NC,2026,37081,41,GUILFORD,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,165,0,0,,106681,0,0,TRUE,1,ABSENTEE; EARLYVOTE; PROVISIONAL; TRANSFER
+NC,2026,37081,41,GUILFORD,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,165,1,0,0,0,26006,1,TRUE,1,ABSENTEE
+NC,2026,37081,41,GUILFORD,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,165,1,0,0,0,1493,1,TRUE,1,PROVISIONAL
+NC,2026,37081,41,GUILFORD,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37083,42,HALIFAX,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,17,4,0,0,0,32740,1,TRUE,1,EV HAL; EV RING; EV RRA; EV SN
+NC,2026,37083,42,HALIFAX,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,13719,0,0,TRUE,1,ABSENTEE; EV HALIFAX; EV RINGWOOD; EV ROANOKE RAPIDS; EV SCOTLAND NECK; PROVISIONAL; TRANSFER
+NC,2026,37083,42,HALIFAX,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,17,1,0,0,0,999,1,TRUE,1,ABSENTEE
+NC,2026,37083,42,HALIFAX,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,17,1,0,0,0,194,1,TRUE,1,PROVISIONAL
+NC,2026,37083,42,HALIFAX,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37085,43,HARNETT,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,94139,0,0,TRUE,1,
+NC,2026,37085,43,HARNETT,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,25172,0,0,TRUE,1,
+NC,2026,37085,43,HARNETT,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,6461,0,0,TRUE,1,
+NC,2026,37085,43,HARNETT,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,663,0,0,TRUE,1,
+NC,2026,37087,44,HAYWOOD,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,29,0,0,,55485,0,0,TRUE,1,ABSENTEE; PROVISIONAL; TRANSFER
+NC,2026,37087,44,HAYWOOD,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,29,0,0,,15958,0,0,TRUE,1,ABSENTEE; PROVISIONAL; TRANSFER
+NC,2026,37087,44,HAYWOOD,mail,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,29,0,0,,0,3463,1,TRUE,1,ABSENTEE; PROVISIONAL; TRANSFER
+NC,2026,37087,44,HAYWOOD,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,29,0,0,,214,0,0,TRUE,1,ABSENTEE; PROVISIONAL; TRANSFER
+NC,2026,37089,45,HENDERSON,early,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,34,1,0,0,100006,0,0,TRUE,1,EV
+NC,2026,37089,45,HENDERSON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,34,0,0,,29508,0,0,TRUE,1,
+NC,2026,37089,45,HENDERSON,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,34,0,0,,9200,0,0,TRUE,1,
+NC,2026,37089,45,HENDERSON,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,34,0,0,,269,0,0,TRUE,1,
+NC,2026,37091,46,HERTFORD,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,13,0,0,,13937,0,0,TRUE,1,
+NC,2026,37091,46,HERTFORD,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,13,0,0,,5060,0,0,TRUE,1,
+NC,2026,37091,46,HERTFORD,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,13,0,0,,429,0,0,TRUE,1,
+NC,2026,37091,46,HERTFORD,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,13,0,0,,45,0,0,TRUE,1,
+NC,2026,37093,47,HOKE,early,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,15,0,0,,0,33625,1,TRUE,1,ABSENTEE; BOE; PROVISIONAL; ROCKFISH; TRANSFER
+NC,2026,37093,47,HOKE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,9827,0,0,TRUE,1,ABSENTEE; BOE; PROVISIONAL; ROCKFISH; TRANSFER
+NC,2026,37093,47,HOKE,mail,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,15,0,0,,0,1447,1,TRUE,1,ABSENTEE; BOE; PROVISIONAL; ROCKFISH; TRANSFER
+NC,2026,37093,47,HOKE,prov,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,15,0,0,,0,163,1,TRUE,1,ABSENTEE; BOE; PROVISIONAL; ROCKFISH; TRANSFER
+NC,2026,37095,48,HYDE,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,7,2,0,0,0,2280,1,TRUE,1,EV BOE; EV OCK
+NC,2026,37095,48,HYDE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,7,0,0,,2295,0,0,TRUE,1,ABSENTEE; EV BOE; EV OCK; PROVISIONAL; TRANSFER
+NC,2026,37095,48,HYDE,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,7,1,0,0,0,191,1,TRUE,1,ABSENTEE
+NC,2026,37095,48,HYDE,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,7,1,0,0,0,34,1,TRUE,1,PROVISIONAL
+NC,2026,37095,48,HYDE,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37097,49,IREDELL,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,30,0,0,,160196,0,0,TRUE,1,
+NC,2026,37097,49,IREDELL,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,30,0,0,,46683,0,0,TRUE,1,
+NC,2026,37097,49,IREDELL,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,30,0,0,,11914,0,0,TRUE,1,
+NC,2026,37097,49,IREDELL,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,30,0,0,,441,0,0,TRUE,1,
+NC,2026,37099,50,JACKSON,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,13,0,0,,33022,0,0,TRUE,1,
+NC,2026,37099,50,JACKSON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,13,0,0,,8460,0,0,TRUE,1,
+NC,2026,37099,50,JACKSON,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,13,0,0,,1739,0,0,TRUE,1,
+NC,2026,37099,50,JACKSON,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,13,0,0,,320,0,0,TRUE,1,
+NC,2026,37101,51,JOHNSTON,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,34,5,0,0,0,189003,1,TRUE,1,EV-ARCHER LODGE; EV-BENSON; EV-CLAYTON; EV-CLEVELAND; EV-SMITHFIELD
+NC,2026,37101,51,JOHNSTON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,34,0,0,,46571,0,0,TRUE,1,ABS-SUPPLEMENTAL; ABSENTEE; EV-ARCHER LODGE; EV-BENSON; EV-CLAYTON; EV-CLEVELAND; EV-PRINCETON; EV-PROVIDENCE; EV-SELMA; EV-SMITHFIELD; EV-WATKINS; PROVISIONAL; TRANSFER
+NC,2026,37101,51,JOHNSTON,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,34,2,0,0,0,10465,1,TRUE,1,ABS-SUPPLEMENTAL; ABSENTEE
+NC,2026,37101,51,JOHNSTON,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,34,1,0,0,0,790,1,TRUE,1,PROVISIONAL
+NC,2026,37101,51,JOHNSTON,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37103,52,JONES,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,7,1,0,0,0,6966,1,TRUE,1,EARLY VOTING
+NC,2026,37103,52,JONES,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,7,0,0,,3531,0,0,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37103,52,JONES,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,7,1,0,0,0,297,1,TRUE,1,ABSENTEE
+NC,2026,37103,52,JONES,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,7,1,0,0,0,49,1,TRUE,1,PROVISIONAL
+NC,2026,37103,52,JONES,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37105,53,LEE,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,45111,0,0,TRUE,1,
+NC,2026,37105,53,LEE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,11447,0,0,TRUE,1,
+NC,2026,37105,53,LEE,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,2748,0,0,TRUE,1,
+NC,2026,37105,53,LEE,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,10,0,0,,207,0,0,TRUE,1,
+NC,2026,37107,54,LENOIR,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,41295,0,0,TRUE,1,
+NC,2026,37107,54,LENOIR,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,11170,0,0,TRUE,1,
+NC,2026,37107,54,LENOIR,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,1565,0,0,TRUE,1,
+NC,2026,37107,54,LENOIR,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,406,0,0,TRUE,1,
+NC,2026,37109,55,LINCOLN,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,23,0,0,,86943,0,0,TRUE,1,
+NC,2026,37109,55,LINCOLN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,23,0,0,,18792,0,0,TRUE,1,
+NC,2026,37109,55,LINCOLN,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,23,0,0,,4093,0,0,TRUE,1,
+NC,2026,37109,55,LINCOLN,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,23,0,0,,251,0,0,TRUE,1,
+NC,2026,37111,56,MCDOWELL,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,35290,0,0,TRUE,1,
+NC,2026,37111,56,MCDOWELL,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,9970,0,0,TRUE,1,
+NC,2026,37111,56,MCDOWELL,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,1550,0,0,TRUE,1,
+NC,2026,37111,56,MCDOWELL,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,88,0,0,TRUE,1,
+NC,2026,37113,57,MACON,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,31824,0,0,TRUE,1,
+NC,2026,37113,57,MACON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,9072,0,0,TRUE,1,
+NC,2026,37113,57,MACON,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,2216,0,0,TRUE,1,
+NC,2026,37113,57,MACON,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,214,0,0,TRUE,1,
+NC,2026,37115,58,MADISON,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,12,0,0,,19664,0,0,TRUE,1,
+NC,2026,37115,58,MADISON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,12,0,0,,6365,0,0,TRUE,1,
+NC,2026,37115,58,MADISON,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,12,0,0,,909,0,0,TRUE,1,
+NC,2026,37115,58,MADISON,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,12,0,0,,67,0,0,TRUE,1,
+NC,2026,37117,59,MARTIN,early,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,9,0,0,,0,14852,1,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37117,59,MARTIN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,8339,0,0,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37117,59,MARTIN,mail,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,9,0,0,,0,587,1,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37117,59,MARTIN,prov,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,9,0,0,,0,70,1,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37119,60,MECKLENBURG,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,195,0,0,,851749,0,0,TRUE,1,ABSENTEE BY MAIL; PROVISIONAL; TRANSFER
+NC,2026,37119,60,MECKLENBURG,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,195,0,0,,214292,0,0,TRUE,1,ABSENTEE BY MAIL; PROVISIONAL; TRANSFER
+NC,2026,37119,60,MECKLENBURG,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,195,1,0,0,0,76606,1,TRUE,1,ABSENTEE BY MAIL
+NC,2026,37119,60,MECKLENBURG,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,195,1,0,0,0,4275,1,TRUE,1,PROVISIONALS
+NC,2026,37119,60,MECKLENBURG,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFERS
+NC,2026,37121,61,MITCHELL,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,8,0,0,,13076,0,0,TRUE,1,
+NC,2026,37121,61,MITCHELL,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,8,0,0,,3604,0,0,TRUE,1,
+NC,2026,37121,61,MITCHELL,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,8,0,0,,687,0,0,TRUE,1,
+NC,2026,37121,61,MITCHELL,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,8,0,0,,84,0,0,TRUE,1,
+NC,2026,37123,62,MONTGOMERY,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,14,0,0,,17842,0,0,TRUE,1,
+NC,2026,37123,62,MONTGOMERY,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,14,0,0,,7443,0,0,TRUE,1,
+NC,2026,37123,62,MONTGOMERY,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,14,0,0,,746,0,0,TRUE,1,
+NC,2026,37123,62,MONTGOMERY,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,14,0,0,,124,0,0,TRUE,1,
+NC,2026,37125,63,MOORE,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,26,4,0,0,0,82265,1,TRUE,1,BOE TRANSFER; EV AG; EV RS; EV VTH
+NC,2026,37125,63,MOORE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,26,0,0,,30400,0,0,TRUE,1,ABSENTEE; EV AG; EV RS; LATE ABSENTEE; PROVISIONAL; TRANSFER
+NC,2026,37125,63,MOORE,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,26,1,0,0,0,8824,1,TRUE,1,ABSENTEE MAIL
+NC,2026,37125,63,MOORE,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,26,1,0,0,0,409,1,TRUE,1,PROVISIONAL
+NC,2026,37127,64,NASH,early,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,24,3,0,0,80872,0,0,TRUE,1,MT. PLEASANT EV; NASHVILLE EV; ROCKY MOUNT EV
+NC,2026,37127,64,NASH,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,24,0,0,,20024,0,0,TRUE,1,
+NC,2026,37127,64,NASH,mail,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,24,2,0,0,2612,0,0,TRUE,1,ABSENTEE; SUPP ABSENTEE
+NC,2026,37127,64,NASH,prov,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,24,1,0,0,454,0,0,TRUE,1,PROVISIONAL
+NC,2026,37127,64,NASH,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37129,65,NEW HANOVER,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,41,5,0,0,0,193063,1,TRUE,1,EV BOE; EV CAB; EV MLK; EV NLB; EV PVL
+NC,2026,37129,65,NEW HANOVER,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,41,0,0,,62917,0,0,TRUE,1,ABSENTEE; EARLY VOTING BOE; EARLY VOTING CB; EARLY VOTING CFCC; EARLY VOTING NLB; EARLY VOTING SRC; PROVISIONAL; TRANSFER
+NC,2026,37129,65,NEW HANOVER,mail,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,41,1,0,0,16827,0,0,TRUE,1,ABSENTEE MAIL
+NC,2026,37129,65,NEW HANOVER,prov,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,41,1,0,0,1443,0,0,TRUE,1,PROVISIONAL
+NC,2026,37129,65,NEW HANOVER,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37131,66,NORTHAMPTON,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,13,3,0,0,0,12499,1,TRUE,1,EV GASTON; EV JACKSON; EV RICH SQUARE
+NC,2026,37131,66,NORTHAMPTON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,13,0,0,,5353,0,0,TRUE,1,ABSENTEE; EV COOL SPRING CC; EV CREECY GYM; EV CULTURE WELL CTN; PROVISIONAL; TRANSFER
+NC,2026,37131,66,NORTHAMPTON,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,13,1,0,0,0,392,1,TRUE,1,ABSENTEE
+NC,2026,37131,66,NORTHAMPTON,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,13,1,0,0,0,52,1,TRUE,1,PROVISIONAL
+NC,2026,37131,66,NORTHAMPTON,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37133,67,ONSLOW,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,24,0,0,,115712,0,0,TRUE,1,
+NC,2026,37133,67,ONSLOW,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,24,0,0,,35219,0,0,TRUE,1,
+NC,2026,37133,67,ONSLOW,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,24,0,0,,7086,0,0,TRUE,1,
+NC,2026,37133,67,ONSLOW,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,24,0,0,,2861,0,0,TRUE,1,
+NC,2026,37135,68,ORANGE,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,40,6,0,0,0,136741,1,TRUE,1,EV CHL; EV COTC; EV DL; EV EFC; EV OW; EV SC
+NC,2026,37135,68,ORANGE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,40,0,0,,24774,0,0,TRUE,1,ABSENTEE; EV CHL; EV CL; EV COTC; EV ECC; EV OW; EV SCH; PROVISIONAL; TRANSFER
+NC,2026,37135,68,ORANGE,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,40,1,0,0,0,12485,1,TRUE,1,ABSENTEE
+NC,2026,37135,68,ORANGE,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,40,1,0,0,0,273,1,TRUE,1,PROVISIONAL
+NC,2026,37135,68,ORANGE,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37137,69,PAMLICO,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,11894,0,0,TRUE,1,
+NC,2026,37137,69,PAMLICO,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,3273,0,0,TRUE,1,
+NC,2026,37137,69,PAMLICO,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,620,0,0,TRUE,1,
+NC,2026,37137,69,PAMLICO,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,50,0,0,TRUE,1,
+NC,2026,37139,70,PASQUOTANK,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,29188,0,0,TRUE,1,
+NC,2026,37139,70,PASQUOTANK,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,9770,0,0,TRUE,1,
+NC,2026,37139,70,PASQUOTANK,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,1285,0,0,TRUE,1,
+NC,2026,37139,70,PASQUOTANK,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,172,0,0,TRUE,1,
+NC,2026,37141,71,PENDER,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,12,0,0,,61136,0,0,TRUE,1,
+NC,2026,37141,71,PENDER,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,12,0,0,,12480,0,0,TRUE,1,
+NC,2026,37141,71,PENDER,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,12,0,0,,2755,0,0,TRUE,1,
+NC,2026,37141,71,PENDER,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,12,0,0,,515,0,0,TRUE,1,
+NC,2026,37143,72,PERQUIMANS,early,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,7,0,0,,0,10847,1,TRUE,1,ABSENTEE; EARLY VOTING BOE; PROVISIONAL; TRANSFER
+NC,2026,37143,72,PERQUIMANS,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,7,0,0,,4006,0,0,TRUE,1,ABSENTEE; EARLY VOTING BOE; PROVISIONAL; TRANSFER
+NC,2026,37143,72,PERQUIMANS,mail,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,7,0,0,,0,372,1,TRUE,1,ABSENTEE; EARLY VOTING BOE; PROVISIONAL; TRANSFER
+NC,2026,37143,72,PERQUIMANS,prov,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,7,0,0,,0,41,1,TRUE,1,ABSENTEE; EARLY VOTING BOE; PROVISIONAL; TRANSFER
+NC,2026,37145,73,PERSON,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,31860,0,0,TRUE,1,
+NC,2026,37145,73,PERSON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,9988,0,0,TRUE,1,
+NC,2026,37145,73,PERSON,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,1377,0,0,TRUE,1,
+NC,2026,37145,73,PERSON,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,155,0,0,TRUE,1,
+NC,2026,37147,74,PITT,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,40,6,0,0,0,131232,1,TRUE,1,EV AG CENTER; EV COMMUNITY SCH; EV COUNTY OFFICE; EV EASTERN PITT; EV STUDENT CENT; EV WINTERVILLE
+NC,2026,37147,74,PITT,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,40,0,0,,33829,0,0,TRUE,1,ABSENTEE; EV AG CENTER; EV AYDEN; EV BOYD LEE; EV EPPES; EV FARMVILLE; EV STUDENT CENTER; EV WINTERVILLE; PROVISIONAL; TRANSFER
+NC,2026,37147,74,PITT,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,40,1,0,0,0,5692,1,TRUE,1,ABSENTEE
+NC,2026,37147,74,PITT,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,40,1,0,0,0,1965,1,TRUE,1,PROVISIONAL
+NC,2026,37147,74,PITT,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37149,75,POLK,early,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,7,1,0,0,19747,0,0,TRUE,1,EARLY VOTING
+NC,2026,37149,75,POLK,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,7,0,0,,4788,0,0,TRUE,1,
+NC,2026,37149,75,POLK,mail,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,7,1,0,0,1338,0,0,TRUE,1,ABSENTEE
+NC,2026,37149,75,POLK,prov,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,7,1,0,0,48,0,0,TRUE,1,PROVISIONAL
+NC,2026,37149,75,POLK,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37151,76,RANDOLPH,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,22,0,0,,114765,0,0,TRUE,1,
+NC,2026,37151,76,RANDOLPH,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,22,0,0,,29528,0,0,TRUE,1,
+NC,2026,37151,76,RANDOLPH,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,22,0,0,,5385,0,0,TRUE,1,
+NC,2026,37151,76,RANDOLPH,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,22,0,0,,581,0,0,TRUE,1,
+NC,2026,37153,77,RICHMOND,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,26651,0,0,TRUE,1,
+NC,2026,37153,77,RICHMOND,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,11574,0,0,TRUE,1,
+NC,2026,37153,77,RICHMOND,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,842,0,0,TRUE,1,
+NC,2026,37153,77,RICHMOND,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,202,0,0,TRUE,1,
+NC,2026,37155,78,ROBESON,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,39,0,0,,60628,0,0,TRUE,1,
+NC,2026,37155,78,ROBESON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,39,0,0,,28467,0,0,TRUE,1,
+NC,2026,37155,78,ROBESON,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,39,0,0,,1881,0,0,TRUE,1,
+NC,2026,37155,78,ROBESON,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,39,0,0,,1057,0,0,TRUE,1,
+NC,2026,37157,79,ROCKINGHAM,early,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,14,4,0,0,75585,0,0,TRUE,1,EARLY VOTING 1; EARLY VOTING 2; EARLY VOTING 3; EARLY VOTING 4
+NC,2026,37157,79,ROCKINGHAM,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,14,0,0,,19418,0,0,TRUE,1,
+NC,2026,37157,79,ROCKINGHAM,mail,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,14,1,0,0,2875,0,0,TRUE,1,ABSENTEE
+NC,2026,37157,79,ROCKINGHAM,prov,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,14,1,0,0,315,0,0,TRUE,1,PROVISIONAL
+NC,2026,37157,79,ROCKINGHAM,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37159,80,ROWAN,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,41,0,0,,107047,0,0,TRUE,1,
+NC,2026,37159,80,ROWAN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,41,0,0,,35371,0,0,TRUE,1,
+NC,2026,37159,80,ROWAN,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,41,0,0,,6175,0,0,TRUE,1,
+NC,2026,37159,80,ROWAN,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,41,0,0,,389,0,0,TRUE,1,
+NC,2026,37161,81,RUTHERFORD,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,47308,0,0,TRUE,1,
+NC,2026,37161,81,RUTHERFORD,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,18328,0,0,TRUE,1,
+NC,2026,37161,81,RUTHERFORD,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,2574,0,0,TRUE,1,
+NC,2026,37161,81,RUTHERFORD,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,17,0,0,,277,0,0,TRUE,1,
+NC,2026,37163,82,SAMPSON,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,23,0,0,,39563,0,0,TRUE,1,
+NC,2026,37163,82,SAMPSON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,23,0,0,,14495,0,0,TRUE,1,
+NC,2026,37163,82,SAMPSON,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,23,0,0,,1498,0,0,TRUE,1,
+NC,2026,37163,82,SAMPSON,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,23,0,0,,192,0,0,TRUE,1,
+NC,2026,37165,83,SCOTLAND,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,7,0,0,,21538,0,0,TRUE,1,
+NC,2026,37165,83,SCOTLAND,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,7,0,0,,6155,0,0,TRUE,1,
+NC,2026,37165,83,SCOTLAND,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,7,0,0,,994,0,0,TRUE,1,
+NC,2026,37165,83,SCOTLAND,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,7,0,0,,231,0,0,TRUE,1,
+NC,2026,37167,84,STANLY,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,21,2,0,0,0,55598,1,TRUE,1,EV BOE; EV LOC
+NC,2026,37167,84,STANLY,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,21,0,0,,14530,0,0,TRUE,1,ABS BY-MAIL; ADD ABS BY-MAIL; EV-BOE; EV-LOC; EV-NL; EV-NOR; PROVISIONAL; TRANSFER
+NC,2026,37167,84,STANLY,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,21,2,0,0,0,2304,1,TRUE,1,ABSENTEE; ABSENTEE SUP
+NC,2026,37167,84,STANLY,prov,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,21,1,0,0,251,0,0,TRUE,1,PROVISIONAL
+NC,2026,37167,84,STANLY,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37169,85,STOKES,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,18,3,0,0,0,38919,1,TRUE,1,EV DANBURY; EV KING; EV WALNUT COVE
+NC,2026,37169,85,STOKES,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,18,0,0,,13071,0,0,TRUE,1,ABSENTEE; EV DANBURY; EV KING; EV WALNUT COVE; PROVISIONAL; TRANSFER
+NC,2026,37169,85,STOKES,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,18,1,0,0,0,1656,1,TRUE,1,ABSENTEE
+NC,2026,37169,85,STOKES,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,18,1,0,0,0,175,1,TRUE,1,PROVISIONAL
+NC,2026,37169,85,STOKES,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37171,86,SURRY,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,23,4,0,0,0,54606,1,TRUE,1,DOB EV; ELK EV; MA EV; PM EV
+NC,2026,37171,86,SURRY,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,23,0,0,,16162,0,0,TRUE,1,ABSENTEE; EARLY VOTING 1; EARLY VOTING 2; EARLY VOTING 3; PROVISIONAL; TRANSFER
+NC,2026,37171,86,SURRY,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,23,1,0,0,0,3030,1,TRUE,1,ABSENTEE
+NC,2026,37171,86,SURRY,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,23,1,0,0,0,466,1,TRUE,1,PROVISIONAL
+NC,2026,37171,86,SURRY,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37173,87,SWAIN,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,5,0,0,,9992,0,0,TRUE,1,
+NC,2026,37173,87,SWAIN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,5,0,0,,3336,0,0,TRUE,1,
+NC,2026,37173,87,SWAIN,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,5,0,0,,422,0,0,TRUE,1,
+NC,2026,37173,87,SWAIN,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,5,0,0,,134,0,0,TRUE,1,
+NC,2026,37175,88,TRANSYLVANIA,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,31950,0,0,TRUE,1,
+NC,2026,37175,88,TRANSYLVANIA,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,7009,0,0,TRUE,1,
+NC,2026,37175,88,TRANSYLVANIA,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,2110,0,0,TRUE,1,
+NC,2026,37175,88,TRANSYLVANIA,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,15,0,0,,143,0,0,TRUE,1,
+NC,2026,37177,89,TYRRELL,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,6,1,0,0,0,2269,1,TRUE,1,EARLY VOTING
+NC,2026,37177,89,TYRRELL,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,1140,0,0,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37177,89,TYRRELL,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,6,1,0,0,0,34,1,TRUE,1,ABSENTEE
+NC,2026,37177,89,TYRRELL,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,6,1,0,0,0,14,1,TRUE,1,PROVISIONAL
+NC,2026,37177,89,TYRRELL,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37179,90,UNION,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,54,0,0,,212931,0,0,TRUE,1,
+NC,2026,37179,90,UNION,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,54,0,0,,47780,0,0,TRUE,1,
+NC,2026,37179,90,UNION,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,54,0,0,,13794,0,0,TRUE,1,
+NC,2026,37179,90,UNION,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,54,0,0,,1178,0,0,TRUE,1,
+NC,2026,37181,91,VANCE,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,29654,0,0,TRUE,1,
+NC,2026,37181,91,VANCE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,8778,0,0,TRUE,1,
+NC,2026,37181,91,VANCE,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,1274,0,0,TRUE,1,
+NC,2026,37181,91,VANCE,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,9,0,0,,104,0,0,TRUE,1,
+NC,2026,37183,92,WAKE,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,216,18,0,0,0,921402,1,TRUE,1,EVAB; EVAV; EVBB; EVCA; EVCH; EVCM; EVCS; EVHS; EVHT; EVJB; EVJP; EVKD; EVLH; EVLL; EVOP; EVWA; EVWB; EVWD
+NC,2026,37183,92,WAKE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,216,0,0,,272803,0,0,TRUE,1,ABSEN; EVAB; EVAV; EVBOE; EVBR; EVCA; EVCH; EVCS; EVGR; EVHS; EVHT; EVJB; EVKD; EVLH; EVLL; EVNR; EVOP; EVSE; EVTA; EVWA; EVWD; EVWN; EVZB; PROVI; TRANS
+NC,2026,37183,92,WAKE,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,216,1,0,0,0,96016,1,TRUE,1,ABSEN
+NC,2026,37183,92,WAKE,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,216,1,0,0,0,6151,1,TRUE,1,PROVI
+NC,2026,37183,92,WAKE,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANS
+NC,2026,37185,93,WARREN,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,14,0,0,,13653,0,0,TRUE,1,
+NC,2026,37185,93,WARREN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,14,0,0,,5567,0,0,TRUE,1,
+NC,2026,37185,93,WARREN,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,14,0,0,,677,0,0,TRUE,1,
+NC,2026,37185,93,WARREN,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,14,0,0,,54,0,0,TRUE,1,
+NC,2026,37187,94,WASHINGTON,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,6,1,0,0,0,8246,1,TRUE,1,EARLY VOTING
+NC,2026,37187,94,WASHINGTON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,6,0,0,,3193,0,0,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37187,94,WASHINGTON,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,6,1,0,0,0,311,1,TRUE,1,ABSENTEE
+NC,2026,37187,94,WASHINGTON,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,6,1,0,0,0,47,1,TRUE,1,PROVISIONAL
+NC,2026,37187,94,WASHINGTON,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37189,95,WATAUGA,early,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,20,0,0,,0,50820,1,TRUE,1,ABSENTEE; EV ADMIN; EV ASU; EV BRAL; EV DG; EV MC; EV WWCC; PROVISIONAL; TRANSFER
+NC,2026,37189,95,WATAUGA,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,20,0,0,,10742,517,0.0459,TRUE,1,ABSENTEE; EV ADMIN; EV ASU; EV BRAL; EV DG; EV MC; EV WWCC; PROVISIONAL; TRANSFER
+NC,2026,37189,95,WATAUGA,mail,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,20,0,0,,0,2844,1,TRUE,1,ABSENTEE; EV ADMIN; EV ASU; EV BRAL; EV DG; EV MC; EV WWCC; PROVISIONAL; TRANSFER
+NC,2026,37189,95,WATAUGA,prov,county_site,zero_2026,precinct,precinct,county_site,zero_2026+actual_2024,TRUE,20,0,0,,0,557,1,TRUE,1,ABSENTEE; EV ADMIN; EV ASU; EV BRAL; EV DG; EV MC; EV WWCC; PROVISIONAL; TRANSFER
+NC,2026,37191,96,WAYNE,early,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,28,3,0,0,84580,0,0,TRUE,1,EV GBORO LIBRARY; EV MAXWELL CENTER; EV MT O LIBRARY
+NC,2026,37191,96,WAYNE,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,28,0,0,,19527,0,0,TRUE,1,
+NC,2026,37191,96,WAYNE,mail,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,28,1,0,0,3626,0,0,TRUE,1,ABSENTEE
+NC,2026,37191,96,WAYNE,prov,county_site,zero_2026,county_site,county_site,precinct,zero_2026+actual_2024,TRUE,28,1,0,0,637,0,0,TRUE,1,PROVISIONAL
+NC,2026,37191,96,WAYNE,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37193,97,WILKES,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,25,3,0,0,0,46691,1,TRUE,1,EV CFD; EV OFFICE; EV PHFD
+NC,2026,37193,97,WILKES,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,25,0,0,,22029,0,0,TRUE,1,ABSENTEE; MILLERS CREEK EV; OFFICE EV; PROVISIONAL; RONDA EV; SUPPLEMENTAL ABSENTEE; TRANSFER
+NC,2026,37193,97,WILKES,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,25,2,0,0,0,2773,1,TRUE,1,ABSENTEE; ABSENTEE SUP
+NC,2026,37193,97,WILKES,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,25,1,0,0,0,271,1,TRUE,1,PROVISIONAL
+NC,2026,37193,97,WILKES,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37195,98,WILSON,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,24,0,0,,59673,0,0,TRUE,1,
+NC,2026,37195,98,WILSON,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,24,0,0,,16917,0,0,TRUE,1,
+NC,2026,37195,98,WILSON,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,24,0,0,,2602,0,0,TRUE,1,
+NC,2026,37195,98,WILSON,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,24,0,0,,159,0,0,TRUE,1,
+NC,2026,37197,99,YADKIN,early,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,12,1,0,0,0,25417,1,TRUE,1,EARLY VOTING
+NC,2026,37197,99,YADKIN,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,12,0,0,,13494,0,0,TRUE,1,ABSENTEE; EARLY VOTING; PROVISIONAL; TRANSFER
+NC,2026,37197,99,YADKIN,mail,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,12,1,0,0,0,1308,1,TRUE,1,ABSENTEE
+NC,2026,37197,99,YADKIN,prov,county_site,zero_2026,county_site,county_site,county_site,zero_2026+actual_2024,FALSE,12,1,0,0,0,149,1,TRUE,1,PROVISIONAL
+NC,2026,37197,99,YADKIN,transfer,county_site,zero_2026,county_site,county_site,,zero_2026,FALSE,,1,,,,,,TRUE,1,TRANSFER
+NC,2026,37199,100,YANCEY,early,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,16578,0,0,TRUE,1,
+NC,2026,37199,100,YANCEY,eday,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,4330,0,0,TRUE,1,
+NC,2026,37199,100,YANCEY,mail,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,1323,0,0,TRUE,1,
+NC,2026,37199,100,YANCEY,prov,precinct,zero_2026,precinct,precinct,precinct,zero_2026+actual_2024,FALSE,11,0,0,,166,0,0,TRUE,1,
+TX,2026,48001,1,ANDERSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48003,2,ANDREWS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48005,3,ANGELINA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48007,4,ARANSAS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48009,5,ARCHER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48011,6,ARMSTRONG,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48013,7,ATASCOSA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48015,8,AUSTIN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48017,9,BAILEY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48019,10,BANDERA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48021,11,BASTROP,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48023,12,BAYLOR,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48025,13,BEE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48027,14,BELL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48029,15,BEXAR,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,806,0,0,,,,,TRUE,0.0236,
+TX,2026,48029,15,BEXAR,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,806,0,0,,,,,TRUE,0.0236,
+TX,2026,48029,15,BEXAR,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,806,0,0,,,,,TRUE,0.0236,
+TX,2026,48031,16,BLANCO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48033,17,BORDEN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48035,18,BOSQUE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48037,19,BOWIE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48039,20,BRAZORIA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48041,21,BRAZOS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48043,22,BREWSTER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48045,23,BRISCOE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48047,24,BROOKS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48049,25,BROWN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48051,26,BURLESON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48053,27,BURNET,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48055,28,CALDWELL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48057,29,CALHOUN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48059,30,CALLAHAN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48061,31,CAMERON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48063,32,CAMP,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48065,33,CARSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48067,34,CASS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48069,35,CASTRO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48071,36,CHAMBERS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48073,37,CHEROKEE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48075,38,CHILDRESS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48077,39,CLAY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48079,40,COCHRAN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48081,41,COKE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48083,42,COLEMAN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48085,43,COLLIN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48087,44,COLLINGSWORTH,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48089,45,COLORADO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48091,46,COMAL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48093,47,COMANCHE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48095,48,CONCHO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48097,49,COOKE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48099,50,CORYELL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48101,51,COTTLE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48103,52,CRANE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48105,53,CROCKETT,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48107,54,CROSBY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48109,55,CULBERSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48111,56,DALLAM,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48113,57,DALLAS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48115,58,DAWSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48117,59,DEAF SMITH,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48119,60,DELTA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48121,61,DENTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48123,62,DEWITT,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48125,63,DICKENS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48127,64,DIMMIT,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48129,65,DONLEY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48131,66,DUVAL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48133,67,EASTLAND,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48135,68,ECTOR,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48137,69,EDWARDS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48139,70,ELLIS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48141,71,EL PASO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48143,72,ERATH,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48145,73,FALLS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48147,74,FANNIN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48149,75,FAYETTE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48151,76,FISHER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48153,77,FLOYD,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48155,78,FOARD,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48157,79,FORT BEND,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48159,80,FRANKLIN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48161,81,FREESTONE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48163,82,FRIO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48165,83,GAINES,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48167,84,GALVESTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48169,85,GARZA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48171,86,GILLESPIE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48173,87,GLASSCOCK,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48175,88,GOLIAD,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48177,89,GONZALES,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48179,90,GRAY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48181,91,GRAYSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48183,92,GREGG,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48185,93,GRIMES,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48187,94,GUADALUPE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48189,95,HALE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48191,96,HALL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48193,97,HAMILTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48195,98,HANSFORD,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48197,99,HARDEMAN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48199,100,HARDIN,all,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,19,0,0,,,,,FALSE,0.0236,
+TX,2026,48201,101,HARRIS,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,1224,0,0,,,,,TRUE,0.0236,
+TX,2026,48201,101,HARRIS,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,1224,0,0,,,,,TRUE,0.0236,
+TX,2026,48201,101,HARRIS,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,1224,0,0,,,,,TRUE,0.0236,
+TX,2026,48203,102,HARRISON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48205,103,HARTLEY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48207,104,HASKELL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48209,105,HAYS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48211,106,HEMPHILL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48213,107,HENDERSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48215,108,HIDALGO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48217,109,HILL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48219,110,HOCKLEY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48221,111,HOOD,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48223,112,HOPKINS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48225,113,HOUSTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48227,114,HOWARD,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48229,115,HUDSPETH,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48231,116,HUNT,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48233,117,HUTCHINSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48235,118,IRION,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48237,119,JACK,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48239,120,JACKSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48241,121,JASPER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48243,122,JEFF DAVIS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48245,123,JEFFERSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48247,124,JIM HOGG,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48249,125,JIM WELLS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48251,126,JOHNSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48253,127,JONES,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48255,128,KARNES,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48257,129,KAUFMAN,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,37,0,0,,,,,TRUE,0.0236,
+TX,2026,48257,129,KAUFMAN,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,37,0,0,,,,,TRUE,0.0236,
+TX,2026,48257,129,KAUFMAN,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,37,0,0,,,,,TRUE,0.0236,
+TX,2026,48259,130,KENDALL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48261,131,KENEDY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48263,132,KENT,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48265,133,KERR,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48267,134,KIMBLE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48269,135,KING,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48271,136,KINNEY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48273,137,KLEBERG,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48275,138,KNOX,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48277,139,LAMAR,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,25,0,0,,,,,TRUE,0.0236,
+TX,2026,48277,139,LAMAR,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,25,0,0,,,,,TRUE,0.0236,
+TX,2026,48277,139,LAMAR,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,25,0,0,,,,,TRUE,0.0236,
+TX,2026,48277,139,LAMAR,prov,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,25,0,0,,,,,TRUE,0.0236,
+TX,2026,48279,140,LAMB,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48281,141,LAMPASAS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48283,142,LA SALLE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48285,143,LAVACA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48287,144,LEE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48289,145,LEON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48291,146,LIBERTY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48293,147,LIMESTONE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48295,148,LIPSCOMB,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48297,149,LIVE OAK,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48299,150,LLANO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48301,151,LOVING,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48303,152,LUBBOCK,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48305,153,LYNN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48307,154,MCCULLOCH,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48309,155,MCLENNAN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48311,156,MCMULLEN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48313,157,MADISON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48315,158,MARION,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48317,159,MARTIN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48319,160,MASON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48321,161,MATAGORDA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48323,162,MAVERICK,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48325,163,MEDINA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48327,164,MENARD,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48329,165,MIDLAND,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48331,166,MILAM,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48333,167,MILLS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48335,168,MITCHELL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48337,169,MONTAGUE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48339,170,MONTGOMERY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48341,171,MOORE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48343,172,MORRIS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48345,173,MOTLEY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48347,174,NACOGDOCHES,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48349,175,NAVARRO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48351,176,NEWTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48353,177,NOLAN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48355,178,NUECES,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48357,179,OCHILTREE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48359,180,OLDHAM,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48361,181,ORANGE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48363,182,PALO PINTO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48365,183,PANOLA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48367,184,PARKER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48369,185,PARMER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48371,186,PECOS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48373,187,POLK,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48375,188,POTTER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48377,189,PRESIDIO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48379,190,RAINS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48381,191,RANDALL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48383,192,REAGAN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48385,193,REAL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48387,194,RED RIVER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48389,195,REEVES,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48391,196,REFUGIO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48393,197,ROBERTS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48395,198,ROBERTSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48397,199,ROCKWALL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48399,200,RUNNELS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48401,201,RUSK,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48403,202,SABINE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48405,203,SAN AUGUSTINE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48407,204,SAN JACINTO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48409,205,SAN PATRICIO,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48411,206,SAN SABA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48413,207,SCHLEICHER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48415,208,SCURRY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48417,209,SHACKELFORD,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48419,210,SHELBY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48421,211,SHERMAN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48423,212,SMITH,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48425,213,SOMERVELL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48427,214,STARR,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48429,215,STEPHENS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48431,216,STERLING,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48433,217,STONEWALL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48435,218,SUTTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48437,219,SWISHER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48439,220,TARRANT,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48441,221,TAYLOR,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48443,222,TERRELL,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48445,223,TERRY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48447,224,THROCKMORTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48449,225,TITUS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48451,226,TOM GREEN,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48453,227,TRAVIS,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48455,228,TRINITY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48457,229,TYLER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48459,230,UPSHUR,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48461,231,UPTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48463,232,UVALDE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48465,233,VAL VERDE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48467,234,VAN ZANDT,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48469,235,VICTORIA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48471,236,WALKER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48473,237,WALLER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48475,238,WARD,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48477,239,WASHINGTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48479,240,WEBB,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48481,241,WHARTON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48483,242,WHEELER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48485,243,WICHITA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48487,244,WILBARGER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48489,245,WILLACY,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48491,246,WILLIAMSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,TRUE,0.0236,
+TX,2026,48493,247,WILSON,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48495,248,WINKLER,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48497,249,WISE,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48499,250,WOOD,early,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,26,0,0,,,,,TRUE,0.0236,
+TX,2026,48499,250,WOOD,eday,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,26,0,0,,,,,TRUE,0.0236,
+TX,2026,48499,250,WOOD,mail,precinct,zero_2026,precinct,precinct,,zero_2026,FALSE,26,0,0,,,,,TRUE,0.0236,
+TX,2026,48501,251,YOAKUM,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48503,252,YOUNG,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48505,253,ZAPATA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,
+TX,2026,48507,254,ZAVALA,*,unknown,unknown,unknown,,,none,FALSE,,,,,,,,FALSE,0.0236,

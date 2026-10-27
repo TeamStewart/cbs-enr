@@ -39,8 +39,11 @@ if (length(miss)) stop("No results for: ", paste(miss, collapse = ", "), ". Run 
 want = c(intersect("tx_base", want), sort(setdiff(want, "tx_base")))
 # each scenario's default run first, then its labelled runs
 MODEL_RUNS = c("swing", "cory", "core")   # labels that are models, not setting changes
-# model_both is retired: its runs (sim_<scenario>__both_results.csv) are never shown
-have = have[!grepl("__both$", have)]
+# model_hybrid (and its retired predecessor model_both) is a prior-re-centring VARIANT of
+# model_medsl, not a separate model: its runs (sim_<scenario>__hybrid_results.csv, and the
+# single-arm ablations __hyblvl / __hybcomp / __hybnocov) stay out of the default page and
+# come back with --all-runs.
+have = have[!grepl("__(both|hybrid|hyblvl|hybcomp|hybnocov)$", have)]
 # per scenario: model_medsl, then the other models in MODEL_RUNS order, then setting changes
 KEYS = unlist(lapply(want, \(sc) {
   k = have[sc_of(have) == sc]
