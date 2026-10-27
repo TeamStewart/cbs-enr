@@ -186,17 +186,10 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
   env = fit_medsl_setup_for(cells, returns, dir_26, hybrid)
   counts = cell_counts(cells, returns)
 
-  counted = tibble(raw_twop = sum(counts$c_dem) / max(sum(counts$c_dem + counts$c_rep), 1),
-                   counted_votes = sum(counts$c_tot), expected_votes = sum(cells$exp_votes),
-                   obs_cells = sum(counts$c_tot > 0), complete_cells = sum(counts$c_tot > 0 & counts$complete))
+  counted = race_counted(cells, counts)
   settings = sprintf("%s; %g%% interval", env$.settings, 100 * level)
-  if (!any(counts$c_tot > 0)) {
-    return(list(model = name, status = "no_votes", settings = settings, conf = sprintf("posterior_%g", 100 * level),
-                race = bind_cols(tibble(status = "no_votes", est_twop = NA_real_, lo_twop = NA_real_, hi_twop = NA_real_,
-                                        p_dem_win = NA_real_, est_turnout = NA_real_, lo_turnout = NA_real_,
-                                        hi_turnout = NA_real_), counted),
-                cells = NULL, draws = NULL, point = NULL))
-  }
+  if (!any(counts$c_tot > 0))
+    return(model_result(name, "no_votes", settings, counted, interval = "credible", level = level))
 
   # the model's returns: one row per precinct x mode, reported once it has votes, complete
   # once that method is counted out
@@ -250,7 +243,6 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
   }
 
   dr = tibble(twop = f$S_2p, turnout = f$turn, dem = f$S_dem * f$turn, rep = f$S_rep * f$turn)
-  ci = cred(dr$twop, level); ct = cred(dr$turnout, level)
   # ---- THE SILENT-PRIOR ALARM ------------------------------------------------------
   # A fit that is entirely its own prior returns the same columns and the same intervals as
   # a real one. Nothing in the output distinguishes them, so on the night a state whose feed
@@ -285,16 +277,13 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
         else "", " -- partial fit."))
     }
   }
-  list(model = name, status = st, settings = settings, conf = sprintf("posterior_%g", 100 * level),
-       # the structured ledger as well as the status string, so a consumer can test
-       # `fit$prior_only$all_prior` rather than parse prose
-       prior_only = po,
-       race = bind_cols(tibble(status = st, est_twop = mean(dr$twop), lo_twop = ci[["lower"]], hi_twop = ci[["upper"]],
-                               p_dem_win = mean(dr$twop > 0.5), est_turnout = mean(dr$turnout),
-                               lo_turnout = ct[["lower"]], hi_turnout = ct[["upper"]]), counted),
-       cells = f$prec,                       # precinct: turn_est, dem_est (share of all votes), interval
-       draws = dr,
-       point = c(dem = mean(dr$dem), rep = mean(dr$rep), tot = mean(dr$turnout)))
+  res = model_result(name, st, settings, counted, est = draws_race_est(dr, level), cells = prec_rows(f$prec),
+                     draws = dr, point = c(dem = mean(dr$dem), rep = mean(dr$rep), tot = mean(dr$turnout)),
+                     interval = "credible", level = level)
+  # the structured ledger as well as the status string, so a consumer can test
+  # `fit$prior_only$all_prior` rather than parse prose
+  res$prior_only = po
+  res
 }
 
 # medsl_sur: Young-Kyung's scripts/model/model_hybrid.R. The same model as model_medsl, with
