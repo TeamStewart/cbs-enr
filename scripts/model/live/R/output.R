@@ -42,7 +42,11 @@
 # ========================================
 
 MODEL_NAMES = c(swing = "model_simpleswing", cory = "model_cory", medsl = "model_medsl",
-                cpois = "model_cory_pois", cprec = "model_cory_prec")
+                cpois = "model_cory_pois", cprec = "model_cory_prec", hybrid = "model_hybrid",
+                pbayes = "model_cory_pbayes")
+# the models with posterior / bootstrap draws, and how their intervals are labelled
+DRAW_CONF = c(swing = "county_bootstrap_%g", medsl = "posterior_%g", cprec = "cred_int_%g",
+              hybrid = "posterior_%g", pbayes = "posterior_%g")
 
 # one row per race_id with the enightmodels race columns. The default suits the sims
 # (race_id is the contest, e.g. "gov"); for live races pass a table built from the race
@@ -111,7 +115,7 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
 
   cand = reported_by_candidate(returns)
   conf = NA_character_
-  if (model %in% c("swing", "medsl", "cprec")) {
+  if (model %in% names(DRAW_CONF)) {
     # point predictions by party; third-party votes split across third-party candidates
     # in proportion to their counted votes (equally if none counted yet)
     ptot = fit_point(fit)
@@ -119,8 +123,7 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
     oth_tot = ptot[["tot"]] - pv[["dem"]] - pv[["rep"]]
     dr = fit$draws
     tot_d = dr$turnout
-    conf = sprintf(switch(model, swing = "county_bootstrap_%g", medsl = "posterior_%g",
-                          cprec = "cred_int_%g"), 100 * level)
+    conf = sprintf(DRAW_CONF[[model]], 100 * level)
     q = function(x) unname(cred(x, level))
     cand = cand |>
       mutate(w = if (sum(rep[party %in% c("oth", "ind")]) > 0) rep / sum(rep[party %in% c("oth", "ind")])
@@ -172,10 +175,10 @@ to_prec_data = function(fit, model, race, time) {
   p = fit$cells
   if (!fit_ok(fit) || is.null(p) || !nrow(p)) return(NULL)
   blank = function(d, cols) { for (c in setdiff(cols, names(d))) d[[c]] = NA_real_; d }
-  out = if (model == "medsl") {
+  out = if (model %in% c("medsl", "hybrid")) {
     # already the richest shape; est_dem2/p_win/cnt_prec added to prec_out for this
     p |> mutate(method = NA_character_)
-  } else if (model == "cprec") {
+  } else if (model %in% c("cprec", "pbayes")) {
     p |> mutate(method = NA_character_,
                 p_win = p_dem_win,
                 n_obs_modes = n_obs_cells,
@@ -239,7 +242,8 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
                      length(mc), n_all)
     }
   }
-  fit = tryCatch(fit_model(m, cells, ret), error = function(e) list(status = paste("error:", conditionMessage(e))))
+  args = if (m == "hybrid") list(cbs_county = cbs) else list()   # CBS county totals as constraints
+  fit = tryCatch(do.call(fit_model, c(list(m, cells, ret), args)), error = function(e) list(status = paste("error:", conditionMessage(e))))
   if (!is.null(note) && !is.null(fit$settings) && !is.na(fit$settings)) fit$settings = paste0(fit$settings, note)
   pred = tryCatch(to_pred_data(fit, m, cells, ret, race, time, level),
                   error = function(e) { fit$status <<- paste("error in output:", conditionMessage(e)); NULL })
@@ -273,8 +277,8 @@ run_par = function(x, f, cores = 1) {
 # be done BEFORE this is called: a forked process's caches are thrown away when it ends.
 run_jobs = function(jobs, cores = 1) {
   # model_medsl's set-up for each state x county set, here before forking (see above)
-  for (j in jobs) if (identical(j$model, "medsl") && nrow(j$cells) && is.null(j$fail))
-    try(fit_medsl_setup_for(j$cells, j$ret), silent = TRUE)
+  for (j in jobs) if (j$model %in% c("medsl", "hybrid") && nrow(j$cells) && is.null(j$fail))
+    try(fit_medsl_setup_for(j$cells, j$ret, hybrid = j$model == "hybrid"), silent = TRUE)
   one = function(j) tryCatch(if (!is.null(j$fail)) stop(j$fail) else do.call(predict_one, j[setdiff(names(j), "fail")]), error = function(e)
     list(pred = NULL, status = tibble(race_id = j$race$race_id[1], model = unname(MODEL_NAMES[j$model]), time = j$time,
                                       status = paste("error:", conditionMessage(e)), statewide = NA_character_,

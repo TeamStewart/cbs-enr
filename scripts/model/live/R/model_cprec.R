@@ -52,16 +52,14 @@ cprec_inputs = function(cells, counts, obs_min = 0.6) {
     list(d = d, dummies = dummies)
 }
 
-# per-precinct summaries from the draws, summing each precinct's methods within a draw
-cprec_precincts = function(f, d, level = 0.95) {
+# Per-precinct summaries from cell-level draws (draws x cells matrices of total, Dem and Rep
+# votes), summing each precinct's methods within a draw. d: one row per cell with geo,
+# county, obs, c_tot. Shared with model_cpbayes.R.
+draws_precincts = function(tot, dem, rep, d, level = 0.95) {
     z = qnorm(1 - (1 - level) / 2)
     g = factor(d$geo, levels = unique(d$geo))
     by_prec = function(M) rowsum(t(M), g, reorder = FALSE)          # precincts x draws
-    T = posterior::draws_of(f$post_turn)
-    V = posterior::draws_of(f$post_vote)
-    tot = by_prec(T)
-    dem = by_prec(V[, , 1] * T)
-    rep = by_prec(V[, , 2] * T)
+    tot = by_prec(tot); dem = by_prec(dem); rep = by_prec(rep)
     msd = function(M) list(m = rowMeans(M), s = apply(M, 1, sd))
     t_ = msd(tot); s_ = msd(dem / pmax(tot, 1e-9)); d2 = dem / pmax(dem + rep, 1e-9)
     d |>
@@ -107,7 +105,11 @@ fit_cprec = function(cells, returns, ctrl_form = CPREC_FORM, prior_n_turn = 0.5,
         est = list(est_twop = mean(dr$twop), lo_twop = ci[["lower"]], hi_twop = ci[["upper"]],
                    p_dem_win = mean(dr$dem > dr$rep), est_turnout = mean(dr$turnout),
                    lo_turnout = ct[["lower"]], hi_turnout = ct[["upper"]]),
-        cells = if (precincts) cprec_precincts(f, d, level),
+        cells = if (precincts) {
+            T = posterior::draws_of(f$post_turn)
+            V = posterior::draws_of(f$post_vote)
+            draws_precincts(T, V[, , 1] * T, V[, , 2] * T, d, level)
+        },
         draws = dr,
         point = c(dem = mean(dr$dem), rep = mean(dr$rep), tot = mean(dr$turnout)),
         coef = enightmodels::forecast_coefs(f)

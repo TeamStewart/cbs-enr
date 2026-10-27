@@ -67,13 +67,14 @@ snapshot for any race whose pull fails.
 | `R/model_cory.R` | **model_cory**: `fit_cory()`, Cory's `enightmodels::model_legacy()` on precinct x method cells; also the helpers the three Cory wrappers share |
 | `R/model_cpois.R` | **model_cory_pois**: `fit_cpois()`, Cory's precinct Poisson model `model_prec_pois()` and his `strat_lin` spec cascade, sourced from `../modeling-cory/tx-prim-26/R/` |
 | `R/model_cprec.R` | **model_cory_prec**: `fit_cprec()`, Cory's `enightmodels::forecast_prec()` set up as in his NYC run (`../modeling-cory/nyc/`); out of the default run on cost |
-| `R/model_medsl.R` | **model_medsl**: `fit_medsl()`, which runs Young-Kyung's `scripts/model/model_turnout.R` from its own file (see below) |
+| `R/model_cpbayes.R` | **model_cory_pbayes**: `fit_cpbayes()`, a precinct Poisson model on `enightmodels::pois_bayes()` (turnout on counted-out cells, party shares on reporting cells, posterior predictive draws); candidate replacement for model_cory_pois |
+| `R/model_medsl.R` | **model_medsl**: `fit_medsl()`, which runs Young-Kyung's `scripts/model/model_turnout.R` from its own file (see below); also **model_hybrid**: `fit_hybrid()`, the same model with `scripts/model/model_hybrid.R`'s re-centred priors |
 | `R/run.R` | `run_race()`, `run_all()`, and the list of wired models |
 | `R/output.R` | `predict_all()` and `write_predictions()`: results in enightmodels' prediction format for the dashboard |
 | `R/counties.R` | statewide rows: scraped counties from the models + CBS county results for the rest |
 | `R/virtual.R` | NC's county-level "virtual precinct" batches for every model but model_medsl: `fit_model()`, `virtual_split()`, `add_virtual()` |
 | `R/races.R` | the races we cover, from `26_general/input_data/priors.csv`: `races_from_priors()`, `cbs_for_races()` |
-| `tests/sim_night.R` | runs the models on one of Ethan's simulated nights through `run_all()` |
+| `tests/sim_night.R` | runs the models on one of Ethan's simulated nights, every checkpoint x race x model in parallel (`--cores=`, default half the cores minus one) |
 | `tests/time_models.R` | how long each model takes per race on this computer, one at a time and all at once in parallel (as `run_night.R` runs them) |
 | `tests/sim_statewide.R` | a simulated night at state level: Ethan's sim for the scraped counties + a simulated CBS feed for the rest, scored against the statewide truth |
 
@@ -101,6 +102,8 @@ on, so one bad race cannot stop the rest.
 | cory | `R/model_cory.R` | `model_legacy()`'s two stages called directly so the precinct frame comes from the same fit; past = expected votes x baseline share |
 | cpois | `R/model_cpois.R` | Cory's code and `model_specs` run as is, with one pooled party (his model assumes a primary) and his TX covariates from `{ST}_precinct.parquet`; needs lme4, broom.mixed, collapse, glmnet |
 | cprec | `R/model_cprec.R` | NYC's `simple_pres` spec plus 0/1 method columns; draws from `forecast_summarize()` |
+| pbayes | `R/model_cpbayes.R` | new, under evaluation; out of the default run |
+| hybrid | `R/model_medsl.R` | `model_hybrid.R` sourced into model_medsl's environment, `fit_stage_hybrid()` in place of `fit_stage()`; the CBS county snapshot is passed on the night (county-constraint arm), none in the sims; arms switch off with `HY_LEVEL` / `HY_COMP` / `HY_SHARE` / `HY_COUNTY=0`; out of the default run |
 | medsl | `R/model_medsl.R` | runs `scripts/model/model_turnout.R` itself, not a copy: its sections 1-2 and its functions are evaluated from that file each time the models load for a state (once per state per session), so Young-Kyung's changes there are picked up with no edit here. Its two file reads are replaced by frames built from `{ST}_precinct.parquet` and `{ST}_precinct_mode_history.parquet`; mode offsets default to zero (`MODE_OFFSET_SOURCE=zero`). Its other switches still work as environment variables. Blank YouGov race predictions (some MI and CA precincts) are filled with the county mean, noted in `settings`. If `model_turnout.R`'s section markers or its `covs_long` / `mode_hist` lines change, `fit_medsl()` stops with a message saying so. |
 
 Speed, one race per refresh on a slow 2-core test server: model_simpleswing 4-7 s, model_medsl 3-15 s, model_cory 1-18 s in AK, FL, MI, NC and TX; California (23,685 precincts) takes model_cory about 58 s and needs `MEDSL_DRAWS=200` or less to fit model_medsl in memory. `run_night.R` runs every race x model at once on all cores but one (`--cores=`), so a refresh takes about as long as its slowest fit. Time it on your machine with `tests/time_models.R`.

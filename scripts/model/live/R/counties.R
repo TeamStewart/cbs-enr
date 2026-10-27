@@ -167,13 +167,11 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
   lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
 
   cand = reported_by_candidate(returns)
-  if (model %in% c("swing", "medsl", "cprec")) {
+  if (model %in% names(DRAW_CONF)) {
     dr = fit$draws
     D32 = dr$dem; R32 = dr$rep; T32 = dr$turnout
     pt = fit_point(fit)
-    conf = sprintf(switch(model, swing = "county_bootstrap_%g_plus_rest",
-                          medsl = "posterior_%g_plus_rest",
-                          cprec = "cred_int_%g_plus_rest"), 100 * level)
+    conf = sprintf(paste0(DRAW_CONF[[model]], "_plus_rest"), 100 * level)
   } else if (model %in% c("cory", "cpois")) {
     # no draws: a point estimate carried to the rest of the state, with no interval
     # (model_cory_pois's conformal bounds cover the scraped counties only)

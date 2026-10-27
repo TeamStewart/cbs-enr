@@ -22,9 +22,9 @@
 ##   everything else virtual  (provisional, transfer, a stray unmatched precinct id): counted
 ##                            votes added as they are, nothing projected
 ##
-## Every model but model_medsl is adjusted (VIRTUAL_MODELS; output.R predict_one()):
+## Every model but model_medsl and model_hybrid is adjusted (VIRTUAL_MODELS; output.R predict_one()):
 ## models with draws in every draw, the others in their point prediction and bounds.
-## model_medsl gets the same rows as county x mode observations from bucket_counts()
+## model_medsl and model_hybrid get the same rows as county x mode observations from bucket_counts()
 ## (returns.R) inside its own fit.
 ## Only for races fit by vote method. A state with no {ST}_virtual_history.parquet and no
 ## unmatched rows is untouched. Rows are matched on geo + method after METHOD_MAP (run.R).
@@ -34,7 +34,7 @@
 # ========================================
 
 VIRTUAL_MIN_SHARE = 0.5
-VIRTUAL_MODELS = c("swing", "cory", "cpois", "cprec")
+VIRTUAL_MODELS = c("swing", "cory", "cpois", "cprec", "pbayes")
 # geo_county() (the 3-digit county code in a precinct id) is in vote_modes.R
 
 virtual_history = function(state, dir_26 = find_26_general()) {
@@ -80,10 +80,10 @@ virtual_split = function(cells, returns, dir_26 = find_26_general()) {
 
 # run_race() with the virtual units fit around and added back (what predict_one() and
 # run_all() call)
-fit_model = function(model, cells, returns) {
-  if (!model %in% VIRTUAL_MODELS) return(run_race(model, cells, returns))
+fit_model = function(model, cells, returns, ...) {
+  if (!model %in% VIRTUAL_MODELS) return(run_race(model, cells, returns, ...))
   vs = virtual_split(cells, returns)
-  add_virtual(run_race(model, vs$cells, vs$returns), model, vs)
+  add_virtual(run_race(model, vs$cells, vs$returns, ...), model, vs)
 }
 
 # Adds the virtual units to a fit (run_race() on vs$cells / vs$returns). Point estimate and,
@@ -93,7 +93,7 @@ add_virtual = function(fit, model, vs) {
   lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
   E = sum(vs$cells$exp_votes)
   base_s = sum(vs$cells$exp_votes * vs$cells$dem2) / max(E, 1)     # baseline Dem two-party share
-  if (model %in% c("swing", "cprec")) {
+  if (model %in% c("swing", "cprec", "pbayes")) {
     pt = fit_point(fit); dr = fit$draws
     vp = project_rest(vs$units, lg(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]])) - lg(base_s), pt[["tot"]] / E, noise = FALSE)
     vd = project_rest(vs$units, lg(dr$dem / (dr$dem + dr$rep)) - lg(base_s), dr$turnout / E, noise = TRUE)
