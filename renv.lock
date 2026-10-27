@@ -936,6 +936,44 @@
       "Maintainer": "Michel Lang <michellang@gmail.com>",
       "Repository": "CRAN"
     },
+    "bases": {
+      "Package": "bases",
+      "Version": "0.2.1",
+      "Source": "Repository",
+      "Priority": null,
+      "Depends": [
+        "R (>= 3.6.0)"
+      ],
+      "Imports": [
+        "rlang",
+        "stats",
+        "methods"
+      ],
+      "LinkingTo": [
+        "cpp11"
+      ],
+      "Suggests": [
+        "mgcv",
+        "recipes",
+        "tibble",
+        "adj (>= 0.1.0)",
+        "RSpectra",
+        "igraph",
+        "testthat (>= 3.0.0)",
+        "knitr",
+        "rmarkdown"
+      ],
+      "Enhances": [
+        null
+      ],
+      "License": "MIT + file LICENSE",
+      "License_is_FOSS": null,
+      "License_restricts_use": null,
+      "OS_type": null,
+      "NeedsCompilation": "yes",
+      "Repository": "CRAN",
+      "Type": "source"
+    },
     "bigD": {
       "Package": "bigD",
       "Version": "0.3.1",

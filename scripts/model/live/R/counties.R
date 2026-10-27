@@ -26,7 +26,7 @@
 ## A county with nothing counted (p_c = 0) is all expectation: E_c votes at the Harris
 ## 2024 share moved by tonight's swing.
 ##
-## Intervals (models with draws: model_simpleswing, model_medsl): for each of the model's draws,
+## Intervals (fits with draws: swing, pois_bayes, lm_bayes, medsl_sur): for each of the model's draws,
 ## the swing and turnout ratio come from that draw (so the rest of the state moves with
 ## the scraped counties), plus
 ##   REST_COMMON_SD  the rest of the state swinging differently from the scraped counties
@@ -154,6 +154,7 @@ project_rest = function(rest, swing, turn_ratio, noise = TRUE) {
 # fit: run_race() result; cbs: latest CBS snapshot for the race; base: county_baseline().
 state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, level = 0.95) {
   if (!fit_ok(fit) || is.null(cbs) || !nrow(cbs)) return(NULL)
+  name = model_label(model); model = model_base(model)
   rest = rest_of_state(cbs, base, cells)
   sc = scraped_counties(cells)
   b32 = cbs |> distinct(county_fips, county_cbs) |> filter(county_cbs %in% sc) |>
@@ -167,19 +168,19 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
   lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
 
   cand = reported_by_candidate(returns)
-  if (model %in% names(DRAW_CONF)) {
+  if (is.null(fit$pred)) {
     dr = fit$draws
     D32 = dr$dem; R32 = dr$rep; T32 = dr$turnout
     pt = fit_point(fit)
-    conf = sprintf(paste0(DRAW_CONF[[model]], "_plus_rest"), 100 * level)
-  } else if (model %in% c("cory", "cpois")) {
+    conf = paste0(fit$conf, "_plus_rest")
+  } else {
     # no draws: a point estimate carried to the rest of the state, with no interval
-    # (model_cory_pois's conformal bounds cover the scraped counties only)
+    # (conf_seq and conformal bounds cover the scraped counties only)
     pr = fit$pred
     pt = c(dem = sum(pr$pred[pr$party == "dem"]), rep = sum(pr$pred[pr$party == "rep"]), tot = sum(pr$pred))
     D32 = pt[["dem"]]; R32 = pt[["rep"]]; T32 = pt[["tot"]]
     conf = NA_character_
-  } else stop("state_pred_data() has no rule for model '", model, "' yet")
+  }
 
   # rest of the state: point (no noise, from the point fit) and per-draw
   rest_pt = project_rest(rest, lg(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]])) - lg(h32),
@@ -227,7 +228,7 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
   # race_id carried, not reconstructed -- see the note in output.R::to_pred_data()
   bind_cols(race[rep(1, nrow(out)), c("race_id", "state", "election", "jurisdiction",
                                       "contest", "district")], out) |>
-    mutate(time = time, model = unname(MODEL_NAMES[model]), model_conf = conf, pct_rep = pct, geo = "all",
+    mutate(time = time, model = name, model_conf = conf, pct_rep = pct, geo = "all",
            cbs_as_of = max(cbs$observed_at), election = as.Date(election), district = as.integer(district)) |>
     relocate(state, election, jurisdiction, contest, district, candidate, party, pred_type, time,
              model, model_conf, pct_rep, rep, pred, pred_min, pred_max, p_win, geo, race_id) |>

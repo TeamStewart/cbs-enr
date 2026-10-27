@@ -5,6 +5,8 @@
 ## From the cbs-enr folder:
 ##   Rscript scripts/model/live/tests/sim_night.R [scenario] [--models=swing,cory,medsl] [--out=<dir>] [--cores=<n>]
 ## scenario defaults to tx_base (26_sim/tx_base); --models defaults to every wired model.
+## "<model>[/<demo>][/<interval>]" runs a model with a demographic spec (R/demos.R) and an
+## interval (R/results.R), e.g. --models=swing,swing/strat_d_cov,pois_bayes/tpsob/conformal
 ## Every checkpoint x race x model is one job, run in forked workers: --cores defaults to half
 ## the machine's cores minus one (4 on a 10-core laptop), so a run leaves the computer usable.
 ## Memory is about 1-4 GB per worker on TX.
@@ -17,6 +19,7 @@ args = commandArgs(trailingOnly = TRUE)
 SCENARIO = c(grep("^--", args, value = TRUE, invert = TRUE), "tx_base")[1]
 opt = function(key, default) sub(paste0("^--", key, "="), "", c(grep(paste0("^--", key, "="), args, value = TRUE), paste0("--", key, "=", default))[1])
 MODELS_RUN = strsplit(opt("models", paste(MODELS, collapse = ",")), ",")[[1]]
+check_models(MODELS_RUN)
 CORES = as.integer(opt("cores", max(1L, parallel::detectCores() %/% 2L - 1L)))
 
 DIR_26 = find_26_general()
@@ -40,13 +43,11 @@ rets = rets[vapply(rets, \(x) sum(x$votes) > 0, NA)]
 jobs = tidyr::expand_grid(i = seq_along(rets), race_id = sort(unique(sim$truth$contest)), model = MODELS_RUN)
 
 # one-time set-up in this process, before forking, so the workers inherit it: model_medsl /
-# model_hybrid's model environment, Cory's sourced code and the covariate caches
+# medsl_sur's model environment and the covariate caches
 st = sim$truth$state[1]
 invisible({
-  if ("medsl" %in% MODELS_RUN) fit_medsl_setup_for(cells, rets[[1]])
-  if ("hybrid" %in% MODELS_RUN) fit_medsl_setup_for(cells, rets[[1]], hybrid = TRUE)
-  if ("cpois" %in% MODELS_RUN) { cpois_env(); cpois_covs(st) }
-  if ("pbayes" %in% MODELS_RUN) cpbayes_covs(st)
+  if ("medsl_sur" %in% model_base(MODELS_RUN)) fit_medsl_setup_for(cells, rets[[1]], hybrid = TRUE)
+  demo_covs(st)
 })
 cat(sprintf("%d checkpoints with votes, %d jobs on %d core(s)\n", length(rets), nrow(jobs), CORES))
 

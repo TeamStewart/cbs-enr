@@ -22,9 +22,9 @@
 ##   everything else virtual  (provisional, transfer, a stray unmatched precinct id): counted
 ##                            votes added as they are, nothing projected
 ##
-## Every model but model_medsl and model_hybrid is adjusted (VIRTUAL_MODELS; output.R predict_one()):
-## models with draws in every draw, the others in their point prediction and bounds.
-## model_medsl and model_hybrid get the same rows as county x mode observations from bucket_counts()
+## Every model but medsl_sur is adjusted (VIRTUAL_MODELS; output.R predict_one()):
+## fits with draws in every draw, the others in their point prediction and bounds.
+## medsl_sur gets the same rows as county x mode observations from bucket_counts()
 ## (returns.R) inside its own fit.
 ## Only for races fit by vote method. A state with no {ST}_virtual_history.parquet and no
 ## unmatched rows is untouched. Rows are matched on geo + method after METHOD_MAP (run.R).
@@ -34,7 +34,7 @@
 # ========================================
 
 VIRTUAL_MIN_SHARE = 0.5
-VIRTUAL_MODELS = c("swing", "cory", "cpois", "cprec", "pbayes")
+VIRTUAL_MODELS = c("swing", "ratio_strata", "pois_bayes", "lm_bayes")
 # geo_county() (the 3-digit county code in a precinct id) is in vote_modes.R
 
 virtual_history = function(state, dir_26 = find_26_general()) {
@@ -81,9 +81,9 @@ virtual_split = function(cells, returns, dir_26 = find_26_general()) {
 # run_race() with the virtual units fit around and added back (what predict_one() and
 # run_all() call)
 fit_model = function(model, cells, returns, ...) {
-  if (!model %in% VIRTUAL_MODELS) return(run_race(model, cells, returns, ...))
+  if (!model_base(model) %in% VIRTUAL_MODELS) return(run_race(model, cells, returns, ...))
   vs = virtual_split(cells, returns)
-  add_virtual(run_race(model, vs$cells, vs$returns, ...), model, vs)
+  add_virtual(run_race(model, vs$cells, vs$returns, ...), model_base(model), vs)
 }
 
 # Adds the virtual units to a fit (run_race() on vs$cells / vs$returns). Point estimate and,
@@ -93,7 +93,7 @@ add_virtual = function(fit, model, vs) {
   lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
   E = sum(vs$cells$exp_votes)
   base_s = sum(vs$cells$exp_votes * vs$cells$dem2) / max(E, 1)     # baseline Dem two-party share
-  if (model %in% c("swing", "cprec", "pbayes")) {
+  if (is.null(fit$pred)) {
     pt = fit_point(fit); dr = fit$draws
     vp = project_rest(vs$units, lg(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]])) - lg(base_s), pt[["tot"]] / E, noise = FALSE)
     vd = project_rest(vs$units, lg(dr$dem / (dr$dem + dr$rep)) - lg(base_s), dr$turnout / E, noise = TRUE)
@@ -105,7 +105,7 @@ add_virtual = function(fit, model, vs) {
     fit$race = mutate(fit$race, est_twop = mean(fit$draws$twop), lo_twop = ci[["lower"]], hi_twop = ci[["upper"]],
                       p_dem_win = mean(fit$draws$twop > 0.5), est_turnout = mean(fit$draws$turnout),
                       lo_turnout = ct[["lower"]], hi_turnout = ct[["upper"]])
-  } else if (model %in% c("cory", "cpois")) {
+  } else {
     # no draws: the virtual units' point projection is added to the prediction and its bounds
     pr = fit$pred
     d = sum(pr$pred[pr$party == "dem"]); r = sum(pr$pred[pr$party == "rep"])
@@ -113,7 +113,8 @@ add_virtual = function(fit, model, vs) {
     fit$pred = add_party_votes(pr, vp[1, ])
     est = pred_race_est(fit$pred)
     fit$race = mutate(fit$race, est_twop = est$est_twop, lo_twop = est$lo_twop, hi_twop = est$hi_twop,
-                      est_turnout = est$est_turnout)
+                      est_turnout = est$est_turnout, lo_turnout = lo_turnout + sum(vp[1, ]),
+                      hi_turnout = hi_turnout + sum(vp[1, ]))
   }
   u = vs$units
   fit$settings = paste0(fit$settings, sprintf("; plus %d county-level virtual-precinct units (%d reported, %d projected)",

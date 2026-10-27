@@ -767,7 +767,7 @@ re-specifying it.
 | `candidate`, `party` | one row per candidate |
 | `pred_type` | `"vote"` = predicted final votes; `"share"` = predicted final share of ALL votes cast in the race, as `pred_convert(to = "share")` defines it |
 | `time` | the returns snapshot the predictions are from |
-| `model` | `model_simpleswing`, `model_cory`, `model_cory_pois`, `model_medsl` by default; `model_cory_prec` only when asked for (see below) |
+| `model` | `swing`, `ratio_strata`, `pois_bayes`, `medsl_sur` by default; `lm_bayes` only when asked for (see below). A variant run with a demographic spec or another interval is labelled `<model>[/<spec>][/<interval>]`, e.g. `pois_bayes/strat_d/conformal` (`live/README.md`). Renamed 2026-10-27 from `model_simpleswing`, `model_cory`, `model_cory_pbayes`, `model_cory_prec`, `model_hybrid`; `model_medsl` and `model_cory_pois` are no longer run |
 | `model_conf` | how the interval was made and at what level — see below |
 | `pct_rep` | share of the race's precincts with any votes counted. **The same definition for every model**, so the column lines up across them |
 | `rep` | reported so far (votes, or share of the votes counted so far) |
@@ -835,21 +835,19 @@ CBS remainder and is not the same object.
 
 | model | `model_conf` |
 |---|---|
-| `model_simpleswing` | `county_bootstrap_95` |
-| `model_medsl` | `posterior_95` |
-| `model_cory` | NA — the model gives no interval, and hardcodes `pred_min`/`pred_max`/`model_conf` to NA |
-| `model_cory_prec` | `cred_int_95` or `conf_seq_95`, from `enightmodels::forecast_intervals()` |
+| `swing` | `county_bootstrap_95` (`/conformal`: `approx_conform_95`) |
+| `ratio_strata` | NA: no interval by default (`/conformal`: `approx_conform_95`) |
+| `pois_bayes`, `lm_bayes` | `posterior_95` (`/conf_seq`: `conf_seq_95`; `/conformal`: `approx_conform_95`) |
+| `medsl_sur` | `posterior_95` |
 
-**`model_cory_prec` is implemented but NOT in the default run**, on cost rather than
-correctness. Measured on `tx_base` at 22:00 with 2 races x 5 models, the refresh took 425s
-and cprec was **423s** of it (medsl 37s, cpois 30s, cory 20s, simpleswing 12s). Its runtime
-is flat in draws and linear in cells, so the frame expansion worsens it — TX went 6,134 →
-15,084 precincts and CA is 26,700 — against a 300s cadence. `MODELS` in `live/R/run.R` is
-the implemented set; `MODELS_DEFAULT` is what runs. `--models=...,cprec` still reaches it.
+The methods are defined in `live/R/results.R`. `conf_seq_95` and `approx_conform_95` rows
+have no `p_win`, and their statewide rows carry a point with NA `model_conf`.
 
-`forecast_intervals()` returns both a credible interval and an anytime-valid confidence
-sequence. **Pick one and name it;** emitting both would duplicate every row, and an
-unlabelled choice makes two models' intervals look comparable when they are not.
+**`lm_bayes` is implemented but NOT in the default run**, on cost rather than correctness.
+Measured on `tx_base` at 22:00 with 2 races x 5 models, the refresh took 425s and lm_bayes
+(then `model_cory_prec`) was **423s** of it. Its runtime is flat in draws and linear in
+cells, against a 300s cadence. `MODELS` in `live/R/run.R` is the implemented set;
+`MODELS_DEFAULT` is what runs. `--models=...,lm_bayes` still reaches it.
 
 *Acceptance:* `check_pred(read_csv("predictions_latest.csv"))` passes — it folds in the
 column-order assertion below, so this is one call, and it is the call to use rather than
@@ -964,9 +962,8 @@ explicitly, because the existing flag-gated dump gets this wrong, reading 10,956
    do not exist yet: `turn_sd`/`turn_lo`/`turn_hi`, `est_dem2`, `cnt_prec`, and `level`
    threaded instead of hardcoded. Per-model adapters, because the `cells` slot is not
    uniform across models today.
-3. **`model_cory_prec`'s `model_conf`** — decide `cred_int_95` vs `conf_seq_95` on its
-   first real run and record the choice in §15.1's table. Until it is recorded, that
-   model's intervals are not comparable to `model_medsl`'s.
+3. ~~`model_cory_prec`'s `model_conf`~~ — settled 2026-10-27: `posterior_95` by default,
+   `conf_seq_95` as the `lm_bayes/conf_seq` variant (§15.1).
 
 Deferred: residuals and per-precinct `p_win` in §15.3; margin rows anywhere (§15.1 — the
 dashboard's job, permanently).

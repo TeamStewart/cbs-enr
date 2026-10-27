@@ -34,7 +34,7 @@
 ## scraped counties by much more than the model allows for.
 ##
 ## From the cbs-enr folder:
-##   Rscript scripts/model/live/tests/sim_statewide.R [scenario] [--models=swing,cory,medsl]
+##   Rscript scripts/model/live/tests/sim_statewide.R [scenario] [--models=swing,ratio_strata,medsl_sur]
 ##           [--offset=<logit>] [--seed=<n>] [--checkpoints=all|calib] [--races=gov]
 ##           [--snapshots-only]   (write the simulated CBS feed + truth, don't run the models)
 ## Writes 26_general/model_tests/SIM_statewide_<scenario>[_offset<x>][_<race>].csv

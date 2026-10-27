@@ -1,6 +1,8 @@
 # ========================================
-## model_medsl.R -- model_medsl: Young-Kyung's precinct x vote-method model
-## (scripts/model/model_turnout.R), run on any race in the live format.
+## model_medsl.R -- medsl_sur: Young-Kyung's precinct x vote-method model
+## (scripts/model/model_turnout.R, with model_hybrid.R's re-centred priors; fit_medsl_sur()),
+## run on any race in the live format. fit_medsl() alone, the plain model_turnout.R model
+## (formerly model_medsl), is no longer run on the night but is what fit_medsl_sur() calls.
 ##
 ## model_turnout.R is NOT copied or edited here. Its own code runs, from its own file, each
 ## time the models are loaded for a state, so a change Young-Kyung makes there is picked
@@ -89,7 +91,7 @@ medsl_inputs = function(state, dir_26 = find_26_general(), mode_election = NULL)
 # counties: fit only these counties' precincts (county names as in cells$county) -- the
 #   counties the live feed actually covers, so the model's totals never include counties
 #   whose votes come from CBS instead. NULL = every county in the state's inputs.
-# hybrid: also load model_hybrid.R into the environment (fit_stage_hybrid(), see fit_hybrid())
+# hybrid: also load model_hybrid.R into the environment (fit_stage_hybrid(), see fit_medsl_sur())
 medsl_key = function(state, counties, hybrid = FALSE)
   paste0(if (is.null(counties)) state else paste(state, paste(sort(unique(counties)), collapse = "|")),
          if (hybrid) "|hybrid")
@@ -174,12 +176,12 @@ fit_medsl_setup_for = function(cells, returns, dir_26 = find_26_general(), hybri
 # cells:   build_cells() output (used for the precinct x method counts and the counted
 #          totals, so they match the other models exactly)
 # returns: one race's standard returns (returns.R)
-# hybrid / cbs_county: see fit_hybrid()
+# hybrid / cbs_county: see fit_medsl_sur()
 fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26_general(),
                      hybrid = FALSE, cbs_county = NULL) {
   state = unique(returns$state)
   if (length(state) != 1) stop("fit_medsl() takes one race (one state) at a time")
-  name = if (hybrid) "hybrid" else "medsl"
+  name = if (hybrid) "medsl_sur" else "medsl"
   # fit the counties in `cells` (the ones the feed covers; see feed_cells())
   env = fit_medsl_setup_for(cells, returns, dir_26, hybrid)
   counts = cell_counts(cells, returns)
@@ -189,7 +191,7 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
                    obs_cells = sum(counts$c_tot > 0), complete_cells = sum(counts$c_tot > 0 & counts$complete))
   settings = sprintf("%s; %g%% interval", env$.settings, 100 * level)
   if (!any(counts$c_tot > 0)) {
-    return(list(model = name, status = "no_votes", settings = settings,
+    return(list(model = name, status = "no_votes", settings = settings, conf = sprintf("posterior_%g", 100 * level),
                 race = bind_cols(tibble(status = "no_votes", est_twop = NA_real_, lo_twop = NA_real_, hi_twop = NA_real_,
                                         p_dem_win = NA_real_, est_turnout = NA_real_, lo_turnout = NA_real_,
                                         hi_turnout = NA_real_), counted),
@@ -283,7 +285,7 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
         else "", " -- partial fit."))
     }
   }
-  list(model = name, status = st, settings = settings,
+  list(model = name, status = st, settings = settings, conf = sprintf("posterior_%g", 100 * level),
        # the structured ledger as well as the status string, so a consumer can test
        # `fit$prior_only$all_prior` rather than parse prose
        prior_only = po,
@@ -295,12 +297,12 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
        point = c(dem = mean(dr$dem), rep = mean(dr$rep), tot = mean(dr$turnout)))
 }
 
-# model_hybrid: Young-Kyung's scripts/model/model_hybrid.R. The same model as model_medsl, with
+# medsl_sur: Young-Kyung's scripts/model/model_hybrid.R. The same model as model_medsl, with
 # its turnout level, method composition and vote-share PRIORS re-centred from tonight's
 # returns (log counted / prior and logit share offsets on county x method fixed effects,
 # gated per county x method), and CBS's counted-out county x method totals imposed as exact
 # constraints when a snapshot is passed. Arms switch off with HY_LEVEL / HY_COMP / HY_SHARE /
 # HY_COUNTY = 0 (all four off reproduces model_medsl). No snapshot (the sims) leaves the
 # county arm inert.
-fit_hybrid = function(cells, returns, ..., cbs_county = NULL)
+fit_medsl_sur = function(cells, returns, ..., cbs_county = NULL)
   fit_medsl(cells, returns, ..., hybrid = TRUE, cbs_county = cbs_county)

@@ -31,14 +31,14 @@ AT_LARGE = c("AK", "DE", "ND", "SD", "VT", "WY")
 # definitions of one name differing in both value and type is a trap, and whichever file
 # was sourced second would have won silently.
 # It is removable because priors.csv now STATES `election` and races_from_priors() reads it,
-# and nothing consumes parse_race_id()'s election field: model_cory.R and model_cpois.R take
+# and nothing consumes parse_race_id()'s election field: model_ratio_strata.R takes
 # only ri$contest / ri$district (their `election` comes from the returns), and
 # cbs_county_pull.R's CLI takes only state/contest/district.
 
 # parse_race_id() INFERS the race dimension from the id string. priors.csv now STATES it,
 # and races_from_priors() reads it, so nothing in the night path infers any more. This is
 # kept for the CLI paths that genuinely only have a string to go on -- cbs_county_pull.R's
-# positional arguments, and model_cory.R / model_cpois.R when handed a bare returns
+# positional arguments, and model_ratio_strata.R when handed a bare returns
 # race_id -- and for the round-trip assertion below.
 #
 # WHY THE INFERENCE HAD TO GO. It is not invertible: `district` is SYNTHESISED as 1 for
@@ -71,8 +71,19 @@ RACE_COLS = c("race_id", "state", "election", "jurisdiction", "contest", "distri
 races_from_priors = function(dir_26 = find_26_general()) {
   f = file.path(dir_26, "input_data", "priors.csv")
   pr = readr::read_csv(f, show_col_types = FALSE, col_types = readr::cols(
-    race_id = "c", state = "c", election = "D", jurisdiction = "c",
+    race_id = "c", state = "c", election = "c", jurisdiction = "c",
     contest = "c", district = "i"))
+  # ISO dates, or M/D/YY(YY) as Excel writes them when it re-saves the file
+  el = trimws(pr$election)
+  pr$election = as.Date(el, "%Y-%m-%d")
+  for (fmt in c("%m/%d/%Y", "%m/%d/%y")) {
+    i = is.na(pr$election) & grepl("^\\d{1,2}/\\d{1,2}/\\d{2}$", el) == (fmt == "%m/%d/%y")
+    pr$election[i] = as.Date(el[i], fmt)
+  }
+  unread = which(is.na(pr$election) & !is.na(el) & nzchar(el))
+  if (length(unread))
+    cli::cli_abort(c("{.path {f}} has an election date that is not a date on row(s) {unread}: {.val {el[unread]}}.",
+      "i" = "Write it as 2026-11-03 (11/3/26 and 11/3/2026 are read too)."))
   miss = setdiff(RACE_COLS, names(pr))
   if (length(miss))
     cli::cli_abort(c("{.path {f}} is missing the race column(s) {.val {miss}}.",

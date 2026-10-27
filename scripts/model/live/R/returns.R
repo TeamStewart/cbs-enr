@@ -25,7 +25,7 @@
 # (cum_frac); censored precincts never report.
 #
 # round_by: the original harness rounds counted votes in two different ways --
-#   "candidate"  round each candidate's votes (what model_cory got; also what a real feed
+#   "candidate"  round each candidate's votes (what ratio_strata got; also what a real feed
 #                looks like, since every candidate's count is a whole number). Default.
 #   "party"      add up dem / rep / third-party first, then round (what the swing model
 #                got). Only differs when a party has more than one candidate (e.g. a
@@ -122,7 +122,7 @@ returns_from_live = function(live, candidates, state, election, at = NULL, compl
 #            nc_001_1 where the NC feed writes nc_001_01); unmatched ids are kept as written
 #   complete the precinct's stage >= complete_stage (6)
 # Rows whose geo matches no precinct in our inputs are kept: virtual.R adds them at county level
-# for model_simpleswing and model_cory, and bucket_counts() passes them to model_medsl.
+# for swing and ratio_strata, and bucket_counts() passes them to medsl_sur.
 match_live_geo = function(geo, geos = NULL) {
   geo = as.character(geo)
   if (is.null(geos)) return(geo)

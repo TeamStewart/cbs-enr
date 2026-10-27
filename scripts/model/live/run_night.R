@@ -26,7 +26,9 @@
 ##                 method, votes, stage, observed_at); parquet or csv
 ##   --candidates  CONTRACT.md section 5 (race_id, candidate_id, name, party)
 ##   --cbs=test    CBS's test feed instead of live (default live)
-##   --models=swing,cory,medsl   (default: all three)
+##   --models=swing,pois_bayes   (default: MODELS_DEFAULT in R/run.R); a model may carry a
+##                 demographic spec (R/demos.R) and an interval (R/results.R):
+##                 "<model>[/<demo>][/<interval>]", e.g. pois_bayes/strat_d/conformal
 ##   --states=NC,TX  only these states' races (default: every race in priors.csv)
 ##   --cores=N     how many race x model fits run at once (default: all cores but one).
 ##                 Every race x model in every state goes into one pool, so a refresh takes
@@ -41,12 +43,10 @@
 source("scripts/model/live/load.R")
 args = commandArgs(trailingOnly = TRUE)
 opt = function(k, d = NA) { a = grep(paste0("^--", k, "="), args, value = TRUE); if (length(a)) sub("^[^=]*=", "", a[1]) else d }
-# MODELS_DEFAULT, not MODELS: cprec is implemented but out of the default run on cost
+# MODELS_DEFAULT, not MODELS: lm_bayes is implemented but out of the default run on cost
 # (see run.R). --models= still reaches it, and is validated against the full MODELS.
 MODELS_RUN = strsplit(opt("models", paste(MODELS_DEFAULT, collapse = ",")), ",")[[1]]
-if (length(bad <- setdiff(MODELS_RUN, MODELS)))
-  stop("unknown model(s) in --models=: ", paste(bad, collapse = ", "),
-       ". Choose from: ", paste(MODELS, collapse = ", "))
+check_models(MODELS_RUN)
 SIM = opt("sim"); EVERY = as.numeric(opt("every", "0")); CBS_ENV = opt("cbs", "live")
 CORES = as.integer(opt("cores", max(1L, parallel::detectCores() - 1L)))
 TZ = "America/New_York"
@@ -66,11 +66,9 @@ state_inputs = function(st) {
   if (is.null(cache[[st]])) {
     cells = tryCatch(build_cells(st, d26), error = function(e) e)
     base = tryCatch(county_baseline(st, d26), error = function(e) e)
-    medsl = if (any(c("medsl", "hybrid") %in% MODELS_RUN) && !inherits(cells, "error"))
-      tryCatch({
-        if ("medsl" %in% MODELS_RUN) medsl_setup(st, d26)
-        if ("hybrid" %in% MODELS_RUN) medsl_setup(st, d26, hybrid = TRUE)
-      }, error = function(e) e) else NULL
+    medsl = if ("medsl_sur" %in% model_base(MODELS_RUN) && !inherits(cells, "error"))
+      tryCatch(medsl_setup(st, d26, hybrid = TRUE), error = function(e) e) else NULL
+    try(demo_covs(st, d26), silent = TRUE)          # precinct demographics (R/demos.R)
     cache[[st]] = list(cells = cells, base = base, medsl = medsl)
   }
   cache[[st]]

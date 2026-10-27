@@ -5,7 +5,7 @@
 ## times ONLY the step that reruns every model on the new returns -- exactly what run_night.R
 ## does every five minutes: all three models on every race, scraped + statewide rows, in
 ## parallel on all cores but one. Not timed: the one-time set-up at the start of the night
-## (loading precinct inputs, model_medsl's set-up) and reading the new returns / CBS file.
+## (loading precinct inputs, medsl_sur's set-up) and reading the new returns / CBS file.
 ## Nothing is written.
 ##
 ## From the cbs-enr folder:
@@ -34,7 +34,7 @@ races = races_from_priors(d26) |> filter(state == "TX")
 t0 = proc.time()[["elapsed"]]
 cells = build_cells("TX", d26)
 base = county_baseline("TX", d26)
-invisible(medsl_setup("TX", d26))
+invisible(medsl_setup("TX", d26, hybrid = TRUE))
 for (pk in c("fixest", "enightmodels")) suppressPackageStartupMessages(requireNamespace(pk, quietly = TRUE))
 cat(sprintf("One-time set-up for the night: %.1f s. Timing %d refreshes of %s on %d core(s) (of %d).\n\n",
             proc.time()[["elapsed"]] - t0, length(SCRAPES), paste(MODELS, collapse = ", "), CORES, parallel::detectCores()))

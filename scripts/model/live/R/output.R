@@ -8,10 +8,10 @@
 ##               "share" = predicted final share of ALL votes cast in the race (as
 ##                         enightmodels::pred_convert(to = "share") defines it)
 ##   time        the returns snapshot the predictions are from
-##   model       MODEL_NAMES below
-##   model_conf  how the interval was made and its level, e.g. "county_bootstrap_95"
-##               (model_simpleswing) or "posterior_95" (model_medsl);
-##               NA when the model gives no interval (model_cory)
+##   model       the model's name (run.R: "<model>[/<demo>][/<interval>]", e.g. "swing")
+##   model_conf  how the interval was made and its level (results.R), e.g.
+##               "county_bootstrap_95" (swing) or "posterior_95" (pois_bayes);
+##               NA when the model gives no interval (ratio_strata)
 ##   pct_rep     share of the race's precincts with any votes counted -- the same
 ##               definition for every model, so the column lines up across models
 ##   rep         reported so far (votes, or share of the votes counted so far)
@@ -41,12 +41,6 @@
 ##                                    run + "latest", for both tables
 # ========================================
 
-MODEL_NAMES = c(swing = "model_simpleswing", cory = "model_cory", medsl = "model_medsl",
-                cpois = "model_cory_pois", cprec = "model_cory_prec", hybrid = "model_hybrid",
-                pbayes = "model_cory_pbayes")
-# the models with posterior / bootstrap draws, and how their intervals are labelled
-DRAW_CONF = c(swing = "county_bootstrap_%g", medsl = "posterior_%g", cprec = "cred_int_%g",
-              hybrid = "posterior_%g", pbayes = "posterior_%g")
 
 # one row per race_id with the enightmodels race columns. The default suits the sims
 # (race_id is the contest, e.g. "gov"); for live races pass a table built from the race
@@ -72,7 +66,7 @@ reported_by_candidate = function(returns) {
 }
 
 # predicted final votes c(dem, rep, tot) from a model with draws: its `point` if it gives
-# one (model_medsl: the posterior mean), else the sum of its cells (model_simpleswing)
+# one (medsl_sur: the posterior mean), else the sum of its cells (swing)
 fit_point = function(fit) {
   if (!is.null(fit$point)) return(fit$point[c("dem", "rep", "tot")])
   c(dem = sum(fit$cells$dem), rep = sum(fit$cells$rep), tot = sum(fit$cells$tot))
@@ -109,13 +103,13 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
   # SILENTLY -- an anti-join reports every row missing rather than erroring. Carrying the
   # key costs one column and removes the whole class.
   base = race |> select(race_id, state, election, jurisdiction, contest, district)
-  name = unname(MODEL_NAMES[model])
+  name = model_label(model); model = model_base(model)
   pct = pct_reporting(cells, returns)
   if (!fit_ok(fit)) return(NULL)
 
   cand = reported_by_candidate(returns)
-  conf = NA_character_
-  if (model %in% names(DRAW_CONF)) {
+  conf = fit$conf %||% NA_character_
+  if (is.null(fit$pred)) {
     # point predictions by party; third-party votes split across third-party candidates
     # in proportion to their counted votes (equally if none counted yet)
     ptot = fit_point(fit)
@@ -123,7 +117,6 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
     oth_tot = ptot[["tot"]] - pv[["dem"]] - pv[["rep"]]
     dr = fit$draws
     tot_d = dr$turnout
-    conf = sprintf(DRAW_CONF[[model]], 100 * level)
     q = function(x) unname(cred(x, level))
     cand = cand |>
       mutate(w = if (sum(rep[party %in% c("oth", "ind")]) > 0) rep / sum(rep[party %in% c("oth", "ind")])
@@ -141,21 +134,18 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
              pred_min = pmax(c(ci_v[1], ci_s[1]), 0), pred_max = c(ci_v[2], ci_s[2]), p_win = pw)
     })
     out = bind_rows(rows)
-  } else if (model %in% c("cory", "cpois")) {
-    # per-candidate point predictions (fit$pred); model_cory_pois also has conformal bounds,
-    # whose share version (bound / point total) is approximate, hence "approx_conform"
+  } else {
+    # per-candidate predictions (fit$pred), with bounds for conf_seq / conformal intervals;
+    # the share version of a bound (bound / point total) is approximate
     pr = fit$pred |>
       left_join(select(cand, candidate, rep), by = "candidate") |>
       mutate(rep = coalesce(rep, 0))
     tot = sum(pr$pred)
-    if (model == "cpois") conf = sprintf("approx_conform_%g", 100 * level)
     out = bind_rows(
       mutate(pr, pred_type = "vote"),
       mutate(pr, pred_type = "share", rep = rep / max(sum(rep), 1),
              across(c(pred, pred_min, pred_max), ~ .x / tot))) |>
       mutate(pred_min = pmax(pred_min, 0), pred_max = pmax(pred_max, 0), p_win = NA_real_)
-  } else {
-    stop("to_pred_data() has no rule for model '", model, "' yet")
   }
   bind_cols(base[rep(1, nrow(out)), ], out) |>
     mutate(time = time, model = name, model_conf = conf, pct_rep = pct, geo = "scraped",
@@ -174,16 +164,17 @@ PREC_COLS = c("race_id", "model", "time", "geo", "county", "method",
 to_prec_data = function(fit, model, race, time) {
   p = fit$cells
   if (!fit_ok(fit) || is.null(p) || !nrow(p)) return(NULL)
+  nm = model_label(model); model = model_base(model)
   blank = function(d, cols) { for (c in setdiff(cols, names(d))) d[[c]] = NA_real_; d }
-  out = if (model %in% c("medsl", "hybrid")) {
+  out = if (model == "medsl_sur") {
     # already the richest shape; est_dem2/p_win/cnt_prec added to prec_out for this
     p |> mutate(method = NA_character_)
-  } else if (model %in% c("cprec", "pbayes")) {
+  } else if (model %in% c("lm_bayes", "pois_bayes")) {
     p |> mutate(method = NA_character_,
                 p_win = p_dem_win,
                 n_obs_modes = n_obs_cells,
                 q_share = NA_real_)
-  } else if (model %in% c("swing", "cory", "cpois")) {
+  } else if (model %in% c("swing", "ratio_strata")) {
     # dem/rep/tot, no interval; summed over methods to one row per precinct
     p |>
       summarize(across(c(dem, rep, tot), sum), .by = any_of(c("geo", "county"))) |>
@@ -198,7 +189,7 @@ to_prec_data = function(fit, model, race, time) {
   # NA, so if it ran first it would create `model` and `time` as NA columns and the mutate
   # below would read those NAs out of the data mask instead of the function arguments --
   # silently stamping every row with model = NA.
-  nm = unname(MODEL_NAMES[model]); tm = time
+  tm = time
   out |>
     mutate(race_id = race$race_id[1], model = nm, time = tm, geo = as.character(geo)) |>
     blank(PREC_COLS) |>
@@ -232,7 +223,7 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
   # a by-method model on a race where only some counties' results are split by method:
   # fit it on those counties; the rest count as unscraped and come from CBS (run.R)
   note = NULL
-  if (m %in% METHOD_ONLY_MODELS && nrow(ret) && !returns_by_method(ret) && !all(cells$method == "all")) {
+  if (model_base(m) %in% METHOD_ONLY_MODELS && nrow(ret) && !returns_by_method(ret) && !all(cells$method == "all")) {
     mc = method_counties(ret)
     n_all = n_distinct(geo_county(ret$geo))
     if (length(mc) && any(geo_county(cells$geo) %in% mc)) {
@@ -242,7 +233,7 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
                      length(mc), n_all)
     }
   }
-  args = if (m == "hybrid") list(cbs_county = cbs) else list()   # CBS county totals as constraints
+  args = if (model_base(m) == "medsl_sur") list(cbs_county = cbs) else list()   # CBS county totals as constraints
   fit = tryCatch(do.call(fit_model, c(list(m, cells, ret), args)), error = function(e) list(status = paste("error:", conditionMessage(e))))
   if (!is.null(note) && !is.null(fit$settings) && !is.na(fit$settings)) fit$settings = paste0(fit$settings, note)
   pred = tryCatch(to_pred_data(fit, m, cells, ret, race, time, level),
@@ -257,7 +248,7 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
   }
   prec = tryCatch(to_prec_data(fit, m, race, time), error = function(e) NULL)
   list(pred = pred, prec = prec,
-       status = tibble(race_id = r, model = unname(MODEL_NAMES[m]), time = time,
+       status = tibble(race_id = r, model = model_label(m), time = time,
                        status = if (is.null(fit$status)) "error: no status" else fit$status,
                        statewide = st_status, seconds = round(proc.time()[["elapsed"]] - t0, 1),
                        settings = if (is.null(fit$settings)) NA_character_ else fit$settings))
@@ -276,17 +267,17 @@ run_par = function(x, f, cores = 1) {
 # arguments. Anything slow to set up (build_cells(), county_baseline(), medsl_setup()) must
 # be done BEFORE this is called: a forked process's caches are thrown away when it ends.
 run_jobs = function(jobs, cores = 1) {
-  # model_medsl's set-up for each state x county set, here before forking (see above)
-  for (j in jobs) if (j$model %in% c("medsl", "hybrid") && nrow(j$cells) && is.null(j$fail))
-    try(fit_medsl_setup_for(j$cells, j$ret, hybrid = j$model == "hybrid"), silent = TRUE)
+  # medsl_sur's set-up for each state x county set, here before forking (see above)
+  for (j in jobs) if (model_base(j$model) == "medsl_sur" && nrow(j$cells) && is.null(j$fail))
+    try(fit_medsl_setup_for(j$cells, j$ret, hybrid = TRUE), silent = TRUE)
   one = function(j) tryCatch(if (!is.null(j$fail)) stop(j$fail) else do.call(predict_one, j[setdiff(names(j), "fail")]), error = function(e)
-    list(pred = NULL, status = tibble(race_id = j$race$race_id[1], model = unname(MODEL_NAMES[j$model]), time = j$time,
+    list(pred = NULL, status = tibble(race_id = j$race$race_id[1], model = model_label(j$model), time = j$time,
                                       status = paste("error:", conditionMessage(e)), statewide = NA_character_,
                                       seconds = NA_real_, settings = NA_character_)))
   res = run_par(jobs, one, cores)
   # a forked process that died outright comes back as an error object, not a list
   res = lapply(seq_along(res), function(i) if (is.list(res[[i]]) && !is.null(res[[i]]$status)) res[[i]] else
-    list(pred = NULL, status = tibble(race_id = jobs[[i]]$race$race_id[1], model = unname(MODEL_NAMES[jobs[[i]]$model]),
+    list(pred = NULL, status = tibble(race_id = jobs[[i]]$race$race_id[1], model = model_label(jobs[[i]]$model),
                                       time = jobs[[i]]$time, status = paste("error: worker failed:", as.character(res[[i]])),
                                       statewide = NA_character_, seconds = NA_real_, settings = NA_character_)))
   list(pred = bind_rows(lapply(res, `[[`, "pred")),
