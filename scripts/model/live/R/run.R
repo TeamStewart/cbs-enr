@@ -18,7 +18,7 @@
 ## A model name is "<model>[/<demo>][/<interval>]": <demo> a demographic spec from demos.R,
 ## <interval> one of results.R's INTERVALS, e.g. "pois_bayes/strat_d/conformal". Left out,
 ## the model runs its DEMO_DEFAULT and the first of its MODEL_INTERVALS. The name is also the
-## published label, written in that order. medsl_sur takes no spec and only "credible".
+## published label, written in that order. medsl_sur takes no spec.
 ##
 ##   swing         uniform swing, county x method fixed effects (model_swing.R)
 ##   ratio_strata  Cory's legacy ratio model, ratios pooled within strata (model_ratio_strata.R)
@@ -153,7 +153,7 @@ run_race = function(model, cells, returns, ...) {
                                     demo = demo, interval = interval, ...),
     pois_bayes = fit_pois_bayes(sh$cells, sh$returns, demo = demo, interval = interval, ...),
     lm_bayes = fit_lm_bayes(sh$cells, sh$returns, demo = demo, interval = interval, ...),
-    medsl_sur = if (sh$by_method) fit_medsl_sur(sh$cells, sh$returns, ...) else needs_method("medsl_sur")
+    medsl_sur = if (sh$by_method) fit_medsl_sur(sh$cells, sh$returns, interval = interval, ...) else needs_method("medsl_sur")
   )
   if (!sh$by_method && !is.null(fit$settings) && !is.na(fit$settings))
     fit$settings = paste0(fit$settings, "; fit WITHOUT vote method (the feed gave precinct totals only)")

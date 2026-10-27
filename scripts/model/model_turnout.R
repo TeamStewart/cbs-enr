@@ -1624,6 +1624,12 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   # --- 4d. invert, substitute observed, aggregate WITHIN each draw ---
   num_d = num_r = num_o = den = numeric(draws)
   cell_s_hat = matrix(NA_real_, N_PREC, M, dimnames = list(NULL, MODES))
+  # per cell (precinct x mode), means over draws: final votes by party (fin_*) and the
+  # model's fitted share of all votes by party (fit_*, before any counted votes are mixed
+  # in). Returned as `cell_votes` for the live wrapper's conformal interval; nothing here
+  # reads them.
+  cell_votes = lapply(setNames(nm = c("fin_dem", "fin_rep", "fin_oth", "fit_dem", "fit_rep", "fit_oth")),
+                      \(x) matrix(NA_real_, N_PREC, M, dimnames = list(NULL, MODES)))
   # PER-PRECINCT accumulators (draws x N_PREC), for precinct-level output.
   # pnum_r is accumulated so the precinct dump can report a TWO-PARTY share. Without it
   # only `dem_est` (Dem share of ALL votes) is available, which is a different quantity
@@ -1997,6 +2003,10 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     v_rep = cr + rem_two * (1 - s)
     v_oth = co + rem * tp
     cell_s_hat[, mi] = colMeans(v_dem / pmax(v_dem + v_rep, 1e-9))
+    cell_votes$fin_dem[, mi] = colMeans(v_dem); cell_votes$fin_rep[, mi] = colMeans(v_rep)
+    cell_votes$fin_oth[, mi] = colMeans(v_oth)
+    cell_votes$fit_dem[, mi] = colMeans((1 - tp) * s); cell_votes$fit_rep[, mi] = colMeans((1 - tp) * (1 - s))
+    cell_votes$fit_oth[, mi] = colMeans(tp)
     num_d = num_d + rowSums(v_dem)
     num_r = num_r + rowSums(v_rep)
     num_o = num_o + rowSums(v_oth)
@@ -2065,7 +2075,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       eq_prior_names = sort(unique(prior_eqs)), gated_modes = sort(unique(gated_modes)),
       all_prior = n_obs_cells < 30 || length(unique(prior_eqs)) == length(keys)
     ),
-    cell_s = cell_s_hat, cell_obs = mask,
+    cell_s = cell_s_hat, cell_obs = mask, cell_votes = cell_votes,
     prec = prec_out,
     # NULL when the county bound never ran, a 0-row frame when it ran and never bound.
     # The distinction is what the TX/CA/FL/MI inertness check needs: those states have zero

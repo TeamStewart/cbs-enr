@@ -25,7 +25,11 @@
 ## A cell (precinct x method) counts as reported once it has any votes (its shares are used
 ## at once) and as complete once that method is fully counted (`complete` in the returns;
 ## its turnout is used only then).
-## Interval: the model's posterior draws, mean +/- z * sd as for the other models. The
+## Interval (results.R): credible (default), the posterior draws' equal-tailed interval; or
+## conformal, from fit_stage()'s per-cell final votes and fitted shares (`cell_votes`). No
+## conf_seq: model_turnout.R's prior_draws() gives only the Dem share of all votes (conf_seq
+## needs prior draws of each party's votes and turnout) and ignores model_hybrid.R's
+## re-centred priors. No demographic spec: see todo.md item 1. The
 ## number of draws is model_turnout.R's DRAWS (500) unless MEDSL_DRAWS is set, e.g.
 ## MEDSL_DRAWS=250 in ~/.Renviron. Speed (TX, one race): about 6 s of fixed work plus
 ## about 1 s per 100 draws, and the 95% interval moves by under 0.05 points between 250
@@ -174,9 +178,10 @@ fit_medsl_setup_for = function(cells, state, dir_26 = find_26_general(), hybrid 
 # cells:   build_cells() output (used for the precinct x method counts and the counted
 #          totals, so they match the other models exactly)
 # returns: one race's standard returns (returns.R)
+# interval: "credible" or "conformal" (results.R)
 # hybrid / cbs_county: see fit_medsl_sur()
 fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26_general(),
-                     hybrid = FALSE, cbs_county = NULL) {
+                     hybrid = FALSE, cbs_county = NULL, interval = "credible") {
   state = unique(returns$state)
   if (length(state) != 1) stop("fit_medsl() takes one race (one state) at a time")
   name = if (hybrid) "medsl_sur" else "medsl"
@@ -187,7 +192,7 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
   counted = race_counted(cells, counts)
   settings = sprintf("%s; %g%% interval", env$.settings, 100 * level)
   if (!any(counts$c_tot > 0))
-    return(model_result(name, "no_votes", settings, counted, interval = "credible", level = level))
+    return(model_result(name, "no_votes", settings, counted, interval = interval, level = level))
 
   # the model's returns: one row per precinct x mode, reported once it has votes, complete
   # once that method is counted out
@@ -275,9 +280,18 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
         else "", " -- partial fit."))
     }
   }
-  res = model_result(name, st, settings, counted, est = draws_race_est(dr, level), cells = prec_rows(f$prec),
-                     draws = dr, point = c(dem = mean(dr$dem), rep = mean(dr$rep), tot = mean(dr$turnout)),
-                     interval = "credible", level = level)
+  # conformal: one row per precinct x mode of the model's frame, with what is counted
+  fc = if (interval == "conformal") {
+    cv = f$cell_votes
+    tibble(geo = rep(as.character(env$prec$geo), ncol(cv$fin_dem)), method = rep(colnames(cv$fin_dem), each = nrow(cv$fin_dem)),
+           !!!lapply(cv, as.vector)) |>
+      left_join(transmute(counts, geo = as.character(geo), method = as.character(method), c_dem, c_rep, c_oth, c_tot),
+                by = c("geo", "method")) |>
+      mutate(across(c(c_dem, c_rep, c_oth, c_tot), \(x) coalesce(x, 0)),
+             across(starts_with("fin_") | starts_with("fit_"), \(x) coalesce(x, 0)))
+  }
+  res = draws_result(name, interval, settings, counted, dr, level, returns, fc = fc, cells = prec_rows(f$prec))
+  res$status = res$race$status = st
   # the structured ledger as well as the status string, so a consumer can test
   # `fit$prior_only$all_prior` rather than parse prose
   res$prior_only = po

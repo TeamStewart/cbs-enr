@@ -69,7 +69,7 @@ snapshot for any race whose pull fails.
 | `R/model_ratio_strata.R` | **ratio_strata**: `fit_ratio_strata()`, Cory's `enightmodels::model_legacy()` on precinct x method cells |
 | `R/model_pois_bayes.R` | **pois_bayes**: `fit_pois_bayes()`, a precinct Poisson model on `enightmodels::pois_bayes()` (turnout on counted-out cells, party shares on reporting cells, posterior predictive draws) |
 | `R/model_lm_bayes.R` | **lm_bayes**: `fit_lm_bayes()`, Cory's `enightmodels::forecast_prec()` set up as in his NYC run (`../modeling-cory/nyc/`); out of the default run on cost |
-| `R/medsl_sur.R` | **medsl_sur**: `fit_medsl_sur()`, Young-Kyung's `scripts/model/model_turnout.R` run from its own file with `scripts/model/medsl_sur.R`'s re-centred priors (see below). `fit_medsl()`, the plain model (formerly medsl_sur), is no longer run on its own |
+| `R/model_medsl.R` | **medsl_sur**: `fit_medsl_sur()`, Young-Kyung's `scripts/model/model_turnout.R` run from its own file with `scripts/model/model_hybrid.R`'s re-centred priors (see below). `fit_medsl()`, the plain model (formerly medsl_sur), is no longer run on its own |
 | `R/model_cpois.R` | retired, not loaded: model_cory_pois, Cory's `model_prec_pois()`; `pois_bayes/<spec>/conformal` replaces it |
 | `R/run.R` | `run_race()`, `run_all()`, and the list of wired models |
 | `R/output.R` | `predict_all()` and `write_predictions()`: results in enightmodels' prediction format for the dashboard |
@@ -93,7 +93,7 @@ and interval.
 | `ratio_strata` | Cory's legacy ratio model, ratios pooled within strata | `ratio`, `strat_g` (default), `strat_d`, `strat_dg` | none, conformal |
 | `pois_bayes` | Bayesian Poisson precinct model (`pois_bayes()`) | all, as fixed effects; default `strat_dg_cov` | credible, conf_seq, conformal |
 | `lm_bayes` | Cory's NYC forecaster (`forecast_prec()`) | all, added to NYC's `simple_pres` spec; default `ratio` | credible, conf_seq, conformal |
-| `medsl_sur` | Young-Kyung's model with `medsl_sur.R` | none | credible |
+| `medsl_sur` | Young-Kyung's model with `model_hybrid.R` | none (its own covariates; see todo.md item 1) | credible, conformal |
 
 **Specs** (`R/demos.R`, Cory's tx-prim-26 `model_specs`):
 
@@ -149,7 +149,7 @@ on, so one bad race cannot stop the rest.
 | ratio_strata | `R/model_ratio_strata.R` | `model_legacy()`'s two stages called directly so the precinct frame comes from the same fit; past = expected votes x baseline share |
 | pois_bayes | `R/model_pois_bayes.R` | in the default run; replaces model_cory_pois |
 | lm_bayes | `R/model_lm_bayes.R` | NYC's `simple_pres` spec plus 0/1 method columns; draws from `forecast_summarize()`; out of the default run on cost |
-| medsl_sur | `R/medsl_sur.R` | `medsl_sur.R` sourced into the model_turnout.R environment, `fit_stage_hybrid()` in place of `fit_stage()`; the CBS county snapshot is passed on the night (county-constraint arm), none in the sims; arms switch off with `HY_LEVEL` / `HY_COMP` / `HY_SHARE` / `HY_COUNTY=0`. Runs `scripts/model/model_turnout.R` itself, not a copy: its sections 1-2 and its functions are evaluated from that file each time the models load for a state (once per state per session), so Young-Kyung's changes there are picked up with no edit here. Its two file reads are replaced by frames built from `{ST}_precinct.parquet` and `{ST}_precinct_mode_history.parquet`; mode offsets default to zero (`MODE_OFFSET_SOURCE=zero`). Its other switches still work as environment variables. Blank YouGov race predictions (some MI and CA precincts) are filled with the county mean, noted in `settings`. If `model_turnout.R`'s section markers or its `covs_long` / `mode_hist` lines change, `fit_medsl()` stops with a message saying so. |
+| medsl_sur | `R/model_medsl.R` | `model_hybrid.R` sourced into the model_turnout.R environment, `fit_stage_hybrid()` in place of `fit_stage()`; the CBS county snapshot is passed on the night (county-constraint arm), none in the sims; arms switch off with `HY_LEVEL` / `HY_COMP` / `HY_SHARE` / `HY_COUNTY=0`. Runs `scripts/model/model_turnout.R` itself, not a copy: its sections 1-2 and its functions are evaluated from that file each time the models load for a state (once per state per session), so Young-Kyung's changes there are picked up with no edit here. Its two file reads are replaced by frames built from `{ST}_precinct.parquet` and `{ST}_precinct_mode_history.parquet`; mode offsets default to zero (`MODE_OFFSET_SOURCE=zero`). Its other switches still work as environment variables. Blank YouGov race predictions (some MI and CA precincts) are filled with the county mean, noted in `settings`. If `model_turnout.R`'s section markers or its `covs_long` / `mode_hist` lines change, `fit_medsl()` stops with a message saying so. |
 
 Speed, one race per refresh on a slow 2-core test server: swing 4-7 s, medsl_sur 3-15 s, ratio_strata 1-18 s in AK, FL, MI, NC and TX; California (23,685 precincts) takes ratio_strata about 58 s and needs `MEDSL_DRAWS=200` or less to fit medsl_sur in memory. `run_night.R` runs every race x model at once on all cores but one (`--cores=`), so a refresh takes about as long as its slowest fit. Time it on your machine with `tests/time_models.R`.
 

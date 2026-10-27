@@ -31,19 +31,36 @@ estimates**; the exceptions say so.
 
 ## Items
 
-### 1. medsl_sur is still the outlier
-`R/model_medsl.R` builds its own result list instead of `model_result()` (`R/results.R`),
-uses its own covariates (`yg_*`), takes no demographic spec and only the `credible`
-interval, and needs its own set-up and caching (`medsl_setup()`, `fit_medsl_setup_for()`,
-plus special cases in `run_jobs()`, `run_night.R`, `tests/sim_night.R` and
-`tests/time_models.R` so the set-up happens before forking). It is the main reason
-`output.R` and the runners still check model names.
-- Return `model_result(...)` (keep `prior_only`), and set `conf` there.
-- Bring it in line with the others where it fits: demographic specs, other intervals,
-  simpler set-up. **Mason has cleared editing Young-Kyung's files**
-  (`scripts/model/model_turnout.R`, `scripts/model/model_hybrid.R`) as needed. Keep
-  `tests/compare_runs.R` at zero for the default `medsl_sur` unless a change is meant to
-  move it, and say in the commit what moved and why.
+### 1. medsl_sur is still the outlier -- DONE (2026-10-27)
+Done:
+- `fit_medsl()` returns `model_result()` (via `draws_result()`), sets `conf` there, keeps
+  `prior_only` on the result, and returns `prec_rows()` precinct rows.
+- Pre-fork set-up is one hook, `MODEL_SETUP` / `setup_model()` (`R/run.R`), called by
+  `run_jobs()` and the test runners for every model; no runner or `output.R` checks for
+  "medsl_sur" to set it up. Still model-specific, on purpose: `predict_one()` passes
+  `cbs_county` only to medsl_sur (no other fit takes it) and `METHOD_ONLY_MODELS`.
+- Intervals: `medsl_sur/conformal` (Cory's approximate conformal, from `fit_stage()`'s new
+  `cell_votes` slot in `scripts/model/model_turnout.R`: per-cell final votes and fitted
+  shares). Default `medsl_sur` unchanged (`compare_runs.R`: 0 differences).
+
+Not done, and why:
+- **conf_seq.** `conf_seq_bounds()` needs prior draws of each party's votes and turnout.
+  `model_turnout.R`'s `prior_draws()` returns only the Dem share of all votes, its spreads
+  (`sd_sys_*`, `sd_idio_*`) were tuned for that one quantity, and it draws from the
+  unshifted priors, not model_hybrid.R's re-centred ones. Adding it means writing a new
+  prior predictive in Young-Kyung's file and choosing its spreads, which is a modelling
+  decision, not a refactor.
+- **Demographic specs.** The model's covariates are `COVS_TURN` / `COVS_SHARE` / `COVS_TP`
+  in `model_turnout.R`: global constants read from the environment once per state set-up,
+  naming numeric columns of its own `covs_long` frame, which it standardizes. A spec would
+  have to (a) become part of the set-up cache key, so each spec costs its own set-up and
+  memory; (b) turn strata into dummy columns, since the model has no grouping terms but its
+  county random effect, so `(1 | geostratum)` cannot be written as Cory specifies it; and
+  (c) decide whether the spec replaces Young-Kyung's covariates (turnout22/24, age, male,
+  YouGov race predictions) or adds to them. Replacing them makes a different model; adding
+  43 tpsob columns to each per-mode equation of a SUR with `MIN_FIT_OBS` gates risks the
+  overfitting the file already warns about for the third-party equation. Ask Young-Kyung
+  before trying.
 
 ### 2. One input signature
 `fit_swing()` takes `cell_counts()`; every other model takes returns. Make it
