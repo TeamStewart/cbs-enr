@@ -71,7 +71,7 @@ snapshot for any race whose pull fails.
 | `R/model_lm_bayes.R` | **lm_bayes**: `fit_lm_bayes()`, Cory's `enightmodels::forecast_prec()` set up as in his NYC run (`../modeling-cory/nyc/`); out of the default run on cost |
 | `R/model_medsl.R` | **medsl_sur**: `fit_medsl_sur()`, Young-Kyung's `scripts/model/model_turnout.R` run from its own file with `scripts/model/model_hybrid.R`'s re-centred priors (see below). `fit_medsl()`, the plain model (formerly medsl_sur), is no longer run on its own |
 | `R/model_cpois.R` | retired, not loaded: model_cory_pois, Cory's `model_prec_pois()`; `pois_bayes/<spec>/conformal` replaces it |
-| `R/run.R` | `run_race()`, `run_all()`, and the list of wired models |
+| `R/run.R` | `run_race()`, `run_all()`; `RUN`, what runs on the night, and `MODELS`, every implemented model |
 | `R/output.R` | `predict_all()` and `write_predictions()`: results in enightmodels' prediction format for the dashboard |
 | `R/counties.R` | statewide rows: scraped counties from the models + CBS county results for the rest |
 | `R/virtual.R` | NC's county-level "virtual precinct" batches for every model but medsl_sur: `fit_model()`, `virtual_split()`, `add_virtual()` |

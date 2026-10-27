@@ -4,7 +4,7 @@
 ## From the cbs-enr folder:
 ##   Rscript scripts/model/live/tests/compare_runs.R save <out.rds> [models] [scenario]
 ##       predict_all() on the scenario's gov race at 21:15 and 23:00 (default models:
-##       MODELS_DEFAULT, scenario tx_base), saved with its status and precinct rows
+##       RUN, scenario tx_base), saved with its status and precinct rows
 ##   Rscript scripts/model/live/tests/compare_runs.R compare <before.rds> <after.rds> [old=new,...]
 ##       joins the two runs by model x candidate x pred_type x geo and prints the largest
 ##       difference in pred, pred_min, pred_max, p_win and precinct turn_est per model.
@@ -17,7 +17,7 @@ source("scripts/model/live/load.R")
 a = commandArgs(trailingOnly = TRUE)
 
 if (a[1] == "save") {
-  ms = if (length(a) >= 3) strsplit(a[3], ",")[[1]] else MODELS_DEFAULT
+  ms = if (length(a) >= 3) strsplit(a[3], ",")[[1]] else RUN
   sc = if (length(a) >= 4) a[4] else "tx_base"
   sim = read_sim(file.path(dirname(find_26_general()), "26_sim", sc))
   cells = feed_cells(build_cells(sim$truth$state[1]), sim$truth)

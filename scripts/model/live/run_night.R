@@ -26,7 +26,7 @@
 ##                 method, votes, stage, observed_at); parquet or csv
 ##   --candidates  CONTRACT.md section 5 (race_id, candidate_id, name, party)
 ##   --cbs=test    CBS's test feed instead of live (default live)
-##   --models=swing,pois_bayes   (default: MODELS_DEFAULT in R/run.R); a model may carry a
+##   --models=swing,pois_bayes   (default: RUN in R/run.R; any of MODELS); a model may carry a
 ##                 demographic spec (R/demos.R) and an interval (R/results.R):
 ##                 "<model>[/<demo>][/<interval>]", e.g. pois_bayes/strat_d/conformal
 ##   --states=NC,TX  only these states' races (default: every race in priors.csv)
@@ -43,9 +43,7 @@
 source("scripts/model/live/load.R")
 args = commandArgs(trailingOnly = TRUE)
 opt = function(k, d = NA) { a = grep(paste0("^--", k, "="), args, value = TRUE); if (length(a)) sub("^[^=]*=", "", a[1]) else d }
-# MODELS_DEFAULT, not MODELS: lm_bayes is implemented but out of the default run on cost
-# (see run.R). --models= still reaches it, and is validated against the full MODELS.
-MODELS_RUN = strsplit(opt("models", paste(MODELS_DEFAULT, collapse = ",")), ",")[[1]]
+MODELS_RUN = strsplit(opt("models", paste(RUN, collapse = ",")), ",")[[1]]
 check_models(MODELS_RUN)
 SIM = opt("sim"); EVERY = as.numeric(opt("every", "0")); CBS_ENV = opt("cbs", "live")
 CORES = as.integer(opt("cores", max(1L, parallel::detectCores() - 1L)))

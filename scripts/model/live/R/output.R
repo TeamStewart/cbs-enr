@@ -35,7 +35,7 @@
 ## Margins ("margin_share", "margin_vote") are left to the dashboard: enightmodels' schema
 ## requires pred >= 0, so a negative margin row would fail check_pred_data().
 ##
-##   res = predict_all(cells, returns, races = race_info(returns), models = MODELS)
+##   res = predict_all(cells, returns, races = race_info(returns), models = RUN)
 ##   res$pred, res$status
 ##   write_predictions(res)           to 26_general/model_results: a timestamped file per
 ##                                    run + "latest", for both tables
@@ -279,7 +279,7 @@ make_jobs = function(cells, returns, races, models, time, cbs = NULL, base = NUL
 # cbs: optional named list, race_id -> latest CBS county snapshot (read_cbs_latest()), and
 # base = county_baseline(state): adds statewide rows (geo = "all") for those races.
 # cores: run the race x model fits in parallel (see run_jobs()).
-predict_all = function(cells, returns, races = race_info(returns), models = MODELS,
+predict_all = function(cells, returns, races = race_info(returns), models = RUN,
                        time = max(returns$time), level = 0.95, cbs = NULL, base = NULL, cores = 1) {
   run_jobs(make_jobs(cells, returns, races, models, time, cbs, base, level), cores)
 }

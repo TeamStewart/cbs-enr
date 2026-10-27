@@ -847,7 +847,7 @@ have no `p_win`, and their statewide rows carry a point with NA `model_conf`.
 Measured on `tx_base` at 22:00 with 2 races x 5 models, the refresh took 425s and lm_bayes
 (then `model_cory_prec`) was **423s** of it. Its runtime is flat in draws and linear in
 cells, against a 300s cadence. `MODELS` in `live/R/run.R` is the implemented set;
-`MODELS_DEFAULT` is what runs. `--models=...,lm_bayes` still reaches it.
+`RUN` is what runs. `--models=...,lm_bayes` still reaches it.
 
 *Acceptance:* `check_pred(read_csv("predictions_latest.csv"))` passes — it folds in the
 column-order assertion below, so this is one call, and it is the call to use rather than
@@ -894,8 +894,8 @@ no rows in §15.1 — the only way to tell that apart from "we never tried" is a
 So `status` is written on every run, for every race x model in the run, including the
 successful ones, and it is written even when `predictions` is empty.
 
-*Acceptance:* for one run, every race in `priors.csv` x every model in `MODELS` has exactly
-one `status` row; `nrow(status) == n_races * length(MODELS)`; and every race x model absent
+*Acceptance:* for one run, every race in `priors.csv` x every model in `RUN` (or `--models=`) has exactly
+one `status` row; `nrow(status) == n_races * length(RUN)`; and every race x model absent
 from `predictions_latest.csv` has a `status` that is not `"ok"`.
 
 ### 15.3 `precincts` — the per-precinct dump

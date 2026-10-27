@@ -4,7 +4,7 @@
 ##   run_race("swing", cells, returns_one_race)   -> the model's full result (list)
 ##   fit_model("swing", cells, returns_one_race)  -> the same, with NC-style virtual
 ##                                                   precincts handled (virtual.R)
-##   run_all(cells, returns, models = MODELS)     -> one row per race x model (fit_model())
+##   run_all(cells, returns, models = RUN)        -> one row per race x model (fit_model())
 ##
 ## Every model takes the same two inputs -- cells (cells.R) and standard returns
 ## (returns.R) -- and returns the same list:
@@ -33,14 +33,16 @@
 ## add it to run_race() below.
 # ========================================
 
-# Every model that is IMPLEMENTED and runnable. run_race() dispatches on this, and
-# --models= validates against it, so a name here can always be asked for explicitly.
-MODELS = c("swing", "ratio_strata", "pois_bayes", "lm_bayes", "medsl_sur")
+# What runs on the night (run_night.R, predict_all()) unless --models= says otherwise, as
+# Cory's tx-prim-26 `specs`: one model name each, "<model>[/<demo>][/<interval>]", and the
+# name is the published label. lm_bayes is left out on cost: almost all of its time is
+# enightmodels::lm_bayes(), and it grows faster than linearly in cells (TX gov at 22:00: 38s
+# on the 32 scraped counties, 18,402 cells; 133s on all 26,313).
+RUN = c("swing", "ratio_strata", "pois_bayes", "medsl_sur")
 
-# What runs on a refresh unless --models= says otherwise. lm_bayes is left out on cost: almost
-# all of its time is enightmodels::lm_bayes(), and it grows faster than linearly in cells (TX
-# gov at 22:00: 38s on the 32 scraped counties, 18,402 cells; 133s on all 26,313).
-MODELS_DEFAULT = setdiff(MODELS, "lm_bayes")
+# Every model that is implemented: run_race() dispatches on these and check_models()
+# validates against them, so any of them can be asked for with --models=.
+MODELS = c("swing", "ratio_strata", "pois_bayes", "lm_bayes", "medsl_sur")
 
 # Slow set-up a model caches for the session, run in the main process before fits are forked
 # (run_jobs(), the runners): a forked worker's caches are thrown away when it ends, and see
@@ -162,7 +164,7 @@ run_race = function(model, cells, returns, ...) {
 
 # A model that errors on one race is recorded (status = "error: ...") rather than stopping
 # the other races -- on election night one bad race must not take down the rest.
-run_all = function(cells, returns, models = MODELS) {
+run_all = function(cells, returns, models = RUN) {
   races = sort(unique(returns$race_id))
   purrr::map_dfr(races, function(r) {
     ret = filter(returns, race_id == r)
