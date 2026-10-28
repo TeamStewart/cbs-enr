@@ -142,9 +142,38 @@ read_history <- function(state) {
   mutate(h, across(c(geo, method, contest, party, county), as.character), district = as.integer(district))
 }
 
+# model name -> model_base / model_spec / model_interval. Names are <base>[/<spec>][/<interval>]
+# with default parts left off (scripts/model/live/R/config.R); model_config.csv has every part
+# filled in. Names not in it are split on "/", and missing parts are "default".
+model_parts <- function(models, config = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_config.csv")) {
+  intervals = c("bootstrap", "credible", "conf_seq", "conformal", "none")
+  parsed = tibble(model = unique(models)) |>
+    mutate(
+      parts = str_split(model, "/"),
+      model_base = map_chr(parts, 1),
+      model_interval = map_chr(parts, \(p) coalesce(intersect(p[-1], intervals)[1], "default")),
+      model_spec = map_chr(parts, \(p) coalesce(setdiff(p[-1], intervals)[1], "default"))
+    ) |>
+    select(-parts)
+  # spec_default / interval_default: the part is the base model's default (a bare name like "swing")
+  if (!fs::file_exists(config)) {
+    return(mutate(parsed, spec_default = model_spec == "default", interval_default = model_interval == "default"))
+  }
+  cfg = readr::read_csv(config, col_types = readr::cols(.default = "c"), progress = FALSE) |>
+    distinct(model, model_base = base, model_spec = spec, model_interval = interval)
+  defaults = filter(cfg, model == model_base) |> select(model_base, d_spec = model_spec, d_int = model_interval)
+  bind_rows(semi_join(cfg, parsed, by = "model"), anti_join(parsed, cfg, by = "model")) |>
+    left_join(defaults, by = "model_base") |>
+    mutate(
+      spec_default = coalesce(model_spec == d_spec, model_spec == "default"),
+      interval_default = coalesce(model_interval == d_int, model_interval == "default")
+    ) |>
+    select(-d_spec, -d_int)
+}
+
 # enightmodels output in {ELECTION_FOLDER}/model_results: every predictions_*.csv run
 # stacked into a time series (later files win on duplicate rows), and each
-# race/model's most recent status_*.csv row
+# race/model's most recent status_*.csv row; both with model_parts()
 read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_results")) {
   read_runs = \(prefix) {
     # "latest" sorts after the timestamped files, so it wins ties
@@ -180,6 +209,9 @@ read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "mo
                 statewide = cli::ansi_strip(statewide), settings = cli::ansi_strip(settings))
   }
 
+  parts = model_parts(c(pred$model, status$model))
+  if (!is.null(pred)) pred = left_join(pred, parts, by = "model")
+  if (!is.null(status)) status = left_join(status, parts, by = "model")
   list(pred = pred, status = status)
 }
 
@@ -274,10 +306,14 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     race_id = character(), state = character(), contest = character(), district = integer(),
     model = character(), model_conf = character(), geo = character(),
     pred_type = character(), party = character(), candidate = character(), time = as.POSIXct(character()),
-    pct_rep = numeric(), rep = numeric(), pred = numeric(), pred_min = numeric(), pred_max = numeric()
+    pct_rep = numeric(), rep = numeric(), pred = numeric(), pred_min = numeric(), pred_max = numeric(),
+    model_base = character(), model_spec = character(), model_interval = character(),
+    spec_default = logical(), interval_default = logical()
   )
   ms_empty = tibble(race_id = character(), model = character(), time = as.POSIXct(character()),
-                    status = character(), statewide = character(), settings = character())
+                    status = character(), statewide = character(), settings = character(),
+                    model_base = character(), model_spec = character(), model_interval = character(),
+                    spec_default = logical(), interval_default = logical())
   mp_all = bind_rows(mp_empty, models$pred)
   ms_all = bind_rows(ms_empty, models$status)
 
@@ -412,7 +448,8 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     l2 = map(out, "l2") |> bind_rows(),
     models = map(out, "models") |> bind_rows(),
     model_status = map(out, "model_status") |> bind_rows(),
-    title = DASHBOARD_TITLE
+    title = DASHBOARD_TITLE,
+    top_model = DASHBOARD_MODEL
   )
 }
 

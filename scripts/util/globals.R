@@ -61,13 +61,24 @@ local({
 # - hist_contest: contest to compare against in {STATE}_history.parquet; NA -> same contest
 DASHBOARD_CONTESTS = tibble::tribble(
   ~state, ~contest, ~district, ~label, ~hist_contest,
+  "AK", "sen", NA_integer_, "AK Senate", NA_character_,
   "GA", "sen", NA_integer_, "GA Senate", NA_character_,
   "GA", "gov", NA_integer_, "GA Governor", NA_character_,
+  "MI", "sen", NA_integer_, "MI Senate", NA_character_,
+  "MN", "sen", NA_integer_, "MN Senate", NA_character_,
   "NC", "sen", NA_integer_, "NC Senate", NA_character_,
   "NE", "sen", NA_integer_, "NE Senate", NA_character_,
+  "OH", "sen", NA_integer_, "OH Senate", NA_character_,
   "PA", "gov", NA_integer_, "PA Governor", NA_character_,
+  "TX", "sen", NA_integer_, "TX Senate", NA_character_,
+  "TX", "gov", NA_integer_, "TX Governor", NA_character_,
   "TX", "house", 33L, NA_character_, NA_character_,
 )
+
+# Model whose latest projection shows under the Dem/Rep toplines on the Results page, as
+# "<model_base>/<model_spec>/<model_interval>" (see model_parts() in scripts/functions.R) or the
+# raw model name. Left blank for contests where it has no rows or its latest run did not fit.
+DASHBOARD_MODEL = "ratio_strata/strat_g/conformal"
 
 DASHBOARD_TITLE = local({
   yr = paste0("20", stringr::str_sub(ELECTION_FOLDER, 1, 2))

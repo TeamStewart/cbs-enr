@@ -30,13 +30,14 @@ ojs_define(
   l2 = if (is.null(dd$l2)) data.frame(key = character(), geo = character(), mode = character()) else dd$l2,
   models = if (is.null(dd$models)) data.frame(key = character(), model = character(), time = numeric()) else transform(dd$models, time = to_ms(time)),
   model_status = if (is.null(dd$model_status)) data.frame(key = character(), model = character()) else transform(dd$model_status, time = to_ms(time)),
-  dash_title = dd$title
+  dash_title = dd$title,
+  top_model = if (is.null(dd$top_model)) "" else dd$top_model
 )
 ```
 
 # Results
 
-## Overview {height="88px"}
+## Overview {height="104px"}
 
 ```{ojs setup}
 //| output: false
@@ -180,6 +181,8 @@ explorerCols = ["dem", "rep", "total", "dem_share", "rep_share", "margin", "stag
 // precincts without an L2 match have null L2 vars and drop out here
 explorerRows = reported.filter(d => d.facet === prec_mode && d[prec_x] != null && d[prec_y] != null)
 explorerType = k => d3.max(explorerRows, d => d[k]) > 2 ? "sqrt" : "linear"
+// shares/proportions (all values in [0, 1]) always get a fixed 0-1 axis
+explorerDomain = k => { const [lo, hi] = d3.extent(explorerRows, d => d[k]); return lo >= 0 && hi <= 1 ? [0, 1] : undefined; }
 explorerLo = Math.max(d3.min(explorerRows, d => d[prec_x]), d3.min(explorerRows, d => d[prec_y]))
 explorerHi = Math.min(d3.max(explorerRows, d => d[prec_x]), d3.max(explorerRows, d => d[prec_y]))
 
@@ -335,24 +338,34 @@ exportButtons = {
 
 ```{ojs boxes}
 {
-  const box = (title, value, sub, cls = "") => html`<div class="dbox ${cls}">
+  const box = (title, value, sub, cls = "", sub2 = "") => html`<div class="dbox ${cls}">
     <div class="dbox-title">${title}</div>
     <div class="dbox-value">${value}</div>
     <div class="dbox-sub">${sub}</div>
+    ${sub2 ? html`<div class="dbox-sub">${sub2}</div>` : ""}
   </div>`;
   const c = cur;
   const yy = c.hist_year ? `'${String(c.hist_year).slice(2)}` : null;
   const ofHist = (x, h) => x != null && h > 0 && yy ? `${pct(x / h)} of ${yy}` : "";
   const two = c.dem_votes + c.rep_votes;
   const reportedGeo = c.n_complete + c.n_partial;
+  // top_model's latest scraped-geo vote projection; blank if not modeled or its latest run didn't fit
+  const isTop = d => d.model === top_model || `${d.model_base}/${d.model_spec}/${d.model_interval}` === top_model;
+  const topStatus = d3.greatest(MS.filter(d => d.key === sel && isTop(d)), d => +new Date(d.time));
+  const topRows = MP.filter(d => d.key === sel && isTop(d) && d.geo === "scraped" && d.pred_type === "vote");
+  const topTime = d3.max(topRows, d => +d.time);
+  const topPred = p => topRows.find(d => +d.time === topTime && d.party === p)?.pred;
+  const [pd, pr] = [topPred("dem"), topPred("rep")];
+  const fits = top_model && pd != null && pr != null && pd + pr > 0 && (!topStatus || /^ok/.test(topStatus.status));
+  const proj = v => fits ? html`<span title=${`${top_model} · ${fmtTime(new Date(topTime))}`}>Proj. ${fmt(Math.round(v))} · ${pct(v / (pd + pr))}</span>` : "";
   return html`<div class="dbox-row">
     ${box("Last Updated", fmtTime(c.time), c.n_juris > 1 ? html`<span title=${c.juris}>ET · ${c.n_juris} jurisdictions pooled</span>` : `ET · ${c.juris}`)}
     ${box("Precincts Reported", c.n_geo ? `${fmt(reportedGeo)} / ${fmt(c.n_geo)}` : "—",
       c.n_geo ? `${fmt(c.n_complete)} done · ${fmt(c.n_partial)} partial` : "")}
     ${box("Total Votes Reported", fmt(c.total), ofHist(c.total, c.hist_total))}
     ${box("EDay Votes Reported", c.eday == null ? "—" : fmt(c.eday), c.eday == null ? "No Election Day split" : ofHist(c.eday, c.hist_eday))}
-    ${box(c.dem_name ?? "Democrat", fmt(c.dem_votes), two > 0 ? `${pct(c.dem_votes / two)} of two-party` : "", "dbox-dem")}
-    ${box(c.rep_name ?? "Republican", fmt(c.rep_votes), two > 0 ? `${pct(c.rep_votes / two)} of two-party` : "", "dbox-rep")}
+    ${box(c.dem_name ?? "Democrat", fmt(c.dem_votes), two > 0 ? `${pct(c.dem_votes / two)} of two-party` : "", "dbox-dem", proj(pd))}
+    ${box(c.rep_name ?? "Republican", fmt(c.rep_votes), two > 0 ? `${pct(c.rep_votes / two)} of two-party` : "", "dbox-rep", proj(pr))}
   </div>`;
 }
 ```
@@ -477,8 +490,8 @@ viewof prec_mode = {
 {
   if (noVotes) return noVotesMsg();
   const s = exportable("Precinct Explorer", {
-  x: { label: `${prec_x} →`, grid: true, type: explorerType(prec_x) },
-  y: { label: `↑ ${prec_y}`, grid: true, type: explorerType(prec_y) },
+  x: { label: `${prec_x} →`, grid: true, type: explorerType(prec_x), domain: explorerDomain(prec_x) },
+  y: { label: `↑ ${prec_y}`, grid: true, type: explorerType(prec_y), domain: explorerDomain(prec_y) },
   marks: [
     Plot.dot(explorerRows, { x: prec_x, y: prec_y, r: 2, fill: INK, fillOpacity: 0.45, channels: { geo: "geo", county: "county", total: "total" }, tip: true }),
     Plot.linearRegressionY(explorerRows, { x: prec_x, y: prec_y, stroke: "black" }),
@@ -501,12 +514,48 @@ msc = MS.filter(d => d.key === sel)
 modelsOk = [...new Set(mpc.map(d => d.model))].sort()
 modelList = [...modelsOk, ...[...new Set(msc.map(d => d.model))].filter(m => !modelsOk.includes(m)).sort()]
 noModels = mpc.length === 0
+// model name -> { base, spec, interval, specDefault, intervalDefault } (model_parts() in functions.R)
+modelParts = {
+  const m = new Map();
+  for (const d of [...mpc, ...msc]) if (!m.has(d.model))
+    m.set(d.model, { base: d.model_base ?? d.model, spec: d.model_spec ?? "default", interval: d.model_interval ?? "default",
+                     specDefault: d.spec_default ?? false, intervalDefault: d.interval_default ?? false });
+  return m;
+}
+
+// picker text for the demographic specs (scripts/model/live/R/demos.R) and intervals (R/results.R):
+// [dropdown label, hover description]; codes not listed show as-is. Listed order is dropdown order.
+SPEC_LABELS = {
+  return {
+    ratio: ["No covariates", "Expected votes only"],
+    strat_g: ["Region", "Effect for each CBS region (geostratum)"],
+    strat_d: ["Majority race", "Effect for each precinct majority-race group (stratum_demo: white, Hispanic, Black, Asian, or mixed)"],
+    strat_dg: ["Majority race + region", "Majority-race and CBS-region group effects"],
+    strat_d_cov: ["Majority race + '24 vote, age, white educ.", "Majority race; '24 Dem two-party share and its square; % aged 18-29 and 65+; % white college and % white non-college"],
+    strat_dg_cov: ["Majority race + region + '24 vote, age, white educ.", "Majority race and CBS region; '24 Dem two-party share and its square; % aged 18-29 and 65+; % white college and % white non-college"],
+    tpsob: ["Spline: '24 vote, age, educ., race", "43-term thin-plate spline basis of '24 Dem share, % 18-29 and 65+, % white college and non-college, % Black, % Hispanic"],
+    tpsob_g: ["Spline: '24 vote, age, educ., race + region", "43-term thin-plate spline basis of '24 Dem share, % 18-29 and 65+, % white college and non-college, % Black, % Hispanic; plus CBS region"],
+    medsl_cov: ["MEDSL: '24 vote, turnout, age, sex, race", "'24 Dem two-party share; 2022 and 2024 turnout (L2); % 65+; % male; YouGov % Black and % Hispanic"]
+  }
+}
+INTERVAL_LABELS = {
+  return {
+    bootstrap: ["County bootstrap", "County bootstrap of the swing model"],
+    credible: ["Posterior 95%", "Equal-tailed 95% interval of the posterior draws"],
+    conf_seq: ["Confidence sequence", "95% confidence sequence on prior vs. posterior race totals"],
+    conformal: ["Conformal (approx.)", "Approximate split-conformal 95% interval on fitted cell shares"],
+    none: ["None", "No interval"]
+  }
+}
 noModelsMsg = () => empty(html`<div>No model results for ${cur.label}.</div>
   ${msc.length ? html`<div class="model-status-list">${msc.map(d => html`<div><b>${d.model}</b>: ${d.status}</div>`)}</div>` : ""}`)
 
 GEO_LABELS = { return { scraped: "Scraped", all: "Statewide (all)" } }
 partyName = p => p === "dem" ? (cur.dem_name ?? "Dem") : (cur.rep_name ?? "Rep")
 modelColor = { return { type: "categorical", domain: [partyName("dem"), partyName("rep")], range: [DEM, REP], legend: true } }
+
+// last model-control choices; this cell has no inputs, so it survives contest changes and mctl restores from it
+mctlMemo = { return {} }
 
 model_pick = mctl.model
 hasAll = mpc.some(d => d.model === model_pick && d.geo === "all")
@@ -553,7 +602,7 @@ modelSpec = (rows, opts) => {
 }
 ```
 
-## Row {height="85%"}
+## Row {height="78%"}
 
 ### Model Plots {.tabset}
 
@@ -590,59 +639,115 @@ modelSpec = (rows, opts) => {
 }
 ```
 
-## Row {height="15%"}
+## Row {height="22%"}
 
 ### Model
 
 ```{ojs model-controls}
-// one form for model, statewide overlay, and time window; value = { model, all, from, to }
+// one form for model (base / demographic spec / interval), statewide overlay, and time window;
+// value = { model, all, from, to }, where model is the full name, e.g. pois_bayes/strat_d/conformal
 viewof mctl = {
   // default to the first model that reports intervals; failed models (status only) are listed but disabled
   const start = modelsOk.find(m => mpc.some(d => d.model === m && d.pred_min != null)) ?? modelsOk[0] ?? null;
   const runTimes = m => [...new Set(mpc.filter(d => d.model === m).map(d => +d.time))].sort((a, b) => a - b);
   const form = html`<form class="model-ctl">
-    <label>Model <select name="model" class="form-select form-select-sm"></select></label>
+    <label>Model <select name="base" class="form-select form-select-sm"></select></label>
+    <label>Demographics <select name="spec" class="form-select form-select-sm"></select></label>
+    <label>Interval <select name="interval" class="form-select form-select-sm"></select></label>
     <label name="all-wrap"><input type="checkbox" name="all" class="form-check-input"> Statewide projection (all counties)</label>
     <label>From <select name="from" class="form-select form-select-sm"></select></label>
     <label>To <select name="to" class="form-select form-select-sm"></select></label>
   </form>`;
-  const { model, all, from, to } = form.elements;
-  // set option properties directly: html`` writes disabled=${false} as a present attribute
-  model.replaceChildren(...modelList.map(m => {
-    const ok = modelsOk.includes(m);
-    return Object.assign(document.createElement("option"), { value: m, text: ok ? m : `${m} (failed)`, disabled: !ok });
-  }));
+  const { base, spec, interval, all, from, to } = form.elements;
+  const P = m => modelParts.get(m);
+  const okWhere = f => modelsOk.some(m => f(P(m)));
+  // set option properties directly: html`` writes disabled=${false} as a present attribute.
+  // labels: SPEC_LABELS / INTERVAL_LABELS; the model's default comes first, then the labels' order
+  const fill = (sel, vals, ok, labels = {}, isDefault = () => false) => {
+    const order = Object.keys(labels);
+    const rank = v => isDefault(v) ? -1 : order.includes(v) ? order.indexOf(v) : order.length;
+    sel.replaceChildren(...[...new Set(vals)].sort((a, b) => rank(a) - rank(b)).map(v => {
+      const [lab, desc] = labels[v] ?? [v, v];
+      const text = isDefault(v) ? `${lab} (default)` : lab;
+      return Object.assign(document.createElement("option"),
+        { value: v, text: ok(v) ? text : `${text} (failed)`, disabled: !ok(v), title: `${desc} [${v}]` });
+    }));
+  };
+  // keep the previous choice when it is still available, else the first working option
+  const pick = (sel, prefer) => {
+    const ok = [...sel.options].filter(o => !o.disabled);
+    sel.value = ok.some(o => o.value === prefer) ? prefer : (ok[0] ?? sel.options[0])?.value ?? "";
+    sel.title = sel.selectedOptions[0]?.title ?? "";
+  };
+  const resolve = () => modelList.find(m => P(m).base === base.value && P(m).spec === spec.value && P(m).interval === interval.value) ?? null;
+  fill(base, modelList.map(m => P(m).base), b => okWhere(p => p.base === b));
   const allWrap = form.querySelector("[name=all-wrap]");
   // window ends are limited to the picked model's run times, and can't cross
   const limit = () => {
     for (const o of from.options) o.disabled = +o.value > +to.value;
     for (const o of to.options) o.disabled = +o.value < +from.value;
   };
+  const win = () => ({ from: +from.value, to: +to.value, fromStart: from.selectedIndex === 0, toEnd: to.selectedIndex === to.options.length - 1 });
   const setModel = () => {
-    const t = runTimes(model.value);
+    const m = resolve();
+    const t = runTimes(m);
+    // carry the window over to the new model's run times; an end left at first/last run stays pinned there
+    const w = from.options.length ? win() : mctlMemo;
     for (const s of [from, to]) s.replaceChildren(...t.map(x => html`<option value=${x}>${fmtTime(x)}</option>`));
-    from.value = t[0]; to.value = t.at(-1);
-    allWrap.hidden = !mpc.some(d => d.model === model.value && d.geo === "all");
-    if (allWrap.hidden) all.checked = false;
+    let a = (w.fromStart === false ? t.find(x => x >= w.from) : undefined) ?? t[0];
+    let b = (w.toEnd === false ? t.findLast(x => x <= w.to) : undefined) ?? t.at(-1);
+    if (a > b) { a = t[0]; b = t.at(-1); }
+    from.value = a; to.value = b;
+    allWrap.hidden = !mpc.some(d => d.model === m && d.geo === "all");
+    all.checked = !allWrap.hidden && mctlMemo.all === true;
     limit();
   };
-  const update = () => { form.value = { model: model.value || null, all: all.checked, from: +from.value, to: +to.value }; };
-  model.addEventListener("input", setModel);
+  // a changed model narrows the specs it has run with, and a changed spec the intervals
+  const setSpec = preferInterval => {
+    const names = modelList.filter(m => P(m).base === base.value && P(m).spec === spec.value);
+    fill(interval, names.map(m => P(m).interval), i => okWhere(p => p.base === base.value && p.spec === spec.value && p.interval === i),
+         INTERVAL_LABELS, i => names.some(m => P(m).interval === i && P(m).intervalDefault));
+    pick(interval, preferInterval);
+    setModel();
+  };
+  const setBase = (preferSpec, preferInterval) => {
+    const names = modelList.filter(m => P(m).base === base.value);
+    fill(spec, names.map(m => P(m).spec), s => okWhere(p => p.base === base.value && p.spec === s),
+         SPEC_LABELS, s => names.some(m => P(m).spec === s && P(m).specDefault));
+    pick(spec, preferSpec);
+    setSpec(preferInterval);
+  };
+  const update = () => {
+    form.value = { model: resolve(), all: all.checked, from: +from.value, to: +to.value };
+    for (const s of [spec, interval]) s.title = s.selectedOptions[0]?.title ?? "";
+    if (!noModels) Object.assign(mctlMemo, { base: base.value, spec: spec.value, interval: interval.value, ...win() });
+  };
+  base.addEventListener("input", () => setBase(spec.value, interval.value));
+  spec.addEventListener("input", () => setSpec(interval.value));
+  interval.addEventListener("input", setModel);
+  // remembered apart from update() so a model without a statewide run doesn't clear the choice
+  all.addEventListener("input", () => { mctlMemo.all = all.checked; });
   from.addEventListener("input", limit);
   to.addEventListener("input", limit);
   form.addEventListener("input", update);
   form.addEventListener("submit", e => e.preventDefault());
   form.hidden = noModels;
-  model.value = start;
-  if (!noModels) setModel();
+  if (!noModels) {
+    const m0 = okWhere(p => p.base === mctlMemo.base) ? mctlMemo : P(start);
+    base.value = m0.base;
+    setBase(m0.spec, m0.interval);
+  }
   update();
   return form;
 }
 {
   if (noModels) return html`<div class="model-note">${msc.length ? "No model has produced predictions for this contest yet." : "This contest is not modeled."}</div>`;
   const confs = [...new Set(modelRows.map(d => d.model_conf).filter(c => c != null))];
+  const p = modelParts.get(model_pick);
+  const desc = (labels, v) => labels[v]?.[1] ?? v;
   return html`<div class="model-note">
     <div>Solid: prediction · band: interval (${confs.length ? confs.join(", ") : "none for this model"}) · dotted: reported${hasAll ? " · dashed: statewide (all counties)" : ""}</div>
+    ${p ? html`<div>Demographics: ${desc(SPEC_LABELS, p.spec)} · Interval: ${desc(INTERVAL_LABELS, p.interval)} · <code>${model_pick}</code></div>` : ""}
   </div>`;
 }
 ```
