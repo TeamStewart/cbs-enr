@@ -26,7 +26,9 @@
 ##                 method, votes, stage, observed_at); parquet or csv
 ##   --candidates  CONTRACT.md section 5 (race_id, candidate_id, name, party)
 ##   --cbs=test    CBS's test feed instead of live (default live)
-##   --models=swing,pois_bayes   (default: RUN in R/run.R; any of MODELS); a model may carry a
+##   --config=<file>  the model config (default 26_general/model_config.csv, R/config.R): its
+##                 run = TRUE rows are the models run. RUN in R/run.R if the file is missing
+##   --models=swing,pois_bayes   (overrides the config; any of MODELS); a model may carry a
 ##                 demographic spec (R/demos.R) and an interval (R/results.R):
 ##                 "<model>[/<demo>][/<interval>]", e.g. pois_bayes/strat_d/conformal
 ##   --states=NC,TX  only these states' races (default: every race in priors.csv)
@@ -43,7 +45,13 @@
 source("scripts/model/live/load.R")
 args = commandArgs(trailingOnly = TRUE)
 opt = function(k, d = NA) { a = grep(paste0("^--", k, "="), args, value = TRUE); if (length(a)) sub("^[^=]*=", "", a[1]) else d }
-MODELS_RUN = strsplit(opt("models", paste(RUN, collapse = ",")), ",")[[1]]
+MODELS_RUN = if (!is.na(opt("models"))) strsplit(opt("models"), ",")[[1]] else {
+  f_cfg = opt("config", file.path(find_26_general(), MODEL_CONFIG_FILE))
+  if (file.exists(f_cfg)) models_from_config(f_cfg) else {
+    cli::cli_alert_warning("No {.path {f_cfg}}: running RUN (R/run.R). Make the config with make_model_config.R")
+    RUN
+  }
+}
 check_models(MODELS_RUN)
 SIM = opt("sim"); EVERY = as.numeric(opt("every", "0")); CBS_ENV = opt("cbs", "live")
 CORES = as.integer(opt("cores", max(1L, parallel::detectCores() - 1L)))

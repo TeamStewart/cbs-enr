@@ -36,6 +36,6 @@ local({
 local({
   here = "scripts/model/live/R"
   if (!dir.exists(here)) stop("Run from the cbs-enr folder (scripts/model/live/R not found from ", getwd(), ")")
-  for (f in c("paths.R", "vote_modes.R", "cells.R", "returns.R", "demos.R", "results.R", "model_swing.R", "model_ratio_strata.R", "model_medsl.R", "model_lm_bayes.R", "model_pois_bayes.R", "run.R", "output.R", "counties.R", "virtual.R", "races.R", "cbs_county_pull.R"))
+  for (f in c("paths.R", "vote_modes.R", "cells.R", "returns.R", "demos.R", "results.R", "model_swing.R", "model_ratio_strata.R", "model_medsl.R", "model_lm_bayes.R", "model_pois_bayes.R", "run.R", "config.R", "output.R", "counties.R", "virtual.R", "races.R", "cbs_county_pull.R"))
     source(file.path(here, f))
 })

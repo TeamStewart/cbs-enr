@@ -20,7 +20,7 @@ Rscript scripts/model/live/run_night.R --every=5
 ```
 reads the scrapers' clean files, `26_general/{ST}/clean/*_latest.parquet` (`returns_from_clean()` in `R/returns.R`, which matches their precinct ids to our inputs). `--returns=<file> --candidates=<file>` reads a CONTRACT.md section 8 file instead.
 Every 5 minutes: pulls fresh CBS county results for each race in `priors.csv`, runs every
-model on every race, and writes `26_general/model_results/predictions_latest.csv` (scraped
+model switched on in `26_general/model_config.csv` on every race, and writes `26_general/model_results/predictions_latest.csv` (scraped
 counties, `geo = "scraped"`, and statewide, `geo = "all"`) and `status_latest.csv`. Drop
 `--every` for a single refresh. To try the whole path on a simulated night with a simulated
 CBS feed (writes to `model_tests/run_night_sim/`, never to `model_results/`):
@@ -72,6 +72,7 @@ snapshot for any race whose pull fails.
 | `R/model_medsl.R` | **medsl_sur**: `fit_medsl_sur()`, Young-Kyung's `scripts/model/model_turnout.R` run from its own file with `scripts/model/model_hybrid.R`'s re-centred priors (see below). `fit_medsl()`, the plain model (formerly medsl_sur), is no longer run on its own |
 | `R/model_cpois.R` | retired, not loaded: model_cory_pois, Cory's `model_prec_pois()`; `pois_bayes/<spec>/conformal` replaces it |
 | `R/run.R` | `run_race()`, `run_all()`; `RUN`, what runs on the night, and `MODELS`, every implemented model |
+| `R/config.R` | `26_general/model_config.csv`: every model / spec / interval name, and `run` = TRUE for the ones `run_night.R` runs (and so the targets pipeline, `model_status` in `_targets.R`; `MODEL_SIM` in `scripts/util/globals.R` points it at a sim). Rebuild with `make_model_config.R`, which keeps each row's `run` and `note` |
 | `R/output.R` | `predict_all()` and `write_predictions()`: results in enightmodels' prediction format for the dashboard |
 | `R/counties.R` | statewide rows: scraped counties from the models + CBS county results for the rest |
 | `R/virtual.R` | NC's county-level "virtual precinct" batches for every model but medsl_sur: `fit_model()`, `virtual_split()`, `add_virtual()` |
