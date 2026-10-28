@@ -19,9 +19,7 @@ format:
 # State x Contest selections live in DASHBOARD_CONTESTS (scripts/util/globals.R).
 # Everything below is drawn client-side (OJS) from dashboard_data.
 # For testing outside the pipeline, point CBS_DASH_RDS at a saved build_dashboard_data() rds.
-library(targets)
-
-dd = if (nzchar(Sys.getenv("CBS_DASH_RDS"))) readRDS(Sys.getenv("CBS_DASH_RDS")) else tar_read(dashboard_data)
+dd = if (nzchar(Sys.getenv("CBS_DASH_RDS"))) readRDS(Sys.getenv("CBS_DASH_RDS")) else targets::tar_read(dashboard_data)
 
 to_ms = \(x) as.numeric(x) * 1000
 
@@ -29,9 +27,14 @@ ojs_define(
   meta = transform(dd$meta, time = to_ms(time)),
   ts = transform(dd$ts, time = to_ms(time)),
   prec = dd$prec,
+  l2 = if (is.null(dd$l2)) data.frame(key = character(), geo = character(), mode = character()) else dd$l2,
+  models = if (is.null(dd$models)) data.frame(key = character(), model = character(), time = numeric()) else transform(dd$models, time = to_ms(time)),
+  model_status = if (is.null(dd$model_status)) data.frame(key = character(), model = character()) else transform(dd$model_status, time = to_ms(time)),
   dash_title = dd$title
 )
 ```
+
+# Results
 
 ## Overview {height="88px"}
 
@@ -41,6 +44,14 @@ ojs_define(
 M = transpose(meta)
 TS = transpose(ts).map(d => ({ ...d, time: new Date(d.time) }))
 P = transpose(prec)
+L2 = transpose(l2)
+MP = transpose(models).map(d => ({ ...d, time: new Date(d.time) }))
+MS = transpose(model_status)
+
+// L2 precinct shares, joined to ENR geos through input_data/crosswalks (see read_l2() in functions.R)
+L2_COLS = ["l2_n", "l2_turnout20", "l2_turnout22", "l2_turnout24", "l2_male", "l2_white", "l2_black", "l2_hispanic", "l2_asian"]
+// ENR method -> L2 vote-mode columns used for turnout; other methods (prov, all) get no turnout
+L2_MODE = { return { Total: "Total", eday: "eday", early: "early", adv: "early", mail: "mail", abs: "mail" } }
 
 DEM = "#005599"
 REP = "#ce0008"
@@ -111,7 +122,18 @@ withShares = rows => rows.map(d => ({
   swing: d.total > 0 && d.hist_total > 0 ? d.dem / d.total - d.hist_dem / d.hist_total : null
 }))
 
-precRows = withShares([...geoTotal, ...pc.filter(d => modes.includes(d.method))])
+l2c = new Map(L2.filter(d => d.key === sel).map(d => [`${d.geo}|${d.mode}`, d]))
+// non-turnout L2 vars are the same in every mode; turnout follows the row's vote mode
+withL2 = d => {
+  const t = l2c.get(`${d.geo}|Total`);
+  if (!t) return d;
+  const m = l2c.get(`${d.geo}|${L2_MODE[d.method]}`);
+  const o = { ...d };
+  for (const k of L2_COLS) o[k] = k.startsWith("l2_turnout") ? (m ? m[k] : null) : t[k];
+  return o;
+}
+
+precRows = withShares([...geoTotal, ...pc.filter(d => modes.includes(d.method))]).map(withL2)
 reported = precRows.filter(d => d.total > 0)
 
 // time series: Total facet + one facet per method present
@@ -130,6 +152,9 @@ partyColor = { return { type: "categorical", domain: [cur.dem_name ?? "Dem", cur
 
 empty = msg => html`<div class="dash-empty">${msg}</div>`
 noData = pc.length === 0
+// precincts exist but every count is still zero (pre-election / zero files)
+noVotes = reported.length === 0
+noVotesMsg = () => empty(noData ? "No data yet for this contest." : "No votes reported yet for this contest.")
 noHist = () => empty(`No history file for ${cur.state} (${cur.contest}). Expected history/${cur.state}_history.parquet.`)
 
 // precinct + county points for the history scatter
@@ -150,7 +175,9 @@ scatterRows = {
 
 // precinct explorer (controls live in the explorer card toolbar)
 explorerCols = ["dem", "rep", "total", "dem_share", "rep_share", "margin", "stage",
-  ...(cur.has_hist ? ["hist_dem", "hist_rep", "hist_total", "hist_dem_share", "hist_margin", "swing"] : [])]
+  ...(cur.has_hist ? ["hist_dem", "hist_rep", "hist_total", "hist_dem_share", "hist_margin", "swing"] : []),
+  ...L2_COLS]
+// precincts without an L2 match have null L2 vars and drop out here
 explorerRows = reported.filter(d => d.facet === prec_mode && d[prec_x] != null && d[prec_y] != null)
 explorerType = k => d3.max(explorerRows, d => d[k]) > 2 ? "sqrt" : "linear"
 explorerLo = Math.max(d3.min(explorerRows, d => d[prec_x]), d3.min(explorerRows, d => d[prec_y]))
@@ -184,6 +211,126 @@ histSpec = (rows, x, label, xticks = 2) => ({
     Plot.ruleY([0])
   ]
 })
+
+// ---- Image export ----
+// Each chart cell registers its spec here; the card-header button re-renders it with EXPORT_THEME
+// (fixed size, larger type, title/legend/caption) and saves a PNG. The live charts are untouched.
+EXPORT_THEME = { return {
+  width: 1200, height: 675, scale: 3, format: "png",   // pixels = width/height x scale; format "png" or "jpeg"
+  font: "Helvetica Neue, Helvetica, Arial, sans-serif",
+  fontSize: 15, titleSize: 26, subtitleSize: 16, captionSize: 12,
+  ink: "#222222", muted: "#666666", background: "#ffffff", pad: 36,
+  margin: { top: 44, right: 24, bottom: 56, left: 64 },   // minimum plot margins at the larger font
+  caption: "Source: CBS News / MIT Election Data"
+} }
+EXPORTS = new Map()
+exportable = (name, s, title) => (EXPORTS.set(`${cur.key}|${name}`, { s, title: title ?? name }), s)
+
+exportChart = {
+  const T = EXPORT_THEME;
+  const idb = (op, val) => new Promise((resolve, reject) => {
+    const req = indexedDB.open("cbs-dash-export", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("kv");
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      const tx = req.result.transaction("kv", op === "get" ? "readonly" : "readwrite");
+      const r = op === "get" ? tx.objectStore("kv").get("dir") : tx.objectStore("kv").put(val, "dir");
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    };
+  });
+  // folder is picked once (shift-click to re-pick) and remembered; needs Chrome/Edge, otherwise a normal download
+  const getDir = async repick => {
+    if (!window.showDirectoryPicker) return null;
+    let dir = repick ? null : await idb("get").catch(() => null);
+    if (dir && (await dir.requestPermission({ mode: "readwrite" })) !== "granted") dir = null;
+    if (!dir) {
+      dir = await window.showDirectoryPicker({ id: "cbs-dash-export", mode: "readwrite" });
+      await idb("put", dir).catch(() => null);
+    }
+    return dir;
+  };
+  const render = async ({ s, title }) => {
+    const legend = s.color?.legend && s.color.domain ? s.color : null;
+    const subtitle = `${cur.label} · as of ${fmtTime(cur.time)} ET`;
+    const headH = T.pad + T.titleSize + 10 + T.subtitleSize + (legend ? 34 : 0) + 18;
+    const plotW = T.width - 2 * T.pad, plotH = T.height - headH - T.captionSize - T.pad - 14;
+    const svg = Plot.plot({
+      ...s, color: s.color && { ...s.color, legend: false }, width: plotW, height: plotH,
+      marginTop: Math.max(s.marginTop ?? 0, T.margin.top), marginRight: Math.max(s.marginRight ?? 0, T.margin.right),
+      marginBottom: Math.max(s.marginBottom ?? 0, T.margin.bottom), marginLeft: Math.max(s.marginLeft ?? 0, T.margin.left),
+      style: { fontFamily: T.font, fontSize: `${T.fontSize}px`, color: T.ink, background: "transparent", overflow: "visible" }
+    });
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const img = new Image();
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(svg));
+    await img.decode();
+    const c = document.createElement("canvas");
+    c.width = T.width * T.scale; c.height = T.height * T.scale;
+    const g = c.getContext("2d");
+    g.scale(T.scale, T.scale);
+    g.fillStyle = T.background; g.fillRect(0, 0, T.width, T.height);
+    g.textBaseline = "top";
+    g.fillStyle = T.ink; g.font = `700 ${T.titleSize}px ${T.font}`;
+    g.fillText(title, T.pad, T.pad);
+    g.fillStyle = T.muted; g.font = `400 ${T.subtitleSize}px ${T.font}`;
+    g.fillText(subtitle, T.pad, T.pad + T.titleSize + 10);
+    if (legend) {
+      let x = T.pad;
+      const y = T.pad + T.titleSize + 10 + T.subtitleSize + 14;
+      g.font = `400 ${T.fontSize}px ${T.font}`;
+      legend.domain.forEach((d, i) => {
+        g.fillStyle = legend.range[i]; g.fillRect(x, y + 1, 14, 14);
+        g.fillStyle = T.ink; g.fillText(d, x + 20, y);
+        x += 20 + g.measureText(d).width + 24;
+      });
+    }
+    g.drawImage(img, T.pad, headH, plotW, plotH);
+    g.fillStyle = T.muted; g.font = `400 ${T.captionSize}px ${T.font}`;
+    g.fillText(T.caption, T.pad, T.height - T.pad - T.captionSize + 6);
+    return new Promise(resolve => c.toBlob(resolve, `image/${T.format}`, 0.95));
+  };
+  return async (name, repick = false) => {
+    const entry = EXPORTS.get(`${cur.key}|${name}`);
+    if (!entry) return "Nothing to export for this chart.";
+    const stamp = new Date(cur.time ?? Date.now()).toISOString().slice(0, 16).replace(/[-:]/g, "").replace("T", "-");
+    const file = `${cur.key}_${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}_${stamp}.${T.format === "jpeg" ? "jpg" : T.format}`;
+    let dir = null;
+    try { dir = await getDir(repick); } catch (e) { if (e.name === "AbortError") return "Cancelled."; console.warn(e); }
+    const blob = await render(entry);
+    if (dir) {
+      const w = await (await dir.getFileHandle(file, { create: true })).createWritable();
+      await w.write(blob);
+      await w.close();
+      return `Saved ${dir.name}/${file}`;
+    }
+    const a = html`<a download=${file} href=${URL.createObjectURL(blob)}>`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    return `Downloaded ${file}`;
+  };
+}
+
+// one button per chart card header; exports whichever tab is showing
+exportButtons = {
+  const add = (header, nameFn) => {
+    header.querySelector(".dash-export")?.remove();
+    const b = html`<button type="button" class="btn btn-sm dash-export" title="Save chart image (shift-click: choose folder)"><i class="bi bi-download"></i></button>`;
+    b.onclick = async e => {
+      b.disabled = true;
+      const msg = await exportChart(nameFn(), e.shiftKey).catch(err => (console.error(err), `Export failed: ${err.message}`));
+      b.disabled = false;
+      b.title = msg;
+      b.classList.add("dash-export-done");
+      setTimeout(() => b.classList.remove("dash-export-done"), 1500);
+    };
+    header.append(b);
+  };
+  document.querySelectorAll(".card.tabset > .card-header").forEach(h => add(h, () => h.querySelector(".nav-link.active")?.dataset.value));
+  const ex = document.querySelector(".card-toolbar");
+  if (ex) add(ex, () => "Precinct Explorer");
+  return exportChart;
+}
 ```
 
 ```{ojs boxes}
@@ -218,9 +365,9 @@ histSpec = (rows, x, label, xticks = 2) => ({
 //| title: Total Votes
 {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
-  const s = timeSpec(tsLong.filter(d => d.series === "Total"), "votes", {
+  const s = exportable("Total Votes", timeSpec(tsLong.filter(d => d.series === "Total"), "votes", {
     label: "Votes", tickFormat: "~s", stroke: () => INK, tip: d => fmt(d.votes)
-  });
+  }));
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -229,9 +376,9 @@ histSpec = (rows, x, label, xticks = 2) => ({
 //| title: Vote Count
 {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
-  const s = timeSpec(tsLong.filter(d => d.party), "votes", {
+  const s = exportable("Vote Count", timeSpec(tsLong.filter(d => d.party), "votes", {
     label: "Votes", tickFormat: "~s", stroke: "series", color: partyColor, tip: d => fmt(d.votes)
-  });
+  }));
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -240,9 +387,9 @@ histSpec = (rows, x, label, xticks = 2) => ({
 //| title: Vote Share
 {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
-  const s = timeSpec(tsLong.filter(d => d.party && d.share != null), "share", {
+  const s = exportable("Vote Share", timeSpec(tsLong.filter(d => d.party && d.share != null), "share", {
     label: "Share of all votes", tickFormat: ".0%", stroke: "series", color: partyColor, domain: [0, 1], tip: d => pct(d.share)
-  });
+  }));
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -252,8 +399,8 @@ histSpec = (rows, x, label, xticks = 2) => ({
 ```{ojs}
 //| title: Margin
 {
-  if (noData) return empty("No data yet for this contest.");
-  const s = histSpec(reported.filter(d => d.margin != null), "margin", `Precinct margin (${cur.dem_name ?? "Dem"} − ${cur.rep_name ?? "Rep"}) →`, [-0.5, 0.5]);
+  if (noVotes) return noVotesMsg();
+  const s = exportable("Margin", histSpec(reported.filter(d => d.margin != null), "margin", `Precinct margin (${cur.dem_name ?? "Dem"} − ${cur.rep_name ?? "Rep"}) →`, [-0.5, 0.5]));
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -262,15 +409,18 @@ histSpec = (rows, x, label, xticks = 2) => ({
 //| title: Swing
 {
   if (!cur.has_hist) return noHist();
-  const s = histSpec(reported.filter(d => d.swing != null), "swing", `Dem share swing vs '${String(cur.hist_year).slice(2)} →`);
+  if (noVotes) return noVotesMsg();
+  const s = exportable("Swing", histSpec(reported.filter(d => d.swing != null), "swing", `Dem share swing vs '${String(cur.hist_year).slice(2)} →`));
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
 
 ```{ojs}
 //| title: Swing Scatter
-!cur.has_hist ? noHist() :
-Plot.plot({
+{
+  if (!cur.has_hist) return noHist();
+  if (noVotes) return noVotesMsg();
+  const s = exportable("Swing Scatter", {
   fx: { domain: ["Precincts", "Counties"], label: null },
   x: { domain: [0, 1], label: `Dem share '${String(cur.hist_year).slice(2)} →`, tickFormat: ".0%", grid: true },
   y: { domain: [0, 1], label: "↑ Dem share now", tickFormat: ".0%", grid: true },
@@ -286,7 +436,9 @@ Plot.plot({
       fill: DEM, fillOpacity: 0.4, stroke: "white", strokeWidth: 0.5, channels: { county: "county" }, tip: true
     })
   ]
-})
+  });
+  return Plot.plot({ fx: s.fx, x: s.x, y: s.y, r: s.r, marks: s.marks });
+}
 ```
 
 ## Row {height="37%"}
@@ -295,6 +447,10 @@ Plot.plot({
 
 ```{ojs ctrl-prec}
 //| content: card-toolbar
+l2Warn = {
+  if (![prec_x, prec_y].some(k => k.startsWith("l2_"))) return html`<span></span>`;
+  return html`<span class="l2-warn" title="ENR precincts in this contest matched to L2 via input_data/crosswalks. Unmatched precincts are dropped from the plot.">⚠ L2 matched for ${pct(cur.l2_match ?? 0)} of precincts</span>`;
+}
 viewof line45 = {
   const out = Inputs.checkbox(["45°"], { value: [] });
   out.querySelector("input").classList.add("form-check-input");
@@ -318,8 +474,9 @@ viewof prec_mode = {
 ```
 
 ```{ojs explorer}
-noData ? empty("No data yet for this contest.") :
-Plot.plot({
+{
+  if (noVotes) return noVotesMsg();
+  const s = exportable("Precinct Explorer", {
   x: { label: `${prec_x} →`, grid: true, type: explorerType(prec_x) },
   y: { label: `↑ ${prec_y}`, grid: true, type: explorerType(prec_y) },
   marks: [
@@ -327,5 +484,165 @@ Plot.plot({
     Plot.linearRegressionY(explorerRows, { x: prec_x, y: prec_y, stroke: "black" }),
     line45.length > 0 && explorerLo < explorerHi ? Plot.link([0], { x1: explorerLo, y1: explorerLo, x2: explorerHi, y2: explorerHi, stroke: "#999", strokeDasharray: "4,4" }) : null
   ]
-})
+  }, `Precincts: ${prec_y} vs ${prec_x} (${prec_mode})`);
+  return Plot.plot({ x: s.x, y: s.y, marks: s.marks });
+}
+```
+
+# Models
+
+```{ojs model-setup}
+//| output: false
+
+// enightmodels predictions for the selected contest (read_model_results() in functions.R)
+mpc = MP.filter(d => d.key === sel)
+msc = MS.filter(d => d.key === sel)
+// models with predictions first, then ones that only appear in status (failed runs)
+modelsOk = [...new Set(mpc.map(d => d.model))].sort()
+modelList = [...modelsOk, ...[...new Set(msc.map(d => d.model))].filter(m => !modelsOk.includes(m)).sort()]
+noModels = mpc.length === 0
+noModelsMsg = () => empty(html`<div>No model results for ${cur.label}.</div>
+  ${msc.length ? html`<div class="model-status-list">${msc.map(d => html`<div><b>${d.model}</b>: ${d.status}</div>`)}</div>` : ""}`)
+
+GEO_LABELS = { return { scraped: "Scraped", all: "Statewide (all)" } }
+partyName = p => p === "dem" ? (cur.dem_name ?? "Dem") : (cur.rep_name ?? "Rep")
+modelColor = { return { type: "categorical", domain: [partyName("dem"), partyName("rep")], range: [DEM, REP], legend: true } }
+
+model_pick = mctl.model
+hasAll = mpc.some(d => d.model === model_pick && d.geo === "all")
+modelRows = mpc
+  .filter(d => d.model === model_pick && (d.geo === "scraped" || (d.geo === "all" && mctl.all)))
+  .filter(d => +d.time >= mctl.from && +d.time <= mctl.to)
+  .map(d => ({ ...d, series: `${partyName(d.party)} · ${GEO_LABELS[d.geo] ?? d.geo}`, pname: partyName(d.party) }))
+  .sort((a, b) => a.time - b.time)
+
+// turnout: every party's predicted votes summed per run (no interval)
+turnoutRows = d3.rollups(modelRows.filter(d => d.pred_type === "vote"),
+  v => ({ time: v[0].time, geo: v[0].geo, pct_rep: v[0].pct_rep, pred: d3.sum(v, d => d.pred), rep: d3.sum(v, d => d.rep),
+          series: `Total · ${GEO_LABELS[v[0].geo] ?? v[0].geo}` }),
+  d => d.geo, d => +d.time).flatMap(([, g]) => g.map(([, r]) => r)).sort((a, b) => a.time - b.time)
+
+// solid line = prediction, ribbon = interval, dotted = reported; "all" draws dashed with a lighter ribbon
+modelSpec = (rows, opts) => {
+  const geo = g => rows.filter(d => d.geo === g);
+  const marks = [];
+  for (const g of ["scraped", "all"]) {
+    const r = geo(g);
+    if (r.length === 0) continue;
+    const dash = g === "all" ? "6,3" : null;
+    marks.push(
+      Plot.areaY(r.filter(d => d.pred_min != null && d.pred_max != null), { x: "time", y1: "pred_min", y2: "pred_max", z: "series", fill: opts.stroke, fillOpacity: g === "all" ? 0.08 : 0.18, curve: "monotone-x" }),
+      Plot.lineY(r, { x: "time", y: "rep", z: "series", stroke: opts.stroke, strokeWidth: 1, strokeDasharray: "1,3", strokeOpacity: 0.8 }),
+      Plot.lineY(r, { x: "time", y: "pred", z: "series", stroke: opts.stroke, strokeWidth: 2, strokeDasharray: dash }),
+      Plot.dot(r, { x: "time", y: "pred", fill: opts.stroke, r: 2 })
+    );
+  }
+  if (opts.rule != null) marks.push(Plot.ruleY([opts.rule], { stroke: "#999", strokeDasharray: "4,4" }));
+  marks.push(
+    Plot.ruleX(rows, Plot.pointerX({ x: "time", stroke: "#999" })),
+    Plot.tip(rows, Plot.pointerX({ x: "time", y: "pred", title: d => `${d.series}\n${fmtTime(d.time)} · ${pct(d.pct_rep)} reporting\n` +
+      `Predicted ${opts.fmt(d.pred)}${d.pred_min != null ? ` (${opts.fmt(d.pred_min)} to ${opts.fmt(d.pred_max)})` : ""}\nReported ${opts.fmt(d.rep)}` }))
+  );
+  return {
+    marginBottom: 30,
+    x: { label: null, ticks: 5 },
+    y: { grid: true, label: opts.label, tickFormat: opts.tickFormat },
+    color: opts.color,
+    marks
+  };
+}
+```
+
+## Row {height="85%"}
+
+### Model Plots {.tabset}
+
+```{ojs}
+//| title: Predicted Share
+{
+  if (noModels) return noModelsMsg();
+  const s = exportable("Predicted Share", modelSpec(modelRows.filter(d => d.pred_type === "share" && ["dem", "rep"].includes(d.party)), {
+    label: "Share of all votes", tickFormat: ".0%", stroke: "pname", color: modelColor, rule: 0.5, fmt: pct
+  }), `Predicted share: ${model_pick}`);
+  return Plot.plot({ marginBottom: s.marginBottom, x: s.x, y: s.y, color: s.color, marks: s.marks });
+}
+```
+
+```{ojs}
+//| title: Predicted Votes
+{
+  if (noModels) return noModelsMsg();
+  const s = exportable("Predicted Votes", modelSpec(modelRows.filter(d => d.pred_type === "vote" && ["dem", "rep"].includes(d.party)), {
+    label: "Votes", tickFormat: "~s", stroke: "pname", color: modelColor, fmt: fmt
+  }), `Predicted votes: ${model_pick}`);
+  return Plot.plot({ marginBottom: s.marginBottom, x: s.x, y: s.y, color: s.color, marks: s.marks });
+}
+```
+
+```{ojs}
+//| title: Predicted Turnout
+{
+  if (noModels) return noModelsMsg();
+  const s = exportable("Predicted Turnout", modelSpec(turnoutRows, {
+    label: "Total votes (all candidates)", tickFormat: "~s", stroke: () => INK, fmt: fmt
+  }), `Predicted turnout: ${model_pick}`);
+  return Plot.plot({ marginBottom: s.marginBottom, x: s.x, y: s.y, color: s.color, marks: s.marks });
+}
+```
+
+## Row {height="15%"}
+
+### Model
+
+```{ojs model-controls}
+// one form for model, statewide overlay, and time window; value = { model, all, from, to }
+viewof mctl = {
+  // default to the first model that reports intervals; failed models (status only) are listed but disabled
+  const start = modelsOk.find(m => mpc.some(d => d.model === m && d.pred_min != null)) ?? modelsOk[0] ?? null;
+  const runTimes = m => [...new Set(mpc.filter(d => d.model === m).map(d => +d.time))].sort((a, b) => a - b);
+  const form = html`<form class="model-ctl">
+    <label>Model <select name="model" class="form-select form-select-sm"></select></label>
+    <label name="all-wrap"><input type="checkbox" name="all" class="form-check-input"> Statewide projection (all counties)</label>
+    <label>From <select name="from" class="form-select form-select-sm"></select></label>
+    <label>To <select name="to" class="form-select form-select-sm"></select></label>
+  </form>`;
+  const { model, all, from, to } = form.elements;
+  // set option properties directly: html`` writes disabled=${false} as a present attribute
+  model.replaceChildren(...modelList.map(m => {
+    const ok = modelsOk.includes(m);
+    return Object.assign(document.createElement("option"), { value: m, text: ok ? m : `${m} (failed)`, disabled: !ok });
+  }));
+  const allWrap = form.querySelector("[name=all-wrap]");
+  // window ends are limited to the picked model's run times, and can't cross
+  const limit = () => {
+    for (const o of from.options) o.disabled = +o.value > +to.value;
+    for (const o of to.options) o.disabled = +o.value < +from.value;
+  };
+  const setModel = () => {
+    const t = runTimes(model.value);
+    for (const s of [from, to]) s.replaceChildren(...t.map(x => html`<option value=${x}>${fmtTime(x)}</option>`));
+    from.value = t[0]; to.value = t.at(-1);
+    allWrap.hidden = !mpc.some(d => d.model === model.value && d.geo === "all");
+    if (allWrap.hidden) all.checked = false;
+    limit();
+  };
+  const update = () => { form.value = { model: model.value || null, all: all.checked, from: +from.value, to: +to.value }; };
+  model.addEventListener("input", setModel);
+  from.addEventListener("input", limit);
+  to.addEventListener("input", limit);
+  form.addEventListener("input", update);
+  form.addEventListener("submit", e => e.preventDefault());
+  form.hidden = noModels;
+  model.value = start;
+  if (!noModels) setModel();
+  update();
+  return form;
+}
+{
+  if (noModels) return html`<div class="model-note">${msc.length ? "No model has produced predictions for this contest yet." : "This contest is not modeled."}</div>`;
+  const confs = [...new Set(modelRows.map(d => d.model_conf).filter(c => c != null))];
+  return html`<div class="model-note">
+    <div>Solid: prediction · band: interval (${confs.length ? confs.join(", ") : "none for this model"}) · dotted: reported${hasAll ? " · dashed: statewide (all counties)" : ""}</div>
+  </div>`;
+}
 ```

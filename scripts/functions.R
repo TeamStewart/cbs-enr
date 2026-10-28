@@ -43,7 +43,7 @@ get_data <- function(state, county, timestamp, path = NULL, trust_stage = FALSE,
   }
 
   write_local(d, glue("{state}/clean/{local_file_name}_latest.csv"))
-  write_local(d, glue("{state}/clean/{local_file_name}_{timestamp}.csv"))
+  write_local(d, glue("{state}/clean/{local_file_name}_{timestamp}.csv"), csv = FALSE)
 
   return(d)
 }
@@ -96,6 +96,8 @@ upload_html <- function(path, state) {
 # series) and returns the precinct-level table for the latest run.
 make_summary <- function(data, state, county) {
   key = if (is.na(county)) state else glue("{state}_{county}")
+  # upstream scrape errored (NULL via error = "null") or site posted nothing yet
+  if (is.null(data) || nrow(data) == 0) return(NULL)
 
   d = as_tibble(data) |>
     mutate(
@@ -140,6 +142,47 @@ read_history <- function(state) {
   mutate(h, across(c(geo, method, contest, party, county), as.character), district = as.integer(district))
 }
 
+# enightmodels output in {ELECTION_FOLDER}/model_results: every predictions_*.csv run
+# stacked into a time series (later files win on duplicate rows), and each
+# race/model's most recent status_*.csv row
+read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_results")) {
+  read_runs = \(prefix) {
+    # "latest" sorts after the timestamped files, so it wins ties
+    files = sort(fs::dir_ls(dir, regexp = glue("/{prefix}_[^/]*\\.csv$"), fail = FALSE))
+    if (length(files) == 0) return(NULL)
+    map(files, \(f) readr::read_csv(f, col_types = readr::cols(.default = "c"), progress = FALSE)) |>
+      bind_rows(.id = "file") |>
+      mutate(file = match(file, files))
+  }
+
+  pred = read_runs("predictions")
+  if (!is.null(pred)) {
+    pred = pred |>
+      mutate(
+        time = lubridate::ymd_hms(time, quiet = TRUE),
+        district = as.integer(as.numeric(district)),
+        across(c(pct_rep, rep, pred, pred_min, pred_max), as.numeric)
+      ) |>
+      filter(!is.na(time)) |>
+      arrange(desc(file)) |>
+      distinct(race_id, state, contest, district, model, geo, pred_type, party, candidate, time, .keep_all = TRUE) |>
+      select(race_id, state, contest, district, model, model_conf, geo, pred_type, party, candidate,
+             time, pct_rep, rep, pred, pred_min, pred_max) |>
+      arrange(time)
+  }
+
+  status = read_runs("status")
+  if (!is.null(status)) {
+    status = status |>
+      arrange(desc(file)) |>
+      distinct(race_id, model, .keep_all = TRUE) |>
+      transmute(race_id, model, time = lubridate::ymd_hms(time, quiet = TRUE), status,
+                statewide = cli::ansi_strip(statewide), settings = cli::ansi_strip(settings))
+  }
+
+  list(pred = pred, status = status)
+}
+
 read_summaries <- function(state, keys) {
   files = fs::dir_ls(fs::path(PATH_DROPBOX, ELECTION_FOLDER, state, "summaries"), regexp = "summary_.*\\.parquet$", fail = FALSE)
   if (length(files) == 0) return(NULL)
@@ -149,9 +192,61 @@ read_summaries <- function(state, keys) {
     distinct()
 }
 
+# L2 precinct shares for the precinct explorer, keyed on ENR geo through
+# input_data/crosswalks/{st}.csv (docs/precinct_crosswalks.md). Variables are the
+# frame's (yougov_precinct_frame.parquet) that L2 has. Long by mode: "Total" plus
+# eday/early/mail, where turnout uses that mode's vote columns.
+read_l2 <- function(state) {
+  dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "input_data")
+  xw_path = fs::path(dir, "crosswalks", glue("{tolower(state)}.csv"))
+  l2_path = fs::dir_ls(fs::path(dir, "l2"), regexp = glue("/{tolower(state)}_\\d{{8}}_precincts\\.parquet$"), fail = FALSE) |>
+    sort() |>
+    tail(1)
+  if (!fs::file_exists(xw_path) || length(l2_path) == 0) return(NULL)
+
+  # cbs_counties spells MIAMIDADE; ENR geo carries the cbs county number, not FIPS
+  norm = \(x) str_remove_all(toupper(x), "[^A-Z]")
+  cty = enightmodels::cbs_counties |>
+    filter(.data$state == .env$state) |>
+    transmute(cty = norm(county), county_cbs)
+  xw = readr::read_csv(xw_path, col_types = readr::cols(.default = "c")) |>
+    filter(!is.na(precinct_enr), !is.na(precinct_l2)) |>
+    distinct(county, precinct_enr, precinct_l2) |> # frame rows repeat per cd
+    mutate(cty = norm(county)) |>
+    inner_join(cty, by = "cty") |>
+    mutate(geo = tolower(sprintf("%s_%03d_%s", state, county_cbs, precinct_enr))) |>
+    select(geo, county, precinct_l2)
+
+  l2 = nanoparquet::read_parquet(l2_path) |>
+    as_tibble() |>
+    filter(n > 0) |>
+    rename(precinct_l2 = precinct)
+  base = transmute(l2, county, precinct_l2,
+    l2_n = n,
+    l2_male = male / n,
+    l2_white = race1 / (n - race_unk),
+    l2_black = race2 / (n - race_unk),
+    l2_hispanic = race3 / (n - race_unk),
+    l2_asian = race4 / (n - race_unk)
+  )
+  turnout = l2 |>
+    select(county, precinct_l2, n, matches("^vote(20|22|24)(_(eday|early|mail))?$")) |>
+    pivot_longer(starts_with("vote"), names_to = c("year", "mode"), names_pattern = "^vote(\\d+)_?(.*)$") |>
+    mutate(mode = if_else(mode == "", "Total", mode), name = paste0("l2_turnout", year), value = value / n) |>
+    select(county, precinct_l2, mode, name, value) |>
+    pivot_wider()
+
+  xw |>
+    inner_join(base, by = c("county", "precinct_l2")) |>
+    inner_join(turnout, by = c("county", "precinct_l2"), relationship = "one-to-many") |>
+    select(geo, mode, starts_with("l2_")) |>
+    mutate(across(starts_with("l2_"), \(x) if_else(is.finite(x), x, NA_real_)))
+}
+
 # Build everything index.qmd needs for each row of `contests`.
-# `dash` is a list of make_summary() outputs (one per jurisdiction).
-build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
+# `dash` is a list of make_summary() outputs (one per jurisdiction);
+# `models` is read_model_results() output (NULL for no modeling).
+build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = NULL) {
   contests = contests |>
     mutate(
       key = if_else(is.na(district), paste0(state, "-", contest), paste0(state, "-", contest, "-", district)),
@@ -159,12 +254,32 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
       hist_contest = coalesce(hist_contest, contest)
     )
 
-  prec_all = map(dash, \(x) mutate(x$prec, state = x$state, src = x$key, src_time = x$time)) |> bind_rows()
+  # drop jurisdictions whose scrape/summary failed; show whatever is left
+  dash = purrr::compact(dash)
+  prec_all = map(dash, \(x) mutate(x$prec, state = x$state, src = x$key, src_time = x$time)) |>
+    unname() |>
+    bind_rows(tibble(
+      jurisdiction = character(), contest = character(), district = integer(), geo = character(),
+      method = character(), candidate = character(), party = character(), votes = numeric(),
+      stage = integer(), state = character(), src = character(), src_time = as.POSIXct(character())
+    ))
   keys_by_state = split(map_chr(dash, "key"), map_chr(dash, "state"))
 
   states = unique(contests$state)
   summaries = map(states, \(s) read_summaries(s, keys_by_state[[s]])) |> set_names(states)
   histories = map(states, read_history) |> set_names(states)
+  l2s = map(states, read_l2) |> set_names(states)
+
+  mp_empty = tibble(
+    race_id = character(), state = character(), contest = character(), district = integer(),
+    model = character(), model_conf = character(), geo = character(),
+    pred_type = character(), party = character(), candidate = character(), time = as.POSIXct(character()),
+    pct_rep = numeric(), rep = numeric(), pred = numeric(), pred_min = numeric(), pred_max = numeric()
+  )
+  ms_empty = tibble(race_id = character(), model = character(), time = as.POSIXct(character()),
+                    status = character(), statewide = character(), settings = character())
+  mp_all = bind_rows(mp_empty, models$pred)
+  ms_all = bind_rows(ms_empty, models$status)
 
   out = pmap(contests, \(state, contest, district, key, label, hist_contest, ...) {
     p = filter(prec_all, .env$state == .data$state, .env$contest == .data$contest)
@@ -218,6 +333,14 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
 
     geo_stage = summarise(prec, stage = suppressWarnings(max(stage, na.rm = TRUE)), .by = geo)
 
+    # crosswalk geos are lowercased; ENR geos vary in case (prefix and precinct)
+    l2 = tibble(geo = character(), mode = character())
+    if (!is.null(l2s[[state]])) {
+      l2 = tibble(geo = geo_stage$geo, g = tolower(geo_stage$geo)) |>
+        inner_join(l2s[[state]], by = c(g = "geo")) |>
+        select(-g)
+    }
+
     meta = tibble(
       key = key, label = label, state = state, contest = contest, district = district,
       time = if (nrow(p) > 0) max(p$src_time) else NA,
@@ -236,7 +359,9 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
       hist_by_method = !is.null(h) && !all(is.na(h$method)),
       hist_year = if (is.null(h)) NA_integer_ else as.integer(max(h$year)),
       hist_total = if (is.null(h)) NA_real_ else sum(h$votes),
-      hist_eday = hist_eday
+      hist_eday = hist_eday,
+      # share of ENR precincts with an L2 match (0 when the state has no crosswalk)
+      l2_match = if (nrow(geo_stage) > 0) n_distinct(l2$geo) / nrow(geo_stage) else NA_real_
     )
 
     s = summaries[[state]]
@@ -263,10 +388,20 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
       }
     }
 
+    # model rows: statewide contests may carry NA or the same dummy district as the ENR data
+    mp = filter(mp_all, .env$state == .data$state, .env$contest == .data$contest,
+                .data$district %in% unique(c(district, dist)))
+    race_ids = unique(c(mp$race_id, paste(state, contest, sep = "_"),
+                        if (!is.na(district)) paste(state, contest, district, sep = "_")))
+    ms = filter(ms_all, race_id %in% race_ids)
+
     list(
       meta = meta,
       ts = mutate(ts, key = key, .before = 1),
-      prec = mutate(prec, key = key, .before = 1)
+      models = mp |> select(-any_of(c("state", "contest", "district", "race_id"))) |> mutate(key = key, .before = 1),
+      model_status = select(ms, -race_id) |> mutate(key = key, .before = 1),
+      prec = mutate(prec, key = key, .before = 1),
+      l2 = mutate(l2, key = key, .before = 1)
     )
   })
 
@@ -274,6 +409,9 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS) {
     meta = map(out, "meta") |> bind_rows(),
     ts = map(out, "ts") |> bind_rows(),
     prec = map(out, "prec") |> bind_rows(),
+    l2 = map(out, "l2") |> bind_rows(),
+    models = map(out, "models") |> bind_rows(),
+    model_status = map(out, "model_status") |> bind_rows(),
     title = DASHBOARD_TITLE
   )
 }

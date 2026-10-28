@@ -17,7 +17,9 @@ suppressPackageStartupMessages({
 source("scripts/functions.R")
 
 devtools::document(PATH_ENIGHTDATA)
-pak::local_install(PATH_ENIGHTDATA, upgrade = TRUE, ask = FALSE)
+# renv (not pak) so dependency versions stay at renv.lock; enightdata itself
+# is in renv's ignored.packages since each machine installs its own checkout
+renv::install(PATH_ENIGHTDATA, prompt = FALSE)
 
 options(
   readr.show_col_types = FALSE,
@@ -39,7 +41,7 @@ tar_option_set(
     "enightdata" # internal package for scrapers and timestamps
   ),
   imports = c("enightdata"),
-  error = "continue",
+  error = "null",
   controller = crew::crew_controller_local(workers = 12)
 )
 
@@ -87,22 +89,9 @@ office_filter = NULL
 # ========================================
 ## PIPELINE
 # ========================================
-map_multi = tar_map(
-  dplyr::filter(metadata, dplyr::n() > 1, .by = c(state, county)) |>
-    dplyr::summarise(
-      paths = list(path),
-      path_timestamps = list(path_timestamp),
-      .by = c(state, county, upload, trust_stage)
-    ),
-  tar_target(timestamp, purrr::map2(path_timestamps, paths, \(pt, p) get_timestamp(state, county, pt)), cue = tar_cue(mode = "always")),
-  tar_target(data, purrr::pmap(list(paths, timestamp, trust_stage), \(p, ts, tr) get_data(state, county, ts, p, tr, multi=TRUE)) |> dplyr::bind_rows()),
-  tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp[[1]], upload, do_cbs = FALSE, office_filter = office_filter)),
-  tar_target(summary, make_summary(data, state, county)),
-  names = c(state, county)
-)
-
+# all states/counties
 map_single = tar_map(
-  dplyr::filter(metadata, dplyr::n() == 1, .by = c(state, county)),
+  metadata,
   tar_target(timestamp, get_timestamp(state, county, path_timestamp), cue = tar_cue(mode = "always")),
   tar_target(data, get_data(state, county, timestamp, path, trust_stage)),
   tar_target(tbl_cbs, create_table_cbs(data, state, county, timestamp, upload, do_cbs = FALSE, office_filter = office_filter)),
@@ -111,26 +100,15 @@ map_single = tar_map(
 )
 
 list(
-  # first, parse jurisdictions with multiple URLs (e.g., for Dem/Rep primary)
-  map_multi,
-  # parse remaining, normal jurisdictions
   map_single,
-  tar_target(ca_statewide, get_castatewide(), cue = tar_cue(mode = "always")),
-  tar_target(
-    la_totals_timestamp,
-    enightdata::ca_timestamp(
-      "https://results.lavote.gov/ElectionResults/GetElectionData?electionID=4338",
-      county = "los angeles"
-    ),
-    cue = tar_cue(mode = "always")
-  ),
-  tar_target(la_totals, get_la_totals(la_totals_timestamp)),
   # dashboard: contests shown are set by DASHBOARD_CONTESTS in scripts/util/globals.R
-  tar_combine(dash_inputs, map_multi[["summary"]], map_single[["summary"]], command = list(!!!.x)),
   # election-night models, after the scrapes: the run = TRUE rows of model_config.csv, on the
   # real returns unless MODEL_SIM (scripts/util/globals.R) names a sim scenario
   tar_target(model_config, path.expand(fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_config.csv")), format = "file"),
   tar_target(model_status, run_models(model_config, MODEL_SIM, MODEL_SIM_AT, after = dash_inputs), cue = tar_cue(mode = "always")),
-  tar_target(dashboard_data, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS)),
+  tar_combine(dash_inputs, map_single[["summary"]], command = list(!!!.x)),
+  # enightmodels output, re-read every run ({ELECTION_FOLDER}/model_results)
+  tar_target(model_results, read_model_results(), cue = tar_cue(mode = "always")),
+  tar_target(dashboard_data, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS, model_results)),
   tar_quarto(dashboard, "index.qmd", quiet = FALSE)
 )
