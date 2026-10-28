@@ -18,7 +18,13 @@ them to `probe`, `verify` and `status`. If it names phases, run only those.)
 3. Scrapers: `verify` every row in the scraper queue. Fix failing enightdata scrapers
    per its `CLAUDE.md`, with a test, `devtools::document()` and `devtools::test()`.
 4. Crosswalks: rebuild each stale state per `docs/crosswalk_todo.md`, update its
-   Results entry, then run `xwalk-done`.
+   Results entry, then run `xwalk-done`. Then run
+   `Rscript scripts/util/crosswalks/votehub.R` (rebuilds the ENR <-> VoteHub
+   crosswalk for every state with a VoteHub shapefile whose clean files changed;
+   states without one are skipped). Check each state's match rate against the
+   last `votehub` log line and eyeball the fuzzy-rule rows it prints; if a
+   state's rate drops, inspect the unmatched ids and add keys or recodes in
+   `votehub.R`. Log the rates with `cycle.R log "votehub xwalk: ST n/N (x%), ..."`.
 5. Google Sheet: run `cycle.R sheet` as a dry run. If there are no conflicts, run
    `sheet --apply`. Report any conflicts instead of resolving them.
 

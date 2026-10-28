@@ -33,6 +33,7 @@ the next `/enr-cycle` resumes from that line.
 | `docs/enr_cycle/sheet_manual.csv` | hand-queued sheet edits (`sheet-add`) | `cycle.R` |
 | `docs/enr_cycle/log.md` | append-only log: automatic probe/verify/xwalk lines plus a `SESSION` line per session | `cycle.R` |
 | `docs/crosswalk_todo.md`, `docs/precinct_crosswalks.md` | crosswalk method, per-state results | crosswalk work |
+| `scripts/util/crosswalks/votehub.R` | ENR <-> VoteHub shapefile crosswalks (`input_data/crosswalks/votehub/`) | phase 3 |
 | enightdata `tasks/todo.md`, `CLAUDE.md` | scraper rules, known scraper blockers | scraper work |
 
 **Never edit `metadata.csv` by hand.** `scripts/automation.R` overwrites it
@@ -172,6 +173,42 @@ clean file) differs from the one the state's crosswalk was last built on.
 3. Update the state's row and Results entry in `docs/crosswalk_todo.md`.
 4. `Rscript scripts/util/enr_cycle/cycle.R xwalk-done {ST}` marks every
    clean row of the state as current.
+
+### VoteHub crosswalks
+
+States with a VoteHub precinct shapefile (`input_data/votehub-shapefiles/`;
+all of them are in `26_pct_bdrys.gpkg`: AK, FL, GA, IA, MI, NC, NE, OH, SC,
+TX) also get an ENR <-> VoteHub crosswalk, separate from the frame crosswalk.
+It covers every ENR precinct in the state's `clean/*_latest.parquet` files,
+not only frame counties. States without a VoteHub layer are skipped.
+
+```sh
+Rscript scripts/util/crosswalks/votehub.R          # states whose clean files are newer than their csv
+Rscript scripts/util/crosswalks/votehub.R MI TX    # these states
+Rscript scripts/util/crosswalks/votehub.R --all    # every VoteHub state with clean data
+```
+
+Output: `input_data/crosswalks/votehub/{st}.csv` with `state, county,
+precinct_enr, unit_id, precinct_vh, vh_geography, vh_rule` (`unit_id` NA if
+unmatched). Matching is within county and strict 1:1, through the ordered tiers
+in `votehub.R` (ENR id against the VoteHub code in `unit_id` and the name in
+`precinct_sos`, exact first). FL and TX layers are 2026 primary precincts
+(`vh_geography = primary`).
+
+Run it after the frame crosswalks in every pass. For each state:
+
+- Compare the match rate with the last `votehub xwalk` line in `log.md`, then
+  log the new rates: `cycle.R log "votehub xwalk: MI 2393/2625 (91.2%), ..."`.
+- Eyeball the fuzzy-rule rows the script prints (`name_bag`, `name_mi`,
+  `name_abbr`, `name_short`, `name_init`, `*_lead`). Exact and code rules can be
+  trusted.
+- Unmatched rows that are not precincts (AK `NN-early`/`-absentee`/`-question`,
+  NC `EV ...`/`ABSENTEE`/`TRANSFER`/`PROVISIONAL`) are expected. If the rate
+  drops for real precincts, inspect the new ids and add keys or recodes in
+  `state_keys()` / `tiers` in `votehub.R`.
+
+Rates on 2026-10-28: AK 76.6%, FL 99.1%, GA 97.9%, MI 91.2%, NC 92.4%,
+NE 85.6%, OH 93.2%, TX 99.3% (IA, SC: no clean data yet).
 
 ## Google Sheet
 
