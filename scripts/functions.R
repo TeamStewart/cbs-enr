@@ -471,3 +471,23 @@ get_castatewide <- function() {
     ) |>
     write_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/CA/clean/statewide/ca_statewide_{time}.csv"))
 }
+
+# Election-night models: one refresh of scripts/model/live/run_night.R, in its own R
+# process (load.R must set single-threaded BLAS before any matrix work, and the models
+# fork their own workers). Runs the run = TRUE rows of `config`
+# ({ELECTION_FOLDER}/model_config.csv, scripts/model/live/R/config.R). `sim`: "" for the
+# real scraped returns (written to model_results/), or a 26_sim scenario run at `at`
+# (written to model_tests/run_night_sim/<sim>/). `after` is unused: it orders this after
+# the scrapes. Returns the run's status table, one row per race x model.
+run_models <- function(config, sim = MODEL_SIM, at = MODEL_SIM_AT, after = NULL) {
+  args = c("scripts/model/live/run_night.R", glue("--config={config}"))
+  if (nzchar(sim)) args = c(args, glue("--sim={sim}"), glue("--at={at}"))
+  out = suppressWarnings(system2(file.path(R.home("bin"), "Rscript"), shQuote(args), stdout = TRUE, stderr = TRUE))
+  writeLines(out)
+  if (!is.null(attr(out, "status")) && attr(out, "status") != 0) {
+    stop("run_night.R failed (exit ", attr(out, "status"), "):\n", paste(tail(out, 20), collapse = "\n"))
+  }
+  dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER)
+  dir = if (nzchar(sim)) fs::path(dir, "model_tests", "run_night_sim", sim) else fs::path(dir, "model_results")
+  readr::read_csv(fs::path(dir, "status_latest.csv"), col_types = readr::cols(.default = "c"), progress = FALSE)
+}

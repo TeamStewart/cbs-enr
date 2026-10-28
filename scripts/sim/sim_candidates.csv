@@ -1,0 +1,33 @@
+state,contest,role,candidate,party,source
+TX,gov,dem,"hinojosa, gina",dem,TX zero files
+TX,gov,rep,"abbott, greg",rep,TX zero files
+TX,gov,minor,"dixon, pat",oth,TX zero files
+TX,gov,writein,write-in,oth,TX zero files
+TX,sen,dem,"talarico, james",dem,TX zero files
+TX,sen,rep,"paxton, ken",rep,TX zero files
+TX,sen,minor,"brown, ted",oth,TX zero files
+TX,sen,writein,write-in,oth,TX zero files
+AK,sen,dem,"peltola, mary",dem,AK_latest (the 2026 primary file)
+AK,sen,rep,"sullivan, dan",rep,AK_latest (the 2026 primary file)
+AK,sen,minor,other,oth,"several minor candidates in the primary; no general zero file yet"
+GA,sen,dem,"ossoff, jon",dem,GA zero file
+GA,sen,rep,"collins, mike",rep,GA zero file
+GA,sen,minor,other,oth,"GA zero file has three (bartell, clement, easton)"
+IA,sen,dem,"turek, josh",dem,"no IA zero file; nominee from the June 2 primary"
+IA,sen,rep,"hinson, ashley",rep,"no IA zero file; nominee from the June 2 primary"
+IA,sen,minor,other,oth,no IA zero file
+MI,sen,dem,"el-sayed, abdul",dem,MI zero files
+MI,sen,rep,"rogers, mike",rep,MI zero files
+MI,sen,minor,other,oth,MI zero files have four
+MI,sen,writein,write-in,oth,MI zero files
+MN,sen,dem,"flanagan, peggy",dem,MN zero file
+MN,sen,rep,"tafoya, michele",rep,MN zero file
+MN,sen,minor,other,oth,MN zero file has two
+MN,sen,writein,write-in,oth,MN zero file
+NC,sen,dem,"cooper, roy",dem,NC zero file
+NC,sen,rep,"whatley, michael",rep,NC zero file
+NC,sen,minor,other,oth,NC zero file has two (bray and dublin)
+OH,sen,dem,"brown, sherrod",dem,OH zero files
+OH,sen,rep,"husted, jon",rep,OH zero files
+OH,sen,minor,other,oth,OH zero files have several
+OH,sen,writein,write-in,oth,OH zero files

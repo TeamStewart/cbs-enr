@@ -1,0 +1,235 @@
+% ============================================================================
+%  Turnout variables: symbol -> code -> transform -> source
+%  A reference map for the turnout side of the precinct x vote-mode model.
+%  Everything below is the USE_COMPOSE = 1 default.
+%  Compile: pdflatex turnout_variables.tex
+% ============================================================================
+\documentclass[11pt]{article}
+
+\usepackage[margin=0.9in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\setlist[itemize]{itemsep=3pt, topsep=4pt}
+\newcommand{\var}[1]{\texttt{\footnotesize #1}}
+\newcommand{\file}[1]{\texttt{\footnotesize #1}}
+\newcommand{\logit}{\operatorname{logit}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\refm}{\mathrm{ref}}
+
+% column types: symbol / code / transform / source
+\newcolumntype{S}{>{\centering\arraybackslash}m{0.52in}}
+\newcolumntype{C}{>{\raggedright\arraybackslash}m{1.18in}}
+\newcolumntype{T}{>{\raggedright\arraybackslash}m{2.24in}}
+\newcolumntype{R}{>{\raggedright\arraybackslash}m{2.18in}}
+
+\title{Turnout variables: symbol, code, transform, source}
+\author{Young-Kyung Kim}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\noindent
+A reference map for the turnout side of the precinct $\times$ vote-mode model, tracing
+each quantity from the raw data column it comes from to the outcome that is actually
+fitted. Everything here assumes the \var{USE\_COMPOSE = 1} default. Line numbers refer to
+\file{scripts/model/tx\_gov\_trial.R} unless another file is named.
+
+\section{Inputs}
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}SCTR@{}}
+\toprule
+\textbf{Sym.} & \textbf{Code} & \textbf{Transform} & \textbf{Source column $\rightarrow$ dataset} \\
+\midrule
+$n_i$ & \var{n} & passthrough &
+  \var{n} $\rightarrow$ \file{TX\_precinct.parquet}. The YouGov frame count; L2's is kept
+  separately as \var{l2\_n} \\[4pt]
+--- & \var{turnoutPred} & passthrough &
+  \var{turnoutPred} $\rightarrow$ \file{yougov\_precinct\_frame.parquet}. A vendor
+  midterm turnout score; not computed by us \\[4pt]
+$E_i$ & \var{est\_turnout} & $\min(\var{turnoutPred} \cdot n_i,\ n_i)$ &
+  \file{prep\_tx\_model\_inputs.R:319} \\[4pt]
+$E_i$ & \var{est\_tot} & \var{est\_dem + est\_rep}, re-widened from the long-by-party frame &
+  \var{est} $\rightarrow$ \file{TX\_precinct.parquet} via \var{covs\_long}; line 703 \\[4pt]
+$v^{\text{hist}}_{im}$ & \var{voters} & passthrough &
+  \var{vote22\_\{mail,early,eday\}} $\rightarrow$ L2, pivoted at
+  \file{prep\_tx\_model\_inputs.R:363--370} $\rightarrow$
+  \file{TX\_precinct\_mode\_history.parquet} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Derived priors}
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}SCTR@{}}
+\toprule
+\textbf{Sym.} & \textbf{Code} & \textbf{Transform} & \textbf{Source} \\
+\midrule
+$p^{0}_{im}$ & \var{mode\_turn\_share} &
+  $\dfrac{v^{\text{hist}}_{im} + k\,c_{cm}}{\sum_{m'} v^{\text{hist}}_{im'} + k}$,
+  $k = 40$, then renormalised to sum to 1 &
+  \var{voters} $\rightarrow$ mode history; lines 645--653.
+  $c_{cm}$ is the county's mode share \\[10pt]
+$\tau^{0}_{im}$ & \var{prior\_tau} & $E_i \cdot p^{0}_{im}$ & line 745 \\[4pt]
+$\kappa n_i$ & \var{cap} & $1.25 \cdot \max(n_i,\ 1)$ & line 735 \\[4pt]
+$\theta^{0}_i$ & \var{y\_tau\_prior} \emph{(ref slot)} &
+  $\logit\!\left(E_i / \kappa n_i\right)$ & lines 762--764 \\[4pt]
+$\eta^{0}_{im}$ & \var{y\_tau\_prior} \emph{(other slots)} &
+  $\log\!\left(p^{0}_{im} \big/ p^{0}_{i,\refm}\right)$ & line 765 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Observed, from the returns}
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}SCTR@{}}
+\toprule
+\textbf{Sym.} & \textbf{Code} & \textbf{Transform} & \textbf{Source} \\
+\midrule
+$c_{im}$ & \var{tau} & \var{votes\_dem + votes\_rep + votes\_oth} &
+  the live feed, or \file{TX\_truth.parquet} $+$ \file{TX\_schedule.parquet} in a sim;
+  line 894 \\[4pt]
+--- & \var{obs} & \var{stage >= 2 \& tau > 0 \& tot2 > 0} &
+  line 896. ``has reported'' \\[4pt]
+--- & \var{obs\_turn} &
+  \var{obs \& (complete | tau >= 1.1 * prior\_tau)} &
+  line 918. ``has finished''. The fallback is the plateau proxy
+  \var{COMPLETE\_FRAC} \\[4pt]
+$C_i$ & \var{cnt\_prec} & $\sum_m c_{im}$ over \var{obs} modes & line 915 \\[4pt]
+$T^{\text{fin}}_i$ & \var{T\_final} & $\sum_m c_{im}$ over \textbf{\var{obs\_turn}} modes &
+  line 917 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Fitted outcomes --- the same three slots, two different meanings}
+
+The per-mode turnout slot is \emph{reinterpreted} rather than restructured, so that
+$\Sigma$, the error draws, the conditional-MVN grouping and the aggregation offsets all
+keep working unchanged. The reference mode's slot carries the precinct total; the other
+two carry the mode composition.
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}SCTR@{}}
+\toprule
+\textbf{Sym.} & \textbf{Code} & \textbf{Transform} & \textbf{Fit condition} \\
+\midrule
+$\theta_i$ & \var{y\_tau} \emph{(ref slot)} &
+  $\logit\!\left(T^{\text{fin}}_i / \kappa n_i\right)$ &
+  \textbf{\var{all\_done}} --- \emph{every} mode of the precinct finished \\[6pt]
+$\eta_{im}$ & \var{y\_tau} \emph{(other slots)} &
+  $\log\!\left(c_{im} \big/ c_{i,\refm}\right)$ &
+  \var{obs\_turn \& ref\_done} --- this mode \emph{and} the reference \\[6pt]
+--- & \var{lb\_tau} & $\logit\!\left(C_i / \kappa n_i\right)$ &
+  censoring bound; reference slot only, and only when \var{USE\_CENSOR=1} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Back out to votes}
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}SCT@{}}
+\toprule
+\textbf{Sym.} & \textbf{Code} & \textbf{Transform} \\
+\midrule
+$T_i$ & \var{T\_draw} & $\kappa n_i \cdot \logit^{-1}(\theta_i + \varepsilon)$ \\[4pt]
+$p_{im}$ & --- & $\softmax(\eta_i)$, with the reference mode's log-ratio fixed at 0 \\[4pt]
+$\tau_{im}$ & \var{tau} (draw) & $T_i \cdot p_{im}$ --- sums to $T_i$ exactly, and
+  $T_i < \kappa n_i$ by construction \\[4pt]
+--- & --- & $T_i \leftarrow \max(T_i,\ C_i)$ --- the counted-votes floor \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Switches that are off by default}
+
+Everything above describes the shipped defaults. The variables below exist in
+\file{tx\_gov\_trial.R} but do nothing unless their switch is set, which is why they do
+not appear in the tables above. They are the machinery for letting a \emph{partially}
+counted precinct inform $\theta$.
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}SCTR@{}}
+\toprule
+\textbf{Sym.} & \textbf{Code} & \textbf{Transform} & \textbf{Switch / status} \\
+\midrule
+$\delta_m$ & \var{comp\_tilt} &
+  vote-weighted mean of $\log(c_{im}/c_{i,\refm}) - \eta^{0}_{im}$ over precincts where
+  mode $m$ \emph{and} the reference are both counted out; $\delta_\refm \equiv 0$ &
+  \var{COMPOSITION\_UPDATE=1}. Estimates a statewide shift in the mode mix \\[12pt]
+$p_{im}$ & \var{p\_tilt} &
+  $p^{0}_{im}\exp(\delta_m)$, renormalised per precinct &
+  equals $p^{0}_{im}$ when the tilt is off \\[6pt]
+$q_i$ & \var{q\_cov} &
+  $\sum_{m \text{ counted out}} p_{im}$ --- the share of the precinct's expected vote
+  that is finished. $\var{all\_done} \Rightarrow q_i = 1$ &
+  always computed; only \emph{used} by the switches below \\[12pt]
+$\widehat{T}_i$ & \var{T\_hat} &
+  $T^{\text{fin}}_i$ when \var{all\_done}, else $T^{\text{fin}}_i / q_i$ &
+  \var{MIN\_MODE\_COVERAGE} $< 1$. The gross-up \\[6pt]
+--- & \var{w\_tau} & $q_i^{\var{COVERAGE\_WT\_POW}}$, default exponent 2 &
+  precision weight: $\operatorname{Var}(\widehat{T}) \propto 1/q^2$ \\[10pt]
+$r_i$ & \var{r\_prior} & $C_i \big/ \sum_m \tau^{0}_{im}$ &
+  counted votes over the prior expected total. Needs no completeness flag \\[10pt]
+$\pi_i$ & \var{p\_atom} &
+  $\operatorname{clamp}(r_i,\ 0.02,\ 0.98)$ under the default
+  \var{ATOM\_SOURCE=prior}; \var{flag} uses $q_i$ and \var{both} their max &
+  \var{USE\_ATOM=1}. $P(\text{precinct has finished})$, the point mass at the bound \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Why $\theta$'s gate is the one that is wrong.}
+A completed cell's per-mode ratio decomposes exactly:
+\begin{equation*}
+  \log\!\left(\frac{c_{im}}{\tau^{0}_{im}}\right)
+  = \underbrace{\log\!\left(\frac{T_i}{E_i}\right)}_{\text{level } (\theta)}
+  + \underbrace{\log\!\left(\frac{p_{im}}{p^{0}_{im}}\right)}_{\text{composition } (\eta)} .
+\end{equation*}
+\emph{One} completed mode identifies the level given a composition; \emph{two} identify
+both. So $\eta$'s condition (this mode and the reference) is already correct, and only
+$\theta$'s \var{all\_done} is too strict --- it demands three modes where one suffices.
+
+\paragraph{Measured status, so none of this reads as settled.}
+On a simulated night whose true turnout was $0.85\times$ the prior, relaxing $\theta$'s
+gate to $q_i \geq 0.5$ moved turnout from $119\%$ of truth to $101\%$, and did not
+degrade the correctly-specified night. But the \emph{same} setting on the real TX 2024
+backtest, where completeness is a plateau proxy rather than a feed flag, fabricated votes
+--- $103.7\% \rightarrow 109.0\%$ at full count --- because $1/q$ invents the share of any
+mode that is finished but not flagged. Censoring (\var{USE\_CENSOR=1}), with or without
+the atom, made turnout \emph{worse} in both simulated scenarios: a lower bound can only
+push the estimate up, and the error it was aimed at points down. All of these default to
+off for that reason.
+
+\section*{Two things the table makes visible}
+\addcontentsline{toc}{section}{Two things the table makes visible}
+
+\paragraph{\var{est\_turnout} enters three times.}
+As $E_i$ it sets the $\theta$ prior (line 764); multiplied by the mode split it becomes
+\var{prior\_tau} (line 745); and \var{prior\_tau} is then the denominator of the
+\var{COMPLETE\_FRAC} plateau test (line 918). So a single vendor score sets the turnout
+\emph{level}, the mode \emph{composition}, and the \emph{completeness proxy} at once. It
+is the most load-bearing number on the turnout side, and none of it is computed here.
+
+\paragraph{The fit-condition column is where the model breaks.}
+$\theta$ and $\eta$ occupy the same three slots and look parallel everywhere in the code
+--- same variable name \var{y\_tau}, same \var{prior\_tau} ancestry, same loop. But
+$\theta$ requires \emph{all three} modes to be finished and $\eta$ requires \emph{two}.
+That asymmetry is correct as identification --- one finished mode pins the level only if
+the composition is assumed, two pin both --- but nothing in the naming signals it. Since
+mail votes finish days after election night, \var{all\_done} is effectively never
+satisfied while results are being reported, the $\theta$ equation is fitted on zero rows,
+and the solve returns its prior unchanged. Measured on a simulated night whose true
+turnout was $0.85 \times$ the prior, the model reported $119\%$ of truth from the first
+checkpoint to the last --- which is $1/0.85$, the prior echoed back.
+
+\end{document}

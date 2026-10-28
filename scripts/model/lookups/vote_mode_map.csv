@@ -1,0 +1,27 @@
+state,year,raw_label,method,note
+TX,2024,Election Day,eday,
+TX,2024,ELECTION DAY,eday,
+TX,2024,Election,eday,
+TX,2024,Early,early,
+TX,2024,Early Voting,early,
+TX,2024,EARLY VOTING,early,
+TX,2024,Early Votes,early,
+TX,2024,EV In-person,early,Dallas; "EV" = early voting
+TX,2024,Absentee,mail,"TX ""absentee"" IS by-mail: 2.1-4.7% of each county's vote, matching TX mail ~4%, not early ~64-82%"
+TX,2024,Absentee Votes,mail,
+TX,2024,Absentee By Mail,mail,
+TX,2024,Absentee/Mail,mail,
+TX,2024,Ballot by Mail,mail,
+TX,2024,BALLOT BY MAIL,mail,
+TX,2024,EV Mail,mail,Dallas
+TX,2024,Mail,mail,
+TX,2024,Provisional,prov,
+TX,2024,EV Provisional,prov,
+TX,2024,ED Provisional,prov,
+TX,2024,Early Voting Provisional,prov,
+TX,2024,Election Day Provisional,prov,
+TX,2024,Limited,prov,"limited ballots; folded into prov"
+TX,2024,PROV/EV/ED,DROP,"Dallas composite of prov+early+eday; cannot be split. 1,370 votes = 0.2% of Dallas"
+TX,2024,regVotersCounty,DROP,registration metadata; not votes
+TX,2024,Undervotes,DROP,"ballot-level metadata; the archived scraper bucketed these as Overvote/Undervote"
+TX,2024,Overvotes,DROP,"as above"

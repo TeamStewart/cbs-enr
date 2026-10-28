@@ -102,6 +102,10 @@ map_single = tar_map(
 list(
   map_single,
   # dashboard: contests shown are set by DASHBOARD_CONTESTS in scripts/util/globals.R
+  # election-night models, after the scrapes: the run = TRUE rows of model_config.csv, on the
+  # real returns unless MODEL_SIM (scripts/util/globals.R) names a sim scenario
+  tar_target(model_config, path.expand(fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_config.csv")), format = "file"),
+  tar_target(model_status, run_models(model_config, MODEL_SIM, MODEL_SIM_AT, after = dash_inputs), cue = tar_cue(mode = "always")),
   tar_combine(dash_inputs, map_single[["summary"]], command = list(!!!.x)),
   # enightmodels output, re-read every run ({ELECTION_FOLDER}/model_results)
   tar_target(model_results, read_model_results(), cue = tar_cue(mode = "always")),

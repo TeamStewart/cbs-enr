@@ -1,0 +1,174 @@
+% ============================================================================
+%  model_simpleswing: specification
+%  The standard uniform swing model.
+%  Source: scripts/model/live/R/model_swing.R.
+%  Compile: pdflatex swing_model_spec.tex
+% ============================================================================
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\setlist[itemize]{itemsep=2pt, topsep=4pt}
+\newcommand{\dem}{\mathrm{dem}}
+\newcommand{\rep}{\mathrm{rep}}
+\newcommand{\oth}{\mathrm{oth}}
+\newcommand{\var}[1]{\texttt{#1}}
+
+\title{\texttt{model\_simpleswing}: specification}
+\author{Young-Kyung Kim}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\noindent
+This documents the standard uniform swing model as implemented in
+\var{scripts/model/live/R/model\_swing.R}. It is one of the two baselines the precinct
+$\times$ vote-mode model is compared against. Sections follow the same order as the main model's specification so
+the two can be read side by side.
+
+\section{Outcomes}
+
+The model works on precinct $\times$ vote-mode cells, with
+$m \in \{\text{mail}, \text{early}, \text{eday}\}$, and estimates two things per cell:
+
+\begin{itemize}
+  \item a \textbf{turnout} correction, on the log scale, relative to a fixed baseline;
+  \item a \textbf{two-party share} correction --- the \emph{swing} --- on the raw share
+        scale, relative to the precinct's prior lean.
+\end{itemize}
+
+The two are estimated by separate, independent regressions. Third-party share is not
+estimated at all: it is held fixed at the precinct's prior value
+$tp_i = \min(\max(\var{oth\_base}_i, 0), 0.25)$.
+
+\section{The baseline}
+
+Both corrections are expressed relative to a baseline expectation of votes per cell,
+$e_{im}$. The precinct's expected total $\var{est\_turnout}_i$ is split across modes using
+the precinct's own 2022 mode history, shrunk toward its county's split:
+\begin{equation}
+  q_{im} = \frac{v_{im} + k\, c_{\,c(i)m}}{\textstyle\sum_{m'} v_{im'} + k},
+  \qquad
+  p_{im} = \frac{q_{im}}{\sum_{m'} q_{im'}},
+  \qquad
+  e_{im} = \max\big(\var{est\_turnout}_i \cdot p_{im},\ 0.5\big),
+  \label{eq:base}
+\end{equation}
+with $k = 40$, $v_{im}$ the precinct's 2022 voters in mode $m$, and $c_{cm}$ the county's
+mode share. This is the same baseline \texttt{model\_cory} is given, and the same shrinkage
+constant the main model uses for its mode priors, so the three models start from a common
+point.
+
+\section{Turnout}
+
+Write $c_{im}$ for the ballots counted so far in a cell and $f_{im}$ for the fraction of
+the cell that has reported. The turnout outcome is the log ratio of counted to expected,
+\begin{equation}
+  \ell_{im} = \log \frac{\max(c_{im},\, 0.5)}{e_{im}},
+  \label{eq:lr}
+\end{equation}
+fitted by two-way fixed effects on county and mode,
+\begin{equation}
+  \ell_{im} = \alpha_{c(i)} + \gamma_m + \varepsilon_{im},
+  \label{eq:fe}
+\end{equation}
+weighted by $e_{im}$ and estimated with \texttt{fixest::feols}. Only \emph{counted-out}
+cells enter the fit: those with $f_{im} \geq 1$ and at least one two-party vote.
+Partially-counted cells contribute nothing to the turnout estimate.
+
+Cells whose county or mode carries no fitted value fall back to the weighted mean for
+that mode, and then to the overall weighted mean.
+
+The predicted cell total floors the fit at what is already counted:
+\begin{equation}
+  \tau_{im} =
+  \begin{cases}
+    c_{im} & \text{if the cell is counted out,}\\[2pt]
+    \max\!\big(c_{im},\ e_{im}\exp(\hat\ell_{im})\big) & \text{otherwise.}
+  \end{cases}
+  \label{eq:tot}
+\end{equation}
+
+Note what equations~\eqref{eq:fe} and~\eqref{eq:tot} together imply. The fitted correction
+$\hat\ell_{im}$ varies only at the county $\times$ mode level, so \emph{all} precinct-level
+variation in predicted turnout comes from the baseline $e_{im}$; the fit supplies a shared
+multiplicative adjustment and nothing else. The model therefore never makes a
+precinct-specific turnout prediction.
+
+\section{Share}
+
+The share outcome is the swing away from the precinct's prior two-party lean
+$\var{dem2}_i$, on the raw share scale rather than the logit scale:
+\begin{equation}
+  y_{im} = \frac{c^{\dem}_{im}}{\max(c^{\dem}_{im} + c^{\rep}_{im},\, 1)} - \var{dem2}_i,
+\end{equation}
+fitted by the same two-way specification \eqref{eq:fe} and the same weights. Here the fit
+set is wider: \emph{any} cell with at least one two-party vote counts, whether or not it
+has finished reporting. The predicted share is clamped,
+$s_{im} = \min(\max(\var{dem2}_i + \hat y_{im},\, 0.001),\, 0.999)$.
+
+\section{Partial counts}
+
+Counted votes are kept exactly and the remainder is allocated at the predicted share:
+\begin{equation}
+  r_{im} = (\tau_{im} - c_{im})(1 - tp_i),
+  \qquad
+  \dem_{im} = c^{\dem}_{im} + r_{im}\, s_{im},
+  \qquad
+  \rep_{im} = c^{\rep}_{im} + r_{im}(1 - s_{im}).
+\end{equation}
+A counted-out cell is substituted exactly, bypassing the prediction entirely.
+
+\section{Uncertainty}
+
+The interval comes from $B = 100$ \textbf{county bootstrap} replicates. Each replicate
+resamples the reporting counties with replacement and refits both equations with weights
+$w_{im} = e_{im} \cdot \#\{c(i)\}$, where $\#\{c\}$ is the county's multiplicity in that
+draw. The resulting statewide quantities are then re-centered on the point fit:
+\begin{equation}
+  \tilde S^{(b)} = S^{(b)} - \overline{S} + \hat S_{\text{point}}.
+  \label{eq:recentre}
+\end{equation}
+
+Checkpoints at which nothing has been counted are skipped: with no reported cells the
+model has nothing to estimate.
+
+\section*{Limitations}
+\addcontentsline{toc}{section}{Limitations}
+
+Stated plainly, and without prejudice to the model's purpose --- it is a deliberately
+simple baseline and several of these are the price of that simplicity.
+
+\begin{itemize}
+  \item \textbf{No ceiling.} Nothing bounds $\tau_{im}$ by the precinct's registrants.
+        In practice this is far less dangerous than it sounds: because the fitted
+        correction is constant within a county $\times$ mode cell, the model has very
+        little variance available to blow up with. It cannot produce the kind of
+        precinct-level overshoot an unconstrained per-precinct prediction can.
+  \item \textbf{No adding up.} The three modes of a precinct are predicted independently
+        and summed; nothing forces $\sum_m \tau_{im}$ to respect a precinct total. The
+        per-cell floor in \eqref{eq:tot} is consistent with this, since there is no
+        adding-up property for it to break.
+  \item \textbf{Turnout and share are independent.} They are two unrelated fits, and
+        turnout reaches the share aggregate only through the size of the remainder. Their
+        correlation is not propagated. Measured within-mode $\rho(\tau, s)$ varies in sign
+        across modes, so this is not a wash in either direction.
+  \item \textbf{Asymmetric information use.} The share equation uses partially-counted
+        cells; the turnout equation uses only counted-out ones. Early in the night the
+        turnout fit can therefore be resting on very few cells.
+  \item \textbf{The interval is a spread, not a posterior.} Re-centering
+        \eqref{eq:recentre} means the bootstrap cannot express bias, only dispersion, and
+        that dispersion reflects between-county resampling alone --- not residual
+        precinct variance and not baseline error. Coverage comparisons against a model
+        that draws from a posterior are not like-for-like, and should be read with
+        interval \emph{width} alongside.
+  \item \textbf{Third party is not modeled.} It is a fixed per-precinct constant, so no
+        uncertainty in it reaches the aggregate.
+\end{itemize}
+
+\end{document}

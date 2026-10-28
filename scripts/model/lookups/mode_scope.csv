@@ -1,0 +1,10 @@
+state,year,ref_mode,modes,note
+AK,2026,eday,mail|early|eday,"2022 split eday 66.6 / mail 19.3 / early 14.2; prov folded into eday"
+CA,2026,mail,mail|eday,"2022 mail 89.7 / eday 8.8 / early 1.6. NO early in the zero files, so early is dropped from MODES entirely; 77.7% of filed geos are all-only and route to the mode-free path"
+FL,2026,mail,mail|early|eday,"2022 mail 36.8 / eday 35.8 / early 27.5 -- near-even, and 2024 would instead favour early (47.5). Revisit if FL's 2026 cadence shows mail reporting later than early; prov folded into eday"
+MI,2026,eday,mail|early|eday,"2022 eday 57.8 / mail 42.2 / early 0.0. MI had no in-person early voting until 2024, so early is genuinely new in 2026 and its history is uninformative"
+NC,2026,eday,mail|early|eday,"EXCEPTION to the largest-mode rule: eday is the only mode reported at precinct level in every county. 33 of 100 counties report early only at one-stop SITE level (38.1% of 2024 early votes, 31.2% of all votes, landed on non-precinct geo ids), so early cannot carry theta. NC's L2 2022 history is also wrong (early mislabelled into mail), so share size cannot be read off it"
+TX,2026,early,mail|early|eday,"2022 early 65.1 / eday 30.5 / mail 4.4. Current hardcoded default -- keep so tx24_backtest.R stays bit-identical; prov folded into eday"
+GA,2026,early,mail|early|eday,"Zero file (GA_latest, statewide) reports early, eday, mail and prov at precinct level. 2022 split early 58.0 / eday 36.2 / mail 5.8; prov folded into eday"
+OH,2026,eday,mail|early|eday,"Zero files (13 county feeds) report early, eday, mail and prov, plus all-only geos in some counties. 2022 split eday 70.1 / mail 25.5 / early 4.4; prov folded into eday"
+MN,2026,all,all,"Zero file (MN_latest, statewide) reports every precinct as method all only: no vote-method split exists in the feed, so the state is modelled without vote method"

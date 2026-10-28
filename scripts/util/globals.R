@@ -6,9 +6,27 @@ ELECTION_FOLDER = Sys.getenv("CBS_ELECTION_FOLDER", "26_general")
 PATH_DROPBOX = ""
 PATH_ENIGHTDATA = ""
 
+# Election-night models in the targets pipeline (run_models() in scripts/functions.R; which
+# models run is {ELECTION_FOLDER}/model_config.csv). MODEL_SIM = "" runs them on the real
+# scraped returns and writes to model_results/. A 26_sim scenario name (e.g. "tx_base") runs
+# them on that simulated night at MODEL_SIM_AT instead, written to
+# model_tests/run_night_sim/<scenario>/ and never to model_results/.
+MODEL_SIM = Sys.getenv("CBS_MODEL_SIM", "")
+MODEL_SIM_AT = Sys.getenv("CBS_MODEL_SIM_AT", "2026-11-03 22:00")
+
 local({
   user = Sys.info()["user"]
-  
+
+  # ENV VARS FIRST, so a machine can STATE its paths instead of being recognised by
+  # username. The username map below only ever worked for the three people in it and
+  # cli_abort()ed for everyone else -- which made this file unsourceable from
+  # scripts/model/live/load.R, and would have taken down run_night.R on any machine whose
+  # user is not one of those three. Stating the path is also the same route
+  # find_26_general() already prefers (CBS_26_GENERAL).
+  if (nzchar(Sys.getenv("PATH_DROPBOX")))    PATH_DROPBOX    <<- Sys.getenv("PATH_DROPBOX")
+  if (nzchar(Sys.getenv("PATH_ENIGHTDATA"))) PATH_ENIGHTDATA <<- Sys.getenv("PATH_ENIGHTDATA")
+  if (nzchar(PATH_DROPBOX) && nzchar(PATH_ENIGHTDATA)) return(invisible(NULL))
+
   if (user == "josephloffredo"){
     PATH_DROPBOX <<- "~/MIT Dropbox/Joseph Loffredo/CBS-MIT Election Data"
     PATH_ENIGHTDATA <<- "/Users/josephloffredo/Desktop/GitHub/enightdata"
@@ -19,7 +37,15 @@ local({
     PATH_DROPBOX <<- "/Users/stewart/MIT Dropbox/Mason Reece/Research/CBS-MIT Election Data"
     PATH_ENIGHTDATA <<- "~/Documents/enightdata"
   } else {
-    cli::cli_abort("User {user} not recognized, cannot set PATH_DROPBOX or PATH_ENIGHTDATA")
+    # WARN, not abort. An unrecognised user is a missing CONFIG, not a broken repo: the
+    # consumers of these paths all guard on nzchar() (find_26_general() skips an empty
+    # PATH_DROPBOX and falls through to its own globs and CBS_26_GENERAL), so leaving them
+    # empty degrades rather than dies. Aborting here meant one unlisted username could stop
+    # the entire election-night pipeline from even loading.
+    cli::cli_alert_warning(
+      "globals.R: user {.val {user}} is not in the known list, so PATH_DROPBOX and \
+       PATH_ENIGHTDATA are unset. Set them in ~/.Renviron if anything needs them \
+       (find_26_general() has its own lookup and does not).")
   }
 
 })
