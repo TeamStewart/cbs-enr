@@ -120,7 +120,31 @@ review_matches = function(l2_matched, fr_keys) {
 ## Output
 # ========================================
 
+# County key shared by the frame crosswalks and the VoteHub ones. AK ENR
+# counties are election districts and VoteHub's are house districts, but AK
+# ids ("01-600") are statewide.
+norm_county = function(x) str_remove_all(str_remove(str_to_upper(x), " COUNTY$"), "[^A-Z]")
+county_key = function(st, x) if (st == "AK") rep("AK", length(x)) else norm_county(x)
+
+# Add `precinct_votehub` (VoteHub unit_id) through `precinct_enr`, from
+# input_data/crosswalks/votehub/{st}.csv (scripts/util/crosswalks/votehub.R).
+# NA when the state has no VoteHub crosswalk or the ENR precinct is unmatched.
+add_votehub = function(st, crosswalk) {
+  crosswalk = select(crosswalk, -any_of("precinct_votehub"))
+  vh_file = election_path("input_data/crosswalks/votehub", paste0(str_to_lower(st), ".csv"))
+  if (!fs::file_exists(vh_file)) return(mutate(crosswalk, precinct_votehub = NA_character_))
+  vh = read_csv(vh_file, col_types = cols(.default = "c")) |>
+    filter(!is.na(unit_id)) |>
+    distinct(.ck = county_key(st, county), precinct_enr, precinct_votehub = unit_id)
+  stopifnot(!anyDuplicated(vh[c(".ck", "precinct_enr")]))
+  crosswalk |>
+    mutate(.ck = county_key(st, county)) |>
+    left_join(vh, join_by(.ck, precinct_enr), na_matches = "never") |>
+    select(-.ck)
+}
+
 write_crosswalk = function(st, crosswalk) {
+  crosswalk = add_votehub(st, crosswalk)
   fs::dir_create(election_path("input_data/crosswalks"))
   enightdata::write_local(crosswalk, paste0("input_data/crosswalks/", str_to_lower(st), ".csv"), parquet = FALSE)
 }

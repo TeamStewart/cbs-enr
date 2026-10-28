@@ -3,11 +3,14 @@ source("scripts/util/crosswalks/helpers.R")
 # Build ENR <-> VoteHub precinct crosswalks, one csv per state:
 # input_data/crosswalks/votehub/{st}.csv with every ENR precinct in the state's
 # clean/*_latest.parquet files and its VoteHub `unit_id` (NA if unmatched).
-# VoteHub boundaries: input_data/votehub-shapefiles/26_pct_bdrys.gpkg (all
-# states; the per-state {ST}26G/{ST}26P shapefiles are the same polygons).
+# Each build also refreshes the `precinct_votehub` column of the state's frame
+# crosswalk (input_data/crosswalks/{st}.csv; add_votehub() in helpers.R).
+# VoteHub boundaries: input_data/votehub-shapefiles/26_pct_bdrys.gpkg, plus a
+# per-state {ST}26G/{ST}26P shapefile (folder or .zip) for any state not in
+# the gpkg (the gpkg's states have the same polygons in their per-state files).
 # States with no VoteHub layer or no clean data are skipped.
 #
-#   Rscript scripts/util/crosswalks/votehub.R          # states whose clean files are newer than their csv
+#   Rscript scripts/util/crosswalks/votehub.R          # states whose clean files or VoteHub layer are newer than their csv
 #   Rscript scripts/util/crosswalks/votehub.R MI TX    # these states
 #   Rscript scripts/util/crosswalks/votehub.R --all    # every VoteHub state with clean data
 #
@@ -17,15 +20,35 @@ source("scripts/util/crosswalks/helpers.R")
 # Per-state recodes go in `state_keys()`.
 
 args = commandArgs(TRUE)
-VH_GPKG = "input_data/votehub-shapefiles/26_pct_bdrys.gpkg"
+VH_DIR = "input_data/votehub-shapefiles"
 OUT_DIR = "input_data/crosswalks/votehub"
 
-vh_all = sf::st_read(election_path(VH_GPKG), quiet = TRUE) |>
-  sf::st_drop_geometry() |>
-  as_tibble() |>
-  transmute(state = state_abbr, geography, county, unit_id, precinct_vh = precinct_sos)
-
-norm_county = function(x) str_remove_all(str_remove(str_to_upper(x), " COUNTY$"), "[^A-Z]")
+# attribute tables only (no geometry); `src` is the file, for staleness
+read_vh = function() {
+  gpkg = election_path(VH_DIR, "26_pct_bdrys.gpkg")
+  vh = sf::st_read(gpkg, query = "SELECT unit_id, state_abbr, geography, county, precinct_sos FROM precincts", quiet = TRUE) |>
+    as_tibble() |>
+    transmute(state = state_abbr, geography, county, unit_id, precinct_vh = precinct_sos, src = gpkg)
+  # per-state layers ("CA26G" folder or "CA26G.zip") for states not in the gpkg,
+  # or newer than the gpkg (then they replace its rows: TX26G.zip, Oct 28)
+  files = fs::dir_ls(election_path(VH_DIR), regexp = "/[A-Z]{2}26[GP](\\.zip)?$")
+  newer = fs::file_info(files)$modification_time > fs::file_info(gpkg)$modification_time
+  files = files[!str_sub(fs::path_file(files), 1, 2) %in% vh$state | newer]
+  files = files[order(str_sub(fs::path_file(files), 5, 5))]  # G before P
+  files = files[!duplicated(fs::path_ext_remove(files))]  # folder wins over its zip
+  files = files[!duplicated(str_sub(fs::path_file(files), 1, 2))]  # one layer per state
+  vh = filter(vh, !state %in% str_sub(fs::path_file(files), 1, 2))
+  extra = map(files, \(f) {
+    layer = fs::path_ext_remove(fs::path_file(f))
+    dsn = if (fs::path_ext(f) == "zip") paste0("/vsizip/", f) else f
+    sf::st_read(dsn, query = paste("SELECT COUNTY, UNIQUE_ID, PCT FROM", layer), quiet = TRUE) |>
+      as_tibble() |>
+      transmute(state = str_sub(layer, 1, 2), geography = if_else(str_ends(layer, "P"), "primary", "general"),
+                county = COUNTY, unit_id = UNIQUE_ID, precinct_vh = PCT, src = f)
+  })
+  bind_rows(vh, list_rbind(unname(extra)))
+}
+vh_all = read_vh()
 
 num_key = function(x) str_replace_all(str_to_upper(str_squish(x)), "(^|(?<=[A-Z]))0+(?=\\d)", "")
 lead_key = function(x) num_key(str_match(x, "^\\s*([A-Za-z]?\\d+[A-Za-z]?)(?=[\\s.-]|$)")[, 2]) # "16-BPK Park" -> "16"
@@ -79,6 +102,7 @@ base_keys = function(x) {
     std = std_name(str_remove(x, "\\.0+$")),         # Miami-Dade "592.0"
     num = num_key(str_remove(x, "\\.0+$")),
     lead = lead_key(x),
+    mid = num_key(str_match(x, "^\\d+-(\\w+)-")[, 2]),    # CA San Diego "0001-100000-SAN PASQUAL" -> "100000"
     paren = num_key(str_match(x, "\\(([^)]+)\\)\\s*$")[, 2]), # NE Cedar "PCT 01  (1)"
     pnum = num_key(str_match(str_to_upper(x), "^(?:PRECINCT|PCT)\\.?\\s*(\\S+)$")[, 2]),
     nolead = std_name(strip_lead(x)),
@@ -90,10 +114,6 @@ base_keys = function(x) {
     init = init_key(x)
   )
 }
-
-# County key for matching. AK ENR counties are election districts and
-# VoteHub's are house districts, but AK ids ("01-600") are statewide.
-county_key = function(st, x) if (st == "AK") rep("AK", length(x)) else norm_county(x)
 
 # State-specific ENR labels. `id_label` (default: the ENR id) feeds the id
 # tiers; `enr_name` (optional) is a second label tried after them.
@@ -126,6 +146,7 @@ tiers = tribble(
   "name_pnum",   "num",    "n_pnum",
   "name_paren",  "num",    "n_paren",
   "code_lead",   "lead",   "c_num",
+  "code_mid",    "mid",    "c_num",
   "name_lead",   "num",    "n_lead",
   "lead_lead",   "lead",   "n_lead",
   "nolead_name", "nolead", "n_std",
@@ -194,16 +215,25 @@ build_state = function(st) {
 
   fs::dir_create(election_path(OUT_DIR))
   enightdata::write_local(crosswalk, paste0(OUT_DIR, "/", str_to_lower(st), ".csv"), parquet = FALSE)
+
+  # refresh precinct_votehub in the frame crosswalk, if the state has one
+  frame_xw = election_path("input_data/crosswalks", paste0(str_to_lower(st), ".csv"))
+  if (fs::file_exists(frame_xw)) {
+    xw = add_votehub(st, read_csv(frame_xw, col_types = cols(.default = "c")))
+    write_crosswalk(st, xw)
+    cli::cli_alert_info("{st} frame crosswalk: precinct_votehub for {sum(!is.na(xw$precinct_votehub))}/{sum(!is.na(xw$precinct_enr))} rows with an ENR id")
+  }
   crosswalk
 }
 
 vh_states = unique(vh_all$state)
 states = if ("--all" %in% args) vh_states else if (length(args)) toupper(args) else {
-  # default: states whose newest clean file is newer than their crosswalk
+  # default: states whose newest clean file or VoteHub layer is newer than their crosswalk
   keep(vh_states, \(st) {
     clean = Sys.glob(election_path(st, "clean", "*_latest.parquet"))
+    inputs = c(clean, unique(vh_all$src[vh_all$state == st]))
     out = election_path(OUT_DIR, paste0(str_to_lower(st), ".csv"))
-    length(clean) > 0 && (!fs::file_exists(out) || max(fs::file_info(clean)$modification_time) > fs::file_info(out)$modification_time)
+    length(clean) > 0 && (!fs::file_exists(out) || max(fs::file_info(inputs)$modification_time) > fs::file_info(out)$modification_time)
   })
 }
 skip = setdiff(states, vh_states)

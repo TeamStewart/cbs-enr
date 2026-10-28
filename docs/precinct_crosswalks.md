@@ -16,6 +16,7 @@ Reference implementation: `scripts/util/crosswalks/nc.R` (NC); shared code in `s
 | `precinct_enr` | raw ENR precinct id (as in `geo`), NA if no 1:1 match |
 | `precinct_l2` | raw L2 `precinct` string, NA if no 1:1 match |
 | `l2_rule` | which matching tier produced the L2 match (for auditing) |
+| `precinct_votehub` | VoteHub shapefile `unit_id`, joined through `precinct_enr` from `crosswalks/votehub/{st}.csv` by `write_crosswalk()`; NA if no ENR id, no VoteHub layer for the state, or no match (see `docs/enr_cycle.md`, "VoteHub crosswalks") |
 
 ## Rules
 
