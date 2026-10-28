@@ -43,7 +43,7 @@ for (st in states) {
   t0 = proc.time()[["elapsed"]]
   cells = tryCatch(build_cells(st, d26), error = function(e) NULL)
   if (is.null(cells)) { cat(st, ": no precinct inputs, skipped\n"); next }
-  if ("medsl" %in% MODELS) invisible(medsl_setup(st, d26))
+  for (m in MODELS) setup_model(m, cells, st)
   setup = proc.time()[["elapsed"]] - t0
   ret = fake_returns(cells, st)
   race = tibble(race_id = ret$race_id[1], state = st, election = as.Date("2026-11-03"), jurisdiction = st,
@@ -52,7 +52,7 @@ for (st in states) {
     t1 = proc.time()[["elapsed"]]
     f = tryCatch(run_race(m, cells, ret), error = function(e) list(status = paste("error:", conditionMessage(e))))
     rows[[length(rows) + 1]] = tibble(state = st, precincts = n_distinct(cells$geo), setup_once_s = round(setup, 1),
-                                      model = unname(MODEL_NAMES[m]), seconds = round(proc.time()[["elapsed"]] - t1, 1),
+                                      model = m, seconds = round(proc.time()[["elapsed"]] - t1, 1),
                                       status = f$status)
   }
   jobs = c(jobs, make_jobs(cells, ret, race, MODELS, time = ret$time[1]))

@@ -92,10 +92,8 @@ set.seed(as.integer(Sys.getenv("SEED", unset = "20260303")))
 # ---- CONFIG ---------------------------------------------------------------------
 STATE          = "TX"
 ELECTION_FOLDER = "26_general"
-PATH_DROPBOX   = Sys.getenv(
-  "PATH_DROPBOX",
-  unset = "~/Library/CloudStorage/Dropbox-MIT/Young-Kyung Kim/Contracting/2024 Election Results"
-)
+# PATH_DROPBOX env var if set, else this machine's Dropbox (live/R/paths.R)
+PATH_DROPBOX   = local({ source("scripts/model/live/R/paths.R", local = TRUE); find_dropbox() })
 # PATH_COVS override lets a backtest driver swap in a panel whose covariates are all
 # pre-treatment for its target election (see tx24_backtest.R).
 path_covs      = Sys.getenv(
@@ -610,7 +608,8 @@ USE_COUNTY_RE = Sys.getenv("USE_COUNTY_RE", unset = "1") == "1"
 # (1|stratum_demo) + (1|geostratum), i.e. 5 and 6 levels -- for comparison. NC says a
 # coarse stratification recovers only 3-7% of the county effect (R^2 of the county effect
 # on 5 or 6 lean strata = 0.045 / 0.034), so this is expected to under-cover.
-RE_GROUPING = Sys.getenv("RE_GROUPING", unset = "county")   # county | cory | geostratum
+# "stratum_demo" alone is there for the live wrapper's demographic specs (live/R/demos.R).
+RE_GROUPING = Sys.getenv("RE_GROUPING", unset = "county")   # county | cory | geostratum | stratum_demo
 ICC_TURN  = as.numeric(Sys.getenv("ICC_TURN",  unset = "0.200"))   # TX 2022, L2
 ICC_SHARE = as.numeric(Sys.getenv("ICC_SHARE", unset = "0.269"))   # TX 2022, MEDSL
 ICC_TP    = as.numeric(Sys.getenv("ICC_TP",    unset = "0.269"))   # unmeasured; share proxy
@@ -1053,6 +1052,7 @@ CTY_MAT = if (!USE_COUNTY_RE) matrix(0, nrow(prec), 0) else {
   switch(RE_GROUPING,
     county     = mk(prec$county, "cty_"),
     geostratum = mk(prec$geostratum, "geo_"),
+    stratum_demo = mk(prec$stratum_demo, "sd_"),
     cory       = cbind(mk(prec$stratum_demo, "sd_"), mk(prec$geostratum, "geo_")),
     cli_abort("unknown RE_GROUPING {RE_GROUPING}"))
 }
@@ -1626,6 +1626,12 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   # --- 4d. invert, substitute observed, aggregate WITHIN each draw ---
   num_d = num_r = num_o = den = numeric(draws)
   cell_s_hat = matrix(NA_real_, N_PREC, M, dimnames = list(NULL, MODES))
+  # per cell (precinct x mode), means over draws: final votes by party (fin_*) and the
+  # model's fitted share of all votes by party (fit_*, before any counted votes are mixed
+  # in). Returned as `cell_votes` for the live wrapper's conformal interval; nothing here
+  # reads them.
+  cell_votes = lapply(setNames(nm = c("fin_dem", "fin_rep", "fin_oth", "fit_dem", "fit_rep", "fit_oth")),
+                      \(x) matrix(NA_real_, N_PREC, M, dimnames = list(NULL, MODES)))
   # PER-PRECINCT accumulators (draws x N_PREC), for precinct-level output.
   # pnum_r is accumulated so the precinct dump can report a TWO-PARTY share. Without it
   # only `dem_est` (Dem share of ALL votes) is available, which is a different quantity
@@ -1999,6 +2005,10 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     v_rep = cr + rem_two * (1 - s)
     v_oth = co + rem * tp
     cell_s_hat[, mi] = colMeans(v_dem / pmax(v_dem + v_rep, 1e-9))
+    cell_votes$fin_dem[, mi] = colMeans(v_dem); cell_votes$fin_rep[, mi] = colMeans(v_rep)
+    cell_votes$fin_oth[, mi] = colMeans(v_oth)
+    cell_votes$fit_dem[, mi] = colMeans((1 - tp) * s); cell_votes$fit_rep[, mi] = colMeans((1 - tp) * (1 - s))
+    cell_votes$fit_oth[, mi] = colMeans(tp)
     num_d = num_d + rowSums(v_dem)
     num_r = num_r + rowSums(v_rep)
     num_o = num_o + rowSums(v_oth)
@@ -2067,7 +2077,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       eq_prior_names = sort(unique(prior_eqs)), gated_modes = sort(unique(gated_modes)),
       all_prior = n_obs_cells < 30 || length(unique(prior_eqs)) == length(keys)
     ),
-    cell_s = cell_s_hat, cell_obs = mask,
+    cell_s = cell_s_hat, cell_obs = mask, cell_votes = cell_votes,
     prec = prec_out,
     # NULL when the county bound never ran, a 0-row frame when it ran and never bound.
     # The distinction is what the TX/CA/FL/MI inertness check needs: those states have zero
@@ -2092,9 +2102,14 @@ calibrate_sigma = function(cells, returns_full) {
 }
 
 # ---- 5. prior-only draws (reference measure for conf_seq) ----------------------
-prior_draws = function(cells, draws = DRAWS,
-                       sd_sys_s = 0.10, sd_sys_tau = 0.12,
-                       sd_idio_s = 0.40, sd_idio_tau = 0.30) {
+# Prior predictive draws of the race TOTALS, as if nothing were counted: a tibble with one
+# row per draw of dem, rep, oth and turnout (all votes). `cells` should carry the model's
+# own priors (prior_tau, prior_s, prior_tp), NOT priors re-centred on tonight's returns
+# (model_hybrid.R's recentre_prior()): a reference measure that has seen the data is not
+# a reference measure. Same terms and spreads as prior_draws(), which is this summarised.
+prior_totals = function(cells, draws = DRAWS,
+                        sd_sys_s = 0.10, sd_sys_tau = 0.12,
+                        sd_idio_s = 0.40, sd_idio_tau = 0.30) {
   # CRITICAL: the systematic terms are what make this a usable reference measure.
   # Idiosyncratic per-cell noise averages out over ~13.5k cells (1/sqrt(n)), so a
   # prior built from it alone is ABSURDLY tight at the statewide level -- tighter
@@ -2104,7 +2119,7 @@ prior_draws = function(cells, draws = DRAWS,
   sys_s   = rnorm(draws, 0, sd_sys_s)
   sys_tau = rnorm(draws, 0, sd_sys_tau)
   sys_tp  = rnorm(draws, 0, sd_sys_s)
-  num = den = numeric(draws)
+  dem = rep = oth = numeric(draws)
   for (m in MODES) {
     cm  = filter(cells, mode == m)
     nc  = nrow(cm)
@@ -2114,9 +2129,17 @@ prior_draws = function(cells, draws = DRAWS,
                    sys_s + matrix(rnorm(draws * nc, 0, sd_idio_s), draws))
     tp  = invlogit(matrix(logit(cm$prior_tp), draws, nc, byrow = TRUE) +
                    sys_tp + matrix(rnorm(draws * nc, 0, sd_idio_s), draws))
-    num = num + rowSums(tau * (1 - tp) * s); den = den + rowSums(tau)
+    dem = dem + rowSums(tau * (1 - tp) * s)
+    rep = rep + rowSums(tau * (1 - tp) * (1 - s))
+    oth = oth + rowSums(tau * tp)
   }
-  num / pmax(den, 1e-9)   # prior predictive for the DEM SHARE OF ALL VOTES
+  tibble::tibble(dem = dem, rep = rep, oth = oth, turnout = dem + rep + oth)
+}
+
+# prior predictive for the DEM SHARE OF ALL VOTES (the same draws as prior_totals())
+prior_draws = function(cells, draws = DRAWS, ...) {
+  p = prior_totals(cells, draws = draws, ...)
+  p$dem / pmax(p$turnout, 1e-9)
 }
 
 # ---- 6. run --------------------------------------------------------------------

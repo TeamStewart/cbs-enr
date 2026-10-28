@@ -26,7 +26,7 @@
 ## A county with nothing counted (p_c = 0) is all expectation: E_c votes at the Harris
 ## 2024 share moved by tonight's swing.
 ##
-## Intervals (models with draws: model_simpleswing, model_medsl): for each of the model's draws,
+## Intervals (fits with draws: swing, pois_bayes, lm_bayes, medsl_sur): for each of the model's draws,
 ## the swing and turnout ratio come from that draw (so the rest of the state moves with
 ## the scraped counties), plus
 ##   REST_COMMON_SD  the rest of the state swinging differently from the scraped counties
@@ -36,6 +36,9 @@
 ##   REST_TURN_SD    each county's turnout vs expectation (log scale)
 ## all applied only to the part of a county not yet counted. These are set by judgment,
 ## not fitted; the calibration nights do not cover the rest of the state.
+## Fits with bounds instead of draws (conf_seq, conformal; project_rest_bounds()): each end
+## of a party's interval takes the swing and turnout ratio from the scraped counties'
+## interval ends that are worst for that party, plus the quantiles of the REST_* terms.
 ##
 ##   county_baseline("TX")                           2024 / 2022 county results, all counties
 ##   read_cbs_latest("TX", "gov", env = "live")      the latest CBS snapshot for a race
@@ -150,10 +153,40 @@ project_rest = function(rest, swing, turn_ratio, noise = TRUE) {
         oth = rowSums(M(rest$o) + V * o_rem))
 }
 
+# Party totals of `rest` for a fit with bounds instead of draws. swing, turn_ratio: c(point,
+# lower, upper), from the scraped counties' two-party share and turnout intervals. A party's
+# low end takes the ends that are worst for it (Dem: low share, low turnout; Rep: high share,
+# low turnout; third parties: low turnout), its high end the opposite, and both add the
+# quantiles of the REST_* terms (DRAWS draws around the point, seeded). NA ends give NA bounds.
+# Returns tibble party, pred, pred_min, pred_max.
+project_rest_bounds = function(rest, swing, turn_ratio, level = 0.95) {
+  a = (1 - level) / 2
+  # rows: point; (low share, low turnout); (high, high); (low, high); (high, low)
+  sc = project_rest(rest, swing[c(1, 2, 3, 2, 3)], turn_ratio[c(1, 2, 3, 3, 2)], noise = FALSE)
+  set.seed(SEED)
+  nz = project_rest(rest, rep(swing[1], DRAWS), rep(turn_ratio[1], DRAWS)) - matrix(sc[1, ], DRAWS, 3, byrow = TRUE)
+  q = function(p) unname(apply(nz, 2, quantile, p, names = FALSE))
+  tibble(party = c("dem", "rep", "oth"), pred = unname(sc[1, ]),
+         pred_min = unname(c(sc[2, "dem"], sc[5, "rep"], sc[2, "oth"])) + q(a),
+         pred_max = unname(c(sc[3, "dem"], sc[4, "rep"], sc[3, "oth"])) + q(1 - a))
+}
+
+# swing and turnout ratio c(point, lower, upper) of a fit with bounds, against a baseline Dem
+# two-party share base_s and expected votes E. The point is from pt = c(dem, rep, tot); the
+# ends from the fit's race row (a missing turnout end is the point: conformal's turnout).
+fit_swing_bounds = function(fit, pt, base_s, E) {
+  lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
+  r = fit$race
+  tw = c(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]]), r$lo_twop, r$hi_twop)
+  tt = c(pt[["tot"]], coalesce(r$lo_turnout, pt[["tot"]]), coalesce(r$hi_turnout, pt[["tot"]]))
+  list(swing = lg(tw) - lg(base_s), turn_ratio = tt / max(E, 1))
+}
+
 # Statewide rows (geo = "all") for one race x model, in the same format as to_pred_data().
 # fit: run_race() result; cbs: latest CBS snapshot for the race; base: county_baseline().
 state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, level = 0.95) {
   if (!fit_ok(fit) || is.null(cbs) || !nrow(cbs)) return(NULL)
+  name = model_label(model); model = model_base(model)
   rest = rest_of_state(cbs, base, cells)
   sc = scraped_counties(cells)
   b32 = cbs |> distinct(county_fips, county_cbs) |> filter(county_cbs %in% sc) |>
@@ -167,51 +200,28 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
   lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
 
   cand = reported_by_candidate(returns)
-  if (model %in% c("swing", "medsl", "cprec")) {
+  has_draws = is.null(fit$pred)
+  conf = if (is.na(fit$conf %||% NA)) NA_character_ else paste0(fit$conf, "_plus_rest")
+  if (has_draws) {
     dr = fit$draws
     D32 = dr$dem; R32 = dr$rep; T32 = dr$turnout
     pt = fit_point(fit)
-    conf = sprintf(switch(model, swing = "county_bootstrap_%g_plus_rest",
-                          medsl = "posterior_%g_plus_rest",
-                          cprec = "cred_int_%g_plus_rest"), 100 * level)
-  } else if (model == "cory") {
-    pr = cory_by_candidate(fit)    # with any virtual-precinct votes (virtual.R)
-    pt = c(dem = sum(pr$pred[pr$party == "dem"]), rep = sum(pr$pred[pr$party == "rep"]), tot = sum(pr$pred))
-    D32 = pt[["dem"]]; R32 = pt[["rep"]]; T32 = pt[["tot"]]
-    conf = NA_character_
-  } else if (model == "cpois") {
-    # model_cory_pois has no draws, so the statewide composition follows the `cory` path:
-    # a point estimate carried to the rest of the state, with NO interval.
-    #
-    # It DOES carry conformal bounds on the scraped counties, and they are deliberately not
-    # used here. project_rest() propagates an interval by taking the swing and turnout ratio
-    # from each DRAW, so the rest of the state moves with the scraped counties. With only a
-    # lo/hi pair there is nothing to propagate: running project_rest() at the bounds would
-    # compose a conformal bound on scraped-county votes with a point projection of the
-    # remainder, which is not a calibrated interval on the statewide share. An honest NA
-    # beats a number nobody can defend on air. (Its scraped-county interval is also ~12x
-    # model_medsl's width and does not tighten as the count comes in -- see model_cpois.R.)
-    #
-    # TAKE `party` FROM THE RETURNS. fit_cpois runs in `party_est = "pooled"` mode, which
-    # labels every row party = "all"; `sum(pred[party == "dem"])` would be 0 for both
-    # majors and T32 would divide by zero. Same trap as in to_pred_data().
-    pr = (if (is.data.frame(fit$raw)) fit$raw else fit$raw$pred) |>
-      mutate(candidate = as.character(candidate)) |>
-      summarize(pred = sum(pred), .by = candidate) |>
-      left_join(select(cand, candidate, party), by = "candidate") |>
-      mutate(party = coalesce(as.character(party), "oth"))
-    pt = c(dem = sum(pr$pred[pr$party == "dem"]), rep = sum(pr$pred[pr$party == "rep"]),
-           tot = sum(pr$pred))
-    if (!(pt[["dem"]] + pt[["rep"]] > 0))
-      stop("cpois: no dem/rep votes after joining party from the returns -- check the candidate join")
-    D32 = pt[["dem"]]; R32 = pt[["rep"]]; T32 = pt[["tot"]]
-    conf = NA_character_
-  } else stop("state_pred_data() has no rule for model '", model, "' yet")
+  } else {
+    # bounds instead of draws: the scraped counties' party bounds plus the rest's
+    # (project_rest_bounds()); a fit without an interval keeps NA bounds
+    pr = mutate(fit$pred, grp = if_else(party %in% c("dem", "rep"), party, "oth"))
+    pt = c(dem = sum(pr$pred[pr$grp == "dem"]), rep = sum(pr$pred[pr$grp == "rep"]), tot = sum(pr$pred))
+    sb = fit_swing_bounds(fit, pt, h32, e32)
+    rb = project_rest_bounds(rest, sb$swing, sb$turn_ratio, level)
+    b32 = summarize(pr, across(c(pred_min, pred_max), sum), .by = grp)
+    i = match(rb$party, b32$grp)              # NA: no candidate of that party in the race
+    lo = setNames(ifelse(is.na(i), 0, b32$pred_min[i]) + rb$pred_min, rb$party)
+    hi = setNames(ifelse(is.na(i), 0, b32$pred_max[i]) + rb$pred_max, rb$party)
+  }
 
   # rest of the state: point (no noise, from the point fit) and per-draw
   rest_pt = project_rest(rest, lg(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]])) - lg(h32),
                          pt[["tot"]] / max(e32, 1), noise = FALSE)
-  has_draws = length(D32) > 1
   rest_dr = if (has_draws) project_rest(rest, lg(D32 / (D32 + R32)) - lg(h32), T32 / max(e32, 1)) else NULL
 
   # by party: point, and draws if any
@@ -224,21 +234,20 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
 
   # reported: scraped counties from our returns, the rest from CBS
   rep_rest = c(dem = sum(rest$d), rep = sum(rest$r), oth = sum(rest$o))
-  oth_c = cand$party %in% c("oth", "ind")
-  w = if (any(oth_c)) {
-    ww = if (sum(cand$rep[oth_c]) > 0) cand$rep / sum(cand$rep[oth_c]) else rep(1 / sum(oth_c), nrow(cand))
-    if_else(oth_c, ww, NA_real_)
-  } else rep(NA_real_, nrow(cand))
+  cand = cand_split(cand)
   q = function(x) unname(cred(x, level))
   rows = lapply(seq_len(nrow(cand)), function(i) {
-    pty = if (oth_c[i]) "oth" else cand$party[i]
-    k = if (oth_c[i]) w[i] else 1
+    pty = cand$grp[i]
+    k = cand$w[i]
     rp = cand$rep[i] + k * rep_rest[[pty]]
     point = k * P[[pty]]
     if (has_draws) {
       v = k * Dd[[pty]]; ci_v = q(v); ci_s = q(v / tot_d)
       pw = if (pty == "dem") mean(Dd$dem > Dd$rep) else if (pty == "rep") mean(Dd$rep > Dd$dem) else NA_real_
-    } else { ci_v = ci_s = c(NA_real_, NA_real_); pw = NA_real_ }
+    } else {
+      # the share version of a bound (bound / point total) is approximate, as in to_pred_data()
+      ci_v = k * c(lo[[pty]], hi[[pty]]); ci_s = ci_v / tot_pt; pw = NA_real_
+    }
     tibble(candidate = cand$candidate[i], party = cand$party[i], pred_type = c("vote", "share"),
            rep = c(rp, NA_real_), pred = c(point, point / tot_pt),
            pred_min = pmax(c(ci_v[1], ci_s[1]), 0), pred_max = c(ci_v[2], ci_s[2]), p_win = pw)
@@ -254,7 +263,7 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
   # race_id carried, not reconstructed -- see the note in output.R::to_pred_data()
   bind_cols(race[rep(1, nrow(out)), c("race_id", "state", "election", "jurisdiction",
                                       "contest", "district")], out) |>
-    mutate(time = time, model = unname(MODEL_NAMES[model]), model_conf = conf, pct_rep = pct, geo = "all",
+    mutate(time = time, model = name, model_conf = conf, pct_rep = pct, geo = "all",
            cbs_as_of = max(cbs$observed_at), election = as.Date(election), district = as.integer(district)) |>
     relocate(state, election, jurisdiction, contest, district, candidate, party, pred_type, time,
              model, model_conf, pct_rep, rep, pred, pred_min, pred_max, p_win, geo, race_id) |>

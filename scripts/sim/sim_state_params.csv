@@ -1,7 +1,11 @@
-state,poll_close,poll_close_late,note
-TX,20:00,EL PASO=21:00,"From make_sim_tx.R. 19:00 CT = 20:00 ET; El Paso is Mountain and heavily Hispanic/Democratic, so a late close correlates reporting TIME with PARTISANSHIP -- any mechanism that weights precincts by how early they finish inherits that as a share bias. Keep it."
-AK,,,"NEEDS FILLING. Poll close is 20:00 AKT, so roughly 24:00 ET, and AK has its own late-close areas. Times here are EASTERN, as P$poll_close is."
-CA,,,"NEEDS FILLING. 20:00 PT = 23:00 ET."
-FL,,,"NEEDS FILLING. FL spans two zones: most of the state 19:00 ET, the panhandle 20:00 ET. The panhandle is the Republican end, so this is the mirror of TX's El Paso case and matters for the same reason."
-MI,,,"NEEDS FILLING. Most of MI 20:00 ET; the four Upper Peninsula counties on Central time close 21:00 ET."
-NC,,,"NEEDS FILLING. Single zone, close is not on the hour."
+state,poll_close,poll_close_late,pres24_dem2,site_methods,note
+TX,20:00,EL PASO=21:00,0.43062880324543612,,"19:00 CT = 20:00 ET; El Paso is Mountain and heavily Hispanic/Democratic, so a late close correlates reporting TIME with PARTISANSHIP -- any mechanism that weights precincts by how early they finish inherits that as a share bias. Keep it. pres24_dem2 is 42.46 / (42.46 + 56.14), the value make_sim_tx.R always used, so TX sims stay bit-identical."
+NC,19:30,,,early,"Single zone, polls close 19:30 ET. Early is reported by one-stop site, not precinct, in the counties lookups/reporting_levels.csv marks county_site."
+GA,19:00,,,,"Single zone, polls close 19:00 ET."
+MI,20:00,GOGEBIC=21:00;IRON=21:00;DICKINSON=21:00;MENOMINEE=21:00,,,"Most of MI 20:00 ET; the four Upper Peninsula counties on Central time close 21:00 ET."
+OH,19:30,,,,"Single zone, polls close 19:30 ET."
+IA,21:00,,,,"20:00 CT = 21:00 ET, single zone. No model inputs yet."
+MN,21:00,,,,"20:00 CT = 21:00 ET, single zone. No model inputs yet."
+AK,2026-11-04 00:00,,,early|mail,"20:00 AKST = 00:00 ET Nov 4 (DST has ended). The Aleutians west of 169.5W close 20:00 HST = 01:00 ET, but they are part of a house district (the CBS unit), so they cannot be split out here. Early and mail report by district bucket ({dd}-early, {dd}-absentee), per reporting_levels.csv. Prov ({dd}-question) is also district-level in the feed, but mode_scope.csv folds prov into eday, which reports by precinct, so it stays on the precinct rows."
+CA,,,,,"NEEDS FILLING. 20:00 PT = 23:00 ET."
+FL,,,,,"NEEDS FILLING. FL spans two zones: most of the state 19:00 ET, the panhandle 20:00 ET. The panhandle is the Republican end, so this is the mirror of TX's El Paso case and matters for the same reason."

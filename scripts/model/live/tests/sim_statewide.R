@@ -34,7 +34,7 @@
 ## scraped counties by much more than the model allows for.
 ##
 ## From the cbs-enr folder:
-##   Rscript scripts/model/live/tests/sim_statewide.R [scenario] [--models=swing,cory,medsl]
+##   Rscript scripts/model/live/tests/sim_statewide.R [scenario] [--models=swing,ratio_strata,medsl_sur]
 ##           [--offset=<logit>] [--seed=<n>] [--checkpoints=all|calib] [--races=gov]
 ##           [--snapshots-only]   (write the simulated CBS feed + truth, don't run the models)
 ## Writes 26_general/model_tests/SIM_statewide_<scenario>[_offset<x>][_<race>].csv
@@ -116,6 +116,25 @@ cap_at = function(tm) {
 cand_names = sim$truth |> distinct(contest, party, candidate) |>
   mutate(party = if_else(party %in% c("dem", "rep"), party, "oth")) |>
   slice_head(n = 1, by = c(contest, party))
+# The feed follows cbs_county_pull.R's schema_version 2: one row per county x method x
+# candidate, with county_total_vote set (here the method rows add up to it exactly; in the
+# real feed they fall short). The other counties' votes are split by method in the same
+# shares as the scraped counties' final votes, per race x party. The scraped counties' rows
+# are the sim's own counts with every precinct included (a censored precinct is one the
+# scrapers miss, not CBS), so medsl_sur's county step has exact targets once a county is in.
+msplit = sim$truth |> filter(geo %in% cells$geo) |>
+  mutate(party = if_else(party %in% c("dem", "rep"), party, "oth")) |>
+  summarize(v = sum(votes), .by = c(contest, party, method)) |>
+  mutate(m_share = v / sum(v), .by = c(contest, party)) |> select(-v)
+sim_cbs = sim; sim_cbs$truth = mutate(sim$truth, censored = FALSE)
+final32 = sim$truth |> filter(geo %in% cells$geo) |> summarize(final = sum(votes), .by = c(contest, county_cbs))
+cbs_cols = function(x, tm) mutate(x, county_total_vote = sum(votes), .by = county_cbs) |>
+  transmute(state = STATE, contest, district = NA_integer_, county_fips, county_cbs, county_name, method,
+            candidate, party, party_cbs = party, votes, rep_method = NA_real_, exp_method = NA_real_,
+            county_total_vote, county_pct_exp_vote, county_precincts_in, county_precincts_of,
+            county_ts = lubridate::with_tz(tm, "UTC"), race_last_updated = lubridate::with_tz(tm, "UTC"),
+            race_pct_in = NA_real_, county_pct_rep = county_pct_exp_vote / 100, race_call = FALSE, env = "sim",
+            observed_at = lubridate::with_tz(tm, "UTC"), schema_version = 2L)
 for (tm in as.list(times)) {
   pc = pmin(pmax(1 - exp(-pmax(as.numeric(difftime(tm, rest$start, units = "mins")), 0) / rest$tau), 0), 1) * cap_at(tm)
   for (r in races) {
@@ -125,24 +144,31 @@ for (tm in as.list(times)) {
     snap = tibble(county_fips = f$county_fips, county_cbs = f$county_cbs, county_name = f$county_name,
                   dem = round(tot * (1 - f$oth) * sc), rep = round(tot * (1 - f$oth) * (1 - sc)),
                   county_pct_exp_vote = floor(100 * pc), prec_of = pmax(round(f$exp_base / 800), 1)) |>
-      mutate(oth = tot - dem - rep) |>
+      mutate(oth = tot - dem - rep, contest = r,
+             county_precincts_in = floor(prec_of * county_pct_exp_vote / 100), county_precincts_of = prec_of) |>
       pivot_longer(c(dem, rep, oth), names_to = "party", values_to = "votes") |>
+      inner_join(msplit, by = c("contest", "party"), relationship = "many-to-many") |>
+      mutate(votes = round(votes * m_share)) |>
       left_join(filter(cand_names, contest == r) |> select(party, candidate), by = "party") |>
-      transmute(state = STATE, contest = r, district = NA_integer_, county_fips, county_cbs, county_name,
-                candidate, party, party_cbs = party, votes,
-                county_total_vote = NA_real_, county_pct_exp_vote,
-                county_precincts_in = floor(prec_of * county_pct_exp_vote / 100), county_precincts_of = prec_of,
-                county_ts = lubridate::with_tz(tm, "UTC"), race_last_updated = lubridate::with_tz(tm, "UTC"),
-                race_pct_in = NA_real_, race_call = FALSE, env = "sim", observed_at = lubridate::with_tz(tm, "UTC"))
-    # CBS lists every county: the scraped ones too (their rows are not used for the
-    # projection, but they place the scraped counties' history -- see counties.R)
-    snap = bind_rows(snap, lookup |> filter(county_cbs %in% scraped) |>
-      tidyr::crossing(filter(cand_names, contest == r) |> select(party, candidate)) |>
-      transmute(state = STATE, contest = r, district = NA_integer_, county_fips, county_cbs, county_name,
-                candidate, party, party_cbs = party, votes = 0, county_total_vote = NA_real_,
-                county_pct_exp_vote = 0, county_precincts_in = 0, county_precincts_of = 1,
-                county_ts = lubridate::with_tz(tm, "UTC"), race_last_updated = lubridate::with_tz(tm, "UTC"),
-                race_pct_in = NA_real_, race_call = FALSE, env = "sim", observed_at = lubridate::with_tz(tm, "UTC")))
+      cbs_cols(tm)
+    # CBS lists every county: the scraped ones too. Their rows are not used for the
+    # projection (they place the scraped counties' history -- see counties.R), but
+    # medsl_sur's county step uses them as county x method targets
+    ret = returns_from_sim(sim_cbs, r, tm, geos = cells$geo) |>
+      mutate(county_cbs = stringr::str_extract(geo, "(?<=_)[0-9]{3}(?=_)"))
+    prec = ret |> distinct(county_cbs, geo, stage) |>
+      summarize(county_precincts_in = sum(stage == 6L), county_precincts_of = n(), .by = county_cbs)
+    snap32 = ret |>
+      mutate(party = if_else(party %in% c("dem", "rep"), party, "oth")) |>
+      summarize(votes = sum(votes), .by = c(county_cbs, method, party)) |>
+      mutate(contest = r) |>
+      left_join(filter(cand_names, contest == r) |> select(party, candidate), by = "party") |>
+      left_join(filter(final32, contest == r) |> select(county_cbs, final), by = "county_cbs") |>
+      mutate(county_pct_exp_vote = floor(100 * sum(votes) / final), .by = county_cbs) |>
+      left_join(prec, by = "county_cbs") |>
+      inner_join(select(lookup, county_cbs, county_fips, county_name), by = "county_cbs") |>
+      cbs_cols(tm)
+    snap = bind_rows(snap, snap32)
     tag = paste0(STATE, "_", r)
     dd = file.path(dir_cbs, "cbs_api", "sim", tag)
     dir.create(dd, recursive = TRUE, showWarnings = FALSE)
@@ -169,7 +195,7 @@ res = map_dfr(as.list(times), function(tm) {
   cbs = setNames(lapply(races, \(r) read_cbs_latest(STATE, r, env = "sim", at = tm, dir_26 = dir_cbs)), races)
   out = predict_all(cells, ret, models = MODELS_RUN, time = tm, cbs = cbs, base = base)
   rest_in = map_dfr(races, \(r) if (is.null(cbs[[r]])) tibble(contest = r, rest_counted = 0) else
-                      tibble(contest = r, rest_counted = sum(cbs[[r]]$votes)))
+                      tibble(contest = r, rest_counted = sum(cbs[[r]]$votes[!cbs[[r]]$county_cbs %in% scraped])))
   sim_in = ret |> summarize(sim_counted = sum(votes), .by = race_id) |> rename(contest = race_id)
   cat(sprintf("  %s  %s\n", format(tm, "%m-%d %H:%M"), paste(unique(out$status$statewide), collapse = "/")))
   if (!nrow(out$pred)) return(NULL)

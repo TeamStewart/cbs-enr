@@ -127,6 +127,10 @@ list(
   tar_target(la_totals, get_la_totals(la_totals_timestamp)),
   # dashboard: contests shown are set by DASHBOARD_CONTESTS in scripts/util/globals.R
   tar_combine(dash_inputs, map_multi[["summary"]], map_single[["summary"]], command = list(!!!.x)),
+  # election-night models, after the scrapes: the run = TRUE rows of model_config.csv, on the
+  # real returns unless MODEL_SIM (scripts/util/globals.R) names a sim scenario
+  tar_target(model_config, path.expand(fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_config.csv")), format = "file"),
+  tar_target(model_status, run_models(model_config, MODEL_SIM, MODEL_SIM_AT, after = dash_inputs), cue = tar_cue(mode = "always")),
   tar_target(dashboard_data, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS)),
   tar_quarto(dashboard, "index.qmd", quiet = FALSE)
 )

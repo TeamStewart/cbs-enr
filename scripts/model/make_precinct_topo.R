@@ -40,9 +40,8 @@ suppressPackageStartupMessages({
 })
 
 # ---- paths ----------------------------------------------------------------------
-PATH_DROPBOX <- Sys.getenv(
-  "PATH_DROPBOX",
-  unset = "~/Library/CloudStorage/Dropbox-MIT/Young-Kyung Kim/Contracting/2024 Election Results")
+# PATH_DROPBOX env var if set, else this machine's Dropbox (live/R/paths.R)
+PATH_DROPBOX <- local({ source("scripts/model/live/R/paths.R", local = TRUE); find_dropbox() })
 P_IN   <- path.expand(file.path(PATH_DROPBOX, "26_general/input_data/model_inputs"))
 P_GPKG <- path.expand(file.path(PATH_DROPBOX,
             "26_general/input_data/votehub-shapefiles/26_pct_bdrys.gpkg"))

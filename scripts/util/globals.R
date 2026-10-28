@@ -6,6 +6,14 @@ ELECTION_FOLDER = Sys.getenv("CBS_ELECTION_FOLDER", "26_general")
 PATH_DROPBOX = ""
 PATH_ENIGHTDATA = ""
 
+# Election-night models in the targets pipeline (run_models() in scripts/functions.R; which
+# models run is {ELECTION_FOLDER}/model_config.csv). MODEL_SIM = "" runs them on the real
+# scraped returns and writes to model_results/. A 26_sim scenario name (e.g. "tx_base") runs
+# them on that simulated night at MODEL_SIM_AT instead, written to
+# model_tests/run_night_sim/<scenario>/ and never to model_results/.
+MODEL_SIM = Sys.getenv("CBS_MODEL_SIM", "")
+MODEL_SIM_AT = Sys.getenv("CBS_MODEL_SIM_AT", "2026-11-03 22:00")
+
 local({
   user = Sys.info()["user"]
 

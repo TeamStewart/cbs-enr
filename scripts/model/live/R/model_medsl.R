@@ -1,21 +1,22 @@
 # ========================================
-## model_medsl.R -- model_medsl: Young-Kyung's precinct x vote-method model
-## (scripts/model/model_turnout.R), run on any race in the live format.
+## model_medsl.R -- medsl_sur: Young-Kyung's precinct x vote-method model
+## (scripts/model/model_turnout.R, with model_hybrid.R's re-centred priors; fit_medsl_sur()),
+## run on any race in the live format. fit_medsl() alone, the plain model_turnout.R model
+## (formerly model_medsl), is no longer run on the night but is what fit_medsl_sur() calls.
 ##
 ## model_turnout.R is NOT copied or edited here. Its own code runs, from its own file, each
 ## time the models are loaded for a state, so a change Young-Kyung makes there is picked
-## up with no edit to live/. This is the same way scripts/model/tests/test_sim_night.R
-## (section A, "trial") runs it:
+## up with no edit to live/:
 ##   - every top-level statement of its sections 1-2 runs (config, functions, `prec`, mode
 ##     priors, `cells`, CTY_MAT), and sections 3-5 contribute only their functions
 ##     (fit_stage(), prior_draws(), ...). Its synthetic run (section 6) never runs.
 ##   - its two file reads (`covs_long`, `mode_hist`) are replaced by frames built here from
 ##     the state's model inputs, {ST}_precinct.parquet and {ST}_precinct_mode_history.parquet
-##     (prep_model_inputs.R), with the same column mapping test_sim_night.R uses.
+##     (prep_model_inputs.R); the column mapping is below.
 ##   - it runs in its own environment, one per state, so its `cells`, `prec` etc. never
 ##     collide with live/'s objects or with another state's.
 ##   - MODE_OFFSET_SOURCE defaults to "zero" (our mode history has turnout by method but
-##     not by party), as in test_sim_night.R. Any of the model's own switches can still be
+##     not by party). Any of the model's own switches can still be
 ##     set as environment variables before loading (e.g. MODE_OFFSET_SOURCE=nc,
 ##     USE_COUNTY_RE=0, SIGMA_STRUCT=diag).
 ##
@@ -23,9 +24,11 @@
 ##   fit_medsl(cells, returns)   cells from build_cells(), one race's standard returns
 ## A cell (precinct x method) counts as reported once it has any votes (its shares are used
 ## at once) and as complete once that method is fully counted (`complete` in the returns;
-## its turnout is used only then) -- test_sim_night.R's defaults (--cells=any
-## --complete=feed).
-## Interval: the model's posterior draws, mean +/- z * sd as for the other models. The
+## its turnout is used only then).
+## Interval (results.R): credible (default), the posterior draws' equal-tailed interval;
+## conf_seq, against model_turnout.R's prior_totals() on the model's own (not re-centred)
+## priors, drawn after the fit so the default's random numbers are unchanged; or
+## conformal, from fit_stage()'s per-cell final votes and fitted shares (`cell_votes`). The
 ## number of draws is model_turnout.R's DRAWS (500) unless MEDSL_DRAWS is set, e.g.
 ## MEDSL_DRAWS=250 in ~/.Renviron. Speed (TX, one race): about 6 s of fixed work plus
 ## about 1 s per 100 draws, and the 95% interval moves by under 0.05 points between 250
@@ -39,15 +42,18 @@
 # ========================================
 
 MEDSL_SRC = "scripts/model/model_turnout.R"
+HYBRID_SRC = "scripts/model/model_hybrid.R"
 .medsl_env = new.env()   # cache: one model environment per state
 
 # model_turnout.R's input frame (`covs_long`, long by party) and mode history, from our
-# model inputs. Column mapping (as in test_sim_night.R section A):
+# model inputs. Column mapping:
 #   county       <- county_name              est (dem/rep) <- est_turnout x dem2 / (1 - dem2)
 #   turnout22/24 <- L2 turnout22/24 (rates)  age           <- p_age_65_up (share 65+)
 #   male         <- p_male                   pred.bla/his  <- yg_pred_bla / yg_pred_his
 #   tp_raw       <- oth_base (third-party share; the model clamps it to [0, 0.25])
-medsl_inputs = function(state, dir_26 = find_26_general(), mode_election = NULL) {
+# cols: extra precinct columns a demographic spec needs (demo_covs(), demos.R; "dem2_sq" is
+#   dem2 squared), joined on under their own names
+medsl_inputs = function(state, dir_26 = find_26_general(), mode_election = NULL, cols = character()) {
   dir_in = file.path(dir_26, "input_data", "model_inputs")
   inp = read_pq(file.path(dir_in, paste0(state, "_precinct.parquet")))
   mh = mode_history(state, dir_26, mode_election)
@@ -56,6 +62,9 @@ medsl_inputs = function(state, dir_26 = find_26_general(), mode_election = NULL)
               turnout22, turnout24, age = p_age_65_up, male = p_male,
               `pred.bla` = yg_pred_bla, `pred.his` = yg_pred_his, tp_raw = oth_base,
               est_turnout)
+  if (length(setdiff(cols, "dem2_sq")))
+    covs_wide = left_join(covs_wide, select(demo_covs(state, dir_26), geo, all_of(setdiff(cols, "dem2_sq"))), by = "geo")
+  if ("dem2_sq" %in% cols) covs_wide = mutate(covs_wide, dem2_sq = dem2^2)
   # fill blank YouGov race predictions: county mean, then state mean
   filled = character()
   for (v in c("pred.bla", "pred.his")) {
@@ -85,17 +94,41 @@ medsl_inputs = function(state, dir_26 = find_26_general(), mode_election = NULL)
        note = if (length(filled)) paste0("filled with county means: ", paste(filled, collapse = "; ")) else "")
 }
 
+# A demographic spec (demos.R) as model_turnout.R settings: list(covs = COVS_TURN and
+# COVS_SHARE, re = RE_GROUPING or NULL to keep the model's county effect, cols = frame columns
+# to add). NULL for medsl_cov, the model's own design, so the default is untouched. Covariates
+# follow log_n (the model's scale term), named as medsl_inputs() names them; (1 | x) terms,
+# and tpsob_g's geostratum, become the random-effect grouping.
+medsl_spec = function(demo) {
+  if (demo == "medsl_cov") return(NULL)
+  f = DEMOS[[check_demo(demo)]]
+  fixed = if (is.null(reformulas::nobars(f))) character() else attr(terms(reformulas::nobars(f)), "term.labels")
+  grp = c(vapply(reformulas::findbars(f), \(b) deparse(b[[3]]), ""), intersect(fixed, c("geostratum", "stratum_demo")))
+  fixed = setdiff(fixed, c("geostratum", "stratum_demo"))
+  own = c(`I(dem2^2)` = "dem2_sq", p_age_65_up = "age", p_male = "male", yg_pred_bla = "pred.bla",
+          yg_pred_his = "pred.his", dem2 = "dem2", turnout22 = "turnout22", turnout24 = "turnout24")
+  covs = ifelse(fixed %in% names(own), own[fixed], fixed)
+  re = if (setequal(grp, c("geostratum", "stratum_demo"))) "cory" else if (length(grp)) grp[1]
+  list(covs = c("log_n", unname(covs)), re = re, cols = c(setdiff(fixed, names(own)), if ("I(dem2^2)" %in% fixed) "dem2_sq"))
+}
+
 # Run model_turnout.R's sections 1-2 and its function definitions for one state, in a fresh
 # environment, and return that environment. Cached per state (and county set) for the session.
 # counties: fit only these counties' precincts (county names as in cells$county) -- the
 #   counties the live feed actually covers, so the model's totals never include counties
 #   whose votes come from CBS instead. NULL = every county in the state's inputs.
-medsl_key = function(state, counties) if (is.null(counties)) state else paste(state, paste(sort(unique(counties)), collapse = "|"))
-medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refresh = FALSE, counties = NULL) {
-  key = medsl_key(state, counties)
+# hybrid: also load model_hybrid.R into the environment (fit_stage_hybrid(), see fit_medsl_sur())
+# demo: a demographic spec (medsl_spec())
+medsl_key = function(state, counties, hybrid = FALSE, demo = "medsl_cov")
+  paste0(if (is.null(counties)) state else paste(state, paste(sort(unique(counties)), collapse = "|")),
+         if (hybrid) "|hybrid", if (demo != "medsl_cov") paste0("|", demo))
+medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refresh = FALSE, counties = NULL,
+                       hybrid = FALSE, demo = "medsl_cov") {
+  key = medsl_key(state, counties, hybrid, demo)
   if (!refresh && !is.null(.medsl_env[[key]])) return(.medsl_env[[key]])
   if (!file.exists(src)) stop("Can't find ", src, " (run from the cbs-enr folder)")
-  inp = medsl_inputs(state, dir_26)
+  spec = medsl_spec(demo)
+  inp = medsl_inputs(state, dir_26, cols = spec$cols)
   if (!is.null(counties)) {
     inp$covs_long = filter(inp$covs_long, county %in% counties)
     inp$mode_hist = filter(inp$mode_hist, geo %in% inp$covs_long$geo)
@@ -119,25 +152,28 @@ medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refre
   is_source = function(e) is.call(e) && identical(e[[1]], as.name("source"))
 
   env = new.env(parent = globalenv())
-  assign("covs_long", inp$covs_long, envir = env)
-  assign("mode_hist", inp$mode_hist, envir = env)
   # model_turnout.R hardcodes STATE = "TX" (its own default driver is the TX trial), and
   # nothing here used to override it -- so every state ran with STATE == "TX". Harmless
   # while STATE only fed unread file paths and a cli header, but anything keyed on it (the
   # per-state REF_MODE / MODES lookup) would silently read TX for all six states. Inject it
   # and skip the model's own assignment, exactly as covs_long / mode_hist are handled.
-  assign("STATE", state, envir = env)
+  # A demographic spec's covariates and grouping are injected the same way.
+  inject = c(list(covs_long = inp$covs_long, mode_hist = inp$mode_hist, STATE = state),
+             if (!is.null(spec)) list(COVS_TURN = spec$covs, COVS_SHARE = spec$covs),
+             if (!is.null(spec$re)) list(RE_GROUPING = spec$re))
+  for (v in names(inject)) assign(v, inject[[v]], envir = env)
   skipped = character()
   suppressMessages(for (i in seq_along(ex)) {
     e = ex[[i]]; line = sr[[i]][1]
-    if (lhs(e) %in% c("covs_long", "mode_hist", "STATE")) { skipped = c(skipped, lhs(e)); next }
+    if (lhs(e) %in% names(inject)) { skipped = c(skipped, lhs(e)); next }
     if (!(line < cut_ret || (line < cut_run && is_fun(e)))) next
     # source(model_core.R) goes into the model's environment, not the global one
     if (is_source(e)) e[["local"]] = env
     eval(e, envir = env)
   })
-  if (!setequal(skipped, c("covs_long", "mode_hist", "STATE")))
-    stop("model_turnout.R no longer assigns covs_long / mode_hist / STATE at top level; update live/R/model_medsl.R")
+  if (!setequal(skipped, names(inject)))
+    stop("model_turnout.R no longer assigns ", paste(setdiff(names(inject), skipped), collapse = " / "),
+         " at top level; update live/R/model_medsl.R")
   if (!exists("fit_stage", envir = env, inherits = FALSE)) stop("model_turnout.R no longer defines fit_stage()")
 
   env$.draws = as.integer(Sys.getenv("MEDSL_DRAWS", unset = env$DRAWS))
@@ -146,47 +182,50 @@ medsl_setup = function(state, dir_26 = find_26_general(), src = MEDSL_SRC, refre
     "bounded turnout %s (KAPPA %.2f, ref %s); Sigma %s/%s; county RE %s; mode offsets %s; gates %d cells / %d counties"),
     .draws, USE_COMPOSE, KAPPA, REF_MODE, SIGMA_SOURCE, SIGMA_STRUCT, USE_COUNTY_RE,
     MODE_OFFSET_SOURCE, MIN_MODE_CELLS, MIN_MODE_CTY))
+  if (!is.null(spec)) env$.settings = sprintf("%s; spec %s (covariates %s; random effect %s)", env$.settings, demo,
+                                               paste(spec$covs, collapse = ", "), env$RE_GROUPING)
   if (nzchar(inp$note)) env$.settings = paste0(env$.settings, "; ", inp$note)
+  if (hybrid) {
+    suppressMessages(sys.source(HYBRID_SRC, envir = env))
+    env$.settings = with(env, sprintf("model_hybrid.R (arms: level %s, composition %s, share %s, county %s) on %s",
+                                      HY_LEVEL, HY_COMP, HY_SHARE, HY_COUNTY, .settings))
+  }
   .medsl_env[[key]] = env
   env
 }
 
 # the model environment for the counties in `cells` (all of the state's counties -> the
-# state-wide cached set-up)
-fit_medsl_setup_for = function(cells, returns, dir_26 = find_26_general()) {
-  state = unique(returns$state)
-  if (length(state) != 1) stop("fit_medsl() takes one race (one state) at a time")
+# state-wide cached set-up). Also run before forking, through MODEL_SETUP (run.R).
+fit_medsl_setup_for = function(cells, state, dir_26 = find_26_general(), hybrid = FALSE, demo = "medsl_cov") {
   key = paste0("counties_", state)
   if (is.null(.medsl_env[[key]])) .medsl_env[[key]] =
     unique(read_pq(file.path(dir_26, "input_data", "model_inputs", paste0(state, "_precinct.parquet")))$county_name)
   ctys = unique(cells$county)
-  medsl_setup(state, dir_26, counties = if (setequal(ctys, .medsl_env[[key]])) NULL else ctys)
+  medsl_setup(state, dir_26, counties = if (setequal(ctys, .medsl_env[[key]])) NULL else ctys, hybrid = hybrid,
+              demo = demo)
 }
 
 # cells:   build_cells() output (used for the precinct x method counts and the counted
 #          totals, so they match the other models exactly)
 # returns: one race's standard returns (returns.R)
-fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26_general()) {
+# demo: a demographic spec (medsl_spec()); interval: "credible", "conf_seq" or "conformal" (results.R)
+# hybrid / cbs_county: see fit_medsl_sur()
+fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26_general(),
+                     hybrid = FALSE, cbs_county = NULL, demo = "medsl_cov", interval = "credible") {
   state = unique(returns$state)
   if (length(state) != 1) stop("fit_medsl() takes one race (one state) at a time")
+  name = if (hybrid) "medsl_sur" else "medsl"
   # fit the counties in `cells` (the ones the feed covers; see feed_cells())
-  env = fit_medsl_setup_for(cells, returns, dir_26)
+  env = fit_medsl_setup_for(cells, state, dir_26, hybrid, demo)
   counts = cell_counts(cells, returns)
 
-  counted = tibble(raw_twop = sum(counts$c_dem) / max(sum(counts$c_dem + counts$c_rep), 1),
-                   counted_votes = sum(counts$c_tot), expected_votes = sum(cells$exp_votes),
-                   obs_cells = sum(counts$c_tot > 0), complete_cells = sum(counts$c_tot > 0 & counts$complete))
+  counted = race_counted(cells, counts)
   settings = sprintf("%s; %g%% interval", env$.settings, 100 * level)
-  if (!any(counts$c_tot > 0)) {
-    return(list(model = "medsl", status = "no_votes", settings = settings,
-                race = bind_cols(tibble(status = "no_votes", est_twop = NA_real_, lo_twop = NA_real_, hi_twop = NA_real_,
-                                        p_dem_win = NA_real_, est_turnout = NA_real_, lo_turnout = NA_real_,
-                                        hi_turnout = NA_real_), counted),
-                cells = NULL, draws = NULL, point = NULL))
-  }
+  if (!any(counts$c_tot > 0))
+    return(model_result(name, "no_votes", settings, counted, interval = interval, level = level))
 
-  # the model's returns: one row per precinct x mode (test_sim_night.R --cells=any
-  # --complete=feed): reported once it has votes, complete once that method is counted out
+  # the model's returns: one row per precinct x mode, reported once it has votes, complete
+  # once that method is counted out
   rep_cell = counts$c_tot > 0
   ret_m = counts |>
     transmute(geo, mode = method,
@@ -216,8 +255,10 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
   known_cells = tibble(geo = union(as.character(cells$geo), as.character(env$cells$geo)))
   cty_obs = bucket_counts(known_cells, returns)
   report_buckets(cty_obs, cells = known_cells, label = unique(returns$race_id)[1])
-  f = suppressMessages(env$fit_stage(env$cells, ret_m, draws = draws, cross_mode = env$USE_CROSS_MODE,
-                                     county_obs = cty_obs))
+  f = suppressMessages(if (hybrid)
+    env$fit_stage_hybrid(env$cells, ret_m, draws = draws, cross_mode = env$USE_CROSS_MODE,
+                         county_obs = cty_obs, cbs_county = cbs_county)
+  else env$fit_stage(env$cells, ret_m, draws = draws, cross_mode = env$USE_CROSS_MODE, county_obs = cty_obs))
   # fit_stage() is run under suppressMessages (the model is chatty), which would also eat
   # the county bound's per-county log -- and that log is the only way to tell a bound that
   # binds on real votes from one that binds on an id join error. So it is re-emitted here
@@ -235,7 +276,6 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
   }
 
   dr = tibble(twop = f$S_2p, turnout = f$turn, dem = f$S_dem * f$turn, rep = f$S_rep * f$turn)
-  ci = cred(dr$twop, level); ct = cred(dr$turnout, level)
   # ---- THE SILENT-PRIOR ALARM ------------------------------------------------------
   # A fit that is entirely its own prior returns the same columns and the same intervals as
   # a real one. Nothing in the output distinguishes them, so on the night a state whose feed
@@ -270,14 +310,34 @@ fit_medsl = function(cells, returns, level = 0.95, seed = 2026, dir_26 = find_26
         else "", " -- partial fit."))
     }
   }
-  list(model = "medsl", status = st, settings = settings,
-       # the structured ledger as well as the status string, so a consumer can test
-       # `fit$prior_only$all_prior` rather than parse prose
-       prior_only = po,
-       race = bind_cols(tibble(status = st, est_twop = mean(dr$twop), lo_twop = ci[["lower"]], hi_twop = ci[["upper"]],
-                               p_dem_win = mean(dr$twop > 0.5), est_turnout = mean(dr$turnout),
-                               lo_turnout = ct[["lower"]], hi_turnout = ct[["upper"]]), counted),
-       cells = f$prec,                       # precinct: turn_est, dem_est (share of all votes), interval
-       draws = dr,
-       point = c(dem = mean(dr$dem), rep = mean(dr$rep), tot = mean(dr$turnout)))
+  # conformal: one row per precinct x mode of the model's frame, with what is counted
+  fc = if (interval == "conformal") {
+    cv = f$cell_votes
+    tibble(geo = rep(as.character(env$prec$geo), ncol(cv$fin_dem)), method = rep(colnames(cv$fin_dem), each = nrow(cv$fin_dem)),
+           !!!lapply(cv, as.vector)) |>
+      left_join(transmute(counts, geo = as.character(geo), method = as.character(method), c_dem, c_rep, c_oth, c_tot),
+                by = c("geo", "method")) |>
+      mutate(across(c(c_dem, c_rep, c_oth, c_tot), \(x) coalesce(x, 0)),
+             across(starts_with("fin_") | starts_with("fit_"), \(x) coalesce(x, 0)))
+  }
+  # conf_seq: prior predictive draws of the race totals, nothing counted (env$cells holds
+  # the model's own priors; fit_stage_hybrid() re-centres a copy)
+  prior = if (interval == "conf_seq") env$prior_totals(env$cells, draws = draws)
+  res = draws_result(name, interval, settings, counted, dr, level, returns, prior = prior, fc = fc,
+                     cells = prec_rows(f$prec))
+  res$status = res$race$status = st
+  # the structured ledger as well as the status string, so a consumer can test
+  # `fit$prior_only$all_prior` rather than parse prose
+  res$prior_only = po
+  res
 }
+
+# medsl_sur: Young-Kyung's scripts/model/model_hybrid.R. The same model as model_medsl, with
+# its turnout level, method composition and vote-share PRIORS re-centred from tonight's
+# returns (log counted / prior and logit share offsets on county x method fixed effects,
+# gated per county x method), and CBS's counted-out county x method totals imposed as exact
+# constraints when a snapshot is passed. Arms switch off with HY_LEVEL / HY_COMP / HY_SHARE /
+# HY_COUNTY = 0 (all four off reproduces model_medsl). No snapshot (the sims) leaves the
+# county arm inert.
+fit_medsl_sur = function(cells, returns, ..., cbs_county = NULL)
+  fit_medsl(cells, returns, ..., hybrid = TRUE, cbs_county = cbs_county)

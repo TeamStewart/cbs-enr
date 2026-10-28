@@ -26,7 +26,11 @@
 ##                 method, votes, stage, observed_at); parquet or csv
 ##   --candidates  CONTRACT.md section 5 (race_id, candidate_id, name, party)
 ##   --cbs=test    CBS's test feed instead of live (default live)
-##   --models=swing,cory,medsl   (default: all three)
+##   --config=<file>  the model config (default 26_general/model_config.csv, R/config.R): its
+##                 run = TRUE rows are the models run. RUN in R/run.R if the file is missing
+##   --models=swing,pois_bayes   (overrides the config; any of MODELS); a model may carry a
+##                 demographic spec (R/demos.R) and an interval (R/results.R):
+##                 "<model>[/<demo>][/<interval>]", e.g. pois_bayes/strat_d/conformal
 ##   --states=NC,TX  only these states' races (default: every race in priors.csv)
 ##   --cores=N     how many race x model fits run at once (default: all cores but one).
 ##                 Every race x model in every state goes into one pool, so a refresh takes
@@ -41,12 +45,14 @@
 source("scripts/model/live/load.R")
 args = commandArgs(trailingOnly = TRUE)
 opt = function(k, d = NA) { a = grep(paste0("^--", k, "="), args, value = TRUE); if (length(a)) sub("^[^=]*=", "", a[1]) else d }
-# MODELS_DEFAULT, not MODELS: cprec is implemented but out of the default run on cost
-# (see run.R). --models= still reaches it, and is validated against the full MODELS.
-MODELS_RUN = strsplit(opt("models", paste(MODELS_DEFAULT, collapse = ",")), ",")[[1]]
-if (length(bad <- setdiff(MODELS_RUN, MODELS)))
-  stop("unknown model(s) in --models=: ", paste(bad, collapse = ", "),
-       ". Choose from: ", paste(MODELS, collapse = ", "))
+MODELS_RUN = if (!is.na(opt("models"))) strsplit(opt("models"), ",")[[1]] else {
+  f_cfg = opt("config", file.path(find_26_general(), MODEL_CONFIG_FILE))
+  if (file.exists(f_cfg)) models_from_config(f_cfg) else {
+    cli::cli_alert_warning("No {.path {f_cfg}}: running RUN (R/run.R). Make the config with make_model_config.R")
+    RUN
+  }
+}
+check_models(MODELS_RUN)
 SIM = opt("sim"); EVERY = as.numeric(opt("every", "0")); CBS_ENV = opt("cbs", "live")
 CORES = as.integer(opt("cores", max(1L, parallel::detectCores() - 1L)))
 TZ = "America/New_York"
@@ -66,9 +72,8 @@ state_inputs = function(st) {
   if (is.null(cache[[st]])) {
     cells = tryCatch(build_cells(st, d26), error = function(e) e)
     base = tryCatch(county_baseline(st, d26), error = function(e) e)
-    medsl = if ("medsl" %in% MODELS_RUN && !inherits(cells, "error"))
-      tryCatch(medsl_setup(st, d26), error = function(e) e) else NULL
-    cache[[st]] = list(cells = cells, base = base, medsl = medsl)
+    try(demo_covs(st, d26), silent = TRUE)          # precinct demographics (R/demos.R)
+    cache[[st]] = list(cells = cells, base = base)
   }
   cache[[st]]
 }

@@ -1,7 +1,7 @@
 % ============================================================================
 %  model_simpleswing: specification
-%  The standard uniform swing model, as implemented for the model test page.
-%  Source: scripts/model/tests/test_sim_night.R, section C (lines 344-440).
+%  The standard uniform swing model.
+%  Source: scripts/model/live/R/model_swing.R.
 %  Compile: pdflatex swing_model_spec.tex
 % ============================================================================
 \documentclass[11pt]{article}
@@ -26,10 +26,9 @@
 \maketitle
 
 \noindent
-This documents the standard uniform swing model as it is actually implemented for the
-model test page and the calibration runs, in \var{scripts/model/tests/test\_sim\_night.R}
-section C. It is one of the two baselines the precinct $\times$ vote-mode model is
-compared against. Sections follow the same order as the main model's specification so
+This documents the standard uniform swing model as implemented in
+\var{scripts/model/live/R/model\_swing.R}. It is one of the two baselines the precinct
+$\times$ vote-mode model is compared against. Sections follow the same order as the main model's specification so
 the two can be read side by side.
 
 \section{Outcomes}

@@ -22,11 +22,10 @@
 # ---- simulated nights -------------------------------------------------------------
 # sim: list(truth = TX_truth.parquet, sched = TX_schedule.parquet), read by read_sim().
 # A cell's counted votes are its final votes x the share of the cell counted by `time`
-# (cum_frac); censored precincts never report. Same rules as counted_at() / frac_at() in
-# scripts/model/tests/test_sim_night.R.
+# (cum_frac); censored precincts never report.
 #
 # round_by: the original harness rounds counted votes in two different ways --
-#   "candidate"  round each candidate's votes (what model_cory got; also what a real feed
+#   "candidate"  round each candidate's votes (what ratio_strata got; also what a real feed
 #                looks like, since every candidate's count is a whole number). Default.
 #   "party"      add up dem / rep / third-party first, then round (what the swing model
 #                got). Only differs when a party has more than one candidate (e.g. a
@@ -55,8 +54,7 @@ read_sim = function(dir_sc, tz = "America/New_York", state = NULL) {
   )
 }
 
-# the checkpoints the sim tests refit at: every 15 minutes 8pm-4am ET, then four later
-# times (same as scripts/model/tests/test_sim_night.R)
+# the checkpoints the sim tests refit at: every 15 minutes 8pm-4am ET, then four later times
 sim_checkpoints = function(tz = "America/New_York") {
   c(seq(as.POSIXct("2026-11-03 20:00", tz = tz), as.POSIXct("2026-11-04 04:00", tz = tz), by = "15 min"),
     as.POSIXct(c("2026-11-04 12:00", "2026-11-05 12:00", "2026-11-07 12:00", "2026-11-10 12:00"), tz = tz))
@@ -124,7 +122,7 @@ returns_from_live = function(live, candidates, state, election, at = NULL, compl
 #            nc_001_1 where the NC feed writes nc_001_01); unmatched ids are kept as written
 #   complete the precinct's stage >= complete_stage (6)
 # Rows whose geo matches no precinct in our inputs are kept: virtual.R adds them at county level
-# for model_simpleswing and model_cory, and bucket_counts() passes them to model_medsl.
+# for swing and ratio_strata, and bucket_counts() passes them to medsl_sur.
 match_live_geo = function(geo, geos = NULL) {
   geo = as.character(geo)
   if (is.null(geos)) return(geo)

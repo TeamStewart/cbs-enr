@@ -22,10 +22,11 @@
 ##   everything else virtual  (provisional, transfer, a stray unmatched precinct id): counted
 ##                            votes added as they are, nothing projected
 ##
-## Only model_simpleswing and model_cory are adjusted (VIRTUAL_MODELS; output.R
-## predict_one()). model_medsl gets the same rows as county x mode observations from
-## bucket_counts() (returns.R) inside its own fit, and model_cory_pois / model_cory_prec are
-## left as they are.
+## Every model but medsl_sur is adjusted (VIRTUAL_MODELS; output.R predict_one()):
+## fits with draws in every draw, fits with bounds in their point and bounds (each end
+## projected at the fit's own interval ends, project_rest_bounds() in counties.R).
+## medsl_sur gets the same rows as county x mode observations from bucket_counts()
+## (returns.R) inside its own fit.
 ## Only for races fit by vote method. A state with no {ST}_virtual_history.parquet and no
 ## unmatched rows is untouched. Rows are matched on geo + method after METHOD_MAP (run.R).
 ##
@@ -34,7 +35,7 @@
 # ========================================
 
 VIRTUAL_MIN_SHARE = 0.5
-VIRTUAL_MODELS = c("swing", "cory")
+VIRTUAL_MODELS = c("swing", "ratio_strata", "pois_bayes", "lm_bayes")
 # geo_county() (the 3-digit county code in a precinct id) is in vote_modes.R
 
 virtual_history = function(state, dir_26 = find_26_general()) {
@@ -78,6 +79,14 @@ virtual_split = function(cells, returns, dir_26 = find_26_general()) {
   list(cells = cells_m, returns = ret[in_model, ], units = units)
 }
 
+# run_race() with the virtual units fit around and added back (what predict_one() and
+# run_all() call)
+fit_model = function(model, cells, returns, ...) {
+  if (!model_base(model) %in% VIRTUAL_MODELS) return(run_race(model, cells, returns, ...))
+  vs = virtual_split(cells, returns)
+  add_virtual(run_race(model, vs$cells, vs$returns, ...), model_base(model), vs)
+}
+
 # Adds the virtual units to a fit (run_race() on vs$cells / vs$returns). Point estimate and,
 # for models with draws, every draw.
 add_virtual = function(fit, model, vs) {
@@ -85,7 +94,7 @@ add_virtual = function(fit, model, vs) {
   lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
   E = sum(vs$cells$exp_votes)
   base_s = sum(vs$cells$exp_votes * vs$cells$dem2) / max(E, 1)     # baseline Dem two-party share
-  if (model == "swing") {
+  if (is.null(fit$pred)) {
     pt = fit_point(fit); dr = fit$draws
     vp = project_rest(vs$units, lg(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]])) - lg(base_s), pt[["tot"]] / E, noise = FALSE)
     vd = project_rest(vs$units, lg(dr$dem / (dr$dem + dr$rep)) - lg(base_s), dr$turnout / E, noise = TRUE)
@@ -97,14 +106,18 @@ add_virtual = function(fit, model, vs) {
     fit$race = mutate(fit$race, est_twop = mean(fit$draws$twop), lo_twop = ci[["lower"]], hi_twop = ci[["upper"]],
                       p_dem_win = mean(fit$draws$twop > 0.5), est_turnout = mean(fit$draws$turnout),
                       lo_turnout = ct[["lower"]], hi_turnout = ct[["upper"]])
-  } else if (model == "cory") {
-    pr = if (is.data.frame(fit$raw)) fit$raw else fit$raw$pred
-    pr = mutate(pr, party = as.character(party))
-    d = sum(pr$pred[pr$party == "dem"]); r = sum(pr$pred[pr$party == "rep"])
-    vp = project_rest(vs$units, lg(d / (d + r)) - lg(base_s), sum(pr$pred) / E, noise = FALSE)
-    fit$virtual = vp[1, ]
-    fit$race = mutate(fit$race, est_twop = unname((d + vp[1, "dem"]) / (d + r + vp[1, "dem"] + vp[1, "rep"])),
-                      est_turnout = est_turnout + sum(vp[1, ]))
+  } else {
+    # bounds instead of draws: the virtual units' point and bounds (project_rest_bounds(),
+    # counties.R) added to the prediction and its bounds
+    pr = fit$pred
+    pt = c(dem = sum(pr$pred[pr$party == "dem"]), rep = sum(pr$pred[pr$party == "rep"]), tot = sum(pr$pred))
+    sb = fit_swing_bounds(fit, pt, base_s, E)
+    vb = project_rest_bounds(vs$units, sb$swing, sb$turn_ratio)
+    fit$pred = add_party_votes(pr, vb)
+    est = pred_race_est(fit$pred)
+    fit$race = mutate(fit$race, est_twop = est$est_twop, lo_twop = est$lo_twop, hi_twop = est$hi_twop,
+                      est_turnout = est$est_turnout, lo_turnout = lo_turnout + sum(vb$pred_min),
+                      hi_turnout = hi_turnout + sum(vb$pred_max))
   }
   u = vs$units
   fit$settings = paste0(fit$settings, sprintf("; plus %d county-level virtual-precinct units (%d reported, %d projected)",
@@ -112,18 +125,18 @@ add_virtual = function(fit, model, vs) {
   fit
 }
 
-# model_cory's predicted votes by candidate, with the virtual votes added (third-party virtual
-# votes split across third-party candidates in proportion to their predictions)
-cory_by_candidate = function(fit) {
-  pr = if (is.data.frame(fit$raw)) fit$raw else fit$raw$pred
-  pr = pr |> mutate(candidate = as.character(candidate), party = as.character(party)) |>
-    summarize(pred = sum(pred), .by = c(candidate, party))
-  v = fit$virtual
-  if (is.null(v)) return(pr)
+# per-candidate predictions (fit$pred) plus party totals and bounds (v: party, pred, pred_min,
+# pred_max), each added to the same column: a party's votes split equally across its
+# candidates, third-party votes in proportion to their predictions
+add_party_votes = function(pr, v) {
   oth = !pr$party %in% c("dem", "rep")
   w = if (any(oth)) pr$pred[oth] / max(sum(pr$pred[oth]), 1) else numeric()
-  pr$pred[pr$party == "dem"] = pr$pred[pr$party == "dem"] + v[["dem"]] / max(sum(pr$party == "dem"), 1)
-  pr$pred[pr$party == "rep"] = pr$pred[pr$party == "rep"] + v[["rep"]] / max(sum(pr$party == "rep"), 1)
-  if (any(oth)) pr$pred[oth] = pr$pred[oth] + v[["oth"]] * (if (sum(w) > 0) w else 1 / sum(oth))
-  pr
+  if (any(oth) && sum(w) == 0) w = rep(1 / sum(oth), sum(oth))
+  share = case_when(pr$party == "dem" ~ 1 / max(sum(pr$party == "dem"), 1),
+                    pr$party == "rep" ~ 1 / max(sum(pr$party == "rep"), 1), TRUE ~ 0)
+  share[oth] = w
+  grp = if_else(oth, "oth", pr$party)
+  i = match(grp, v$party)
+  mutate(pr, pred = pred + share * v$pred[i], pred_min = pred_min + share * v$pred_min[i],
+         pred_max = pred_max + share * v$pred_max[i])
 }

@@ -3,7 +3,7 @@
 ##
 ## Reads 26_sim/<from>/ (TX_truth.parquet, TX_schedule.parquet, manifest.json), applies one
 ## or more distortions that a uniform swing cannot absorb, and writes 26_sim/<name>/ in the
-## same format, so run_model_tests.R picks it up like any of Ethan's scenarios. Ethan's code
+## same format, so scripts/model/live/tests/sim_night.R runs it like any of Ethan's scenarios. Ethan's code
 ## and files are not touched.
 ##
 ## Distortions (combine freely):
@@ -22,12 +22,13 @@
 ##                        gets which time changes. Default when the name contains "urban".
 ##
 ## Run from the cbs-enr folder:
-##   Rscript scripts/model/tests/make_stress_scenario.R tx_hispanic_swing
-##   Rscript scripts/model/tests/make_stress_scenario.R tx_urbanfirst
-##   Rscript scripts/model/tests/make_stress_scenario.R tx_both --hisp_swing=0.211 --urban_first
+##   Rscript scripts/sim/make_stress_scenario.R tx_hispanic_swing
+##   Rscript scripts/sim/make_stress_scenario.R tx_urbanfirst
+##   Rscript scripts/sim/make_stress_scenario.R tx_both --hisp_swing=0.211 --urban_first
 ##   (--from=<scenario> to start from something other than tx_base)
 # ========================================
-source("scripts/model/tests/model_test_common.R")
+suppressPackageStartupMessages({ library(dplyr); library(tidyr) })
+source("scripts/sim/sim_config.R")   # DIR_26, DIR_SIMS, read_pq(), write_pq()
 args = commandArgs(trailingOnly = TRUE)
 NAME = grep("^--", args, value = TRUE, invert = TRUE)[1]
 if (is.na(NAME) || !grepl("^[A-Za-z0-9_]+$", NAME)) stop("Give the new scenario a name (letters, digits, _), e.g. tx_hispanic_swing")
@@ -42,8 +43,8 @@ HISP = as.numeric(opt("hisp_swing", if (grepl("hispanic", NAME)) 0.211 else 0))
 URBAN = isTRUE(opt("urban_first", grepl("urban", NAME)))
 if (HISP == 0 && !URBAN) stop("No distortion chosen: use --hisp_swing=<pts> and/or --urban_first")
 
-dir_from = file.path(DIR_SIM, FROM); dir_to = file.path(DIR_SIM, NAME)
-if (!dir.exists(dir_from)) stop("No scenario ", FROM, " in ", DIR_SIM)
+dir_from = file.path(DIR_SIMS, FROM); dir_to = file.path(DIR_SIMS, NAME)
+if (!dir.exists(dir_from)) stop("No scenario ", FROM, " in ", DIR_SIMS)
 dir.create(dir_to, showWarnings = FALSE, recursive = TRUE)
 truth = read_pq(file.path(dir_from, "TX_truth.parquet"))
 sched = read_pq(file.path(dir_from, "TX_schedule.parquet"))
@@ -92,7 +93,7 @@ write_pq(truth, file.path(dir_to, "TX_truth.parquet"))
 write_pq(sched, file.path(dir_to, "TX_schedule.parquet"))
 manifest$scenario = NAME
 manifest$created = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")
-manifest$stress = list(from = FROM, made_by = "scripts/model/tests/make_stress_scenario.R", changes = as.list(notes))
+manifest$stress = list(from = FROM, made_by = "scripts/sim/make_stress_scenario.R", changes = as.list(notes))
 manifest$params$stress_hisp_swing = HISP
 manifest$params$stress_urban_first = URBAN
 tot = truth |> summarize(dem = sum(votes[party == "dem"]), rep = sum(votes[party == "rep"]), .by = contest)
@@ -105,4 +106,4 @@ writeLines(jsonlite::toJSON(manifest, auto_unbox = TRUE, pretty = TRUE, null = "
            file.path(dir_to, "manifest.json"))
 cat(sprintf("Wrote %s from %s:\n  %s\n", dir_to, FROM, paste(notes, collapse = "\n  ")))
 print(as.data.frame(mutate(tot, dem2 = round(100 * dem / (dem + rep), 2))), row.names = FALSE)
-cat("Next: Rscript scripts/model/tests/run_model_tests.R", NAME, "--variants=default,swing,cory\n")
+cat("Next: Rscript scripts/model/live/tests/sim_night.R", NAME, "\n")

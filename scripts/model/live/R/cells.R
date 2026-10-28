@@ -15,11 +15,8 @@
 ## has none; 1 / #methods if that is
 ## missing too). exp_votes is floored at 0.5.
 ##
-## Moved from expected_cells() in scripts/model/tests/test_sim_night.R; since then it can read
-## the results-based history (mode_history()), and a county with no history gets the state's
-## split instead of an even one.
-## Note, kept as in the original: v and n_p count EVERY method in the mode-history file,
-## including any not listed in `methods`, before the shares are renormalized.
+## Note: v and n_p count EVERY method in the mode-history file, including any not listed in
+## `methods`, before the shares are renormalized.
 # ========================================
 
 build_cells = function(state, dir_26 = find_26_general(), mode_election = NULL,
