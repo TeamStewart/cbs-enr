@@ -45,7 +45,10 @@ jobs = tidyr::expand_grid(i = seq_along(rets), race_id = sort(unique(sim$truth$c
 # one-time set-up in this process, before forking, so the workers inherit it: each model's
 # own set-up (MODEL_SETUP, run.R) and the covariate caches
 st = sim$truth$state[1]
-for (m in MODELS_RUN) setup_model(m, cells, st)
+# (a set-up failure, e.g. medsl_sur in a state modeled without vote method, is left for its
+# own jobs to report, so the other models still run)
+for (m in MODELS_RUN) tryCatch(setup_model(m, cells, st),
+                               error = function(e) message(m, " set-up failed: ", conditionMessage(e)))
 invisible(demo_covs(st))
 cat(sprintf("%d checkpoints with votes, %d jobs on %d core(s)\n", length(rets), nrow(jobs), CORES))
 
@@ -53,7 +56,10 @@ t0 = Sys.time()
 one = function(k) {
   j = jobs[k, ]; ret = filter(rets[[j$i]], race_id == j$race_id)
   s0 = proc.time()[["elapsed"]]
-  fit = tryCatch(suppressMessages(fit_model(j$model, cells, ret))$race,
+  # a skipped fit (e.g. medsl_sur on a race without a vote-method split) has no race row:
+  # keep its status, which says why
+  fit = tryCatch({ f = suppressMessages(fit_model(j$model, cells, ret))
+                   if (is.null(f$race) || !nrow(f$race)) tibble(status = f$status) else f$race },
                  error = function(e) tibble(status = paste("error:", conditionMessage(e))))
   bind_cols(tibble(race_id = j$race_id, model = j$model, time = format(max(ret$time), "%Y-%m-%d %H:%M")),
             fit, tibble(seconds = round(proc.time()[["elapsed"]] - s0, 1)))
@@ -62,7 +68,8 @@ res = run_par(seq_len(nrow(jobs)), one, CORES)
 bad = !vapply(res, is.data.frame, NA)
 if (any(bad)) res[bad] = lapply(which(bad), \(k) tibble(race_id = jobs$race_id[k], model = jobs$model[k],
                                                          status = paste("error: worker failed:", as.character(res[[k]]))))
-res = bind_rows(res) |>
+res = bind_rows(res, tibble(est_twop = numeric(), lo_twop = numeric(), hi_twop = numeric(),
+                            counted_votes = numeric(), seconds = numeric())) |>   # columns even if every fit failed
   left_join(truth, by = "race_id") |>
   mutate(pct_votes = counted_votes / truth_turnout,
          covers = truth_twop >= lo_twop & truth_twop <= hi_twop,
