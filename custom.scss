@@ -136,18 +136,74 @@
 
 .card-toolbar:has(.dash-export) { flex: 1 1 auto; }
 
-// models page: model / statewide / time-window controls under the plots
+// models page toolbar: one compact row, "As of" pushed right
 .model-ctl {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1.5rem;
-  font-size: 0.85rem;
+  gap: 0.35rem 1.25rem;
+  width: 100%;
+  font-size: 0.8rem;
 
-  label { display: flex; align-items: center; gap: 0.4rem; margin: 0; white-space: nowrap; }
+  label { display: flex; align-items: center; gap: 0.4rem; margin: 0; white-space: nowrap; font-weight: 600; }
   label[hidden] { display: none; }
-  .form-select { width: auto; }
+  .form-select, .form-control { width: auto; font-size: 0.8rem; padding-top: 0.1rem; padding-bottom: 0.1rem; min-height: 0; font-weight: 400; }
+  select[name=model] { max-width: 26rem; font-family: $font-family-monospace; font-size: 0.75rem; }
   .form-check-input { margin: 0; }
+  .btn-sm { font-size: 0.75rem; padding: 0.1rem 0.5rem; }
+}
+
+.model-ctl-asof {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.model-ctl-tz { color: $text-muted; }
+
+// models page summary table: one row per model actually run; click a row to plot it
+.model-table-wrap {
+  height: 100%;
+  overflow: auto;
+}
+
+// keep the table card at its set width; the table scrolls instead of widening the card
+.quarto-dashboard .observablehq:has(> .model-table-wrap) {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.model-table {
+  font-size: 0.78rem;
+  margin-bottom: 0.5rem;
+
+  th { font-weight: 600; white-space: nowrap; position: sticky; top: 0; background: $body-bg; }
+  td { white-space: nowrap; vertical-align: middle; }
+  th, td { padding: 0.2rem 0.3rem; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  code { font-size: 0.75rem; color: inherit; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover td { background: rgba(0, 0, 0, 0.03); }
+  tbody tr.selected td { background: rgba(0, 85, 153, 0.09); }
+}
+
+// models page maps: zoom reset button, top right of the map
+.quarto-dashboard figure:has(> svg.dash-map), .quarto-dashboard figure.dash-map { position: relative; }
+
+.map-reset {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 0.7rem;
+  padding: 0.05rem 0.4rem;
+  background: $body-bg;
+}
+
+.model-stale {
+  color: $text-muted;
+  font-size: 0.7rem;
 }
 
 .model-note {
@@ -160,4 +216,9 @@
   margin-top: 0.5rem;
   font-style: normal;
   font-size: 0.85rem;
+}
+
+// models page plot tabs: tighter so five tabs plus the export button fit on one line
+.card.tabset:has(.dash-map) > .card-header .nav-link {
+  padding: 0.4rem 0.6rem;
 }

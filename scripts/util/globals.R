@@ -80,6 +80,13 @@ DASHBOARD_CONTESTS = tibble::tribble(
 # raw model name. Left blank for contests where it has no rows or its latest run did not fit.
 DASHBOARD_MODEL = "ratio_strata/strat_g/conformal"
 
+# Precinct maps on the Models page: {st}.json from scripts/util/make_dashboard_geo.R, built once.
+# The page fetches DASHBOARD_GEO_URL/{st}.json at view time (relative to the page, or a full
+# URL), so the geometry is uploaded once and never re-embedded; DASHBOARD_GEO_DIR is the local
+# copy that says which states have a map.
+DASHBOARD_GEO_DIR = "data/dashboard/geo"
+DASHBOARD_GEO_URL = Sys.getenv("CBS_DASH_GEO_URL", "data/dashboard/geo")
+
 DASHBOARD_TITLE = local({
   yr = paste0("20", stringr::str_sub(ELECTION_FOLDER, 1, 2))
   kind = stringr::str_to_title(stringr::str_remove(ELECTION_FOLDER, "^\\d+_"))

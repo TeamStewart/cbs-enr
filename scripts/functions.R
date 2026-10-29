@@ -212,7 +212,62 @@ read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "mo
   parts = model_parts(c(pred$model, status$model))
   if (!is.null(pred)) pred = left_join(pred, parts, by = "model")
   if (!is.null(status)) status = left_join(status, parts, by = "model")
-  list(pred = pred, status = status)
+  list(pred = pred, status = status, prec = read_model_precincts(dir))
+}
+
+# per-precinct projections (write_precincts() in scripts/model/live/R/output.R): the
+# latest run only, from precincts_latest.parquet (else the newest stamped file)
+read_model_precincts <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_results")) {
+  f = fs::path(dir, "precincts_latest.parquet")
+  if (!fs::file_exists(f)) f = tail(sort(fs::dir_ls(dir, regexp = "/precincts_\\d{8}_\\d{6}\\.parquet$", fail = FALSE)), 1)
+  if (length(f) == 0) return(NULL)
+  nanoparquet::read_parquet(f, col_select = c("race_id", "model", "time", "geo", "turn_est", "dem_est", "est_dem2")) |>
+    as_tibble() |>
+    filter(time == max(time), .by = c(race_id, model))
+}
+
+# ENR / model precinct id -> comparable key, as norm_live_geo() in scripts/model/live/R/returns.R
+# (case, spacing, a trailing ".0", and leading zeros in the precinct part)
+norm_geo <- function(geo) {
+  parts = str_match(as.character(geo), "^([A-Za-z]{2}_\\d{3})_(.*)$")
+  id = str_remove(str_remove(str_squish(toupper(parts[, 3])), "\\.0$"), "^0+(?=\\d)")
+  if_else(is.na(parts[, 1]), toupper(as.character(geo)), paste0(tolower(parts[, 2]), "_", id))
+}
+
+# Models page, per precinct key (norm_geo): `unit_id`, the VoteHub unit for the maps, from
+# scripts/model/lookups/model_precincts.csv and input_data/crosswalks/votehub/{st}.csv; and
+# `frame`, whether the key is in the models' inputs with a past vote
+# (input_data/model_inputs/{ST}_precinct.parquet). Both are built once in 26_general.
+read_geo_units <- function(state) {
+  dir = fs::path(PATH_DROPBOX, "26_general", "input_data")
+  frame_path = fs::path(dir, "model_inputs", glue("{state}_precinct.parquet"))
+  frame = tibble(g = character())
+  if (fs::file_exists(frame_path)) {
+    frame = nanoparquet::read_parquet(frame_path, col_select = c("geo", "dem2")) |>
+      filter(!is.na(dem2)) |>
+      transmute(g = norm_geo(geo))
+  }
+  mp = readr::read_csv("scripts/model/lookups/model_precincts.csv", col_types = readr::cols(.default = "c"),
+                       col_select = c("state", "geo", "unit_id"), progress = FALSE) |>
+    filter(.data$state == .env$state, !is.na(unit_id)) |>
+    transmute(g = norm_geo(geo), unit_id)
+  xw_path = fs::path(dir, "crosswalks", "votehub", glue("{tolower(state)}.csv"))
+  xw = tibble(g = character(), unit_id = character())
+  if (fs::file_exists(xw_path)) {
+    norm = \(x) str_remove_all(toupper(x), "[^A-Z]")
+    cty = enightmodels::cbs_counties |>
+      filter(.data$state == .env$state) |>
+      transmute(cty = norm(county), county_cbs)
+    xw = readr::read_csv(xw_path, col_types = readr::cols(.default = "c"), progress = FALSE) |>
+      filter(!is.na(unit_id), !is.na(precinct_enr)) |>
+      mutate(cty = norm(county)) |>
+      inner_join(cty, by = "cty") |>
+      transmute(g = norm_geo(sprintf("%s_%03d_%s", tolower(state), as.integer(county_cbs), precinct_enr)), unit_id)
+  }
+  bind_rows(mp, xw) |>
+    distinct(g, .keep_all = TRUE) |>
+    full_join(mutate(distinct(frame), frame = TRUE), by = "g") |>
+    mutate(frame = coalesce(frame, FALSE))
 }
 
 read_summaries <- function(state, keys) {
@@ -301,6 +356,10 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
   summaries = map(states, \(s) read_summaries(s, keys_by_state[[s]])) |> set_names(states)
   histories = map(states, read_history) |> set_names(states)
   l2s = map(states, read_l2) |> set_names(states)
+  geo_units = map(states, read_geo_units) |> set_names(states)
+  mprec_all = bind_rows(tibble(race_id = character(), model = character(), time = as.POSIXct(character()),
+                               geo = character(), turn_est = numeric(), dem_est = numeric(), est_dem2 = numeric()),
+                        models$prec)
 
   mp_empty = tibble(
     race_id = character(), state = character(), contest = character(), district = integer(),
@@ -431,13 +490,53 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
                         if (!is.na(district)) paste(state, contest, district, sep = "_")))
     ms = filter(ms_all, race_id %in% race_ids)
 
+    # Models page: share of counted votes in precincts the model inputs know (history);
+    # for states with a map file (make_dashboard_geo.R), counted votes and each model's
+    # latest projected remaining vote (rem, with its Dem two-party share d2) per VoteHub unit
+    gu = geo_units[[state]]
+    gt = summarise(prec, across(c(dem, rep, total), sum), .by = geo) |>
+      mutate(g = norm_geo(geo)) |>
+      left_join(gu, by = "g")
+    # reporting ENR precincts (any votes) found in the model inputs, and their share of counted votes
+    has_frame = sum(gt$total) > 0 && any(gu$frame)
+    rep_geo = filter(gt, total > 0)
+    match_n = if (has_frame) sum(rep_geo$frame %in% TRUE) else NA_integer_
+    match_of = if (has_frame) nrow(rep_geo) else NA_integer_
+    hist_match = if (has_frame) sum(rep_geo$total[rep_geo$frame %in% TRUE]) / sum(rep_geo$total) else NA_real_
+    mres = tibble(unit_id = character(), dem = numeric(), rep = numeric(), total = numeric())
+    mprec = tibble(model = character(), unit_id = character(), rem = numeric(), d2 = numeric())
+    mprec_runs = tibble(model = character(), time = as.POSIXct(character()))
+    if (fs::file_exists(fs::path(DASHBOARD_GEO_DIR, glue("{tolower(state)}.json")))) {
+      mres = gt |>
+        filter(!is.na(unit_id)) |>
+        summarise(across(c(dem, rep, total), sum), .by = unit_id)
+      mr = filter(mprec_all, race_id %in% race_ids)
+      mprec = mr |>
+        mutate(g = norm_geo(geo), dv = dem_est * turn_est, rv = dv * (1 - est_dem2) / est_dem2) |>
+        inner_join(filter(gu, !is.na(unit_id)) |> select(g, unit_id), by = "g") |>
+        summarise(tot = sum(turn_est, na.rm = TRUE), dv = sum(dv, na.rm = TRUE), rv = sum(rv, na.rm = TRUE), .by = c(model, unit_id)) |>
+        left_join(mres, by = "unit_id") |>
+        mutate(
+          across(c(dem, rep, total), \(x) coalesce(x, 0)),
+          rem = pmax(tot - total, 0), rd = pmax(dv - dem, 0), rr = pmax(rv - rep, 0),
+          d2 = if_else(rd + rr > 0, rd / (rd + rr), NA_real_)
+        ) |>
+        filter(rem >= 1, !is.na(d2)) |>
+        transmute(model, unit_id, rem = round(rem), d2 = round(d2, 3))
+      mprec_runs = distinct(mr, model, time)
+    }
+    meta = mutate(meta, hist_match = hist_match, match_n = match_n, match_of = match_of, n_frame = sum(gu$frame))
+
     list(
       meta = meta,
       ts = mutate(ts, key = key, .before = 1),
       models = mp |> select(-any_of(c("state", "contest", "district", "race_id"))) |> mutate(key = key, .before = 1),
       model_status = select(ms, -race_id) |> mutate(key = key, .before = 1),
       prec = mutate(prec, key = key, .before = 1),
-      l2 = mutate(l2, key = key, .before = 1)
+      l2 = mutate(l2, key = key, .before = 1),
+      mres = mutate(mres, key = key, .before = 1),
+      mprec = mutate(mprec, key = key, .before = 1),
+      mprec_runs = mutate(mprec_runs, key = key, .before = 1)
     )
   })
 
@@ -448,6 +547,10 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     l2 = map(out, "l2") |> bind_rows(),
     models = map(out, "models") |> bind_rows(),
     model_status = map(out, "model_status") |> bind_rows(),
+    mres = map(out, "mres") |> bind_rows(),
+    mprec = map(out, "mprec") |> bind_rows(),
+    mprec_runs = map(out, "mprec_runs") |> bind_rows(),
+    geo_url = DASHBOARD_GEO_URL,
     title = DASHBOARD_TITLE,
     top_model = DASHBOARD_MODEL
   )

@@ -185,6 +185,35 @@ for (t in sort(unique(c(fm_pred$time, fm_status$time)))) {
 }
 cli::cli_inform("model results: {n_distinct(fm_pred$time)} runs, {n_distinct(fm_pred$race_id)} races in {model_dir}")
 
+# fake per-precinct projections for the Models page maps, as write_precincts() writes them
+# (precincts_latest.parquet): each model's latest run, projecting each precinct's uncounted
+# truth with noise in turnout and in the remaining vote's two-party split
+fake_precincts <- function(scenario, state) {
+  by_geo = \(d) summarise(d, tot = sum(votes), dem = sum(votes[party == "dem"]), rep = sum(votes[party == "rep"]), .by = c(contest, geo))
+  fin = nanoparquet::read_parquet(fs::path(SIM_DIR, scenario, glue("{state}_truth.parquet"))) |> as_tibble() |> by_geo()
+  cnt = by_geo(dash[[state]]$prec) |> rename(c_tot = tot, c_dem = dem, c_rep = rep)
+  runs = fm_pred |>
+    filter(state == .env$state) |>
+    filter(time == max(time), .by = c(contest, model)) |>
+    distinct(contest, model, time)
+  geos = left_join(fin, cnt, by = c("contest", "geo")) |>
+    mutate(across(starts_with("c_"), \(x) coalesce(x, 0)),
+           R = pmax(tot - c_tot, 0), pd = pmax(dem - c_dem, 0) / pmax(R, 1), pr = pmax(rep - c_rep, 0) / pmax(R, 1))
+  pmap(runs, \(contest, model, time) {
+    g = filter(geos, contest == .env$contest)
+    e = exp(rnorm(1, 0, 0.05) + rnorm(nrow(g), 0, 0.15))
+    s = plogis(qlogis(pmin(pmax(g$pd / pmax(g$pd + g$pr, 1e-9), 0.01), 0.99)) + rnorm(1, 0, 0.1) + rnorm(nrow(g), 0, 0.2))
+    dv = g$c_dem + g$R * e * (g$pd + g$pr) * s
+    rv = g$c_rep + g$R * e * (g$pd + g$pr) * (1 - s)
+    turn = g$c_tot + g$R * e
+    tibble(race_id = paste(state, contest, sep = "_"), model, time, geo = g$geo,
+           turn_est = turn, dem_est = dv / pmax(turn, 1e-9), est_dem2 = dv / pmax(dv + rv, 1e-9))
+  }) |> bind_rows()
+}
+fp = map2(SCENARIOS, STATES, fake_precincts) |> bind_rows()
+nanoparquet::write_parquet(fp, fs::path(model_dir, "precincts_latest.parquet"))
+cli::cli_inform("precinct projections: {nrow(fp)} rows, {n_distinct(fp$model)} models")
+
 dd = build_dashboard_data(unname(dash), contests = TEST_CONTESTS, models = read_model_results(model_dir))
 saveRDS(dd, fs::path(PATH_DROPBOX, ELECTION_FOLDER, "dashboard_data.rds"))
 # committed copy; pushing it to main redeploys GitHub Pages (.github/workflows/pages.yml)

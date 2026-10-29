@@ -44,7 +44,7 @@ jobs:
           CBS_DASH_RDS: data/dashboard/dashtest_data.rds
         run: |
           quarto render index.qmd
-          mkdir _site && cp index.html _site/ && touch _site/.nojekyll
+          mkdir -p _site/data/dashboard && cp index.html _site/ && cp -r data/dashboard/geo _site/data/dashboard/ && touch _site/.nojekyll
 
       - uses: actions/upload-pages-artifact@v5
         with:

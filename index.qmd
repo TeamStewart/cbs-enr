@@ -30,6 +30,10 @@ ojs_define(
   l2 = if (is.null(dd$l2)) data.frame(key = character(), geo = character(), mode = character()) else dd$l2,
   models = if (is.null(dd$models)) data.frame(key = character(), model = character(), time = numeric()) else transform(dd$models, time = to_ms(time)),
   model_status = if (is.null(dd$model_status)) data.frame(key = character(), model = character()) else transform(dd$model_status, time = to_ms(time)),
+  mres = if (is.null(dd$mres)) data.frame(key = character(), unit_id = character()) else dd$mres,
+  mprec = if (is.null(dd$mprec)) data.frame(key = character(), model = character(), unit_id = character()) else dd$mprec,
+  mprec_runs = if (is.null(dd$mprec_runs)) data.frame(key = character(), model = character(), time = numeric()) else transform(dd$mprec_runs, time = to_ms(time)),
+  geo_url = if (is.null(dd$geo_url)) "data/dashboard/geo" else dd$geo_url,
   dash_title = dd$title,
   top_model = if (is.null(dd$top_model)) "" else dd$top_model
 )
@@ -48,6 +52,10 @@ P = transpose(prec)
 L2 = transpose(l2)
 MP = transpose(models).map(d => ({ ...d, time: new Date(d.time) }))
 MS = transpose(model_status)
+// Models page maps: counted votes and each model's projected remaining vote per VoteHub unit
+MRES = transpose(mres)
+MPREC = transpose(mprec)
+MPRECRUN = transpose(mprec_runs).map(d => ({ ...d, time: new Date(d.time) }))
 
 // L2 precinct shares, joined to ENR geos through input_data/crosswalks (see read_l2() in functions.R)
 L2_COLS = ["l2_n", "l2_turnout20", "l2_turnout22", "l2_turnout24", "l2_male", "l2_white", "l2_black", "l2_hispanic", "l2_asian"]
@@ -541,12 +549,20 @@ SPEC_LABELS = {
 INTERVAL_LABELS = {
   return {
     bootstrap: ["County bootstrap", "County bootstrap of the swing model"],
-    credible: ["Posterior 95%", "Equal-tailed 95% interval of the posterior draws"],
-    conf_seq: ["Confidence sequence", "95% confidence sequence on prior vs. posterior race totals"],
-    conformal: ["Conformal (approx.)", "Approximate split-conformal 95% interval on fitted cell shares"],
+    credible: ["Posterior", "Equal-tailed interval of the posterior draws"],
+    conf_seq: ["Confidence sequence", "Confidence sequence on prior vs. posterior race totals"],
+    conformal: ["Conformal (approx.)", "Approximate split-conformal interval on fitted cell shares"],
     none: ["None", "No interval"]
   }
 }
+INTERVAL_SHORT = { return { bootstrap: "Bootstrap", credible: "Posterior", conf_seq: "Conf. seq.", conformal: "Conformal", none: "None" } }
+specLabel = s => SPEC_LABELS[s]?.[0] ?? s
+intervalLabel = i => INTERVAL_LABELS[i]?.[0] ?? i
+// "approx_conform_95" -> "95%"
+confLevel = c => { const m = /_(\d+(?:\.\d+)?)$/.exec(c ?? ""); return m ? `${m[1]}%` : ""; }
+modelText = m => { const p = modelParts.get(m); return p ? `${p.base} · ${specLabel(p.spec)} · ${intervalLabel(p.interval)}` : m; }
+modelTitle = m => { const p = modelParts.get(m); return p ? `${SPEC_LABELS[p.spec]?.[1] ?? p.spec}\n${INTERVAL_LABELS[p.interval]?.[1] ?? p.interval}\n[${m}]` : m; }
+
 noModelsMsg = () => empty(html`<div>No model results for ${cur.label}.</div>
   ${msc.length ? html`<div class="model-status-list">${msc.map(d => html`<div><b>${d.model}</b>: ${d.status}</div>`)}</div>` : ""}`)
 
@@ -554,14 +570,28 @@ GEO_LABELS = { return { scraped: "Scraped", all: "Statewide (all)" } }
 partyName = p => p === "dem" ? (cur.dem_name ?? "Dem") : (cur.rep_name ?? "Rep")
 modelColor = { return { type: "categorical", domain: [partyName("dem"), partyName("rep")], range: [DEM, REP], legend: true } }
 
+// run times across every model for the contest; the "As of" input moves among these
+runTimes = [...new Set(mpc.map(d => +d.time))].sort((a, b) => a - b)
+
+// "As of" is a datetime-local in Eastern time, whatever the viewer's zone
+etOffset = ms => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    .formatToParts(ms).map(x => [x.type, x.value]));
+  return Date.UTC(+p.year, p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(ms / 1000) * 1000;
+}
+toET = ms => new Date(ms + etOffset(ms)).toISOString().slice(0, 16)
+fromET = s => { const u = Date.parse(`${s}:00Z`); return u - etOffset(u - etOffset(u)); }
+
 // last model-control choices; this cell has no inputs, so it survives contest changes and mctl restores from it
 mctlMemo = { return {} }
 
 model_pick = mctl.model
+asof = mctl.asof
 hasAll = mpc.some(d => d.model === model_pick && d.geo === "all")
 modelRows = mpc
   .filter(d => d.model === model_pick && (d.geo === "scraped" || (d.geo === "all" && mctl.all)))
-  .filter(d => +d.time >= mctl.from && +d.time <= mctl.to)
+  .filter(d => +d.time <= asof)
   .map(d => ({ ...d, series: `${partyName(d.party)} · ${GEO_LABELS[d.geo] ?? d.geo}`, pname: partyName(d.party) }))
   .sort((a, b) => a.time - b.time)
 
@@ -600,11 +630,230 @@ modelSpec = (rows, opts) => {
     marks
   };
 }
+
+// ---- summary table: each model's latest scraped-geo run at or before "As of" ----
+summaryRows = {
+  const byModel = d3.group(mpc.filter(d => d.geo === "scraped" && +d.time <= asof), d => d.model);
+  return modelsOk.filter(m => byModel.has(m)).map(m => {
+    const v = byModel.get(m);
+    const t = d3.max(v, d => +d.time);
+    const run = v.filter(d => +d.time === t);
+    const sh = p => run.find(d => d.pred_type === "share" && d.party === p);
+    const [dm, rp] = [sh("dem"), sh("rep")];
+    const two = (a, b) => a != null && b != null && a + b > 0 ? a / (a + b) : null;
+    const p = modelParts.get(m);
+    return {
+      model: m, base: p.base, spec: p.spec, interval: p.interval, time: t,
+      conf: run.find(d => d.model_conf != null)?.model_conf ?? null,
+      d2: two(dm?.pred, rp?.pred),
+      // two-party bounds from the share bounds (exact when the shares split a two-party interval)
+      lo: two(dm?.pred_min, rp?.pred_max), hi: two(dm?.pred_max, rp?.pred_min),
+      turnout: d3.sum(run.filter(d => d.pred_type === "vote"), d => d.pred),
+      pct_rep: run[0].pct_rep
+    };
+  }).sort((a, b) => d3.ascending(a.base, b.base) || d3.ascending(Object.keys(SPEC_LABELS).indexOf(a.spec), Object.keys(SPEC_LABELS).indexOf(b.spec)) ||
+                    d3.ascending(Object.keys(INTERVAL_LABELS).indexOf(a.interval), Object.keys(INTERVAL_LABELS).indexOf(b.interval)));
+}
+
+// ---- precinct maps (VoteHub units; geometry from scripts/util/make_dashboard_geo.R) ----
+// fetched once per state at view time from geo_url, not embedded in the page
+geoCache = new Map()
+geoData = {
+  const st = cur.state.toLowerCase();
+  if (!geoCache.has(st)) geoCache.set(st, fetch(`${geo_url}/${st}.json`)
+    .then(r => r.ok ? r.json() : null)
+    .then(fc => fc && prepGeo(fc))
+    .catch(e => (console.warn(e), null)));
+  return geoCache.get(st);
+}
+// d3 wants clockwise outer rings; flip any polygon that comes out covering the globe.
+// Projection centred on the state (AK crosses the antimeridian).
+prepGeo = fc => {
+  const fix = poly => d3.geoArea({ type: "Polygon", coordinates: poly }) > 2 * Math.PI ? poly.map(r => r.slice().reverse()) : poly;
+  const features = fc.features.filter(f => ["Polygon", "MultiPolygon"].includes(f.geometry?.type)).map(f => {
+    const g = f.geometry;
+    const coordinates = g.type === "Polygon" ? fix(g.coordinates) : g.coordinates.map(fix);
+    return { type: "Feature", id: f.properties.id, properties: f.properties, geometry: { type: g.type, coordinates } };
+  });
+  const lon0 = d3.median(features, f => f.properties.cx > 0 ? f.properties.cx - 360 : f.properties.cx);
+  const lat0 = d3.median(features, f => f.properties.cy);
+  const collection = { type: "FeatureCollection", features };
+  return { features, byId: new Map(features.map(f => [f.id, f])),
+           projection: { type: "conic-equal-area", parallels: [lat0 - 4, lat0 + 4], rotate: [-lon0, 0], domain: collection } };
+}
+mresc = MRES.filter(d => d.key === sel)
+mprecc = MPREC.filter(d => d.key === sel && d.model === model_pick)
+mprecRun = MPRECRUN.find(d => d.key === sel && d.model === model_pick)
+
+// two-party Dem margin bins: R+60, R+30, R+10, even, D+10, D+30, D+60
+MARGIN_BINS = [-0.6, -0.3, -0.1, 0, 0.1, 0.3, 0.6]
+marginColor = {
+  const shade = (c, t) => d3.interpolateRgb(c, "#ffffff")(t);
+  return {
+    type: "threshold", domain: MARGIN_BINS, legend: true, label: "Two-party margin",
+    tickFormat: d => d === 0 ? "Even" : `${d < 0 ? "R" : "D"}+${Math.round(Math.abs(d) * 100)}`,
+    range: [shade(REP, 0), shade(REP, 0.3), shade(REP, 0.55), shade(REP, 0.75), shade(DEM, 0.75), shade(DEM, 0.55), shade(DEM, 0.3), shade(DEM, 0)]
+  };
+}
+MAP_BLANK = "#e9ecef"
+
+// zoom (wheel / pinch / double-click) and pan (drag) on every map (className "dash-map"); attached
+// from here so the map cells keep the literal Plot.plot({...}) that dashboard autosize needs.
+// Lines keep their width and circles grow only with the square root of the zoom.
+mapZoom = {
+  const init = el => {
+    el.dataset.zoom = "1";
+    const svg = [el, ...el.querySelectorAll("svg")].find(x => x.tagName === "svg" && x.querySelector('g[aria-label="geo"]'));
+    if (!svg) return;
+    const layers = svg.querySelectorAll(':scope > g[aria-label="geo"], :scope > g[aria-label="dot"]');
+    svg.querySelectorAll('g[aria-label="geo"] path, g[aria-label="dot"] circle').forEach(x => x.setAttribute("vector-effect", "non-scaling-stroke"));
+    const dots = [...svg.querySelectorAll('g[aria-label="dot"] circle')].map(c => [c, +c.getAttribute("r")]);
+    const zoom = d3.zoom().scaleExtent([1, 60]).on("zoom", ({ transform: t }) => {
+      layers.forEach(g => g.setAttribute("transform", t));
+      dots.forEach(([c, r]) => c.setAttribute("r", r / Math.sqrt(t.k)));
+    });
+    d3.select(svg).style("cursor", "grab").call(zoom);
+    const reset = html`<button type="button" class="btn btn-sm btn-outline-secondary map-reset" title="Reset zoom">Reset</button>`;
+    reset.onclick = () => d3.select(svg).transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+    (el.tagName === "svg" ? el.parentElement : el).append(reset);
+  };
+  const scan = () => document.querySelectorAll(".dash-map:not([data-zoom])").forEach(init);
+  const obs = new MutationObserver(scan);
+  obs.observe(document.body, { childList: true, subtree: true });
+  invalidation.then(() => obs.disconnect());
+  scan();
+  return init;
+}
+noMap = g => empty(g === null ? `No VoteHub precinct map for ${cur.state} (expected ${geo_url}/${cur.state.toLowerCase()}.json).` : "Loading map…")
 ```
 
-## Row {height="78%"}
+## {.toolbar}
 
-### Model Plots {.tabset}
+```{ojs model-controls}
+// value = { model, all, asof }: model is the full name (e.g. pois_bayes/strat_d/conformal),
+// asof a time in ms; plots run up to it and the table shows each model's last run at or before it
+viewof mctl = {
+  const isTop = m => m === top_model || `${modelParts.get(m)?.base}/${modelParts.get(m)?.spec}/${modelParts.get(m)?.interval}` === top_model;
+  const start = [mctlMemo.model, modelsOk.find(isTop), modelsOk.find(m => mpc.some(d => d.model === m && d.pred_min != null)), modelsOk[0]]
+    .find(m => m != null && modelsOk.includes(m)) ?? null;
+  const form = html`<form class="model-ctl">
+    <label>Model <select name="model" class="form-select form-select-sm"></select></label>
+    <label name="all-wrap"><input type="checkbox" name="all" class="form-check-input"> Statewide</label>
+    <span class="model-ctl-asof">
+      <label>As of <input type="datetime-local" name="asof" class="form-control form-control-sm"></label>
+      <span class="model-ctl-tz">ET</span>
+      <button type="button" name="latest" class="btn btn-sm btn-outline-secondary">Latest</button>
+    </span>
+  </form>`;
+  const { model, all, asof, latest } = form.elements;
+  // one select, grouped by base model; the base's default spec/interval first, then label order
+  const rank = (labels, v) => { const o = Object.keys(labels); return o.includes(v) ? o.indexOf(v) : o.length; };
+  const bases = [...new Set(modelList.map(m => modelParts.get(m).base))].sort();
+  model.replaceChildren(...bases.map(b => {
+    const g = document.createElement("optgroup");
+    g.label = b;
+    const ms = modelList.filter(m => modelParts.get(m).base === b).sort((x, y) => {
+      const [p, q] = [modelParts.get(x), modelParts.get(y)];
+      return (q.specDefault && q.intervalDefault) - (p.specDefault && p.intervalDefault) ||
+        rank(SPEC_LABELS, p.spec) - rank(SPEC_LABELS, q.spec) || rank(INTERVAL_LABELS, p.interval) - rank(INTERVAL_LABELS, q.interval);
+    });
+    // set option properties directly: html`` writes disabled=${false} as a present attribute
+    g.append(...ms.map(m => {
+      const p = modelParts.get(m);
+      const tag = !modelsOk.includes(m) ? " (failed)" : p.specDefault && p.intervalDefault ? " (default)" : "";
+      return Object.assign(document.createElement("option"), { value: m, text: modelText(m) + tag, disabled: !modelsOk.includes(m), title: modelTitle(m) });
+    }));
+    return g;
+  }));
+  const first = runTimes[0], last = runTimes.at(-1);
+  if (last != null) { asof.min = toET(first); asof.max = toET(last); }
+  // follow the newest run unless an earlier time was picked
+  const t0 = mctlMemo.asof != null && mctlMemo.atLatest === false ? Math.min(Math.max(mctlMemo.asof, first), last) : last;
+  const setAsof = t => { asof.value = t == null ? "" : toET(t); };
+  const allWrap = form.querySelector("[name=all-wrap]");
+  const setModel = () => {
+    allWrap.hidden = !mpc.some(d => d.model === model.value && d.geo === "all");
+    all.checked = !allWrap.hidden && mctlMemo.all === true;
+    model.title = model.selectedOptions[0]?.title ?? "";
+  };
+  const update = () => {
+    // minute precision; the end of that minute so a run stamped inside it counts
+    let t = asof.value ? fromET(asof.value) + 59999 : last;
+    if (t == null || t >= last) t = last ?? Infinity;
+    // before the first run there is nothing to show: snap to it
+    if (first != null && t < first) { t = first; setAsof(first); }
+    form.value = { model: model.value || null, all: all.checked, asof: t };
+    if (!noModels) Object.assign(mctlMemo, { model: model.value, asof: t, atLatest: t >= last });
+  };
+  model.addEventListener("input", setModel);
+  all.addEventListener("input", () => { mctlMemo.all = all.checked; });
+  latest.addEventListener("click", () => { setAsof(last); update(); form.dispatchEvent(new Event("input", { bubbles: true })); });
+  form.addEventListener("input", update);
+  form.addEventListener("submit", e => e.preventDefault());
+  form.hidden = noModels;
+  if (start) model.value = start;
+  setAsof(t0);
+  setModel();
+  update();
+  return form;
+}
+```
+
+## Row
+
+### Models {width="45%"}
+
+```{ojs model-table}
+{
+  if (noModels) return html`<div class="model-note">${msc.length ? "No model has produced predictions for this contest yet." : "This contest is not modeled."}</div>`;
+  const latestRun = d3.max(summaryRows, d => d.time);
+  const pick = m => {
+    const s = viewof mctl.elements.model;
+    s.value = m;
+    s.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+  const turnFmt = d3.format(".3s");
+  // rows built with the DOM: a bare <tr> fragment doesn't survive html``'s parser
+  const td = (text, cls = "") => Object.assign(document.createElement("td"), { textContent: text, className: cls });
+  const rows = summaryRows.map(d => {
+    const tr = document.createElement("tr");
+    tr.className = d.model === model_pick ? "selected" : "";
+    tr.title = modelTitle(d.model);
+    tr.dataset.model = d.model;
+    const first = td("");
+    first.append(Object.assign(document.createElement("code"), { textContent: d.base }));
+    if (d.time < latestRun) first.append(" ", Object.assign(document.createElement("span"), { className: "model-stale", textContent: fmtTime(d.time), title: "Last run at or before As of" }));
+    const spec = Object.assign(td(""), { title: SPEC_LABELS[d.spec]?.[1] ?? d.spec });
+    spec.append(Object.assign(document.createElement("code"), { textContent: d.spec }));
+    tr.append(first, spec, td(`${INTERVAL_SHORT[d.interval] ?? d.interval} ${confLevel(d.conf)}`.trim()),
+      td(d.d2 == null ? "—" : d.lo == null || d.hi == null ? pct(d.d2) : `${pct(d.d2)} (${pct(d.lo)}–${pct(d.hi)})`, "num"),
+      td(d.turnout > 0 ? turnFmt(d.turnout) : "—", "num"),
+      td(cur.match_of > 0 ? pct(cur.match_n / cur.match_of) : "—", "num"));
+    return tr;
+  });
+  const tbody = document.createElement("tbody");
+  tbody.append(...rows);
+  tbody.addEventListener("click", e => { const m = e.target.closest("tr")?.dataset.model; if (m) pick(m); });
+  return html`<div class="model-table-wrap">
+    <table class="table table-sm model-table">
+      <thead><tr>
+        <th>Model</th><th title="Demographic spec (hover a row for its description)">Spec</th><th>Interval</th>
+        <th class="num" title="Predicted Dem share of the two-party vote (interval)">Est. D (interval)</th>
+        <th class="num" title="Predicted total votes, all candidates">Turnout</th>
+        <th class="num" title="Reporting precincts found in the models' historical inputs (input_data/model_inputs/{ST}_precinct.parquet); the same for every model">Match</th>
+      </tr></thead>
+      ${tbody}
+    </table>
+    <div class="model-note">
+      As of ${fmtTime(asof)} ET · ${summaryRows.length ? pct(d3.max(summaryRows, d => d.pct_rep)) : "—"} of precincts reporting · click a row to plot it
+      ${cur.match_of > 0 ? html`<div>Match: ${fmt(cur.match_n)} of ${fmt(cur.match_of)} reporting precincts are in the models' historical inputs (${pct(cur.hist_match)} of counted votes); the inputs have ${fmt(cur.n_frame)} precincts. Same for every model.</div>` : ""}
+      <div>Plots: solid prediction · band interval · dotted reported${hasAll ? " · dashed statewide (all counties)" : ""}</div>
+    </div>
+  </div>`;
+}
+```
+
+### Model Plots {.tabset width="55%"}
 
 ```{ojs}
 //| title: Predicted Share
@@ -639,115 +888,51 @@ modelSpec = (rows, opts) => {
 }
 ```
 
-## Row {height="22%"}
-
-### Model
-
-```{ojs model-controls}
-// one form for model (base / demographic spec / interval), statewide overlay, and time window;
-// value = { model, all, from, to }, where model is the full name, e.g. pois_bayes/strat_d/conformal
-viewof mctl = {
-  // default to the first model that reports intervals; failed models (status only) are listed but disabled
-  const start = modelsOk.find(m => mpc.some(d => d.model === m && d.pred_min != null)) ?? modelsOk[0] ?? null;
-  const runTimes = m => [...new Set(mpc.filter(d => d.model === m).map(d => +d.time))].sort((a, b) => a - b);
-  const form = html`<form class="model-ctl">
-    <label>Model <select name="base" class="form-select form-select-sm"></select></label>
-    <label>Demographics <select name="spec" class="form-select form-select-sm"></select></label>
-    <label>Interval <select name="interval" class="form-select form-select-sm"></select></label>
-    <label name="all-wrap"><input type="checkbox" name="all" class="form-check-input"> Statewide projection (all counties)</label>
-    <label>From <select name="from" class="form-select form-select-sm"></select></label>
-    <label>To <select name="to" class="form-select form-select-sm"></select></label>
-  </form>`;
-  const { base, spec, interval, all, from, to } = form.elements;
-  const P = m => modelParts.get(m);
-  const okWhere = f => modelsOk.some(m => f(P(m)));
-  // set option properties directly: html`` writes disabled=${false} as a present attribute.
-  // labels: SPEC_LABELS / INTERVAL_LABELS; the model's default comes first, then the labels' order
-  const fill = (sel, vals, ok, labels = {}, isDefault = () => false) => {
-    const order = Object.keys(labels);
-    const rank = v => isDefault(v) ? -1 : order.includes(v) ? order.indexOf(v) : order.length;
-    sel.replaceChildren(...[...new Set(vals)].sort((a, b) => rank(a) - rank(b)).map(v => {
-      const [lab, desc] = labels[v] ?? [v, v];
-      const text = isDefault(v) ? `${lab} (default)` : lab;
-      return Object.assign(document.createElement("option"),
-        { value: v, text: ok(v) ? text : `${text} (failed)`, disabled: !ok(v), title: `${desc} [${v}]` });
-    }));
-  };
-  // keep the previous choice when it is still available, else the first working option
-  const pick = (sel, prefer) => {
-    const ok = [...sel.options].filter(o => !o.disabled);
-    sel.value = ok.some(o => o.value === prefer) ? prefer : (ok[0] ?? sel.options[0])?.value ?? "";
-    sel.title = sel.selectedOptions[0]?.title ?? "";
-  };
-  const resolve = () => modelList.find(m => P(m).base === base.value && P(m).spec === spec.value && P(m).interval === interval.value) ?? null;
-  fill(base, modelList.map(m => P(m).base), b => okWhere(p => p.base === b));
-  const allWrap = form.querySelector("[name=all-wrap]");
-  // window ends are limited to the picked model's run times, and can't cross
-  const limit = () => {
-    for (const o of from.options) o.disabled = +o.value > +to.value;
-    for (const o of to.options) o.disabled = +o.value < +from.value;
-  };
-  const win = () => ({ from: +from.value, to: +to.value, fromStart: from.selectedIndex === 0, toEnd: to.selectedIndex === to.options.length - 1 });
-  const setModel = () => {
-    const m = resolve();
-    const t = runTimes(m);
-    // carry the window over to the new model's run times; an end left at first/last run stays pinned there
-    const w = from.options.length ? win() : mctlMemo;
-    for (const s of [from, to]) s.replaceChildren(...t.map(x => html`<option value=${x}>${fmtTime(x)}</option>`));
-    let a = (w.fromStart === false ? t.find(x => x >= w.from) : undefined) ?? t[0];
-    let b = (w.toEnd === false ? t.findLast(x => x <= w.to) : undefined) ?? t.at(-1);
-    if (a > b) { a = t[0]; b = t.at(-1); }
-    from.value = a; to.value = b;
-    allWrap.hidden = !mpc.some(d => d.model === m && d.geo === "all");
-    all.checked = !allWrap.hidden && mctlMemo.all === true;
-    limit();
-  };
-  // a changed model narrows the specs it has run with, and a changed spec the intervals
-  const setSpec = preferInterval => {
-    const names = modelList.filter(m => P(m).base === base.value && P(m).spec === spec.value);
-    fill(interval, names.map(m => P(m).interval), i => okWhere(p => p.base === base.value && p.spec === spec.value && p.interval === i),
-         INTERVAL_LABELS, i => names.some(m => P(m).interval === i && P(m).intervalDefault));
-    pick(interval, preferInterval);
-    setModel();
-  };
-  const setBase = (preferSpec, preferInterval) => {
-    const names = modelList.filter(m => P(m).base === base.value);
-    fill(spec, names.map(m => P(m).spec), s => okWhere(p => p.base === base.value && p.spec === s),
-         SPEC_LABELS, s => names.some(m => P(m).spec === s && P(m).specDefault));
-    pick(spec, preferSpec);
-    setSpec(preferInterval);
-  };
-  const update = () => {
-    form.value = { model: resolve(), all: all.checked, from: +from.value, to: +to.value };
-    for (const s of [spec, interval]) s.title = s.selectedOptions[0]?.title ?? "";
-    if (!noModels) Object.assign(mctlMemo, { base: base.value, spec: spec.value, interval: interval.value, ...win() });
-  };
-  base.addEventListener("input", () => setBase(spec.value, interval.value));
-  spec.addEventListener("input", () => setSpec(interval.value));
-  interval.addEventListener("input", setModel);
-  // remembered apart from update() so a model without a statewide run doesn't clear the choice
-  all.addEventListener("input", () => { mctlMemo.all = all.checked; });
-  from.addEventListener("input", limit);
-  to.addEventListener("input", limit);
-  form.addEventListener("input", update);
-  form.addEventListener("submit", e => e.preventDefault());
-  form.hidden = noModels;
-  if (!noModels) {
-    const m0 = okWhere(p => p.base === mctlMemo.base) ? mctlMemo : P(start);
-    base.value = m0.base;
-    setBase(m0.spec, m0.interval);
-  }
-  update();
-  return form;
-}
+```{ojs}
+//| title: Results Map
 {
-  if (noModels) return html`<div class="model-note">${msc.length ? "No model has produced predictions for this contest yet." : "This contest is not modeled."}</div>`;
-  const confs = [...new Set(modelRows.map(d => d.model_conf).filter(c => c != null))];
-  const p = modelParts.get(model_pick);
-  const desc = (labels, v) => labels[v]?.[1] ?? v;
-  return html`<div class="model-note">
-    <div>Solid: prediction · band: interval (${confs.length ? confs.join(", ") : "none for this model"}) · dotted: reported${hasAll ? " · dashed: statewide (all counties)" : ""}</div>
-    ${p ? html`<div>Demographics: ${desc(SPEC_LABELS, p.spec)} · Interval: ${desc(INTERVAL_LABELS, p.interval)} · <code>${model_pick}</code></div>` : ""}
-  </div>`;
+  const g = geoData;
+  if (!g) return noMap(g);
+  const res = mresc.filter(d => d.total > 0 && d.dem + d.rep > 0 && g.byId.has(d.unit_id))
+    .map(d => { const f = g.byId.get(d.unit_id); return { ...d, feature: f, cx: f.properties.cx, cy: f.properties.cy, margin: (d.dem - d.rep) / (d.dem + d.rep) }; });
+  const s = exportable("Results Map", {
+    projection: g.projection,
+    color: marginColor,
+    caption: `Counted votes as of ${fmtTime(cur.time)} ET · ${fmt(res.length)} of ${fmt(g.features.length)} precincts reporting · grey: none yet or not matched`,
+    marks: [
+      Plot.geo(g.features, { fill: MAP_BLANK, stroke: "white", strokeWidth: 0.3 }),
+      Plot.geo(res.map(d => d.feature), { fill: res.map(d => d.margin), stroke: "white", strokeWidth: 0.3,
+        title: res.map(d => `${d.unit_id}\n${partyName("dem")} ${fmt(d.dem)} · ${partyName("rep")} ${fmt(d.rep)}\n${marginColor.tickFormat(Math.round(d.margin * 100) / 100)} · ${fmt(d.total)} votes`) })
+    ]
+  }, "Precinct results");
+  return Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, caption: s.caption, marks: s.marks });
+}
+```
+
+```{ojs}
+//| title: Remaining Vote Map
+{
+  const g = geoData;
+  if (!g) return noMap(g);
+  if (noModels) return noModelsMsg();
+  if (mprecc.length === 0) return empty(`No precinct projections for ${model_pick} (model_results/precincts_latest.parquet).`);
+  const rows = mprecc.filter(d => g.byId.has(d.unit_id))
+    .map(d => { const p = g.byId.get(d.unit_id).properties; return { ...d, cx: p.cx, cy: p.cy, margin: 2 * d.d2 - 1 }; })
+    .sort((a, b) => b.rem - a.rem);
+  const tot = d3.sum(rows, d => d.rem);
+  const d2 = tot > 0 ? d3.sum(rows, d => d.rem * d.d2) / tot : null;
+  const s = exportable("Remaining Vote Map", {
+    projection: g.projection,
+    color: marginColor,
+    r: { type: "sqrt", domain: [0, d3.max(rows, d => d.rem)], range: [0, 14] },
+    caption: `${model_pick}${mprecRun ? ` · run ${fmtTime(mprecRun.time)} ET` : ""} · ${fmt(Math.round(tot))} votes expected outstanding` +
+      `${d2 == null ? "" : ` (${pct(d2)} D two-party)`} · circle area: expected remaining votes, color: their projected margin`,
+    marks: [
+      Plot.geo(g.features, { fill: MAP_BLANK, stroke: "white", strokeWidth: 0.3 }),
+      Plot.dot(rows, { x: "cx", y: "cy", r: "rem", fill: "margin", fillOpacity: 0.85, stroke: "white", strokeWidth: 0.5,
+        title: d => `${d.unit_id}\n${fmt(d.rem)} votes expected outstanding\n${pct(d.d2)} D two-party (${marginColor.tickFormat(Math.round(d.margin * 100) / 100)})` })
+    ]
+  }, "Expected remaining vote");
+  return Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, r: s.r, caption: s.caption, marks: s.marks });
 }
 ```
