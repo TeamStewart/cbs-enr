@@ -1,4 +1,4 @@
-# Interval coverage on the simulated nights (todo item 6)
+# Interval coverage on the simulated nights
 
 Written 2026-10-27. All 10 scenarios in `26_sim/`. **lm_bayes not run** (dropped on time, see
 "Not covered").
@@ -153,9 +153,9 @@ interval by a measured factor), not the current bootstrap / credible intervals.
    0.505, interval never holds the truth (0 of 17), status "ok (partial prior: 7 of 9
    equations ...)" from 1am to the last checkpoint, and `prior_only` before that, while
    pois_bayes converges to 0.503. Not diagnosed: the 2 equations left at the prior are the
-   first place to look. Worth a look by whoever owns item 1 (`R/model_medsl.R`, `model_turnout.R`).
+   first place to look. Relevant to `R/model_medsl.R` and `medsl/model_turnout.R`.
 2. **medsl_sur's set-up aborts for a state with no vote-method split.** On MN,
-   `fit_medsl_setup_for()` stops at `scripts/model/model_turnout.R:783` with
+   `fit_medsl_setup_for()` stops at `scripts/model/live/medsl/model_turnout.R:783` with
    `MODES names all with no MODE_TURN_SHARE fallback value.` (MI did not hit it). The fits
    themselves are skipped correctly ("no vote-method split"), but anything that calls the
    set-up first (`sim_night.R`, `time_models.R`, `run_night.R`) dies for the whole run on such

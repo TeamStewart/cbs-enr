@@ -17,13 +17,30 @@
 # ========================================
 source("scripts/model/live/load.R")
 args = commandArgs(trailingOnly = TRUE)
-opt = function(k, d) { a = grep(paste0("^--", k, "="), args, value = TRUE); if (length(a)) sub("^[^=]*=", "", a[1]) else d }
+
+#' Value of a `--key=value` command-line flag
+#'
+#' @param k Flag name.
+#' @param d Default when the flag is absent.
+#' @return The value as a string, or `d`.
+opt = function(k, d) {
+  a = grep(paste0("^--", k, "="), args, value = TRUE)
+  if (length(a)) sub("^[^=]*=", "", a[1]) else d
+}
 CORES = as.integer(opt("cores", max(1L, parallel::detectCores() - 1L)))
 SCEN = opt("sim", "tx_base")
 TZ = "America/New_York"
 # five scrapes through the night
-SCRAPES = as.POSIXct(c("2026-11-03 20:30", "2026-11-03 21:30", "2026-11-03 22:30",
-                       "2026-11-04 00:00", "2026-11-04 02:00"), tz = TZ)
+SCRAPES = as.POSIXct(
+  c(
+    "2026-11-03 20:30",
+    "2026-11-03 21:30",
+    "2026-11-03 22:30",
+    "2026-11-04 00:00",
+    "2026-11-04 02:00"
+  ),
+  tz = TZ
+)
 
 d26 = find_26_general()
 sim = read_sim(file.path(dirname(d26), "26_sim", SCEN))
@@ -34,10 +51,20 @@ races = races_from_priors(d26) |> filter(state == "TX")
 t0 = proc.time()[["elapsed"]]
 cells = build_cells("TX", d26)
 base = county_baseline("TX", d26)
-for (m in MODELS) setup_model(m, cells, "TX")
-for (pk in c("fixest", "enightmodels")) suppressPackageStartupMessages(requireNamespace(pk, quietly = TRUE))
-cat(sprintf("One-time set-up for the night: %.1f s. Timing %d refreshes of %s on %d core(s) (of %d).\n\n",
-            proc.time()[["elapsed"]] - t0, length(SCRAPES), paste(MODELS, collapse = ", "), CORES, parallel::detectCores()))
+for (m in MODELS) {
+  setup_model(m, cells, "TX")
+}
+for (pk in c("fixest", "enightmodels")) {
+  suppressPackageStartupMessages(requireNamespace(pk, quietly = TRUE))
+}
+cat(sprintf(
+  "One-time set-up for the night: %.1f s. Timing %d refreshes of %s on %d core(s) (of %d).\n\n",
+  proc.time()[["elapsed"]] - t0,
+  length(SCRAPES),
+  paste(MODELS, collapse = ", "),
+  CORES,
+  parallel::detectCores()
+))
 
 # ---- the five refreshes -----------------------------------------------------------------
 res = lapply(seq_along(SCRAPES), function(k) {
@@ -45,21 +72,34 @@ res = lapply(seq_along(SCRAPES), function(k) {
   # the new scrape and the latest CBS county file (not timed)
   ret = bind_rows(lapply(c("gov", "sen"), \(r) returns_from_sim(sim, r, tm, geos = cells$geo))) |>
     mutate(race_id = paste0("TX_", race_id))
-  cbs = setNames(lapply(c("gov", "sen"), \(r) read_cbs_latest("TX", r, env = "sim", at = tm, dir_26 = dir_cbs)),
-                 c("TX_gov", "TX_sen"))
+  cbs = setNames(
+    lapply(c("gov", "sen"), \(r) read_cbs_latest("TX", r, env = "sim", at = tm, dir_26 = dir_cbs)),
+    c("TX_gov", "TX_sen")
+  )
   # rerun every model on every race: what each five-minute refresh does
   t1 = proc.time()[["elapsed"]]
   out = run_jobs(make_jobs(cells, ret, races, MODELS, time = tm, cbs = cbs, base = base), CORES)
   secs = proc.time()[["elapsed"]] - t1
   per = out$status |> summarize(s = max(seconds, na.rm = TRUE), .by = model)
   bad = filter(out$status, status != "ok")
-  cat(sprintf("Refresh %d (%s, %.0f%% of the 32 counties' votes counted): %.1f s   [slowest fit: %s]%s\n",
-              k, format(tm, "%H:%M"), 100 * sum(ret$votes) / sum(sim$truth$votes[sim$truth$geo %in% cells$geo]), secs,
-              paste(sprintf("%s %.0f s", per$model, per$s), collapse = ", "),
-              if (nrow(bad)) paste0("  PROBLEM: ", paste(bad$model, bad$status, collapse = "; ")) else ""))
+  cat(sprintf(
+    "Refresh %d (%s, %.0f%% of the 32 counties' votes counted): %.1f s   [slowest fit: %s]%s\n",
+    k,
+    format(tm, "%H:%M"),
+    100 * sum(ret$votes) / sum(sim$truth$votes[sim$truth$geo %in% cells$geo]),
+    secs,
+    paste(sprintf("%s %.0f s", per$model, per$s), collapse = ", "),
+    if (nrow(bad)) paste0("  PROBLEM: ", paste(bad$model, bad$status, collapse = "; ")) else ""
+  ))
   secs
 })
 secs = unlist(res)
-cat(sprintf("\nAverage refresh: %.1f s (fastest %.1f, slowest %.1f) for 2 races x %d models on %d core(s).\n",
-            mean(secs), min(secs), max(secs), length(MODELS), CORES))
+cat(sprintf(
+  "\nAverage refresh: %.1f s (fastest %.1f, slowest %.1f) for 2 races x %d models on %d core(s).\n",
+  mean(secs),
+  min(secs),
+  max(secs),
+  length(MODELS),
+  CORES
+))
 cat("On election night add the time to read the scrape and pull CBS's county results.\n")

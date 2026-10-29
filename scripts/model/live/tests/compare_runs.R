@@ -8,7 +8,7 @@
 ##   Rscript scripts/model/live/tests/compare_runs.R compare <before.rds> <after.rds> [old=new,...]
 ##       joins the two runs by model x candidate x pred_type x geo and prints the largest
 ##       difference in pred, pred_min, pred_max, p_win and precinct turn_est per model.
-##       old=new renames models in <before> (e.g. model_cory=ratio_strata) when labels changed.
+##       old=new renames models in <before> (e.g. old_name=swing) when labels changed.
 ##
 ## Typical use: save on the commit before the refactor (git stash or a worktree), save after,
 ## compare. Every difference should be 0 unless the change is meant to move estimates.
@@ -29,24 +29,53 @@ if (a[1] == "save") {
   saveRDS(out, a[2])
   cat("saved", a[2], "\n")
 } else if (a[1] == "compare") {
-  o = readRDS(a[2]); n = readRDS(a[3])
+  o = readRDS(a[2])
+  n = readRDS(a[3])
   map = if (length(a) >= 4) {
     kv = strsplit(strsplit(a[4], ",")[[1]], "=")
     setNames(vapply(kv, `[`, "", 2), vapply(kv, `[`, "", 1))
-  } else character()
+  } else {
+    character()
+  }
   ren = function(m) ifelse(m %in% names(map), map[m], m)
   mx = function(x) if (all(is.na(x))) NA_real_ else max(abs(x), na.rm = TRUE)
   for (k in names(o)) {
     cat("==", k, "\n")
-    po = mutate(o[[k]]$pred, model = ren(model)); pn = n[[k]]$pred
+    po = mutate(o[[k]]$pred, model = ren(model))
+    pn = n[[k]]$pred
     j = full_join(po, pn, by = c("model", "candidate", "pred_type", "geo"), suffix = c(".o", ".n"))
-    cat("prediction rows before / after:", nrow(po), nrow(pn), "; unmatched:", sum(is.na(j$pred.o) | is.na(j$pred.n)), "\n")
-    print(j |> summarize(d_pred = mx(pred.o - pred.n), d_min = mx(pred_min.o - pred_min.n),
-                         d_max = mx(pred_max.o - pred_max.n), d_p_win = mx(p_win.o - p_win.n),
-                         conf = paste(unique(model_conf.o), "->", unique(model_conf.n)), .by = model))
-    pr_o = mutate(o[[k]]$prec, model = ren(model)); pr_n = n[[k]]$prec
+    cat(
+      "prediction rows before / after:",
+      nrow(po),
+      nrow(pn),
+      "; unmatched:",
+      sum(is.na(j$pred.o) | is.na(j$pred.n)),
+      "\n"
+    )
+    print(
+      j |>
+        summarize(
+          d_pred = mx(pred.o - pred.n),
+          d_min = mx(pred_min.o - pred_min.n),
+          d_max = mx(pred_max.o - pred_max.n),
+          d_p_win = mx(p_win.o - p_win.n),
+          conf = paste(unique(model_conf.o), "->", unique(model_conf.n)),
+          .by = model
+        )
+    )
+    pr_o = mutate(o[[k]]$prec, model = ren(model))
+    pr_n = n[[k]]$prec
     jp = inner_join(pr_o, pr_n, by = c("model", "geo"), suffix = c(".o", ".n"))
-    cat("precinct rows before / after / joined:", nrow(pr_o), nrow(pr_n), nrow(jp),
-        "; max |turn_est diff|:", mx(jp$turn_est.o - jp$turn_est.n), "\n")
+    cat(
+      "precinct rows before / after / joined:",
+      nrow(pr_o),
+      nrow(pr_n),
+      nrow(jp),
+      "; max |turn_est diff|:",
+      mx(jp$turn_est.o - jp$turn_est.n),
+      "\n"
+    )
   }
-} else stop("first argument: save or compare")
+} else {
+  stop("first argument: save or compare")
+}

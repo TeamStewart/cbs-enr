@@ -35,48 +35,90 @@
 ## (build_cells() in live/R/cells.R).
 ##
 ## From the cbs-enr folder:
-##   Rscript scripts/model/make_mode_results.R NC
+##   Rscript scripts/model/prep/make_mode_results.R NC
 # ========================================
-suppressPackageStartupMessages({ library(dplyr); library(readr); library(stringr) })
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(readr)
+  library(stringr)
+})
 source("scripts/model/live/R/paths.R")
 args = commandArgs(trailingOnly = TRUE)
 st = toupper(grep("^--", args, value = TRUE, invert = TRUE)[1])
-if (is.na(st)) stop("Give the state, e.g. Rscript scripts/model/make_mode_results.R NC")
+if (is.na(st)) {
+  stop("Give the state, e.g. Rscript scripts/model/prep/make_mode_results.R NC")
+}
 f_arg = sub("^--file=", "", grep("^--file=", args, value = TRUE))
 d26 = find_26_general()
 dir_src = file.path(dirname(d26), "24_general", st, "clean")
-srcs = if (length(f_arg)) path.expand(f_arg) else list.files(dir_src, pattern = paste0("^", st, "(_.*)?_latest\\.parquet$"), full.names = TRUE)
-if (!length(srcs)) stop("No ", st, "*_latest.parquet in ", dir_src)
-if (any(file.size(srcs) == 0)) stop("0-byte (online-only) files: ", paste(basename(srcs[file.size(srcs) == 0]), collapse = ", "), ". Make them available offline in Dropbox.")
-x = bind_rows(lapply(srcs, function(f) nanoparquet::read_parquet(f) |>
-                       mutate(across(where(is.factor), as.character), race_id = as.character(race_id))))
-x = filter(x, grepl("^(US )?President", race_name, ignore.case = TRUE), !grepl("Overvote|Undervote", vote_mode))
-if (!nrow(x)) stop("No President race in ", paste(basename(srcs), collapse = ", "))
+srcs = if (length(f_arg)) {
+  path.expand(f_arg)
+} else {
+  list.files(dir_src, pattern = paste0("^", st, "(_.*)?_latest\\.parquet$"), full.names = TRUE)
+}
+if (!length(srcs)) {
+  stop("No ", st, "*_latest.parquet in ", dir_src)
+}
+if (any(file.size(srcs) == 0)) {
+  stop(
+    "0-byte (online-only) files: ",
+    paste(basename(srcs[file.size(srcs) == 0]), collapse = ", "),
+    ". Make them available offline in Dropbox."
+  )
+}
+x = bind_rows(lapply(srcs, function(f) {
+  nanoparquet::read_parquet(f) |>
+    mutate(across(where(is.factor), as.character), race_id = as.character(race_id))
+}))
+x = filter(
+  x,
+  grepl("^(US )?President", race_name, ignore.case = TRUE),
+  !grepl("Overvote|Undervote", vote_mode)
+)
+if (!nrow(x)) {
+  stop("No President race in ", paste(basename(srcs), collapse = ", "))
+}
 x = x |>
-  mutate(method = case_when(vote_mode %in% c("Election Day", "Provisional") ~ "eday",
-                            vote_mode == "Early Voting" ~ "early",
-                            vote_mode == "Absentee/Mail" ~ "mail", TRUE ~ NA_character_),
-         county = toupper(jurisdiction))
-if (any(is.na(x$method))) stop("Unmapped vote_mode values: ", paste(unique(x$vote_mode[is.na(x$method)]), collapse = ", "))
+  mutate(
+    method = case_when(
+      vote_mode %in% c("Election Day", "Provisional") ~ "eday",
+      vote_mode == "Early Voting" ~ "early",
+      vote_mode == "Absentee/Mail" ~ "mail",
+      TRUE ~ NA_character_
+    ),
+    county = toupper(jurisdiction)
+  )
+if (any(is.na(x$method))) {
+  stop("Unmapped vote_mode values: ", paste(unique(x$vote_mode[is.na(x$method)]), collapse = ", "))
+}
 
 dir_in = file.path(d26, "input_data", "model_inputs")
 inp = nanoparquet::read_parquet(file.path(dir_in, paste0(st, "_precinct.parquet"))) |>
   transmute(geo = as.character(geo), county = toupper(county_name), precinct_id = precinct_enr)
 
-real = filter(x, !virtual_precinct) |> summarize(v = sum(precinct_total), .by = c(county, precinct_id, method))
+real = filter(x, !virtual_precinct) |>
+  summarize(v = sum(precinct_total), .by = c(county, precinct_id, method))
 virt = filter(x, virtual_precinct) |> summarize(virt = sum(precinct_total), .by = c(county, method))
 m = inner_join(inp, real, by = c("county", "precinct_id"))
 # matched counties: most of their precinct-level (non-virtual) votes match our precincts
 cty_votes = x |> filter(!virtual_precinct) |> summarize(v = sum(precinct_total), .by = county)
 cty_match = m |> summarize(vm = sum(v), .by = county)
-ok_cty = cty_votes |> left_join(cty_match, by = "county") |> filter(coalesce(vm, 0) >= 0.5 * v) |> pull(county)
-cat(sprintf("%d of %d counties in our inputs matched to 2024 precinct results; the rest keep the 2022 county split\n",
-            sum(unique(inp$county) %in% ok_cty), n_distinct(inp$county)))
+ok_cty = cty_votes |>
+  left_join(cty_match, by = "county") |>
+  filter(coalesce(vm, 0) >= 0.5 * v) |>
+  pull(county)
+cat(sprintf(
+  "%d of %d counties in our inputs matched to 2024 precinct results; the rest keep the 2022 county split\n",
+  sum(unique(inp$county) %in% ok_cty),
+  n_distinct(inp$county)
+))
 
 # each matched precinct's own split, plus its county's virtual-precinct votes spread by precinct size
 mp = filter(m, county %in% ok_cty)
 w = mp |> summarize(v = sum(v), .by = c(geo, county)) |> mutate(w = v / sum(v), .by = county)
-alloc = w |> select(geo, county, w) |> inner_join(virt, by = "county", relationship = "many-to-many") |>
+alloc = w |>
+  select(geo, county, w) |>
+  inner_join(virt, by = "county", relationship = "many-to-many") |>
   transmute(geo, method, v = w * virt)
 out_p = bind_rows(select(mp, geo, method, v), alloc)
 
@@ -85,8 +127,13 @@ p24 = out_p |>
   tidyr::complete(geo, method = c("early", "eday", "mail"), fill = list(v = 0)) |>
   left_join(select(inp, geo, county), by = "geo")
 m = mp
-cat(sprintf("%s: %d of %d precincts in our inputs matched by name; %s from virtual precincts spread over their counties\n",
-            st, n_distinct(m$geo), nrow(inp), format(round(sum(alloc$v)), big.mark = ",")))
+cat(sprintf(
+  "%s: %d of %d precincts in our inputs matched by name; %s from virtual precincts spread over their counties\n",
+  st,
+  n_distinct(m$geo),
+  nrow(inp),
+  format(round(sum(alloc$v)), big.mark = ",")
+))
 
 # ---- rescale each matched county to its 2022 split -------------------------------------
 SPLIT_ELECTION = "2022_general"
@@ -94,26 +141,44 @@ h22 = nanoparquet::read_parquet(file.path(dir_in, paste0(st, "_precinct_mode_his
   filter(election == SPLIT_ELECTION) |>
   transmute(geo = as.character(geo), method, voters = as.numeric(voters)) |>
   inner_join(select(inp, geo, county), by = "geo")
-if (!nrow(h22)) stop(st, "_precinct_mode_history.parquet has no ", SPLIT_ELECTION, " rows")
-tgt = h22 |> summarize(v = sum(voters), .by = c(county, method)) |>
-  mutate(ts = v / sum(v), .by = county) |> select(county, method, ts)
+if (!nrow(h22)) {
+  stop(st, "_precinct_mode_history.parquet has no ", SPLIT_ELECTION, " rows")
+}
+tgt = h22 |>
+  summarize(v = sum(voters), .by = c(county, method)) |>
+  mutate(ts = v / sum(v), .by = county) |>
+  select(county, method, ts)
 scaled = p24 |>
-  mutate(pt = sum(v), .by = geo) |>                       # precinct's 2024 total
-  mutate(cv = sum(v), .by = county) |>                     # county's 2024 total
-  mutate(cmv = sum(v), .by = c(county, method)) |>         # county's 2024 total for the method
+  mutate(pt = sum(v), .by = geo) |> # precinct's 2024 total
+  mutate(cv = sum(v), .by = county) |> # county's 2024 total
+  mutate(cmv = sum(v), .by = c(county, method)) |> # county's 2024 total for the method
   left_join(tgt, by = c("county", "method")) |>
-  mutate(voters = case_when(is.na(ts) ~ v,                 # no 2022 split for the county: keep 2024
-                            cmv > 0 ~ v * ts * cv / cmv,   # the method's 2024 precinct pattern, at the 2022 county share
-                            TRUE ~ ts * pt))               # method absent in 2024: spread by precinct size
+  mutate(
+    voters = case_when(
+      is.na(ts) ~ v, # no 2022 split for the county: keep 2024
+      cmv > 0 ~ v * ts * cv / cmv, # the method's 2024 precinct pattern, at the 2022 county share
+      TRUE ~ ts * pt
+    )
+  ) # method absent in 2024: spread by precinct size
 fill = h22 |> filter(!geo %in% scaled$geo)
 out = bind_rows(select(scaled, geo, method, voters), select(fill, geo, method, voters)) |>
   mutate(voters = round(voters), election = "2022_split_2024_pattern") |>
   select(geo, election, method, voters) |>
   arrange(geo, method)
-chk = out |> inner_join(select(inp, geo, county), by = "geo") |> summarize(v = sum(voters), .by = c(county, method)) |>
-  mutate(s = v / sum(v), .by = county) |> inner_join(tgt, by = c("county", "method"))
-cat(sprintf("%d precincts with the 2024 pattern at the %s county split, %d with the %s county split only (no 2024 match); largest county share gap vs %s: %.4f\n",
-            n_distinct(scaled$geo), SPLIT_ELECTION, n_distinct(fill$geo), SPLIT_ELECTION, SPLIT_ELECTION, max(abs(chk$s - chk$ts))))
+chk = out |>
+  inner_join(select(inp, geo, county), by = "geo") |>
+  summarize(v = sum(voters), .by = c(county, method)) |>
+  mutate(s = v / sum(v), .by = county) |>
+  inner_join(tgt, by = c("county", "method"))
+cat(sprintf(
+  "%d precincts with the 2024 pattern at the %s county split, %d with the %s county split only (no 2024 match); largest county share gap vs %s: %.4f\n",
+  n_distinct(scaled$geo),
+  SPLIT_ELECTION,
+  n_distinct(fill$geo),
+  SPLIT_ELECTION,
+  SPLIT_ELECTION,
+  max(abs(chk$s - chk$ts))
+))
 sh = out |> summarize(v = sum(voters), .by = method) |> mutate(share = round(v / sum(v), 3))
 cat("method split:", paste(sprintf("%s %.1f%%", sh$method, 100 * sh$share), collapse = ", "), "\n")
 f = file.path(d26, "input_data", "model_inputs", paste0(st, "_precinct_mode_results.parquet"))
@@ -126,21 +191,53 @@ cat("Wrote", f, "\n")
 # model and handled as one county-level unit (counted once the batch is in, projected
 # from 2024 until then).
 lk = read_csv(file.path(dir_in, paste0(st, "_counties.csv")), col_types = cols(.default = "c"))
-pty = function(p) case_when(grepl("^dem", p, ignore.case = TRUE) ~ "dem", grepl("^rep", p, ignore.case = TRUE) ~ "rep", TRUE ~ "oth")
+
+#' Party label to dem / rep / oth
+#'
+#' @param p Party labels.
+#' @return Character vector.
+pty = function(p) {
+  case_when(
+    grepl("^dem", p, ignore.case = TRUE) ~ "dem",
+    grepl("^rep", p, ignore.case = TRUE) ~ "rep",
+    TRUE ~ "oth"
+  )
+}
 vh = x |>
   mutate(party = pty(candidate_party)) |>
-  summarize(votes = sum(precinct_total[virtual_precinct]),
-            dem = sum(precinct_total[virtual_precinct & party == "dem"]),
-            rep = sum(precinct_total[virtual_precinct & party == "rep"]),
-            method_votes = sum(precinct_total), .by = c(county, method)) |>
+  summarize(
+    votes = sum(precinct_total[virtual_precinct]),
+    dem = sum(precinct_total[virtual_precinct & party == "dem"]),
+    rep = sum(precinct_total[virtual_precinct & party == "rep"]),
+    method_votes = sum(precinct_total),
+    .by = c(county, method)
+  ) |>
   filter(votes > 0) |>
   mutate(oth = votes - dem - rep, virt_share = votes / method_votes) |>
   left_join(transmute(lk, county = toupper(county_name), county_cbs), by = "county") |>
   relocate(county_cbs, county)
-if (any(is.na(vh$county_cbs))) cat("! counties not in ", st, "_counties.csv: ", paste(unique(vh$county[is.na(vh$county_cbs)]), collapse = ", "), "\n", sep = "")
+if (any(is.na(vh$county_cbs))) {
+  cat(
+    "! counties not in ",
+    st,
+    "_counties.csv: ",
+    paste(unique(vh$county[is.na(vh$county_cbs)]), collapse = ", "),
+    "\n",
+    sep = ""
+  )
+}
 f2 = file.path(d26, "input_data", "model_inputs", paste0(st, "_virtual_history.parquet"))
 nanoparquet::write_parquet(filter(vh, !is.na(county_cbs)), f2)
-cat(sprintf("Virtual precincts in 2024: %s votes; county x method reported mostly virtually (>= 50%%): %s\n",
-            format(sum(vh$votes), big.mark = ","),
-            paste(sprintf("%s %d counties", names(table(vh$method[vh$virt_share >= 0.5])), table(vh$method[vh$virt_share >= 0.5])), collapse = ", ")))
+cat(sprintf(
+  "Virtual precincts in 2024: %s votes; county x method reported mostly virtually (>= 50%%): %s\n",
+  format(sum(vh$votes), big.mark = ","),
+  paste(
+    sprintf(
+      "%s %d counties",
+      names(table(vh$method[vh$virt_share >= 0.5])),
+      table(vh$method[vh$virt_share >= 0.5])
+    ),
+    collapse = ", "
+  )
+))
 cat("Wrote", f2, "\n")

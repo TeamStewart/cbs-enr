@@ -20,30 +20,33 @@
 # ========================================
 
 # ---- simulated nights -------------------------------------------------------------
-# sim: list(truth = TX_truth.parquet, sched = TX_schedule.parquet), read by read_sim().
-# A cell's counted votes are its final votes x the share of the cell counted by `time`
-# (cum_frac); censored precincts never report.
-#
-# round_by: the original harness rounds counted votes in two different ways --
-#   "candidate"  round each candidate's votes (what ratio_strata got; also what a real feed
-#                looks like, since every candidate's count is a whole number). Default.
-#   "party"      add up dem / rep / third-party first, then round (what the swing model
-#                got). Only differs when a party has more than one candidate (e.g. a
-#                minor-party candidate plus write-ins), by at most 1 vote per cell.
-# state: NULL auto-detects from the {ST}_truth.parquet in the scenario directory, so a
-# non-TX scenario needs no argument and no naming convention. The filenames used to be
-# hardcoded to TX, which silently limited every sim run to one state.
+#' Read one of Ethan's simulated nights
+#'
+#' @param dir_sc Scenario directory (26_sim/<scenario>).
+#' @param tz Time zone for the schedule times.
+#' @param state Two-letter state code; NULL auto-detects from the scenario's single
+#'   `{ST}_truth.parquet`.
+#' @return List: truth (`{ST}_truth.parquet`: final votes per geo x method x candidate) and
+#'   sched (`{ST}_schedule.parquet`: cumulative share counted, `cum_frac`, by time `t`).
 read_sim = function(dir_sc, tz = "America/New_York", state = NULL) {
   if (is.null(state)) {
     f = list.files(dir_sc, pattern = "_truth\\.parquet$")
-    if (length(f) != 1)
-      stop("expected exactly one *_truth.parquet in ", dir_sc, ", found ", length(f),
-           if (length(f)) paste0(": ", paste(f, collapse = ", ")) else "")
+    if (length(f) != 1) {
+      stop(
+        "expected exactly one *_truth.parquet in ",
+        dir_sc,
+        ", found ",
+        length(f),
+        if (length(f)) paste0(": ", paste(f, collapse = ", ")) else ""
+      )
+    }
     state = sub("_truth\\.parquet$", "", f)
   }
   p = function(suffix) {
     f = file.path(dir_sc, paste0(state, suffix))
-    if (!file.exists(f)) stop("sim scenario is missing ", basename(f))
+    if (!file.exists(f)) {
+      stop("sim scenario is missing ", basename(f))
+    }
     f
   }
   list(
@@ -54,22 +57,58 @@ read_sim = function(dir_sc, tz = "America/New_York", state = NULL) {
   )
 }
 
-# the checkpoints the sim tests refit at: every 15 minutes 8pm-4am ET, then four later times
+#' Checkpoints the sim tests refit at
+#'
+#' @param tz Time zone.
+#' @return POSIXct vector: every 15 minutes 8pm-4am ET on election night, then noon on Nov 4,
+#'   5, 7 and 10.
 sim_checkpoints = function(tz = "America/New_York") {
-  c(seq(as.POSIXct("2026-11-03 20:00", tz = tz), as.POSIXct("2026-11-04 04:00", tz = tz), by = "15 min"),
-    as.POSIXct(c("2026-11-04 12:00", "2026-11-05 12:00", "2026-11-07 12:00", "2026-11-10 12:00"), tz = tz))
+  c(
+    seq(
+      as.POSIXct("2026-11-03 20:00", tz = tz),
+      as.POSIXct("2026-11-04 04:00", tz = tz),
+      by = "15 min"
+    ),
+    as.POSIXct(
+      c("2026-11-04 12:00", "2026-11-05 12:00", "2026-11-07 12:00", "2026-11-10 12:00"),
+      tz = tz
+    )
+  )
 }
 
+#' Share of each cell counted by a time
+#'
+#' @param sim `read_sim()` list.
+#' @param time POSIXct.
+#' @return Tibble: geo, method, frac (the largest `cum_frac` landed by `time`).
 sim_frac_at = function(sim, time) {
   landed = filter(sim$sched, !is.na(t), !is.na(cum_frac), t <= time)
-  if (nrow(landed) == 0) return(tibble(geo = character(), method = character(), frac = numeric()))
+  if (nrow(landed) == 0) {
+    return(tibble(geo = character(), method = character(), frac = numeric()))
+  }
   summarize(landed, frac = max(cum_frac), .by = c(geo, method))
 }
 
+#' Standard returns at one checkpoint of a simulated night
+#'
+#' A cell's counted votes are its final votes x the share counted by `time`; censored
+#' precincts never report. `stage` is precinct-level, as a feed reports it: 6 when every
+#' method is fully counted, 4 when anything is in, else 0.
+#'
+#' @param sim `read_sim()` list.
+#' @param race_id The sim's contest (e.g. "gov").
+#' @param time POSIXct checkpoint.
+#' @param geos Keep only these geos (e.g. the cells' precincts); NULL keeps all.
+#' @param round_by "candidate" (default) rounds each candidate's counted votes, as a real
+#'   feed reports them; "party" sums dem / rep / third party first, then rounds. They differ
+#'   by at most 1 vote per cell, and only when a party has more than one candidate.
+#' @return Standard returns (file header), with `frac` the share of the cell counted.
 returns_from_sim = function(sim, race_id, time, geos = NULL, round_by = c("candidate", "party")) {
   round_by = match.arg(round_by)
   tr = filter(sim$truth, contest == race_id)
-  if (!is.null(geos)) tr = filter(tr, geo %in% geos)
+  if (!is.null(geos)) {
+    tr = filter(tr, geo %in% geos)
+  }
   if (round_by == "party") {
     tr = tr |>
       mutate(party = if_else(party %in% c("dem", "rep"), party, "oth")) |>
@@ -87,45 +126,76 @@ returns_from_sim = function(sim, race_id, time, geos = NULL, round_by = c("candi
     select(geo, method, frac, stage)
   tr |>
     left_join(fr, by = c("geo", "method")) |>
-    transmute(race_id = contest, state, election, geo, method, candidate, party,
-              votes = round(votes * frac), stage, complete = frac >= 1, frac, time = time)
+    transmute(
+      race_id = contest,
+      state,
+      election,
+      geo,
+      method,
+      candidate,
+      party,
+      votes = round(votes * frac),
+      stage,
+      complete = frac >= 1,
+      frac,
+      time = time
+    )
 }
 
 # ---- the live feed ----------------------------------------------------------------
-# live: CONTRACT.md section 8 -- geo, race_id, candidate_id, method, votes, stage,
-#       observed_at; append-only, one snapshot per scrape.
-# candidates: CONTRACT.md section 5 -- race_id, candidate_id, name, party.
-# Takes each row's latest value at or before `at` (default: the latest scrape).
-# `geo` must already be reconciled to the precinct spine and `method` already canonical
-# (lookups/vote_mode_map.csv); this function does neither.
-# NOT YET TESTED AGAINST A REAL FEED: as of CONTRACT.md 2026-10-18 the TX live ids join
-# to the spine at 0.8%, so the id crosswalk has to be fixed upstream first.
+#' Standard returns from a CONTRACT.md section 8 feed
+#'
+#' Takes each row's latest value at or before `at`. `geo` must already be reconciled to the
+#' precinct spine and `method` already canonical (lookups/vote_mode_map.csv); this function
+#' does neither. Used by `run_night.R --returns=`.
+#'
+#' @param live The feed: geo, race_id, candidate_id, method, votes, stage, observed_at;
+#'   append-only, one snapshot per scrape.
+#' @param candidates CONTRACT.md section 5: race_id, candidate_id, name, party.
+#' @param state,election Filled into every row.
+#' @param at POSIXct; NULL = the latest scrape.
+#' @param complete_stage A cell is complete once its precinct's stage reaches this.
+#' @return Standard returns.
 returns_from_live = function(live, candidates, state, election, at = NULL, complete_stage = 6L) {
-  if (!is.null(at)) live = filter(live, observed_at <= at)
+  if (!is.null(at)) {
+    live = filter(live, observed_at <= at)
+  }
   live |>
     slice_max(observed_at, n = 1, with_ties = FALSE, by = c(geo, race_id, candidate_id, method)) |>
-    left_join(select(candidates, race_id, candidate_id, candidate = name, party),
-              by = c("race_id", "candidate_id")) |>
-    transmute(race_id, state = state, election = election, geo, method, candidate, party,
-              votes, stage, complete = stage >= complete_stage, frac = NA_real_, time = observed_at)
+    left_join(
+      select(candidates, race_id, candidate_id, candidate = name, party),
+      by = c("race_id", "candidate_id")
+    ) |>
+    transmute(
+      race_id,
+      state = state,
+      election = election,
+      geo,
+      method,
+      candidate,
+      party,
+      votes,
+      stage,
+      complete = stage >= complete_stage,
+      frac = NA_real_,
+      time = observed_at
+    )
 }
 
 # ---- the scrapers' clean files ------------------------------------------------------
-# 26_general/{ST}/clean/{ST}[_<county>]_latest.parquet, in enightmodels' election-data
-# format (state, election, jurisdiction, contest, district, candidate, party, time, stage,
-# method, geo, votes): the zero file before polls close, the latest scrape after.
-# -> standard returns for the races in `races` (races_from_priors()).
-#   race_id  {ST}_{contest}[_{district}] as in priors.csv (at-large House seats: no district)
-#   geo      as in our precinct inputs: a feed id that matches one of `geos` (the
-#            precinct ids in the inputs) as written is kept; otherwise it is matched after
-#            dropping leading zeros / case / spacing on both sides (an older prep wrote
-#            nc_001_1 where the NC feed writes nc_001_01); unmatched ids are kept as written
-#   complete the precinct's stage >= complete_stage (6)
-# Rows whose geo matches no precinct in our inputs are kept: virtual.R adds them at county level
-# for swing and ratio_strata, and bucket_counts() passes them to medsl_sur.
+#' Match feed geo ids to our precinct ids
+#'
+#' A feed id found in `geos` as written is kept; otherwise it is matched after
+#' `norm_live_geo()` on both sides. Unmatched ids are kept as written.
+#'
+#' @param geo Feed geo ids.
+#' @param geos Our precinct ids; NULL returns `geo` unchanged.
+#' @return Character vector the length of `geo`.
 match_live_geo = function(geo, geos = NULL) {
   geo = as.character(geo)
-  if (is.null(geos)) return(geo)
+  if (is.null(geos)) {
+    return(geo)
+  }
   geos = unique(as.character(geos))
   key = setNames(geos, norm_live_geo(geos))
   key = key[!duplicated(names(key))]
@@ -133,6 +203,13 @@ match_live_geo = function(geo, geos = NULL) {
   if_else(geo %in% geos | is.na(alt), geo, alt)
 }
 
+#' Normalize a geo id for matching
+#'
+#' The precinct part is upper-cased, space-squished, and loses a trailing ".0" and leading
+#' zeros. Ids not in `{st}_{ddd}_...` form are returned as they are.
+#'
+#' @param geo Geo ids.
+#' @return Character vector.
 norm_live_geo = function(geo) {
   parts = stringr::str_match(as.character(geo), "^([a-z]{2}_\\d{3})_(.*)$")
   id = stringr::str_squish(toupper(parts[, 3]))
@@ -140,82 +217,158 @@ norm_live_geo = function(geo) {
   if_else(is.na(parts[, 1]), as.character(geo), paste0(parts[, 2], "_", id))
 }
 
-returns_from_clean = function(races, dir_26 = find_26_general(), files = NULL, complete_stage = 6L, geos = NULL) {
-  if (is.null(files)) files = unlist(lapply(unique(races$state), function(st)
-    list.files(file.path(dir_26, st, "clean"), pattern = paste0("^", st, "(_.*)?_latest\\.parquet$"), full.names = TRUE)))
-  if (!length(files)) stop("No *_latest.parquet in 26_general/<ST>/clean for ", paste(unique(races$state), collapse = ", "))
+#' Standard returns from the scrapers' clean files
+#'
+#' Reads `26_general/{ST}/clean/{ST}[_<county>]_latest.parquet`, in enightmodels'
+#' election-data format (state, election, jurisdiction, contest, district, candidate, party,
+#' time, stage, method, geo, votes): the zero file before polls close, the latest scrape
+#' after. Online-only (0-byte) Dropbox files are skipped with a warning, so one county
+#' cannot stop the refresh. Rows whose geo matches no precinct are kept: `virtual.R` adds
+#' them at county level for swing and ratio_strata, and `bucket_counts()` passes them to
+#' medsl_sur.
+#'
+#' @param races Races to keep (`races_from_priors()`).
+#' @param dir_26 Path to 26_general.
+#' @param files Files to read; NULL finds every state's `*_latest.parquet`.
+#' @param complete_stage A cell is complete once its precinct's stage reaches this.
+#' @param geos Our precinct ids, for `match_live_geo()`.
+#' @return Standard returns. race_id is `{ST}_{contest}[_{district}]` as in priors.csv
+#'   (at-large House seats have no district).
+returns_from_clean = function(
+  races,
+  dir_26 = find_26_general(),
+  files = NULL,
+  complete_stage = 6L,
+  geos = NULL
+) {
+  if (is.null(files)) {
+    files = unlist(lapply(unique(races$state), function(st) {
+      list.files(
+        file.path(dir_26, st, "clean"),
+        pattern = paste0("^", st, "(_.*)?_latest\\.parquet$"),
+        full.names = TRUE
+      )
+    }))
+  }
+  if (!length(files)) {
+    stop(
+      "No *_latest.parquet in 26_general/<ST>/clean for ",
+      paste(unique(races$state), collapse = ", ")
+    )
+  }
   # a 0-byte file is online-only in Dropbox: skip it (with a warning) rather than stop the
   # whole refresh, so one county's file can't take down every race
   empty = files[file.size(files) == 0]
   if (length(empty)) {
-    cli::cli_alert_warning("Skipping {length(empty)} online-only (0-byte) file{?s}; make {?it/them} available offline in Dropbox: {head(basename(empty), 8)}{if (length(empty) > 8) ', ...' else ''}")
+    cli::cli_alert_warning(
+      "Skipping {length(empty)} online-only (0-byte) file{?s}; make {?it/them} available offline in Dropbox: {head(basename(empty), 8)}{if (length(empty) > 8) ', ...' else ''}"
+    )
     files = setdiff(files, empty)
   }
-  if (!length(files)) stop("Every *_latest.parquet for ", paste(unique(races$state), collapse = ", "), " is online-only in Dropbox; make 26_general available offline")
-  x = bind_rows(lapply(files, function(f) read_pq(f) |> mutate(across(where(is.factor), as.character),
-                                                               district = as.integer(district))))
+  if (!length(files)) {
+    stop(
+      "Every *_latest.parquet for ",
+      paste(unique(races$state), collapse = ", "),
+      " is online-only in Dropbox; make 26_general available offline"
+    )
+  }
+  x = bind_rows(lapply(files, function(f) {
+    read_pq(f) |> mutate(across(where(is.factor), as.character), district = as.integer(district))
+  }))
   x |>
-    mutate(state = toupper(state),
-           race_id = if_else(is.na(district) | (contest == "house" & state %in% AT_LARGE),
-                             paste(state, contest, sep = "_"), paste(state, contest, district, sep = "_"))) |>
+    mutate(
+      state = toupper(state),
+      race_id = if_else(
+        is.na(district) | (contest == "house" & state %in% AT_LARGE),
+        paste(state, contest, sep = "_"),
+        paste(state, contest, district, sep = "_")
+      )
+    ) |>
     filter(race_id %in% races$race_id) |>
-    transmute(race_id, state, election = as.character(election), geo = match_live_geo(geo, geos), method,
-              candidate, party, votes, stage, time) |>
-    summarize(votes = sum(votes), stage = max(stage), time = max(time),
-              .by = c(race_id, state, election, geo, method, candidate, party)) |>
+    transmute(
+      race_id,
+      state,
+      election = as.character(election),
+      geo = match_live_geo(geo, geos),
+      method,
+      candidate,
+      party,
+      votes,
+      stage,
+      time
+    ) |>
+    summarize(
+      votes = sum(votes),
+      stage = max(stage),
+      time = max(time),
+      .by = c(race_id, state, election, geo, method, candidate, party)
+    ) |>
     mutate(complete = stage >= complete_stage, frac = NA_real_)
 }
 
 # ---- drop detection ---------------------------------------------------------------
-# cell_counts() joins FROM `cells`, so every returns row whose (geo, method) is not a cell
-# is discarded. Two distinct loss modes, and before this diagnostic both were silent:
-#
-#   unknown_geo     the `geo` is not in `cells` at all. Either a non-precinct reporting
-#                   bucket -- an early-voting SITE (`nc_032_EV DUKE`, `ak_004_04-early`)
-#                   or a county-level mail/provisional bucket (`nc_003_ABSENTEE`,
-#                   `ak_001_01-ABSENTEE`) -- or a precinct id that was never reconciled to
-#                   the spine. scripts/model/lookups/reporting_levels.csv is the
-#                   pre-election expectation of which (state, county, method) send these.
-#   unknown_method  the `geo` is a known precinct but the method is not one of its cells.
-#                   Every state's feed carries `prov` (and CA/MI/FL/TX carry `all`) while
-#                   build_cells() defaults to early/eday/mail, so these are votes on
-#                   precincts we do model, in a bucket we did not ask for.
-#
-# This is not an edge case and not a rounding error. Measured on NC 2024 Governor,
-# 1,743,117 of 5,591,547 votes -- 31.2% -- sat on non-precinct geo ids; on the AK August
-# 2026 primary (26_general/AK/clean/AK_latest.parquet, all three contests), 153,478 of
-# 493,117 -- 31.1% -- sat on the per-district `NN-EARLY`, `NN-ABSENTEE` and `NN-QUESTION`
-# buckets, which is AK's ENTIRE early, mail and provisional vote. Both vanished with no
-# counter and no warning.
-#
-# Returns one row per (drop, method): n_geo, n_rows, votes, share of all returns votes.
-# `attr(., "geos")` carries the distinct dropped geos (drop, method, geo, votes) so a
-# caller can name them; `attr(., "total_votes")` the denominator.
+#' Returns rows that `cell_counts()` would drop
+#'
+#' `cell_counts()` joins from `cells`, so a returns row whose (geo, method) is not a cell is
+#' discarded. Two loss modes:
+#' * unknown_geo: the geo is not in `cells` at all. Either a non-precinct reporting bucket
+#'   -- an early-voting site (`nc_032_EV DUKE`, `ak_004_04-early`) or a county mail /
+#'   provisional pile (`nc_003_ABSENTEE`) -- or a precinct id never reconciled to the spine.
+#'   lookups/reporting_levels.csv is the pre-election expectation of which (state, county,
+#'   method) send these.
+#' * unknown_method: the geo is a known precinct but the method is not one of its cells
+#'   (`prov`, or `all` in CA / MI / FL / TX feeds).
+#'
+#' Size: 31% of the vote in NC 2024 Governor and in the AK 2026 primary sat on non-precinct
+#' geo ids.
+#'
+#' @param cells Cells (geo, method).
+#' @param returns One race's returns.
+#' @return Tibble, one row per (drop, method): n_geo, n_rows, votes, share of all returns
+#'   votes. Attributes: `geos` (drop, method, geo, votes) and `total_votes`.
 returns_dropped = function(cells, returns) {
   known_geo = unique(as.character(cells$geo))
   known_cell = paste0(as.character(cells$geo), "\r", as.character(cells$method))
   r = returns |>
-    transmute(geo = as.character(geo), method = as.character(method), votes,
-              drop = case_when(!geo %in% known_geo ~ "unknown_geo",
-                               !paste0(geo, "\r", method) %in% known_cell ~ "unknown_method",
-                               TRUE ~ NA_character_)) |>
+    transmute(
+      geo = as.character(geo),
+      method = as.character(method),
+      votes,
+      drop = case_when(
+        !geo %in% known_geo ~ "unknown_geo",
+        !paste0(geo, "\r", method) %in% known_cell ~ "unknown_method",
+        TRUE ~ NA_character_
+      )
+    ) |>
     filter(!is.na(drop))
   tot = sum(returns$votes, na.rm = TRUE)
-  geos = r |> summarize(votes = sum(votes, na.rm = TRUE), .by = c(drop, method, geo)) |>
+  geos = r |>
+    summarize(votes = sum(votes, na.rm = TRUE), .by = c(drop, method, geo)) |>
     arrange(drop, method, desc(votes))
   out = r |>
-    summarize(n_geo = n_distinct(geo), n_rows = n(), votes = sum(votes, na.rm = TRUE),
-              .by = c(drop, method)) |>
+    summarize(
+      n_geo = n_distinct(geo),
+      n_rows = n(),
+      votes = sum(votes, na.rm = TRUE),
+      .by = c(drop, method)
+    ) |>
     mutate(share = if (tot > 0) votes / tot else NA_real_) |>
     arrange(drop, desc(votes))
   structure(out, geos = geos, total_votes = tot)
 }
 
-# Prints nothing when nothing is dropped. Deliberately NOT behind a flag or a verbosity
-# option: the failure mode this exists to catch is a silent 31% loss, so the only way it
-# can do its job is to be on by default.
+#' Print the drop diagnostic
+#'
+#' Prints nothing when nothing is dropped; always on.
+#'
+#' @param d `returns_dropped()` output.
+#' @param label Tag for the message (race and time).
+#' @param n_show How many dropped geos to name.
+#' @return `d`, invisibly.
 report_dropped = function(d, label = NULL, n_show = 6) {
-  if (nrow(d) == 0) return(invisible(d))
+  if (nrow(d) == 0) {
+    return(invisible(d))
+  }
   tot = attr(d, "total_votes")
   v = sum(d$votes)
   tag = if (is.null(label)) "" else paste0(" [", label, "]")
@@ -225,66 +378,66 @@ report_dropped = function(d, label = NULL, n_show = 6) {
   cli::cli_alert_warning(paste0(
     "cell_counts() dropped {prettyNum(v, big.mark = ',')} of ",
     "{prettyNum(tot, big.mark = ',')} returns votes ",
-    "({pct(if (tot > 0) v / tot else NA_real_)})", tag, ": ",
-    "{n_geo} geo{?s} absent from cells, {n_cell} row{?s} on an unmodelled method."))
+    "({pct(if (tot > 0) v / tot else NA_real_)})",
+    tag,
+    ": ",
+    "{n_geo} geo{?s} absent from cells, {n_cell} row{?s} on an unmodelled method."
+  ))
   for (i in seq_len(nrow(d))) {
     cli::cli_alert_info(paste0(
       "  {d$drop[i]} / {d$method[i]}: {d$n_geo[i]} geo{?s}, ",
       "{prettyNum(d$votes[i], big.mark = ',')} votes ",
-      "({pct(d$share[i])} of all returns votes so far)"))
+      "({pct(d$share[i])} of all returns votes so far)"
+    ))
   }
   ex = attr(d, "geos") |> filter(drop == "unknown_geo") |> head(n_show)
-  if (nrow(ex)) cli::cli_alert_info("  e.g. {.val {ex$geo}}")
+  if (nrow(ex)) {
+    cli::cli_alert_info("  e.g. {.val {ex$geo}}")
+  }
   invisible(d)
 }
 
 # ---- county x mode observations from the bucket rows -------------------------------
-# The rows returns_dropped() calls `unknown_geo` are not noise: for AK and NC they are the
-# county/site-level reports that carry 31% of the state's vote. This turns them into one
-# observation per (county, mode) so something downstream can use them, instead of only
-# counting them as a loss.
-#
-# DELIBERATELY NARROW, because every one of these qualifiers has a counterexample in the
-# repo and getting any of them wrong produces an UP-ONLY error that no turnout metric sees:
-#
-#   bucket rows only      a row qualifies only if its geo is ABSENT from `cells` AND its
-#                         label classifies as a bucket. Both conditions, not either. The
-#                         set-difference catches Caswell `PROVI` and Henderson `EV`, which
-#                         are real NC PRECINCTS whose labels look like buckets
-#                         (make_reporting_levels.R's own scoring calls them out) -- they
-#                         are in `cells`, so they are excluded here and their votes stay
-#                         where they belong, in cell_counts().
-#   never `all` or `adv`  an aggregate must never be summed beside its parts. `all` sits
-#                         on KNOWN precincts (returns.R's unknown_method class), so the
-#                         set-difference already drops it; bucket_class() returns NA for it
-#                         as a second line of defence. 512 CA precincts in county 038 file
-#                         `all` AND mail AND eday simultaneously, so this is live.
-#   the GEO's county      keyed on the 3-digit code in the geo, never on `cells$county`.
-#                         In AK those are DIFFERENT PARTITIONS: 40 geo codes against 30
-#                         borough names, 13 codes spanning more than one borough (code 037
-#                         spans 7) and 11 boroughs spanning more than one code, with no
-#                         containment either way. Grouping AK buckets by borough would
-#                         require splitting them, which is the allocation assumption this
-#                         is supposed to avoid.
-#   one race              asserted, like cell_counts(). The headline 153,478 AK figure is a
-#                         sum across all three AK contests; used as one race's total it
-#                         would be 3x.
-#   folded to MODES       prov and transfer are not modes (BUCKET_FOLD in vote_modes.R).
-#
-# Returns one row per (county, mode): c_dem, c_rep, c_oth, c_tot, n_geo, complete.
-# `attr(., "unmatched")` carries the dropped geos that did NOT qualify, so a caller can
-# tell "no buckets" from "buckets we failed to parse" -- the distinction that makes an
-# empty result safe to act on.
+#' County x mode observations from bucket rows
+#'
+#' The rows `returns_dropped()` calls unknown_geo carry 31% of AK's and NC's vote. This turns
+#' them into one observation per (county, mode). Deliberately narrow, because every
+#' qualifier has a counterexample and a mistake produces an up-only turnout error:
+#' * bucket rows only: the geo must be absent from `cells` AND its label must classify as a
+#'   bucket (`bucket_class()`). Caswell `PROVI` and Henderson `EV` are real NC precincts and
+#'   stay in `cell_counts()`.
+#' * never `all` or `adv`: an aggregate is never summed beside its parts.
+#' * keyed on the geo's county code (`geo_county()`), never `cells$county`: in AK those are
+#'   different partitions.
+#' * one race at a time (stops otherwise).
+#' * folded to the model's modes (`BUCKET_FOLD`: prov and transfer -> eday).
+#'
+#' @param cells Cells (geo), the known precincts.
+#' @param returns One race's returns.
+#' @return Tibble, one row per (county, mode): c_dem, c_rep, c_oth, c_tot, n_geo, complete.
+#'   Attribute `unmatched`: unknown geos that do not look like buckets (unreconciled
+#'   precinct ids), so "no buckets" and "buckets we failed to parse" look different.
 bucket_counts = function(cells, returns) {
-  if (n_distinct(returns$race_id) > 1) stop("bucket_counts() takes one race at a time")
+  if (n_distinct(returns$race_id) > 1) {
+    stop("bucket_counts() takes one race at a time")
+  }
   known = unique(as.character(cells$geo))
   r = returns |>
     mutate(geo = as.character(geo), method = as.character(method)) |>
     filter(!geo %in% known)
-  empty = tibble(county = character(), mode = character(), c_dem = numeric(),
-                 c_rep = numeric(), c_oth = numeric(), c_tot = numeric(),
-                 n_geo = integer(), complete = logical())
-  if (!nrow(r)) return(structure(empty, unmatched = r[0, ]))
+  empty = tibble(
+    county = character(),
+    mode = character(),
+    c_dem = numeric(),
+    c_rep = numeric(),
+    c_oth = numeric(),
+    c_tot = numeric(),
+    n_geo = integer(),
+    complete = logical()
+  )
+  if (!nrow(r)) {
+    return(structure(empty, unmatched = r[0, ]))
+  }
   r = r |>
     mutate(county = geo_county(geo), label = geo_label(geo), bk = bucket_class(label))
   # An unknown geo whose label does NOT look like a bucket is a SPINE failure -- a precinct
@@ -293,24 +446,34 @@ bucket_counts = function(cells, returns) {
   ok = !is.na(r$bk) & !is.na(r$county)
   unmatched = r[!ok, ]
   r = r[ok, ] |> mutate(mode = unname(BUCKET_FOLD[bk]))
-  if (any(is.na(r$mode)))
-    stop("bucket_class() returned a class with no BUCKET_FOLD entry: ",
-         paste(unique(r$bk[is.na(r$mode)]), collapse = ", "))
+  if (any(is.na(r$mode))) {
+    stop(
+      "bucket_class() returned a class with no BUCKET_FOLD entry: ",
+      paste(unique(r$bk[is.na(r$mode)]), collapse = ", ")
+    )
+  }
   out = r |>
-    summarize(c_dem = sum(votes[party == "dem"], na.rm = TRUE),
-              c_rep = sum(votes[party == "rep"], na.rm = TRUE),
-              c_oth = sum(votes[!party %in% c("dem", "rep")], na.rm = TRUE),
-              n_geo = n_distinct(geo),
-              complete = all(complete),
-              .by = c(county, mode)) |>
+    summarize(
+      c_dem = sum(votes[party == "dem"], na.rm = TRUE),
+      c_rep = sum(votes[party == "rep"], na.rm = TRUE),
+      c_oth = sum(votes[!party %in% c("dem", "rep")], na.rm = TRUE),
+      n_geo = n_distinct(geo),
+      complete = all(complete),
+      .by = c(county, mode)
+    ) |>
     mutate(c_tot = c_dem + c_rep + c_oth) |>
     arrange(county, mode)
   structure(out, unmatched = unmatched)
 }
 
-# Prints nothing when there are no buckets. Reports the unmatched set even when it is the
-# only thing present, because "we found no buckets" and "we could not parse the buckets we
-# found" must not look the same.
+#' Print the bucket summary
+#'
+#' Prints nothing when there are no buckets, but always reports unmatched geos.
+#'
+#' @param b `bucket_counts()` output.
+#' @param cells Cells; if given, flags bucket counties with no modeled precinct.
+#' @param label Tag for the message.
+#' @return `b`, invisibly.
 report_buckets = function(b, cells = NULL, label = NULL) {
   um = attr(b, "unmatched")
   tag = if (is.null(label)) "" else paste0(" [", label, "]")
@@ -318,19 +481,25 @@ report_buckets = function(b, cells = NULL, label = NULL) {
     cli::cli_alert_info(paste0(
       "bucket_counts{tag}: {prettyNum(sum(b$c_tot), big.mark = ',')} votes on ",
       "{sum(b$n_geo)} county/site geo{?s} -> {nrow(b)} county x mode observation{?s} ",
-      "({n_distinct(b$county)} county(ies))"))
+      "({n_distinct(b$county)} county(ies))"
+    ))
     for (m in sort(unique(b$mode))) {
       z = b[b$mode == m, ]
-      cli::cli_alert_info(paste0("  {m}: {nrow(z)} county(ies), ",
+      cli::cli_alert_info(paste0(
+        "  {m}: {nrow(z)} county(ies), ",
         "{prettyNum(sum(z$c_tot), big.mark = ',')} votes, ",
-        "{sum(z$complete)} flagged complete"))
+        "{sum(z$complete)} flagged complete"
+      ))
     }
     if (!is.null(cells)) {
       miss = setdiff(unique(b$county), geo_county(cells$geo))
-      if (length(miss))
-        cli::cli_alert_danger(paste0("  {length(miss)} bucket county(ies) are not ",
+      if (length(miss)) {
+        cli::cli_alert_danger(paste0(
+          "  {length(miss)} bucket county(ies) are not ",
           "in `cells` ({.val {miss}}) -- their votes belong to no modelled ",
-          "precinct and must NOT be used as a county total."))
+          "precinct and must NOT be used as a county total."
+        ))
+      }
     }
   }
   if (nrow(um)) {
@@ -338,30 +507,44 @@ report_buckets = function(b, cells = NULL, label = NULL) {
     cli::cli_alert_warning(paste0(
       "bucket_counts{tag}: {prettyNum(sum(um$votes, na.rm = TRUE), big.mark = ',')} votes ",
       "on {length(g)} unknown geo{?s} that do NOT look like buckets -- these are ",
-      "unreconciled precinct ids, not county reports: {.val {utils::head(g, 6)}}"))
+      "unreconciled precinct ids, not county reports: {.val {utils::head(g, 6)}}"
+    ))
   }
   invisible(b)
 }
 
 # ---- down to precinct x method counts ---------------------------------------------
-# One race's returns -> one row per row of `cells`, in the same order:
-#   c_dem, c_rep, c_oth, c_tot, complete
-# Cells with no returns rows get zeros and complete = FALSE.
-# Returns rows that are NOT a cell are dropped -- see returns_dropped() above; the shape
-# and column names of the return value are unchanged, other models depend on them.
+#' One race's returns as precinct x method counts
+#'
+#' Rows that are not a cell are dropped and reported (`returns_dropped()`). Cells with no
+#' returns get zeros and complete = FALSE.
+#'
+#' @param cells Cells (geo, method).
+#' @param returns One race's returns (stops on more than one).
+#' @return Tibble, one row per row of `cells` in the same order: geo, method, c_dem, c_rep,
+#'   c_oth, complete, c_tot.
 cell_counts = function(cells, returns) {
-  if (n_distinct(returns$race_id) > 1) stop("cell_counts() takes one race at a time")
+  if (n_distinct(returns$race_id) > 1) {
+    stop("cell_counts() takes one race at a time")
+  }
   tt = suppressWarnings(max(returns$time, na.rm = TRUE))
-  report_dropped(returns_dropped(cells, returns),
-                 label = paste0(returns$race_id[1],
-                                if (is.finite(tt)) paste0(" @ ", format(tt)) else ""))
+  report_dropped(
+    returns_dropped(cells, returns),
+    label = paste0(returns$race_id[1], if (is.finite(tt)) paste0(" @ ", format(tt)) else "")
+  )
   cc = returns |>
-    summarize(c_dem = sum(votes[party == "dem"]), c_rep = sum(votes[party == "rep"]),
-              c_oth = sum(votes[!party %in% c("dem", "rep")]), complete = all(complete),
-              .by = c(geo, method))
+    summarize(
+      c_dem = sum(votes[party == "dem"]),
+      c_rep = sum(votes[party == "rep"]),
+      c_oth = sum(votes[!party %in% c("dem", "rep")]),
+      complete = all(complete),
+      .by = c(geo, method)
+    )
   select(cells, geo, method) |>
     left_join(cc, by = c("geo", "method")) |>
-    mutate(across(c(c_dem, c_rep, c_oth), \(x) coalesce(x, 0)),
-           complete = coalesce(complete, FALSE),
-           c_tot = c_dem + c_rep + c_oth)
+    mutate(
+      across(c(c_dem, c_rep, c_oth), \(x) coalesce(x, 0)),
+      complete = coalesce(complete, FALSE),
+      c_tot = c_dem + c_rep + c_oth
+    )
 }

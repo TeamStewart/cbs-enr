@@ -44,8 +44,7 @@ Built 2026-10-18 from `24_general/TX/raw/*.csv` (249 snapshot files, 28 counties
 the canonical vocabulary (`Early Voting` / `Election Day` / `Absentee/Mail` /
 `Provisional` / `Overvote/Undervote`) and `candidate_party` spelled out (`Democrat`) — so
 those states need no mapping at all. The states still on the raw county shape, and so
-dependent on these files, are AR, CO, SC, TX and WV. `scripts/model/returns_panel.R`
-branches on which shape a state has.
+dependent on these files, are AR, CO, SC, TX and WV.
 
 Note `24_general/TX/clean/` is empty — the TX 2024 cleaning step was never run, which is
 why no normalized TX 2024 data existed and this map had to be reconstructed from raw.
@@ -78,8 +77,8 @@ under an empty candidate name; these are not attributable and must not be summed
 **What it answers:** for a given `(state, county, method)`, will those votes arrive on
 precinct geos, or in a county-level / early-voting-site bucket?
 
-Built by `scripts/model/make_reporting_levels.R` (from the cbs-enr folder:
-`Rscript scripts/model/make_reporting_levels.R [STATE ...]`). Keyed on `(state, year)`
+Built by `scripts/model/prep/make_reporting_levels.R` (from the cbs-enr folder:
+`Rscript scripts/model/prep/make_reporting_levels.R [STATE ...]`). Keyed on `(state, year)`
 like the other lookups in this folder.
 
 ## Why it exists
@@ -280,7 +279,7 @@ NY is out of scope: statewide-only, no precinct inputs.
 
 Maps our precinct key `geo` to the votehub precinct-geometry key `unit_id`, so a
 precinct-level prediction can be drawn on a map. Built by
-`scripts/model/make_precinct_topo.R`, which also emits the simplified geometry to
+`scripts/model/prep/make_precinct_topo.R`, which also emits the simplified geometry to
 `scripts/model/topo/{st}_precincts.topojson`.
 
 **Geometry is static for the whole night.** Only predictions change, so the crosswalk and
@@ -388,8 +387,7 @@ matching could not place.
 
 ### Normalization
 
-`code4` is the verified recipe from `tx_backtest_panel.R` / `backtest_panel.R` (98.9% on
-TX 2022 L2↔votehub): upcase → take a **trailing parenthetical** if present → strip
+`code4` (98.9% on TX 2022 L2↔votehub): upcase → take a **trailing parenthetical** if present → strip
 punctuation → **zero-pad to 4**.
 
 - The parenthetical rule is for our `precinct_l2`, which stores several states as
@@ -492,10 +490,10 @@ blobs, which is correct: there are no voters in them.
 
 ## Provenance
 
-Built 2026-10-26 by `scripts/model/make_precinct_topo.R` from
+Built 2026-10-26 by `scripts/model/prep/make_precinct_topo.R` from
 `26_general/input_data/votehub-shapefiles/26_pct_bdrys.gpkg` (2026-10-02) and
 `26_general/input_data/model_inputs/{ST}_precinct.parquet` (2026-10-22). Rebuild with
-`Rscript scripts/model/make_precinct_topo.R`; `SKIP_TOPO=1` stops after the crosswalk and
+`Rscript scripts/model/prep/make_precinct_topo.R`; `SKIP_TOPO=1` stops after the crosswalk and
 `STATES=FL` does one state. Requires GDAL (`ogr2ogr`) and mapshaper
 (`npm i -g mapshaper`) — no R spatial dependency, and `nanoparquet` rather than `arrow`,
 which is in `renv.lock` but not installed.

@@ -9,7 +9,7 @@
 ##
 ##   virtual county x method  a method the county reported mostly (>= VIRTUAL_MIN_SHARE)
 ##                            in virtual precincts in 2024 ({ST}_virtual_history.parquet,
-##                            scripts/model/make_mode_results.R). Its precinct cells are
+##                            scripts/model/prep/make_mode_results.R). Its precinct cells are
 ##                            taken out of the model, and the county's votes for that method
 ##                            are one unit:
 ##                              before any are reported: projected -- expected votes (the
@@ -36,107 +36,237 @@
 
 VIRTUAL_MIN_SHARE = 0.5
 VIRTUAL_MODELS = c("swing", "ratio_strata", "pois_bayes", "lm_bayes")
-# geo_county() (the 3-digit county code in a precinct id) is in vote_modes.R
 
+#' A state's virtual-precinct history
+#'
+#' @param state Two-letter state code.
+#' @param dir_26 Path to 26_general.
+#' @return `{ST}_virtual_history.parquet` as a tibble, or NULL if the state has none.
 virtual_history = function(state, dir_26 = find_26_general()) {
   f = file.path(dir_26, "input_data", "model_inputs", paste0(state, "_virtual_history.parquet"))
-  if (!file.exists(f)) return(NULL)
+  if (!file.exists(f)) {
+    return(NULL)
+  }
   read_pq(f) |> mutate(county_cbs = as.character(county_cbs))
 }
 
+#' Split a race into precinct cells and virtual units
+#'
+#' Takes the virtual county x methods (file header) out of the precinct fit.
+#'
+#' @param cells Cells from `build_cells()`.
+#' @param returns One race's standard returns.
+#' @param dir_26 Path to 26_general.
+#' @return List: cells and returns for the precinct fit, and units (one row per county x
+#'   method: counted d / r / o, expected base votes, 2024 lean h24 and oth24); units is NULL
+#'   when nothing is virtual (no method split, or no history).
 virtual_split = function(cells, returns, dir_26 = find_26_general()) {
   none = list(cells = cells, returns = filter(returns, geo %in% cells$geo), units = NULL)
-  if (!nrow(returns) || !returns_by_method(returns) || all(cells$method == "all")) return(none)
+  if (!nrow(returns) || !returns_by_method(returns) || all(cells$method == "all")) {
+    return(none)
+  }
   st = returns$state[1]
   ret = mutate(returns, method = unname(METHOD_MAP[as.character(method)]))
   cells = mutate(cells, county_cbs = geo_county(geo))
   vh = virtual_history(st, dir_26)
-  main = if (is.null(vh)) tibble(county_cbs = character(), method = character(), votes = numeric(),
-                                 dem = numeric(), rep = numeric(), oth = numeric(), virt_share = numeric()) else
+  main = if (is.null(vh)) {
+    tibble(
+      county_cbs = character(),
+      method = character(),
+      votes = numeric(),
+      dem = numeric(),
+      rep = numeric(),
+      oth = numeric(),
+      virt_share = numeric()
+    )
+  } else {
     filter(vh, virt_share >= VIRTUAL_MIN_SHARE, county_cbs %in% cells$county_cbs)
+  }
   in_model = paste(ret$geo, ret$method) %in% paste(cells$geo, cells$method)
-  in_model = in_model & !paste(geo_county(ret$geo), ret$method) %in% paste(main$county_cbs, main$method)
+  in_model = in_model &
+    !paste(geo_county(ret$geo), ret$method) %in% paste(main$county_cbs, main$method)
   out = ret[!in_model & geo_county(ret$geo) %in% cells$county_cbs, ]
-  if (!nrow(main) && sum(out$votes) == 0) return(none)
+  if (!nrow(main) && sum(out$votes) == 0) {
+    return(none)
+  }
 
   dropped = semi_join(cells, main, by = c("county_cbs", "method"))
   cells_m = anti_join(cells, main, by = c("county_cbs", "method")) |> select(-county_cbs)
   counted = out |>
-    mutate(county_cbs = geo_county(geo), party = if_else(party %in% c("dem", "rep"), party, "oth")) |>
-    summarize(d = sum(votes[party == "dem"]), r = sum(votes[party == "rep"]), o = sum(votes[party == "oth"]),
-              .by = c(county_cbs, method))
+    mutate(
+      county_cbs = geo_county(geo),
+      party = if_else(party %in% c("dem", "rep"), party, "oth")
+    ) |>
+    summarize(
+      d = sum(votes[party == "dem"]),
+      r = sum(votes[party == "rep"]),
+      o = sum(votes[party == "oth"]),
+      .by = c(county_cbs, method)
+    )
   # lean of a projected unit: the history's batch lean when it has one, else the precinct
   # baseline of the cells it replaces (AK's history comes from a primary, so it has none)
-  expect = dropped |> summarize(base_d = sum(exp_votes * dem2) / max(sum(exp_votes), 1),
-                                base_o = sum(exp_votes * oth) / max(sum(exp_votes), 1),
-                                exp_base = sum(exp_votes), .by = c(county_cbs, method)) |>
-    left_join(transmute(main, county_cbs, method, h24 = dem / pmax(dem + rep, 1), oth24 = oth / pmax(votes, 1)),
-              by = c("county_cbs", "method"))
+  expect = dropped |>
+    summarize(
+      base_d = sum(exp_votes * dem2) / max(sum(exp_votes), 1),
+      base_o = sum(exp_votes * oth) / max(sum(exp_votes), 1),
+      exp_base = sum(exp_votes),
+      .by = c(county_cbs, method)
+    ) |>
+    left_join(
+      transmute(
+        main,
+        county_cbs,
+        method,
+        h24 = dem / pmax(dem + rep, 1),
+        oth24 = oth / pmax(votes, 1)
+      ),
+      by = c("county_cbs", "method")
+    )
   units = full_join(expect, counted, by = c("county_cbs", "method")) |>
-    mutate(across(c(d, r, o, exp_base), \(x) coalesce(x, 0)),
-           h24 = coalesce(h24, base_d, 0.5), oth24 = coalesce(oth24, base_o, 0),
-           p = 1)        # counted votes are taken as final (see header); project_rest() ignores p when nothing is counted
+    mutate(
+      across(c(d, r, o, exp_base), \(x) coalesce(x, 0)),
+      h24 = coalesce(h24, base_d, 0.5),
+      oth24 = coalesce(oth24, base_o, 0),
+      p = 1
+    ) # counted votes are taken as final (see header); project_rest() ignores p when nothing is counted
   list(cells = cells_m, returns = ret[in_model, ], units = units)
 }
 
-# run_race() with the virtual units fit around and added back (what predict_one() and
-# run_all() call)
+#' Run a model with virtual units handled
+#'
+#' `run_race()` on the precinct cells, then the virtual units added back (`add_virtual()`).
+#' What `predict_one()` and `run_all()` call.
+#'
+#' @param model Model name.
+#' @param cells Cells from `build_cells()`.
+#' @param returns One race's standard returns.
+#' @param ... Passed to `run_race()`.
+#' @return The model's result list.
 fit_model = function(model, cells, returns, ...) {
-  if (!model_base(model) %in% VIRTUAL_MODELS) return(run_race(model, cells, returns, ...))
+  if (!model_base(model) %in% VIRTUAL_MODELS) {
+    return(run_race(model, cells, returns, ...))
+  }
   vs = virtual_split(cells, returns)
   add_virtual(run_race(model, vs$cells, vs$returns, ...), model_base(model), vs)
 }
 
-# Adds the virtual units to a fit (run_race() on vs$cells / vs$returns). Point estimate and,
-# for models with draws, every draw.
+#' Add the virtual units to a fit
+#'
+#' Point estimate and, for fits with draws, every draw; fits with bounds get each end
+#' projected at the fit's own interval ends (`project_rest_bounds()`).
+#'
+#' @param fit `run_race()` result on `vs$cells` / `vs$returns`.
+#' @param model Model name.
+#' @param vs `virtual_split()` output.
+#' @return `fit` with race estimates, draws or `pred`, and settings updated.
 add_virtual = function(fit, model, vs) {
-  if (is.null(vs$units) || !identical(fit$status, "ok")) return(fit)
+  if (is.null(vs$units) || !identical(fit$status, "ok")) {
+    return(fit)
+  }
   lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
   E = sum(vs$cells$exp_votes)
-  base_s = sum(vs$cells$exp_votes * vs$cells$dem2) / max(E, 1)     # baseline Dem two-party share
+  base_s = sum(vs$cells$exp_votes * vs$cells$dem2) / max(E, 1) # baseline Dem two-party share
   if (is.null(fit$pred)) {
-    pt = fit_point(fit); dr = fit$draws
-    vp = project_rest(vs$units, lg(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]])) - lg(base_s), pt[["tot"]] / E, noise = FALSE)
-    vd = project_rest(vs$units, lg(dr$dem / (dr$dem + dr$rep)) - lg(base_s), dr$turnout / E, noise = TRUE)
-    fit$point = c(dem = unname(pt[["dem"]] + vp[1, "dem"]), rep = unname(pt[["rep"]] + vp[1, "rep"]),
-                  tot = unname(pt[["tot"]] + sum(vp[1, ])))
-    fit$draws = dr |> mutate(dem = dem + vd[, "dem"], rep = rep + vd[, "rep"], turnout = turnout + rowSums(vd),
-                             twop = dem / (dem + rep))
-    ci = cred(fit$draws$twop); ct = cred(fit$draws$turnout)
-    fit$race = mutate(fit$race, est_twop = mean(fit$draws$twop), lo_twop = ci[["lower"]], hi_twop = ci[["upper"]],
-                      p_dem_win = mean(fit$draws$twop > 0.5), est_turnout = mean(fit$draws$turnout),
-                      lo_turnout = ct[["lower"]], hi_turnout = ct[["upper"]])
+    pt = fit_point(fit)
+    dr = fit$draws
+    vp = project_rest(
+      vs$units,
+      lg(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]])) - lg(base_s),
+      pt[["tot"]] / E,
+      noise = FALSE
+    )
+    vd = project_rest(
+      vs$units,
+      lg(dr$dem / (dr$dem + dr$rep)) - lg(base_s),
+      dr$turnout / E,
+      noise = TRUE
+    )
+    fit$point = c(
+      dem = unname(pt[["dem"]] + vp[1, "dem"]),
+      rep = unname(pt[["rep"]] + vp[1, "rep"]),
+      tot = unname(pt[["tot"]] + sum(vp[1, ]))
+    )
+    fit$draws = dr |>
+      mutate(
+        dem = dem + vd[, "dem"],
+        rep = rep + vd[, "rep"],
+        turnout = turnout + rowSums(vd),
+        twop = dem / (dem + rep)
+      )
+    ci = cred(fit$draws$twop)
+    ct = cred(fit$draws$turnout)
+    fit$race = mutate(
+      fit$race,
+      est_twop = mean(fit$draws$twop),
+      lo_twop = ci[["lower"]],
+      hi_twop = ci[["upper"]],
+      p_dem_win = mean(fit$draws$twop > 0.5),
+      est_turnout = mean(fit$draws$turnout),
+      lo_turnout = ct[["lower"]],
+      hi_turnout = ct[["upper"]]
+    )
   } else {
     # bounds instead of draws: the virtual units' point and bounds (project_rest_bounds(),
     # counties.R) added to the prediction and its bounds
     pr = fit$pred
-    pt = c(dem = sum(pr$pred[pr$party == "dem"]), rep = sum(pr$pred[pr$party == "rep"]), tot = sum(pr$pred))
+    pt = c(
+      dem = sum(pr$pred[pr$party == "dem"]),
+      rep = sum(pr$pred[pr$party == "rep"]),
+      tot = sum(pr$pred)
+    )
     sb = fit_swing_bounds(fit, pt, base_s, E)
     vb = project_rest_bounds(vs$units, sb$swing, sb$turn_ratio)
     fit$pred = add_party_votes(pr, vb)
     est = pred_race_est(fit$pred)
-    fit$race = mutate(fit$race, est_twop = est$est_twop, lo_twop = est$lo_twop, hi_twop = est$hi_twop,
-                      est_turnout = est$est_turnout, lo_turnout = lo_turnout + sum(vb$pred_min),
-                      hi_turnout = hi_turnout + sum(vb$pred_max))
+    fit$race = mutate(
+      fit$race,
+      est_twop = est$est_twop,
+      lo_twop = est$lo_twop,
+      hi_twop = est$hi_twop,
+      est_turnout = est$est_turnout,
+      lo_turnout = lo_turnout + sum(vb$pred_min),
+      hi_turnout = hi_turnout + sum(vb$pred_max)
+    )
   }
   u = vs$units
-  fit$settings = paste0(fit$settings, sprintf("; plus %d county-level virtual-precinct units (%d reported, %d projected)",
-                                              nrow(u), sum(u$d + u$r + u$o > 0), sum(u$d + u$r + u$o == 0 & u$exp_base > 0)))
+  fit$settings = paste0(
+    fit$settings,
+    sprintf(
+      "; plus %d county-level virtual-precinct units (%d reported, %d projected)",
+      nrow(u),
+      sum(u$d + u$r + u$o > 0),
+      sum(u$d + u$r + u$o == 0 & u$exp_base > 0)
+    )
+  )
   fit
 }
 
-# per-candidate predictions (fit$pred) plus party totals and bounds (v: party, pred, pred_min,
-# pred_max), each added to the same column: a party's votes split equally across its
-# candidates, third-party votes in proportion to their predictions
+#' Add party totals to per-candidate predictions
+#'
+#' A party's votes split equally across its candidates; third-party votes in proportion to
+#' their predictions. Each column (pred, pred_min, pred_max) is added to the same column.
+#'
+#' @param pr Per-candidate predictions (`fit$pred`).
+#' @param v Party totals and bounds: party, pred, pred_min, pred_max.
+#' @return `pr` with the votes added.
 add_party_votes = function(pr, v) {
   oth = !pr$party %in% c("dem", "rep")
   w = if (any(oth)) pr$pred[oth] / max(sum(pr$pred[oth]), 1) else numeric()
-  if (any(oth) && sum(w) == 0) w = rep(1 / sum(oth), sum(oth))
-  share = case_when(pr$party == "dem" ~ 1 / max(sum(pr$party == "dem"), 1),
-                    pr$party == "rep" ~ 1 / max(sum(pr$party == "rep"), 1), TRUE ~ 0)
+  if (any(oth) && sum(w) == 0) {
+    w = rep(1 / sum(oth), sum(oth))
+  }
+  share = case_when(
+    pr$party == "dem" ~ 1 / max(sum(pr$party == "dem"), 1),
+    pr$party == "rep" ~ 1 / max(sum(pr$party == "rep"), 1),
+    TRUE ~ 0
+  )
   share[oth] = w
   grp = if_else(oth, "oth", pr$party)
   i = match(grp, v$party)
-  mutate(pr, pred = pred + share * v$pred[i], pred_min = pred_min + share * v$pred_min[i],
-         pred_max = pred_max + share * v$pred_max[i])
+  mutate(
+    pr,
+    pred = pred + share * v$pred[i],
+    pred_min = pred_min + share * v$pred_min[i],
+    pred_max = pred_max + share * v$pred_max[i]
+  )
 }

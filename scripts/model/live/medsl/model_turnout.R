@@ -1,5 +1,9 @@
 # ========================================
-## TX Governor 2026 -- TRIAL precinct model: turnout x vote share, by vote mode
+## model_turnout.R -- the medsl_sur engine: precinct x vote-method model of turnout and
+## vote share. Loaded once per state by live/R/model_medsl.R (medsl_setup()), which
+## supplies STATE, covs_long and mode_hist and then sources this file, model_core.R and
+## model_hybrid.R into one environment. Nothing here reads a file of its own except
+## lookups/mode_scope.csv.
 ##
 ## Three-equation (SUR-style) model per precinct x mode:
 ##     log(tau_im)                 ~ X_i    tau = ALL votes in the cell
@@ -25,41 +29,6 @@
 ##   predictive variance depends on their correlation. Sigma also carries
 ##   share<->share correlation ACROSS modes, which is what lets early/mail returns
 ##   update the election-day prediction for that same precinct.
-##
-## Input:  {PATH_DROPBOX}/26_general/input_data/model_inputs/TX_precinct.parquet
-##         (was TX_prec_covs.parquet; PATH_COVS overrides the path)
-##         Built by scripts/model/prep_tx_model_inputs.R, which supersedes the removed
-##         prep_tx_covs.R / check_live_ids.R / inspect_l2.R (Bridget, 2026-10-19).
-##         NOTE two changes there that affect joins and covariates:
-##           - `geo` drops LEADING ZEROS (`tx_257_1`, not `tx_257_0001`), because live
-##             feeds write ids without them -- Harris matched 15.8% before stripping and
-##             99.6% after.
-##           - `n` is now the YouGov frame's registrant count (complete for every
-##             precinct); L2's is carried alongside as `l2_n`, and L2 gaps are filled
-##             with the county registrant-weighted mean flagged `l2_imputed`.
-##         Schema (long by party):
-##           geo, county, geostratum, stratum_demo, cd_main, cd_main_share, n_cd, n,
-##           turnout20, turnout22, turnout24, turnoutPred, age, male,
-##           pred.whi, pred.bla, pred.his, pred.asi, pred.oth,
-##           pr_harris, pr_trump, vote_imputed, <l2 cols>, dem2,
-##           party ("dem"/"rep"), est, method ("all")
-##
-## !! THE COVARIATE INPUT HAS NO VOTE-MODE SPLIT (method == "all" only). !!
-##    Mode priors are therefore built in the MODE PRIORS config block below. Status
-##    as of 2026-10-18:
-##      MODE_TURN_SHARE   -- SOLVED. 2022 midterm split read from the L2 precinct file
-##        (l2/tx_20261011_precincts.parquet, vote22_{mail,early,eday}); available PER
-##        PRECINCT, joinable via crosswalks/tx.csv `precinct_l2`. Constant below is the
-##        statewide fallback.
-##      MODE_SHARE_OFFSET -- STILL 0. L2 records HOW people voted, never FOR WHOM.
-##        Reachable by EI (see that block) or from real mode x party results.
-##      Sigma cross-mode share blocks -- STILL BLOCKED on real mode x party results.
-##
-## Output: console summary + optional parquet of draws-level statewide summaries.
-##
-## Run from the cbs-enr folder:
-##   Rscript scripts/model/model_turnout.R            # synthetic returns, all stages
-##   Rscript scripts/model/model_turnout.R 0.35       # single stage at 35% reported
 # ========================================
 
 suppressPackageStartupMessages({
@@ -69,54 +38,26 @@ suppressPackageStartupMessages({
   library(stringr)
   library(cli)
   library(nanoparquet)
-  library(enightmodels)   # lm_bayes, log_s, cred_int, conf_seq, logit_shift
+  library(enightmodels) # lm_bayes, log_s, cred_int, conf_seq, logit_shift
 })
-# SEED overridable so coverage can be tested across replications
-# Fitting primitives live in model_core.R so the backtests cannot drift from the model.
-# Run from the cbs-enr folder, or set MODEL_CORE to an explicit path.
-source(Sys.getenv("MODEL_CORE", unset = "scripts/model/model_core.R"))
-# geo_county(): the 3-digit county code inside a canonical geo (`{st}_{county_cbs}_{prec}`).
-# CTY_BOUND needs it to map each precinct to the partition `bucket_counts()` keys on, and
-# that mapping must be the SAME rule in both places: in AK the geo code and the borough
-# name in `cells$county` are DIFFERENT partitions (40 codes against 30 names, code 037
-# spanning 7 boroughs, no containment either way), so a second copy of the rule that drifts
-# would reassign 31% of the state's votes to the wrong county silently. It lives in
-# live/R/vote_modes.R, which live/load.R sources into the global environment -- the parent
-# of the per-state environment model_medsl.R runs this file in -- so under the live stack it
-# is already here and this is a no-op. The source() is only for running this file standalone.
-if (!exists("geo_county", mode = "function"))
-  source(Sys.getenv("VOTE_MODES", unset = "scripts/model/live/R/vote_modes.R"))
+# fitting primitives (fit_conj_re(), draw_beta_re(), ...)
+source("scripts/model/live/medsl/model_core.R", local = TRUE)
+# geo_county() (live/R/vote_modes.R, loaded by live/load.R) maps each precinct to the
+# county code bucket_counts() keys on. CTY_BOUND must use that same rule: in AK the geo
+# code and the borough in `cells$county` are different partitions.
 
 set.seed(as.integer(Sys.getenv("SEED", unset = "20260303")))
 
 # ---- CONFIG ---------------------------------------------------------------------
-STATE          = "TX"
-ELECTION_FOLDER = "26_general"
-# PATH_DROPBOX env var if set, else this machine's Dropbox (live/R/paths.R)
-PATH_DROPBOX   = local({ source("scripts/model/live/R/paths.R", local = TRUE); find_dropbox() })
-# PATH_COVS override lets a backtest driver swap in a panel whose covariates are all
-# pre-treatment for its target election (see tx24_backtest.R).
-path_covs      = Sys.getenv(
-  "PATH_COVS",
-  unset = file.path(PATH_DROPBOX, ELECTION_FOLDER, "input_data",
-                    paste0(STATE, "_prec_covs.parquet")))
-# Historical precinct x mode x party returns. Supplies ALL THREE mode-dependent
-# inputs: the turnout split, the partisan offset, and Sigma. See the MODE PRIORS
-# block for the required schema. Drop the file here and everything below uses it.
-path_mode_hist = Sys.getenv(
-  "PATH_MODE_HIST",                       # override for testing
-  unset = file.path(PATH_DROPBOX, ELECTION_FOLDER, "input_data",
-                    paste0(STATE, "_mode_history.parquet"))
-)
-
-DRAWS          = 500      # posterior draws
+# STATE, covs_long and mode_hist come from the caller (live/R/model_medsl.R).
+DRAWS = 500 # posterior draws
 # Prior strength, in PRECINCT-EQUIVALENTS (not per-cell). Env-settable so the turnout
 # equation's dependence on its prior can be ablated: the TURNOUT_RATIO scenarios show the
 # model echoing est_turnout almost exactly early on, and this is the first thing to rule
 # in or out as the cause.
-PRIOR_N_TURN   = as.numeric(Sys.getenv("PRIOR_N_TURN", unset = "3.0"))
-PRIOR_N_SHARE  = 3.0      # keep FIXED across the night; relative weight decays on its own
-STAGE_DONE     = 2L       # a mode cell counts as observed at this reporting stage
+PRIOR_N_TURN = as.numeric(Sys.getenv("PRIOR_N_TURN", unset = "3.0"))
+PRIOR_N_SHARE = 3.0 # keep FIXED across the night; relative weight decays on its own
+STAGE_DONE = 2L # a mode cell counts as observed at this reporting stage
 # Support gate: the minimum reported cells, and reporting counties, before a MODE's
 # returns are used at all. Below it the mode stays at its prior. See the gate in
 # fit_stage() for the TX 2024 measurement that motivates it.
@@ -125,18 +66,18 @@ STAGE_DONE     = 2L       # a mode cell counts as observed at this reporting sta
 # cases rather than discarding legitimate share information.
 # Below this many reported cells an equation is held at its prior LOCATION outright
 # (see the prior-only branch in fit_stage's mu construction).
-MIN_FIT_OBS    = as.integer(Sys.getenv("MIN_FIT_OBS", unset = "30"))
+MIN_FIT_OBS = as.integer(Sys.getenv("MIN_FIT_OBS", unset = "30"))
 MIN_MODE_CELLS = as.integer(Sys.getenv("MIN_MODE_CELLS", unset = "10"))
-MIN_MODE_CTY   = as.integer(Sys.getenv("MIN_MODE_CTY",   unset = "1"))
+MIN_MODE_CTY = as.integer(Sys.getenv("MIN_MODE_CTY", unset = "1"))
 # Fallback completeness test for TURNOUT when the feed carries no `pct_reported`:
 # a cell's turnout counts as observed once counted >= COMPLETE_FRAC * prior_tau.
 # It is only as good as prior_tau, which on TX 2024 is off by ~1.7x for eday and ~0.5x
 # for mail -- so prefer a real pct_reported field wherever the feed has one.
-COMPLETE_FRAC  = as.numeric(Sys.getenv("COMPLETE_FRAC", unset = "1.1"))
+COMPLETE_FRAC = as.numeric(Sys.getenv("COMPLETE_FRAC", unset = "1.1"))
 # Wide prior on the unreported set's share offset, in logit units, shared within a
 # (county, mode). Measured on TX 2024 at 0.26-0.45 raw / 0.15-0.30 vote-weighted; 0.25 is
 # the starting point. SD_UNREP=0 disables it (ablation). See the block in fit_stage.
-SD_UNREP       = as.numeric(Sys.getenv("SD_UNREP", unset = "0.25"))
+SD_UNREP = as.numeric(Sys.getenv("SD_UNREP", unset = "0.25"))
 # COUNTY TURNOUT LOWER BOUND (CTY_BOUND=0 to ablate; inert unless fit_stage() is given
 # `county_obs`).
 # 31% of AK's and NC's vote never lands on a precinct: AK reports mail, early and
@@ -204,7 +145,7 @@ SD_UNREP       = as.numeric(Sys.getenv("SD_UNREP", unset = "0.25"))
 # remove it, and `bucket_counts()` already carries that flag. Deliberately NOT done here:
 # gating the BOUND on completeness is what makes HY_COUNTY inert, and the two must not be
 # conflated. Raise it as its own change.
-CTY_BOUND      = Sys.getenv("CTY_BOUND", unset = "1") == "1"
+CTY_BOUND = Sys.getenv("CTY_BOUND", unset = "1") == "1"
 # COUNTY-LEVEL ANALOGUE OF PIN_DONE (CTY_SUBSTITUTE=0 to ablate).
 # The bound above is ONE-SIDED, and that is what costs it 2-6pp when the prior is already
 # right: E[max(0, C_c - T_c)] > 0 even when E[T_c] = C_c, so flooring a noisy county total
@@ -288,10 +229,10 @@ CTY_SUB_MIN_RPRIOR = as.numeric(Sys.getenv("CTY_SUB_MIN_RPRIOR", unset = "0.5"))
 # constraint and the floor fight and the floor wins silently.
 # As counting proceeds the floor increasingly binds and the constraint does less, which
 # is the correct behaviour: the data should take over from the prior.
-STATE_TURNOUT     = suppressWarnings(as.numeric(Sys.getenv("STATE_TURNOUT", unset = NA)))
-STATE_TURNOUT_SD  = as.numeric(Sys.getenv("STATE_TURNOUT_SD", unset = "0.05"))  # log scale
-PIN_DONE       = Sys.getenv("PIN_DONE", unset = "1") == "1"
-PIN_MIN_SHARE  = as.numeric(Sys.getenv("PIN_MIN_SHARE", unset = "0.95"))
+STATE_TURNOUT = suppressWarnings(as.numeric(Sys.getenv("STATE_TURNOUT", unset = NA)))
+STATE_TURNOUT_SD = as.numeric(Sys.getenv("STATE_TURNOUT_SD", unset = "0.05")) # log scale
+PIN_DONE = Sys.getenv("PIN_DONE", unset = "1") == "1"
+PIN_MIN_SHARE = as.numeric(Sys.getenv("PIN_MIN_SHARE", unset = "0.95"))
 # CORROBORATION. q_share rests on the completeness flag, which in production is a plateau
 # proxy -- three snapshots with no growth. A mode that merely PAUSED clears it, so a
 # precinct can reach q_share >= 0.95 with real votes still outstanding, and pinning then
@@ -315,7 +256,7 @@ PIN_MIN_RPRIOR = as.numeric(Sys.getenv("PIN_MIN_RPRIOR", unset = "0.95"))
 # The misspecification is that pure Tobit gives a FINISHED cell zero probability of
 # sitting exactly at its bound, when tau = C exactly is the common case late on. The fix
 # is a mixture likelihood with an atom at the bound, not a different threshold.
-USE_CENSOR     = Sys.getenv("USE_CENSOR", unset = "0") == "1"
+USE_CENSOR = Sys.getenv("USE_CENSOR", unset = "0") == "1"
 # ATOM AT THE BOUND (USE_ATOM=1; needs USE_CENSOR=1 to do anything). Pure Tobit gives a
 # FINISHED precinct zero probability of sitting exactly at its bound, which is what makes
 # censoring break late turnout -- E[T | T >= C] > C strictly, so every still-censored
@@ -341,7 +282,7 @@ USE_CENSOR     = Sys.getenv("USE_CENSOR", unset = "0") == "1"
 # NOTE this is flag-free, not assumption-free: r_prior leans on prior_tau, which is off
 # ~1.7x for eday and ~0.5x for mail on TX 2024. The difference is that the prior's error
 # is measurable and the flag's is not.
-ATOM_SOURCE    = Sys.getenv("ATOM_SOURCE", unset = "prior")  # prior | flag | both
+ATOM_SOURCE = Sys.getenv("ATOM_SOURCE", unset = "prior") # prior | flag | both
 stopifnot("ATOM_SOURCE must be both, flag or prior" = ATOM_SOURCE %in% c("both", "flag", "prior"))
 # PARTIAL-PRECINCT TOTALS. The reference slot's outcome is theta = logit(T/cap), and the
 # strict reading of "the precinct total" is every mode counted out. But the per-mode ratio
@@ -385,15 +326,15 @@ COMPOSITION_UPDATE = Sys.getenv("COMPOSITION_UPDATE", unset = "0") == "1"
 #   log(c_im / tau0_im) = log(T_i/E_i) + log(p_im/p0_im)   [level] + [composition]
 # so pooling counted-out cells and subtracting the already-estimated delta_m leaves the
 # statewide level correction. Non-circular: it needs no fit, only counted-out cells.
-LEVEL_UPDATE  = Sys.getenv("LEVEL_UPDATE", unset = "0") == "1"
+LEVEL_UPDATE = Sys.getenv("LEVEL_UPDATE", unset = "0") == "1"
 LEVEL_MIN_CELL = as.integer(Sys.getenv("LEVEL_MIN_CELL", unset = "100"))
-COMP_MIN_PREC      = as.integer(Sys.getenv("COMP_MIN_PREC", unset = "50"))  # min precincts to trust a tilt
+COMP_MIN_PREC = as.integer(Sys.getenv("COMP_MIN_PREC", unset = "50")) # min precincts to trust a tilt
 MIN_MODE_SHARE = as.numeric(Sys.getenv("MIN_MODE_SHARE", unset = "1"))
-Q_SHARE_WT_EXP   = as.numeric(Sys.getenv("Q_SHARE_WT_EXP",   unset = "2"))
+Q_SHARE_WT_EXP = as.numeric(Sys.getenv("Q_SHARE_WT_EXP", unset = "2"))
 stopifnot("MIN_MODE_SHARE must be in (0, 1]" = MIN_MODE_SHARE > 0 && MIN_MODE_SHARE <= 1)
-USE_ATOM       = Sys.getenv("USE_ATOM", unset = "0") == "1"
-ATOM_FLOOR     = as.numeric(Sys.getenv("ATOM_FLOOR", unset = "0.02"))
-ATOM_CEIL      = as.numeric(Sys.getenv("ATOM_CEIL",  unset = "0.98"))
+USE_ATOM = Sys.getenv("USE_ATOM", unset = "0") == "1"
+ATOM_FLOOR = as.numeric(Sys.getenv("ATOM_FLOOR", unset = "0.02"))
+ATOM_CEIL = as.numeric(Sys.getenv("ATOM_CEIL", unset = "0.98"))
 # ---- BOUNDED TURNOUT: precinct total x mode composition -----------------------------
 # The three per-mode turnout equations used to be unconstrained log-normals fitted
 # independently, so nothing tied them to each other or to anything physical. Turnout read
@@ -408,8 +349,8 @@ ATOM_CEIL      = as.numeric(Sys.getenv("ATOM_CEIL",  unset = "0.98"))
 # of registrants, which sum to 4.66x n against an actual total of 0.654x n (7.1x actual,
 # useless). On the total, kappa=1.25 binds on 1.16% of precincts and allows 1.91x actual.
 # USE_COMPOSE=0 restores the old independent-log-normal turnout equations.
-USE_COMPOSE    = Sys.getenv("USE_COMPOSE", unset = "1") == "1"
-KAPPA          = as.numeric(Sys.getenv("KAPPA", unset = "1.25"))
+USE_COMPOSE = Sys.getenv("USE_COMPOSE", unset = "1") == "1"
+KAPPA = as.numeric(Sys.getenv("KAPPA", unset = "1.25"))
 # ---- PER-STATE MODE SCOPE -------------------------------------------------------
 # REF_MODE carries theta (the precinct TOTAL); every other mode is a log-ratio to it. So
 # the reference must be a mode that is OBSERVED, early and everywhere, in this state. The
@@ -422,23 +363,30 @@ KAPPA          = as.numeric(Sys.getenv("KAPPA", unset = "1.25"))
 # NC is a documented exception -- see the note column in the lookup.
 # PRECEDENCE: env var > lookup row for (STATE, year) > the legacy TX default. The env
 # override is what the backtests set, so they are unaffected.
-MODE_SCOPE_PATH = Sys.getenv("MODE_SCOPE_PATH",
-                             unset = "scripts/model/lookups/mode_scope.csv")
+MODE_SCOPE_PATH = Sys.getenv("MODE_SCOPE_PATH", unset = "scripts/model/lookups/mode_scope.csv")
 MODE_SCOPE_YEAR = as.integer(Sys.getenv("MODE_SCOPE_YEAR", unset = "2026"))
 mode_scope = local({
-  if (!file.exists(MODE_SCOPE_PATH)) return(NULL)
+  if (!file.exists(MODE_SCOPE_PATH)) {
+    return(NULL)
+  }
   d = utils::read.csv(MODE_SCOPE_PATH, colClasses = "character")
   r = d[d$state == STATE & d$year == as.character(MODE_SCOPE_YEAR), , drop = FALSE]
-  if (!nrow(r)) return(NULL)
-  list(ref_mode = trimws(r$ref_mode[1]),
-       modes = trimws(strsplit(r$modes[1], "|", fixed = TRUE)[[1]]))
+  if (!nrow(r)) {
+    return(NULL)
+  }
+  list(
+    ref_mode = trimws(r$ref_mode[1]),
+    modes = trimws(strsplit(r$modes[1], "|", fixed = TRUE)[[1]])
+  )
 })
-if (is.null(mode_scope))
-  cli_alert_warning("No {.path {basename(MODE_SCOPE_PATH)}} row for {STATE}/{MODE_SCOPE_YEAR} \\
+if (is.null(mode_scope)) {
+  cli_alert_warning(
+    "No {.path {basename(MODE_SCOPE_PATH)}} row for {STATE}/{MODE_SCOPE_YEAR} \\
                      -- falling back to the legacy TX scope (ref early, mail/early/eday). \\
-                     Add a row rather than relying on this.")
-REF_MODE       = Sys.getenv("REF_MODE",
-                            unset = if (is.null(mode_scope)) "early" else mode_scope$ref_mode)
+                     Add a row rather than relying on this."
+  )
+}
+REF_MODE = Sys.getenv("REF_MODE", unset = if (is.null(mode_scope)) "early" else mode_scope$ref_mode)
 # Prior sd on the STATEWIDE LEVEL, in logit units, decoupled from PRIOR_N_*.
 # MEASURED (calibrate_swing.R, 9 states x 37 contest pairs): the statewide two-party Dem
 # share moves 0.22-0.26 logit between a prior contest and its target, against the ~0.098
@@ -461,9 +409,9 @@ REF_MODE       = Sys.getenv("REF_MODE",
 # at once, which is why it is off by default pending a design that separates them --
 # most likely a mean-zero statewide offset added to the PREDICTIVE draw (as SD_UNREP is)
 # rather than a loosening of the posterior shrinkage.
-SD_SYS_LEVEL   = as.numeric(Sys.getenv("SD_SYS_LEVEL", unset = "0"))
-LEVEL          = 0.95
-USE_CROSS_MODE = TRUE     # FALSE => independent residuals (ablation, for comparison)
+SD_SYS_LEVEL = as.numeric(Sys.getenv("SD_SYS_LEVEL", unset = "0"))
+LEVEL = 0.95
+USE_CROSS_MODE = TRUE # FALSE => independent residuals (ablation, for comparison)
 
 # Where the 2M x 2M residual covariance comes from.
 #   "historical" -- PREFERRED. Sigma is a structural quantity: estimate it ONCE from a
@@ -500,16 +448,29 @@ SIGMA_SOURCE = Sys.getenv("SIGMA_SOURCE", unset = "measured")
 # These are BORROWED FROM NC for the share blocks -- TX has no mode x party history, so
 # there is no alternative but to borrow or to assume zero, and zero is not the safer choice
 # (see the memo's discussion of why an "uninformative" value does not exist here).
-RHO_TAU_S   = c(mail = 0.204, early = 0.052, eday = -0.140)   # within mode
-RHO_S_CROSS = if (Sys.getenv("RHO_ME_CORRECTED") == "1") 0.40 else 0.232  # mail<->early
+RHO_TAU_S = c(mail = 0.204, early = 0.052, eday = -0.140) # within mode
+RHO_S_CROSS = if (Sys.getenv("RHO_ME_CORRECTED") == "1") 0.40 else 0.232 # mail<->early
+
+#' Prior correlation matrix among the equations
+#'
+#' Within-mode tau <-> s correlations (`RHO_TAU_S`) and the mail <-> early share correlation
+#' (`RHO_S_CROSS`), both measured on NC 2024; every other pair is 0.
+#'
+#' @param keys Equation names, `<mode>_<outcome>`.
+#' @return Correlation matrix (PSD-repaired).
 measured_corr = function(keys) {
-  K = length(keys); C = diag(K); dimnames(C) = list(keys, keys)
+  K = length(keys)
+  C = diag(K)
+  dimnames(C) = list(keys, keys)
   idx = function(m, o) which(keys == paste(m, o, sep = "_"))
-  for (m in MODES) {                                   # within-mode tau<->s
-    a = idx(m, "tau"); b = idx(m, "s")
+  for (m in MODES) {
+    # within-mode tau<->s
+    a = idx(m, "tau")
+    b = idx(m, "s")
     C[a, b] = C[b, a] = RHO_TAU_S[[m]]
   }
-  a = idx("mail", "s"); b = idx("early", "s")          # the one real cross-mode pair
+  a = idx("mail", "s")
+  b = idx("early", "s") # the one real cross-mode pair
   C[a, b] = C[b, a] = RHO_S_CROSS
   psd_repair(C)
 }
@@ -559,7 +520,7 @@ RHO_CROSS = Sys.getenv("RHO_CROSS", unset = "calibrated")
 # the measured within-precinct sd inflation from it is 4.7%, and conditioning on an
 # observed mode is the only way one mode informs another. So: "full" when you want
 # precinct-level predictions, "diag" if you only publish aggregates.
-SIGMA_STRUCT = Sys.getenv("SIGMA_STRUCT", unset = "full")   # full | block | diag
+SIGMA_STRUCT = Sys.getenv("SIGMA_STRUCT", unset = "full") # full | block | diag
 
 # ---- COUNTY RANDOM EFFECT -------------------------------------------------------
 # The dominant uncertainty term, by a wide margin. Residuals are NOT independent across
@@ -609,32 +570,33 @@ USE_COUNTY_RE = Sys.getenv("USE_COUNTY_RE", unset = "1") == "1"
 # coarse stratification recovers only 3-7% of the county effect (R^2 of the county effect
 # on 5 or 6 lean strata = 0.045 / 0.034), so this is expected to under-cover.
 # "stratum_demo" alone is there for the live wrapper's demographic specs (live/R/demos.R).
-RE_GROUPING = Sys.getenv("RE_GROUPING", unset = "county")   # county | cory | geostratum | stratum_demo
-ICC_TURN  = as.numeric(Sys.getenv("ICC_TURN",  unset = "0.200"))   # TX 2022, L2
-ICC_SHARE = as.numeric(Sys.getenv("ICC_SHARE", unset = "0.269"))   # TX 2022, MEDSL
-ICC_TP    = as.numeric(Sys.getenv("ICC_TP",    unset = "0.269"))   # unmeasured; share proxy
-path_sigma   = file.path(PATH_DROPBOX, ELECTION_FOLDER, "input_data",
-                         paste0(STATE, "_gov_sigma.rds"))
+RE_GROUPING = Sys.getenv("RE_GROUPING", unset = "county") # county | cory | geostratum | stratum_demo
+ICC_TURN = as.numeric(Sys.getenv("ICC_TURN", unset = "0.200")) # TX 2022, L2
+ICC_SHARE = as.numeric(Sys.getenv("ICC_SHARE", unset = "0.269")) # TX 2022, MEDSL
+ICC_TP = as.numeric(Sys.getenv("ICC_TP", unset = "0.269")) # unmeasured; share proxy
 
-# Covariates. Deliberately SMALL: with hundreds of races you cannot hand-curate.
-# Same set in both equations for now -> Sigma does not change beta (SUR == OLS when
-# designs match); it only fixes the joint predictive distribution, which is the point.
-# To also gain SUR efficiency, give the two equations NON-NESTED sets (see TODO below).
-# Overridable from the environment (comma-separated) so a backtest can drop a covariate
-# that would be look-ahead for ITS target year -- e.g. turnout24 for a 2024 backtest.
+#' Covariate list from an environment variable
+#'
+#' @param var Variable name (comma-separated list).
+#' @param default Value when unset.
+#' @return Character vector.
 cov_env = function(var, default) {
   v = Sys.getenv(var, unset = "")
-  if (!nzchar(v)) return(default)
+  if (!nzchar(v)) {
+    return(default)
+  }
   trimws(strsplit(v, ",", fixed = TRUE)[[1]])
 }
-COVS_TURN  = cov_env("COVS_TURN",
-             c("log_n", "turnout22", "turnout24", "age", "male",
-               "pred.bla", "pred.his", "dem2"))
-COVS_SHARE = cov_env("COVS_SHARE",
-             c("log_n", "turnout22", "turnout24", "age", "male",
-               "pred.bla", "pred.his", "dem2"))
+COVS_TURN = cov_env(
+  "COVS_TURN",
+  c("log_n", "turnout22", "turnout24", "age", "male", "pred.bla", "pred.his", "dem2")
+)
+COVS_SHARE = cov_env(
+  "COVS_SHARE",
+  c("log_n", "turnout22", "turnout24", "age", "male", "pred.bla", "pred.his", "dem2")
+)
 # Third-party share is a weak, stable signal -- keep its design small or it overfits.
-COVS_TP    = cov_env("COVS_TP", c("log_n", "age", "male", "dem2", "tp_prior_raw"))
+COVS_TP = cov_env("COVS_TP", c("log_n", "age", "male", "dem2", "tp_prior_raw"))
 # Covariates DERIVED in section 1 rather than read from the frame. Everything else named
 # by a COVS_* list is a raw frame column and gets standardized there.
 COVS_DERIVED = c("log_n", "dem2", "tp_prior_raw")
@@ -650,10 +612,10 @@ COVS_DERIVED = c("log_n", "dem2", "tp_prior_raw")
 # It also keeps s (what decides the race, and what the dem2 prior already expresses)
 # on its own scale rather than buried in a K-way composition.
 OUTCOMES = c("tau", "tp", "s")
-K_OUT    = length(OUTCOMES)
-PRIOR_N_TP   = 2.0        # prior strength for the third-party equation
-TP_SHRINK_N  = 2000       # registrants at which the precinct tp signal gets half weight
-TP_RANGE     = c(0.001, 0.15)   # clamp for the third-party prior
+K_OUT = length(OUTCOMES)
+PRIOR_N_TP = 2.0 # prior strength for the third-party equation
+TP_SHRINK_N = 2000 # registrants at which the precinct tp signal gets half weight
+TP_RANGE = c(0.001, 0.15) # clamp for the third-party prior
 
 # ---- MODE PRIORS ----------------------------------------------------------------
 # Canonical mode keys from enightmodels::VOTE_METHODS. THESE ARE THE MODEL'S MODES, i.e.
@@ -663,64 +625,20 @@ TP_RANGE     = c(0.001, 0.15)   # clamp for the third-party prior
 # M = length(MODES) flows into Sigma, eps, the conditional-MVN grouping and the softmax,
 # so changing it changes the equation count: 3 modes x 3 outcomes = 9 equations, 2 x 3 = 6.
 MODES = local({
-  if (nzchar(Sys.getenv("MODES"))) return(trimws(strsplit(Sys.getenv("MODES"), ",")[[1]]))
+  if (nzchar(Sys.getenv("MODES"))) {
+    return(trimws(strsplit(Sys.getenv("MODES"), ",")[[1]]))
+  }
   if (is.null(mode_scope)) c("mail", "early", "eday") else mode_scope$modes
 })
 stopifnot("REF_MODE must be one of MODES" = REF_MODE %in% MODES)
 #
-# If `path_mode_hist` exists, the turnout split, the partisan offset and Sigma are all
-# DERIVED from it (derive_mode_priors() below) and the constants here are ignored.
+# mode_hist (geo, method, party, votes; from {ST}_precinct_mode_history.parquet or
+# {ST}_precinct_mode_results.parquet) gives each precinct's turnout split
+# (derive_mode_priors() below). The constants here are fallbacks for when it is NULL.
 #
-# REQUIRED SCHEMA for {STATE}_mode_history.parquet -- one row per precinct x mode x
-# party, FINAL CANVASS numbers (not an election-night snapshot):
-#     geo      chr  live-scraper format: tx_{county_cbs 3-digit}_{precinct_id}, with
-#                   precinct_id trimmed, upper-cased and LEADING ZEROS DROPPED
-#                   (tx_257_1, not tx_257_0001) -- see CONTRACT.md §0 and
-#                   prep_tx_model_inputs.R
-#     election chr  e.g. "2022_general", "2024_general"
-#     method   chr  one of mail / early / eday  (map provisional+limited explicitly;
-#                   say whether they are folded into eday or dropped)
-#     party    chr  "dem" / "rep"
-#     votes    dbl  final votes for that party in that precinct and mode
-# Optional but valuable: `contest` (so we can prefer governor/senate over president),
-# and `boundary_vintage` (which precinct map the geo ids are on).
-#
-# Fallback constants, used only when the file is absent.
-#
-# MODE_TURN_SHARE: the 2022 MIDTERM split, read DIRECTLY from the L2 precinct file
-# (26_general/input_data/l2/tx_20261011_precincts.parquet, refreshed 2026-10-16), which
-# carries vote{16,18,20,22,24}_{mail,early,eday} -- per-election, per-mode voter counts
-# at precinct level. 9,591 precinct rows, vote22 populated in 99.7% of them.
-#
-#   election         mail    early    eday       total
-#   2018 midterm     4.8%    67.9%   27.3%   6,882,402
-#   2020 pres        7.2%    79.5%   13.3%   9,802,123
-#   2022 midterm     4.2%    63.8%   32.0%   7,515,288   <- used here
-#   2024 pres        3.5%    76.4%   20.2%  10,963,552
-#
-# MIDTERMS RUN ~27-32% ELECTION-DAY, PRESIDENTIALS 13-20%. 2026 is a midterm, so 2022
-# is the analogue. Do NOT use the coalesced "most recent general" composite in
-# yougov_precinct_frame_method.csv (72.9/21.6/5.5): it is dominated by 2024 and
-# under-weights election day by ~10pp. Election day is both the mode with the most
-# distinctive partisan lean and the one that reports last, so that error feeds straight
-# into red-mirage bias.
-#
-# THESE ARE AVAILABLE PER PRECINCT -- the statewide constants below are only a fallback.
-# BUILT ARTIFACT (Bridget, 2026-10-19): TX_precinct_mode_history.parquet covers the
-# 2016-2024 generals for 5,537 precincts with an L2 match; in the 32 scope counties the
-# 2022 split is mail 4.4 / early 65.0 / eday 30.5, and the mode columns cover 99.8% of
-# 2022 voters. Point PATH_MODE_HIST at it rather than re-deriving the join.
-# Join path, if rebuilding: L2 `precinct_cbs` -> crosswalks/tx.csv `precinct_l2`
-# (90.3% of precincts, 98.2% of REGISTRANTS -- the weighted figure is the relevant one)
-# -> `precinct_yougov` -> the covariate frame. See derive_mode_priors() for the shape.
-# DO NOT backfill crosswalk gaps by normalizing ids: for 92 TX precincts a normalized
-# match exists but the pairs are different places sharing a number, with registrant
-# counts differing by a median 35%. The blanks are correct (CONTRACT.md §0).
-#
-# Caveat: still a stock of CURRENT registrants who voted in 2022 by each mode, so
-# survivorship-biased (2022 voters since died/moved are absent). But it is the right
-# election and the right modes, which the composite was not.
-MODE_TURN_SHARE   = c(mail = 0.042, early = 0.638, eday = 0.320)
+# MODE_TURN_SHARE: TX's 2022 midterm split from L2 (mail 4.2 / early 63.8 / eday 32.0).
+# 2026 is a midterm; presidential years run far less election-day (TX 2024: 20.2%).
+MODE_TURN_SHARE = c(mail = 0.042, early = 0.638, eday = 0.320)
 #
 # MODE_SHARE_OFFSET: the mode partisan differential, as a LINEAR function of the
 # precinct's own lean, not a constant:
@@ -745,14 +663,15 @@ MODE_TURN_SHARE   = c(mail = 0.042, early = 0.638, eday = 0.320)
 # composed. Use NC to establish that a nonzero, lean-dependent offset is needed -- not to
 # import its size. Set USE_NC_DELTA=1 to borrow them anyway for a sensitivity run.
 MODE_SHARE_OFFSET = rbind(
-  mail  = c(a = 0.0, b = 0.0),
+  mail = c(a = 0.0, b = 0.0),
   early = c(a = 0.0, b = 0.0),
-  eday  = c(a = 0.0, b = 0.0)
+  eday = c(a = 0.0, b = 0.0)
 )
-NC_DELTA = rbind(                      # measured above; borrow only deliberately
-  mail  = c(a =  0.660, b = -0.297),
-  early = c(a = -0.029, b =  0.041),
-  eday  = c(a = -0.025, b = -0.089)
+NC_DELTA = rbind(
+  # measured above; borrow only deliberately
+  mail = c(a = 0.660, b = -0.297),
+  early = c(a = -0.029, b = 0.041),
+  eday = c(a = -0.025, b = -0.089)
 )
 if (Sys.getenv("USE_NC_DELTA") == "1") {
   MODE_SHARE_OFFSET = NC_DELTA
@@ -762,17 +681,8 @@ if (Sys.getenv("USE_NC_DELTA") == "1") {
 # constants above). "history" derives it from the file, "zero" and "nc" keep the file's
 # turnout split but replace its partisan offset. See derive_mode_priors().
 MODE_OFFSET_SOURCE = Sys.getenv("MODE_OFFSET_SOURCE", unset = "history")
-#
-# Which past election to lean on. 2026 is a MIDTERM, so 2022 is the better analogue
-# for mode composition and for the mode partisan differential; 2024 has better
-# coverage and a fresher precinct partisan lean. Preference order, first match wins.
-# Env-overridable (comma-separated) so a backtest can name an analogue appropriate to
-# ITS target year -- 2020 for a presidential target, since TX mode composition tracks
-# turnout type rather than calendar.
-MODE_HIST_PREFER = cov_env("MODE_HIST_PREFER", c("2022_general", "2024_general"))
+
 # --------------------------------------------------------------------------------
-
-
 
 # The fallback constants above are written for the legacy mail/early/eday scope. When a
 # state's MODES differ (CA drops `early`), subset and RENORMALISE so the fallback still
@@ -781,124 +691,85 @@ MODE_HIST_PREFER = cov_env("MODE_HIST_PREFER", c("2022_general", "2024_general")
 # per geo in the `cells` block regardless.
 if (!setequal(names(MODE_TURN_SHARE), MODES)) {
   miss = setdiff(MODES, names(MODE_TURN_SHARE))
-  if (length(miss)) cli_abort("MODES names {miss} with no MODE_TURN_SHARE fallback value.")
+  if (length(miss)) {
+    cli_abort("MODES names {miss} with no MODE_TURN_SHARE fallback value.")
+  }
   dropped = setdiff(names(MODE_TURN_SHARE), MODES)
   MODE_TURN_SHARE = MODE_TURN_SHARE[MODES]
   MODE_TURN_SHARE = MODE_TURN_SHARE / sum(MODE_TURN_SHARE)
   MODE_SHARE_OFFSET = MODE_SHARE_OFFSET[MODES, , drop = FALSE]
-  cli_alert_info("{STATE}: mode scope drops {dropped}; fallback MODE_TURN_SHARE \\
-                  renormalised to {paste(sprintf('%s %.3f', MODES, MODE_TURN_SHARE), collapse = ' ')}")
+  cli_alert_info(
+    "{STATE}: mode scope drops {dropped}; fallback MODE_TURN_SHARE \\
+                  renormalised to {paste(sprintf('%s %.3f', MODES, MODE_TURN_SHARE), collapse = ' ')}"
+  )
 }
 
 stopifnot(
-  "MODE_TURN_SHARE must sum to 1"   = abs(sum(MODE_TURN_SHARE) - 1) < 1e-9,
+  "MODE_TURN_SHARE must sum to 1" = abs(sum(MODE_TURN_SHARE) - 1) < 1e-9,
   "MODE_TURN_SHARE must be named for MODES" = setequal(names(MODE_TURN_SHARE), MODES),
-  "MODE_SHARE_OFFSET must be a MODES x (a,b) matrix" =
-    setequal(rownames(MODE_SHARE_OFFSET), MODES) &&
-    identical(colnames(MODE_SHARE_OFFSET), c("a","b"))
+  "MODE_SHARE_OFFSET must be a MODES x (a,b) matrix" = setequal(
+    rownames(MODE_SHARE_OFFSET),
+    MODES
+  ) &&
+    identical(colnames(MODE_SHARE_OFFSET), c("a", "b"))
 )
 
-# ---- 1. load precinct covariates ------------------------------------------------
-# Falls back to a synthetic frame with the documented schema so this script is
-# runnable before the real file lands. Synthetic mode is loudly labeled.
-load_covs = function(path) {
-  if (file.exists(path)) {
-    cli_alert_success("Reading {.path {path}}")
-    d = read_parquet(path)
-    # Structural columns, plus whatever the ACTIVE covariate lists name. Checking the
-    # active set rather than a fixed list is what lets a backtest supply turnout20 in
-    # place of turnout24 without carrying a dead column.
-    req = unique(c("geo", "county", "geostratum", "stratum_demo", "n", "party", "est",
-                   "method", setdiff(c(COVS_TURN, COVS_SHARE, COVS_TP), COVS_DERIVED),
-                   "dem2"))
-    miss = setdiff(req, names(d))
-    if (length(miss)) cli_abort("Input is missing required columns: {miss}")
-    if (!all(d$method == "all")) {
-      cli_alert_info("Input already has a mode split ({unique(d$method)}) -- \\
-                      replace the MODE PRIORS block with those columns.")
-    }
-    return(d)
-  }
-  cli_alert_warning("{.path {path}} not found -- generating SYNTHETIC covariates. \\
-                     Results are a plumbing test only, not a forecast.")
-  np = 4500
-  tibble(
-    geo          = sprintf("tx_%03d_%04d", rep(1:150, length.out = np), 1:np),
-    county       = sprintf("county_%03d", rep(1:150, length.out = np)),
-    geostratum   = paste0("TX-", rep(1:6, length.out = np)),
-    stratum_demo = sample(c("white_noncol", "white_col", "hisp", "black", "mixed"), np, TRUE),
-    n            = round(runif(np, 300, 4000)),
-    turnout22    = runif(np, 0.25, 0.65),
-    turnout24    = runif(np, 0.40, 0.80),
-    turnoutPred  = runif(np, 0.35, 0.70),
-    age          = runif(np, 35, 60),
-    male         = runif(np, 0.42, 0.55),
-    `pred.bla`   = runif(np, 0, 0.5),
-    `pred.his`   = runif(np, 0, 0.7)
-  ) |>
-    mutate(
-      dem2 = invlogit(rnorm(np, 0, 0.9)),
-      # third-party residual, matched to the real frame: n-weighted ~1.6%, right-skewed
-      pr_other = pmin(pmax(rgamma(np, shape = 1.6, rate = 95), 0), 0.25)
-    ) |>
-    mutate(pr_harris = dem2 * (1 - pr_other), pr_trump = (1 - dem2) * (1 - pr_other)) |>
-    select(-pr_other) |>
-    mutate(est_tot = turnoutPred * n, est_dem = est_tot * dem2, est_rep = est_tot * (1 - dem2)) |>
-    select(-est_tot) |>
-    pivot_longer(c(est_dem, est_rep), names_to = "party", values_to = "est",
-                 names_prefix = "est_") |>
-    mutate(method = "all")
-}
-
-covs_long = load_covs(path_covs)
+# ---- 1. precinct covariates --------------------------------------------------------
+# covs_long is supplied by the caller (live/R/model_medsl.R's medsl_inputs()): one row per
+# precinct x party, with the structural columns below and every column the active COVS_*
+# lists name.
+local({
+  req = unique(c(
+    "geo",
+    "county",
+    "geostratum",
+    "stratum_demo",
+    "n",
+    "party",
+    "est",
+    "method",
+    setdiff(c(COVS_TURN, COVS_SHARE, COVS_TP), COVS_DERIVED),
+    "dem2"
+  ))
+  miss = setdiff(req, names(covs_long))
+  if (length(miss)) cli_abort("covs_long is missing required columns: {miss}")
+})
 
 # ---- 1b. mode history -> per-precinct mode priors -------------------------------
-# Turns the colleague's precinct x mode x party table into:
-#   (a) per-precinct mode turnout shares   (replaces MODE_TURN_SHARE)
-#   (b) per-mode logit share offsets        (replaces MODE_SHARE_OFFSET)
-# Both are shrunk toward the county / statewide value so thin precincts behave.
-load_mode_history = function(path) {
-  if (!file.exists(path)) return(NULL)
-  d = read_parquet(path) |> as_tibble()
-  req = c("geo", "election", "method", "party", "votes")
-  miss = setdiff(req, names(d))
-  if (length(miss)) cli_abort("{.path {path}} missing columns: {miss}")
-
-  bad_m = setdiff(unique(d$method), MODES)
-  if (length(bad_m)) cli_abort("unexpected `method` values: {bad_m}. Map them to \\
-                                {MODES} (and state where provisional went).")
-  bad_p = setdiff(unique(d$party), c("dem", "rep"))
-  if (length(bad_p)) cli_alert_warning("dropping non-two-party rows: {bad_p}")
-  d = filter(d, party %in% c("dem", "rep"))
-
-  elec = MODE_HIST_PREFER[MODE_HIST_PREFER %in% unique(d$election)]
-  if (!length(elec)) cli_abort("no election in {MODE_HIST_PREFER}; have \\
-                                {unique(d$election)}")
-  if ("contest" %in% names(d)) {
-    pref = c("governor", "senate", "president")
-    hit = pref[pref %in% tolower(unique(d$contest))]
-    if (length(hit)) d = filter(d, tolower(contest) == hit[1])
-    cli_inform("mode history: using contest {.val {if (length(hit)) hit[1] else 'all'}}")
-  }
-  cli_alert_success("Mode history: {.path {basename(path)}}, using {.val {elec[1]}}")
-  filter(d, election == elec[1]) |>
-    summarize(votes = sum(votes), .by = c(geo, method, party))
-}
-
+#' Mode priors from the precinct x mode history
+#'
+#' Turns `mode_hist` into (a) per-precinct mode turnout shares (replacing
+#' `MODE_TURN_SHARE`) and (b) per-mode logit share offsets (replacing
+#' `MODE_SHARE_OFFSET`), each shrunk toward the county / statewide value. The offsets
+#' follow `MODE_OFFSET_SOURCE`: "history" (derived), "zero", or "nc" (`NC_DELTA`).
+#'
+#' @param hist Mode history: geo, method, party, votes.
+#' @param prec Precinct frame.
+#' @param k_turn Shrinkage of the turnout split toward the county, in votes.
+#' @param k_share Shrinkage of the share offsets.
+#' @return List: turn_share, offset, shrink_share; NULL when `hist` is NULL.
 derive_mode_priors = function(hist, prec, k_turn = 40, k_share = 60) {
-  if (is.null(hist)) return(NULL)
+  if (is.null(hist)) {
+    return(NULL)
+  }
   cty = prec |> select(geo, county) |> mutate(geo = as.character(geo))
   h = hist |>
     pivot_wider(names_from = party, values_from = votes, values_fill = 0) |>
     inner_join(cty, by = "geo")
-  if (!nrow(h)) cli_abort("mode history did not join to any precinct `geo`. \\
-                            Check the id format (tx_{{county_cbs}}_{{precinct}}).")
+  if (!nrow(h)) {
+    cli_abort(
+      "mode history did not join to any precinct `geo`. \\
+                            Check the id format (tx_{{county_cbs}}_{{precinct}})."
+    )
+  }
   cli_inform("mode history joined {n_distinct(h$geo)} of {nrow(prec)} precincts")
 
   # (a) turnout split: precinct mode share, shrunk to its county's mode share
   tot = h |> mutate(v = dem + rep) |> summarize(v = sum(v), .by = c(geo, county, method))
-  cty_sh = tot |> summarize(v = sum(v), .by = c(county, method)) |>
-    mutate(cty_share = v / sum(v), .by = county) |> select(county, method, cty_share)
+  cty_sh = tot |>
+    summarize(v = sum(v), .by = c(county, method)) |>
+    mutate(cty_share = v / sum(v), .by = county) |>
+    select(county, method, cty_share)
   sw_sh = tot |> summarize(v = sum(v), .by = method) |> mutate(sw = v / sum(v))
   turn_share = tot |>
     mutate(n_prec = sum(v), .by = geo) |>
@@ -906,52 +777,74 @@ derive_mode_priors = function(hist, prec, k_turn = 40, k_share = 60) {
     left_join(select(sw_sh, method, sw), by = "method") |>
     mutate(
       cty_share = coalesce(cty_share, sw),
-      share = (v + k_turn * cty_share) / (n_prec + k_turn)      # Beta-ish shrinkage
+      share = (v + k_turn * cty_share) / (n_prec + k_turn) # Beta-ish shrinkage
     ) |>
     mutate(share = share / sum(share), .by = geo) |>
     select(geo, method, mode_turn_share = share)
 
   # (b) partisan offset: logit_shift so each mode's weighted aggregate matches that
   #     mode's observed historical two-party Dem share
-  obs_mode = h |> summarize(d = sum(dem), r = sum(rep), .by = method) |>
+  obs_mode = h |>
+    summarize(d = sum(dem), r = sum(rep), .by = method) |>
     mutate(dem2_mode = d / (d + r))
   w = tot |> select(geo, method, v)
   # Estimate a_m and b_m by regressing the precinct's observed mode differential on its
   # own lean, weighted by that mode's votes. Falls back to (0,0) on thin data.
-  off = t(vapply(MODES, function(m) {
-    hj = h |> filter(method == m) |> inner_join(select(prec, geo, dem2), by = "geo") |>
-      mutate(n2 = dem + rep, s_m = dem / pmax(n2, 1)) |>
-      filter(n2 >= 25, is.finite(dem2), dem2 > 0, dem2 < 1, s_m > 0, s_m < 1)
-    if (nrow(hj) < 100) return(c(a = 0, b = 0))
-    x = logit(hj$dem2); y = logit(hj$s_m) - x
-    f = stats::lm.wfit(cbind(1, x), y, hj$n2)
-    c(a = unname(f$coefficients[1]), b = unname(f$coefficients[2]))
-  }, numeric(2)))
+  off = t(vapply(
+    MODES,
+    function(m) {
+      hj = h |>
+        filter(method == m) |>
+        inner_join(select(prec, geo, dem2), by = "geo") |>
+        mutate(n2 = dem + rep, s_m = dem / pmax(n2, 1)) |>
+        filter(n2 >= 25, is.finite(dem2), dem2 > 0, dem2 < 1, s_m > 0, s_m < 1)
+      if (nrow(hj) < 100) {
+        return(c(a = 0, b = 0))
+      }
+      x = logit(hj$dem2)
+      y = logit(hj$s_m) - x
+      f = stats::lm.wfit(cbind(1, x), y, hj$n2)
+      c(a = unname(f$coefficients[1]), b = unname(f$coefficients[2]))
+    },
+    numeric(2)
+  ))
   rownames(off) = MODES
   # The turnout split and the partisan offset come from the same file but are NOT equally
   # trustworthy: a history built from registration-by-mode carries a real turnout split
   # and a misleading partisan one. MODE_OFFSET_SOURCE lets the two be sourced separately.
   if (MODE_OFFSET_SOURCE == "zero") {
     off[] = 0
-    cli_alert_info("MODE_OFFSET_SOURCE=zero -- keeping the derived turnout split, \\
-                    forcing delta_m to 0")
+    cli_alert_info(
+      "MODE_OFFSET_SOURCE=zero -- keeping the derived turnout split, \\
+                    forcing delta_m to 0"
+    )
   } else if (MODE_OFFSET_SOURCE == "nc") {
     off = NC_DELTA[MODES, , drop = FALSE]
-    cli_alert_info("MODE_OFFSET_SOURCE=nc -- keeping the derived turnout split, \\
-                    borrowing NC-measured delta_m")
+    cli_alert_info(
+      "MODE_OFFSET_SOURCE=nc -- keeping the derived turnout split, \\
+                    borrowing NC-measured delta_m"
+    )
   } else if (MODE_OFFSET_SOURCE != "history") {
-    cli_abort("unknown MODE_OFFSET_SOURCE {MODE_OFFSET_SOURCE} \\
-               (history | zero | nc)")
+    cli_abort(
+      "unknown MODE_OFFSET_SOURCE {MODE_OFFSET_SOURCE} \\
+               (history | zero | nc)"
+    )
   }
-  cli_inform(c("derived mode priors:",
-    paste0("  statewide turnout split: ",
-           paste(sprintf("%s %.3f", sw_sh$method, sw_sh$sw), collapse = "  ")),
-    paste0("  logit share offsets:     ",
-           paste(sprintf("%s %+.3f", names(off), off), collapse = "  "))))
+  cli_inform(c(
+    "derived mode priors:",
+    paste0(
+      "  statewide turnout split: ",
+      paste(sprintf("%s %.3f", sw_sh$method, sw_sh$sw), collapse = "  ")
+    ),
+    paste0(
+      "  logit share offsets:     ",
+      paste(sprintf("%s %+.3f", names(off), off), collapse = "  ")
+    )
+  ))
   list(turn_share = turn_share, offset = off, shrink_share = k_share)
 }
 
-mode_hist = load_mode_history(path_mode_hist)   # derive_mode_priors() runs after `prec`
+# mode_hist (geo, method, party, votes) is supplied by the caller; derive_mode_priors() runs after `prec`
 
 # one row per precinct: party-long -> wide, and recover total expected turnout
 prec = covs_long |>
@@ -960,39 +853,51 @@ prec = covs_long |>
   pivot_wider(names_from = party, values_from = est, names_prefix = "est_") |>
   mutate(
     est_tot = est_dem + est_rep,
-    log_n   = log(n),
+    log_n = log(n),
     # third-party prior from the frame's residual 1 - pr_harris - pr_trump. Measured
     # n-weighted 1.64% for TX vs ~1.4% actual 2024 "other", so it is signal -- but the
     # precinct range is 0% to 20.4%, so shrink hard toward the statewide value.
     # A panel may instead supply `tp_raw` directly -- a backtest must, since
     # pr_harris/pr_trump are calibrated to 2024 returns and so are look-ahead for 2024.
-    tp_prior_raw = if ("tp_raw" %in% names(covs_long)) pmin(pmax(tp_raw, 0), 0.25)
-                   else pmin(pmax(1 - pr_harris - pr_trump, 0), 0.25),
+    tp_prior_raw = if ("tp_raw" %in% names(covs_long)) {
+      pmin(pmax(tp_raw, 0), 0.25)
+    } else {
+      pmin(pmax(1 - pr_harris - pr_trump, 0), 0.25)
+    },
     # standardize every raw frame covariate the active COVS_* lists name (with the
     # default lists this is turnout22/turnout24/age/male/pred.bla/pred.his, as before)
-    across(all_of(setdiff(unique(c(COVS_TURN, COVS_SHARE, COVS_TP)), COVS_DERIVED)),
-           ~ as.numeric(scale(.x)))
+    across(
+      all_of(setdiff(unique(c(COVS_TURN, COVS_SHARE, COVS_TP)), COVS_DERIVED)),
+      ~ as.numeric(scale(.x))
+    )
   ) |>
   filter(est_tot > 0, is.finite(dem2), is.finite(tp_prior_raw)) |>
   mutate(
-    tp_sw    = stats::weighted.mean(tp_prior_raw, est_tot),
-    w_tp     = n / (n + TP_SHRINK_N),
-    tp_prior = pmin(pmax(w_tp * tp_prior_raw + (1 - w_tp) * tp_sw,
-                         TP_RANGE[1]), TP_RANGE[2])
+    tp_sw = stats::weighted.mean(tp_prior_raw, est_tot),
+    w_tp = n / (n + TP_SHRINK_N),
+    tp_prior = pmin(pmax(w_tp * tp_prior_raw + (1 - w_tp) * tp_sw, TP_RANGE[1]), TP_RANGE[2])
   )
 
-cli_h1("{STATE} Governor 2026 -- trial precinct x mode model")
 cli_inform(c(
   "precincts: {nrow(prec)}",
   "baseline expected turnout: {format(round(sum(prec$est_tot)), big.mark = ',')}",
   "baseline Dem two-party share: {round(weighted.mean(prec$dem2, prec$est_tot), 4)}"
 ))
+
+#' Warn when the mode priors fall back to constants
+#'
+#' @param mode_priors `derive_mode_priors()` output.
+#' @return NULL, invisibly; warns only when `mode_priors` is NULL.
 warn_uncalibrated_modes = function(mode_priors) {
-  if (!is.null(mode_priors)) return(invisible())
+  if (!is.null(mode_priors)) {
+    return(invisible())
+  }
   if (all(MODE_SHARE_OFFSET == 0)) {
-    cli_alert_warning("No mode history, and MODE_SHARE_OFFSET is all zero: the prior \\
+    cli_alert_warning(
+      "No mode history, and MODE_SHARE_OFFSET is all zero: the prior \\
                        assumes every mode votes like its precinct overall. Early-night \\
-                       output will carry the full red-mirage/blue-shift bias.")
+                       output will carry the full red-mirage/blue-shift bias."
+    )
   } else {
     cli_alert_warning("Using hardcoded MODE_* constants (no mode history found).")
   }
@@ -1003,33 +908,43 @@ mode_priors = derive_mode_priors(mode_hist, prec)
 warn_uncalibrated_modes(mode_priors)
 
 cells = tidyr::expand_grid(prec, mode = MODES) |>
-  { \(x) if (is.null(mode_priors)) {
-      mutate(x, mode_turn_share = MODE_TURN_SHARE[mode],
-                off_a = MODE_SHARE_OFFSET[mode, "a"], off_b = MODE_SHARE_OFFSET[mode, "b"])
-    } else {
-      x |>
-        left_join(rename(mode_priors$turn_share, mode = method), by = c("geo", "mode")) |>
+  {
+    \(x) {
+      if (is.null(mode_priors)) {
         mutate(
-          # precincts the history did not cover fall back to the statewide constants
-          mode_turn_share = coalesce(mode_turn_share, MODE_TURN_SHARE[mode]),
-          off_a = mode_priors$offset[mode, "a"],
-          off_b = mode_priors$offset[mode, "b"]
+          x,
+          mode_turn_share = MODE_TURN_SHARE[mode],
+          off_a = MODE_SHARE_OFFSET[mode, "a"],
+          off_b = MODE_SHARE_OFFSET[mode, "b"]
         )
-    } }() |>
+      } else {
+        x |>
+          left_join(rename(mode_priors$turn_share, mode = method), by = c("geo", "mode")) |>
+          mutate(
+            # precincts the history did not cover fall back to the statewide constants
+            mode_turn_share = coalesce(mode_turn_share, MODE_TURN_SHARE[mode]),
+            off_a = mode_priors$offset[mode, "a"],
+            off_b = mode_priors$offset[mode, "b"]
+          )
+      }
+    }
+  }() |>
   mutate(
-    mode_turn_share = mode_turn_share / sum(mode_turn_share), .by = geo
+    mode_turn_share = mode_turn_share / sum(mode_turn_share),
+    .by = geo
   ) |>
   mutate(
     prior_tau = est_tot * mode_turn_share,
     # delta_im = a_m + b_m * logit(dem2_i)  -- lean-dependent, per the NC measurement
-    prior_s   = invlogit(logit(dem2) + off_a + off_b * logit(dem2)),
-    prior_tp  = tp_prior,            # no mode differential assumed for third party
-    y_tp_prior  = logit(prior_tp),
-    y_s_prior   = logit(prior_s),
+    prior_s = invlogit(logit(dem2) + off_a + off_b * logit(dem2)),
+    prior_tp = tp_prior, # no mode differential assumed for third party
+    y_tp_prior = logit(prior_tp),
+    y_s_prior = logit(prior_s),
     # registrant-based ceiling on the PRECINCT total
     cap = KAPPA * pmax(n, 1),
     # share of this precinct's prior composition carried by the reference mode
-    ref_share = mode_turn_share[match(REF_MODE, mode)], .by = geo
+    ref_share = mode_turn_share[match(REF_MODE, mode)],
+    .by = geo
   ) |>
   mutate(
     # The per-mode `tau` SLOT is reinterpreted rather than restructured, so every
@@ -1037,128 +952,99 @@ cells = tidyr::expand_grid(prec, mode = MODES) |>
     # keeps working unchanged:
     #   reference mode's slot -> theta, the precinct TOTAL on the capped logit scale
     #   other modes' slots    -> eta_m, the log-ratio of that mode's share to the ref's
-    y_tau_prior = if (!USE_COMPOSE) log(prior_tau + 0.1) else if_else(
-      mode == REF_MODE,
-      logit(pmin(pmax(est_tot / cap, 1e-4), 1 - 1e-4)),
-      log(pmax(mode_turn_share, 1e-6) / pmax(ref_share, 1e-6)))
+    y_tau_prior = if (!USE_COMPOSE) {
+      log(prior_tau + 0.1)
+    } else {
+      if_else(
+        mode == REF_MODE,
+        logit(pmin(pmax(est_tot / cap, 1e-4), 1 - 1e-4)),
+        log(pmax(mode_turn_share, 1e-6) / pmax(ref_share, 1e-6))
+      )
+    }
   )
-N_PREC = nrow(prec); M = length(MODES)
+N_PREC = nrow(prec)
+M = length(MODES)
 # county indicator matrix for the random effect (one column per county, in prec order)
-CTY_MAT = if (!USE_COUNTY_RE) matrix(0, nrow(prec), 0) else {
+CTY_MAT = if (!USE_COUNTY_RE) {
+  matrix(0, nrow(prec), 0)
+} else {
   mk = function(v, pre) {
-    f = factor(v); m = stats::model.matrix(~ f - 1)
-    colnames(m) = paste0(pre, levels(f)); m
+    f = factor(v)
+    m = stats::model.matrix(~ f - 1)
+    colnames(m) = paste0(pre, levels(f))
+    m
   }
-  switch(RE_GROUPING,
-    county     = mk(prec$county, "cty_"),
+  switch(
+    RE_GROUPING,
+    county = mk(prec$county, "cty_"),
     geostratum = mk(prec$geostratum, "geo_"),
     stratum_demo = mk(prec$stratum_demo, "sd_"),
-    cory       = cbind(mk(prec$stratum_demo, "sd_"), mk(prec$geostratum, "geo_")),
-    cli_abort("unknown RE_GROUPING {RE_GROUPING}"))
+    cory = cbind(mk(prec$stratum_demo, "sd_"), mk(prec$geostratum, "geo_")),
+    cli_abort("unknown RE_GROUPING {RE_GROUPING}")
+  )
 }
-if (USE_COUNTY_RE)
-  cli_inform("random effect ON [{RE_GROUPING}]: {ncol(CTY_MAT)} levels, \\
-              lambda turn {round((1-ICC_TURN)/ICC_TURN,2)} / share {round((1-ICC_SHARE)/ICC_SHARE,2)}")
+if (USE_COUNTY_RE) {
+  cli_inform(
+    "random effect ON [{RE_GROUPING}]: {ncol(CTY_MAT)} levels, \\
+              lambda turn {round((1-ICC_TURN)/ICC_TURN,2)} / share {round((1-ICC_SHARE)/ICC_SHARE,2)}"
+  )
+}
 cli_inform("cells: {nrow(cells)} ({N_PREC} precincts x {M} modes)")
 
-# ---- 3. synthetic returns (replace with the live feed) --------------------------
-# Truth is drawn ONCE with a deliberate mode differential and correlated precinct
-# shocks, so the cross-mode conditioning has something real to find.
-make_truth = function(cells) {
-  # Error structure now MATCHES the NC 2024 measurements rather than my initial guesses:
-  #   within-mode rho(tau, s):  mail +0.204, early +0.052, eday -0.140  (sign-varying)
-  #   cross-mode rho:           ~0 for turnout and for mail<->eday / early<->eday
-  # The previous version drew u_tau / u_s at PRECINCT level, shared across modes, which
-  # implied near-perfect cross-mode correlation -- the opposite of what NC shows -- and
-  # drew tau and s independently, so it had no within-mode correlation to find either.
-  # Consequence: full / block / diag Sigma were indistinguishable for reasons that were
-  # artefacts of the generator. Shocks are now drawn PER CELL with mode-specific
-  # within-cell correlation. (This slightly understates the one real cross-mode pair,
-  # mail<->early at +0.232; representing that would need a factor structure.)
-  rho_in  = c(mail = 0.204, early = 0.052, eday = -0.140)
-  sd_tau  = 0.18; sd_s = 0.22; sd_tp = 0.30
-  # COUNTY-level component, at the NC-measured ICC. Without this the generator has
-  # independent precincts and cannot test whether the county random effect is calibrated
-  # -- it would only show that the intervals widen.
-  cty <- unique(cells$county)
-  cshock <- tibble(
-    county = cty,
-    c_tau = rnorm(length(cty), 0, sd_tau * sqrt(ICC_TURN  / (1 - ICC_TURN))),
-    c_s   = rnorm(length(cty), 0, sd_s   * sqrt(ICC_SHARE / (1 - ICC_SHARE))),
-    c_tp  = rnorm(length(cty), 0, sd_tp  * sqrt(ICC_TP    / (1 - ICC_TP)))
-  )
-  true_a = c(mail =  0.660, early = -0.029, eday = -0.025)
-  true_b = c(mail = -0.297, early =  0.041, eday = -0.089)
-  cells |>
-    left_join(cshock, by = "county") |>
-    mutate(
-      .r  = rho_in[mode],
-      .z1 = rnorm(n()), .z2 = rnorm(n()),
-      e_tau = sd_tau * .z1 + c_tau,
-      e_s   = sd_s * (.r * .z1 + sqrt(1 - .r^2) * .z2) + c_s,   # within-cell corr + county
-      e_tp  = sd_tp * rnorm(n()) + c_tp,
-      tau_true = pmax(round(prior_tau * exp(e_tau)), 0),
-      s_true   = invlogit(logit(dem2) + true_a[mode] + true_b[mode] * logit(dem2) + e_s),
-      tp_true  = invlogit(logit(prior_tp) + e_tp)
-    ) |>
-    select(geo, mode, tau_true, s_true, tp_true)
-}
-
-# reporting order: mode-driven (mail -> early -> eday), with county-level jitter
-make_stages = function(cells, truth, frac) {
-  ord = c(mail = 0.0, early = 0.33, eday = 0.66)
-  cells |>
-    select(geo, county, mode) |>
-    mutate(
-      pos = ord[mode] + 0.34 * (dense_rank(county) / n_distinct(county)) + runif(n(), 0, 0.03),
-      stage = if_else(pos <= frac, STAGE_DONE, 0L)
-    ) |>
-    select(geo, mode, stage) |>
-    left_join(truth, by = c("geo", "mode")) |>
-    mutate(
-      v_two = tau_true * (1 - tp_true),
-      votes_dem = if_else(stage >= STAGE_DONE, round(v_two * s_true), NA_real_),
-      votes_rep = if_else(stage >= STAGE_DONE, round(v_two * (1 - s_true)), NA_real_),
-      votes_oth = if_else(stage >= STAGE_DONE, round(tau_true * tp_true), NA_real_)
-    ) |>
-    select(geo, mode, stage, votes_dem, votes_rep, votes_oth)
-}
-
-# ---- 4. fit --------------------------------------------------------------------
+# ---- 3. fit --------------------------------------------------------------------
 # One lm_bayes per (mode, outcome) = K_OUT * M = 3M equations (9 for three modes). All
 # share a design, so these coefficients equal the full-SUR ones; Sigma is estimated from
 # residuals. Caveat: the equivalence needs the same regressors on the SAME ROWS, and the
 # observed sets differ by mode on the night (early reports before eday), so this is an
 # unbalanced SUR and equation-by-equation is not strictly efficient. Unmeasured.
 
-# Conjugate Gaussian fit with a g-prior on the covariate block and a ridge-equivalent
-# random effect on the county block. One weighted QR; same posterior form as lm_bayes.
-#   rows: [g-prior pseudo-rows | reported data rows | county ridge rows]
-
-
-
-# Pairwise covariance from an incomplete residual matrix. Blocks with too little
-# overlap are left at zero (conservative: no conditioning through that block).
-
-# county_obs: optional county x mode observations for the votes that land on NO precinct,
-#   one row per (county, mode) with `county` the 3-DIGIT GEO CODE and `c_tot` its votes --
-#   i.e. live/R/returns.R::bucket_counts() output, unmodified. NULL (the default) makes the
-#   county bound inert, so every existing caller is unchanged. Only `county` and `c_tot` are
-#   read: the partisan columns belong to the share half, which is not implemented here.
-fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
-                     Sigma_hist = NULL, level = 0.95, county_obs = NULL) {
+#' Fit the model to one snapshot of returns
+#'
+#' One conjugate regression per mode x outcome (`fit_conj_re()`), a joint residual
+#' covariance Sigma across the 3M equations, and draws of every cell's final votes,
+#' conditioning unobserved modes on observed ones within a precinct. Below the support
+#' gate (`MIN_MODE_CELLS`, `MIN_MODE_CTY`) or `MIN_FIT_OBS` an equation stays at its prior.
+#'
+#' @param cells Precinct x mode cells with priors (`cells` built in section 2).
+#' @param returns One row per precinct x mode: geo, mode, stage, complete, votes_dem,
+#'   votes_rep, votes_oth (NA until reported).
+#' @param draws Number of draws.
+#' @param cross_mode Condition unobserved modes on observed ones.
+#' @param Sigma_hist A fixed Sigma instead of estimating one.
+#' @param level Interval level for the precinct rows.
+#' @param county_obs County x mode observations for votes on no precinct, as
+#'   `bucket_counts()` returns them (`county` the 3-digit geo code, `c_tot`). They bound each
+#'   county's drawn turnout from below (`CTY_BOUND`). NULL leaves the bound inert. Only
+#'   `county` and `c_tot` are read.
+#' @return List: S_dem, S_rep, S_oth, S_2p (statewide share draws), turn (turnout draws),
+#'   Sigma, resid, n_obs_cells, prior_only (equations held at prior; `all_prior` TRUE when
+#'   the fit is all prior), cell_s, cell_obs, cell_votes (per-cell final votes and fitted
+#'   shares, for conformal), prec (per-precinct estimates), cty_bound (NULL when the county
+#'   bound never ran, 0 rows when it ran and never bound).
+fit_stage = function(
+  cells,
+  returns,
+  draws = DRAWS,
+  cross_mode = USE_CROSS_MODE,
+  Sigma_hist = NULL,
+  level = 0.95,
+  county_obs = NULL
+) {
   has_complete = "complete" %in% names(returns)
-  if (!has_complete)
-    cli_alert_warning("returns carry no `complete` flag -- falling back to \\
+  if (!has_complete) {
+    cli_alert_warning(
+      "returns carry no `complete` flag -- falling back to \\
                        COMPLETE_FRAC * prior_tau, which is known to be unreliable \\
-                       (see the note in fit_stage)")
+                       (see the note in fit_stage)"
+    )
+  }
   d = cells |>
     left_join(returns, by = c("geo", "mode")) |>
     mutate(
       complete = if (has_complete) coalesce(complete, FALSE) else FALSE,
-      tot2  = votes_dem + votes_rep,
-      tau   = tot2 + votes_oth,                       # ALL votes in the cell
-      obs   = !is.na(votes_dem) & stage >= STAGE_DONE & tau > 0 & tot2 > 0,
+      tot2 = votes_dem + votes_rep,
+      tau = tot2 + votes_oth, # ALL votes in the cell
+      obs = !is.na(votes_dem) & stage >= STAGE_DONE & tau > 0 & tot2 > 0,
       # TWO observation flags, matching enightmodels::forecast_prec(obs, obs_turn):
       # a cell's SHARES become usable as soon as it reports (they are a sample of that
       # cell's electorate, weighted by counted ballots below), but its TURNOUT is only
@@ -1193,13 +1079,13 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       f_dem = if_else(obs, votes_dem, 0),
       f_rep = if_else(obs, votes_rep, 0),
       f_oth = if_else(obs, votes_oth, 0),
-      o_tp  = if_else(obs, votes_oth / pmax(tau, 1), NA_real_),
-      o_s   = if_else(obs, votes_dem / pmax(tot2, 1), NA_real_),
+      o_tp = if_else(obs, votes_oth / pmax(tau, 1), NA_real_),
+      o_s = if_else(obs, votes_dem / pmax(tot2, 1), NA_real_),
       # CONTINUITY-CORRECTED values -- used to FIT, so a cell with zero third-party
       # votes (very common) gives a finite logit instead of -Inf
-      y_tau = NA_real_,                 # filled below; meaning depends on USE_COMPOSE
-      y_tp  = if_else(obs, logit((votes_oth + 0.5) / (tau + 1)),  NA_real_),
-      y_s   = if_else(obs, logit((votes_dem + 0.5) / (tot2 + 1)), NA_real_)
+      y_tau = NA_real_, # filled below; meaning depends on USE_COMPOSE
+      y_tp = if_else(obs, logit((votes_oth + 0.5) / (tau + 1)), NA_real_),
+      y_s = if_else(obs, logit((votes_dem + 0.5) / (tot2 + 1)), NA_real_)
     )
 
   # ---- precinct-level quantities for the total x composition parameterization ------
@@ -1210,16 +1096,23 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   # working unchanged.
   d = d |>
     mutate(
-      cnt_prec  = sum(if_else(obs, tau, 0), na.rm = TRUE),   # counted so far, precinct
-      all_done  = all(obs_turn),                             # every mode counted out
-      T_final   = sum(if_else(obs_turn, tau, 0), na.rm = TRUE),
+      cnt_prec = sum(if_else(obs, tau, 0), na.rm = TRUE), # counted so far, precinct
+      all_done = all(obs_turn), # every mode counted out
+      T_final = sum(if_else(obs_turn, tau, 0), na.rm = TRUE),
       # SECOND, independent signal that counting has stopped: how much of the precinct's
       # PRIOR expected total is already in. q_share is only as good as the completeness
       # flag; this one needs no flag at all. A precinct that has already counted its
       # whole expected vote is done whatever the flag says.
-      tau_ref   = { i <- match(REF_MODE, mode); if_else(rep(obs_turn[i], n()), tau[i], NA_real_) },
-      ref_done  = { i <- match(REF_MODE, mode); rep(obs_turn[i], n()) },
-      .by = geo)
+      tau_ref = {
+        i <- match(REF_MODE, mode)
+        if_else(rep(obs_turn[i], n()), tau[i], NA_real_)
+      },
+      ref_done = {
+        i <- match(REF_MODE, mode)
+        rep(obs_turn[i], n())
+      },
+      .by = geo
+    )
 
   # ---- statewide composition tilt (see COMPOSITION_UPDATE) -------------------------
   # delta_m = vote-weighted mean of [ observed log(c_m/c_ref) - prior log(p0_m/p0_ref) ]
@@ -1231,11 +1124,13 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       if (nrow(z) >= COMP_MIN_PREC) {
         # for a NON-reference mode, y_tau_prior IS log(p0_m / p0_ref) by construction
         # (see the y_tau_prior block), so it is the prior log-ratio we need here.
-        obs_lr   = log(z$tau / z$tau_ref)
+        obs_lr = log(z$tau / z$tau_ref)
         comp_tilt[m] = stats::weighted.mean(obs_lr - z$y_tau_prior, z$tau + z$tau_ref)
       }
     }
-    cli_inform("composition tilt: {paste(sprintf('%s %+.3f', names(comp_tilt), comp_tilt), collapse = '  ')}")
+    cli_inform(
+      "composition tilt: {paste(sprintf('%s %+.3f', names(comp_tilt), comp_tilt), collapse = '  ')}"
+    )
   }
   # ---- statewide LEVEL correction (see LEVEL_UPDATE) -------------------------------
   # lambda = vote-weighted mean of [ log(c_im / tau0_im) - delta_m ] over counted-out
@@ -1246,10 +1141,14 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     zc = d |> filter(obs_turn, tau > 0, prior_tau > 0)
     if (nrow(zc) >= LEVEL_MIN_CELL) {
       level_tilt = stats::weighted.mean(
-        log(zc$tau / zc$prior_tau) - comp_tilt[zc$mode], zc$tau)
-      cli_inform("level tilt: {sprintf('%+.3f', level_tilt)} \
+        log(zc$tau / zc$prior_tau) - comp_tilt[zc$mode],
+        zc$tau
+      )
+      cli_inform(
+        "level tilt: {sprintf('%+.3f', level_tilt)} \
                   ({round(100 * (exp(level_tilt) - 1), 1)}% on est_tot, \
-                  from {nrow(zc)} counted-out cells)")
+                  from {nrow(zc)} counted-out cells)"
+      )
     }
   }
 
@@ -1266,7 +1165,8 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # Must live HERE, not in the earlier mutate: level_tilt is not defined until the
       # counted-out cells have been pooled above.
       r_prior = cnt_prec / pmax(sum(prior_tau) * exp(level_tilt), 1),
-      .by = geo) |>
+      .by = geo
+    ) |>
     mutate(
       is_ref = mode == REF_MODE,
       # WHICH ROWS THE TURNOUT SLOT CAN BE FITTED ON:
@@ -1274,16 +1174,26 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       #   log-ratio  -- needs this mode AND the reference mode counted out
       # `all_done |` is not redundant: q_share sums normalized shares, so an all-modes
       # precinct can land at 0.9999999999999999 and fail a bare `>= 1`.
-      fit_tau = if (!USE_COMPOSE) obs_turn
-                else if_else(is_ref,
-                             all_done | (q_share >= MIN_MODE_SHARE & T_final > 0),
-                             obs_turn & ref_done & !is.na(tau_ref) & tau_ref > 0),
+      fit_tau = if (!USE_COMPOSE) {
+        obs_turn
+      } else {
+        if_else(
+          is_ref,
+          all_done | (q_share >= MIN_MODE_SHARE & T_final > 0),
+          obs_turn & ref_done & !is.na(tau_ref) & tau_ref > 0
+        )
+      },
       # exact sum when every mode is in; otherwise the composition supplies the rest
       T_hat = if_else(all_done, T_final, T_final / pmax(q_share, 1e-6)),
-      y_tau = if (!USE_COMPOSE) if_else(obs_turn, log(tau + 0.1), NA_real_)
-              else if_else(is_ref,
-                           logit(pmin(pmax(T_hat / cap, 1e-4), 1 - 1e-4)),
-                           log(pmax(tau, 0.5) / pmax(tau_ref, 0.5))),
+      y_tau = if (!USE_COMPOSE) {
+        if_else(obs_turn, log(tau + 0.1), NA_real_)
+      } else {
+        if_else(
+          is_ref,
+          logit(pmin(pmax(T_hat / cap, 1e-4), 1 - 1e-4)),
+          log(pmax(tau, 0.5) / pmax(tau_ref, 0.5))
+        )
+      },
       w_tau = if_else(is_ref, q_share^Q_SHARE_WT_EXP, 1),
       y_tau = if_else(fit_tau, y_tau, NA_real_),
       # The TOTAL is right-censored for any reporting precinct: T_i >= what is counted.
@@ -1291,18 +1201,20 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # early blow-up and broke the late one -- the total is the quantity with the good
       # prior (corr(log) 0.962) and the bound is directly observable.
       cens_tau = USE_COMPOSE & is_ref & !fit_tau & cnt_prec > 0,
-      lb_tau   = logit(pmin(pmax(cnt_prec / cap, 1e-4), 1 - 1e-4)),
+      lb_tau = logit(pmin(pmax(cnt_prec / cap, 1e-4), 1 - 1e-4)),
       # P(this precinct has finished counting). Only the reference slot is ever
       # censored, so this is only read there.
       # Either signal on its own is sufficient evidence, so take the max: most modes
       # flagged done, OR the expected vote already counted. Erring HIGH here is the safe
       # direction -- a too-high p_atom under-predicts T, and the counted-votes floor
       # catches that, whereas a too-low p_atom over-predicts and the floor cannot.
-      p_raw    = switch(ATOM_SOURCE,
-                        both  = pmax(q_share, pmin(r_prior, 1)),
-                        flag  = q_share,
-                        prior = pmin(r_prior, 1)),
-      p_atom   = pmin(pmax(p_raw, ATOM_FLOOR), ATOM_CEIL)
+      p_raw = switch(
+        ATOM_SOURCE,
+        both = pmax(q_share, pmin(r_prior, 1)),
+        flag = q_share,
+        prior = pmin(r_prior, 1)
+      ),
+      p_atom = pmin(pmax(p_raw, ATOM_FLOOR), ATOM_CEIL)
     )
 
   n_obs_cells = sum(d$obs)
@@ -1313,20 +1225,24 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   # cli_alert_info below is swallowed and no operator ever sees it. The ledger is read and
   # re-emitted by the caller.
   # cli_warn, not cli_alert_info, for the same reason: warnings survive suppressMessages.
-  gated_modes = character(0)       # held at prior by the MODE SUPPORT GATE
-  prior_eqs   = character(0)       # equations below MIN_FIT_OBS, so sitting at prior_loc
-  if (n_obs_cells < 30)
-    cli_warn("only {n_obs_cells} observed cell(s) -- this fit IS its prior, not a \
-              forecast. Every number it returns comes from the 2024 baseline.")
+  gated_modes = character(0) # held at prior by the MODE SUPPORT GATE
+  prior_eqs = character(0) # equations below MIN_FIT_OBS, so sitting at prior_loc
+  if (n_obs_cells < 30) {
+    cli_warn(
+      "only {n_obs_cells} observed cell(s) -- this fit IS its prior, not a \
+              forecast. Every number it returns comes from the 2024 baseline."
+    )
+  }
 
   # --- 4a. per-(mode, outcome) conjugate fits ---
-  fits = list(); n_fit = list(); prior_loc_mat = list()
+  fits = list()
+  n_fit = list()
+  prior_loc_mat = list()
   resid_mat = matrix(NA_real_, N_PREC, K_OUT * M)
   colnames(resid_mat) = paste(rep(MODES, each = K_OUT), OUTCOMES, sep = "_")
   geo_idx = setNames(seq_len(N_PREC), prec$geo)
   covs_for = function(out) switch(out, tau = COVS_TURN, tp = COVS_TP, s = COVS_SHARE)
-  prior_n_for = function(out) switch(out, tau = PRIOR_N_TURN, tp = PRIOR_N_TP,
-                                     s = PRIOR_N_SHARE)
+  prior_n_for = function(out) switch(out, tau = PRIOR_N_TURN, tp = PRIOR_N_TP, s = PRIOR_N_SHARE)
 
   for (m in MODES) {
     dm = filter(d, mode == m)
@@ -1342,22 +1258,26 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     # of a cell is a PARTIAL count, so substituting it as if final understates turnout
     # (the standing "partial reporting is censored for turnout" caveat). Below the gate
     # the mode stays entirely at its prior.
-    n_c = sum(dm$obs); n_cty = n_distinct(dm$county[dm$obs])
+    n_c = sum(dm$obs)
+    n_cty = n_distinct(dm$county[dm$obs])
     if (n_c > 0 && (n_c < MIN_MODE_CELLS || n_cty < MIN_MODE_CTY)) {
-      cli_alert_info("mode {m}: only {n_c} cell(s) in {n_cty} county(ies) \\
+      cli_alert_info(
+        "mode {m}: only {n_c} cell(s) in {n_cty} county(ies) \\
                       -- below the support gate ({MIN_MODE_CELLS} cells / \\
-                      {MIN_MODE_CTY} counties), holding the mode at its prior")
+                      {MIN_MODE_CTY} counties), holding the mode at its prior"
+      )
       gated_modes = c(gated_modes, m)
-      dm$obs = FALSE; dm$obs_turn = FALSE
+      dm$obs = FALSE
+      dm$obs_turn = FALSE
       dm$o_tau = dm$o_tp = dm$o_s = NA_real_
     }
     for (out in OUTCOMES) {
-      ycol  = paste0("y_", out)
-      pcol  = paste0("y_", out, "_prior")
-      covs  = covs_for(out)
-      pn    = prior_n_for(out)
-      form  = as.formula(paste(ycol, "~", paste(sprintf("`%s`", covs), collapse = " + ")))
-      dm2   = mutate(dm, !!ycol := coalesce(.data[[ycol]], .data[[pcol]]))  # placeholder; subset gates fitting
+      ycol = paste0("y_", out)
+      pcol = paste0("y_", out, "_prior")
+      covs = covs_for(out)
+      pn = prior_n_for(out)
+      form = as.formula(paste(ycol, "~", paste(sprintf("`%s`", covs), collapse = " + ")))
+      dm2 = mutate(dm, !!ycol := coalesce(.data[[ycol]], .data[[pcol]])) # placeholder; subset gates fitting
       # FINDING (NC 2024, 1,118 precincts): most of the share residual variance is
       # SAMPLING noise, not unpredictability -- log(resid^2) regressed on log(ballots)
       # has slope -0.72 (mail), -0.62 (early), -0.84 (eday), against -1 for pure
@@ -1382,14 +1302,17 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       pa = if (out == "tau" && USE_ATOM) dm$p_atom else NULL
       wt = if (out == "tau") {
         # default (MIN_MODE_SHARE = 1) keeps the turnout equation unweighted, as before
-        if (!USE_COMPOSE || MIN_MODE_SHARE >= 1) NULL else {
-          raw = dm$w_tau; raw[!dm$fit_tau] = 1
-          mu  = if (any(dm$fit_tau)) mean(raw[dm$fit_tau]) else 1
+        if (!USE_COMPOSE || MIN_MODE_SHARE >= 1) {
+          NULL
+        } else {
+          raw = dm$w_tau
+          raw[!dm$fit_tau] = 1
+          mu = if (any(dm$fit_tau)) mean(raw[dm$fit_tau]) else 1
           raw / mu
         }
       } else {
-        raw = pmax(dm$tau, 1)                         # ballots counted in the cell
-        raw[!dm$obs] = 1                              # unused (not in subset), keep finite
+        raw = pmax(dm$tau, 1) # ballots counted in the cell
+        raw[!dm$obs] = 1 # unused (not in subset), keep finite
         # normalize to mean 1 over the OBSERVED rows, so prior_n keeps its
         # "precinct-equivalents" meaning instead of being swamped by raw counts
         mu = if (any(dm$obs)) mean(raw[dm$obs]) else 1
@@ -1400,16 +1323,26 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
         lam = (1 - icc) / icc
         Xcov = cbind(1, as.matrix(prec[, covs, drop = FALSE]))
         fit = fit_conj_re(
-          y = dm[[ycol]], Xcov = Xcov, Cty = CTY_MAT, obs = ob,
-          prior_loc = dm[[pcol]], prior_eff = pn / nrow(dm),
-          lambda = lam, wts = wt,
+          y = dm[[ycol]],
+          Xcov = Xcov,
+          Cty = CTY_MAT,
+          obs = ob,
+          prior_loc = dm[[pcol]],
+          prior_eff = pn / nrow(dm),
+          lambda = lam,
+          wts = wt,
           sd_level = if (SD_SYS_LEVEL > 0) SD_SYS_LEVEL else NULL,
-          cens = if (USE_CENSOR) cs else NULL, y_lb = lb, p_atom = pa
+          cens = if (USE_CENSOR) cs else NULL,
+          y_lb = lb,
+          p_atom = pa
         )
         if (is.null(fit)) cli_abort("county-RE design is rank deficient for {m}/{out}")
       } else {
         fit = lm_bayes(
-          form, data = dm2, subset = ob, weights = wt,
+          form,
+          data = dm2,
+          subset = ob,
+          weights = wt,
           prior_yhat_loc = dm[[pcol]],
           prior_yhat_eff = pn / nrow(dm)
         )
@@ -1432,7 +1365,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   Sigma = if (!cross_mode) {
     diag(vapply(fits, sig_of, 0)^2, K_OUT * M)
   } else if (SIGMA_SOURCE == "measured") {
-    sdv = vapply(fits, sig_of, 0)                      # tonight's own per-equation sigmas
+    sdv = vapply(fits, sig_of, 0) # tonight's own per-equation sigmas
     C = measured_corr(colnames(resid_mat))
     diag(sdv) %*% C %*% diag(sdv)
   } else if (!is.null(Sigma_hist)) {
@@ -1441,8 +1374,10 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   } else if (SIGMA_SOURCE == "pairwise") {
     cov_pairwise(resid_mat)
   } else {
-    cli_alert_info("no historical Sigma supplied -- using diagonal (no cross-mode \\
-                    conditioning). Set SIGMA_SOURCE or pass Sigma_hist.")
+    cli_alert_info(
+      "no historical Sigma supplied -- using diagonal (no cross-mode \\
+                    conditioning). Set SIGMA_SOURCE or pass Sigma_hist."
+    )
     diag(vapply(fits, sig_of, 0)^2, K_OUT * M)
   }
   dimnames(Sigma) = list(colnames(resid_mat), colnames(resid_mat))
@@ -1465,12 +1400,17 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
 
   # --- optional override of the s<->s CROSS-MODE blocks (sensitivity analysis) ---
   if (RHO_CROSS != "calibrated") {
-    s_idx = which(grepl("_s$", colnames(Sigma)))          # the three share equations
+    s_idx = which(grepl("_s$", colnames(Sigma))) # the three share equations
     rho = if (RHO_CROSS == "draw") NA_real_ else as.numeric(RHO_CROSS)
     if (!is.na(rho)) {
       sdv = sqrt(diag(Sigma))
-      for (a in s_idx) for (b in s_idx) if (a != b)
-        Sigma[a, b] = rho * sdv[a] * sdv[b]
+      for (a in s_idx) {
+        for (b in s_idx) {
+          if (a != b) {
+            Sigma[a, b] = rho * sdv[a] * sdv[b]
+          }
+        }
+      }
       Sigma = psd_repair(Sigma)
       dimnames(Sigma) = list(colnames(resid_mat), colnames(resid_mat))
     }
@@ -1480,9 +1420,10 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   # mu[[k]] is draws x N_PREC for outcome k, in the column order of resid_mat
   keys = colnames(resid_mat)
   mu = lapply(keys, function(k) {
-    parts = strsplit(k, "_")[[1]]; out = parts[2]
+    parts = strsplit(k, "_")[[1]]
+    out = parts[2]
     covs = covs_for(out)
-    X    = cbind(1, as.matrix(prec[, covs, drop = FALSE]))
+    X = cbind(1, as.matrix(prec[, covs, drop = FALSE]))
     # An equation with (almost) no reported cells must sit at its PRIOR LOCATION, not at
     # a posterior mean drawn from a g-prior worth 3 precinct-equivalents. With no data
     # that posterior is extremely diffuse -- var of a fitted value is ~sigma^2 * p /
@@ -1491,7 +1432,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     # mail with no counted-out cells. Holding the mode at its prior has to mean the
     # prior, not an unconstrained fit to nothing.
     if (n_fit[[k]] < MIN_FIT_OBS) {
-      prior_eqs <<- c(prior_eqs, k)   # <<- : mu is built inside lapply()
+      prior_eqs <<- c(prior_eqs, k) # <<- : mu is built inside lapply()
       return(matrix(prior_loc_mat[[k]], draws, N_PREC, byrow = TRUE))
     }
     if (USE_COUNTY_RE) {
@@ -1509,14 +1450,14 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     select(geo, mode, obs) |>
     pivot_wider(names_from = mode, values_from = obs) |>
     arrange(match(geo, prec$geo))
-  mask = as.matrix(obs_mode[, MODES, drop = FALSE])            # N_PREC x M logical
+  mask = as.matrix(obs_mode[, MODES, drop = FALSE]) # N_PREC x M logical
   # second mask, for TURNOUT substitution only: a reporting-but-still-counting cell
   # contributes its shares but NOT its turnout (see the two flags in `d`)
   turn_mode = d |>
     select(geo, mode, obs_turn) |>
     pivot_wider(names_from = mode, values_from = obs_turn) |>
     arrange(match(geo, prec$geo))
-  mask_turn = as.matrix(turn_mode[, MODES, drop = FALSE])      # N_PREC x M logical
+  mask_turn = as.matrix(turn_mode[, MODES, drop = FALSE]) # N_PREC x M logical
   # THIRD mask, for the turnout SLOT's observed-ness in the conditional-MVN block.
   # It is not the same as mask_turn once the slot holds a total / log-ratio: a non-ref
   # cell can be counted out while its REFERENCE mode is not, in which case its log-ratio
@@ -1526,27 +1467,38 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     select(geo, mode, fit_tau) |>
     pivot_wider(names_from = mode, values_from = fit_tau) |>
     arrange(match(geo, prec$geo))
-  mask_fit = as.matrix(fit_mode[, MODES, drop = FALSE])        # N_PREC x M logical
+  mask_fit = as.matrix(fit_mode[, MODES, drop = FALSE]) # N_PREC x M logical
   obs_vals = d |>
     select(geo, mode, y_tau, y_tp, y_s) |>
-    pivot_wider(names_from = mode, values_from = c(y_tau, y_tp, y_s),
-                names_glue = "{mode}_{str_remove(.value, 'y_')}") |>
+    pivot_wider(
+      names_from = mode,
+      values_from = c(y_tau, y_tp, y_s),
+      names_glue = "{mode}_{str_remove(.value, 'y_')}"
+    ) |>
     arrange(match(geo, prec$geo))
-  obs_vals = as.matrix(obs_vals[, keys, drop = FALSE])         # N_PREC x K_OUT*M
+  obs_vals = as.matrix(obs_vals[, keys, drop = FALSE]) # N_PREC x K_OUT*M
   obs_raw = d |>
     select(geo, mode, o_tau, o_tp, o_s) |>
-    pivot_wider(names_from = mode, values_from = c(o_tau, o_tp, o_s),
-                names_glue = "{mode}_{str_remove(.value, 'o_')}") |>
+    pivot_wider(
+      names_from = mode,
+      values_from = c(o_tau, o_tp, o_s),
+      names_glue = "{mode}_{str_remove(.value, 'o_')}"
+    ) |>
     arrange(match(geo, prec$geo))
-  obs_raw = as.matrix(obs_raw[, keys, drop = FALSE])           # N_PREC x K_OUT*M
+  obs_raw = as.matrix(obs_raw[, keys, drop = FALSE]) # N_PREC x K_OUT*M
   cnt_mat = function(col) {
-    m = d |> select(geo, mode, all_of(col)) |>
+    m = d |>
+      select(geo, mode, all_of(col)) |>
       pivot_wider(names_from = mode, values_from = all_of(col)) |>
       arrange(match(geo, prec$geo))
-    m = as.matrix(m[, MODES, drop = FALSE]); m[is.na(m)] = 0; m
+    m = as.matrix(m[, MODES, drop = FALSE])
+    m[is.na(m)] = 0
+    m
   }
-  cnt_tau = cnt_mat("f_tau"); cnt_dem = cnt_mat("f_dem")
-  cnt_rep = cnt_mat("f_rep"); cnt_oth = cnt_mat("f_oth")
+  cnt_tau = cnt_mat("f_tau")
+  cnt_dem = cnt_mat("f_dem")
+  cnt_rep = cnt_mat("f_rep")
+  cnt_oth = cnt_mat("f_oth")
 
   # residual draws, conditioning on observed OUTCOMES of the same precinct.
   # The pattern is per (mode, outcome), not per mode: since the obs/obs_turn split a
@@ -1555,9 +1507,9 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   obs_out = matrix(FALSE, N_PREC, K_OUT * M, dimnames = list(NULL, keys))
   for (mi in seq_along(MODES)) {
     k = K_OUT * (mi - 1)
-    obs_out[, k + 1] = mask_fit[, mi]       # turnout slot: where y_tau actually exists
-    obs_out[, k + 2] = mask[, mi]           # tp
-    obs_out[, k + 3] = mask[, mi]           # s
+    obs_out[, k + 1] = mask_fit[, mi] # turnout slot: where y_tau actually exists
+    obs_out[, k + 2] = mask[, mi] # tp
+    obs_out[, k + 3] = mask[, mi] # s
   }
   stopifnot(!any(is.na(obs_vals[obs_out])))
   eps = array(0, c(draws, N_PREC, K_OUT * M))
@@ -1566,22 +1518,26 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     rows = which(pat == p)
     o = which(strsplit(p, "")[[1]] == "1")
     u = setdiff(seq_len(K_OUT * M), o)
-    if (!length(u)) next
+    if (!length(u)) {
+      next
+    }
     # With a diagonal Sigma, Sigma_uo = 0, so conditioning is an exact no-op. Skip it
     # rather than multiplying by zeros -- this is the simplification `diag` buys.
     if (length(o) && cross_mode && any(Sigma[u, o, drop = FALSE] != 0)) {
-      A   = Sigma[u, o, drop = FALSE] %*% solve(Sigma[o, o, drop = FALSE])
+      A = Sigma[u, o, drop = FALSE] %*% solve(Sigma[o, o, drop = FALSE])
       Scu = psd_repair(Sigma[u, u, drop = FALSE] - A %*% Sigma[o, u, drop = FALSE])
       # observed residual = observed y - its own linear predictor (draw-specific)
       for (j in seq_along(rows)) {
-        i  = rows[j]
-        ro = vapply(o, function(k) obs_vals[i, k] - mu[[k]][, i], numeric(draws))  # draws x |o|
-        shift = ro %*% t(A)                                                        # draws x |u|
+        i = rows[j]
+        ro = vapply(o, function(k) obs_vals[i, k] - mu[[k]][, i], numeric(draws)) # draws x |o|
+        shift = ro %*% t(A) # draws x |u|
         eps[, i, u] = shift + matrix(rnorm(draws * length(u)), draws) %*% chol(Scu)
       }
     } else {
       Su = psd_repair(Sigma[u, u, drop = FALSE])
-      for (i in rows) eps[, i, u] = matrix(rnorm(draws * length(u)), draws) %*% chol(Su)
+      for (i in rows) {
+        eps[, i, u] = matrix(rnorm(draws * length(u)), draws) %*% chol(Su)
+      }
     }
   }
 
@@ -1607,7 +1563,9 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   # Being mean-zero, this must NOT move the point estimate -- only the width. That is the
   # sharpest check on this block, and the backtest's error curve is where it is verified.
   if (SD_UNREP > 0) {
-    cf = factor(prec$county); ci = as.integer(cf); n_cty = nlevels(cf)
+    cf = factor(prec$county)
+    ci = as.integer(cf)
+    n_cty = nlevels(cf)
     for (mi in seq_along(MODES)) {
       k = K_OUT * (mi - 1)
       # Keyed on mask_turn, NOT mask: a cell that is reporting but still counting has its
@@ -1617,7 +1575,9 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # 0.59 -> 0.60pp -- because by then almost every cell has SOME report, while the
       # remaining VOTES still sat inside half-counted cells.
       unrep = !mask_turn[, mi]
-      if (!any(unrep)) next
+      if (!any(unrep)) {
+        next
+      }
       z = matrix(rnorm(draws * n_cty, 0, SD_UNREP), draws, n_cty)
       eps[, unrep, k + 3] = eps[, unrep, k + 3] + z[, ci[unrep], drop = FALSE]
     }
@@ -1630,14 +1590,17 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   # model's fitted share of all votes by party (fit_*, before any counted votes are mixed
   # in). Returned as `cell_votes` for the live wrapper's conformal interval; nothing here
   # reads them.
-  cell_votes = lapply(setNames(nm = c("fin_dem", "fin_rep", "fin_oth", "fit_dem", "fit_rep", "fit_oth")),
-                      \(x) matrix(NA_real_, N_PREC, M, dimnames = list(NULL, MODES)))
+  cell_votes = lapply(
+    setNames(nm = c("fin_dem", "fin_rep", "fin_oth", "fit_dem", "fit_rep", "fit_oth")),
+    \(x) matrix(NA_real_, N_PREC, M, dimnames = list(NULL, MODES))
+  )
   # PER-PRECINCT accumulators (draws x N_PREC), for precinct-level output.
   # pnum_r is accumulated so the precinct dump can report a TWO-PARTY share. Without it
   # only `dem_est` (Dem share of ALL votes) is available, which is a different quantity
   # from every headline and every `covers` check in the harnesses -- so the old dump's
   # estimate and its own `truth_dem2` column were on different scales.
-  pnum_d = matrix(0, draws, N_PREC); pnum_r = matrix(0, draws, N_PREC)
+  pnum_d = matrix(0, draws, N_PREC)
+  pnum_r = matrix(0, draws, N_PREC)
   pden = matrix(0, draws, N_PREC)
   # ---- reconstruct turnout from the TOTAL and the COMPOSITION ---------------------
   # tau_im = T_i * p_im with sum_m p_im = 1, so sum_m tau_im = T_i EXACTLY and
@@ -1651,19 +1614,26 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   # 0-row frame = it ran over real county observations and never bound, which is the correct
   # state for a model that is already predicting at least what has been counted.
   cty_bound_log = NULL
-  if (CTY_BOUND && !is.null(county_obs) && nrow(county_obs) && !USE_COMPOSE)
-    cli_alert_warning("CTY_BOUND needs USE_COMPOSE -- there is no precinct total to bound \\
-                       in the per-cell parameterization. County observations ignored.")
+  if (CTY_BOUND && !is.null(county_obs) && nrow(county_obs) && !USE_COMPOSE) {
+    cli_alert_warning(
+      "CTY_BOUND needs USE_COMPOSE -- there is no precinct total to bound \\
+                       in the per-cell parameterization. County observations ignored."
+    )
+  }
   if (USE_COMPOSE) {
     k_ref = K_OUT * (ref_i - 1)
-    capm  = matrix(KAPPA * pmax(prec$n, 1), draws, N_PREC, byrow = TRUE)  # cap lives on `cells`
-    T_draw = capm * invlogit(mu[[k_ref + 1]] + eps[, , k_ref + 1])
+    capm = matrix(KAPPA * pmax(prec$n, 1), draws, N_PREC, byrow = TRUE) # cap lives on `cells`
+    T_draw = capm * invlogit(mu[[k_ref + 1]] + eps[,, k_ref + 1])
     # softmax over modes; the reference mode's log-ratio is 0 by definition
-    ex = vector("list", M); den_p = matrix(0, draws, N_PREC)
+    ex = vector("list", M)
+    den_p = matrix(0, draws, N_PREC)
     for (mi in seq_along(MODES)) {
       k = K_OUT * (mi - 1)
-      ex[[mi]] = if (mi == ref_i) matrix(1, draws, N_PREC)
-                 else exp(pmin(mu[[k + 1]] + eps[, , k + 1], 20))
+      ex[[mi]] = if (mi == ref_i) {
+        matrix(1, draws, N_PREC)
+      } else {
+        exp(pmin(mu[[k + 1]] + eps[,, k + 1], 20))
+      }
       den_p = den_p + ex[[mi]]
     }
     # THE FLOOR MUST ACT ON THE PRECINCT TOTAL, NOT PER CELL.
@@ -1675,7 +1645,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     # only to the modes that are short of their composition-implied share, in proportion
     # to how short they are. Counted stays a hard floor per cell AND sum_m v_im = T_i.
     cnt_tot = matrix(rowSums(cnt_tau), draws, N_PREC, byrow = TRUE)
-    T_draw  = pmax(T_draw, cnt_tot)
+    T_draw = pmax(T_draw, cnt_tot)
     # A precinct with every mode counted out has a KNOWN total: substitute it rather than
     # flooring, or the draw contributes one-sided excess on a quantity with no
     # uncertainty left. mask_turn is the N_PREC x M obs_turn matrix built above.
@@ -1685,7 +1655,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       rp_prec = d |> distinct(geo, r_prior) |> arrange(match(geo, prec$geo)) |> pull(r_prior)
       # all_done is exact and needs no corroboration; the q_share route does.
       done_prec = (rowSums(mask_turn) == M) |
-                  (qs_prec >= PIN_MIN_SHARE & rp_prec >= PIN_MIN_RPRIOR)
+        (qs_prec >= PIN_MIN_SHARE & rp_prec >= PIN_MIN_RPRIOR)
       if (any(done_prec)) {
         # direct assignment, not dplyr::if_else -- vctrs rejects matrices
         T_draw[, done_prec] <- cnt_tot[, done_prec, drop = FALSE]
@@ -1693,7 +1663,7 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     }
     # ---- STATEWIDE TURNOUT CONSTRAINT (see STATE_TURNOUT) --------------------------
     if (!is.na(STATE_TURNOUT) && STATE_TURNOUT > 0) {
-      capv  = capm[1, ]                                  # kappa*n_i, same every draw
+      capv = capm[1, ] # kappa*n_i, same every draw
       n_hit <- 0L
       for (dd in seq_len(draws)) {
         cnt_d <- cnt_tot[dd, ]
@@ -1703,19 +1673,28 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
         th_d <- qlogis(pmin(pmax(T_draw[dd, ] / capv, 1e-9), 1 - 1e-9))
         f <- function(del) sum(capv * plogis(th_d + del)) - S_d
         # bracket: +/-10 on the logit scale spans essentially (0, kappa*n) statewide
-        lo <- -10; hi <- 10
-        if (f(lo) > 0 || f(hi) < 0) { n_hit <- n_hit + 1L; next }   # unreachable, leave as-is
+        lo <- -10
+        hi <- 10
+        if (f(lo) > 0 || f(hi) < 0) {
+          n_hit <- n_hit + 1L
+          next
+        } # unreachable, leave as-is
         del <- stats::uniroot(f, c(lo, hi), tol = 1e-8)$root
-        T_draw[dd, ] <- pmax(capv * plogis(th_d + del), cnt_d)      # floor re-applied
+        T_draw[dd, ] <- pmax(capv * plogis(th_d + del), cnt_d) # floor re-applied
       }
-      if (n_hit > 0)
-        cli_alert_warning("statewide constraint unreachable on {n_hit} of {draws} draws \
-                           -- left unconstrained")
+      if (n_hit > 0) {
+        cli_alert_warning(
+          "statewide constraint unreachable on {n_hit} of {draws} draws \
+                           -- left unconstrained"
+        )
+      }
       cnt_tot_chk <- rowSums(cnt_tau)
-      cli_inform("statewide constraint: target {format(round(STATE_TURNOUT), big.mark = ',')} \
+      cli_inform(
+        "statewide constraint: target {format(round(STATE_TURNOUT), big.mark = ',')} \
                   (sd {STATE_TURNOUT_SD} log), counted \
                   {format(round(cnt_tot_chk[1] * 0 + sum(cnt_tau)), big.mark = ',')}, \
-                  mean drawn total {format(round(mean(rowSums(T_draw))), big.mark = ',')}")
+                  mean drawn total {format(round(mean(rowSums(T_draw))), big.mark = ',')}"
+      )
     }
     # ---- COUNTY TURNOUT LOWER BOUND (see CTY_BOUND) --------------------------------
     # ORDERED LAST, and the order is not cosmetic. The statewide block above ends with
@@ -1735,33 +1714,45 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     # so the target for the common shift is sum_{i in c} c_i + B_c and no precinct-level
     # counted total is ever re-derived from the county figure.
     if (CTY_BOUND && !is.null(county_obs) && nrow(county_obs)) {
-      if (!all(c("county", "c_tot") %in% names(county_obs)))
-        cli_abort("county_obs needs `county` (3-digit geo code) and `c_tot`; \\
-                   got {.val {names(county_obs)}}")
+      if (!all(c("county", "c_tot") %in% names(county_obs))) {
+        cli_abort(
+          "county_obs needs `county` (3-digit geo code) and `c_tot`; \\
+                   got {.val {names(county_obs)}}"
+        )
+      }
       # KEYED ON THE GEO'S CODE, NEVER prec$county. In AK those are different partitions:
       # 40 geo codes against 30 borough names, code 037 spanning 7 boroughs, 11 boroughs
       # spanning more than one code, and no containment in either direction (measured on
       # AK_precinct.parquet). prec$county is a NAME; bucket_counts() keys on the code.
       cty_v = geo_county(prec$geo)
-      capv  = capm[1, ]                  # kappa*n_i, same every draw
-      cnt_v = cnt_tot[1, ]               # precinct-level counted, same every draw
+      capv = capm[1, ] # kappa*n_i, same every draw
+      cnt_v = cnt_tot[1, ] # precinct-level counted, same every draw
       # A precinct whose geo carries no county code belongs to no county here, so it is
       # simply never in a county's free set (which == drops NA) and never receives the
       # bound. Warned rather than fatal: going inert statewide over a few malformed ids
       # would throw away the bound in every well-formed county too.
-      if (anyNA(cty_v))
-        cli_warn("county bound: {sum(is.na(cty_v))} precinct geo{?s} carry no 3-digit \\
+      if (anyNA(cty_v)) {
+        cli_warn(
+          "county bound: {sum(is.na(cty_v))} precinct geo{?s} carry no 3-digit \\
                   county code ({.val {utils::head(prec$geo[is.na(cty_v)], 5)}}) -- they are \\
-                  excluded from every county total, so their counties' bounds understate")
+                  excluded from every county total, so their counties' bounds understate"
+        )
+      }
       # ONE SOURCE PER COUNTY. bucket_counts() returns one row per (county, mode) by
       # construction; re-asserted because a duplicated key is the one way the same votes
       # could enter C_c twice. The other route -- summing bucket geos AND the CBS county
       # feed, which are the SAME votes -- is prevented by never reading the CBS feed here.
-      key = if ("mode" %in% names(county_obs)) paste0(county_obs$county, "\r", county_obs$mode)
-            else county_obs$county
-      if (anyDuplicated(key))
-        cli_abort("county_obs has {sum(duplicated(key))} duplicated (county, mode) key{?s} \\
-                   -- the same votes would be counted twice in the county total")
+      key = if ("mode" %in% names(county_obs)) {
+        paste0(county_obs$county, "\r", county_obs$mode)
+      } else {
+        county_obs$county
+      }
+      if (anyDuplicated(key)) {
+        cli_abort(
+          "county_obs has {sum(duplicated(key))} duplicated (county, mode) key{?s} \\
+                   -- the same votes would be counted twice in the county total"
+        )
+      }
       # DOUBLE-COUNT SIGNATURE. reporting_levels.csv assigns each (county, method) to ONE
       # level, so a county reporting a mode as a pile should have no precinct-level votes in
       # that same mode. Both present means either a mixed-level county or the feed sending
@@ -1775,19 +1766,34 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       # Raised as a WARNING, not a cli message: fit_stage() runs under suppressMessages() in
       # live/R/model_medsl.R, which would silently eat it.
       if ("mode" %in% names(county_obs)) {
-        dbl = Filter(Negate(is.null), lapply(which(county_obs$mode %in% MODES), function(k) {
-          ov = sum(cnt_tau[cty_v == county_obs$county[k], match(county_obs$mode[k], MODES)],
-                   na.rm = TRUE)
-          if (ov > 0) tibble(county = county_obs$county[k], mode = county_obs$mode[k],
-                             bucket = county_obs$c_tot[k], precinct = ov) else NULL
-        }))
+        dbl = Filter(
+          Negate(is.null),
+          lapply(which(county_obs$mode %in% MODES), function(k) {
+            ov = sum(
+              cnt_tau[cty_v == county_obs$county[k], match(county_obs$mode[k], MODES)],
+              na.rm = TRUE
+            )
+            if (ov > 0) {
+              tibble(
+                county = county_obs$county[k],
+                mode = county_obs$mode[k],
+                bucket = county_obs$c_tot[k],
+                precinct = ov
+              )
+            } else {
+              NULL
+            }
+          })
+        )
         if (length(dbl)) {
           z = bind_rows(dbl)
-          cli_warn("county bound: {nrow(z)} (county, mode) pair{?s} have BOTH a \\
+          cli_warn(
+            "county bound: {nrow(z)} (county, mode) pair{?s} have BOTH a \\
             county pile and precinct-level votes ({prettyNum(sum(z$bucket), big.mark = ',')} \\
             bucket + {prettyNum(sum(z$precinct), big.mark = ',')} precinct votes) -- if the \\
             feed is reporting the same votes at both levels the county total is inflated: \\
-            {.val {paste0(z$county, '/', z$mode)}}")
+            {.val {paste0(z$county, '/', z$mode)}}"
+          )
         }
       }
       obs_c = county_obs |> summarize(B = sum(c_tot, na.rm = TRUE), .by = county)
@@ -1798,9 +1804,11 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       miss = setdiff(obs_c$county, cty_v)
       if (length(miss)) {
         mv = sum(obs_c$B[obs_c$county %in% miss])
-        cli_warn("county bound: {length(miss)} bucket county(ies) have no precinct \\
+        cli_warn(
+          "county bound: {length(miss)} bucket county(ies) have no precinct \\
           in `cells` ({.val {miss}}), {prettyNum(mv, big.mark = ',')} votes -- DROPPED, \\
-          not used as a county total")
+          not used as a county total"
+        )
         obs_c = obs_c |> filter(!county %in% miss)
       }
       obs_c = obs_c |> filter(B > 0)
@@ -1819,19 +1827,26 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
         # are uncommitted above; defaulted so this block works whether or not they are
         # present (no r_prior => the flag-only gate, which is what the pin was before).
         rp_min = if (exists("PIN_MIN_RPRIOR")) PIN_MIN_RPRIOR else 0
-        rp_p   = rep(Inf, N_PREC)
-        if ("r_prior" %in% names(d))
+        rp_p = rep(Inf, N_PREC)
+        if ("r_prior" %in% names(d)) {
           rp_p = d |> distinct(geo, r_prior) |> arrange(match(geo, prec$geo)) |> pull(r_prior)
+        }
         pin_v = (rowSums(mask_turn) == M) | (qs_p >= PIN_MIN_SHARE & rp_p >= rp_min)
         # A pinned precinct must be sitting exactly at its count. It will NOT be if the
         # statewide constraint ran -- that block re-shifts every precinct and only re-floors
         # at cnt_d, so it destroys the pin's equality itself -- so the check is only
         # meaningful with that block off.
-        if (any(pin_v) && !(!is.na(STATE_TURNOUT) && STATE_TURNOUT > 0) &&
-            max(abs(T_draw[, pin_v, drop = FALSE] - cnt_tot[, pin_v, drop = FALSE])) > 1e-6)
-          cli_warn("county bound: the recomputed PIN_DONE gate does not match the \\
+        if (
+          any(pin_v) &&
+            !(!is.na(STATE_TURNOUT) && STATE_TURNOUT > 0) &&
+            max(abs(T_draw[, pin_v, drop = FALSE] - cnt_tot[, pin_v, drop = FALSE])) > 1e-6
+        ) {
+          cli_warn(
+            "county bound: the recomputed PIN_DONE gate does not match the \\
             pin actually applied -- the exemption is on the wrong precincts. Reconcile with \\
-            the PIN_DONE block before trusting the bound.")
+            the PIN_DONE block before trusting the bound."
+          )
+        }
       }
       # Also held: a precinct already counted at or above its own cap kappa*n_i. The common
       # shift cannot raise it (capv * plogis(.) < capv <= cnt_v, and the floor then puts it
@@ -1842,30 +1857,41 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
       if (CTY_SUBSTITUTE && nrow(obs_c)) {
         piles_done = county_obs |> summarize(ok = all(complete), .by = county)
         # each precinct's own expected total, in prec order, for the r_prior gate
-        exp_v = d |> summarize(E = sum(prior_tau, na.rm = TRUE), .by = geo) |>
-          arrange(match(geo, prec$geo)) |> pull(E)
+        exp_v = d |>
+          summarize(E = sum(prior_tau, na.rm = TRUE), .by = geo) |>
+          arrange(match(geo, prec$geo)) |>
+          pull(E)
         for (ci in seq_len(nrow(obs_c))) {
-          cc  = obs_c$county[ci]
-          j   = match(cc, piles_done$county)
-          if (is.na(j) || !isTRUE(piles_done$ok[j])) next      # a pile still arriving
+          cc = obs_c$county[ci]
+          j = match(cc, piles_done$county)
+          if (is.na(j) || !isTRUE(piles_done$ok[j])) {
+            next
+          } # a pile still arriving
           idx = which(cty_v == cc)
           # Modes this county reports AT PRECINCT level = those that actually have
           # precinct-level votes. Read from the votes rather than from the mode vocabulary
           # because BUCKET_FOLD sends provisional piles into `eday`, so in AK all three of
           # MODES have a pile and a vocabulary test would pass vacuously.
-          pm  = which(colSums(cnt_tau[idx, , drop = FALSE]) > 0)
+          pm = which(colSums(cnt_tau[idx, , drop = FALSE]) > 0)
           # NO precinct-level votes at all => nothing has been counted here except the
           # piles. Substituting would pin the county to its piles alone.
-          if (!length(pm)) next
-          if (!all(mask_turn[idx, pm, drop = FALSE])) next
+          if (!length(pm)) {
+            next
+          }
+          if (!all(mask_turn[idx, pm, drop = FALSE])) {
+            next
+          }
           E = sum(exp_v[idx])
           r = (sum(cnt_v[idx]) + obs_c$B[ci]) / max(E, 1)
           sub_ok[ci] = is.finite(r) && r >= CTY_SUB_MIN_RPRIOR
         }
       }
-      n_unreach = 0L; logs = list(); refused = character(); n_floorfight = 0L
+      n_unreach = 0L
+      logs = list()
+      refused = character()
+      n_floorfight = 0L
       for (ci in seq_len(nrow(obs_c))) {
-        idx  = which(cty_v == obs_c$county[ci])
+        idx = which(cty_v == obs_c$county[ci])
         free = idx[!fixed_v[idx]]
         targ = sum(cnt_v[free]) + obs_c$B[ci]
         if (!length(free)) {
@@ -1873,10 +1899,13 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
           # so there is nowhere for the bucket votes to go that does not contradict an
           # equality we have already asserted. Silently shifting a pinned precinct would
           # make the bound look as if it had worked.
-          refused = c(refused, obs_c$county[ci]); next
+          refused = c(refused, obs_c$county[ci])
+          next
         }
-        cf = capv[free]; cnf = cnt_v[free]
-        hit = 0L; short_v = numeric(0)
+        cf = capv[free]
+        cnf = cnt_v[free]
+        hit = 0L
+        short_v = numeric(0)
         for (dd in seq_len(draws)) {
           th = qlogis(pmin(pmax(T_draw[dd, free] / cf, 1e-9), 1 - 1e-9))
           # `cur` is read back through the clamp rather than from T_draw directly, so that
@@ -1886,13 +1915,18 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
           cur = sum(cf * plogis(th))
           # ONE-SIDED unless the county's total is KNOWN, in which case solve in both
           # directions -- that is the whole of the PIN_DONE analogue.
-          if (cur >= targ && !sub_ok[ci]) next
-          f  = function(del) sum(cf * plogis(th + del)) - targ
+          if (cur >= targ && !sub_ok[ci]) {
+            next
+          }
+          f = function(del) sum(cf * plogis(th + del)) - targ
           lo = if (sub_ok[ci]) -50 else 0
           # f is increasing. +/-50 on the logit scale spans the clamp (logit 1e-9 = -20.7)
           # to the cap, so an unreachable target means the county total is inconsistent with
           # this county's registrants, not that the bracket is too tight.
-          if (f(50) < 0 || f(lo) > 0) { n_unreach = n_unreach + 1L; next }
+          if (f(50) < 0 || f(lo) > 0) {
+            n_unreach = n_unreach + 1L
+            next
+          }
           del = stats::uniroot(f, c(lo, 50), tol = 1e-8)$root
           Tn = cf * plogis(th + del)
           # The per-precinct counted floor still wins: a precinct cannot finish below its
@@ -1901,48 +1935,85 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
           # "the constraint and the floor fight and the floor wins silently". It is counted
           # here rather than left silent, because a county that cannot reach its own known
           # total means the deficit sits in precincts that are individually already over it.
-          if (del < 0 && any(Tn < cnf - 1e-9)) n_floorfight = n_floorfight + 1L
+          if (del < 0 && any(Tn < cnf - 1e-9)) {
+            n_floorfight = n_floorfight + 1L
+          }
           T_draw[dd, free] <- pmax(Tn, cnf)
-          hit = hit + 1L; short_v = c(short_v, targ - cur)
+          hit = hit + 1L
+          short_v = c(short_v, targ - cur)
         }
-        if (hit) logs[[length(logs) + 1L]] = tibble(
-          county = obs_c$county[ci], n_free = length(free), n_fixed = length(idx) - length(free),
-          bucket = obs_c$B[ci], cnt_prec = sum(cnt_v[idx]), target = targ,
-          draws_bound = hit, mean_short = mean(short_v), max_short = max(short_v))
+        if (hit) {
+          logs[[length(logs) + 1L]] = tibble(
+            county = obs_c$county[ci],
+            n_free = length(free),
+            n_fixed = length(idx) - length(free),
+            bucket = obs_c$B[ci],
+            cnt_prec = sum(cnt_v[idx]),
+            target = targ,
+            draws_bound = hit,
+            mean_short = mean(short_v),
+            max_short = max(short_v)
+          )
+        }
       }
-      cty_bound_log = if (length(logs)) bind_rows(logs) |> arrange(desc(mean_short)) else
-        tibble(county = character(), n_free = integer(), n_fixed = integer(), bucket = numeric(),
-               cnt_prec = numeric(), target = numeric(), draws_bound = integer(),
-               mean_short = numeric(), max_short = numeric())
-      if (n_floorfight > 0)
-        cli_warn("county bound: the per-precinct counted floor overrode a SUBSTITUTED \
+      cty_bound_log = if (length(logs)) {
+        bind_rows(logs) |> arrange(desc(mean_short))
+      } else {
+        tibble(
+          county = character(),
+          n_free = integer(),
+          n_fixed = integer(),
+          bucket = numeric(),
+          cnt_prec = numeric(),
+          target = numeric(),
+          draws_bound = integer(),
+          mean_short = numeric(),
+          max_short = numeric()
+        )
+      }
+      if (n_floorfight > 0) {
+        cli_warn(
+          "county bound: the per-precinct counted floor overrode a SUBSTITUTED \
           county total on {n_floorfight} county-draw(s) -- those counties finish above \
-          their own observed total because individual precincts are already past it")
-      if (length(refused))
-        cli_warn("county bound: REFUSED on {length(refused)} county(ies) with \\
+          their own observed total because individual precincts are already past it"
+        )
+      }
+      if (length(refused)) {
+        cli_warn(
+          "county bound: REFUSED on {length(refused)} county(ies) with \\
           bucket votes and no unpinned, uncapped precinct ({.val {refused}}) -- the bound \\
-          would have had to move a precinct whose total is already asserted known")
-      if (n_unreach > 0)
-        cli_warn("county bound unreachable on {n_unreach} (county, draw) pair{?s} \\
+          would have had to move a precinct whose total is already asserted known"
+        )
+      }
+      if (n_unreach > 0) {
+        cli_warn(
+          "county bound unreachable on {n_unreach} (county, draw) pair{?s} \\
                            -- the county's observed votes exceed kappa * sum(n_i) there; \\
-                           left unconstrained (suspect an id join, not real votes)")
+                           left unconstrained (suspect an id join, not real votes)"
+        )
+      }
       # EVERY binding county, with how much. A bound that binds on a join error looks
       # identical to one that binds on real votes, so the only way to tell them apart is to
       # read the counties and the magnitudes -- which means printing them, not a count.
-      cli_inform("county bound: {nrow(cty_bound_log)} of {nrow(obs_c)} county(ies) bind, \\
-                  {prettyNum(round(sum(obs_c$B)), big.mark = ',')} bucket votes observed")
+      cli_inform(
+        "county bound: {nrow(cty_bound_log)} of {nrow(obs_c)} county(ies) bind, \\
+                  {prettyNum(round(sum(obs_c$B)), big.mark = ',')} bucket votes observed"
+      )
       for (i in seq_len(nrow(cty_bound_log))) {
         z = cty_bound_log[i, ]
-        cli_inform("  {z$county}: +{round(z$mean_short)} votes mean \\
+        cli_inform(
+          "  {z$county}: +{round(z$mean_short)} votes mean \\
                     (max {round(z$max_short)}) on {z$draws_bound}/{draws} draws; \\
                     {z$n_free} free + {z$n_fixed} held precincts, counted \\
                     {prettyNum(round(z$cnt_prec), big.mark = ',')} + bucket \\
                     {prettyNum(round(z$bucket), big.mark = ',')} = target \\
-                    {prettyNum(round(z$target), big.mark = ',')}")
+                    {prettyNum(round(z$target), big.mark = ',')}"
+        )
       }
     }
     rem_tot = T_draw - cnt_tot
-    short = vector("list", M); short_sum = matrix(0, draws, N_PREC)
+    short = vector("list", M)
+    short_sum = matrix(0, draws, N_PREC)
     for (mi in seq_along(MODES)) {
       cti = matrix(cnt_tau[, mi], draws, N_PREC, byrow = TRUE)
       short[[mi]] = pmax(T_draw * (ex[[mi]] / den_p) - cti, 0)
@@ -1958,11 +2029,15 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   }
   for (mi in seq_along(MODES)) {
     k = K_OUT * (mi - 1)
-    tau = if (USE_COMPOSE) NULL else {
-      tt = exp(mu[[k + 1]] + eps[, , k + 1]) - 0.1; tt[tt < 0] = 0; tt
+    tau = if (USE_COMPOSE) {
+      NULL
+    } else {
+      tt = exp(mu[[k + 1]] + eps[,, k + 1]) - 0.1
+      tt[tt < 0] = 0
+      tt
     }
-    tp  = invlogit(mu[[k + 2]] + eps[, , k + 2])
-    s   = invlogit(mu[[k + 3]] + eps[, , k + 3])
+    tp = invlogit(mu[[k + 2]] + eps[,, k + 2])
+    s = invlogit(mu[[k + 3]] + eps[,, k + 3])
     # ---- PARTIAL COUNTS AS A MIXTURE, not substitute-or-predict -------------------
     # A cell's final votes = what is already counted (KNOWN exactly) + what remains
     # (predicted). So:
@@ -1984,8 +2059,8 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     cr = matrix(cnt_rep[, mi], draws, N_PREC, byrow = TRUE)
     co = matrix(cnt_oth[, mi], draws, N_PREC, byrow = TRUE)
     if (USE_COMPOSE) {
-      rem = rem_tot * (short[[mi]] / short_sum)     # this mode's share of what is left
-      tau = ct + rem                                 # sums to T_i across modes
+      rem = rem_tot * (short[[mi]] / short_sum) # this mode's share of what is left
+      tau = ct + rem # sums to T_i across modes
     } else {
       tau = pmax(tau, ct)
       rem = tau - ct
@@ -2005,17 +2080,19 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     v_rep = cr + rem_two * (1 - s)
     v_oth = co + rem * tp
     cell_s_hat[, mi] = colMeans(v_dem / pmax(v_dem + v_rep, 1e-9))
-    cell_votes$fin_dem[, mi] = colMeans(v_dem); cell_votes$fin_rep[, mi] = colMeans(v_rep)
+    cell_votes$fin_dem[, mi] = colMeans(v_dem)
+    cell_votes$fin_rep[, mi] = colMeans(v_rep)
     cell_votes$fin_oth[, mi] = colMeans(v_oth)
-    cell_votes$fit_dem[, mi] = colMeans((1 - tp) * s); cell_votes$fit_rep[, mi] = colMeans((1 - tp) * (1 - s))
+    cell_votes$fit_dem[, mi] = colMeans((1 - tp) * s)
+    cell_votes$fit_rep[, mi] = colMeans((1 - tp) * (1 - s))
     cell_votes$fit_oth[, mi] = colMeans(tp)
     num_d = num_d + rowSums(v_dem)
     num_r = num_r + rowSums(v_rep)
     num_o = num_o + rowSums(v_oth)
-    den   = den   + rowSums(v_dem + v_rep + v_oth)
+    den = den + rowSums(v_dem + v_rep + v_oth)
     pnum_d = pnum_d + v_dem
     pnum_r = pnum_r + v_rep
-    pden   = pden + v_dem + v_rep + v_oth
+    pden = pden + v_dem + v_rep + v_oth
   }
   # precinct-level Dem share of ALL votes, summarized across draws
   pshare = pnum_d / pmax(pden, 1e-9)
@@ -2032,11 +2109,12 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   # interval ends from `level` rather than hardcoded 0.025/0.975 -- the rest of the codebase
   # threads a level (output.R, cred()), and a dump whose interval silently ignored it could
   # not be compared against anything else.
-  qlo = 0.5 * (1 - level); qhi = 0.5 * (1 + level)
+  qlo = 0.5 * (1 - level)
+  qhi = 0.5 * (1 + level)
   prec_out = tibble(
-    geo      = prec$geo,
-    county   = prec$county,
-    q_share  = qs_out,
+    geo = prec$geo,
+    county = prec$county,
+    q_share = qs_out,
     n_obs_modes = rowSums(mask),
     cnt_prec = cnt_out,
     turn_est = colMeans(pden),
@@ -2049,35 +2127,45 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
     # precincts, max gap 0.47 votes. turn_est stays the MEAN so it matches how the race
     # level reports est_turnout; consistency beats a bracketing guarantee that the atom
     # makes impossible.
-    turn_sd  = apply(pden, 2, sd),
-    turn_lo  = apply(pden, 2, quantile, qlo),
-    turn_hi  = apply(pden, 2, quantile, qhi),
-    dem_est  = colMeans(pshare),            # Dem share of ALL votes
-    dem_sd   = apply(pshare, 2, sd),
-    dem_lo   = apply(pshare, 2, quantile, qlo),
-    dem_hi   = apply(pshare, 2, quantile, qhi),
-    est_dem2 = colMeans(p2),                # Dem share of the TWO-PARTY vote
-    dem2_lo  = apply(p2, 2, quantile, qlo),
-    dem2_hi  = apply(p2, 2, quantile, qhi),
-    p_win    = colMeans(p2 > 0.5),          # P(Dem leads two-party) in this precinct
-    level    = level
+    turn_sd = apply(pden, 2, sd),
+    turn_lo = apply(pden, 2, quantile, qlo),
+    turn_hi = apply(pden, 2, quantile, qhi),
+    dem_est = colMeans(pshare), # Dem share of ALL votes
+    dem_sd = apply(pshare, 2, sd),
+    dem_lo = apply(pshare, 2, quantile, qlo),
+    dem_hi = apply(pshare, 2, quantile, qhi),
+    est_dem2 = colMeans(p2), # Dem share of the TWO-PARTY vote
+    dem2_lo = apply(p2, 2, quantile, qlo),
+    dem2_hi = apply(p2, 2, quantile, qhi),
+    p_win = colMeans(p2 > 0.5), # P(Dem leads two-party) in this precinct
+    level = level
   )
   den = pmax(den, 1e-9)
   list(
     # HEADLINE: shares of ALL votes. These sum to 1 by construction.
-    S_dem = num_d / den, S_rep = num_r / den, S_oth = num_o / den,
+    S_dem = num_d / den,
+    S_rep = num_r / den,
+    S_oth = num_o / den,
     # two-party share, which is what decides the race
-    S_2p  = num_d / pmax(num_d + num_r, 1e-9),
-    turn  = den, Sigma = Sigma, resid = resid_mat, n_obs_cells = n_obs_cells,
+    S_2p = num_d / pmax(num_d + num_r, 1e-9),
+    turn = den,
+    Sigma = Sigma,
+    resid = resid_mat,
+    n_obs_cells = n_obs_cells,
     # How much of this fit is its own prior. `all_prior` TRUE means the output carries no
     # information from tonight at all, and the caller must not present it as a forecast.
     prior_only = list(
-      n_obs_cells = n_obs_cells, n_cells = nrow(d),
-      eq_total = length(keys), eq_prior = length(unique(prior_eqs)),
-      eq_prior_names = sort(unique(prior_eqs)), gated_modes = sort(unique(gated_modes)),
+      n_obs_cells = n_obs_cells,
+      n_cells = nrow(d),
+      eq_total = length(keys),
+      eq_prior = length(unique(prior_eqs)),
+      eq_prior_names = sort(unique(prior_eqs)),
+      gated_modes = sort(unique(gated_modes)),
       all_prior = n_obs_cells < 30 || length(unique(prior_eqs)) == length(keys)
     ),
-    cell_s = cell_s_hat, cell_obs = mask, cell_votes = cell_votes,
+    cell_s = cell_s_hat,
+    cell_obs = mask,
+    cell_votes = cell_votes,
     prec = prec_out,
     # NULL when the county bound never ran, a 0-row frame when it ran and never bound.
     # The distinction is what the TX/CA/FL/MI inertness check needs: those states have zero
@@ -2087,48 +2175,51 @@ fit_stage = function(cells, returns, draws = DRAWS, cross_mode = USE_CROSS_MODE,
   )
 }
 
-# Estimate Sigma from a PAST election in which every mode eventually reported.
-# This is the real calibration step: run it once per state offline on 2022/2024 and
-# cache to {STATE}_gov_sigma.rds; on election night Sigma is an input, not a fit.
-calibrate_sigma = function(cells, returns_full) {
-  f = fit_stage(cells, returns_full, draws = 2, cross_mode = FALSE)
-  R = f$resid
-  cc = stats::complete.cases(R)
-  if (sum(cc) < 50) cli_abort("calibration needs >=50 fully-reported precincts, got {sum(cc)}")
-  S = psd_repair(stats::cov(R[cc, , drop = FALSE]))
-  dimnames(S) = dimnames(R)[c(2, 2)]
-  cli_alert_success("Sigma calibrated on {sum(cc)} fully-reported precincts")
-  S
-}
-
-# ---- 5. prior-only draws (reference measure for conf_seq) ----------------------
-# Prior predictive draws of the race TOTALS, as if nothing were counted: a tibble with one
-# row per draw of dem, rep, oth and turnout (all votes). `cells` should carry the model's
-# own priors (prior_tau, prior_s, prior_tp), NOT priors re-centred on tonight's returns
-# (model_hybrid.R's recentre_prior()): a reference measure that has seen the data is not
-# a reference measure. Same terms and spreads as prior_draws(), which is this summarised.
-prior_totals = function(cells, draws = DRAWS,
-                        sd_sys_s = 0.10, sd_sys_tau = 0.12,
-                        sd_idio_s = 0.40, sd_idio_tau = 0.30) {
+# ---- 4. prior-only draws (reference measure for conf_seq) ----------------------
+#' Prior predictive draws of the race totals
+#'
+#' As if nothing were counted. `cells` should carry the model's own priors, not priors
+#' re-centred on tonight's returns (`recentre_prior()`): a reference measure that has seen
+#' the data is not a reference measure. Used for conf_seq.
+#'
+#' @param cells Cells with prior_tau, prior_s, prior_tp.
+#' @param draws Number of draws.
+#' @param sd_sys_s,sd_sys_tau Statewide (shared) prior sd of the share and log turnout.
+#' @param sd_idio_s,sd_idio_tau Precinct-level prior sd.
+#' @return Tibble, one row per draw: dem, rep, oth, turnout (all votes).
+prior_totals = function(
+  cells,
+  draws = DRAWS,
+  sd_sys_s = 0.10,
+  sd_sys_tau = 0.12,
+  sd_idio_s = 0.40,
+  sd_idio_tau = 0.30
+) {
   # CRITICAL: the systematic terms are what make this a usable reference measure.
   # Idiosyncratic per-cell noise averages out over ~13.5k cells (1/sqrt(n)), so a
   # prior built from it alone is ABSURDLY tight at the statewide level -- tighter
   # than the posterior, which makes conf_seq's quadratic unbounded and returns
   # (-Inf, Inf). The real prior uncertainty is about the statewide SWING, which is
   # perfectly correlated across precincts and does not average away.
-  sys_s   = rnorm(draws, 0, sd_sys_s)
+  sys_s = rnorm(draws, 0, sd_sys_s)
   sys_tau = rnorm(draws, 0, sd_sys_tau)
-  sys_tp  = rnorm(draws, 0, sd_sys_s)
+  sys_tp = rnorm(draws, 0, sd_sys_s)
   dem = rep = oth = numeric(draws)
   for (m in MODES) {
-    cm  = filter(cells, mode == m)
-    nc  = nrow(cm)
+    cm = filter(cells, mode == m)
+    nc = nrow(cm)
     tau = matrix(cm$prior_tau, draws, nc, byrow = TRUE) *
-          exp(sys_tau + matrix(rnorm(draws * nc, 0, sd_idio_tau), draws))
-    s   = invlogit(matrix(logit(cm$prior_s), draws, nc, byrow = TRUE) +
-                   sys_s + matrix(rnorm(draws * nc, 0, sd_idio_s), draws))
-    tp  = invlogit(matrix(logit(cm$prior_tp), draws, nc, byrow = TRUE) +
-                   sys_tp + matrix(rnorm(draws * nc, 0, sd_idio_s), draws))
+      exp(sys_tau + matrix(rnorm(draws * nc, 0, sd_idio_tau), draws))
+    s = invlogit(
+      matrix(logit(cm$prior_s), draws, nc, byrow = TRUE) +
+        sys_s +
+        matrix(rnorm(draws * nc, 0, sd_idio_s), draws)
+    )
+    tp = invlogit(
+      matrix(logit(cm$prior_tp), draws, nc, byrow = TRUE) +
+        sys_tp +
+        matrix(rnorm(draws * nc, 0, sd_idio_s), draws)
+    )
     dem = dem + rowSums(tau * (1 - tp) * s)
     rep = rep + rowSums(tau * (1 - tp) * (1 - s))
     oth = oth + rowSums(tau * tp)
@@ -2136,161 +2227,13 @@ prior_totals = function(cells, draws = DRAWS,
   tibble::tibble(dem = dem, rep = rep, oth = oth, turnout = dem + rep + oth)
 }
 
-# prior predictive for the DEM SHARE OF ALL VOTES (the same draws as prior_totals())
+#' Prior predictive draws of the Dem share of all votes
+#'
+#' The same draws as `prior_totals()`, summarised.
+#'
+#' @param cells,draws,... As `prior_totals()`.
+#' @return Numeric vector of draws.
 prior_draws = function(cells, draws = DRAWS, ...) {
   p = prior_totals(cells, draws = draws, ...)
   p$dem / pmax(p$turnout, 1e-9)
 }
-
-# ---- 6. run --------------------------------------------------------------------
-# SOURCE_ONLY=1 stops here: sections 1-5 are definitions plus the real `cells`, `prec`,
-# `CTY_MAT` and config, which is exactly what a backtest driver needs. The driver then
-# calls the SAME fit_stage() the live model uses, so the two cannot drift -- the reason
-# model_core.R was extracted in the first place. The closing brace is at end of file.
-if (nzchar(Sys.getenv("SOURCE_ONLY"))) {
-  cli_alert_info("SOURCE_ONLY set -- definitions and cells built; \\
-                  skipping the synthetic run")
-} else {
-
-args  = commandArgs(trailingOnly = TRUE)
-fracs = if (length(args)) as.numeric(args[1]) else c(0.10, 0.30, 0.50, 0.70, 0.90, 1.00)
-
-# Sigma: load the cached historical one, else calibrate on a synthetic PAST election
-# (an independent draw from the same structure -- never tonight's own realization).
-Sigma_hist = NULL
-if (SIGMA_SOURCE == "historical") {
-  if (file.exists(path_sigma)) {
-    Sigma_hist = readRDS(path_sigma)
-    cli_alert_success("Loaded historical Sigma from {.path {path_sigma}}")
-  } else {
-    cli_alert_warning("No cached Sigma at {.path {path_sigma}} -- calibrating on a \\
-                       SYNTHETIC past election (trial only).")
-    Sigma_hist = calibrate_sigma(cells, make_stages(cells, make_truth(cells), frac = 1.0))
-  }
-}
-
-truth = make_truth(cells)
-TRUTH = with(truth, {
-  tot = sum(tau_true); two = tau_true * (1 - tp_true)
-  list(dem = sum(two * s_true) / tot, rep = sum(two * (1 - s_true)) / tot,
-       oth = sum(tau_true * tp_true) / tot,
-       twoparty = sum(two * s_true) / sum(two), turn = tot)
-})
-d0 = prior_draws(cells)
-
-cli_h2("Truth: Dem {round(100*TRUTH$dem, 2)}%  Rep {round(100*TRUTH$rep, 2)}%  \
-        Oth {round(100*TRUTH$oth, 2)}%  (two-party Dem {round(100*TRUTH$twoparty, 2)}%)  \
-        turnout {format(round(TRUTH$turn), big.mark = ',')}")
-
-res = map_dfr(fracs, function(fr) {
-  ret = make_stages(cells, truth, fr)
-  f   = fit_stage(cells, ret, cross_mode = USE_CROSS_MODE, Sigma_hist = Sigma_hist)
-  ci  = cred_int(f$S_dem, level = LEVEL)              # headline: Dem share of ALL votes
-  cs  = conf_seq(d0, f$S_dem, level = LEVEL)
-  tibble(
-    frac = fr, obs_cells = f$n_obs_cells,
-    dem = mean(f$S_dem), rep = mean(f$S_rep), oth = mean(f$S_oth),
-    sum = mean(f$S_dem + f$S_rep + f$S_oth),          # must be exactly 1
-    sd = sd(f$S_dem),
-    cred_lo = ci[["lower"]], cred_hi = ci[["upper"]],
-    cs_lo = cs[["lower"]], cs_hi = cs[["upper"]],
-    covers = TRUTH$dem >= ci[["lower"]] && TRUTH$dem <= ci[["upper"]],
-    two_party = mean(f$S_2p), turn = mean(f$turn)
-  )
-})
-if (nzchar(Sys.getenv("COVLINE"))) {
-  for (i in seq_len(nrow(res))) cat(sprintf(
-    "COV %s %.6f %.6f %.6f %.6f %d\n", res$frac[i], TRUTH$dem,
-    res$dem[i], res$cred_lo[i], res$cred_hi[i], as.integer(res$covers[i])))
-}
-cli_inform("Headline = Dem share of ALL votes; `sum` must be exactly 1.")
-print(as.data.frame(mutate(res, across(where(is.numeric), ~ signif(.x, 4)))), row.names = FALSE)
-
-# ---- precinct-level output -------------------------------------------------------
-# This is what SIGMA_STRUCT="full" is for: at cell level there is no averaging, so the
-# correlation structure and the conditioning are the dominant terms.
-cli_h2("Precinct-level predictions at 50% reported")
-pp = fit_stage(cells, make_stages(cells, truth, 0.50), cross_mode = USE_CROSS_MODE,
-               Sigma_hist = Sigma_hist)$prec
-tru_p = truth |>
-  summarize(turn = sum(tau_true),
-            dem = sum(tau_true * (1 - tp_true) * s_true) / pmax(sum(tau_true), 1), .by = geo)
-pj = inner_join(pp, tru_p, by = "geo", suffix = c("", "_true"))
-pj = mutate(pj, err = dem_est - dem, covers = dem >= dem_lo & dem <= dem_hi,
-            width = dem_hi - dem_lo)
-cli_inform(c(
-  "precincts: {nrow(pj)}",
-  "by number of modes reported:"))
-pj |>
-  summarize(n = n(), rmse = sqrt(mean(err^2)), width = mean(width),
-            coverage = mean(covers), .by = n_obs_modes) |>
-  arrange(n_obs_modes) |>
-  mutate(across(c(rmse, width, coverage), ~ signif(.x, 3))) |>
-  as.data.frame() |> print(row.names = FALSE)
-
-# ablation: what the cross-mode conditioning is worth
-if (USE_CROSS_MODE) {
-  cli_h2("Ablation at 50% reported: cross-mode Sigma vs independent residuals")
-  ret = make_stages(cells, truth, 0.50)
-  fa = fit_stage(cells, ret, cross_mode = TRUE,  Sigma_hist = Sigma_hist)
-  fb = fit_stage(cells, ret, cross_mode = FALSE)
-
-  # (i) statewide aggregate -- expect LITTLE gain, and the reason matters:
-  #     per-cell residual noise averages out at 1/sqrt(13.5k), so statewide width is
-  #     set almost entirely by COEFFICIENT uncertainty (which moves every precinct
-  #     together). Sigma shrinks per-cell noise, which was already negligible here.
-  cli_inform(c(
-    "statewide Dem share of all votes:  with cross-mode sd {signif(sd(fa$S_dem), 3)}  |  \\
-     without sd {signif(sd(fb$S_dem), 3)}  |  ratio {round(sd(fa$S_dem)/sd(fb$S_dem), 3)}"
-  ))
-
-  # (ii) CELL-level share prediction for UNOBSERVED mode cells -- this is where
-  #      conditioning on an observed mode of the same precinct actually pays, and
-  #      it is what any sub-state aggregate (CD, legislative district) inherits.
-  tr = truth |>
-    mutate(mi = match(mode, MODES), pi = match(geo, prec$geo)) |>
-    filter(!is.na(pi))
-  unobs = !fa$cell_obs
-  idx = tr |> filter(unobs[cbind(pi, mi)])
-  rmse = function(f) sqrt(mean((f$cell_s[cbind(idx$pi, idx$mi)] - idx$s_true)^2))
-  cli_inform(c(
-    "unobserved-cell share RMSE ({nrow(idx)} cells):",
-    "  with    cross-mode: {signif(rmse(fa), 4)}",
-    "  without cross-mode: {signif(rmse(fb), 4)}",
-    "  ratio {round(rmse(fa)/rmse(fb), 3)}  (<1 => observed modes informed unobserved ones)"
-  ))
-}
-
-}   # end of the SOURCE_ONLY guard opened at section 6
-
-# ---- TODO before this is more than a trial -------------------------------------
-# 0. THIRD-PARTY VOTE: now modeled (the `tp` equation), so `tau` is ALL votes and the
-#    three shares of all votes sum to 1 by construction. Remaining caveats:
-#    (a) the tp prior is the frame residual 1 - pr_harris - pr_trump (n-weighted 1.64%,
-#        but precinct range 0-20.4%, hence the heavy shrinkage). votehub
-#        estimated_past_results.csv `gov22_oth/gov22_total` is strictly better -- mean
-#        1.43%, median 1.36%, p95 2.69% -- but needs per-county id reconciliation
-#        (BEXAR 88% matched, KAUFMAN 38%, BELL 0%). Swap it in once crosswalked.
-#    (b) no mode differential is assumed for tp; the synthetic truth has one, so the
-#        model must learn it from returns.
-#    (c) make sure write-ins / "scattered" land in `other` rather than being dropped,
-#        or tau is short and every share is biased high.
-#    (d) if a serious independent appears (>~10%), promote them to a 4th outcome --
-#        the fit loop is generic over OUTCOMES -- rather than hiding them in `other`.
-# 1. CALIBRATE MODE_TURN_SHARE and MODE_SHARE_OFFSET from 2022/2024 mode-level
-#    results (recipe in the config block). This is the dominant source of error.
-# 2. PARTIAL REPORTING. A half-counted cell is a *weighted* observation for the
-#    share equation but a *censored* one (tau >= counted) for turnout. Here a cell
-#    is all-or-nothing at STAGE_DONE. Pass `weights` to lm_bayes for share; treat
-#    turnout as censored or leave unobserved.
-# 3. MODE DENOMINATORS. For an unreported mode we assume MODE_TURN_SHARE; in reality
-#    "500 mail votes counted" rarely tells you how many mail ballots exist.
-# 4. NON-NESTED DESIGNS. COVS_TURN == COVS_SHARE today, so Sigma does not improve
-#    beta (SUR == OLS under matching designs). Moving past-turnout terms to turnout
-#    only and past-partisanship to share only would add an efficiency gain -- but it
-#    is a real exclusion restriction, so verify by backtest first.
-# 5. CROSS-PRECINCT correlation is still absent. Independent precinct errors wash out
-#    at 1/sqrt(n); correlated ones do not, and that difference sets the true width of
-#    the statewide band. Add a geostratum random effect or spatial term.
-# 6. BACKTEST on real 2022/2024 reporting order (enightdata timestamps), not the
-#    synthetic order here, and check interval coverage as a function of % reported.

@@ -154,13 +154,7 @@ model_prec_pois <- function(
         mutate(
             pred_min = tot_pred * if_else(use_pred, pmax(share + q_min, 0), share),
             pred_max = tot_pred * if_else(use_pred, pmin(share + q_max, 1), share),
-        )
-
-    # LOCAL CHANGE (not in Cory's tx-prim-26): also return the per-precinct frame, `prec`,
-    # for the precinct dump (scripts/model/live/R/model_cpois.R). `pred` is unchanged.
-    d_prec = d_pred
-
-    d_pred = d_prec |>
+        ) |>
         summarize(
             model = model_spec[1],
             rep = sum(votes[!is.na(votes)]),
@@ -180,7 +174,6 @@ model_prec_pois <- function(
 
     list(
         pred = d_pred,
-        coef = d_coef,
-        prec = d_prec
+        coef = d_coef
     )
 }

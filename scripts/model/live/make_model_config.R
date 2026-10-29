@@ -11,16 +11,28 @@ source("scripts/model/live/load.R")
 path = file.path(find_26_general(), MODEL_CONFIG_FILE)
 
 grid = model_config_grid()
-old = if (file.exists(path)) readr::read_csv(path, col_types = readr::cols(.default = "c"), progress = FALSE) else NULL
+old = if (file.exists(path)) {
+  readr::read_csv(path, col_types = readr::cols(.default = "c"), progress = FALSE)
+} else {
+  NULL
+}
 
-keep = bind_rows(tibble(model = character(), run = character(), note = character()),
-                 if (!is.null(old)) select(old, model, any_of(c("run", "note"))))
+keep = bind_rows(
+  tibble(model = character(), run = character(), note = character()),
+  if (!is.null(old)) select(old, model, any_of(c("run", "note")))
+)
 cfg = grid |>
   left_join(keep, by = "model") |>
-  mutate(run = coalesce(toupper(run), if_else(model %in% RUN, "TRUE", "FALSE")),
-         note = coalesce(note, ""))
+  mutate(
+    run = coalesce(toupper(run), if_else(model %in% RUN, "TRUE", "FALSE")),
+    note = coalesce(note, "")
+  )
 
 gone = setdiff(old$model, cfg$model)
-if (length(gone)) cli::cli_alert_warning("Dropped rows the models no longer take: {gone}")
+if (length(gone)) {
+  cli::cli_alert_warning("Dropped rows the models no longer take: {gone}")
+}
 readr::write_csv(cfg, path, na = "")
-cli::cli_alert_success("{path}: {nrow(cfg)} model names, {sum(cfg$run == 'TRUE')} run on the night: {cfg$model[cfg$run == 'TRUE']}")
+cli::cli_alert_success(
+  "{path}: {nrow(cfg)} model names, {sum(cfg$run == 'TRUE')} run on the night: {cfg$model[cfg$run == 'TRUE']}"
+)

@@ -24,10 +24,7 @@
 ##   ratio_strata  Cory's legacy ratio model, ratios pooled within strata (model_ratio_strata.R)
 ##   pois_bayes    Bayesian Poisson precinct model, enightmodels::pois_bayes() (model_pois_bayes.R)
 ##   lm_bayes      Cory's NYC forecaster, enightmodels::forecast_prec() (model_lm_bayes.R)
-##   medsl_sur     Young-Kyung's model_hybrid.R, run through model_medsl.R
-## Retired: model_medsl (fit_medsl() is what medsl_sur runs, but it is no longer fit on its
-## own) and model_cory_pois (R/model_cpois.R, not loaded: pois_bayes with a spec and
-## /conformal covers it).
+##   medsl_sur     precinct x method SUR model, live/medsl/ (model_medsl.R)
 ##
 ## To add a model: write fit_<name>(cells, returns, demo, interval, ...) returning that list, and
 ## add it to run_race() below.
@@ -47,41 +44,103 @@ MODELS = c("swing", "ratio_strata", "pois_bayes", "lm_bayes", "medsl_sur")
 # Slow set-up a model caches for the session, run in the main process before fits are forked
 # (run_jobs(), the runners): a forked worker's caches are thrown away when it ends, and see
 # load.R's BLAS note. model -> function(cells, state, demo).
-MODEL_SETUP = list(medsl_sur = function(cells, state, demo) fit_medsl_setup_for(cells, state, hybrid = TRUE, demo = demo))
+MODEL_SETUP = list(medsl_sur = function(cells, state, demo) {
+  medsl_setup_for(cells, state, demo = demo)
+})
+
+#' Run a model's slow set-up before fits are forked
+#'
+#' Calls the model's `MODEL_SETUP` entry, if it has one, in the main process: a forked
+#' worker's caches are thrown away when it ends.
+#'
+#' @param model Model name ("<model>[/<demo>][/<interval>]").
+#' @param cells Cells for the state.
+#' @param state Two-letter state code.
+#' @return NULL, invisibly.
 setup_model = function(model, cells, state) {
   p = model_parts(model)
   f = MODEL_SETUP[[p$base]]
-  if (!is.null(f) && nrow(cells)) f(cells, state, p$demo %||% DEMO_DEFAULT[[p$base]])
+  if (!is.null(f) && nrow(cells)) {
+    f(cells, state, p$demo %||% DEMO_DEFAULT[[p$base]])
+  }
   invisible(NULL)
 }
 
-# "pois_bayes/strat_d/conformal" -> list(base = "pois_bayes", demo = "strat_d",
-# interval = "conformal"); demo / interval NULL when not given
+#' Split a model name into its parts
+#'
+#' @param model One model name, e.g. "pois_bayes/strat_d/conformal".
+#' @return List: base ("pois_bayes"), demo ("strat_d") and interval ("conformal"); demo and
+#'   interval are NULL when not given. Stops on a part that is neither a spec in `DEMOS` nor
+#'   one of `INTERVALS`, or on two of either.
 model_parts = function(model) {
   tok = strsplit(model, "/", fixed = TRUE)[[1]]
   opt = tok[-1]
   bad = setdiff(opt, c(names(DEMOS), INTERVALS))
-  if (length(bad)) stop("'", model, "': ", paste(bad, collapse = ", "), " is neither a demographic spec (",
-                        paste(names(DEMOS), collapse = ", "), ") nor an interval (", paste(INTERVALS, collapse = ", "), ")")
-  pick1 = function(set, what) { x = opt[opt %in% set]; if (length(x) > 1) stop("'", model, "' has more than one ", what); if (length(x)) x }
-  list(base = tok[1], demo = pick1(names(DEMOS), "demographic spec"), interval = pick1(INTERVALS, "interval"))
+  if (length(bad)) {
+    stop(
+      "'",
+      model,
+      "': ",
+      paste(bad, collapse = ", "),
+      " is neither a demographic spec (",
+      paste(names(DEMOS), collapse = ", "),
+      ") nor an interval (",
+      paste(INTERVALS, collapse = ", "),
+      ")"
+    )
+  }
+  pick1 = function(set, what) {
+    x = opt[opt %in% set]
+    if (length(x) > 1) {
+      stop("'", model, "' has more than one ", what)
+    }
+    if (length(x)) x
+  }
+  list(
+    base = tok[1],
+    demo = pick1(names(DEMOS), "demographic spec"),
+    interval = pick1(INTERVALS, "interval")
+  )
 }
+
+#' Base model of each model name
+#'
+#' @param model Character vector of model names.
+#' @return Character vector of base names ("swing", "pois_bayes", ...).
 model_base = function(model) vapply(model, \(m) model_parts(m)$base, "", USE.NAMES = FALSE)
 
-# the published name: the parts that were given, in the order model/demo/interval
+#' Published label of a model name
+#'
+#' @param model One model name.
+#' @return The parts that were given, in the order model/demo/interval.
 model_label = function(model) {
   p = model_parts(model)
   paste(c(p$base, p$demo, p$interval), collapse = "/")
 }
 
-# stops on an unknown model, spec or interval, or one the model can't take
+#' Validate model names
+#'
+#' @param models Character vector of model names.
+#' @return `models`, invisibly. Stops on an unknown model, spec or interval, or one the
+#'   model can't take (`DEMO_DEFAULT`, `MODEL_INTERVALS`).
 check_models = function(models) {
   for (m in models) {
     p = model_parts(m)
-    if (!p$base %in% MODELS) stop("unknown model '", p$base, "'. Choose from: ", paste(MODELS, collapse = ", "))
-    if (!is.null(p$demo) && !p$base %in% names(DEMO_DEFAULT)) stop(p$base, " takes no demographic spec (", m, ")")
-    if (!is.null(p$interval) && !p$interval %in% MODEL_INTERVALS[[p$base]])
-      stop(p$base, " gives intervals ", paste(MODEL_INTERVALS[[p$base]], collapse = ", "), ", not ", p$interval)
+    if (!p$base %in% MODELS) {
+      stop("unknown model '", p$base, "'. Choose from: ", paste(MODELS, collapse = ", "))
+    }
+    if (!is.null(p$demo) && !p$base %in% names(DEMO_DEFAULT)) {
+      stop(p$base, " takes no demographic spec (", m, ")")
+    }
+    if (!is.null(p$interval) && !p$interval %in% MODEL_INTERVALS[[p$base]]) {
+      stop(
+        p$base,
+        " gives intervals ",
+        paste(MODEL_INTERVALS[[p$base]], collapse = ", "),
+        ", not ",
+        p$interval
+      )
+    }
   }
   invisible(models)
 }
@@ -91,18 +150,28 @@ check_models = function(models) {
 # Election Day).
 METHOD_MAP = c(early = "early", eday = "eday", mail = "mail", abs = "mail", prov = "eday")
 
-# Does this race's feed report results by vote method? Only if EVERY row's method maps onto
-# early / eday / mail. Precinct totals only ("all"), "adv" (early and mail lumped together)
-# or a missing method anywhere in the race -> the race is modeled without method.
+#' Does a race's feed report by vote method?
+#'
+#' @param returns One race's returns.
+#' @return TRUE only if every row's method maps onto early / eday / mail (`METHOD_MAP`).
+#'   Precinct totals only ("all"), "adv" (early and mail lumped together) or a missing
+#'   method anywhere means the race is modeled without method.
 returns_by_method = function(returns) {
   m = as.character(returns$method)
   length(m) > 0 && all(!is.na(m) & m %in% names(METHOD_MAP))
 }
 
-# A race's cells and returns in the form the models fit:
-#   by method   methods mapped onto early / eday / mail (abs -> mail, prov -> eday)
-#   without     one cell per precinct, method "all": expected votes summed over methods,
-#               returns summed over methods (complete once every method is; stage the highest)
+#' A race's cells and returns in the form the models fit
+#'
+#' By method only if the feed splits by method (`returns_by_method()`) and the cells do
+#' (`build_cells()` gives one "all" cell per precinct when the state's history lacks a
+#' method). By method, methods map onto early / eday / mail (abs -> mail, prov -> eday).
+#' Without, there is one cell per precinct, method "all": expected votes and returns summed
+#' over methods (complete once every method is; stage the highest).
+#'
+#' @param cells Cells from `build_cells()`.
+#' @param returns One race's returns.
+#' @return List: by_method (logical), cells, returns (with `frac` NA).
 shape_for_method = function(cells, returns) {
   # by method only if the feed splits by method AND the cells do (build_cells() gives one
   # "all" cell per precinct when the state's vote-method history lacks a method)
@@ -110,13 +179,26 @@ shape_for_method = function(cells, returns) {
   keys = intersect(c("race_id", "state", "election", "geo", "candidate", "party"), names(returns))
   ret = returns |>
     mutate(method = if (by_method) unname(METHOD_MAP[as.character(method)]) else "all") |>
-    summarize(votes = sum(votes), stage = max(stage), complete = all(complete), time = max(time),
-              .by = all_of(c(keys, "method"))) |>
+    summarize(
+      votes = sum(votes),
+      stage = max(stage),
+      complete = all(complete),
+      time = max(time),
+      .by = all_of(c(keys, "method"))
+    ) |>
     mutate(frac = NA_real_)
-  if (by_method) return(list(by_method = TRUE, cells = cells, returns = ret))
+  if (by_method) {
+    return(list(by_method = TRUE, cells = cells, returns = ret))
+  }
   cells_all = cells |>
-    summarize(county = first(county), geostratum = first(geostratum), dem2 = first(dem2), oth = first(oth),
-              exp_votes = sum(exp_votes), .by = geo) |>
+    summarize(
+      county = first(county),
+      geostratum = first(geostratum),
+      dem2 = first(dem2),
+      oth = first(oth),
+      exp_votes = sum(exp_votes),
+      .by = geo
+    ) |>
     mutate(method = "all") |>
     select(geo, county, geostratum, method, dem2, oth, exp_votes)
   list(by_method = FALSE, cells = cells_all, returns = ret)
@@ -130,16 +212,34 @@ shape_for_method = function(cells, returns) {
 # CBS's county results in the statewide rows.
 METHOD_ONLY_MODELS = "medsl_sur"
 
-# the counties (3-digit code in the geo) whose every returns row has a usable method
+#' Counties whose returns all carry a usable method
+#'
+#' @param returns Returns.
+#' @return Character vector of 3-digit county codes (from the geo).
 method_counties = function(returns) {
   returns |>
-    mutate(cty = geo_county(geo), ok = !is.na(method) & as.character(method) %in% names(METHOD_MAP)) |>
+    mutate(
+      cty = geo_county(geo),
+      ok = !is.na(method) & as.character(method) %in% names(METHOD_MAP)
+    ) |>
     summarize(ok = all(ok), .by = cty) |>
     filter(ok, !is.na(cty)) |>
     pull(cty)
 }
 
-# `...` goes to the model's fit function (e.g. cbs_county for medsl_sur)
+#' Run one model on one race
+#'
+#' Without a vote-method split every model but medsl_sur is fit on precinct totals;
+#' medsl_sur, whose equations are by method, is skipped with a status saying why
+#' (`METHOD_ONLY_MODELS`).
+#'
+#' @param model Model name ("<model>[/<demo>][/<interval>]"); spec and interval default to
+#'   `DEMO_DEFAULT` and the first of `MODEL_INTERVALS`.
+#' @param cells Cells from `build_cells()`.
+#' @param returns One race's standard returns.
+#' @param ... Passed to the model's fit function (e.g. `cbs_county` for medsl_sur).
+#' @return The model's result list (`model_result()`); `settings` notes a fit without
+#'   vote method.
 run_race = function(model, cells, returns, ...) {
   check_models(model)
   p = model_parts(model)
@@ -147,31 +247,65 @@ run_race = function(model, cells, returns, ...) {
   demo = p$demo %||% DEMO_DEFAULT[[base]]
   interval = p$interval %||% MODEL_INTERVALS[[base]][1]
   sh = shape_for_method(cells, returns)
-  needs_method = function(m) list(model = m, settings = NA_character_,
-    status = if (returns_by_method(returns)) paste0("skipped: the state's vote-method history has no split (see build_cells()), which ", m, " needs") else
-      paste0("skipped: this race's results have no vote-method split, which ", m, " needs"))
-  fit = switch(base,
+  needs_method = function(m) {
+    list(
+      model = m,
+      settings = NA_character_,
+      status = if (returns_by_method(returns)) {
+        paste0(
+          "skipped: the state's vote-method history has no split (see build_cells()), which ",
+          m,
+          " needs"
+        )
+      } else {
+        paste0("skipped: this race's results have no vote-method split, which ", m, " needs")
+      }
+    )
+  }
+  fit = switch(
+    base,
     swing = fit_swing(sh$cells, sh$returns, demo = demo, interval = interval, ...),
-    ratio_strata = fit_ratio_strata(sh$cells, sh$returns, config = enightmodels::model_legacy_config(by_method = sh$by_method),
-                                    demo = demo, interval = interval, ...),
+    ratio_strata = fit_ratio_strata(
+      sh$cells,
+      sh$returns,
+      config = enightmodels::model_legacy_config(by_method = sh$by_method),
+      demo = demo,
+      interval = interval,
+      ...
+    ),
     pois_bayes = fit_pois_bayes(sh$cells, sh$returns, demo = demo, interval = interval, ...),
     lm_bayes = fit_lm_bayes(sh$cells, sh$returns, demo = demo, interval = interval, ...),
-    medsl_sur = if (sh$by_method) fit_medsl_sur(sh$cells, sh$returns, demo = demo, interval = interval, ...) else needs_method("medsl_sur")
+    medsl_sur = if (sh$by_method) {
+      fit_medsl_sur(sh$cells, sh$returns, demo = demo, interval = interval, ...)
+    } else {
+      needs_method("medsl_sur")
+    }
   )
-  if (!sh$by_method && !is.null(fit$settings) && !is.na(fit$settings))
-    fit$settings = paste0(fit$settings, "; fit WITHOUT vote method (the feed gave precinct totals only)")
+  if (!sh$by_method && !is.null(fit$settings) && !is.na(fit$settings)) {
+    fit$settings = paste0(
+      fit$settings,
+      "; fit WITHOUT vote method (the feed gave precinct totals only)"
+    )
+  }
   fit
 }
 
-# A model that errors on one race is recorded (status = "error: ...") rather than stopping
-# the other races -- on election night one bad race must not take down the rest.
+#' Run models on every race
+#'
+#' A model that errors on a race is recorded (status = "error: ...") and the rest carry on.
+#'
+#' @param cells Cells from `build_cells()`.
+#' @param returns Standard returns, any number of races.
+#' @param models Model names.
+#' @return Tibble, one row per race x model: race_id, model, and the fit's `race` row.
 run_all = function(cells, returns, models = RUN) {
   races = sort(unique(returns$race_id))
   purrr::map_dfr(races, function(r) {
     ret = filter(returns, race_id == r)
     purrr::map_dfr(models, function(m) {
-      res = tryCatch(fit_model(m, cells, ret),
-                     error = function(e) list(race = tibble(status = paste("error:", conditionMessage(e)))))
+      res = tryCatch(fit_model(m, cells, ret), error = function(e) {
+        list(race = tibble(status = paste("error:", conditionMessage(e))))
+      })
       bind_cols(tibble(race_id = r, model = m), res$race)
     })
   })

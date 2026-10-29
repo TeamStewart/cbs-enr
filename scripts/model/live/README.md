@@ -69,8 +69,10 @@ snapshot for any race whose pull fails.
 | `R/model_ratio_strata.R` | **ratio_strata**: `fit_ratio_strata()`, Cory's `enightmodels::model_legacy()` on precinct x method cells |
 | `R/model_pois_bayes.R` | **pois_bayes**: `fit_pois_bayes()`, a precinct Poisson model on `enightmodels::pois_bayes()` (turnout on counted-out cells, party shares on reporting cells, posterior predictive draws) |
 | `R/model_lm_bayes.R` | **lm_bayes**: `fit_lm_bayes()`, Cory's `enightmodels::forecast_prec()` set up as in his NYC run (`../modeling-cory/nyc/`); out of the default run on cost |
-| `R/model_medsl.R` | **medsl_sur**: `fit_medsl_sur()`, Young-Kyung's `scripts/model/model_turnout.R` run from its own file with `scripts/model/model_hybrid.R`'s re-centred priors (see below). `fit_medsl()`, the plain model (formerly medsl_sur), is no longer run on its own |
-| `R/model_cpois.R` | retired, not loaded: model_cory_pois, Cory's `model_prec_pois()`; `pois_bayes/<spec>/conformal` replaces it |
+| `R/model_medsl.R` | **medsl_sur**: `fit_medsl_sur()`; builds the model's inputs and loads `medsl/` once per state (`medsl_setup()`) |
+| `medsl/model_turnout.R` | medsl_sur's engine: the precinct x method turnout / third-party / two-party model (`fit_stage()`, `prior_totals()`) |
+| `medsl/model_hybrid.R` | re-centres model_turnout.R's priors on tonight's returns and CBS county totals (`fit_stage_hybrid()`) |
+| `medsl/model_core.R` | fitting primitives model_turnout.R uses |
 | `R/run.R` | `run_race()`, `run_all()`; `RUN`, what runs on the night, and `MODELS`, every implemented model |
 | `R/config.R` | `26_general/model_config.csv`: every model / spec / interval name, and `run` = TRUE for the ones `run_night.R` runs (and so the targets pipeline, `model_status` in `_targets.R`; `MODEL_SIM` in `scripts/util/globals.R` points it at a sim). Rebuild with `make_model_config.R`, which keeps each row's `run` and `note` |
 | `R/output.R` | `predict_all()` and `write_predictions()`: results in enightmodels' prediction format for the dashboard |
@@ -80,6 +82,8 @@ snapshot for any race whose pull fails.
 | `tests/sim_night.R` | runs the models on one of Ethan's simulated nights, every checkpoint x race x model in parallel (`--cores=`, default half the cores minus one) |
 | `tests/time_models.R` | how long each model takes per race on this computer, one at a time and all at once in parallel (as `run_night.R` runs them) |
 | `tests/sim_statewide.R` | a simulated night at state level: Ethan's sim for the scraped counties + a simulated CBS feed for the rest, scored against the statewide truth |
+| `tests/compare_runs.R` | checks a refactor changes no estimates: `save` before and after, then `compare` |
+| `tests/check_outputs.R`, `tests/time_refresh.R`, `tests/coverage_summary.R` | output checks, refresh timing, and the interval coverage report (`tests/coverage_report.md`) |
 
 ## Model names, demographic specs and intervals
 
@@ -94,7 +98,7 @@ and interval.
 | `ratio_strata` | Cory's legacy ratio model, ratios pooled within strata | `ratio`, `strat_g` (default), `strat_d`, `strat_dg` | none, conformal |
 | `pois_bayes` | Bayesian Poisson precinct model (`pois_bayes()`) | all, as fixed effects; default `strat_dg_cov` | credible, conf_seq, conformal |
 | `lm_bayes` | Cory's NYC forecaster (`forecast_prec()`) | all, added to NYC's `simple_pres` spec; default `ratio` | credible, conf_seq, conformal |
-| `medsl_sur` | Young-Kyung's model with `model_hybrid.R` | all: covariates after `log_n` in place of its own, strata as its random-effect grouping in place of county; default `medsl_cov` (its own design) | credible, conf_seq, conformal |
+| `medsl_sur` | precinct x method SUR model (`medsl/`) | all: covariates after `log_n` in place of its own, strata as its random-effect grouping in place of county; default `medsl_cov` (its own design) | credible, conf_seq, conformal |
 
 **Specs** (`R/demos.R`, Cory's tx-prim-26 `model_specs` plus `medsl_cov`):
 
@@ -149,17 +153,18 @@ on, so one bad race cannot stop the rest.
 |---|---|---|
 | swing | `R/model_swing.R` | county x method fixed-effect swing, county bootstrap interval |
 | ratio_strata | `R/model_ratio_strata.R` | `model_legacy()`'s two stages called directly so the precinct frame comes from the same fit; past = expected votes x baseline share |
-| pois_bayes | `R/model_pois_bayes.R` | in the default run; replaces model_cory_pois |
+| pois_bayes | `R/model_pois_bayes.R` | precinct Poisson on `enightmodels::pois_bayes()`, posterior predictive draws |
 | lm_bayes | `R/model_lm_bayes.R` | NYC's `simple_pres` spec plus 0/1 method columns; draws from `forecast_summarize()`; out of the default run on cost |
-| medsl_sur | `R/model_medsl.R` | `model_hybrid.R` sourced into the model_turnout.R environment, `fit_stage_hybrid()` in place of `fit_stage()`; the CBS county snapshot is passed on the night (county-constraint arm), none in the sims; arms switch off with `HY_LEVEL` / `HY_COMP` / `HY_SHARE` / `HY_COUNTY=0`. Runs `scripts/model/model_turnout.R` itself, not a copy: its sections 1-2 and its functions are evaluated from that file each time the models load for a state (once per state per session), so Young-Kyung's changes there are picked up with no edit here. Its two file reads are replaced by frames built from `{ST}_precinct.parquet` and `{ST}_precinct_mode_history.parquet`; mode offsets default to zero (`MODE_OFFSET_SOURCE=zero`). Its other switches still work as environment variables. Blank YouGov race predictions (some MI and CA precincts) are filled with the county mean, noted in `settings`. If `model_turnout.R`'s section markers or its `covs_long` / `mode_hist` lines change, `fit_medsl()` stops with a message saying so. |
+| medsl_sur | `R/model_medsl.R` | `medsl/model_turnout.R` and `medsl/model_hybrid.R` sourced into one environment per state; `fit_stage_hybrid()` fits. The CBS county snapshot is passed on the night (county-constraint arm), none in the sims; arms switch off with `HY_LEVEL` / `HY_COMP` / `HY_SHARE` / `HY_COUNTY=0`. Mode offsets default to zero (`MODE_OFFSET_SOURCE=zero`); the model's other switches are environment variables. Blank YouGov race predictions (some MI and CA precincts) are filled with the county mean, noted in `settings`. |
 
-Speed, one race per refresh on a slow 2-core test server: swing 4-7 s, medsl_sur 3-15 s, ratio_strata 1-18 s in AK, FL, MI, NC and TX; California (23,685 precincts) takes ratio_strata about 58 s and needs `MEDSL_DRAWS=200` or less to fit medsl_sur in memory. `run_night.R` runs every race x model at once on all cores but one (`--cores=`), so a refresh takes about as long as its slowest fit. Time it on your machine with `tests/time_models.R`.
+Speed, one race per refresh on a slow 2-core test server: swing 4-7 s, medsl_sur 3-15 s, ratio_strata 1-18 s in AK, FL, MI, NC and TX; California (23,685 precincts) takes ratio_strata about 58 s; medsl_sur's draws are cut there to fit in memory (`MEDSL_MAX_PRECINCT_DRAWS`). `run_night.R` runs every race x model at once on all cores but one (`--cores=`), so a refresh takes about as long as its slowest fit. Time it on your machine with `tests/time_models.R`.
 
 ## Before this runs live
 
-- **Live ids.** `returns_from_live()` follows CONTRACT.md section 8 but has not met a real
-  feed: `geo` must already be reconciled to the precinct spine (TX live ids joined at 0.8%
-  as of 2026-10-18) and `method` already canonical (`../lookups/vote_mode_map.csv`).
+- **Live ids.** The default path, `returns_from_clean()`, matches the scrapers' geo ids to
+  our precinct inputs. `--returns=` (`returns_from_live()`, `../docs/CONTRACT.md` section 8)
+  expects `geo` already reconciled to the precinct spine and `method` already canonical
+  (`../lookups/vote_mode_map.csv`).
 - **"Complete" means different things in the sims and live.** The sims say when each
   precinct x method cell is fully counted; a live feed only gives the precinct's `stage`,
   and stage 6 can take days (CONTRACT.md section 8). `returns_from_live()` marks a cell
@@ -176,8 +181,20 @@ Speed, one race per refresh on a slow 2-core test server: swing 4-7 s, medsl_sur
   votes (equally until any are counted).
 - **Races with no vote-method split.** No method split is ever assumed. If a state's vote-method history has no votes for one of the methods (MI: no early in-person in any L2 year), `build_cells()` gives one cell per precinct and the state is modeled without method; likewise if any of a race's returns lack a usable method (precinct totals only, `adv`, or missing), the race is modeled without method: swing on precinct totals (county fixed effects only), ratio_strata with `model_legacy_config(by_method = FALSE)`, lm_bayes on precinct totals (as in NYC), and medsl_sur is skipped (status says why), since its equations are by method. `abs` is read as mail and `prov` as Election Day. When only some counties' results lack a method split (a county scraper with precinct totals only, e.g. TX Hardin, MI Wayne, most of CA), medsl_sur is fit on the counties that do split and the others come from CBS's county results in the statewide rows (`METHOD_ONLY_MODELS`, `predict_one()`); `settings` says how many counties. Decided per race at every refresh (`shape_for_method()` in `R/run.R`); `settings` in the status file says when a fit was without method.
 - **Virtual precincts (NC).** Votes a county reports in county-level batches instead of by precinct (NC's early-voting sites and absentee piles) match no precinct. For every model but medsl_sur, a county x method that was mostly reported this way in 2024 (`{ST}_virtual_history.parquet`) is taken out of the precinct fit and added back as one county-level unit: counted votes once the batch is in, projected from 2024 at tonight's swing until then (`R/virtual.R`). medsl_sur uses the same rows as county x mode observations (`bucket_counts()` in `R/returns.R`).
-- **NC vote-method split.** `{ST}_precinct_mode_results.parquet` (`scripts/model/make_mode_results.R`) gives every model the same split: each county's 2022 split (official county returns) with the 2024 precinct pattern within the county. Rerun it after rerunning `prep_model_inputs.R NC`.
+- **NC vote-method split.** `{ST}_precinct_mode_results.parquet` (`scripts/model/prep/make_mode_results.R`) gives every model the same split: each county's 2022 split (official county returns) with the 2024 precinct pattern within the county. Rerun it after rerunning `prep_model_inputs.R NC`.
 - **Counties the feed doesn't cover.** The models fit only the counties with at least one precinct in the race's returns (`feed_cells()` in `R/output.R`); every other county, including counties in our precinct inputs whose live ids we don't have, comes from CBS's county results in the statewide rows. As of 2026-10-22 the crosswalks have live ids for FL 18 of 31 counties, MI 10 of 31, TX 4 of 32 and CA none.
-- **County history for CA and NY.** votehub has no county results for CA or NY, so their statewide rows read `26_general/input_data/county_history/{ST}_county_history.csv` (2024 presidential by county), built by `scripts/model/make_county_history.R` (outside live/; run it again only to rebuild those files or add a state).
+- **County history for CA and NY.** votehub has no county results for CA or NY, so their statewide rows read `26_general/input_data/county_history/{ST}_county_history.csv` (2024 presidential by county), built by `scripts/model/prep/make_county_history.R` (outside live/; run it again only to rebuild those files or add a state).
 - **Statewide rows** come from `R/counties.R` (scraped counties from each model + CBS county
   results for the rest).
+
+## Open items
+
+- **Default intervals.** swing's bootstrap and pois_bayes's credible intervals were 0.4-0.7
+  points wide on tx_base and missed the truth from 22:00 on; every conf_seq and conformal
+  interval held it (`tests/coverage_report.md`). `MODEL_INTERVALS` defaults (`R/results.R`)
+  are unchanged pending a decision.
+- **Simulated CBS feed has no method split.** `tests/sim_statewide.R` writes the simulated
+  CBS county feed without a `method` column, so medsl_sur's county-constraint arm
+  (`county_targets()` in `medsl/model_hybrid.R`) is untested on simulated nights.
+- **medsl_sur draws.** `MEDSL_DRAWS`, `MEDSL_MAX_PRECINCT_DRAWS` and its `seed` could move to
+  `DRAWS`, `SEED` and `cap_draws()` (`R/results.R`); same values, so no estimate change.

@@ -30,29 +30,39 @@
 ##
 ## Prerequisites:  ogr2ogr (GDAL) on PATH;  mapshaper on PATH (`npm i -g mapshaper`).
 ##
-## Run:  Rscript scripts/model/make_precinct_topo.R
-##       STATES=FL Rscript scripts/model/make_precinct_topo.R    # one state
-##       SKIP_TOPO=1 Rscript scripts/model/make_precinct_topo.R  # crosswalk only
+## Run:  Rscript scripts/model/prep/make_precinct_topo.R
+##       STATES=FL Rscript scripts/model/prep/make_precinct_topo.R    # one state
+##       SKIP_TOPO=1 Rscript scripts/model/prep/make_precinct_topo.R  # crosswalk only
 # ========================================
 suppressPackageStartupMessages({
-  library(dplyr); library(readr); library(stringr); library(tidyr); library(purrr); library(cli)
+  library(dplyr)
+  library(readr)
+  library(stringr)
+  library(tidyr)
+  library(purrr)
+  library(cli)
   library(nanoparquet, lib.loc = "renv/library/macos/R-4.5/aarch64-apple-darwin20")
 })
 
 # ---- paths ----------------------------------------------------------------------
 # PATH_DROPBOX env var if set, else this machine's Dropbox (live/R/paths.R)
-PATH_DROPBOX <- local({ source("scripts/model/live/R/paths.R", local = TRUE); find_dropbox() })
-P_IN   <- path.expand(file.path(PATH_DROPBOX, "26_general/input_data/model_inputs"))
-P_GPKG <- path.expand(file.path(PATH_DROPBOX,
-            "26_general/input_data/votehub-shapefiles/26_pct_bdrys.gpkg"))
+PATH_DROPBOX <- local({
+  source("scripts/model/live/R/paths.R", local = TRUE)
+  find_dropbox()
+})
+P_IN <- path.expand(file.path(PATH_DROPBOX, "26_general/input_data/model_inputs"))
+P_GPKG <- path.expand(file.path(
+  PATH_DROPBOX,
+  "26_general/input_data/votehub-shapefiles/26_pct_bdrys.gpkg"
+))
 GPKG_LAYER <- "precincts"
 
 DIR_LOOKUP <- "scripts/model/lookups"
-DIR_TOPO   <- "scripts/model/topo"
-P_XWALK    <- file.path(DIR_LOOKUP, "precinct_geo_crosswalk.csv")
-P_RATES    <- file.path(DIR_LOOKUP, "precinct_geo_match_rates.csv")
+DIR_TOPO <- "scripts/model/topo"
+P_XWALK <- file.path(DIR_LOOKUP, "precinct_geo_crosswalk.csv")
+P_RATES <- file.path(DIR_LOOKUP, "precinct_geo_match_rates.csv")
 
-YEAR   <- 2026
+YEAR <- 2026
 STATES <- strsplit(Sys.getenv("STATES", unset = "AK,FL,NC,TX"), ",")[[1]]
 SKIP_TOPO <- nzchar(Sys.getenv("SKIP_TOPO", unset = ""))
 
@@ -75,11 +85,11 @@ SKIP_TOPO <- nzchar(Sys.getenv("SKIP_TOPO", unset = ""))
 ## reported loudly beside it. A county that fails the gate has a KEY problem worth
 ## fixing; a county with low pct_ours and high pct_attainable has a geometry-vintage
 ## problem that this script cannot fix and must not pretend to.
-MIN_STATE_ATTAINABLE  <- 0.95
+MIN_STATE_ATTAINABLE <- 0.95
 MIN_COUNTY_ATTAINABLE <- 0.80
 ## Below this, the state is reported but its topojson is NOT written: a map covering
 ## half a state's precincts is worse than no map, because the holes read as "no votes".
-MIN_STATE_OURS        <- 0.90
+MIN_STATE_OURS <- 0.90
 
 ## Simplification is expressed as a RESOLUTION IN METRES, not a percentage. A percentage
 ## is a quota on removable vertices, so the same number means a different ground
@@ -96,40 +106,32 @@ SIMPLIFY_INTERVAL <- Sys.getenv("SIMPLIFY_INTERVAL", unset = "100")
 ## quantization grid is stretched over 360 degrees rather than the state's real width.
 ## Escalation is normally a single pass: 1e5 is clean for all four states.
 QUANT_CANDIDATES <- strsplit(
-  Sys.getenv("QUANTIZATION", unset = "1e5,1e6,1e7,no-quantization"), ",")[[1]]
+  Sys.getenv("QUANTIZATION", unset = "1e5,1e6,1e7,no-quantization"),
+  ","
+)[[1]]
 
 dir.create(DIR_LOOKUP, showWarnings = FALSE, recursive = TRUE)
-dir.create(DIR_TOPO,   showWarnings = FALSE, recursive = TRUE)
+dir.create(DIR_TOPO, showWarnings = FALSE, recursive = TRUE)
 
 stopifnot(file.exists(P_GPKG))
-if (nchar(Sys.which("ogr2ogr")) == 0) cli_abort("ogr2ogr not on PATH (GDAL required).")
-if (!SKIP_TOPO && nchar(Sys.which("mapshaper")) == 0)
+if (nchar(Sys.which("ogr2ogr")) == 0) {
+  cli_abort("ogr2ogr not on PATH (GDAL required).")
+}
+if (!SKIP_TOPO && nchar(Sys.which("mapshaper")) == 0) {
   cli_abort("mapshaper not on PATH -- `npm i -g mapshaper`, or set SKIP_TOPO=1.")
+}
 
 # ---- key normalization ----------------------------------------------------------
-## Three normalizers, each with a reason.
-##
-## `code4` is the verified recipe from `tx_backtest_panel.R` / `backtest_panel.R`
-## (98.9% on TX 2022 L2<->votehub): upcase, take a TRAILING PARENTHETICAL if present,
-## strip punctuation, zero-pad to 4. Padding both sides to a common width is what makes
-## "01" and "1" meet; stripping leading zeros instead would be equivalent for numeric
-## keys but breaks alphanumerics like NC's "03C".
-##   - the parenthetical rule is for our `precinct_l2`, which stores several states as
-##     "NAME (ABBREV)" while votehub stores the bare abbreviation (AK "WALES (39-950)",
-##     NC "01 PATTERSON (01)"). votehub never uses parentheses, so applying it to both
-##     sides is safe.
-##   - the TRAILING ".0" strip is for FL Levy, whose votehub `unit_id` carries
-##     spreadsheet decimal artifacts ("1.0", "10.0"). WITHOUT it the normalizer is
-##     actively DANGEROUS, not merely weak: "1.0" strips to "10" and silently matches
-##     OUR precinct 10. That is a wrong join, not a missing one, and it is the reason
-##     Levy previously read 7.7% rather than 0%.
-##
-## `name_norm` is for the FL counties votehub keys by precinct NAME. No padding -- these
-## are facility names, and padding would corrupt them.
-##
-## `lead_code` / `tail_tok` pull a code out of a mixed "code + name" string. votehub is
-## inconsistent about which end the code sits on: AK Bethel has "38-824 Kipnuk" (code
-## first), FL Baker has `precinct_sos` "Baxter 4A" (code last).
+#' Lossy precinct-code key, padded to 4
+#'
+#' Upper-case, take a trailing parenthetical if present (our `precinct_l2` stores some
+#' states as "NAME (ABBREV)"; votehub never uses parentheses), strip a trailing ".0" (FL
+#' Levy's spreadsheet artifacts, which would otherwise turn "1.0" into "10" and match the
+#' wrong precinct), strip punctuation, zero-pad to 4. 98.9% on TX 2022 L2 <-> votehub.
+#' Padding both sides, rather than stripping zeros, keeps alphanumerics like NC's "03C".
+#'
+#' @param x Precinct codes.
+#' @return Character vector; NA when nothing is left.
 code4 <- function(x) {
   x <- toupper(trimws(as.character(x)))
   inner <- str_match(x, "\\(([^()]*)\\)\\s*$")[, 2]
@@ -138,23 +140,48 @@ code4 <- function(x) {
   out <- str_pad(str_remove_all(x, "[^0-9A-Z]"), 4, pad = "0")
   ifelse(is.na(x) | !nzchar(str_remove_all(x, "[^0-9A-Z]")), NA_character_, out)
 }
+
+#' Precinct-name key
+#'
+#' For FL counties votehub keys by precinct name: letters and digits, no padding.
+#'
+#' @param x Precinct names.
+#' @return Character vector; NA when empty.
 name_norm <- function(x) {
   out <- str_remove_all(toupper(trimws(as.character(x))), "[^0-9A-Z]")
   ifelse(is.na(out) | !nzchar(out), NA_character_, out)
 }
+
+#' First token of a "code name" string
+#'
+#' votehub puts the code first in some counties (AK Bethel "38-824 Kipnuk").
+#'
+#' @param x Strings.
+#' @return Character vector.
 lead_code <- function(x) str_extract(trimws(as.character(x)), "^\\S+")
-tail_tok  <- function(x) str_extract(trimws(as.character(x)), "\\S+$")
-## `exact` exists because `code4` is LOSSY and two genuinely different precincts can
-## collide under it. NC Buncombe carries both "68.1" and "681", and votehub carries both
-## as separate polygons -- `code4` maps both to "0681" on both sides, so the uniqueness
-## guard (correctly) drops all four and Buncombe loses two precincts it could have had.
-## Literal equality resolves them, so it runs FIRST and lossy normalization only ever
-## sees what literal matching could not place.
+
+#' Last token of a "name code" string
+#'
+#' votehub puts the code last in some counties (FL Baker "Baxter 4A").
+#'
+#' @param x Strings.
+#' @return Character vector.
+tail_tok <- function(x) str_extract(trimws(as.character(x)), "\\S+$")
+#' Literal precinct key
+#'
+#' Runs before `code4()`, which is lossy: NC Buncombe has both "68.1" and "681", which
+#' `code4()` maps to the same key and the uniqueness guard would then drop.
+#'
+#' @param x Precinct codes.
+#' @return Upper-cased, trimmed codes; NA when empty.
 exact <- function(x) {
   out <- toupper(trimws(as.character(x)))
   ifelse(is.na(out) | !nzchar(out), NA_character_, out)
 }
-## name suffix of our `precinct_l2`: "4A-BAXTER" -> "BAXTER", "1A-SANDERSON" -> "SANDERSON"
+#' Name suffix of our `precinct_l2`
+#'
+#' @param x Ids such as "4A-BAXTER".
+#' @return The part after the first "-" ("BAXTER"); NA if there is none.
 l2_suffix <- function(x) {
   x <- as.character(x)
   ifelse(str_detect(x, "-"), str_remove(x, "^[^-]*-"), NA_character_)
@@ -174,47 +201,53 @@ l2_suffix <- function(x) {
 RULES <- list(
   # literal equality first, so `code4`'s lossiness never gets to collide two precincts
   # that are distinct in both feeds (NC Buncombe "68.1" vs "681").
-  list(id = "enr_exact",     ours = function(d) exact(d$precinct_enr),
-                             vh   = function(v) exact(v$vprec)),
-  list(id = "raw_exact",     ours = function(d) exact(d$precinct_raw),
-                             vh   = function(v) exact(v$vprec)),
+  list(id = "enr_exact", ours = function(d) exact(d$precinct_enr), vh = function(v) exact(v$vprec)),
+  list(id = "raw_exact", ours = function(d) exact(d$precinct_raw), vh = function(v) exact(v$vprec)),
   # AK, NC: our ENR precinct code against votehub's unit_id tail.
-  list(id = "enr_code",      ours = function(d) code4(d$precinct_enr),
-                             vh   = function(v) code4(v$vprec)),
+  list(id = "enr_code", ours = function(d) code4(d$precinct_enr), vh = function(v) code4(v$vprec)),
   # FL, TX: our RAW precinct code. NC falls here for the 16 rows with precinct_enr = NA.
-  list(id = "raw_code",      ours = function(d) code4(d$precinct_raw),
-                             vh   = function(v) code4(v$vprec)),
-  list(id = "l2_code",       ours = function(d) code4(d$precinct_l2),
-                             vh   = function(v) code4(v$vprec)),
+  list(id = "raw_code", ours = function(d) code4(d$precinct_raw), vh = function(v) code4(v$vprec)),
+  list(id = "l2_code", ours = function(d) code4(d$precinct_l2), vh = function(v) code4(v$vprec)),
   # AK Bethel: votehub appends the place name to the code ("38-824 Kipnuk").
-  list(id = "enr_code_lead", ours = function(d) code4(d$precinct_enr),
-                             vh   = function(v) code4(lead_code(v$vprec))),
+  list(id = "enr_code_lead", ours = function(d) code4(d$precinct_enr), vh = function(v) {
+    code4(lead_code(v$vprec))
+  }),
   # FL Walton: unit_id is "Walton 210" but `precinct_sos` is the bare "210".
   # FL Baker:  unit_id is the bare name but `precinct_sos` is "Baxter 4A".
-  list(id = "raw_code_sos",  ours = function(d) code4(d$precinct_raw),
-                             vh   = function(v) code4(v$precinct_sos)),
-  list(id = "raw_code_sostail", ours = function(d) code4(d$precinct_raw),
-                             vh   = function(v) code4(tail_tok(v$precinct_sos))),
+  list(id = "raw_code_sos", ours = function(d) code4(d$precinct_raw), vh = function(v) {
+    code4(v$precinct_sos)
+  }),
+  list(id = "raw_code_sostail", ours = function(d) code4(d$precinct_raw), vh = function(v) {
+    code4(tail_tok(v$precinct_sos))
+  }),
   # FL Gadsden, Levy: votehub keys by polling-place NAME, and our `precinct_enr` for
   # those counties IS the polling-place name.
-  list(id = "enr_name",      ours = function(d) name_norm(d$precinct_enr),
-                             vh   = function(v) name_norm(v$precinct_sos)),
-  list(id = "enr_name_uid",  ours = function(d) name_norm(d$precinct_enr),
-                             vh   = function(v) name_norm(v$vprec)),
+  list(id = "enr_name", ours = function(d) name_norm(d$precinct_enr), vh = function(v) {
+    name_norm(v$precinct_sos)
+  }),
+  list(id = "enr_name_uid", ours = function(d) name_norm(d$precinct_enr), vh = function(v) {
+    name_norm(v$vprec)
+  }),
   # FL Baker again: `precinct_enr` is NA there, but `precinct_l2` carries the name as a
   # suffix ("4A-BAXTER") and votehub's unit_id tail is the bare name ("Baxter").
-  list(id = "l2_name",       ours = function(d) name_norm(l2_suffix(d$precinct_l2)),
-                             vh   = function(v) name_norm(v$vprec)),
-  list(id = "l2_name_sos",   ours = function(d) name_norm(l2_suffix(d$precinct_l2)),
-                             vh   = function(v) name_norm(v$precinct_sos)),
+  list(id = "l2_name", ours = function(d) name_norm(l2_suffix(d$precinct_l2)), vh = function(v) {
+    name_norm(v$vprec)
+  }),
+  list(
+    id = "l2_name_sos",
+    ours = function(d) name_norm(l2_suffix(d$precinct_l2)),
+    vh = function(v) name_norm(v$precinct_sos)
+  ),
   # NC Cherokee: our `precinct_l2` is the WHOLE name with no code prefix
   # ("ANDREWS NORTH WARD"), votehub's unit_id tail is an abbreviation ("ANW") and only
   # `precinct_sos` spells it out. The `l2_suffix` rules above cannot see this because
   # they require a "-" to split on.
-  list(id = "l2_name_full",  ours = function(d) name_norm(d$precinct_l2),
-                             vh   = function(v) name_norm(v$precinct_sos)),
-  list(id = "l2_name_full_uid", ours = function(d) name_norm(d$precinct_l2),
-                             vh   = function(v) name_norm(v$vprec))
+  list(id = "l2_name_full", ours = function(d) name_norm(d$precinct_l2), vh = function(v) {
+    name_norm(v$precinct_sos)
+  }),
+  list(id = "l2_name_full_uid", ours = function(d) name_norm(d$precinct_l2), vh = function(v) {
+    name_norm(v$vprec)
+  })
 )
 
 # ---- read the votehub attribute table (no geometry) -----------------------------
@@ -223,57 +256,103 @@ cli_h1("Precinct geometry crosswalk  ({paste(STATES, collapse='/')}, {YEAR})")
 tmpd <- file.path(tempdir(), "precinct_topo")
 dir.create(tmpd, showWarnings = FALSE, recursive = TRUE)
 
+#' Read votehub's precinct attribute table (no geometry)
+#'
+#' Extracted with ogr2ogr from the GeoPackage.
+#'
+#' @param states Two-letter state codes.
+#' @return Tibble of character columns, plus fips5 and vprec (the precinct part of
+#'   unit_id).
 read_vh_attrs <- function(states) {
   f <- file.path(tmpd, "vh_attrs.csv")
-  if (file.exists(f)) unlink(f)
+  if (file.exists(f)) {
+    unlink(f)
+  }
   sql <- sprintf(
     "SELECT unit_id, state_abbr, county, fips, precinct_sos FROM %s WHERE state_abbr IN (%s)",
-    GPKG_LAYER, paste0("'", states, "'", collapse = ","))
-  st <- system2("ogr2ogr", c("-f", "CSV", shQuote(f), shQuote(P_GPKG),
-                             "-sql", shQuote(sql), "-nlt", "NONE"),
-                stdout = TRUE, stderr = TRUE)
-  if (!file.exists(f)) cli_abort("ogr2ogr failed reading {GPKG_LAYER}: {paste(st, collapse=' ')}")
+    GPKG_LAYER,
+    paste0("'", states, "'", collapse = ",")
+  )
+  st <- system2(
+    "ogr2ogr",
+    c("-f", "CSV", shQuote(f), shQuote(P_GPKG), "-sql", shQuote(sql), "-nlt", "NONE"),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+  if (!file.exists(f)) {
+    cli_abort("ogr2ogr failed reading {GPKG_LAYER}: {paste(st, collapse=' ')}")
+  }
   read_csv(f, col_types = cols(.default = "c")) |>
-    mutate(fips5 = str_extract(unit_id, "^[^-]+"),
-           vprec = str_remove(unit_id, "^[^-]+-:-"))
+    mutate(fips5 = str_extract(unit_id, "^[^-]+"), vprec = str_remove(unit_id, "^[^-]+-:-"))
 }
 
 vh_all <- read_vh_attrs(STATES)
-cli_inform("votehub: {format(nrow(vh_all), big.mark=',')} features across \\
-            {n_distinct(vh_all$state_abbr)} states")
+cli_inform(
+  "votehub: {format(nrow(vh_all), big.mark=',')} features across \\
+            {n_distinct(vh_all$state_abbr)} states"
+)
 ## `fips` is carried for provenance but the join keys on the unit_id prefix: the prefix
 ## is what defines the key and is guaranteed consistent with it.
 bad_fips <- sum(vh_all$fips5 != str_pad(vh_all$fips, 5, pad = "0"), na.rm = TRUE)
-if (bad_fips > 0)
-  cli_alert_warning("{bad_fips} votehub rows where the unit_id FIPS prefix \\
-                     disagrees with the `fips` column -- keying on the prefix")
+if (bad_fips > 0) {
+  cli_alert_warning(
+    "{bad_fips} votehub rows where the unit_id FIPS prefix \\
+                     disagrees with the `fips` column -- keying on the prefix"
+  )
+}
 
 # ---- crosswalk for one state ----------------------------------------------------
+#' Crosswalk one state's precincts to votehub polygons
+#'
+#' Tries the match rules in order (literal, then the normalized keys) within each county,
+#' keeping only unique matches.
+#'
+#' @param st Two-letter state code.
+#' @return List: state, xwalk (geo -> unit_id with the rule used), county (per-county match
+#'   rates), vh, n_ours, n_matched, attainable; NULL if the state has no precinct file.
 build_one <- function(st) {
   p_prec <- file.path(P_IN, paste0(st, "_precinct.parquet"))
-  if (!file.exists(p_prec)) { cli_alert_warning("no {st}_precinct.parquet -- skipped"); return(NULL) }
+  if (!file.exists(p_prec)) {
+    cli_alert_warning("no {st}_precinct.parquet -- skipped")
+    return(NULL)
+  }
 
-  d <- read_parquet(p_prec) |> as_tibble() |>
-    select(geo, county_fips, county_name, precinct_raw, precinct26_code,
-           precinct_l2, precinct_enr) |>
+  d <- read_parquet(p_prec) |>
+    as_tibble() |>
+    select(
+      geo,
+      county_fips,
+      county_name,
+      precinct_raw,
+      precinct26_code,
+      precinct_l2,
+      precinct_enr
+    ) |>
     mutate(county_fips = str_pad(as.character(county_fips), 5, pad = "0"))
-  if (anyDuplicated(d$geo))
-    cli_abort("{st}: `geo` is not unique in {st}_precinct.parquet \\
-               ({sum(duplicated(d$geo))} dups) -- the crosswalk key is broken")
+  if (anyDuplicated(d$geo)) {
+    cli_abort(
+      "{st}: `geo` is not unique in {st}_precinct.parquet \\
+               ({sum(duplicated(d$geo))} dups) -- the crosswalk key is broken"
+    )
+  }
 
   v <- vh_all |> filter(state_abbr == st)
   ## restrict geometry to the counties we actually model. FL is 31 of 67 counties and TX
   ## 32 of 254, so this is most of the file.
   v <- v |> filter(fips5 %in% unique(d$county_fips))
 
-  cli_h2("{st}: {nrow(d)} precincts, {nrow(v)} votehub features in \\
-          {n_distinct(d$county_fips)} modelled counties")
+  cli_h2(
+    "{st}: {nrow(d)} precincts, {nrow(v)} votehub features in \\
+          {n_distinct(d$county_fips)} modelled counties"
+  )
 
   matched <- tibble(geo = character(), unit_id = character(), rule = character())
   for (r in RULES) {
     todo <- d |> filter(!geo %in% matched$geo)
     free <- v |> filter(!unit_id %in% matched$unit_id)
-    if (nrow(todo) == 0 || nrow(free) == 0) break
+    if (nrow(todo) == 0 || nrow(free) == 0) {
+      break
+    }
 
     lhs <- todo |> transmute(geo, cf = county_fips, k = r$ours(todo)) |> filter(!is.na(k))
     rhs <- free |> transmute(unit_id, cf = fips5, k = r$vh(free)) |> filter(!is.na(k))
@@ -281,16 +360,20 @@ build_one <- function(st) {
     lhs <- lhs |> add_count(cf, k, name = "nl") |> filter(nl == 1) |> select(-nl)
     rhs <- rhs |> add_count(cf, k, name = "nr") |> filter(nr == 1) |> select(-nr)
     hit <- inner_join(lhs, rhs, by = c("cf", "k"))
-    if (nrow(hit) == 0) next
+    if (nrow(hit) == 0) {
+      next
+    }
     matched <- bind_rows(matched, hit |> transmute(geo, unit_id, rule = r$id))
-    cli_inform("  rule {.field {r$id}}: +{nrow(hit)} \\
-                (cumulative {nrow(matched)}/{nrow(d)} = {round(100*nrow(matched)/nrow(d),1)}%)")
+    cli_inform(
+      "  rule {.field {r$id}}: +{nrow(hit)} \\
+                (cumulative {nrow(matched)}/{nrow(d)} = {round(100*nrow(matched)/nrow(d),1)}%)"
+    )
   }
   stopifnot(!anyDuplicated(matched$geo), !anyDuplicated(matched$unit_id))
 
-  xw <- d |> left_join(matched, by = "geo") |>
-    transmute(state = st, year = YEAR, geo, unit_id, rule,
-              county_fips, county_name, precinct_raw)
+  xw <- d |>
+    left_join(matched, by = "geo") |>
+    transmute(state = st, year = YEAR, geo, unit_id, rule, county_fips, county_name, precinct_raw)
 
   ## per-county report. `vh_n` is the polygon count that unit actually has, which is
   ## what makes `pct_attainable` meaningful.
@@ -304,27 +387,42 @@ build_one <- function(st) {
   ## caption for a row.
   vh_n <- v |> summarize(vh_n = n(), vh_county = first(county), .by = fips5)
   cty <- xw |>
-    summarize(our_n = n(), matched = sum(!is.na(unit_id)),
-              county_name = first(sort(county_name)),
-              n_names = n_distinct(county_name), .by = county_fips) |>
+    summarize(
+      our_n = n(),
+      matched = sum(!is.na(unit_id)),
+      county_name = first(sort(county_name)),
+      n_names = n_distinct(county_name),
+      .by = county_fips
+    ) |>
     left_join(vh_n, by = c(county_fips = "fips5")) |>
-    mutate(vh_n = coalesce(vh_n, 0L),
-           attainable = pmin(our_n, vh_n),
-           pct_ours = round(100 * matched / our_n, 1),
-           pct_attainable = ifelse(attainable > 0, round(100 * matched / attainable, 1), NA_real_),
-           state = st, year = YEAR) |>
+    mutate(
+      vh_n = coalesce(vh_n, 0L),
+      attainable = pmin(our_n, vh_n),
+      pct_ours = round(100 * matched / our_n, 1),
+      pct_attainable = ifelse(attainable > 0, round(100 * matched / attainable, 1), NA_real_),
+      state = st,
+      year = YEAR
+    ) |>
     arrange(pct_attainable, pct_ours)
 
-  list(state = st, xwalk = xw, county = cty, vh = v,
-       n_ours = nrow(d), n_matched = sum(!is.na(xw$unit_id)),
-       attainable = sum(cty$attainable))
+  list(
+    state = st,
+    xwalk = xw,
+    county = cty,
+    vh = v,
+    n_ours = nrow(d),
+    n_matched = sum(!is.na(xw$unit_id)),
+    attainable = sum(cty$attainable)
+  )
 }
 
 res <- map(STATES, build_one) |> compact()
-if (length(res) == 0) cli_abort("nothing built")
+if (length(res) == 0) {
+  cli_abort("nothing built")
+}
 
 xwalk <- bind_rows(map(res, "xwalk"))
-cty   <- bind_rows(map(res, "county"))
+cty <- bind_rows(map(res, "county"))
 
 # ---- report ---------------------------------------------------------------------
 cli_h1("Match rates")
@@ -332,24 +430,44 @@ cli_h1("Match rates")
 state_tbl <- tibble(
   state = map_chr(res, "state"),
   our_prec = map_int(res, "n_ours"),
-  matched  = map_int(res, "n_matched"),
-  attainable = map_int(res, ~ as.integer(.x$attainable))) |>
-  mutate(pct_ours = round(100 * matched / our_prec, 1),
-         pct_attainable = round(100 * matched / attainable, 1),
-         counties = map_int(res, ~ n_distinct(.x$county$county_fips)))
+  matched = map_int(res, "n_matched"),
+  attainable = map_int(res, ~ as.integer(.x$attainable))
+) |>
+  mutate(
+    pct_ours = round(100 * matched / our_prec, 1),
+    pct_attainable = round(100 * matched / attainable, 1),
+    counties = map_int(res, ~ n_distinct(.x$county$county_fips))
+  )
 print(as.data.frame(state_tbl), row.names = FALSE)
 
 cli_h2("counties below 100% (ranked by pct_attainable)")
-show <- cty |> filter(pct_ours < 100) |>
-  select(state, vh_county, county_name, county_fips, our_n, vh_n, attainable, matched,
-         pct_ours, pct_attainable)
-if (nrow(show) == 0) cli_alert_success("every county at 100%") else
+show <- cty |>
+  filter(pct_ours < 100) |>
+  select(
+    state,
+    vh_county,
+    county_name,
+    county_fips,
+    our_n,
+    vh_n,
+    attainable,
+    matched,
+    pct_ours,
+    pct_attainable
+  )
+if (nrow(show) == 0) {
+  cli_alert_success("every county at 100%")
+} else {
   print(as.data.frame(show), row.names = FALSE)
+}
 
 cli_h2("rule usage")
-print(as.data.frame(
-  xwalk |> count(state, rule) |> pivot_wider(names_from = rule, values_from = n, values_fill = 0L)),
-  row.names = FALSE)
+print(
+  as.data.frame(
+    xwalk |> count(state, rule) |> pivot_wider(names_from = rule, values_from = n, values_fill = 0L)
+  ),
+  row.names = FALSE
+)
 
 # ---- gates: fail loudly, do not emit a map with silent holes --------------------
 ## Collect every violation, then abort once with all of them. Aborting on the first
@@ -357,25 +475,45 @@ print(as.data.frame(
 fails <- character()
 
 bad_cty <- cty |> filter(!is.na(pct_attainable), pct_attainable < 100 * MIN_COUNTY_ATTAINABLE)
-if (nrow(bad_cty) > 0)
-  fails <- c(fails, sprintf(
-    "county key failure: %s (%s) matched %d of %d attainable = %.1f%% < %.0f%%",
-    bad_cty$county_name, bad_cty$state, bad_cty$matched, bad_cty$attainable,
-    bad_cty$pct_attainable, 100 * MIN_COUNTY_ATTAINABLE))
+if (nrow(bad_cty) > 0) {
+  fails <- c(
+    fails,
+    sprintf(
+      "county key failure: %s (%s) matched %d of %d attainable = %.1f%% < %.0f%%",
+      bad_cty$county_name,
+      bad_cty$state,
+      bad_cty$matched,
+      bad_cty$attainable,
+      bad_cty$pct_attainable,
+      100 * MIN_COUNTY_ATTAINABLE
+    )
+  )
+}
 
 bad_st <- state_tbl |> filter(pct_attainable < 100 * MIN_STATE_ATTAINABLE)
-if (nrow(bad_st) > 0)
-  fails <- c(fails, sprintf("state key failure: %s at %.1f%% of attainable < %.0f%%",
-                            bad_st$state, bad_st$pct_attainable, 100 * MIN_STATE_ATTAINABLE))
+if (nrow(bad_st) > 0) {
+  fails <- c(
+    fails,
+    sprintf(
+      "state key failure: %s at %.1f%% of attainable < %.0f%%",
+      bad_st$state,
+      bad_st$pct_attainable,
+      100 * MIN_STATE_ATTAINABLE
+    )
+  )
+}
 
 ## pct_ours is a COVERAGE warning, not a key failure -- it is capped by the geometry
 ## vintage. It blocks that state's topojson but does not fail the crosswalk, because the
 ## crosswalk is still correct and still useful for the counties that do have polygons.
 thin <- state_tbl |> filter(pct_ours < 100 * MIN_STATE_OURS)
-if (nrow(thin) > 0)
-  cli_alert_danger("COVERAGE: {paste(thin$state, collapse=', ')} below \\
+if (nrow(thin) > 0) {
+  cli_alert_danger(
+    "COVERAGE: {paste(thin$state, collapse=', ')} below \\
                     {100*MIN_STATE_OURS}% of OUR precincts -- geometry vintage, \\
-                    not a key problem. Topojson NOT written for these states.")
+                    not a key problem. Topojson NOT written for these states."
+  )
+}
 
 # WRITE THE CROSSWALK FIRST, THEN GATE. The gate protects the MAP -- a topojson with
 # holes is worse than none -- but the crosswalk is a different artifact: a reviewable,
@@ -385,14 +523,36 @@ if (nrow(thin) > 0)
 # (AK read 312 of 402 after the ENR id fix changed its geos, purely because this file had
 # not been rewritten).
 write_csv(xwalk |> arrange(state, county_fips, geo), P_XWALK, na = "")
-write_csv(cty |> select(state, year, county_fips, vh_county, county_name, n_names,
-                        our_n, vh_n, attainable, matched, pct_ours, pct_attainable) |>
-            arrange(state, county_fips), P_RATES, na = "")
-cli_alert_success("wrote {.file {P_XWALK}} ({nrow(xwalk)} rows, \\
-                   {sum(!is.na(xwalk$unit_id))} matched)")
+write_csv(
+  cty |>
+    select(
+      state,
+      year,
+      county_fips,
+      vh_county,
+      county_name,
+      n_names,
+      our_n,
+      vh_n,
+      attainable,
+      matched,
+      pct_ours,
+      pct_attainable
+    ) |>
+    arrange(state, county_fips),
+  P_RATES,
+  na = ""
+)
+cli_alert_success(
+  "wrote {.file {P_XWALK}} ({nrow(xwalk)} rows, \\
+                   {sum(!is.na(xwalk$unit_id))} matched)"
+)
 cli_alert_success("wrote {.file {P_RATES}} ({nrow(cty)} counties)")
 
-if (SKIP_TOPO) { cli_alert_info("SKIP_TOPO set -- stopping before geometry"); quit(save = "no") }
+if (SKIP_TOPO) {
+  cli_alert_info("SKIP_TOPO set -- stopping before geometry")
+  quit(save = "no")
+}
 
 # ---- emit one simplified topojson per state -------------------------------------
 ## Unmatched polygons are KEPT, with `geo` null. A dropped polygon is a hole in the
@@ -410,22 +570,36 @@ if (length(fails) > 0) {
 ## so any single row's join can be traced to the rule that made it.
 cli_h1("topojson")
 
+#' Write one state's simplified topojson
+#'
+#' Simplifies with mapshaper and escalates quantization (`QUANT_CANDIDATES`) until the
+#' output is clean.
+#'
+#' @param r `build_one()` result.
+#' @return One-row tibble: state, features, mb_geojson, mb_topojson, interval_m,
+#'   quantization, file.
 emit_one <- function(r) {
   st <- r$state
-  if (st %in% thin$state) { cli_alert_warning("{st}: skipped (coverage gate)"); return(NULL) }
+  if (st %in% thin$state) {
+    cli_alert_warning("{st}: skipped (coverage gate)")
+    return(NULL)
+  }
 
   counties <- unique(r$county$county_fips)
   f_json <- file.path(tmpd, paste0(st, "_raw.geojson"))
   f_join <- file.path(tmpd, paste0(st, "_xwalk.csv"))
-  f_out  <- file.path(DIR_TOPO, paste0(tolower(st), "_precincts.topojson"))
+  f_out <- file.path(DIR_TOPO, paste0(tolower(st), "_precincts.topojson"))
 
   ## one row per unit_id for mapshaper's -join; only the matched ones, so unmatched
   ## features come through with geo unset
-  r$xwalk |> filter(!is.na(unit_id)) |>
+  r$xwalk |>
+    filter(!is.na(unit_id)) |>
     transmute(unit_id, geo, county_fips, county_name, rule) |>
     write_csv(f_join, na = "")
 
-  if (file.exists(f_json)) unlink(f_json)
+  if (file.exists(f_json)) {
+    unlink(f_json)
+  }
   ## `geom` MUST be named explicitly in the SELECT list. With an explicit column list and
   ## no geometry column, OGR SQL on a GeoPackage returns `"geometry": null` for every
   ## feature and ogr2ogr still EXITS 0 -- producing a valid GeoJSON that mapshaper
@@ -433,14 +607,32 @@ emit_one <- function(r) {
   ## The assertion below is the guard; this comment is why it exists.
   sql <- sprintf(
     "SELECT unit_id, geom FROM %s WHERE state_abbr = '%s' AND fips IN (%s)",
-    GPKG_LAYER, st, paste0("'", counties, "'", collapse = ","))
-  ok <- system2("ogr2ogr", c("-f", "GeoJSON", shQuote(f_json), shQuote(P_GPKG),
-                             "-sql", shQuote(sql), "-t_srs", "EPSG:4326"),
-                stdout = TRUE, stderr = TRUE)
-  if (!file.exists(f_json)) cli_abort("{st}: ogr2ogr GeoJSON failed: {paste(ok, collapse=' ')}")
+    GPKG_LAYER,
+    st,
+    paste0("'", counties, "'", collapse = ",")
+  )
+  ok <- system2(
+    "ogr2ogr",
+    c(
+      "-f",
+      "GeoJSON",
+      shQuote(f_json),
+      shQuote(P_GPKG),
+      "-sql",
+      shQuote(sql),
+      "-t_srs",
+      "EPSG:4326"
+    ),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+  if (!file.exists(f_json)) {
+    cli_abort("{st}: ogr2ogr GeoJSON failed: {paste(ok, collapse=' ')}")
+  }
   mb_in <- round(file.size(f_json) / 1e6, 1)
-  if (any(grepl('"geometry":null', readLines(f_json, n = 20, warn = FALSE), fixed = TRUE)))
+  if (any(grepl('"geometry":null', readLines(f_json, n = 20, warn = FALSE), fixed = TRUE))) {
     cli_abort("{st}: ogr2ogr returned NULL geometry -- is `geom` in the SELECT list?")
+  }
 
   ## STEP ORDER IS LOAD-BEARING: `-clean` must come BEFORE `-simplify`.
   ## `-clean` rebuilds topology from the full-precision arcs, so running it AFTER
@@ -457,49 +649,88 @@ emit_one <- function(r) {
     chk <- system2("mapshaper", c(shQuote(f), "-info"), stdout = TRUE, stderr = TRUE)
     num <- function(pat) {
       ln <- grep(pat, chk, value = TRUE)[1]
-      if (is.na(ln)) return(0L)
+      if (is.na(ln)) {
+        return(0L)
+      }
       as.integer(str_match(str_remove_all(ln, ","), "([0-9]+)")[, 2])
     }
     bb <- grep("Bounds:", chk, value = TRUE)[1]
-    bb <- if (is.na(bb)) rep(NA_real_, 4) else
+    bb <- if (is.na(bb)) {
+      rep(NA_real_, 4)
+    } else {
       as.numeric(strsplit(trimws(str_remove(bb, ".*Bounds:")), ",")[[1]])
-    list(polygon = any(grepl("Type:\\s+polygon", chk)),
-         records = num("Records:"), nulls = num("Nulls:"), bounds = bb, raw = chk)
+    }
+    list(
+      polygon = any(grepl("Type:\\s+polygon", chk)),
+      records = num("Records:"),
+      nulls = num("Nulls:"),
+      bounds = bb,
+      raw = chk
+    )
   }
 
-  quant <- NA_character_; info <- NULL
+  quant <- NA_character_
+  info <- NULL
   for (q in QUANT_CANDIDATES) {
-    ms <- system2("mapshaper", c(
-      "-i", shQuote(f_json),
-      "-join", shQuote(f_join), "keys=unit_id,unit_id",
-        "fields=geo,county_fips,county_name", "unjoined", "unmatched",
+    ms <- system2(
+      "mapshaper",
+      c(
+        "-i",
+        shQuote(f_json),
+        "-join",
+        shQuote(f_join),
+        "keys=unit_id,unit_id",
+        "fields=geo,county_fips,county_name",
+        "unjoined",
+        "unmatched",
         "string-fields=unit_id,geo,county_fips,county_name,rule",
-      "-filter-fields", "unit_id,geo,county_fips,county_name",
-      "-clean",
-      "-simplify", paste0("interval=", SIMPLIFY_INTERVAL), "keep-shapes",
-      "-o", shQuote(f_out), "format=topojson",
+        "-filter-fields",
+        "unit_id,geo,county_fips,county_name",
+        "-clean",
+        "-simplify",
+        paste0("interval=", SIMPLIFY_INTERVAL),
+        "keep-shapes",
+        "-o",
+        shQuote(f_out),
+        "format=topojson",
         if (q == "no-quantization") "no-quantization" else paste0("quantization=", q),
-        "force"),
-      stdout = TRUE, stderr = TRUE)
-    if (!file.exists(f_out)) cli_abort("{st}: mapshaper failed: {paste(ms, collapse='\n')}")
+        "force"
+      ),
+      stdout = TRUE,
+      stderr = TRUE
+    )
+    if (!file.exists(f_out)) {
+      cli_abort("{st}: mapshaper failed: {paste(ms, collapse='\n')}")
+    }
     if (q == QUANT_CANDIDATES[1]) {
       jm <- grep("unmatched|unjoined|Removed|Retained", ms, value = TRUE)
-      for (m in jm) cli_inform("  {m}")
+      for (m in jm) {
+        cli_inform("  {m}")
+      }
     }
     ## verify the ARTIFACT, not the exit code.
     info <- inspect(f_out)
-    if (!info$polygon)
-      cli_abort("{st}: topojson is not a polygon layer -- geometry was lost. \\
-                 mapshaper -info said: {paste(info$raw, collapse=' ')}")
-    if (info$records != nrow(r$vh))
+    if (!info$polygon) {
+      cli_abort(
+        "{st}: topojson is not a polygon layer -- geometry was lost. \\
+                 mapshaper -info said: {paste(info$raw, collapse=' ')}"
+      )
+    }
+    if (info$records != nrow(r$vh)) {
       cli_abort("{st}: topojson has {info$records} features, expected {nrow(r$vh)}")
+    }
     quant <- q
-    if (info$nulls == 0L) break
+    if (info$nulls == 0L) {
+      break
+    }
     cli_alert_warning("{st}: quantization={q} nulled {info$nulls} geometries -- escalating")
   }
-  if (info$nulls != 0L)
-    cli_abort("{st}: {info$nulls} null geometries remain at \\
-               quantization={quant} -- small precincts would render as holes.")
+  if (info$nulls != 0L) {
+    cli_abort(
+      "{st}: {info$nulls} null geometries remain at \\
+               quantization={quant} -- small precincts would render as holes."
+    )
+  }
 
   ## ANTIMERIDIAN. AK's Aleutian tail crosses +180, so its bounding box reads
   ## -179.1..179.8 -- 360 degrees wide for a state ~55 degrees wide. The GEOMETRY IS
@@ -507,22 +738,38 @@ emit_one <- function(r) {
   ## AK as a sliver. The fix belongs at render time (an Albers projection, e.g. Observable
   ## Plot's `projection: "albers-usa"`), not in the data, so this warns rather than
   ## rewriting coordinates.
-  if (!anyNA(info$bounds) && (info$bounds[3] - info$bounds[1]) > 180)
-    cli_alert_warning("{st}: bounds span {round(info$bounds[3]-info$bounds[1])} deg \\
+  if (!anyNA(info$bounds) && (info$bounds[3] - info$bounds[1]) > 180) {
+    cli_alert_warning(
+      "{st}: bounds span {round(info$bounds[3]-info$bounds[1])} deg \\
                        -- crosses the antimeridian. Geometry is correct, but the \\
                        renderer MUST use a projection (e.g. albers-usa); fitting a \\
-                       viewport to the bbox will draw this state as a sliver.")
+                       viewport to the bbox will draw this state as a sliver."
+    )
+  }
 
   mb_out <- round(file.size(f_out) / 1e6, 2)
-  cli_alert_success("{st}: {info$records} features, 0 nulls, quant {quant}, \\
-                     geojson {mb_in} MB -> topojson {mb_out} MB  {.file {f_out}}")
-  tibble(state = st, features = info$records, mb_geojson = mb_in, mb_topojson = mb_out,
-         interval_m = SIMPLIFY_INTERVAL, quantization = quant, file = f_out)
+  cli_alert_success(
+    "{st}: {info$records} features, 0 nulls, quant {quant}, \\
+                     geojson {mb_in} MB -> topojson {mb_out} MB  {.file {f_out}}"
+  )
+  tibble(
+    state = st,
+    features = info$records,
+    mb_geojson = mb_in,
+    mb_topojson = mb_out,
+    interval_m = SIMPLIFY_INTERVAL,
+    quantization = quant,
+    file = f_out
+  )
 }
 
 sizes <- map(res, emit_one) |> compact() |> bind_rows()
 cli_h2("artifact sizes")
-if (nrow(sizes)) print(as.data.frame(sizes |> select(-file)), row.names = FALSE)
-cli_alert_info("index.html is already ~17.8 MB with embed-resources -- check the delta \\
-                before wiring these in, and raise SIMPLIFY_INTERVAL if they cost too much.")
+if (nrow(sizes)) {
+  print(as.data.frame(sizes |> select(-file)), row.names = FALSE)
+}
+cli_alert_info(
+  "index.html is already ~17.8 MB with embed-resources -- check the delta \\
+                before wiring these in, and raise SIMPLIFY_INTERVAL if they cost too much."
+)
 cli_alert_success("done. geometry is static: do NOT re-run this per refresh.")

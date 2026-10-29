@@ -31,21 +31,28 @@
 # `NN-absentee`, `NN-question`) all classify correctly but have no ground truth to score
 # against, so bucket_counts() asserts AK's vocabulary explicitly instead.
 BUCKET_RX = c(
-  mail     = "(^|[^A-Z])(ABS|ABSEN[A-Z]*|MAIL|BY[ -]?MAIL)([^A-Z]|$)",
-  prov     = "(^|[^A-Z])(PROV[A-Z]*|PROVSIONAL|QUESTION[A-Z]*|CHALLENGE[A-Z]*)([^A-Z]|$)",
-  early    = "(^|[^A-Z])(EV|EARLY[A-Z]*|ONE ?STOP|BOE|CURBSIDE)([^A-Z]|$)|^EV[A-Z]{2,4}$",
+  mail = "(^|[^A-Z])(ABS|ABSEN[A-Z]*|MAIL|BY[ -]?MAIL)([^A-Z]|$)",
+  prov = "(^|[^A-Z])(PROV[A-Z]*|PROVSIONAL|QUESTION[A-Z]*|CHALLENGE[A-Z]*)([^A-Z]|$)",
+  early = "(^|[^A-Z])(EV|EARLY[A-Z]*|ONE ?STOP|BOE|CURBSIDE)([^A-Z]|$)|^EV[A-Z]{2,4}$",
   transfer = "(^|[^A-Z])(TRANS[A-Z]*)([^A-Z]|$)"
 )
 
-# NA for anything that looks like a precinct.
+#' Classify a geo label as a reporting bucket
+#'
+#' Applies `BUCKET_RX` in its fixed order (mail, prov, early, transfer).
+#'
+#' @param label Character vector of precinct labels (the part of a geo after the county code).
+#' @return Character vector: "mail", "prov", "early" or "transfer"; NA for anything that
+#'   looks like a precinct.
 bucket_class = function(label) {
   u = toupper(label)
   dplyr::case_when(
-    stringr::str_detect(u, BUCKET_RX[["mail"]])     ~ "mail",
-    stringr::str_detect(u, BUCKET_RX[["prov"]])     ~ "prov",
-    stringr::str_detect(u, BUCKET_RX[["early"]])    ~ "early",
+    stringr::str_detect(u, BUCKET_RX[["mail"]]) ~ "mail",
+    stringr::str_detect(u, BUCKET_RX[["prov"]]) ~ "prov",
+    stringr::str_detect(u, BUCKET_RX[["early"]]) ~ "early",
     stringr::str_detect(u, BUCKET_RX[["transfer"]]) ~ "transfer",
-    TRUE ~ NA_character_)
+    TRUE ~ NA_character_
+  )
 }
 
 # bucket class -> the MODEL's mode. `prov` and `transfer` are not in
@@ -57,9 +64,18 @@ bucket_class = function(label) {
 # Kept as a named vector rather than inlined so the fold is greppable and testable.
 BUCKET_FOLD = c(mail = "mail", early = "early", prov = "eday", transfer = "eday")
 
-# The county part of a canonical geo (CONTRACT.md section 0: `{st}_{county_cbs}_{precinct_id}`,
-# county_cbs zero-padded to 3). Verified on every geo of AK_latest (522) and NC_latest
-# (2,842), buckets included: 0 failures. Used on BOTH sides of the county bound so the
-# model never has to join a county NAME to a county NUMBER.
+#' County code of a canonical geo
+#'
+#' `{st}_{county_cbs}_{precinct_id}` (CONTRACT.md section 0) -> the 3-digit `county_cbs`.
+#' Used on both sides of the county bound so the model never joins a county name to a
+#' county number. In AK the code is a house district, not a borough.
+#'
+#' @param geo Character (or factor) vector of geo ids.
+#' @return Character vector of 3-digit codes; NA where the geo has none.
 geo_county = function(geo) stringr::str_extract(as.character(geo), "(?<=_)[0-9]{3}(?=_)")
-geo_label  = function(geo) stringr::str_replace(as.character(geo), "^[a-z]{2}_[0-9]+_", "")
+
+#' Precinct part of a canonical geo
+#'
+#' @param geo Character (or factor) vector of geo ids.
+#' @return Character vector: the geo with its `{st}_{county}_` prefix removed.
+geo_label = function(geo) stringr::str_replace(as.character(geo), "^[a-z]{2}_[0-9]+_", "")

@@ -66,18 +66,23 @@
 ## reporting_levels.csv live there.
 ##
 ## Usage (from the cbs-enr folder):
-##   Rscript scripts/model/make_mode_composition.R
+##   Rscript scripts/model/prep/make_mode_composition.R
 ## Writes scripts/model/lookups/mode_composition.csv. Re-run only when the archive or the
 ## state list changes; the output is committed.
 # ========================================
 
 suppressPackageStartupMessages({
-  library(dplyr); library(tidyr); library(stringr); library(purrr)
+  library(dplyr)
+  library(tidyr)
+  library(stringr)
+  library(purrr)
 })
 
-DIR_MEDSL = Sys.getenv("MEDSL_2022_DIR",
-  unset = file.path(Sys.getenv("HOME"), "Work/gh/2022-elections-official/individual_states"))
-OUT  = "scripts/model/lookups/mode_composition.csv"
+DIR_MEDSL = Sys.getenv(
+  "MEDSL_2022_DIR",
+  unset = file.path(Sys.getenv("HOME"), "Work/gh/2022-elections-official/individual_states")
+)
+OUT = "scripts/model/lookups/mode_composition.csv"
 YEAR = 2022
 
 # The office whose returns define each state's composition. NOT derived: it has to be a
@@ -92,10 +97,19 @@ OFFICE = c(NC = "US SENATE", AK = "GOVERNOR", CA = "GOVERNOR", MI = "ATTORNEY GE
 # the canvass and fold into eday, overseas ballots are mail. Matches BUCKET_FOLD in
 # live/R/vote_modes.R. `TOTAL` is deliberately absent so it can never be summed in.
 MODE_MAP = list(
-  NC = c("ABSENTEE BY MAIL" = "mail", "ONE STOP" = "early",
-         "ELECTION DAY" = "eday", "PROVISIONAL" = "eday"),
-  AK = c("ABSENTEE" = "mail", "FEDERAL OVERSEAS" = "mail", "EARLY VOTING" = "early",
-         "ELECTION DAY" = "eday", "QUESTION" = "eday"),
+  NC = c(
+    "ABSENTEE BY MAIL" = "mail",
+    "ONE STOP" = "early",
+    "ELECTION DAY" = "eday",
+    "PROVISIONAL" = "eday"
+  ),
+  AK = c(
+    "ABSENTEE" = "mail",
+    "FEDERAL OVERSEAS" = "mail",
+    "EARLY VOTING" = "early",
+    "ELECTION DAY" = "eday",
+    "QUESTION" = "eday"
+  ),
   CA = c("ABSENTEE" = "mail", "NOT ABSENTEE" = "eday"),
   MI = c("ABSENTEE" = "mail", "ELECTION DAY" = "eday")
 )
@@ -105,6 +119,11 @@ MODE_MAP = list(
 # prep_model_inputs.R, so the claim and its measurement sit together.
 L2_BROKEN = "NC"
 
+#' Unzip a state's MEDSL 2022 precinct archive
+#'
+#' @param st Two-letter state code.
+#' @return Path to the extracted CSV, or NULL (with a warning) if the archive is missing or
+#'   does not hold exactly one CSV.
 unzip_state = function(st) {
   z = file.path(DIR_MEDSL, sprintf("2022-%s-local-precinct-general.zip", tolower(st)))
   if (!file.exists(z)) {
@@ -121,47 +140,94 @@ unzip_state = function(st) {
   f
 }
 
+#' Official 2022 county x mode votes for one state
+#'
+#' Keeps the state's office (`OFFICE`) and maps its modes (`MODE_MAP`); stops on an unmapped
+#' mode. TOTAL rows are excluded.
+#'
+#' @param st Two-letter state code.
+#' @return Tibble of county x method voter counts, or NULL if there is no archive.
 one_state = function(st) {
-  f = unzip_state(st); if (is.null(f)) return(NULL)
+  f = unzip_state(st)
+  if (is.null(f)) {
+    return(NULL)
+  }
   cli::cli_h2("{st}  ({round(file.size(f) / 1048576)} MB)")
-  d = readr::read_csv(f, show_col_types = FALSE, progress = FALSE,
-                      col_select = c(office, mode, votes, county_name, county_fips, precinct))
+  d = readr::read_csv(
+    f,
+    show_col_types = FALSE,
+    progress = FALSE,
+    col_select = c(office, mode, votes, county_name, county_fips, precinct)
+  )
   off = OFFICE[[st]]
-  if (!off %in% d$office)
-    cli::cli_abort("{st}: office {.val {off}} not in the archive. Present (top): \\
-                    {paste(head(names(sort(table(d$office), decreasing = TRUE)), 5), collapse = ' | ')}")
+  if (!off %in% d$office) {
+    cli::cli_abort(
+      "{st}: office {.val {off}} not in the archive. Present (top): \\
+                    {paste(head(names(sort(table(d$office), decreasing = TRUE)), 5), collapse = ' | ')}"
+    )
+  }
   mm = MODE_MAP[[st]]
   bad = setdiff(unique(d$mode[d$office == off]), c(names(mm), "TOTAL"))
-  if (length(bad))
-    cli::cli_abort("{st}: unmapped mode value(s) {.val {bad}} -- add them to MODE_MAP or \\
-                    decide explicitly that they are dropped.")
+  if (length(bad)) {
+    cli::cli_abort(
+      "{st}: unmapped mode value(s) {.val {bad}} -- add them to MODE_MAP or \\
+                    decide explicitly that they are dropped."
+    )
+  }
   z = d |>
-    filter(office == off, mode %in% names(mm)) |>          # TOTAL excluded by construction
+    filter(office == off, mode %in% names(mm)) |> # TOTAL excluded by construction
     mutate(method = unname(mm[mode])) |>
-    summarize(voters = sum(votes, na.rm = TRUE),
-              n_precincts = n_distinct(precinct),
-              .by = c(county_name, county_fips, method)) |>
+    summarize(
+      voters = sum(votes, na.rm = TRUE),
+      n_precincts = n_distinct(precinct),
+      .by = c(county_name, county_fips, method)
+    ) |>
     mutate(share = voters / sum(voters), .by = c(county_name, county_fips)) |>
-    mutate(state = st, year = YEAR, source = "medsl_2022_official", office = off,
-           replaces_l2 = st %in% L2_BROKEN)
-  stopifnot("shares must sum to 1 per county" =
-              all(abs(tapply(z$share, z$county_name, sum) - 1) < 1e-9))
+    mutate(
+      state = st,
+      year = YEAR,
+      source = "medsl_2022_official",
+      office = off,
+      replaces_l2 = st %in% L2_BROKEN
+    )
+  stopifnot(
+    "shares must sum to 1 per county" = all(abs(tapply(z$share, z$county_name, sum) - 1) < 1e-9)
+  )
   sw = z |> summarize(v = sum(voters), .by = method) |> mutate(sh = v / sum(v))
-  cli::cli_alert_success("{st}: {n_distinct(z$county_name)} county(ies), \\
+  cli::cli_alert_success(
+    "{st}: {n_distinct(z$county_name)} county(ies), \\
                           {format(sum(z$voters), big.mark = ',')} votes -- \\
-                          {paste(sprintf('%s %.3f', sw$method, sw$sh), collapse = '  ')}")
+                          {paste(sprintf('%s %.3f', sw$method, sw$sh), collapse = '  ')}"
+  )
   z
 }
 
 res = map(names(MODE_MAP), one_state) |> compact() |> bind_rows()
-if (!nrow(res)) cli::cli_abort("no state produced a composition -- check {.path {DIR_MEDSL}}")
+if (!nrow(res)) {
+  cli::cli_abort("no state produced a composition -- check {.path {DIR_MEDSL}}")
+}
 
 res = res |>
-  select(state, year, county_fips, county_name, method, voters, share, n_precincts,
-         source, office, replaces_l2) |>
+  select(
+    state,
+    year,
+    county_fips,
+    county_name,
+    method,
+    voters,
+    share,
+    n_precincts,
+    source,
+    office,
+    replaces_l2
+  ) |>
   arrange(state, county_name, method)
 readr::write_csv(res, OUT)
-cli::cli_alert_success("wrote {.path {OUT}}: {nrow(res)} rows, \\
-                        {n_distinct(paste(res$state, res$county_name))} state x county")
-cli::cli_alert_info("applied by prep_model_inputs.R only where replaces_l2 is TRUE \\
-                     ({paste(L2_BROKEN, collapse = ', ')})")
+cli::cli_alert_success(
+  "wrote {.path {OUT}}: {nrow(res)} rows, \\
+                        {n_distinct(paste(res$state, res$county_name))} state x county"
+)
+cli::cli_alert_info(
+  "applied by prep_model_inputs.R only where replaces_l2 is TRUE \\
+                     ({paste(L2_BROKEN, collapse = ', ')})"
+)

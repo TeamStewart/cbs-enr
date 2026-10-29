@@ -1,14 +1,9 @@
 # Data contract — race-by-race election-night model (2026)
 
-**Status:** draft 1, 2026-10-18. Owner: Young-Kyung Kim. Consumer: `scripts/model/model_turnout.R`
-and its successors. See `tx_model_spec.tex` for the model these inputs feed and
-`nyc_tx_comparison.tex` for why it is shaped this way.
-
-**Update 2026-10-19 (Bridget Schippers):** TX §1, §2, §3, §6 and §9 are now built by
-`scripts/model/prep_tx_model_inputs.R`, which reads shared Dropbox files in
-(`26_general/input_data`) and writes `26_general/input_data/model_inputs/TX_*`. Changes
-in this update: the `geo` normalization rule (§0), measured TX join rates (§0), where `n`
-comes from and how L2 gaps are filled (§2), and the status of `prec_*` / `pr_other` (§11).
+Consumers: the election-night models in `scripts/model/live/`. §1, §2, §3, §6 and §9 are
+built for every state by `scripts/model/prep/prep_model_inputs.R`, which reads
+`26_general/input_data` and writes `26_general/input_data/model_inputs/{ST}_*`. See
+`tx_model_spec.tex` for the medsl_sur model these inputs feed.
 
 This specifies what the model needs, at what grain, in what units. It is written so a
 database can be mapped to it field by field. Sections marked **BLOCKED** are inputs we do
@@ -234,8 +229,7 @@ keep `prior_oth` as its own nullable field.
 
 **Status 2026-10-19.** No longer blocked in principle: the 2024 TX scrape yields real
 precinct × mode × party results, and δ_m is now measured rather than borrowed or assumed.
-Built as `scripts/model/tx24_mode_history_2024.parquet` (not copied into the pipeline path,
-see §10). Measured on TX 2024:
+Built once from the raw county scrapes for a backtest (not in the pipeline path, see §10). Measured on TX 2024:
 
 | method | `delta_a` | `delta_b` | two-party Dem of that mode |
 |---|---|---|---|
@@ -394,7 +388,7 @@ scope**; statewide-only can omit it.
 ## 10. `results_historical` — final canvass by mode and party — **PARTIALLY UNBLOCKED**
 
 **Status 2026-10-19.** TX 2024 now exists, built from the raw county scrapes rather than
-supplied: `scripts/model/tx24_mode_history_2024.parquet`, 16 counties, 4 modes, in this
+supplied (a one-off backtest file), 16 counties, 4 modes, in this
 table's schema. It is deliberately **not** copied to
 `26_general/input_data/TX_mode_history.parquet`, which is where the live model looks —
 dropping it there would silently switch production off `delta_m = 0`, and that should be a
@@ -507,7 +501,7 @@ prediction — is never identified from the current night's data.
    **Status 2026-10-19:** `prec_*` (and `prec_harris2p`) are in the raw voter file
    (`vf_frame_current_202609`) but NOT in `yougov_precinct_frame.parquet`; `create_frame.R`
    has to average them in (over 2024 voters, like `pr_harris`). Once it does,
-   `prep_tx_model_inputs.R` switches to them automatically and reports
+   `prep_model_inputs.R` switches to them automatically and reports
    corr(logit returns, logit model) per §14.4.
 2. **`oth_base` source.** `pr_other` exists as a column and should replace the
    `1 − pr_harris − pr_trump` residual. Better still is `gov22_oth/gov22_total`
