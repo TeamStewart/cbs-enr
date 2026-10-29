@@ -176,14 +176,20 @@ clean file) differs from the one the state's crosswalk was last built on.
 
 ### VoteHub crosswalks
 
-States with a VoteHub precinct shapefile (`input_data/votehub-shapefiles/`;
-all of them are in `26_pct_bdrys.gpkg`: AK, FL, GA, IA, MI, NC, NE, OH, SC,
-TX) also get an ENR <-> VoteHub crosswalk, separate from the frame crosswalk.
-It covers every ENR precinct in the state's `clean/*_latest.parquet` files,
-not only frame counties. States without a VoteHub layer are skipped.
+States with a VoteHub precinct shapefile in `input_data/votehub-shapefiles/`
+(AK, FL, GA, IA, MI, NC, NE, OH, SC in `26_pct_bdrys.gpkg`; CA as
+`CA26G.zip`; TX as `TX26G.zip`) also get an ENR <-> VoteHub crosswalk. A
+state's own file (`{ST}26G` or `{ST}26P`, folder or `.zip`) is picked up
+automatically if the state is not in the gpkg, or if the file is newer than the
+gpkg (it then replaces the gpkg's rows for that state; `G` wins over `P`). The separate crosswalk covers every ENR precinct in
+the state's `clean/*_latest.parquet` files, not only frame counties. Its
+`unit_id` is also added to the frame crosswalk `crosswalks/{st}.csv` as
+`precinct_votehub` (through `precinct_enr`): `write_crosswalk()` adds it when a
+frame script runs, and `votehub.R` refreshes it after each build. States
+without a VoteHub layer are skipped (their frame crosswalks get an NA column).
 
 ```sh
-Rscript scripts/util/crosswalks/votehub.R          # states whose clean files are newer than their csv
+Rscript scripts/util/crosswalks/votehub.R          # states whose clean files or VoteHub layer are newer than their csv
 Rscript scripts/util/crosswalks/votehub.R MI TX    # these states
 Rscript scripts/util/crosswalks/votehub.R --all    # every VoteHub state with clean data
 ```
@@ -192,7 +198,7 @@ Output: `input_data/crosswalks/votehub/{st}.csv` with `state, county,
 precinct_enr, unit_id, precinct_vh, vh_geography, vh_rule` (`unit_id` NA if
 unmatched). Matching is within county and strict 1:1, through the ordered tiers
 in `votehub.R` (ENR id against the VoteHub code in `unit_id` and the name in
-`precinct_sos`, exact first). FL and TX layers are 2026 primary precincts
+`precinct_sos`, exact first). The FL layer is 2026 primary precincts
 (`vh_geography = primary`).
 
 Run it after the frame crosswalks in every pass. For each state:
@@ -207,8 +213,10 @@ Run it after the frame crosswalks in every pass. For each state:
   drops for real precincts, inspect the new ids and add keys or recodes in
   `state_keys()` / `tiers` in `votehub.R`.
 
-Rates on 2026-10-28: AK 76.6%, FL 99.1%, GA 97.9%, MI 91.2%, NC 92.4%,
-NE 85.6%, OH 93.2%, TX 99.3% (IA, SC: no clean data yet).
+Rates on 2026-10-28: AK 76.6%, CA 86.4%, FL 99.1%, GA 97.9%, MI 91.2%,
+NC 92.4%, NE 85.6%, OH 93.2%, TX 99.3% (IA, SC: no clean data yet). CA San
+Diego ENR has 2,994 precincts against VoteHub's 2,239; the unmatched rest
+are expected.
 
 ## Google Sheet
 

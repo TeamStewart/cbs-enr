@@ -1,0 +1,126 @@
+platform,state,county,slug,exists,status,path,note
+ev,CA,Nevada,nevada-county-ca,1,found,https://app.enhancedvoting.com/cdn/results/nevada-county-ca/export-2026StatewideGeneral.json,"[{'languageId': 'en', 'text': 'Nevada County'}]; export HTTP 200"
+ev,IL,Williamson,williamson-county-il,1,not_posted,,"[{'languageId': 'en', 'text': 'Williamson County'}]; newest 2026PrimaryElection (2026-03-17)"
+ev,IN,Porter,porter-county-in,1,found,https://app.enhancedvoting.com/cdn/results/porter-county-in/export-GeneralNov032026.json,"[{'languageId': 'en', 'text': 'Porter County'}]; export HTTP 200"
+ev,MO,Clay,clay-county-mo,1,not_posted,,"[{'languageId': 'en', 'text': 'Clay County'}]; newest pe20260804 (2026-08-04)"
+ev,ND,Adams,adams-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Adams County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Barnes,barnes-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Barnes County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Benson,benson-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Benson County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Billings,billings-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Billings County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Bottineau,bottineau-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Bottineau County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Bowman,bowman-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Bowman County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Burke,burke-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Burke County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Burleigh,burleigh-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Burleigh County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Cass,cass-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Cass County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Cavalier,cavalier-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Cavalier County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Dickey,dickey-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Dickey County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Divide,divide-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Divide County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Dunn,dunn-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Dunn County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Eddy,eddy-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Eddy County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Emmons,emmons-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Emmons County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Foster,foster-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Foster County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Golden Valley,golden-valley-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Golden Valley County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Grand Forks,grand-forks-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Grand Forks County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Grant,grant-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Grant County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Griggs,griggs-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Griggs County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Hettinger,hettinger-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Hettinger County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Kidder,kidder-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Kidder County'}]; newest general11052024 (2024-11-05)"
+ev,ND,LaMoure,lamoure-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'LaMoure County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Logan,logan-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Logan County'}]; newest general11052024 (2024-11-05)"
+ev,ND,McHenry,mchenry-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'McHenry County'}]; newest general11052024 (2024-11-05)"
+ev,ND,McIntosh,mcintosh-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'McIntosh County'}]; newest general11052024 (2024-11-05)"
+ev,ND,McKenzie,mckenzie-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'McKenzie County'}]; newest general11052024 (2024-11-05)"
+ev,ND,McLean,mclean-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'McLean County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Mercer,mercer-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Mercer County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Morton,morton-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Morton County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Mountrail,mountrail-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Mountrail County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Nelson,nelson-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Nelson County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Oliver,oliver-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Oliver County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Pembina,pembina-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Pembina County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Pierce,pierce-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Pierce County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Ramsey,ramsey-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Ramsey County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Ransom,ransom-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Ransom County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Renville,renville-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Renville County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Richland,richland-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Richland County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Rolette,rolette-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Rolette County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Sargent,sargent-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Sargent County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Sheridan,sheridan-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Sheridan County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Sioux,sioux-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Sioux County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Slope,slope-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Slope County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Stark,stark-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Stark County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Steele,steele-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Steele County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Stutsman,stutsman-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Stutsman County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Towner,towner-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Towner County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Traill,traill-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Traill County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Walsh,walsh-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Walsh County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Ward,ward-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Ward County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Wells,wells-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Wells County'}]; newest general11052024 (2024-11-05)"
+ev,ND,Williams,williams-county-nd,1,not_posted,,"[{'languageId': 'en', 'text': 'Williams County'}]; newest general11052024 (2024-11-05)"
+ev,NY,Cattaraugus,cattaraugus-county-ny,1,found,https://app.enhancedvoting.com/cdn/results/cattaraugus-county-ny/export-GE2026.json,"[{'languageId': 'en', 'text': 'Cattaraugus County'}]; export HTTP 200"
+ev,NY,Monroe,monroe-county-ny,1,found,https://app.enhancedvoting.com/cdn/results/monroe-county-ny/export-GE2026.json,"[{'languageId': 'en', 'text': 'Monroe County'}]; export HTTP 200"
+ev,NY,Ontario,ontario-county-ny,1,found,https://app.enhancedvoting.com/cdn/results/ontario-county-ny/export-2026GeneralElection.json,"[{'languageId': 'en', 'text': 'Ontario County'}]; export HTTP 200"
+ev,NY,Steuben,steuben-county-ny,1,found,https://app.enhancedvoting.com/cdn/results/steuben-county-ny/export-GE2026.json,"[{'languageId': 'en', 'text': 'Steuben County'}]; export HTTP 200"
+ev,NY,Sullivan,sullivan-county-ny,1,found,https://app.enhancedvoting.com/cdn/results/sullivan-county-ny/export-GE2026.json,"[{'languageId': 'en', 'text': 'Sullivan County'}]; export HTTP 200"
+ev,NY,Ulster,ulster-county-ny,1,found,https://app.enhancedvoting.com/cdn/results/ulster-county-ny/export-GE2026_20261019155937.json,"[{'languageId': 'en', 'text': 'Ulster County'}]; export HTTP 200"
+ev,OH,Greene,greene-county-oh,1,found,https://app.enhancedvoting.com/cdn/results/greene-county-oh/export-2026NovemberGeneral.json,"[{'languageId': 'en', 'text': 'Greene County'}]; export HTTP 200"
+ev,TN,Shelby,shelby-county-tn,1,not_posted,,"[{'languageId': 'en', 'text': 'Shelby County'}]; newest 08062026CountyGeneralStateandFederalMunicipal (2026-08-06)"
+ev,TX,Reeves,reeves-county-tx,1,found,https://app.enhancedvoting.com/cdn/results/reeves-county-tx/export-11032026.json,"[{'languageId': 'en', 'text': 'Reeves County'}]; export HTTP 200"
+ev,,city-detroit-mi,city-detroit-mi,1,found,https://app.enhancedvoting.com/cdn/results/city-detroit-mi/export-_20261027152933.json,"[{'languageId': 'en', 'text': 'City of Detroit'}]; export HTTP 200"
+ev,,georgia,georgia,1,not_posted,,"[{'languageId': 'en', 'text': 'Georgia'}]; newest 08252026SpecialElectionRunoff (2026-08-25)"
+ev,,rhodeisland,rhodeisland,1,not_posted,,"[{'languageId': 'en', 'text': 'Rhode Island'}]; newest RI2026StatewidePrimary (2026-09-09)"
+ev,,utah,utah,1,found,https://app.enhancedvoting.com/cdn/results/Utah/export-General11032026.json,"[{'languageId': 'en', 'text': 'Utah'}]; export HTTP 200"
+lvt,CA,San Bernardino,sanbernardinocaenr,1,not_posted,,"ids 1-40: newest id 2, no target date"
+lvt,CA,San Joaquin,sanjoaquincaenr,1,found,https://www.livevoterturnout.com/ENR/sanjoaquincaenr/22/en/Index_22.html,id 22
+lvt,IL,Effingham,effinghamilenr,1,found,https://www.livevoterturnout.com/ENR/effinghamilenr/2/en/Index_2.html,id 2
+lvt,IL,Fayette,fayetteilenr,1,not_posted,,"ids 1-11: newest id 2, no target date"
+lvt,KS,Anderson,andersonksenr,1,found,https://www.livevoterturnout.com/ENR/andersonksenr/13/en/Index_13.html,id 13
+lvt,KS,Butler,butlerksenr,1,not_posted,,"ids 1-40: newest id 3, no target date"
+lvt,KS,Douglas,douglasksenr,1,found,https://www.livevoterturnout.com/ENR/douglasksenr/22/en/Index_22.html,id 22
+lvt,KS,Geary,gearyksenr,1,not_posted,,"ids 1-40: newest id 3, no target date"
+lvt,KS,Leavenworth,leavenworthksenr,1,not_posted,,"ids 1-40: newest id 3, no target date"
+lvt,KY,Laurel,laurelkyenr,1,not_posted,,"ids 116-127: newest id 120, no target date"
+lvt,MO,Buchanan,buchananmoenr,1,found,https://www.livevoterturnout.com/ENR/buchananmoenr/27/en/Index_27.html,id 27
+lvt,MO,Caldwell,caldwellmoenr,1,not_posted,,"ids 5-16: newest id 13, no target date"
+lvt,MO,Cape Girardeau,capegirardeaumoenr,1,found,https://www.livevoterturnout.com/ENR/capegirardeaumoenr/2/en/Index_2.html,id 2
+lvt,MO,Cooper,coopermoenr,1,not_posted,,"ids 13-24: newest id 15, no target date"
+lvt,MO,Franklin,franklinmoenr,1,found,https://www.livevoterturnout.com/ENR/franklinmoenr/16/en/Index_16.html,id 16
+lvt,MO,Jackson,jacksonmoenr,1,not_posted,,"ids 35-46: newest id 38, no target date"
+lvt,MO,Jefferson,jeffersonmoenr,1,found,https://www.livevoterturnout.com/ENR/jeffersonmoenr/27/en/Index_27.html,id 27
+lvt,MO,Pettis,pettismoenr,1,not_posted,,"ids 1-40: newest id 13, no target date"
+lvt,MO,Ray,raymoenr,1,found,https://www.livevoterturnout.com/ENR/raymoenr/23/en/Index_23.html,id 23
+lvt,MO,St. Charles,stcharlesmoenr,1,found,https://www.livevoterturnout.com/ENR/stcharlesmoenr/33/en/Index_33.html,id 33
+lvt,MO,Ste. Genevieve,stegenevievemoenr,1,found,https://www.livevoterturnout.com/ENR/stegenevievemoenr/17/en/Index_17.html,id 17
+lvt,MO,Stone,stonemoenr,1,found,https://www.livevoterturnout.com/ENR/stonemoenr/15/en/Index_15.html,id 15
+lvt,NJ,Bergen,bergennjenr,1,not_posted,,"ids 14-25: newest id 20, no target date"
+lvt,NJ,Salem,salemnjenr,1,not_posted,,"ids 11-22: newest id 13, no target date"
+lvt,OH,Butler,butlerohenr,1,found,https://liveresults.boe.ohio.gov/ENR/butlerohenr/24/en/Index_24.html,id 24
+lvt,OH,Huron,huronohenr,0,error,,site HTTP 429
+lvt,OH,Ottawa,ottawaohenr,0,error,,site HTTP 429
+lvt,OH,Paulding,pauldingohenr,0,error,,site HTTP 429
+lvt,OH,Perry,perryohenr,0,error,,site HTTP 429
+lvt,OH,Pickaway,pickawayohenr,0,error,,site HTTP 429
+lvt,OH,Pike,pikeohenr,0,error,,site HTTP 429
+lvt,OH,Portage,portageohenr,0,error,,site HTTP 429
+lvt,OH,Preble,prebleohenr,0,error,,site HTTP 429
+lvt,OH,Putnam,putnamohenr,0,error,,site HTTP 429
+lvt,OH,Richland,richlandohenr,0,error,,site HTTP 429
+lvt,OH,Ross,rossohenr,0,error,,site HTTP 429
+lvt,OH,Sandusky,sanduskyohenr,0,error,,site HTTP 429
+lvt,OH,Scioto,sciotoohenr,0,error,,site HTTP 429
+lvt,OH,Seneca,senecaohenr,0,error,,site HTTP 429
+lvt,OH,Shelby,shelbyohenr,0,error,,site HTTP 429
+lvt,OH,Trumbull,trumbullohenr,0,error,,site HTTP 429
+lvt,OH,Tuscarawas,tuscarawasohenr,0,error,,site HTTP 429
+lvt,OH,Union,unionohenr,0,error,,site HTTP 429
+lvt,OH,Van Wert,vanwertohenr,0,error,,site HTTP 429
+lvt,OH,Vinton,vintonohenr,0,error,,site HTTP 429
+lvt,OH,Washington,washingtonohenr,0,error,,site HTTP 429
+lvt,OH,Wayne,wayneohenr,0,error,,site HTTP 429
+lvt,OH,Williams,williamsohenr,0,error,,site HTTP 429
+lvt,OH,Wood,woodohenr,0,error,,site HTTP 429
+lvt,OH,Wyandot,wyandotohenr,0,error,,site HTTP 429
+lvt,PA,Franklin,franklinpaenr,1,not_posted,,"ids 12-23: newest id 14, no target date"
+lvt,TN,Anderson,andersontnenr,1,not_posted,,"ids 1-40: newest id 2, no target date"
+lvt,OH,cuy,cuyohenr,1,not_posted,,"ids 22-33: newest id None, no target date"
+lvt,,idaho,idaho,1,not_posted,,"ids 133-144: newest id None, no target date"
+lvt,FL,sem,semflenr,1,not_posted,,"ids 19-30: newest id 21, no target date"

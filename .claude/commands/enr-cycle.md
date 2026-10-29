@@ -20,8 +20,10 @@ them to `probe`, `verify` and `status`. If it names phases, run only those.)
 4. Crosswalks: rebuild each stale state per `docs/crosswalk_todo.md`, update its
    Results entry, then run `xwalk-done`. Then run
    `Rscript scripts/util/crosswalks/votehub.R` (rebuilds the ENR <-> VoteHub
-   crosswalk for every state with a VoteHub shapefile whose clean files changed;
-   states without one are skipped). Check each state's match rate against the
+   crosswalk for every state with a VoteHub shapefile whose clean files or
+   shapefile changed, and refreshes `precinct_votehub` in its frame crosswalk;
+   states without one are skipped). Rebuild frame crosswalks first, so the
+   refresh lands on the new file. Check each state's match rate against the
    last `votehub` log line and eyeball the fuzzy-rule rows it prints; if a
    state's rate drops, inspect the unmatched ids and add keys or recodes in
    `votehub.R`. Log the rates with `cycle.R log "votehub xwalk: ST n/N (x%), ..."`.

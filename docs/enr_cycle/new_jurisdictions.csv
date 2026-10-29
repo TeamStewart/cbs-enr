@@ -1,0 +1,43 @@
+state,county,path,path_timestamp,build,upload,updated,trust_stage,for_cbs,type
+CA,Nevada,https://app.enhancedvoting.com/cdn/results/nevada-county-ca/export-2026StatewideGeneral.json,,FALSE,FALSE,TRUE,FALSE,FALSE,ev
+CA,San Bernardino,https://www.livevoterturnout.com/ENR/sanbernardinocaenr/2/en/Index_2.html,,FALSE,FALSE,FALSE,FALSE,FALSE,lvt
+CA,San Joaquin,https://www.livevoterturnout.com/ENR/sanjoaquincaenr/22/en/Index_22.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+CO,,https://results.enr.clarityelections.com/CO/126592/,,FALSE,FALSE,FALSE,FALSE,FALSE,clarity
+ID,,https://www.livevoterturnout.com/ENR/idaho/133/1/en/Index_133.html,,FALSE,FALSE,FALSE,FALSE,FALSE,lvt
+IL,Effingham,https://www.livevoterturnout.com/ENR/effinghamilenr/2/en/Index_2.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+IL,Fayette,https://www.livevoterturnout.com/ENR/fayetteilenr/2/en/Index_2.html,,FALSE,FALSE,FALSE,FALSE,FALSE,lvt
+IL,Madison,https://results.enr.clarityelections.com/IL/Madison/126058/,,FALSE,FALSE,FALSE,FALSE,FALSE,clarity
+IL,Williamson,https://app.enhancedvoting.com/cdn/results/williamson-county-il/export-2026PrimaryElection.json,,FALSE,FALSE,FALSE,FALSE,FALSE,ev
+IN,Porter,https://app.enhancedvoting.com/cdn/results/porter-county-in/export-GeneralNov032026.json,,FALSE,FALSE,TRUE,FALSE,FALSE,ev
+KS,Anderson,https://www.livevoterturnout.com/ENR/andersonksenr/13/en/Index_13.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+KS,Butler,https://www.livevoterturnout.com/ENR/butlerksenr/3/en/Index_3.html,,FALSE,FALSE,FALSE,FALSE,FALSE,lvt
+KS,Douglas,https://www.livevoterturnout.com/ENR/douglasksenr/22/en/Index_22.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+KS,Leavenworth,https://www.livevoterturnout.com/ENR/leavenworthksenr/3/en/Index_3.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+KY,Laurel,https://www.livevoterturnout.com/ENR/laurelkyenr/120/en/Index_120.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+MO,Buchanan,https://www.livevoterturnout.com/ENR/buchananmoenr/27/en/Index_27.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+MO,Caldwell,https://www.livevoterturnout.com/ENR/caldwellmoenr/13/en/Index_13.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+MO,Cape Girardeau,https://www.livevoterturnout.com/ENR/capegirardeaumoenr/2/en/Index_2.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+MO,Clay,https://app.enhancedvoting.com/cdn/results/clay-county-mo/export-pe20260804.json,,FALSE,FALSE,FALSE,FALSE,FALSE,ev
+MO,Cooper,https://www.livevoterturnout.com/ENR/coopermoenr/15/en/Index_15.html,,FALSE,FALSE,FALSE,FALSE,FALSE,lvt
+MO,Franklin,https://www.livevoterturnout.com/ENR/franklinmoenr/16/en/Index_16.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+MO,Jackson,https://www.livevoterturnout.com/ENR/jacksonmoenr/38/en/Index_38.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+MO,Jefferson,https://www.livevoterturnout.com/ENR/jeffersonmoenr/27/en/Index_27.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+MO,Ray,https://www.livevoterturnout.com/ENR/raymoenr/23/en/Index_23.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+MO,St. Charles,https://www.livevoterturnout.com/ENR/stcharlesmoenr/33/en/Index_33.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+MO,Ste. Genevieve,https://www.livevoterturnout.com/ENR/stegenevievemoenr/17/en/Index_17.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+MO,Stone,https://www.livevoterturnout.com/ENR/stonemoenr/15/en/Index_15.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+NJ,Bergen,https://www.livevoterturnout.com/ENR/bergennjenr/20/en/Index_20.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+NJ,Salem,https://www.livevoterturnout.com/ENR/salemnjenr/13/en/Index_13.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+NY,Cattaraugus,https://app.enhancedvoting.com/cdn/results/cattaraugus-county-ny/export-GE2026.json,,FALSE,FALSE,TRUE,FALSE,FALSE,ev
+NY,Monroe,https://app.enhancedvoting.com/cdn/results/monroe-county-ny/export-GE2026.json,,FALSE,FALSE,TRUE,FALSE,FALSE,ev
+NY,Ontario,https://app.enhancedvoting.com/cdn/results/ontario-county-ny/export-2026GeneralElection.json,,FALSE,FALSE,TRUE,FALSE,FALSE,ev
+NY,Steuben,https://app.enhancedvoting.com/cdn/results/steuben-county-ny/export-GE2026.json,,FALSE,FALSE,TRUE,FALSE,FALSE,ev
+NY,Sullivan,https://app.enhancedvoting.com/cdn/results/sullivan-county-ny/export-GE2026.json,,FALSE,FALSE,TRUE,FALSE,FALSE,ev
+NY,Ulster,https://app.enhancedvoting.com/cdn/results/ulster-county-ny/export-GE2026_20261019155937.json,,FALSE,FALSE,TRUE,FALSE,FALSE,ev
+OH,Butler,https://liveresults.boe.ohio.gov/ENR/butlerohenr/24/en/Index_24.html,,FALSE,FALSE,TRUE,FALSE,FALSE,lvt
+OH,Greene,https://app.enhancedvoting.com/cdn/results/greene-county-oh/export-2026NovemberGeneral.json,,FALSE,FALSE,TRUE,FALSE,FALSE,ev
+PA,Franklin,https://www.livevoterturnout.com/ENR/franklinpaenr/14/en/Index_14.html,,FALSE,FALSE,FALSE,FALSE,FALSE,lvt
+PA,Susquehanna,https://results.enr.clarityelections.com/PA/Susquehanna/123829/,,FALSE,FALSE,FALSE,FALSE,FALSE,clarity
+RI,,https://app.enhancedvoting.com/cdn/results/RhodeIsland/export-RI2026StatewidePrimary.json,,FALSE,FALSE,FALSE,FALSE,FALSE,ev
+TN,Shelby,https://app.enhancedvoting.com/cdn/results/shelby-county-tn/export-08062026CountyGeneralStateandFederalMunicipal.json,,FALSE,FALSE,FALSE,FALSE,FALSE,ev
+TX,Reeves,https://app.enhancedvoting.com/cdn/results/reeves-county-tx/export-11032026.json,,FALSE,FALSE,TRUE,FALSE,FALSE,ev

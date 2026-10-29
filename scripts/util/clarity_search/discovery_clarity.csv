@@ -1,0 +1,75 @@
+platform,state,county,slug,exists,status,path,note
+clarity,AL,Baldwin,Baldwin,1,not_posted,,newest 2012 General Election (11/6/2012 12:00:00 AM)
+clarity,AL,Limestone,Limestone,1,not_posted,,newest 2012 General Election (11/6/2012 12:00:00 AM)
+clarity,AL,Mobile,Mobile,1,not_posted,,newest 2012 General Election (11/6/2012 12:00:00 AM)
+clarity,AL,Shelby,Shelby,1,not_posted,,newest 2012 General Election (11/6/2012 12:00:00 AM)
+clarity,CO,Adams,Adams,1,not_posted,,newest 2026 Primary (6/30/2026 12:00:00 AM)
+clarity,CO,Alamosa,Alamosa,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Arapahoe,Arapahoe,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Archuleta,Archuleta,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Baca,Baca,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Bent,Bent,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Boulder,Boulder,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Broomfield,Broomfield,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Chaffee,Chaffee,1,not_posted,,newest 2022 Primary (6/28/2022 12:00:00 AM)
+clarity,CO,Cheyenne,Cheyenne,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Clear Creek,Clear_Creek,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Conejos,Conejos,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Crowley,Crowley,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Custer,Custer,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Delta,Delta,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Denver,Denver,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Dolores,Dolores,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Douglas,Douglas,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Eagle,Eagle,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,El Paso,El_Paso,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Elbert,Elbert,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Fremont,Fremont,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Garfield,Garfield,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Gilpin,Gilpin,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Grand,Grand,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Gunnison,Gunnison,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Hinsdale,Hinsdale,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Huerfano,Huerfano,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Jackson,Jackson,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Jefferson,Jefferson,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Kiowa,Kiowa,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Kit Carson,Kit_Carson,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,La Plata,La_Plata,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Lake,Lake,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Larimer,Larimer,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Las Animas,Las_Animas,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Lincoln,Lincoln,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Logan,Logan,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Mesa,Mesa,1,not_posted,,newest 2022 Primary (6/28/2022 12:00:00 AM)
+clarity,CO,Mineral,Mineral,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Moffat,Moffat,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Montezuma,Montezuma,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Montrose,Montrose,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Morgan,Morgan,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Otero,Otero,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Ouray,Ouray,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Park,Park,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Phillips,Phillips,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Pitkin,Pitkin,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Prowers,Prowers,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Pueblo,Pueblo,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Rio Blanco,Rio_Blanco,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Rio Grande,Rio_Grande,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Routt,Routt,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Saguache,Saguache,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,San Juan,San_Juan,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,San Miguel,San_Miguel,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Sedgwick,Sedgwick,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Summit,Summit,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Teller,Teller,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Washington,Washington,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Weld,Weld,1,not_posted,,elections.json empty; web search by hand
+clarity,CO,Yuma,Yuma,1,not_posted,,elections.json empty; web search by hand
+clarity,IL,Madison,Madison,1,not_posted,,newest 2026 General Primary Election (3/17/2026 12:00:00 AM)
+clarity,OH,Butler,Butler,1,not_posted,,newest November 2016 General (11/8/2016 12:00:00 AM)
+clarity,OK,Greer,Greer,1,not_posted,,newest JUNE 2012 PRIMARY ELECTION (6/26/2012 12:00:00 AM)
+clarity,OK,McClain,McClain,1,not_posted,,newest JUNE 2012 PRIMARY ELECTION (6/26/2012 12:00:00 AM)
+clarity,OK,Payne,Payne,1,not_posted,,newest JUNE 2012 PRIMARY ELECTION (6/26/2012 12:00:00 AM)
+clarity,OK,Tulsa,Tulsa,1,not_posted,,newest JUNE 2012 PRIMARY ELECTION (6/26/2012 12:00:00 AM)
+clarity,PA,Susquehanna,Susquehanna,1,not_posted,,newest 2025 Primary - May (5/20/2025 12:00:00 AM)
