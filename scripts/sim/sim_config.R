@@ -95,3 +95,14 @@ sim_candidates = function(state, file = "scripts/sim/sim_candidates.csv") {
     cli::cli_abort("{.path {file}}: {state} needs one dem, rep and minor row per contest (writein optional).")
   x
 }
+
+# counties with a zero file: the CBS county numbers in the geos of every
+# 26_general/{ST}/clean/*_latest.parquet (geo is st_{county_cbs}_{precinct}). Used by
+# make_sim.R --counties=zero, so a state whose feeds cover only some counties is simulated
+# for those counties alone.
+sim_zero_counties = function(state) {
+  fs = Sys.glob(file.path(DIR_26, state, "clean", paste0(state, "*_latest.parquet")))
+  if (!length(fs)) cli::cli_abort("No zero files in {.path {file.path(DIR_26, state, 'clean')}}.")
+  geo = unlist(lapply(fs, \(f) as.character(nanoparquet::read_parquet(f, col_select = "geo")$geo)))
+  sort(unique(substr(geo, 4, 6)))
+}

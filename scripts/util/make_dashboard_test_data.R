@@ -11,6 +11,8 @@
 ## {TEST_FOLDER}/model_results.
 ## live_sim has only the two-party share and turnout, so per-party shares split the
 ## counted two-party share of the vote at that checkpoint, and votes = share x est_turnout.
+## Live results count censored precincts too (the live feed has them, unmatched).
+## dd$truth holds each contest's final truth (dem, rep, total), drawn on the Models plots.
 ## Also writes fake history (with vote methods, except GA), copies the sim states'
 ## crosswalks and L2 files from 26_general/input_data, and saves the dashboard data rds.
 ## Counties outside the sim get the CBS test feed's latest county snapshot.
@@ -59,6 +61,7 @@ set.seed(1)
 dash = list()
 counted = list() # counted dem / rep / total per state x contest x checkpoint, for the model rows
 cands = list()
+final = list() # final truth per state x contest
 
 for (i in seq_along(SCENARIOS)) {
   s = STATES[i]
@@ -71,8 +74,15 @@ for (i in seq_along(SCENARIOS)) {
     mutate(geo = as.character(geo))
   cands[[s]] = distinct(truth, contest, party, candidate) |> mutate(state = s)
 
+  # final truth, censored precincts included: the dashboard's reference line for the models
+  final[[s]] = truth |>
+    summarise(dem = sum(votes[party == "dem"]), rep = sum(votes[party == "rep"]), total = sum(votes), .by = contest) |>
+    mutate(state = s)
+
   for (tm in as.list(CHECKPOINTS)) {
-    d = sim_snapshot(truth, sched, tm)
+    # censored precincts (ids the crosswalk will not match) still come in on the live feed,
+    # unmatched; count them so reported totals cover every precinct
+    d = sim_snapshot(mutate(truth, censored = FALSE), sched, tm)
     counted[[length(counted) + 1]] = d |>
       summarise(dem = sum(votes[party == "dem"]), rep = sum(votes[party == "rep"]), total = sum(votes), .by = contest) |>
       mutate(state = s, time = tm)
@@ -219,6 +229,10 @@ nanoparquet::write_parquet(fp, fs::path(model_dir, "precincts_latest.parquet"))
 cli::cli_inform("precinct projections: {nrow(fp)} rows, {n_distinct(fp$model)} models")
 
 dd = build_dashboard_data(unname(dash), contests = TEST_CONTESTS, models = read_model_results(model_dir))
+# test only: final truth per contest, drawn as a reference line on the Models plots
+dd$truth = bind_rows(final) |>
+  semi_join(TEST_CONTESTS, by = c("state", "contest")) |>
+  transmute(key = paste0(state, "-", contest), dem, rep, total)
 saveRDS(dd, fs::path(PATH_DROPBOX, ELECTION_FOLDER, "dashboard_data.rds"))
 # committed copy; pushing it to main redeploys GitHub Pages (.github/workflows/pages.yml)
 saveRDS(dd, "data/dashboard/dashtest_data.rds")

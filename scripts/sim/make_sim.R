@@ -7,9 +7,12 @@
 ## sim_snapshot() in scripts/sim/sim_snapshot.R.
 ##
 ## Usage (from the repo root):
-##   Rscript scripts/sim/make_sim.R [--state=NC] [scenario] [seed]
+##   Rscript scripts/sim/make_sim.R [--state=NC] [--contests=sen] [--counties=zero] [scenario] [seed]
 ## --state is optional; without it the state comes from the scenario name prefix
 ## (nc_base -> NC). make_sim_tx.R is the same thing with the state fixed to TX.
+## --contests keeps only those sim_candidates.csv contests (comma-separated; default all).
+## --counties=zero keeps only counties with a zero file in 26_general/{ST}/clean
+## (sim_zero_counties()); the default keeps every county in the model frame.
 ## Checks: Rscript scripts/sim/check_sim.R [scenario]
 ##
 ## Per state (see sim_config.R):
@@ -61,6 +64,15 @@ in_file  = function(suffix) file.path(DIR_IN, paste0(STATE, suffix))
 
 SP = sim_state_params(STATE)
 CANDIDATES = sim_candidates(STATE)
+CONTESTS = opt("contests")
+if (!is.na(CONTESTS)) {
+  CONTESTS = trimws(strsplit(CONTESTS, ",")[[1]])
+  if (length(bad <- setdiff(CONTESTS, CANDIDATES$contest)))
+    cli_abort("--contests {.val {bad}} not in sim_candidates.csv for {STATE}.")
+  CANDIDATES = filter(CANDIDATES, contest %in% CONTESTS)
+}
+COUNTIES = opt("counties", "all")
+if (!COUNTIES %in% c("all", "zero")) cli_abort("--counties must be all or zero, not {COUNTIES}.")
 
 # the model's modes for this state
 ms = read.csv("scripts/model/lookups/mode_scope.csv", colClasses = "character")
@@ -210,6 +222,12 @@ prec = read_pq(in_file("_precinct.parquet"))
 if (length(miss <- setdiff(COLS_PREC, names(prec))))
   cli_abort("{STATE}_precinct.parquet is missing {.val {miss}}.")
 prec = select(prec, all_of(COLS_PREC))
+if (COUNTIES == "zero") {
+  zc = sim_zero_counties(STATE)
+  cli_inform(c("*" = "--counties=zero: {sum(unique(prec$county_cbs) %in% zc)} of {n_distinct(prec$county_cbs)} model counties have a zero file"))
+  prec = filter(prec, county_cbs %in% zc)
+  if (!nrow(prec)) cli_abort("No model precincts in {STATE}'s zero-file counties.")
+}
 # these feed every precinct's votes: one bad value would be NA or Inf in the truth
 bad = with(prec, is.na(n) | is.na(est_turnout) | !(dem2 > 0 & dem2 < 1) | !(oth_base > 0 & oth_base < 1))
 if (any(bad))
@@ -438,6 +456,7 @@ realized = truth |>
 
 manifest = list(
   scenario  = SCENARIO,
+  counties_scope = COUNTIES,
   mode_shift = as.list(P$mode_shift),
   turnout_demo = as.list(P$turnout_demo),
   seed      = SEED,
