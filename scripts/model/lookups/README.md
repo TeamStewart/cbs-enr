@@ -497,3 +497,14 @@ Built 2026-10-26 by `scripts/model/prep/make_precinct_topo.R` from
 `STATES=FL` does one state. Requires GDAL (`ogr2ogr`) and mapshaper
 (`npm i -g mapshaper`) — no R spatial dependency, and `nanoparquet` rather than `arrow`,
 which is in `renv.lock` but not installed.
+
+# `rest_turnout_common_sd.csv`
+
+Prior sd (log scale) of the statewide common turnout term in `live/R/counties.R`: how far the
+counties we don't scrape can run, as a group, from the scraped counties' turnout before any of
+them report. One row per rest-of-state share of the vote (`rest_share`, 0.05–0.95); the night
+interpolates at the state's actual share. Estimated, not set: the 2018 → 2022 county turnout
+change in MEDSL's official returns for 34 states, the largest counties standing in for the
+scraped ones (`prep/make_rest_turnout_common.R`, which has the method and sources). `mean_c`
+is the average gap (the rest's turnout grew 2–5% more than the big counties'); the term is
+centred on 0, so that gap counts toward the width.

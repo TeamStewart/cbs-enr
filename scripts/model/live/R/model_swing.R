@@ -7,10 +7,20 @@
 ##
 ##   1. swing     y_c = d_c / (d_c + r_c) - D_p  =  a_k + g_m + e_c
 ##                WLS on reporting cells, weights E_c:  feols(y ~ 1 | county + method)
-##   2. turnout   l_c = log(t_c / E_c)  =  b_k + h_m + u_c,  on complete cells only
-##                (if no cell is complete yet, l_c is taken as 0: turnout = expectation)
-##      A county (or method) with no data falls back to the E-weighted mean for that
-##      method, then the overall mean.
+##   2. turnout   l_c = log(t_c / E_c), on complete cells only, PER METHOD m, nested
+##                state -> congressional district -> county (swing_turnout_predict()):
+##                  l_c = mu_m + delta_{district,m} + delta_{county,m}
+##                mu_m = E-weighted mean over the method's complete cells; each district's
+##                and county's deviation shrunk toward 0 by tau^2 / (tau^2 + v), the
+##                between-district (between-county) variance tau^2 and the sampling variance
+##                v of its mean both estimated from tonight's complete cells (re_shrink(),
+##                demos.R; no hand-set constant -- tau^2 = 0, no borrowing, until the data
+##                show districts differ).
+##                A county with little counted borrows from its district before the state
+##                (Ansolabehere et al. 2024, "Forecasting Turnout": districts predict turnout
+##                far better than counties). A method with no complete cell keeps its
+##                expectation (l_c = 0): early-vote turnout is never carried over to Election
+##                Day or mail (the same paper: early vote is a poor predictor of the total).
 ##   3. per cell  V_c = t_c if complete, else max(t_c, E_c * exp(l_c))
 ##                S_c = clamp(D_p + swing_c, 0.001, 0.999)
 ##                remaining two-party votes Q_c = (V_c - t_c) * (1 - w_p)
@@ -28,6 +38,61 @@
 ##      interval = "conformal" instead: no bootstrap; conformal bounds (results.R) with the
 ##                fitted share of cell c = (1 - w_p) * S_c for Dem, (1 - w_p) * (1 - S_c) for Rep.
 # ========================================
+
+#' Turnout predictions: per method, county within district within state
+#'
+#' Step 2 of the file header. Covariates `x` (if any, and more than 10 complete cells per
+#' column) are fit first as slopes with county x method fixed effects; the nested
+#' shrinkage then runs on what they leave.
+#'
+#' @param dd Cell frame with lr (log turnout ratio), method, county, cd.
+#' @param fit_rows Logical: complete cells.
+#' @param w Weights (expected votes x bootstrap county weight).
+#' @param x Covariate columns.
+#' @return Numeric vector of predicted log turnout ratios, one per row (0 for a method with
+#'   no complete cell).
+swing_turnout_predict = function(dd, fit_rows, w, x = character()) {
+  use = fit_rows & w > 0
+  out = rep(0, nrow(dd))
+  if (!any(use)) {
+    return(out)
+  }
+  xb = rep(0, nrow(dd))
+  if (length(x) && sum(use) > 10 * length(x)) {
+    fit = tryCatch(
+      fixest::feols(
+        stats::as.formula(paste("lr ~", paste(x, collapse = " + "), "| county^method")),
+        data = dd[use, ],
+        weights = w[use],
+        notes = FALSE,
+        warn = FALSE
+      ),
+      error = function(e) NULL
+    )
+    if (!is.null(fit)) {
+      b = stats::coef(fit)
+      b = b[intersect(x, names(b))]
+      if (length(b)) xb = as.vector(as.matrix(dd[names(b)]) %*% b)
+    }
+  }
+  r = dd$lr - xb
+  for (m in unique(dd$method)) {
+    i = dd$method == m
+    u = i & use
+    if (!any(u)) {
+      next # nothing complete for this method: its expectation, not another method's ratio
+    }
+    f = tibble(cd = dd$cd[u], county = dd$county[u], r = r[u], w = w[u])
+    mu = sum(f$w * f$r) / sum(f$w)
+    by_cd = re_shrink(f$r, f$w, f$cd, mu = mu)
+    f$d_cd = coalesce(unname(by_cd[f$cd]), 0)
+    by_cty = re_shrink(f$r - f$d_cd, f$w, f$county, mu = mu)
+    d_cd = coalesce(unname(by_cd[dd$cd[i]]), 0)
+    d_cty = coalesce(unname(by_cty[dd$county[i]]), 0)
+    out[i] = mu + d_cd + d_cty
+  }
+  out + xb
+}
 
 #' Predictions from county + method fixed effects
 #'
@@ -80,7 +145,7 @@ swing_once = function(d, cw, x = character()) {
   rep_cell = d$c_dem + d$c_rep > 0
   done = rep_cell & d$complete
   sw = swing_fe_predict(d, "y", rep_cell, w, x)
-  lr = if (any(done)) swing_fe_predict(d, "lr", done, w, x) else rep(0, nrow(d))
+  lr = swing_turnout_predict(d, done, w, x)
   tot = if_else(done, d$c_tot, pmax(d$c_tot, d$exp_votes * exp(lr)))
   s = pmin(pmax(d$dem2 + sw, 0.001), 0.999)
   rem2 = (tot - d$c_tot) * (1 - d$oth)
@@ -124,6 +189,7 @@ fit_swing = function(
     select(cells, geo, method, county, dem2, oth, exp_votes),
     select(counts, c_dem, c_rep, c_oth, c_tot, complete)
   ) |>
+    mutate(cd = cell_cd(cells, returns$state[1])) |>
     mutate(y = c_dem / pmax(c_dem + c_rep, 1) - dem2, lr = log(pmax(c_tot, 0.5) / exp_votes))
   X = if (demo == "ratio") {
     matrix(numeric(), nrow(d), 0)
@@ -134,7 +200,7 @@ fit_swing = function(
   x = colnames(X)
 
   settings = sprintf(
-    "uniform swing: feols(swing ~ 1 | county + method), weighted by expected votes; turnout feols(log ratio ~ 1 | county + method) on fully counted cells; demographics %s; %s; %g%% interval",
+    "uniform swing: feols(swing ~ 1 | county + method), weighted by expected votes; turnout per method on fully counted cells, county within congressional district within state (shrinkage from variance components estimated tonight), no carry-over between methods; demographics %s; %s; %g%% interval",
     demo,
     if (interval == "bootstrap") sprintf("%d county bootstrap replicates", boot) else interval,
     100 * level

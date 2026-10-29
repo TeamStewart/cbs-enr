@@ -983,9 +983,30 @@ CTY_MAT = if (!USE_COUNTY_RE) {
     cli_abort("unknown RE_GROUPING {RE_GROUPING}")
   )
 }
+# Congressional-district indicators, added to the random-effect block of the TURNOUT (tau)
+# equations only: a county with few reported precincts borrows from its 2026 district
+# before the statewide level. Their ridge weight is not the counties' ICC_TURN: it is
+# sigma^2 / tau^2, both estimated in each fit from the counted-out precincts (re_shrink(),
+# live/R/demos.R: within-district residual variance and between-district variance of y -
+# prior; tau^2 = 0 makes the weight huge, i.e. no district effect). Ansolabehere et al. (2024), "Forecasting
+# Turnout" (HDSR 6.4): turnout is far more predictable by district than by county. Needs
+# `cd` on covs_long (live/R/model_medsl.R's medsl_inputs()); USE_CD_TURN=0 turns it off.
+USE_CD_TURN = Sys.getenv("USE_CD_TURN", unset = "1") == "1"
+CD_MAT = if (USE_COUNTY_RE && USE_CD_TURN && "cd" %in% names(prec) && length(unique(prec$cd)) > 1) {
+  m = stats::model.matrix(~ f - 1, data.frame(f = factor(prec$cd)))
+  colnames(m) = paste0("cd_", levels(factor(prec$cd)))
+  m
+} else {
+  matrix(0, nrow(prec), 0)
+}
+#' The random-effect block of an equation: groups, plus the districts for turnout
+#'
+#' @param out Outcome ("tau", "tp" or "s").
+#' @return Indicator matrix, one row per precinct.
+re_mat = function(out) if (out == "tau") cbind(CTY_MAT, CD_MAT) else CTY_MAT
 if (USE_COUNTY_RE) {
   cli_inform(
-    "random effect ON [{RE_GROUPING}]: {ncol(CTY_MAT)} levels, \\
+    "random effect ON [{RE_GROUPING}{if (ncol(CD_MAT)) paste0(' + ', ncol(CD_MAT), ' districts in turnout') else ''}]: {ncol(CTY_MAT)} levels, \\
               lambda turn {round((1-ICC_TURN)/ICC_TURN,2)} / share {round((1-ICC_SHARE)/ICC_SHARE,2)}"
   )
 }
@@ -1321,11 +1342,25 @@ fit_stage = function(
       if (USE_COUNTY_RE) {
         icc = switch(out, tau = ICC_TURN, tp = ICC_TP, s = ICC_SHARE)
         lam = (1 - icc) / icc
+        if (out == "tau" && ncol(CD_MAT)) {
+          # district ridge weight sigma^2 / tau^2 from this fit's counted-out precincts
+          rw = if (is.null(wt)) rep(1, nrow(dm)) else wt
+          rs = re_shrink(
+            (dm[[ycol]] - dm[[pcol]])[ob],
+            rw[ob],
+            prec$cd[ob],
+            mu = 0,
+            weights = "precision"
+          )
+          t2 = attr(rs, "tau2")
+          lam_cd = if (is.finite(t2) && t2 > 0) attr(rs, "sigma2") / t2 else 1e8
+          lam = c(rep(lam, ncol(CTY_MAT)), rep(lam_cd, ncol(CD_MAT)))
+        }
         Xcov = cbind(1, as.matrix(prec[, covs, drop = FALSE]))
         fit = fit_conj_re(
           y = dm[[ycol]],
           Xcov = Xcov,
-          Cty = CTY_MAT,
+          Cty = re_mat(out),
           obs = ob,
           prior_loc = dm[[pcol]],
           prior_eff = pn / nrow(dm),
@@ -1438,7 +1473,7 @@ fit_stage = function(
     if (USE_COUNTY_RE) {
       # design now carries the county block; counties with no reported precincts get
       # u_c shrunk to ~0 but keep the full random-effect variance in the draws
-      draw_beta_re(fits[[k]], draws) %*% t(cbind(X, CTY_MAT))
+      draw_beta_re(fits[[k]], draws) %*% t(cbind(X, re_mat(sub("^.*_", "", k))))
     } else {
       draw_beta(fits[[k]], draws) %*% t(X)
     }

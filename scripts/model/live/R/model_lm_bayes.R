@@ -18,6 +18,8 @@
 ##   - obs (share observed) = counted out, or counted >= obs_min of expected votes (NYC:
 ##     precinct total > 1.2 x its early vote); obs_turn = counted out (NYC: >= 98% reporting).
 ##   - candidates are dem / rep / oth; output.R splits oth across the third-party candidates.
+## Turnout prior: expected votes x the cell's congressional-district turnout adjustment
+## (district_turnout_adjust(), demos.R), per method -- see fit_lm_bayes().
 ## Interval (results.R): credible (default) from the posterior draws, with p_dem_win and
 ## statewide intervals; conf_seq from forecast_summarize()'s prior and posterior race totals,
 ## as forecast_intervals() does; conformal on each cell's fitted shares from the share
@@ -95,6 +97,10 @@ fit_lm_bayes = function(
   counts = cell_counts(cells, returns)
   counted = race_counted(cells, counts)
   inp = lm_bayes_inputs(cells, counts, obs_min)
+  # turnout prior moved by the cell's congressional district's turnout so far, per method
+  # (district_turnout_adjust(), demos.R): lm_bayes's own prior is pseudo-observations at the
+  # expectation, so it can't borrow across districts by itself
+  inp$d$prior_turn = pmax(inp$d$prior_turn * district_turnout_adjust(cells, counts, returns$state[1]), 0.5)
   X = if (check_demo(demo) == "ratio") {
     matrix(numeric(), nrow(cells), 0)
   } else {
@@ -107,7 +113,7 @@ fit_lm_bayes = function(
   form = reformulate(c(attr(terms(ctrl_form), "term.labels"), colnames(X), inp$dummies))
   environment(form) = list2env(list(log_s = enightmodels::log_s), parent = globalenv())
   settings = sprintf(
-    "enightmodels::forecast_prec(), demographics %s, ctrl_form %s; prior_n_turn = %g, prior_n_cands = %g; obs_min = %g; %d draws; interval %s %g",
+    "enightmodels::forecast_prec(), turnout prior = expected votes x district turnout adjustment; demographics %s, ctrl_form %s; prior_n_turn = %g, prior_n_cands = %g; obs_min = %g; %d draws; interval %s %g",
     demo,
     deparse1(form),
     prior_n_turn,

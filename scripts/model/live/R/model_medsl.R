@@ -70,7 +70,9 @@ medsl_inputs = function(
       `pred.bla` = yg_pred_bla,
       `pred.his` = yg_pred_his,
       tp_raw = oth_base,
-      est_turnout
+      est_turnout,
+      # 2026 congressional district, for the turnout equations' district effects
+      cd = if ("cd_main" %in% names(inp)) coalesce(as.character(cd_main), "0") else "0"
     )
   if (length(setdiff(cols, "dem2_sq"))) {
     covs_wide = left_join(

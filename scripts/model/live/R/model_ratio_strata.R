@@ -8,6 +8,8 @@
 ## (past_share()). Math: scripts/model/docs/cory_model_spec.tex.
 ## The ratios are pooled within the strata of `demo` (demos.R): strat_g (geostratum, Cory's
 ## default), strat_d, strat_dg, or ratio (one pool); specs with covariates don't apply.
+## Turnout stage: past x the cell's congressional-district turnout adjustment, per method
+## (district_turnout_adjust(), demos.R); the candidate stage uses past as is.
 ## Interval: none (default) or conformal, on the fitted cell shares past x ratio (results.R).
 # ========================================
 
@@ -123,15 +125,21 @@ fit_ratio_strata = function(
       sep = " = ",
       collapse = "; "
     ),
-    "; past = expected votes x baseline share; interval ",
+    "; past = expected votes x baseline share (turnout stage: x district turnout adjustment); interval ",
     interval
   )
   counts = cell_counts(cells, returns)
   counted = race_counted(cells, counts)
 
   d = legacy_elec_data(cells, returns, strata)
+  # turnout stage: each cell's past votes moved by its congressional district's turnout so
+  # far, per method (district_turnout_adjust(), demos.R), so a stratum's ratio is applied on
+  # top of where the precinct's district is running; the candidate stage keeps `past`
+  adj = district_turnout_adjust(cells, counts, returns$state[1])
+  d$past_turn = d$past *
+    coalesce(adj[match(paste(d$geo, d$method), paste(cells$geo, cells$method))], 1)
   # model_legacy()'s two stages, run once so the precinct frame comes from the same fit
-  d_tot = enightmodels::model_legacy_total(d, past, config)
+  d_tot = enightmodels::model_legacy_total(d, past_turn, config)
   d_cand = enightmodels::model_legacy_cand(d, d_tot, past, config)
 
   pred = d_cand |>

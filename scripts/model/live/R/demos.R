@@ -116,6 +116,126 @@ demo_covs = function(state, dir_26 = find_26_general()) {
   .demos[[state]]
 }
 
+#' Each cell's 2026 congressional district
+#'
+#' The precinct's main district (`cd_main` in `{ST}_precinct.parquet`). Every model's turnout
+#' borrows from the precincts of the same district before the whole state: Ansolabehere et
+#' al. (2024), "Forecasting Turnout" (HDSR 6.4) -- turnout varies far more predictably by
+#' district than by county.
+#'
+#' @param cells Cells from `build_cells()`.
+#' @param state Two-letter state code.
+#' @return Character vector, one per cell ("0" where unknown).
+cell_cd = local({
+  cache = new.env()
+  function(cells, state, dir_26 = find_26_general()) {
+    key = paste(state, dir_26)
+    if (is.null(cache[[key]])) {
+      f = file.path(dir_26, "input_data", "model_inputs", paste0(state, "_precinct.parquet"))
+      p = read_pq(f)
+      cache[[key]] = tibble(
+        geo = as.character(p$geo),
+        cd = if ("cd_main" %in% names(p)) coalesce(as.character(p$cd_main), "0") else "0"
+      )
+    }
+    m = cache[[key]]
+    coalesce(m$cd[match(as.character(cells$geo), m$geo)], "0")
+  }
+})
+
+#' Group deviations shrunk by variance components estimated from the data
+#'
+#' The one-way random-effects model r_i = mu + delta_g + e_i, delta_g ~ N(0, tau^2): each
+#' group's weighted mean deviation (m_g - mu) is multiplied by tau^2 / (tau^2 + v_g), v_g
+#' the sampling variance of m_g. Nothing is set by hand: the within-group variance sigma^2
+#' comes from how much a group's own cells differ from each other, and tau^2 from how much
+#' more the group means differ than sigma^2 alone would make them (DerSimonian & Laird
+#' 1986, method of moments, truncated at 0). With tau^2 = 0 -- including whenever fewer
+#' than two groups, or no group with two cells, have data -- every deviation is 0 (full
+#' pooling: nothing is borrowed from the group).
+#'
+#' @param r Values (e.g. log turnout ratios), one per cell.
+#' @param w Weights, one per cell (cells with w <= 0 or non-finite r are dropped).
+#' @param g Group of each cell.
+#' @param mu Level the deviations are measured from (default the weighted mean of r).
+#' @param weights "analytic": each cell has variance sigma^2 and w only weights the means
+#'   (v_g = sigma^2 sum w^2 / (sum w)^2); "precision": cell i has variance sigma^2 / w_i
+#'   (v_g = sigma^2 / sum w).
+#' @return Named numeric vector of shrunk deviations, one per group with data, with
+#'   attributes tau2, sigma2 and m (the unshrunk group means).
+re_shrink = function(r, w, g, mu = NULL, weights = c("analytic", "precision")) {
+  weights = match.arg(weights)
+  ok = is.finite(r) & is.finite(w) & w > 0 & !is.na(g)
+  r = r[ok]
+  w = w[ok]
+  g = as.character(g[ok])
+  if (is.null(mu)) {
+    mu = if (length(r)) sum(w * r) / sum(w) else 0
+  }
+  grp = split(seq_along(r), g)
+  W = vapply(grp, function(i) sum(w[i]), 0)
+  W2 = vapply(grp, function(i) sum(w[i]^2), 0)
+  n = lengths(grp)
+  m = vapply(grp, function(i) sum(w[i] * r[i]) / sum(w[i]), 0)
+  ss = sum(vapply(names(grp), function(k) sum(w[grp[[k]]] * (r[grp[[k]]] - m[[k]])^2), 0))
+  den = if (weights == "analytic") sum(W - W2 / W) else sum(n) - length(n)
+  out = structure(setNames(rep(0, length(W)), names(W)), tau2 = 0, sigma2 = NA_real_, m = m)
+  if (length(W) < 2 || den <= 1e-9) {
+    return(out)
+  }
+  s2 = ss / den
+  attr(out, "sigma2") = s2
+  if (s2 <= 0) {
+    return(out)
+  }
+  v = if (weights == "analytic") s2 * W2 / W^2 else s2 / W
+  a = 1 / v
+  mbar = sum(a * m) / sum(a)
+  Q = sum(a * (m - mbar)^2)
+  tau2 = max(0, (Q - (length(W) - 1)) / (sum(a) - sum(a^2) / sum(a)))
+  attr(out, "tau2") = tau2
+  out[] = tau2 / (tau2 + v) * (m - mu)
+  out
+}
+
+#' District turnout adjustment to each cell's expected votes
+#'
+#' For models whose turnout prior is the expected vote itself (lm_bayes, ratio_strata):
+#' per method m, the E-weighted mean log(counted / expected) over counted-out cells
+#' statewide (mu_m), and each congressional district's deviation from it shrunk by
+#' `re_shrink()` (the between-district variance estimated from tonight's counted-out
+#' cells, not set by hand). A cell not yet counted out then starts from
+#' exp_votes x exp(deviation): a precinct in a district running hot is expected to run hot
+#' before its own count is in. Per method, so early-vote turnout never moves the Election
+#' Day or mail expectation. 1 for every cell before anything is counted out.
+#'
+#' @param cells Cells from `build_cells()`.
+#' @param counts `cell_counts()` for those cells.
+#' @param state Two-letter state code.
+#' @return Numeric multiplier per cell.
+district_turnout_adjust = function(cells, counts, state) {
+  done = counts$complete & counts$c_tot > 0
+  out = rep(1, nrow(cells))
+  if (!any(done)) {
+    return(out)
+  }
+  f = tibble(
+    cd = cell_cd(cells, state),
+    method = as.character(cells$method),
+    lr = log(pmax(counts$c_tot, 0.5) / pmax(cells$exp_votes, 0.5)),
+    w = cells$exp_votes,
+    done = done
+  )
+  adj = rep(0, nrow(f))
+  for (m in unique(f$method[f$done])) {
+    u = f$done & f$method == m
+    dev = re_shrink(f$lr[u], f$w[u], f$cd[u])
+    i = f$method == m
+    adj[i] = coalesce(unname(dev[f$cd[i]]), 0)
+  }
+  exp(adj)
+}
+
 #' Cells with the demographic columns joined on
 #'
 #' @param cells Cells from `build_cells()`.

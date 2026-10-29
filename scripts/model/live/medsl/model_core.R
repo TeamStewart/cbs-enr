@@ -53,7 +53,8 @@ sig_of = function(f) if (is.null(f$post)) f$sigma_scale else f$post$sigma_scale
 #' @param obs Logical: exact observations.
 #' @param prior_loc Prior fitted values (N).
 #' @param prior_eff g-prior weight per row (precinct-equivalents / N).
-#' @param lambda Ridge weight on the group effects, (1 - ICC) / ICC.
+#' @param lambda Ridge weight on the group effects, (1 - ICC) / ICC; or one weight per
+#'   column of `Cty` (e.g. counties and districts with different variances).
 #' @param wts Data-row weights; NULL = 1.
 #' @param sigma_df0,sigma_s0 Scaled inverse chi-square prior on sigma.
 #' @param sd_level Prior sd of the statewide level; NULL keeps it bundled in the g-prior.
@@ -103,6 +104,7 @@ fit_conj_re = function(
   } else {
     pmin(pmax(p_atom[cens], 0), 1)
   }
+  lam_j = if (length(lambda) == J) lambda else rep(lambda[1], J) # one weight, or one per column
   Zp = matrix(0, N, J) # g-prior rows ignore county block
   A_dat = cbind(Xcov[use, , drop = FALSE], Cty[use, , drop = FALSE])
   A_rid = cbind(matrix(0, J, p), diag(J)) # shrink u_c toward 0
@@ -135,7 +137,7 @@ fit_conj_re = function(
       list(
         X = rbind(cbind(Xc, Zp), A_lvl, A_dat, A_rid),
         y = c(prior_loc - plbar, plbar, y_use, rep(0, J)),
-        w = c(rep(prior_eff, N), kappa, wts[use], rep(lambda, J)),
+        w = c(rep(prior_eff, N), kappa, wts[use], lam_j),
         i_dat = if (n_obs > 0) (N + 2L):(N + 1L + n_obs) else integer(0)
       )
     }
@@ -144,7 +146,7 @@ fit_conj_re = function(
       list(
         X = rbind(cbind(Xcov, Zp), A_dat, A_rid),
         y = c(prior_loc, y_use, rep(0, J)),
-        w = c(rep(prior_eff, N), wts[use], rep(lambda, J)),
+        w = c(rep(prior_eff, N), wts[use], lam_j),
         i_dat = if (n_obs > 0) (N + 1L):(N + n_obs) else integer(0)
       )
     }

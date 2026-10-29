@@ -8,7 +8,13 @@
 ## p_dem_win and statewide intervals.
 ##
 ## Per method, two parts, split as in forecast_prec() and the swing model:
-##   turnout  votes_c ~ Poisson(E_c * exp(b0 + X b + u_county)), on cells counted out so far
+##   turnout  votes_c ~ Poisson(E_c * exp(b0 + X b + g_district + u_county)), on cells
+##            counted out so far; g_district = 2026 congressional-district intercepts (0/1
+##            columns) with prior sd tau, tau^2 the between-district variance of log(counted /
+##            expected) over tonight's counted-out cells (re_shrink(), demos.R; empirical
+##            Bayes, not set by hand; no district terms while tau = 0), so a county with little
+##            counted borrows from its district (Ansolabehere et al. 2024, "Forecasting
+##            Turnout"). Turnout only: the share equations don't take them.
 ##   shares   votes_cp ~ Poisson(n_c * s_cp * exp(b0p + X bp + u_county,p)) per party p (dem,
 ##            rep, oth), on every reporting cell -- a partial count is a sample of the cell's
 ##            share, not a bound on it
@@ -45,6 +51,15 @@ pois_bayes_inputs = function(cells, counts, state, demo) {
     bind_cols(select(counts, c_dem, c_rep, c_oth, c_tot, complete)) |>
     mutate(obs = complete & c_tot > 0)
   X = demo_design(d, demo)
+  # congressional-district intercepts for the turnout equation (dummies; none if one district)
+  cdv = cell_cd(cells, state)
+  D = if (length(unique(cdv)) > 1) {
+    m = stats::model.matrix(~ f - 1, data.frame(f = factor(cdv)))
+    colnames(m) = sprintf("cdv_%d", seq_len(ncol(m)))
+    m
+  } else {
+    matrix(numeric(), nrow(d), 0)
+  }
   w = d$exp_votes / sum(d$exp_votes)
   for (j in seq_len(ncol(X))) {
     if (!all(X[, j] %in% 0:1)) {
@@ -52,7 +67,7 @@ pois_bayes_inputs = function(cells, counts, state, demo) {
       X[, j] = (X[, j] - m) / max(sqrt(sum(w * (X[, j] - m)^2)), 1e-9)
     }
   }
-  list(d = bind_cols(d, as_tibble(X)), x = colnames(X))
+  list(d = bind_cols(d, as_tibble(X), as_tibble(D), .cd = cdv), x = colnames(X), xd = colnames(D))
 }
 
 #' Posterior predictive count draws from a pois_bayes() fit
@@ -73,16 +88,38 @@ pois_bayes_inputs = function(cells, counts, state, demo) {
 #' @param draws Number of draws.
 #' @param pr Prior settings (sd of the log rate and its split).
 #' @param off_prior Log exposure for prior predictive draws (conf_seq); NULL for none.
+#' @param xd District-intercept columns (turnout only): added to `form`, each with prior sd
+#'   `sd_d`.
+#' @param sd_d Prior sd of the district intercepts (estimated: `pois_bayes_method()`).
 #' @return List: post (draws x rows of `d`), rate (the fitted rate multiplier exp(X b + u)
 #'   of each row), prior (prior predictive draws at `off_prior`, else NULL).
-pois_bayes_draws = function(d, y, use, off_fit, off_new, form, draws, pr, off_prior = NULL) {
+pois_bayes_draws = function(
+  d,
+  y,
+  use,
+  off_fit,
+  off_new,
+  form,
+  draws,
+  pr,
+  off_prior = NULL,
+  xd = character(),
+  sd_d = 0
+) {
+  if (length(xd)) {
+    form = update(form, reformulate(c(".", xd)))
+  }
   X = model.matrix(form, d)
   # the prior variance of the log rate, pr$sd^2: half on the intercept, a quarter on the
-  # county intercepts, a quarter shared across the covariates (on average over rows)
-  x2 = mean(rowSums(X[, -1, drop = FALSE]^2))
-  sd = c(pr$sd * sqrt(0.5), rep(pr$sd * sqrt(0.25 / max(x2, 1e-9)), ncol(X) - 1))
+  # county intercepts, a quarter shared across the covariates (on average over rows);
+  # district intercepts (turnout) get sd_d, the between-district sd estimated tonight
+  is_d = colnames(X) %in% xd
+  is_x = !is_d & seq_len(ncol(X)) > 1
+  x2 = if (any(is_x)) mean(rowSums(X[, is_x, drop = FALSE]^2)) else 1
+  sd = ifelse(is_d, sd_d, pr$sd * sqrt(0.25 / max(x2, 1e-9)))
+  sd[1] = pr$sd * sqrt(0.5)
   group = pr$sd * sqrt(0.25)
-  v = pr$sd^2
+  v = pr$sd^2 + sd_d^2 * any(is_d) # the district intercepts add their own variance
   d$y = y
   d$use = use
   d$off = off_fit
@@ -134,15 +171,24 @@ pois_bayes_draws = function(d, y, use, off_fit, off_new, form, draws, pr, off_pr
 #' @param draws Number of draws.
 #' @param pr Prior settings.
 #' @param prior Also return prior draws (conf_seq).
+#' @param xd District-intercept columns, for the turnout equation only.
 #' @return List: V (final votes by party, dem / rep / oth, each draws x cells), fit (fitted
 #'   share of each cell's votes by party), prior (prior final votes by party, or NULL).
-pois_bayes_method = function(d, form, draws, pr, prior = FALSE) {
+pois_bayes_method = function(d, form, draws, pr, prior = FALSE, xd = character()) {
   n = nrow(d)
   cnt = function(x) matrix(x, draws, n, byrow = TRUE)
   lg = function(x) log(pmax(x, 0.5))
   base = list(dem = (1 - d$oth) * d$dem2, rep = (1 - d$oth) * (1 - d$dem2), oth = d$oth)
   votes = list(dem = d$c_dem, rep = d$c_rep, oth = d$c_oth)
   off_p = function(x) if (prior) lg(x)
+  # district intercepts' prior sd: the between-district sd of log(counted / expected) over
+  # this method's counted-out cells (re_shrink(), demos.R); none while it is 0
+  xd = xd[vapply(xd, \(j) length(unique(d[[j]])) > 1, NA)]
+  sd_d = 0
+  if (length(xd) && any(d$obs)) {
+    sd_d = sqrt(attr(re_shrink(log(pmax(d$c_tot, 0.5) / pmax(d$exp_votes, 0.5))[d$obs], d$exp_votes[d$obs], d$.cd[d$obs]), "tau2"))
+  }
+  if (sd_d <= 0) xd = character()
 
   Tf = pois_bayes_draws(
     d,
@@ -153,7 +199,9 @@ pois_bayes_method = function(d, form, draws, pr, prior = FALSE) {
     form,
     draws,
     pr,
-    off_p(d$exp_votes)
+    off_p(d$exp_votes),
+    xd = xd,
+    sd_d = sd_d
   )
   T = ifelse(cnt(d$obs), cnt(d$c_tot), pmax(Tf$post, cnt(d$c_tot)))
   rem = T - cnt(d$c_tot)
@@ -217,8 +265,8 @@ fit_pois_bayes = function(
   settings = sprintf(
     paste0(
       "enightmodels::pois_bayes() per method: turnout on counted-out cells (offset log expected ",
-      "votes), party votes on reporting cells (offset log counted x baseline share); demographics %s, ",
-      "county intercepts; prior sd of the log rate %g; quasi-Poisson ",
+      "votes; plus congressional-district intercepts, prior sd estimated tonight), party votes on reporting cells (offset log ",
+      "counted x baseline share); demographics %s, county intercepts; prior sd of the log rate %g; quasi-Poisson ",
       "dispersion; %d draws; interval %s %g"
     ),
     check_demo(demo),
@@ -256,7 +304,7 @@ fit_pois_bayes = function(
   fit = list(dem = numeric(nrow(d)), rep = numeric(nrow(d)), oth = numeric(nrow(d)))
   for (m in unique(d$method)) {
     i = which(d$method == m)
-    vm = pois_bayes_method(d[i, ], form, draws, pr, prior = interval == "conf_seq")
+    vm = pois_bayes_method(d[i, ], form, draws, pr, prior = interval == "conf_seq", xd = inp$xd)
     for (p in names(V)) {
       V[[p]][, i] = vm$V[[p]]
       fit[[p]][i] = vm$fit[[p]]

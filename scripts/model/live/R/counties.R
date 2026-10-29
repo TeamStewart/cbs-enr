@@ -40,8 +40,21 @@
 ##   REST_COUNTY_SD  each county's own swing (logit, independent across counties; real TX
 ##                   between-county swing sd is about 2 points, ~0.08 logit)
 ##   REST_TURN_SD    each county's turnout vs expectation (log scale)
-## all applied only to the part of a county not yet counted. These are set by judgment,
-## not fitted; the calibration nights do not cover the rest of the state.
+##   common turnout  the rest of the state's turnout, as a group, running differently from
+##                   the scraped counties' (log scale, one value per draw; REST_TURN_COMMON_*).
+##                   Without it the county terms average out over many counties and leave
+##                   almost no room for the rest moving together. Its prior sd is
+##                   estimated, not set: how far the non-scraped counties' 2018 -> 2022
+##                   turnout change ran from the big counties' across 34 states, at the
+##                   state's share of the expected vote outside the scraped counties
+##                   (prep/make_rest_turnout_common.R -> lookups/rest_turnout_common_sd.csv;
+##                   ~0.05-0.08). Once rest counties report (CD_MIN_P of their expected vote),
+##                   it is updated from them (normal-normal): their mean log turnout vs
+##                   expectation, after the scraped ratio and district offsets, with its
+##                   variance from how much those counties differ from each other.
+## all applied only to the part of a county not yet counted. REST_COMMON_SD, REST_COUNTY_SD
+## and REST_TURN_SD are set by judgment, not fitted; the calibration nights do not cover the
+## rest of the state.
 ## Fits with bounds instead of draws (conf_seq, conformal; project_rest_bounds()): each end
 ## of a party's interval takes the swing and turnout ratio from the scraped counties'
 ## interval ends that are worst for that party, plus the quantiles of the REST_* terms.
@@ -53,10 +66,11 @@
 REST_COMMON_SD = 0.05
 REST_COUNTY_SD = 0.08
 REST_TURN_SD = 0.10
+# prior sd of the common turnout term, by rest-of-state share (prep/make_rest_turnout_common.R)
+REST_TURN_COMMON_FILE = "scripts/model/lookups/rest_turnout_common_sd.csv"
 
-# congressional-district turnout offsets (cd_turnout_offsets())
+# congressional-district turnout offsets (cd_turnout_offsets()) and the common term's update
 CD_MIN_P = 0.25 # a CBS county informs its district once this share of its expected vote is counted
-CD_SHRINK_VOTES = 50000 # counted expected votes at which a district's own turnout gets half weight
 
 #' County history for the statewide rows
 #'
@@ -217,8 +231,9 @@ county_cd_map = local({
 #' vote counted) over the county's baseline (2022 governor votes). Counties with at least
 #' `CD_MIN_P` of their expected vote counted are used. For each district k, the weighted
 #' mean log ratio of its counties (weights: counted expected votes x the county's share of
-#' its registrants in k) minus the same mean statewide, shrunk toward 0 by
-#' W_k / (W_k + CD_SHRINK_VOTES). A county's offset is its districts' offsets weighted by its
+#' its registrants in k) minus the same mean statewide, shrunk toward 0 by `re_shrink()`
+#' (demos.R: the between-district variance estimated from the counties counted so far, not
+#' set by hand; 0 until they show districts differ). A county's offset is its districts' offsets weighted by its
 #' registrants in each. Before any county is far enough counted, every offset is 0 (the old
 #' statewide ratio).
 #'
@@ -244,10 +259,9 @@ cd_turnout_offsets = function(cbs, base, cd_map) {
     return(none)
   }
   m0 = sum(obs$w * obs$lr) / sum(obs$w)
-  by_cd = obs |>
-    inner_join(cd_map, by = "county_fips", relationship = "one-to-many") |>
-    summarize(W = sum(w * share), m = sum(w * share * lr) / sum(w * share), .by = cd) |>
-    mutate(delta = W / (W + CD_SHRINK_VOTES) * (m - m0))
+  pc = inner_join(obs, cd_map, by = "county_fips", relationship = "one-to-many")
+  dlt = re_shrink(pc$lr, pc$w * pc$share, pc$cd, mu = m0)
+  by_cd = tibble(cd = methods::as(names(dlt), class(cd_map$cd)), delta = unname(dlt))
   cd_map |>
     left_join(select(by_cd, cd, delta), by = "cd") |>
     summarize(turn_offset = sum(share * coalesce(delta, 0)) / sum(share), .by = county_fips)
@@ -293,13 +307,82 @@ rest_of_state = function(cbs, base, cells) {
       exp_base = coalesce(exp_base, 0)
     ) |>
     left_join(offs, by = "county_fips") |>
-    mutate(turn_offset = coalesce(turn_offset, 0))
+    mutate(
+      turn_offset = coalesce(turn_offset, 0),
+      # the rest's share of the state's expected vote: sizes the common turnout term
+      rest_share = sum(exp_base) / max(sum(base$exp_base), 1)
+    )
+}
+
+#' Prior sd of the common turnout term
+#'
+#' Interpolated in `REST_TURN_COMMON_FILE` at the state's rest-of-state share (file header).
+#' 0, with a warning once, if the file is missing.
+#'
+#' @param share Rest-of-state share of the expected vote.
+#' @return The sd (log scale).
+rest_turn_common_prior = local({
+  tab = NULL
+  function(share) {
+    if (is.null(tab)) {
+      tab <<- if (file.exists(REST_TURN_COMMON_FILE)) {
+        readr::read_csv(REST_TURN_COMMON_FILE, show_col_types = FALSE, progress = FALSE)
+      } else {
+        cli::cli_alert_warning("{.path {REST_TURN_COMMON_FILE}} not found: no common turnout term")
+        tibble(rest_share = c(0, 1), sd = c(0, 0))
+      }
+    }
+    if (!is.finite(share) || share <= 0) {
+      return(0)
+    }
+    stats::approx(tab$rest_share, tab$sd, xout = share, rule = 2)$y
+  }
+})
+
+#' The common turnout term for the rest of the state, after the rest counties counted so far
+#'
+#' Prior N(0, s0^2), s0 = `rest_turn_common_prior()`. Data: each rest county with at least
+#' `CD_MIN_P` of its expected vote counted gives r_c = log(CBS's implied total / (baseline x
+#' exp(district offset))) - log(the scraped counties' turnout ratio); their weighted mean
+#' (weights: counted expected votes) has variance s^2 sum w^2 / (sum w)^2, s^2 their
+#' weighted spread. Posterior N(m1, s1^2) by the normal-normal update. Fewer than two such
+#' counties: the prior.
+#'
+#' @param rest `rest_of_state()` (with rest_share).
+#' @param turn_ratio The scraped counties' turnout ratio draws.
+#' @return c(mean, sd).
+rest_turn_common = function(rest, turn_ratio) {
+  if (is.null(rest$rest_share)) {
+    return(c(mean = 0, sd = 0)) # units without the column (virtual.R's): no common term
+  }
+  s0 = rest_turn_common_prior(rest$rest_share[1])
+  if (s0 <= 0) {
+    return(c(mean = 0, sd = 0))
+  }
+  t = rest$d + rest$r + rest$o
+  off = if (is.null(rest$turn_offset)) 0 else rest$turn_offset
+  u = rest$p >= CD_MIN_P & t > 0 & rest$exp_base > 0
+  if (sum(u) < 2) {
+    return(c(mean = 0, sd = s0))
+  }
+  r = log(t[u] / rest$p[u] / rest$exp_base[u]) - off[u] - mean(log(pmax(turn_ratio, 1e-9)))
+  w = rest$p[u] * rest$exp_base[u]
+  m = sum(w * r) / sum(w)
+  W = sum(w)
+  s2 = sum(w * (r - m)^2) / max(W - sum(w^2) / W, 1e-9)
+  v = s2 * sum(w^2) / W^2
+  if (!is.finite(v) || v <= 0) {
+    return(c(mean = 0, sd = s0))
+  }
+  s1 = sqrt(1 / (1 / s0^2 + 1 / v))
+  c(mean = s1^2 * m / v, sd = s1)
 }
 
 #' Project the other counties' final votes
 #'
 #' Method in the file header. With `noise`, adds the `REST_COMMON_SD`, `REST_COUNTY_SD`
-#' and `REST_TURN_SD` terms to the part of each county not yet counted.
+#' and `REST_TURN_SD` terms and draws the common turnout term (`rest_turn_common()`) for the
+#' part of each county not yet counted; without, the common term is at its mean.
 #'
 #' @param rest `rest_of_state()`.
 #' @param swing Length-B vector of logit swings (one per draw; length 1 for a point).
@@ -319,10 +402,12 @@ project_rest = function(rest, swing, turn_ratio, noise = TRUE) {
   common = if (noise) rnorm(B, 0, REST_COMMON_SD) else rep(0, B)
   e_cty = if (noise) matrix(rnorm(B * n, 0, REST_COUNTY_SD), B, n) else 0
   e_trn = if (noise) matrix(rnorm(B * n, 0, REST_TURN_SD), B, n) else 0
+  ct = rest_turn_common(rest, turn_ratio)
+  c_trn = if (noise) rnorm(B, ct[["mean"]], ct[["sd"]]) else rep(ct[["mean"]], B)
   # each county's expectation moves with its district's turnout so far (turn_offset; 0 for
   # units without one, e.g. virtual.R's)
   off = if (is.null(rest$turn_offset)) 0 else rest$turn_offset
-  E = M(rest$exp_base * exp(off)) * turn_ratio * exp(e_trn)
+  E = M(rest$exp_base * exp(off)) * (turn_ratio * exp(c_trn)) * exp(e_trn)
   Tt = M(t)
   # blended final total: CBS's implied total t / p with weight p, expectation E with
   # weight 1 - p  (p x t / p = t); the uncounted part is (1 - p) of it
