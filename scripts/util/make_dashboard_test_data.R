@@ -13,6 +13,7 @@
 ## counted two-party share of the vote at that checkpoint, and votes = share x est_turnout.
 ## Also writes fake history (with vote methods, except GA), copies the sim states'
 ## crosswalks and L2 files from 26_general/input_data, and saves the dashboard data rds.
+## Counties outside the sim get the CBS test feed's latest county snapshot.
 ## Only DASHBOARD_CONTESTS rows with a sim are shown.
 ##
 ## Usage (from project root):
@@ -29,6 +30,9 @@ source("scripts/functions.R")
 source("scripts/sim/sim_snapshot.R")
 
 stopifnot(ELECTION_FOLDER != "26_primaries", ELECTION_FOLDER != "26_general")
+# county fills outside the sim counties: the CBS test feed's latest snapshots (not the sim
+# night, so they do not match its counts; OH has none)
+DASHBOARD_CBS_ENV = "test"
 
 SIM_DIR = fs::path(PATH_DROPBOX, "26_sim")
 # sim_night.R runs: main has each model's default fits, specs_conformal the other

@@ -52,7 +52,16 @@ Rscript scripts/util/make_dashboard_geo.R GA TX    # these states
 
 This writes `data/dashboard/geo/{st}.json` (simplified GeoJSON keyed on VoteHub `unit_id`, with each precinct's point on surface; `KEEP=` sets the share of vertices kept, default 0.02). The page loads `{DASHBOARD_GEO_URL}/{st}.json` (`scripts/util/globals.R`, env `CBS_DASH_GEO_URL`; default the relative `data/dashboard/geo`, so serving the project root works, and GitHub Pages copies the folder). To host the files elsewhere (S3 / CloudFront), upload the folder once and set `CBS_DASH_GEO_URL` to its URL; the bucket needs CORS for the page's origin.
 
-- **Results Map:** counted votes per unit (ENR precincts joined to `unit_id` through `scripts/model/lookups/model_precincts.csv` and the VoteHub crosswalk), filled by two-party margin; grey is not reporting or not matched.
+County and state outlines come from a second static file per state, also built once:
+
+```bash
+Rscript scripts/util/make_dashboard_counties.R          # every state with a {st}.json
+Rscript scripts/util/make_dashboard_counties.R MI TX    # these states
+```
+
+This writes `data/dashboard/geo/{st}_counties.json` from Census cartographic boundaries (`tigris::counties(cb = TRUE)`, 1:500k; AK uses its 40 state house districts, as CBS and the model inputs do), one feature per county (`id` = 5-digit FIPS) plus the dissolved state outline (`id` = `"state"`). When the file exists, both maps draw county outlines and the state outline over the precincts and fit the map to the whole state, so partly scraped states (TX, OH, MI) show whole. Without it the maps fall back to the precinct extent.
+
+- **Results Map:** counted votes per unit (ENR precincts joined to `unit_id` through `scripts/model/lookups/model_precincts.csv` and the VoteHub crosswalk), filled by two-party margin; grey is not reporting or not matched. Counties with no ENR precincts (the `geo` county prefix) are filled from the latest CBS county snapshot the models saved (`26_general/cbs_api/{env}/{ST}_{contest}/`, `scripts/model/live/R/cbs_county_pull.R`; `read_cbs_counties()` in `scripts/functions.R`), with the snapshot time in the caption. `env` is `DASHBOARD_CBS_ENV` (env `CBS_DASH_CBS_ENV`, default `live`). Snapshots are only written at model runs, so these lag the model cycle. The margin uses CBS's per-method Dem and Rep rows, which can fall short of the county total (`method_shortfall`); a county whose method rows are all zero stays grey.
 - **Remaining Vote Map:** from the picked model's latest `model_results/precincts_latest.parquet` (`write_precincts()` in `scripts/model/live/R/output.R`): projected final votes minus counted votes per unit, a circle at the precinct's point on surface sized by expected remaining votes and filled by their projected margin. It always shows the latest run, not "As of".
 
 Both maps zoom (wheel, pinch, double-click) and pan (drag); Reset at the top right undoes it. Hovering a precinct shows its numbers (browser tooltip, which follows the zoom; Plot's pointer tips don't).
@@ -67,6 +76,7 @@ Builds test data in `26_dashtest` from the simulated nights, then renders agains
 
 - **Live results:** each `26_sim/{st}_base` scenario (truth + schedule, `scripts/sim/sim_snapshot.R`) is replayed at the sim test checkpoints (every 15 minutes 8pm-4am ET, then Nov 4/5/7/10 at noon) through `make_summary()`, as one statewide feed per state.
 - **Models:** `live_sim_{st}_base.csv` from `26_general/model_tests/coverage/main` (each model's default fits) and `coverage/specs_conformal` (every other demographic spec with the conformal interval), both from `scripts/model/live/tests/sim_night.R` and stacked, with `main` winning for a model in both. `26_general/model_config.csv` is copied alongside. These are converted to enightmodels `predictions_*.csv` / `status_*.csv` in `26_dashtest/model_results`, all with `geo = "scraped"`. `live_sim` has only the two-party share and turnout, so each party's share is the predicted two-party share times the counted two-party share of the vote at that checkpoint, and predicted votes are share x `est_turnout`. Models with no result at a checkpoint are left out of that run; models with no result at all are listed as failed. `precincts_latest.parquet` is faked from each model's latest run: every precinct's uncounted truth (including sim precincts the feed never reports) projected with noise in turnout and two-party split.
+- **CBS counties:** the CBS test feed's latest snapshots (`DASHBOARD_CBS_ENV = "test"`), unrelated to the sim night. TX fills; MI's 10 unscraped counties have all-zero method rows in the test feed and stay grey; OH has no snapshot.
 - **Other inputs:** fake history from the final count (with vote methods, except GA), and the sim states' crosswalks and L2 files copied from `26_general/input_data`.
 
 Only `DASHBOARD_CONTESTS` rows that have a `_base` sim are shown (currently AK, GA, MI, MN, NC, OH Senate and TX Senate + Governor). A new `{st}_base` scenario with a `live_sim` file is picked up automatically once its contest is in `DASHBOARD_CONTESTS`.

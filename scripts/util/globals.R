@@ -86,6 +86,9 @@ DASHBOARD_MODEL = "ratio_strata/strat_g/conformal"
 # copy that says which states have a map.
 DASHBOARD_GEO_DIR = "data/dashboard/geo"
 DASHBOARD_GEO_URL = Sys.getenv("CBS_DASH_GEO_URL", "data/dashboard/geo")
+# County fills on the maps outside the scraped counties: the latest CBS county snapshot the
+# models saved (26_general/cbs_api/{env}/, scripts/model/live/R/cbs_county_pull.R)
+DASHBOARD_CBS_ENV = Sys.getenv("CBS_DASH_CBS_ENV", "live")
 
 DASHBOARD_TITLE = local({
   yr = paste0("20", stringr::str_sub(ELECTION_FOLDER, 1, 2))

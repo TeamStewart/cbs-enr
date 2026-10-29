@@ -270,6 +270,27 @@ read_geo_units <- function(state) {
     mutate(frame = coalesce(frame, FALSE))
 }
 
+# Models page maps, counties we don't scrape: the latest CBS county snapshot for a race
+# (written by cbs_county_pull.R at each model run), one row per county. dem / rep sum the
+# per-method rows, which can fall short of the county total (`method_shortfall`), so only
+# their ratio is used; total is CBS's county total. NULL if there is no snapshot.
+read_cbs_counties <- function(state, contest, district = NA, env = DASHBOARD_CBS_ENV) {
+  tag = if (is.na(district)) paste0(state, "_", contest) else paste0(state, "_", contest, "_", district)
+  f = tail(sort(fs::dir_ls(fs::path(PATH_DROPBOX, "26_general", "cbs_api", env, tag),
+                           regexp = "_\\d{8}_\\d{6}\\.parquet$", fail = FALSE)), 1)
+  if (length(f) == 0) return(NULL)
+  nanoparquet::read_parquet(f) |>
+    summarise(
+      county_name = first(county_name),
+      dem = sum(votes[party == "dem"], na.rm = TRUE),
+      rep = sum(votes[party == "rep"], na.rm = TRUE),
+      total = first(county_total_vote),
+      pct_exp = first(county_pct_exp_vote),
+      cbs_time = max(observed_at),
+      .by = c(county_fips, county_cbs)
+    )
+}
+
 read_summaries <- function(state, keys) {
   files = fs::dir_ls(fs::path(PATH_DROPBOX, ELECTION_FOLDER, state, "summaries"), regexp = "summary_.*\\.parquet$", fail = FALSE)
   if (length(files) == 0) return(NULL)
@@ -527,6 +548,17 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     }
     meta = mutate(meta, hist_match = hist_match, match_n = match_n, match_of = match_of, n_frame = sum(gu$frame))
 
+    # CBS county results for the counties with no ENR precincts (the geo prefix is county_cbs)
+    mcty = tibble(county_fips = character(), county_name = character(), dem = numeric(), rep = numeric(),
+                  total = numeric(), pct_exp = numeric())
+    cbs = read_cbs_counties(state, contest, district)
+    meta = mutate(meta, cbs_time = as.POSIXct(NA))
+    if (!is.null(cbs)) {
+      scraped = unique(str_extract(prec$geo, "(?<=_)[0-9]{3}(?=_)"))
+      mcty = filter(cbs, !county_cbs %in% scraped) |> select(names(mcty))
+      meta = mutate(meta, cbs_time = max(cbs$cbs_time))
+    }
+
     list(
       meta = meta,
       ts = mutate(ts, key = key, .before = 1),
@@ -536,7 +568,8 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
       l2 = mutate(l2, key = key, .before = 1),
       mres = mutate(mres, key = key, .before = 1),
       mprec = mutate(mprec, key = key, .before = 1),
-      mprec_runs = mutate(mprec_runs, key = key, .before = 1)
+      mprec_runs = mutate(mprec_runs, key = key, .before = 1),
+      mcty = mutate(mcty, key = key, .before = 1)
     )
   })
 
@@ -550,6 +583,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     mres = map(out, "mres") |> bind_rows(),
     mprec = map(out, "mprec") |> bind_rows(),
     mprec_runs = map(out, "mprec_runs") |> bind_rows(),
+    mcty = map(out, "mcty") |> bind_rows(),
     geo_url = DASHBOARD_GEO_URL,
     title = DASHBOARD_TITLE,
     top_model = DASHBOARD_MODEL
