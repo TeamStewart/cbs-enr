@@ -21,13 +21,28 @@
 ## Writes, per state, to 26_general/input_data/model_inputs/:
 ##   {ST}_precinct_districts.parquet   one row per precinct: geo, unit_id, n (registrants),
 ##        cd_old, cd_old_share, n_cd_old, old_src, cd_new, cd_new_share, n_cd_new, moved
-##        (cd_old != cd_new, main districts)
+##        (cd_old != cd_new, main districts), new_check, cd_new_voterfile (below)
 ##   {ST}_precinct_district_pieces.parquet   long: geo, plan ("old" / "new"), cd, share,
 ##        share_of ("area" / "registrants") -- for allocating a split precinct's votes
 ##   with --map, also {ST}_precinct_map.gpkg: every VoteHub polygon with geo (NA where it
 ##        matches none of our precincts), n, cd_old, cd_new -- ready for
 ##        redist::redist_map(map, existing_plan = cd_new, pop = n) once polygons with no
 ##        registrants are filled or dropped
+##
+## NEW-DISTRICT CHECK (new_check). The voter file's district can be wrong for a precinct
+## when a few registrants are mis-geocoded (NC Haywood BC: 16 registrants, put in NC-1,
+## 400 km away), or the precinct can be matched to the wrong VoteHub polygon. Each precinct
+## with a polygon is tested against its neighbours (polygons within NEIGHBOUR_M):
+##   ok            at least one neighbour is in the same new district
+##   island        no neighbours at all (Ocracoke, the Keys, barrier islands) -- fine
+##   boundary_gap  no neighbour shares its district, but one is within GAP_KM (water or a
+##                 sliver between polygons) -- fine
+##   suspect       none of the above. With fewer than FIX_MAX_N registrants the precinct
+##                 takes its neighbours' most common district (cd_new; the voter file's
+##                 value stays in cd_new_voterfile; its new pieces become that one district).
+##                 Larger ones keep the voter file's district and are listed for a manual
+##                 look: more often the polygon match is wrong than the district.
+##   no_polygon    no polygon to test
 ## and prints the old x new transition table (registrants), so a big change (TX-35, NC-1,
 ## ...) can be eyeballed against the enacted map.
 ##
@@ -69,6 +84,9 @@ FIPS = c(NC = "37", FL = "12", TX = "48", CA = "06", AK = "02")
 CRS_AREA = 5070 # CONUS Albers equal-area: areas in m^2
 MIN_PIECE = 0.005 # area pieces under 0.5% of a precinct are slivers from boundary mismatch
 COUNTY_WHOLE = 0.99 # a county counts as wholly in one old district above this area share
+NEIGHBOUR_M = 25 # polygons this close count as neighbours (survives slivers between them)
+GAP_KM = 0.5 # within this of its own district, a precinct is a boundary gap, not suspect
+FIX_MAX_N = 50 # suspect precincts with fewer registrants take their neighbours' district
 
 d26 = find_26_general()
 dir_in = file.path(d26, "input_data")
@@ -161,6 +179,14 @@ for (st in STATES) {
     transmute(unit_id = UNIQUE_ID, county_fips = FIPS) |>
     st_transform(CRS_AREA) |>
     st_make_valid()
+  # a unit can come in more than one polygon (TX Willacy 0006): merge them into one
+  dup = unique(vh$unit_id[duplicated(vh$unit_id)])
+  if (length(dup)) {
+    vh = bind_rows(
+      filter(vh, !unit_id %in% dup),
+      filter(vh, unit_id %in% dup) |> group_by(unit_id, county_fips) |> summarize(.groups = "drop")
+    )
+  }
   old = read_old(st)
 
   # old district by precinct polygon (area shares)
@@ -199,6 +225,37 @@ for (st in STATES) {
         .by = geo
       )
   }
+  # ---- new-district check: does a neighbouring precinct share the new district? -------
+  nd = main(new_long, "cd_new")
+  g = vh |>
+    inner_join(distinct(xw, unit_id, geo), by = "unit_id") |>
+    inner_join(select(nd, geo, cd_new), by = "geo")
+  nb = st_intersects(st_buffer(g, NEIGHBOUR_M), g) # (st_is_within_distance is far slower here)
+  chk = bind_rows(lapply(seq_len(nrow(g)), function(i) {
+    js = setdiff(nb[[i]], i)
+    if (!length(js)) {
+      return(tibble(geo = g$geo[i], new_check = "island", nb_cd = NA_integer_))
+    }
+    if (any(g$cd_new[js] == g$cd_new[i], na.rm = TRUE)) {
+      return(tibble(geo = g$geo[i], new_check = "ok", nb_cd = NA_integer_))
+    }
+    own = setdiff(which(g$cd_new == g$cd_new[i]), i)
+    km = if (length(own)) min(as.numeric(st_distance(g[i, ], g[own, ]))) / 1000 else Inf
+    tibble(
+      geo = g$geo[i],
+      new_check = if (km <= GAP_KM) "boundary_gap" else "suspect",
+      nb_cd = as.integer(names(which.max(table(g$cd_new[js]))))
+    )
+  }))
+  fix = chk |>
+    filter(new_check == "suspect") |>
+    inner_join(select(prec, geo, n), by = "geo") |>
+    filter(n < FIX_MAX_N)
+  new_long = bind_rows(
+    filter(new_long, !geo %in% fix$geo),
+    transmute(fix, geo, cd_new = nb_cd, share = 1)
+  )
+
   out = prec |>
     left_join(
       distinct(xw, geo, unit_id) |> summarize(unit_id = paste(unit_id, collapse = "|"), .by = geo),
@@ -209,7 +266,9 @@ for (st in STATES) {
       by = "geo"
     ) |>
     left_join(main(new_long, "cd_new"), by = "geo") |>
-    mutate(moved = cd_old != cd_new) |>
+    left_join(select(chk, geo, new_check), by = "geo") |>
+    left_join(transmute(nd, geo, cd_new_voterfile = cd_new), by = "geo") |>
+    mutate(new_check = coalesce(new_check, "no_polygon"), moved = cd_old != cd_new) |>
     select(
       geo,
       county_name,
@@ -222,7 +281,9 @@ for (st in STATES) {
       cd_new,
       cd_new_share,
       n_cd_new,
-      moved
+      moved,
+      new_check,
+      cd_new_voterfile
     )
   pieces = bind_rows(
     old_long |> transmute(geo, plan = "old", cd = cd_old, share, share_of = "area"),
@@ -244,6 +305,17 @@ for (st in STATES) {
   cli::cli_alert_info(
     "precincts split 95/5 or closer: {big_split(rename(old_long, cd = cd_old))} on the old map (by area), {big_split(new_long)} on the new (by registrants)"
   )
+  cli::cli_alert_info(
+    "new-district check: {paste(names(table(out$new_check)), table(out$new_check), sep = ' ', collapse = ', ')}; {nrow(fix)} small suspect precinct{?s} given {?its/their} neighbours' district"
+  )
+  big = out |> filter(new_check == "suspect", !geo %in% fix$geo)
+  if (nrow(big)) {
+    cat("Suspect precincts kept as the voter file has them -- check the polygon match and the district:\n")
+    print(
+      as.data.frame(select(big, geo, county_name, n, cd_old, cd_new, cd_new_share, unit_id)),
+      row.names = FALSE
+    )
+  }
   cli::cli_alert_info(
     "precincts whose main district changed number: {sum(out$moved, na.rm = TRUE)} ({round(100 * sum(out$n[out$moved %in% TRUE]) / n_all, 1)}% of registrants)"
   )
