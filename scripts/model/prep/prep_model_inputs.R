@@ -616,8 +616,9 @@ prec = prec |>
     # the contract requires both strictly inside (0, 1)
     dem2 = pmin(pmax(dem2_raw, 0.005), 0.995),
     oth_base = pmin(pmax(oth_raw, 0.001), 0.5),
-    # expected 2026 votes: vendor midterm turnout score x registrants, capped at n
-    est_turnout = pmin(turnoutPred * n, n),
+    # vendor midterm turnout score x registrants: the expected vote before 2026-10-29,
+    # kept for comparison (and used when EST_TURNOUT_SOURCE=vendor)
+    est_turnout_vendor = pmin(turnoutPred * n, n),
     stratum_demo = case_when(
       pred.whi > 0.5 ~ "white",
       pred.his > 0.5 ~ "hisp",
@@ -627,11 +628,64 @@ prec = prec |>
     )
   )
 
+# ---- expected 2026 votes: the registration model ----------------------------------
+# Ansolabehere, Brown, Khanna, Phillips & Stewart (2024), "Forecasting Turnout" (HDSR 6.4):
+# registrants x the turnout rate among registrants in the last comparable election beat
+# demographic, lagged-vote and saturated models out of sample. For a midterm that is 2022:
+#   reg22      n x yg_turnout22 -- the precinct's current registrants who voted in 2022
+#              (precincts with no YouGov rate: the county's rate, then the vendor score)
+#   k_c        the county's ACTUAL 2022 votes (county_baseline(): votehub gov22_total, or
+#              county_history/{ST}_county_history.csv) / its sum of reg22. reg22 misses 2022
+#              voters who have since left the rolls, and k_c restores the county's 2022
+#              level. A county with no 2022 total (NC had no 2022 governor race), or whose
+#              k_c is implausible (outside [0.8, 1.6]: usually our precincts don't cover the
+#              whole county), takes the state's median k_c.
+#   est_turnout = min(reg22 x k_c, n), at least 0.5
+# So the expectation is each county's 2022 turnout, spread over its precincts by where its
+# 2022 voters live now. Tonight's turnout ratio (each model's turnout fit, and the
+# statewide step in live/R/counties.R) moves it from there.
+# EST_TURNOUT_SOURCE=vendor restores the old expectation (turnoutPred x n).
+EST_TURNOUT_SOURCE = Sys.getenv("EST_TURNOUT_SOURCE", unset = "reg22")
+K_RANGE = c(0.8, 1.6)
+v22 = tryCatch(
+  {
+    source("scripts/model/live/R/counties.R", local = (e_cty <- new.env()))
+    e_cty$county_baseline(STATE, DIR_26) |>
+      transmute(county_fips, v22 = if_else(coalesce(gov22_total, 0) > 0, gov22_total, NA_real_))
+  },
+  error = function(e) {
+    cli::cli_alert_warning("No 2022 county totals for {STATE} ({conditionMessage(e)}); k_c = 1")
+    tibble(county_fips = character(), v22 = numeric())
+  }
+)
+prec = prec |>
+  mutate(
+    t22 = coalesce(yg_turnout22, weighted.mean(yg_turnout22, n, na.rm = TRUE)),
+    .by = county_name
+  ) |>
+  mutate(reg22 = n * coalesce(t22, turnoutPred)) |>
+  select(-t22)
+kc = prec |>
+  summarize(reg22 = sum(reg22), .by = county_fips) |>
+  left_join(v22, by = "county_fips") |>
+  mutate(k_raw = v22 / reg22, ok = !is.na(k_raw) & k_raw >= K_RANGE[1] & k_raw <= K_RANGE[2])
+k_state = if (any(kc$ok)) median(kc$k_raw[kc$ok]) else 1
+kc = mutate(kc, k_c = if_else(ok, k_raw, k_state))
+prec = prec |>
+  left_join(select(kc, county_fips, k_c), by = "county_fips") |>
+  mutate(
+    est_turnout_reg22 = pmin(pmax(reg22 * k_c, 0.5), pmax(n, 0.5)), # > 0 even with no 2022 voters (contract)
+    est_turnout = if (EST_TURNOUT_SOURCE == "vendor") est_turnout_vendor else est_turnout_reg22
+  )
+
 cli::cli_h2("Baselines")
 cli::cli_inform(c(
   "dem2 source: {DEM2_SOURCE}",
   "Precincts with dem2 imputed from county average: {sum(prec$vote_imputed)} ({format(sum(prec$n[prec$vote_imputed]), big.mark=',')} registrants)",
   "dem2 clamped to [0.005, 0.995]: {sum(prec$dem2 != prec$dem2_raw)}; oth_base clamped to [0.001, 0.5]: {sum(prec$oth_base != prec$oth_raw)}",
+  "Expected turnout source: {EST_TURNOUT_SOURCE} ({if (EST_TURNOUT_SOURCE == 'vendor') 'vendor turnout score x registrants' else 'registrants x 2022 turnout rate, calibrated to 2022 county votes'})",
+  "2022 calibration k_c: {sum(kc$ok)} of {nrow(kc)} counties from their own 2022 total (median {round(k_state, 3)}, range {paste(round(range(kc$k_c), 3), collapse = '-')}); the rest take the median{if (!any(kc$ok)) ' -- no 2022 totals, so k = 1' else ''}",
+  "Registration-model vs vendor expectation: {format(round(sum(prec$est_turnout_reg22)), big.mark=',')} vs {format(round(sum(prec$est_turnout_vendor)), big.mark=',')} votes; precinct correlation {round(cor(prec$est_turnout_reg22, prec$est_turnout_vendor), 3)}",
   "Expected turnout: {format(round(sum(prec$est_turnout)), big.mark=',')} votes; Dem two-party baseline {round(weighted.mean(prec$dem2, prec$est_turnout), 3)}; third-party baseline {round(weighted.mean(prec$oth_base, prec$est_turnout), 4)}",
   "Cross-check: L2 2022 voters among current registrants, matched precincts: {format(sum(prec$turnout22 * prec$l2_n, na.rm = TRUE), big.mark=',')}"
 ))
@@ -940,6 +994,8 @@ out = prec |>
     turnout22,
     turnout24,
     est_turnout,
+    est_turnout_vendor,
+    est_turnout_reg22,
     dem2,
     oth_base,
     # extras: YouGov values (complete for every precinct) and flags

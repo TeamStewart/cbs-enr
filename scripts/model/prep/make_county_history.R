@@ -10,13 +10,22 @@
 ## (election-night snapshots in the enightmodels format, through certification; the last
 ## snapshot of method "all" is the final count -- CA's matches the certified totals). It
 ## has Harris and Trump only, so pres24_total is their sum and the 2024 third-party share
-## is taken as 0. gov22_total is left blank: the statewide step then uses 2024 presidential
-## votes as each county's baseline size, which only matters relative to the scraped counties
-## (tonight's turnout ratio is measured against the same baseline there).
+## is taken as 0.
+##
+## gov22_total -- each county's 2022 midterm vote, used by prep_model_inputs.R to calibrate
+## expected turnout and by the statewide step as each county's baseline size:
+##   - KEPT from the existing file when this script rebuilds it, so a rerun never blanks it
+##   - or read with --v22=<MEDSL 2022 precinct file> --office=<office>, from MEDSL's
+##     github.com/MEDSL/2022-elections-official (individual_states/2022-<st>-local-precinct-
+##     general.zip; the zip can be passed as is). Use the 2022 statewide race: GOVERNOR (CA),
+##     US SENATE (NC, which had no governor race). Its total votes by county, all modes.
+##   - blank if neither: the statewide step then uses 2024 presidential votes instead.
+## As of 2026-10-29: CA = 2022 governor, NC = 2022 US Senate (both from MEDSL's files).
 ##
 ## From the cbs-enr folder:
 ##   Rscript scripts/model/prep/make_county_history.R CA
 ##   Rscript scripts/model/prep/make_county_history.R CA NY
+##   Rscript scripts/model/prep/make_county_history.R NC --v22=<2022-nc-local-precinct-general.zip> --office="US SENATE"
 ## --file=<path> reads another file instead: the same enightmodels format, or MEDSL's
 ## countypres_2000-2024 (csv / tab).
 # ========================================
@@ -32,6 +41,11 @@ if (!length(states)) {
   stop("Give the state(s), e.g. Rscript scripts/model/prep/make_county_history.R CA")
 }
 f_arg = sub("^--file=", "", grep("^--file=", args, value = TRUE))
+v22_arg = sub("^--v22=", "", grep("^--v22=", args, value = TRUE))
+office_arg = toupper(sub("^--office=", "", grep("^--office=", args, value = TRUE)))
+if (length(v22_arg) && (length(states) != 1 || !length(office_arg))) {
+  stop("--v22= reads one state's MEDSL 2022 file: give one state and --office= (e.g. GOVERNOR)")
+}
 
 d26 = find_26_general()
 dir_out = file.path(d26, "input_data", "county_history")
@@ -114,6 +128,23 @@ if (all(c("geo", "method", "votes", "time", "party", "state") %in% names(x))) {
   stop(basename(src), " is neither the enightmodels format nor MEDSL's countypres format")
 }
 
+# 2022 midterm votes by county from a MEDSL 2022 precinct file (all modes, the race's
+# regular election; special elections and other offices dropped)
+read_v22 = function(path, office) {
+  m = read_csv(path.expand(path), col_types = cols(.default = "c"), progress = FALSE)
+  names(m) = tolower(names(m))
+  m = filter(m, toupper(office) == !!office, is.na(special) | toupper(special) == "FALSE")
+  if (!nrow(m)) {
+    stop("No ", office, " rows in ", basename(path))
+  }
+  # a precinct reporting both a TOTAL row and its modes: the modes only, so nothing counts
+  # twice (precincts with only a TOTAL row keep it)
+  m |>
+    mutate(county_fips = str_pad(county_fips, 5, pad = "0"), mode = toupper(mode)) |>
+    filter(!(mode == "TOTAL" & any(mode != "TOTAL")), .by = c(county_fips, precinct)) |>
+    summarize(gov22_total = sum(as.numeric(votes), na.rm = TRUE), .by = county_fips)
+}
+
 # ---- one state at a time -------------------------------------------------------------------
 for (st in states) {
   y = filter(cty, state_po == st)
@@ -129,8 +160,25 @@ for (st in states) {
       pres24_total = sum(votes),
       .by = county_fips
     ) |>
-    mutate(gov22_total = NA_real_) |>
     arrange(county_fips)
+  # 2022 midterm votes: from --v22 if given, else whatever the existing file already has
+  f = file.path(dir_out, paste0(st, "_county_history.csv"))
+  old22 = if (file.exists(f)) {
+    read_csv(f, col_types = cols(.default = "c"), progress = FALSE) |>
+      transmute(county_fips = str_pad(county_fips, 5, pad = "0"), gov22_total = as.numeric(gov22_total))
+  } else {
+    tibble(county_fips = character(), gov22_total = numeric())
+  }
+  v22 = if (length(v22_arg)) read_v22(v22_arg[1], office_arg[1]) else filter(old22, !is.na(gov22_total))
+  out = left_join(out, v22, by = "county_fips")
+  cat(sprintf(
+    "%s: 2022 midterm votes for %d of %d counties (%s)%s\n",
+    st,
+    sum(!is.na(out$gov22_total)),
+    nrow(out),
+    if (length(v22_arg)) paste(office_arg[1], "from", basename(v22_arg[1])) else "kept from the existing file",
+    if (!any(!is.na(out$gov22_total))) " -- blank: the statewide step uses 2024 presidential votes" else ""
+  ))
   if (!has_total) {
     cat(
       "i",
@@ -160,7 +208,6 @@ for (st in states) {
       mutate(county_name = coalesce(county_name, cbs_name)) |>
       select(-cbs_name)
   }
-  f = file.path(dir_out, paste0(st, "_county_history.csv"))
   write_csv(out, f, na = "")
   cat(sprintf(
     "%s: %d counties; Harris %.1f%% of the two-party vote, %s votes in 2024 -> %s\n",

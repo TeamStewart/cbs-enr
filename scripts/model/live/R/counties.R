@@ -10,9 +10,15 @@
 ## For each other county c, at each run:
 ##   counted     d_c, r_c, o_c from the latest CBS snapshot; t_c = d_c + r_c + o_c;
 ##               p_c = CBS's share of expected vote counted (pct_exp_vote / 100)
-##   expected    E_c = (2022 governor votes in c) x tonight's turnout ratio, where the
-##               ratio = the model's predicted turnout in the scraped counties / their 2022
-##               governor votes
+##   expected    E_c = (2022 governor votes in c) x tonight's turnout ratio x the county's
+##               congressional-district offset, where the ratio = the model's predicted
+##               turnout in the scraped counties / their 2022 governor votes, and the
+##               offset (cd_turnout_offsets()) = how far turnout in the county's 2026
+##               district(s) is running from the state's, measured on the counties CBS has
+##               counted so far -- so an uncounted rural county follows its own district,
+##               not the big metro counties we scrape. Ansolabehere et al. (2024),
+##               "Forecasting Turnout" (HDSR 6.4): turnout forecasts are far more accurate
+##               by district than by county.
 ##   final total T_c = p_c x (t_c / p_c) + (1 - p_c) x E_c = t_c + (1 - p_c) x E_c
 ##               (CBS's own implied total, trusted more as more is counted);
 ##               still to count V_c = (1 - p_c) x T_c
@@ -47,6 +53,10 @@
 REST_COMMON_SD = 0.05
 REST_COUNTY_SD = 0.08
 REST_TURN_SD = 0.10
+
+# congressional-district turnout offsets (cd_turnout_offsets())
+CD_MIN_P = 0.25 # a CBS county informs its district once this share of its expected vote is counted
+CD_SHRINK_VOTES = 50000 # counted expected votes at which a district's own turnout gets half weight
 
 #' County history for the statewide rows
 #'
@@ -173,6 +183,76 @@ read_cbs_latest = function(
   x
 }
 
+#' Each county's 2026 congressional districts
+#'
+#' From prep/make_county_cd.R: how each county's registrants divide among the districts.
+#' Read once per state and session.
+#'
+#' @param state Two-letter state code.
+#' @param dir_26 Path to 26_general.
+#' @return Tibble county_fips, cd, share; NULL if the state has no {ST}_county_cd.csv.
+county_cd_map = local({
+  cache = new.env()
+  function(state, dir_26 = find_26_general()) {
+    key = paste(state, dir_26)
+    if (!exists(key, envir = cache, inherits = FALSE)) {
+      f = file.path(dir_26, "input_data", "model_inputs", paste0(state, "_county_cd.csv"))
+      assign(
+        key,
+        if (file.exists(f)) {
+          readr::read_csv(f, col_types = "cid", progress = FALSE) |> select(county_fips, cd, share)
+        } else {
+          NULL
+        },
+        envir = cache
+      )
+    }
+    get(key, envir = cache, inherits = FALSE)
+  }
+})
+
+#' Congressional-district turnout offsets for the counties CBS reports
+#'
+#' Turnout so far, by county: CBS's implied final total (counted votes / share of expected
+#' vote counted) over the county's baseline (2022 governor votes). Counties with at least
+#' `CD_MIN_P` of their expected vote counted are used. For each district k, the weighted
+#' mean log ratio of its counties (weights: counted expected votes x the county's share of
+#' its registrants in k) minus the same mean statewide, shrunk toward 0 by
+#' W_k / (W_k + CD_SHRINK_VOTES). A county's offset is its districts' offsets weighted by its
+#' registrants in each. Before any county is far enough counted, every offset is 0 (the old
+#' statewide ratio).
+#'
+#' @param cbs CBS snapshot (`read_cbs_latest()`).
+#' @param base `county_baseline()`.
+#' @param cd_map `county_cd_map()`, or NULL.
+#' @return Tibble county_fips, turn_offset (log scale).
+cd_turnout_offsets = function(cbs, base, cd_map) {
+  none = tibble(county_fips = character(), turn_offset = numeric())
+  if (is.null(cd_map) || !nrow(cbs)) {
+    return(none)
+  }
+  obs = cbs |>
+    summarize(
+      t = sum(votes),
+      p = pmin(pmax(first(county_pct_exp_vote) / 100, 0), 1),
+      .by = county_fips
+    ) |>
+    inner_join(select(base, county_fips, exp_base), by = "county_fips") |>
+    filter(p >= CD_MIN_P, t > 0, exp_base > 0) |>
+    mutate(lr = log(t / p / exp_base), w = p * exp_base)
+  if (!nrow(obs)) {
+    return(none)
+  }
+  m0 = sum(obs$w * obs$lr) / sum(obs$w)
+  by_cd = obs |>
+    inner_join(cd_map, by = "county_fips", relationship = "one-to-many") |>
+    summarize(W = sum(w * share), m = sum(w * share * lr) / sum(w * share), .by = cd) |>
+    mutate(delta = W / (W + CD_SHRINK_VOTES) * (m - m0))
+  cd_map |>
+    left_join(select(by_cd, cd, delta), by = "cd") |>
+    summarize(turn_offset = sum(share * coalesce(delta, 0)) / sum(share), .by = county_fips)
+}
+
 #' Counties the models cover
 #'
 #' @param cells Cells.
@@ -187,8 +267,12 @@ scraped_counties = function(cells) unique(stringr::str_extract(cells$geo, "(?<=_
 #' @return Tibble, one row per other county: counted d / r / o, share of expected vote
 #'   counted p, precincts in / of, h24 (2024 two-party Dem share), oth24 (2024 third-party
 #'   share), exp_base (baseline votes). A county missing from `base` gets the state's
-#'   average lean and no expected vote beyond what CBS has counted.
+#'   average lean and no expected vote beyond what CBS has counted. turn_offset is the
+#'   county's congressional-district turnout offset (`cd_turnout_offsets()`; 0 without
+#'   prep/make_county_cd.R's file for the state).
 rest_of_state = function(cbs, base, cells) {
+  st = if ("state" %in% names(cbs)) toupper(cbs$state[1]) else NA_character_
+  offs = cd_turnout_offsets(cbs, base, if (is.na(st)) NULL else county_cd_map(st))
   cbs |>
     filter(!county_cbs %in% scraped_counties(cells)) |>
     summarize(
@@ -207,7 +291,9 @@ rest_of_state = function(cbs, base, cells) {
       h24 = coalesce(h24, sum(base$pres24_dem) / sum(base$pres24_dem + base$pres24_rep)),
       oth24 = coalesce(oth24, sum(base$pres24_oth) / sum(base$pres24_total)),
       exp_base = coalesce(exp_base, 0)
-    )
+    ) |>
+    left_join(offs, by = "county_fips") |>
+    mutate(turn_offset = coalesce(turn_offset, 0))
 }
 
 #' Project the other counties' final votes
@@ -233,7 +319,10 @@ project_rest = function(rest, swing, turn_ratio, noise = TRUE) {
   common = if (noise) rnorm(B, 0, REST_COMMON_SD) else rep(0, B)
   e_cty = if (noise) matrix(rnorm(B * n, 0, REST_COUNTY_SD), B, n) else 0
   e_trn = if (noise) matrix(rnorm(B * n, 0, REST_TURN_SD), B, n) else 0
-  E = M(rest$exp_base) * turn_ratio * exp(e_trn)
+  # each county's expectation moves with its district's turnout so far (turn_offset; 0 for
+  # units without one, e.g. virtual.R's)
+  off = if (is.null(rest$turn_offset)) 0 else rest$turn_offset
+  E = M(rest$exp_base * exp(off)) * turn_ratio * exp(e_trn)
   Tt = M(t)
   # blended final total: CBS's implied total t / p with weight p, expectation E with
   # weight 1 - p  (p x t / p = t); the uncounted part is (1 - p) of it
