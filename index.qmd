@@ -36,7 +36,14 @@ ojs_define(
   mcty = if (is.null(dd$mcty)) data.frame(key = character(), county_fips = character()) else dd$mcty,
   geo_url = if (is.null(dd$geo_url)) "data/dashboard/geo" else dd$geo_url,
   dash_title = dd$title,
-  top_model = if (is.null(dd$top_model)) "" else dd$top_model
+  # second header logo next to the CBS one (format: logo takes only one), inlined for embed-resources
+  mit_logo = paste0("data:image/svg+xml;base64,", base64enc::base64encode("mit_logo_std_rgb_white.svg")),
+  # chart exports: ggmedsl's Styrene B and lab logo (assets/), VoteHub logo for the precinct maps' basemap credit
+  medsl_font = paste0("data:font/ttf;base64,", base64enc::base64encode("assets/StyreneB_Regular.ttf")),
+  medsl_logo = paste0("data:image/png;base64,", base64enc::base64encode("assets/medsl_horizontal.png")),
+  votehub_logo = paste0("data:image/svg+xml;base64,", base64enc::base64encode("votehub-logo-simple.svg")),
+  top_model = if (is.null(dd$top_model)) "" else dd$top_model,
+  truth = if (is.null(dd$truth)) data.frame(key = character(), dem = numeric(), rep = numeric(), total = numeric()) else dd$truth
 )
 ```
 
@@ -68,11 +75,18 @@ L2_MODE = { return { Total: "Total", eday: "eday", early: "early", adv: "early",
 DEM = "#005599"
 REP = "#ce0008"
 INK = "#444444"
+// two-party margin map colors, one per MARGIN_BINS bin, fading from each party's color to white at even
+// (a function so exports can rebuild it with ggmedsl's party colors)
+marginRange = (dem, rep) => {
+  const shade = (c, t) => d3.interpolateRgb(c, "#ffffff")(t);
+  return [shade(rep, 0), shade(rep, 0.3), shade(rep, 0.55), shade(rep, 0.75), shade(dem, 0.75), shade(dem, 0.55), shade(dem, 0.3), shade(dem, 0)];
+}
 
 METHOD_LABELS = { return { eday: "Election Day", early: "Early", mail: "Mail", abs: "Absentee", adv: "Advance", prov: "Provisional", all: "All (unsplit)" } }
 METHOD_ORDER = ["eday", "early", "adv", "mail", "abs", "prov", "all"]
 
-fmt = d3.format(",")
+// counts above 1 print as whole numbers (model predictions are fractional)
+fmt = v => d3.format(",")(Math.abs(v) >= 1 ? Math.round(v) : v)
 pct = d3.format(".1%")
 fmtTime = t => t == null ? "—" : new Date(t).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).replace(",", "")
 
@@ -91,6 +105,8 @@ sel = {
   });
   // charts in hidden tabs render at 0 size; nudge Quarto's card sizing when a tab is shown
   document.addEventListener("shown.bs.tab", () => window.dispatchEvent(new Event("resize")));
+  const logo = document.querySelector("#quarto-dashboard-header .navbar-logo");
+  if (logo && !document.querySelector(".navbar-logo-mit")) logo.after(html`<img src=${mit_logo} alt="MIT" class="navbar-logo navbar-logo-mit">`);
   const title = document.querySelector("#quarto-dashboard-header .navbar-title");
   if (title) {
     title.textContent = dash_title;
@@ -225,23 +241,49 @@ histSpec = (rows, x, label, xticks = 2) => ({
     Plot.ruleY([0])
   ]
 })
+// export legend for histSpec's marks
+histKeys = zero => [
+  { mark: "rect", label: "Precincts per bin", opacity: 0.7 },
+  { mark: "line", label: "Median precinct", color: "black" },
+  { mark: "line", label: zero, color: "#999", width: 1, dash: "4,4" }
+]
 
 // ---- Image export ----
-// Each chart cell registers its spec here; the card-header button re-renders it with EXPORT_THEME
-// (fixed size, larger type, title/legend/caption) and saves a PNG. The live charts are untouched.
+// Each chart cell registers its spec here, with legend keys for any marks the color scale doesn't cover;
+// the card-header button re-renders it in the MIT Election Lab house style (ggmedsl's theme_medsl(),
+// medsl_caption() and add_logo(): Styrene B, centred title, bottom legend, source caption, lab logo strip)
+// at a fixed size and saves a PNG. Precinct maps also credit VoteHub for the basemap. The live charts are untouched.
 EXPORT_THEME = { return {
   width: 1200, height: 675, scale: 3, format: "png",   // pixels = width/height x scale; format "png" or "jpeg"
-  font: "Helvetica Neue, Helvetica, Arial, sans-serif",
-  fontSize: 15, titleSize: 26, subtitleSize: 16, captionSize: 12,
-  ink: "#222222", muted: "#666666", background: "#ffffff", pad: 36,
-  margin: { top: 44, right: 24, bottom: 56, left: 64 },   // minimum plot margins at the larger font
-  caption: "Source: CBS News / MIT Election Data"
+  font: "'Styrene B', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+  base: 16,   // theme_medsl(base_size); every other size is one of its rel() multiples
+  ink: "#000000", subtitle: "#444444", muted: "#666666", grid: "#D0D0D0", background: "#ffffff", pad: 24,
+  margin: { top: 30, right: 24, bottom: 48, left: 64 },   // minimum plot margins at the larger font (maps get none)
+  source: "MIT Election Data + Science Lab", basemap: "VoteHub",
+  dem: "#3791FF", rep: "#F6573E",   // ggmedsl party_colors in place of DEM/REP; null keeps the dashboard's
+  logoW: 0.12, logoPad: 0.01        // add_logo() defaults, as fractions of the width
 } }
 EXPORTS = new Map()
-exportable = (name, s, title) => (EXPORTS.set(`${cur.key}|${name}`, { s, title: title ?? name }), s)
+// legend: { swatch, keys } where swatch is the key shape for the color scale's entries and keys are extra
+// entries { mark: "rect" | "band" | "line" | "dot", label, color, opacity, width, dash, r }
+exportable = (name, s, title, legend = {}) => (EXPORTS.set(`${cur.key}|${name}`, { s, title: title ?? name, legend }), s)
+
+// Styrene B for the canvas text; the rasterized SVG carries its own @font-face (an <img> can't see page fonts)
+exportFont = {
+  const f = new FontFace("Styrene B", `url(${medsl_font})`);
+  document.fonts.add(await f.load());
+  return f;
+}
 
 exportChart = {
   const T = EXPORT_THEME;
+  void exportFont;
+  const loadImg = src => { const i = new Image(); i.src = src; return i.decode().then(() => i); };
+  const logos = Promise.all([loadImg(medsl_logo), loadImg(votehub_logo)]);
+  const recolorMap = new Map(T.dem && T.rep
+    ? [[DEM, T.dem], [REP, T.rep], ...d3.zip(marginRange(DEM, REP), marginRange(T.dem, T.rep))].map(([a, b]) => [a.toLowerCase(), b])
+    : []);
+  const recolor = c => recolorMap.get(String(c).toLowerCase()) ?? c;
   const idb = (op, val) => new Promise((resolve, reject) => {
     const req = indexedDB.open("cbs-dash-export", 1);
     req.onupgradeneeded = () => req.result.createObjectStore("kv");
@@ -264,44 +306,123 @@ exportChart = {
     }
     return dir;
   };
-  const render = async ({ s, title }) => {
-    const legend = s.color?.legend && s.color.domain ? s.color : null;
-    const subtitle = `${cur.label} · as of ${fmtTime(cur.time)} ET`;
-    const headH = T.pad + T.titleSize + 10 + T.subtitleSize + (legend ? 34 : 0) + 18;
-    const plotW = T.width - 2 * T.pad, plotH = T.height - headH - T.captionSize - T.pad - 14;
-    const svg = Plot.plot({
-      ...s, color: s.color && { ...s.color, legend: false }, width: plotW, height: plotH,
-      marginTop: Math.max(s.marginTop ?? 0, T.margin.top), marginRight: Math.max(s.marginRight ?? 0, T.margin.right),
-      marginBottom: Math.max(s.marginBottom ?? 0, T.margin.bottom), marginLeft: Math.max(s.marginLeft ?? 0, T.margin.left),
-      style: { fontFamily: T.font, fontSize: `${T.fontSize}px`, color: T.ink, background: "transparent", overflow: "visible" }
-    });
-    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-    const img = new Image();
-    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(svg));
-    await img.decode();
+  const render = async ({ s, title, legend: lg }) => {
+    const [medslLogo, votehubLogo] = await logos;
+    const B = T.base, W = T.width, H = T.height, innerW = W - 2 * T.pad;
+    const isMap = s.projection != null;
+    // a Plot caption would wrap the svg in a <figure>; it goes in the caption block instead.
+    // keys: legend entries a spec builder (modelSpec) carries for its own marks
+    const { caption: note, keys: specKeys = [], ...spec } = s;
     const c = document.createElement("canvas");
-    c.width = T.width * T.scale; c.height = T.height * T.scale;
+    c.width = W * T.scale; c.height = H * T.scale;
     const g = c.getContext("2d");
     g.scale(T.scale, T.scale);
-    g.fillStyle = T.background; g.fillRect(0, 0, T.width, T.height);
+    g.fillStyle = T.background; g.fillRect(0, 0, W, H);
     g.textBaseline = "top";
-    g.fillStyle = T.ink; g.font = `700 ${T.titleSize}px ${T.font}`;
-    g.fillText(title, T.pad, T.pad);
-    g.fillStyle = T.muted; g.font = `400 ${T.subtitleSize}px ${T.font}`;
-    g.fillText(subtitle, T.pad, T.pad + T.titleSize + 10);
-    if (legend) {
-      let x = T.pad;
-      const y = T.pad + T.titleSize + 10 + T.subtitleSize + 14;
-      g.font = `400 ${T.fontSize}px ${T.font}`;
-      legend.domain.forEach((d, i) => {
-        g.fillStyle = legend.range[i]; g.fillRect(x, y + 1, 14, 14);
-        g.fillStyle = T.ink; g.fillText(d, x + 20, y);
-        x += 20 + g.measureText(d).width + 24;
-      });
+    const font = rel => `400 ${rel * B}px ${T.font}`;
+    const measure = (t, rel) => (g.font = font(rel), g.measureText(t).width);
+    const lineH = rel => rel * B * 1.25;
+    // medsl_wrap(): greedy word wrap to maxW
+    const wrap = (t, rel, maxW = innerW) => String(t).split(" ").reduce((lines, w) => {
+      const joined = lines.length ? `${lines[lines.length - 1]} ${w}` : w;
+      if (lines.length && measure(joined, rel) <= maxW) lines[lines.length - 1] = joined; else lines.push(w);
+      return lines;
+    }, []);
+    const text = (lines, rel, color, x, y, align = "left") => {
+      g.font = font(rel); g.fillStyle = color; g.textAlign = align;
+      lines.forEach((l, i) => g.fillText(l, x, y + i * lineH(rel)));
+      g.textAlign = "left";
+      return y + lines.length * lineH(rel);
+    };
+
+    // title and subtitle, centred (plot.title / plot.subtitle)
+    let y = text(wrap(title, 1.4), 1.4, T.ink, W / 2, T.pad, "center") + 0.75 * B;
+    const plotTop = text(wrap(`${cur.label} · as of ${fmtTime(cur.time)} ET`, 1), 1, T.subtitle, W / 2, y, "center") + B;
+
+    // logo strip under everything (add_logo(position = "bottom-right")); maps add VoteHub to its left
+    const lp = T.logoPad * W, logoW = T.logoW * W, logoH = logoW * medslLogo.naturalHeight / medslLogo.naturalWidth;
+    const stripTop = H - logoH - 2 * lp;
+    g.drawImage(medslLogo, W - lp - logoW, stripTop + lp, logoW, logoH);
+    if (isMap) {
+      const vw = logoH * votehubLogo.naturalWidth / votehubLogo.naturalHeight;
+      g.drawImage(votehubLogo, W - lp - logoW - 2 * B - vw, stripTop + lp, vw, logoH);
     }
-    g.drawImage(img, T.pad, headH, plotW, plotH);
-    g.fillStyle = T.muted; g.font = `400 ${T.captionSize}px ${T.font}`;
-    g.fillText(T.caption, T.pad, T.height - T.pad - T.captionSize + 6);
+
+    // caption, left-aligned: the chart's own note, then the source line
+    const capLines = [...(note ? wrap(note, 0.75) : []),
+      ...wrap(`Source: ${T.source}${isMap ? `. Basemap: ${T.basemap}` : ""}`, 0.75)];
+    const capTop = stripTop - capLines.length * lineH(0.75);
+    text(capLines, 0.75, T.muted, T.pad, capTop);
+
+    // legend at the bottom, centred rows: the color scale, then one key per remaining mark
+    const kh = 0.85 * B;
+    const drawKey = (k, x, y) => {
+      const cy = y + kh / 2;
+      g.save();
+      g.globalAlpha = k.opacity ?? 1;
+      g.fillStyle = g.strokeStyle = recolor(k.color ?? INK);
+      if (k.mark === "rect") g.fillRect(x + 12 - kh / 2, y, kh, kh);
+      else if (k.mark === "band") g.fillRect(x, cy - 5, 24, 10);
+      else if (k.mark === "dot") { g.beginPath(); g.arc(x + 12, cy, k.r ?? 3, 0, 2 * Math.PI); g.fill(); }
+      else {
+        g.lineWidth = k.width ?? 2;
+        g.setLineDash(k.dash ? k.dash.split(",").map(Number) : []);
+        g.beginPath(); g.moveTo(x, cy); g.lineTo(x + 24, cy); g.stroke();
+      }
+      g.restore();
+    };
+    const keyItem = k => ({ w: 30 + measure(k.label, 0.85), h: kh, draw: (x, y) => (drawKey(k, x, y), text([k.label], 0.85, T.ink, x + 30, y)) });
+    const items = [];
+    const sc = spec.color;
+    if (sc?.domain && sc.range) {
+      const tw = sc.label ? measure(sc.label, 0.95) + B / 2 : 0;
+      const drawTitle = (x, y) => sc.label && text([sc.label], 0.95, T.ink, x, y);
+      if (sc.type === "threshold") {
+        const bw = 44, tf = sc.tickFormat ?? (d => d), lh = 0.8 * B;
+        items.push({ w: tw + bw * sc.range.length, h: kh + 4 + lh, draw: (x, y) => {
+          drawTitle(x, y);
+          sc.range.forEach((col, i) => { g.fillStyle = recolor(col); g.fillRect(x + tw + i * bw, y, bw, kh); });
+          sc.domain.forEach((d, i) => text([tf(d)], 0.8, T.ink, x + tw + (i + 1) * bw, y + kh + 4, "center"));
+        } });
+      } else {
+        if (sc.label) items.push({ w: tw, h: kh, draw: drawTitle });
+        sc.domain.forEach((d, i) => items.push(keyItem({ mark: lg.swatch ?? "rect", label: String(d), color: sc.range[i] })));
+      }
+    }
+    [...(lg.keys ?? []), ...specKeys].filter(Boolean).forEach(k => items.push(keyItem(k)));
+    const rows = [];
+    for (const it of items) {
+      const r = rows[rows.length - 1];
+      if (r && r.w + B + it.w <= innerW) { r.items.push(it); r.w += B + it.w; } else rows.push({ items: [it], w: it.w });
+    }
+    rows.forEach(r => r.h = d3.max(r.items, it => it.h));
+    const legendH = rows.length ? d3.sum(rows, r => r.h) + (rows.length - 1) * 6 : 0;
+    y = capTop - 0.75 * B - legendH;
+    for (const r of rows) {
+      let x = (W - r.w) / 2;
+      for (const it of r.items) { it.draw(x, y + (r.h - it.h) / 2); x += it.w + B; }
+      y += r.h + 6;
+    }
+    const plotH = capTop - 0.75 * B - (rows.length ? legendH + B / 2 : 0) - plotTop;
+
+    // the plot itself: theme_minimal-style axes (no ticks, light major grid)
+    const m = k => isMap ? 0 : Math.max(spec[`margin${k}`] ?? 0, T.margin[k.toLowerCase()]);
+    const axis = a => a && { ...a, tickSize: 0 };
+    const svg = Plot.plot({
+      ...spec, x: axis(spec.x), y: axis(spec.y), color: sc && { ...sc, legend: false }, width: innerW, height: plotH,
+      marginTop: m("Top"), marginRight: m("Right"), marginBottom: m("Bottom"), marginLeft: m("Left"),
+      style: { fontFamily: T.font, fontSize: `${0.85 * B}px`, color: T.ink, background: "transparent", overflow: "visible" }
+    });
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    svg.querySelectorAll('[aria-label$="-grid"]').forEach(e => (e.setAttribute("stroke", T.grid), e.setAttribute("stroke-opacity", 1)));
+    svg.querySelectorAll('[aria-label$="-axis label"]').forEach(e => e.setAttribute("font-size", B));
+    svg.querySelectorAll('[aria-label="fx-axis tick label"]').forEach(e => e.setAttribute("font-size", 0.95 * B));
+    svg.querySelectorAll("[fill], [stroke]").forEach(e => ["fill", "stroke"].forEach(a => e.hasAttribute(a) && e.setAttribute(a, recolor(e.getAttribute(a)))));
+    const face = document.createElementNS("http://www.w3.org/2000/svg", "style");
+    face.textContent = `@font-face { font-family: "Styrene B"; src: url(${medsl_font}) format("truetype"); }`;
+    svg.prepend(face);
+    const img = await loadImg("data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(svg)));
+    g.drawImage(img, T.pad, plotTop, innerW, plotH);
     return new Promise(resolve => c.toBlob(resolve, `image/${T.format}`, 0.95));
   };
   return async (name, repick = false) => {
@@ -391,7 +512,7 @@ exportButtons = {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
   const s = exportable("Total Votes", timeSpec(tsLong.filter(d => d.series === "Total"), "votes", {
     label: "Votes", tickFormat: "~s", stroke: () => INK, tip: d => fmt(d.votes)
-  }));
+  }), "Total Votes", { keys: [{ mark: "line", label: "Total votes reported" }] });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -402,7 +523,7 @@ exportButtons = {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
   const s = exportable("Vote Count", timeSpec(tsLong.filter(d => d.party), "votes", {
     label: "Votes", tickFormat: "~s", stroke: "series", color: partyColor, tip: d => fmt(d.votes)
-  }));
+  }), "Vote Count", { swatch: "line" });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -413,7 +534,7 @@ exportButtons = {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
   const s = exportable("Vote Share", timeSpec(tsLong.filter(d => d.party && d.share != null), "share", {
     label: "Share of all votes", tickFormat: ".0%", stroke: "series", color: partyColor, domain: [0, 1], tip: d => pct(d.share)
-  }));
+  }), "Vote Share", { swatch: "line" });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -424,7 +545,8 @@ exportButtons = {
 //| title: Margin
 {
   if (noVotes) return noVotesMsg();
-  const s = exportable("Margin", histSpec(reported.filter(d => d.margin != null), "margin", `Precinct margin (${cur.dem_name ?? "Dem"} − ${cur.rep_name ?? "Rep"}) →`, [-0.5, 0.5]));
+  const s = exportable("Margin", histSpec(reported.filter(d => d.margin != null), "margin", `Precinct margin (${cur.dem_name ?? "Dem"} − ${cur.rep_name ?? "Rep"}) →`, [-0.5, 0.5]),
+    "Margin", { keys: histKeys("Even") });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -434,7 +556,8 @@ exportButtons = {
 {
   if (!cur.has_hist) return noHist();
   if (noVotes) return noVotesMsg();
-  const s = exportable("Swing", histSpec(reported.filter(d => d.swing != null), "swing", `Dem share swing vs '${String(cur.hist_year).slice(2)} →`));
+  const s = exportable("Swing", histSpec(reported.filter(d => d.swing != null), "swing", `Dem share swing vs '${String(cur.hist_year).slice(2)} →`),
+    "Swing", { keys: histKeys("No swing") });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -460,7 +583,11 @@ exportButtons = {
       fill: DEM, fillOpacity: 0.4, stroke: "white", strokeWidth: 0.5, channels: { county: "county" }, tip: true
     })
   ]
-  });
+  }, "Swing Scatter", { keys: [
+    { mark: "dot", label: "Precinct", color: DEM, opacity: 0.4, r: 2.5 },
+    { mark: "dot", label: "County (area: votes counted)", color: DEM, opacity: 0.4, r: 6 },
+    { mark: "line", label: "No swing", color: "#999", width: 1, dash: "4,4" }
+  ] });
   return Plot.plot({ fx: s.fx, x: s.x, y: s.y, r: s.r, marks: s.marks });
 }
 ```
@@ -508,7 +635,11 @@ viewof prec_mode = {
     Plot.linearRegressionY(explorerRows, { x: prec_x, y: prec_y, stroke: "black" }),
     line45.length > 0 && explorerLo < explorerHi ? Plot.link([0], { x1: explorerLo, y1: explorerLo, x2: explorerHi, y2: explorerHi, stroke: "#999", strokeDasharray: "4,4" }) : null
   ]
-  }, `Precincts: ${prec_y} vs ${prec_x} (${prec_mode})`);
+  }, `Precincts: ${prec_y} vs ${prec_x} (${prec_mode})`, { keys: [
+    { mark: "dot", label: "Precinct", opacity: 0.45, r: 2.5 },
+    { mark: "line", label: "Linear fit", color: "black", width: 1.5 },
+    line45.length > 0 && explorerLo < explorerHi && { mark: "line", label: "45° line", color: "#999", width: 1, dash: "4,4" }
+  ] });
   return Plot.plot({ x: s.x, y: s.y, marks: s.marks });
 }
 ```
@@ -520,6 +651,8 @@ viewof prec_mode = {
 
 // enightmodels predictions for the selected contest (read_model_results() in functions.R)
 mpc = MP.filter(d => d.key === sel)
+// test data only (make_dashboard_test_data.R): the sim's final truth, drawn as a reference line
+truthc = transpose(truth).find(d => d.key === sel) ?? null
 msc = MS.filter(d => d.key === sel)
 // models with predictions first, then ones that only appear in status (failed runs)
 modelsOk = [...new Set(mpc.map(d => d.model))].sort()
@@ -620,6 +753,11 @@ modelSpec = (rows, opts) => {
     );
   }
   if (opts.rule != null) marks.push(Plot.ruleY([opts.rule], { stroke: "#999", strokeDasharray: "4,4" }));
+  // final truth (test data only): rows of { y, pname }, labelled at the right edge
+  if (opts.truth?.length) marks.push(
+    Plot.ruleY(opts.truth, { y: "y", stroke: opts.stroke, strokeWidth: 1.5, strokeOpacity: 0.7 }),
+    Plot.text(opts.truth, { y: "y", frameAnchor: "right", textAnchor: "end", text: () => "final", fill: opts.stroke, dy: -6, fontSize: 9 })
+  );
   marks.push(
     Plot.ruleX(rows, Plot.pointerX({ x: "time", stroke: "#999" })),
     Plot.tip(rows, Plot.pointerX({ x: "time", y: "pred", title: d => `${d.series}\n${fmtTime(d.time)} · ${pct(d.pct_rep)} reporting\n` +
@@ -627,6 +765,12 @@ modelSpec = (rows, opts) => {
   );
   return {
     marginBottom: 30,
+    keys: [
+      { mark: "line", label: "Predicted" },
+      { mark: "line", label: "Reported", width: 1, dash: "1,3" },
+      rows.some(d => d.geo === "all") && { mark: "line", label: `Predicted: ${GEO_LABELS.all}`, dash: "6,3" },
+      opts.rule != null && { mark: "line", label: opts.fmt(opts.rule), color: "#999", width: 1, dash: "4,4" }
+    ],
     x: { label: null, ticks: 5 },
     y: { grid: true, label: opts.label, tickFormat: opts.tickFormat },
     color: opts.color,
@@ -702,14 +846,11 @@ mctyc = MCTY.filter(d => d.key === sel)
 
 // two-party Dem margin bins: R+60, R+30, R+10, even, D+10, D+30, D+60
 MARGIN_BINS = [-0.6, -0.3, -0.1, 0, 0.1, 0.3, 0.6]
-marginColor = {
-  const shade = (c, t) => d3.interpolateRgb(c, "#ffffff")(t);
-  return {
-    type: "threshold", domain: MARGIN_BINS, legend: true, label: "Two-party margin",
-    tickFormat: d => d === 0 ? "Even" : `${d < 0 ? "R" : "D"}+${Math.round(Math.abs(d) * 100)}`,
-    range: [shade(REP, 0), shade(REP, 0.3), shade(REP, 0.55), shade(REP, 0.75), shade(DEM, 0.75), shade(DEM, 0.55), shade(DEM, 0.3), shade(DEM, 0)]
-  };
-}
+marginColor = { return {
+  type: "threshold", domain: MARGIN_BINS, legend: true, label: "Two-party margin",
+  tickFormat: d => d === 0 ? "Even" : `${d < 0 ? "R" : "D"}+${Math.round(Math.abs(d) * 100)}`,
+  range: marginRange(DEM, REP)
+} }
 MAP_BLANK = "#e9ecef"
 
 // zoom (wheel / pinch / double-click) and pan (drag) on every map (className "dash-map"); attached
@@ -875,8 +1016,9 @@ viewof mctl = {
 {
   if (noModels) return noModelsMsg();
   const s = exportable("Predicted Share", modelSpec(modelRows.filter(d => d.pred_type === "share" && ["dem", "rep"].includes(d.party)), {
-    label: "Share of all votes", tickFormat: ".0%", stroke: "pname", color: modelColor, rule: 0.5, fmt: pct
-  }), `Predicted share: ${model_pick}`);
+    label: "Share of all votes", tickFormat: ".0%", stroke: "pname", color: modelColor, rule: 0.5, fmt: pct,
+    truth: truthc && truthc.total > 0 ? ["dem", "rep"].map(p => ({ y: truthc[p] / truthc.total, pname: partyName(p) })) : null
+  }), "Predicted Vote Share", { swatch: "line" });
   return Plot.plot({ marginBottom: s.marginBottom, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -886,8 +1028,9 @@ viewof mctl = {
 {
   if (noModels) return noModelsMsg();
   const s = exportable("Predicted Votes", modelSpec(modelRows.filter(d => d.pred_type === "vote" && ["dem", "rep"].includes(d.party)), {
-    label: "Votes", tickFormat: "~s", stroke: "pname", color: modelColor, fmt: fmt
-  }), `Predicted votes: ${model_pick}`);
+    label: "Votes", tickFormat: "~s", stroke: "pname", color: modelColor, fmt: fmt,
+    truth: truthc ? ["dem", "rep"].map(p => ({ y: truthc[p], pname: partyName(p) })) : null
+  }), "Predicted Votes", { swatch: "line" });
   return Plot.plot({ marginBottom: s.marginBottom, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -897,8 +1040,9 @@ viewof mctl = {
 {
   if (noModels) return noModelsMsg();
   const s = exportable("Predicted Turnout", modelSpec(turnoutRows, {
-    label: "Total votes (all candidates)", tickFormat: "~s", stroke: () => INK, fmt: fmt
-  }), `Predicted turnout: ${model_pick}`);
+    label: "Total votes (all candidates)", tickFormat: "~s", stroke: () => INK, fmt: fmt,
+    truth: truthc ? [{ y: truthc.total }] : null
+  }), "Predicted Turnout");
   return Plot.plot({ marginBottom: s.marginBottom, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -927,7 +1071,9 @@ viewof mctl = {
         title: res.map(d => `${d.unit_id}\n${partyName("dem")} ${fmt(d.dem)} · ${partyName("rep")} ${fmt(d.rep)}\n${marginColor.tickFormat(Math.round(d.margin * 100) / 100)} · ${fmt(d.total)} votes`) }),
       ...outlineMarks(g)
     ]
-  }, "Precinct results");
+  }, "Precinct Results", { keys: [
+    { mark: "rect", label: "No results yet or not matched", color: MAP_BLANK }
+  ] });
   return Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, caption: s.caption, marks: s.marks });
 }
 ```
@@ -948,7 +1094,7 @@ viewof mctl = {
     projection: g.projection,
     color: marginColor,
     r: { type: "sqrt", domain: [0, d3.max(rows, d => d.rem)], range: [0, 14] },
-    caption: `${model_pick}${mprecRun ? ` · run ${fmtTime(mprecRun.time)} ET` : ""} · ${fmt(Math.round(tot))} votes expected outstanding` +
+    caption: `${mprecRun ? `Model run ${fmtTime(mprecRun.time)} ET · ` : ""}${fmt(Math.round(tot))} votes expected outstanding` +
       `${d2 == null ? "" : ` (${pct(d2)} D two-party)`} · circle area: expected remaining votes, color: their projected margin`,
     marks: [
       Plot.geo(g.counties, { fill: MAP_BLANK }),
@@ -957,7 +1103,9 @@ viewof mctl = {
       Plot.dot(rows, { x: "cx", y: "cy", r: "rem", fill: "margin", fillOpacity: 0.85, stroke: "white", strokeWidth: 0.5,
         title: d => `${d.unit_id}\n${fmt(d.rem)} votes expected outstanding\n${pct(d.d2)} D two-party (${marginColor.tickFormat(Math.round(d.margin * 100) / 100)})` })
     ]
-  }, "Expected remaining vote");
+  }, "Expected Remaining Vote", { keys: [
+    { mark: "dot", label: "Expected remaining votes (area)", r: 6, opacity: 0.6 }
+  ] });
   return Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, r: s.r, caption: s.caption, marks: s.marks });
 }
 ```
