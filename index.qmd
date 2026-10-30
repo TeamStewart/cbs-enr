@@ -257,7 +257,7 @@ histKeys = zero => [
 // medsl_caption() and add_logo(): Styrene B, centred title, bottom legend, source caption, lab logo strip)
 // at a fixed size and saves a PNG. Precinct maps also credit VoteHub for the basemap. The live charts are untouched.
 EXPORT_THEME = { return {
-  width: 1200, height: 675, scale: 3, format: "png",   // pixels = width/height x scale; format "png" or "jpeg"
+  width: 1200, height: 675, scale: 3, format: "png",   // pixels = width/height x scale (maps: height follows the state); "png" or "jpeg"
   font: "'Styrene B', 'Helvetica Neue', Helvetica, Arial, sans-serif",
   base: 16,   // theme_medsl(base_size); every other size is one of its rel() multiples
   ink: "#000000", subtitle: "#444444", muted: "#666666", grid: "#D0D0D0", background: "#ffffff", pad: 24,
@@ -311,17 +311,15 @@ exportChart = {
   };
   const render = async ({ s, title, legend: lg }) => {
     const [medslLogo, votehubLogo] = await logos;
-    const B = T.base, W = T.width, H = T.height, innerW = W - 2 * T.pad;
+    const B = T.base, W = T.width, innerW = W - 2 * T.pad;
     const isMap = s.projection != null;
-    // a Plot caption would wrap the svg in a <figure>; it goes in the caption block instead.
-    // keys: legend entries a spec builder (modelSpec) carries for its own marks
-    const { caption: note, keys: specKeys = [], ...spec } = s;
+    // a Plot caption would wrap the svg in a <figure>; it goes in the caption block instead
+    // (exportCaption, when given, replaces the live one). keys: legend entries a spec builder
+    // (modelSpec) carries for its own marks
+    const { caption, exportCaption, keys: specKeys = [], ...spec } = s;
+    const note = exportCaption ?? caption;
     const c = document.createElement("canvas");
-    c.width = W * T.scale; c.height = H * T.scale;
     const g = c.getContext("2d");
-    g.scale(T.scale, T.scale);
-    g.fillStyle = T.background; g.fillRect(0, 0, W, H);
-    g.textBaseline = "top";
     const font = rel => `400 ${rel * B}px ${T.font}`;
     const measure = (t, rel) => (g.font = font(rel), g.measureText(t).width);
     const lineH = rel => rel * B * 1.25;
@@ -338,24 +336,18 @@ exportChart = {
       return y + lines.length * lineH(rel);
     };
 
+    // layout first (measuring only), so maps can size the canvas to the state's shape.
     // title and subtitle, centred (plot.title / plot.subtitle)
-    let y = text(wrap(title, 1.4), 1.4, T.ink, W / 2, T.pad, "center") + 0.75 * B;
-    const plotTop = text(wrap(`${cur.label} · as of ${fmtTime(cur.time)} ET`, 1), 1, T.subtitle, W / 2, y, "center") + B;
+    const titleLines = wrap(title, 1.4), subLines = wrap(`${cur.label} · as of ${fmtTime(cur.time)} ET`, 1);
+    const plotTop = T.pad + titleLines.length * lineH(1.4) + 0.75 * B + subLines.length * lineH(1) + B;
 
     // logo strip under everything (add_logo(position = "bottom-right")); maps add VoteHub to its left
     const lp = T.logoPad * W, logoW = T.logoW * W, logoH = logoW * medslLogo.naturalHeight / medslLogo.naturalWidth;
-    const stripTop = H - logoH - 2 * lp;
-    g.drawImage(medslLogo, W - lp - logoW, stripTop + lp, logoW, logoH);
-    if (isMap) {
-      const vw = logoH * votehubLogo.naturalWidth / votehubLogo.naturalHeight;
-      g.drawImage(votehubLogo, W - lp - logoW - 2 * B - vw, stripTop + lp, vw, logoH);
-    }
+    const stripH = logoH + 2 * lp;
 
     // caption, left-aligned: the chart's own note, then the source line
     const capLines = [...(note ? wrap(note, 0.75) : []),
       ...wrap(`Source: ${T.source}${isMap ? `. Basemap: ${T.basemap}` : ""}`, 0.75)];
-    const capTop = stripTop - capLines.length * lineH(0.75);
-    text(capLines, 0.75, T.muted, T.pad, capTop);
 
     // legend at the bottom, centred rows: the color scale, then one key per remaining mark
     const kh = 0.85 * B;
@@ -400,13 +392,37 @@ exportChart = {
     }
     rows.forEach(r => r.h = d3.max(r.items, it => it.h));
     const legendH = rows.length ? d3.sum(rows, r => r.h) + (rows.length - 1) * 6 : 0;
-    y = capTop - 0.75 * B - legendH;
+    const footH = stripH + capLines.length * lineH(0.75) + 0.75 * B + (rows.length ? legendH + B / 2 : 0);
+
+    // maps get the projected state's aspect ratio at full width; other charts the theme's fixed size
+    let H = T.height;
+    if (isMap) {
+      const p = s.projection;
+      const [[x0, y0], [x1, y1]] = d3.geoPath(d3.geoConicEqualArea().parallels(p.parallels).rotate(p.rotate)).bounds(p.domain);
+      H = Math.round(plotTop + innerW * (y1 - y0) / (x1 - x0) + footH);
+    }
+    const plotH = H - plotTop - footH;
+
+    c.width = W * T.scale; c.height = H * T.scale;
+    g.scale(T.scale, T.scale);
+    g.fillStyle = T.background; g.fillRect(0, 0, W, H);
+    g.textBaseline = "top";
+    text(titleLines, 1.4, T.ink, W / 2, T.pad, "center");
+    text(subLines, 1, T.subtitle, W / 2, T.pad + titleLines.length * lineH(1.4) + 0.75 * B, "center");
+    const stripTop = H - stripH;
+    g.drawImage(medslLogo, W - lp - logoW, stripTop + lp, logoW, logoH);
+    if (isMap) {
+      const vw = logoH * votehubLogo.naturalWidth / votehubLogo.naturalHeight;
+      g.drawImage(votehubLogo, W - lp - logoW - 2 * B - vw, stripTop + lp, vw, logoH);
+    }
+    const capTop = stripTop - capLines.length * lineH(0.75);
+    text(capLines, 0.75, T.muted, T.pad, capTop);
+    let y = capTop - 0.75 * B - legendH;
     for (const r of rows) {
       let x = (W - r.w) / 2;
       for (const it of r.items) { it.draw(x, y + (r.h - it.h) / 2); x += it.w + B; }
       y += r.h + 6;
     }
-    const plotH = capTop - 0.75 * B - (rows.length ? legendH + B / 2 : 0) - plotTop;
 
     // the plot itself: theme_minimal-style axes (no ticks, light major grid)
     const m = k => isMap ? 0 : Math.max(spec[`margin${k}`] ?? 0, T.margin[k.toLowerCase()]);
@@ -1072,6 +1088,9 @@ viewof mctl = {
     color: marginColor,
     caption: `Counted votes as of ${fmtTime(cur.time)} ET · ${fmt(res.length)} of ${fmt(g.features.length)} precincts reporting · grey: none yet or not matched` +
       (cty.length ? ` · ${fmt(cty.length)} unscraped counties: CBS county results as of ${fmtTime(cur.cbs_time)} ET` : ""),
+    // the export's title, subtitle and legend already carry the time and the grey key
+    exportCaption: `${fmt(res.length)} of ${fmt(g.features.length)} precincts reporting` +
+      (cty.length ? ` · ${fmt(cty.length)} unscraped counties: CBS county results` : ""),
     marks: [
       Plot.geo(g.counties, { fill: MAP_BLANK }),
       Plot.geo(g.features, { fill: MAP_BLANK, stroke: "white", strokeWidth: 0.3 }),
