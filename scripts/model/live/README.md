@@ -28,6 +28,27 @@ CBS feed (writes to `model_tests/run_night_sim/`, never to `model_results/`):
 Rscript scripts/model/live/run_night.R --sim=tx_base --at="2026-11-03 22:00"
 ```
 
+**Redistricting charts.** After every refresh, `run_night.R` also starts
+`scripts/model/reports/redistricting_compare.R --live` in the background (`--no-redistricting`
+turns it off): tonight's House vote, counted so far, by new district (actual) and old district
+(estimated), for NC, FL, TX, OH and CA. It runs separately, so it never holds up or breaks the
+models. **The dashboard reads the charts from `26_general/model_results/redistricting/`:**
+`redistricting_dumbbell_{ST}_house_latest.png` (one per state), `redistricting_seats_house_latest.png`
+and `redistricting_districts_house_latest.csv`, replaced at every run; time-stamped copies go to
+`history/`, and the run's log to `live.log`.
+
+**Before go time (once, so the first results chart straight away):**
+1. Install fourthirtyfive: `Rscript -e 'remotes::install_github("kuriwaki/fourthirtyfive")'`
+   (sf, ggplot2 and cbsapi with the CBS key are already needed for the models).
+2. CA's 2024 precinct files from the Statewide Database in `26_general/input_data/swdb_g24/`
+   (`srprec_state_g24_v01_shp.zip`, `state_g24_sov_data_by_g24_srprec.zip`; in place as of 2026-10-30).
+3. `Rscript scripts/model/reports/redistricting_compare.R` -- all five states, ~15 minutes.
+   Writes the county x district weights the night run needs to
+   `26_general/input_data/redistricting/`, and the 2024 baseline charts (`*_2024pres.*`).
+   Without the weights `run_night.R` prints a warning and skips the charts.
+4. Dry run on CBS's test feed: `Rscript scripts/model/reports/redistricting_compare.R --live --env=test`,
+   then check that the `*_house_latest` files appear in `model_results/redistricting/`.
+
 ## Output for the dashboard
 
 `predict_all(cells, returns)` runs every race x model and returns `$pred`, in enightmodels'
