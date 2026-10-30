@@ -53,18 +53,30 @@ enightdata::set_all(
   election_date = ELECTION_DATE
 )
 
+# destinations for metadata rows with upload = TRUE; any of "s3_parquet",
+# "s3_csv", "drive_parquet", "drive_csv"
+upload_default = c("s3_parquet", "drive_csv")
+
 # get the metadata file, with the following structure
 # - state: (string) all caps abbreviation of the state
 # - county: (string) lowercase county of interest in that state, if NA then statewide
 # - path: (string) generic cell for url path used to scrape data
 # - path_timestamp: (string) optional cell for timestamp, if NA then use `path`
-# - upload: (boolean) whether to upload this jurisdiction to CBS AWS
+# - upload: (string) where to upload this jurisdiction, comma-separated, any of
+#   "s3_parquet", "s3_csv", "drive_parquet", "drive_csv"; blank or FALSE uploads
+#   nothing, TRUE uses `upload_default` below
 # - trust_stage: (boolean) whether we trust this county's stage variable
-metadata = enightdata::read_local("metadata.csv", colClasses=list(character=1:4, logical=5:8)) |> 
+metadata = enightdata::read_local("metadata.csv", colClasses=list(character=c(1:4, 6), logical=c(5, 7, 8))) |> 
   dplyr::mutate(
     path_timestamp = dplyr::na_if(path_timestamp, ""),
     path_timestamp = dplyr::coalesce(path_timestamp, path),
-    county = dplyr::na_if(county, "")
+    county = dplyr::na_if(county, ""),
+    upload = trimws(dplyr::coalesce(upload, "")),
+    upload = dplyr::case_when(
+      toupper(upload) == "TRUE" ~ paste(upload_default, collapse = ","),
+      toupper(upload) == "FALSE" ~ "",
+      .default = upload
+    )
   ) |> 
   dplyr::filter(build, updated)
 

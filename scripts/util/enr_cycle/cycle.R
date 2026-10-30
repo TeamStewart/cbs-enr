@@ -625,7 +625,7 @@ cmd_sheet = function(apply = FALSE) {
   ok = map2_lgl(todo$row, seq_len(nrow(todo)), \(i, j) back[[todo$field[j]]][i] == todo$new[j])
   if (!all(ok)) cli::cli_abort("Read-back mismatch for {todo$state[!ok]} {todo$county[!ok]} {todo$field[!ok]}.")
   meta_old = read_meta()
-  meta = googlesheets4::read_sheet(SHEET_ID, sheet = SHEET_TAB, col_types = "cccclllllc")
+  meta = googlesheets4::read_sheet(SHEET_ID, sheet = SHEET_TAB, col_types = "cccclclllc")
   data.table::fwrite(meta, fs::path(ROOT, "metadata.csv"), verbose = FALSE)
   nanoparquet::write_parquet(meta, fs::path(ROOT, "metadata.parquet"))
   other = anti_join(read_meta(), meta_old, by = META_COLS) |>
