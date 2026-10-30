@@ -33,8 +33,10 @@ Rscript scripts/model/live/run_night.R --sim=tx_base --at="2026-11-03 22:00"
 turns it off): tonight's House vote, counted so far, by new district (actual) and old district
 (estimated), for NC, FL, TX, OH and CA. It runs separately, so it never holds up or breaks the
 models. **The dashboard reads the charts from `26_general/model_results/redistricting/`:**
-`redistricting_dumbbell_{ST}_house_latest.png` (one per state), `redistricting_seats_house_latest.png`
-and `redistricting_districts_house_latest.csv`, replaced at every run; time-stamped copies go to
+`redistricting_dumbbell_{ST}_house_latest.png` and `redistricting_seats_{ST}_house_latest.png` (one each per state),
+`redistricting_districts_house_latest.csv`, and the old / new district maps
+`redistricting_map_{ST}_old_house_latest.png` / `_new_house_latest.png` (with
+`redistricting_map_{ST}_house_latest.html` to flip between them), replaced at every run; time-stamped copies go to
 `history/`, and the run's log to `live.log`.
 
 **Before go time (once, so the first results chart straight away):**
@@ -42,9 +44,12 @@ and `redistricting_districts_house_latest.csv`, replaced at every run; time-stam
    (sf, ggplot2 and cbsapi with the CBS key are already needed for the models).
 2. CA's 2024 precinct files from the Statewide Database in `26_general/input_data/swdb_g24/`
    (`srprec_state_g24_v01_shp.zip`, `state_g24_sov_data_by_g24_srprec.zip`; in place as of 2026-10-30).
+   OH's official 2024 precinct returns from MEDSL at `26_general/input_data/medsl24/oh24.zip`
+   (github.com/MEDSL/2024-elections-official; in place as of 2026-10-30) -- VoteHub's OH results
+   don't match its OH precinct map.
 3. `Rscript scripts/model/reports/redistricting_compare.R` -- all five states, ~15 minutes.
-   Writes the county x district weights the night run needs to
-   `26_general/input_data/redistricting/`, and the 2024 baseline charts (`*_2024pres.*`).
+   Writes the county x district weights and map geometry the night run needs to
+   `26_general/input_data/redistricting/`, and the 2024 baseline charts and maps (`*_2024pres.*`).
    Without the weights `run_night.R` prints a warning and skips the charts.
 4. Dry run on CBS's test feed: `Rscript scripts/model/reports/redistricting_compare.R --live --env=test`,
    then check that the `*_house_latest` files appear in `model_results/redistricting/`.

@@ -63,13 +63,31 @@
 ## OUTPUT -- 26_general/model_results/redistricting/ (Dropbox; --out= to change). The
 ## dashboard reads the *_latest files there:
 ##   redistricting_dumbbell_{ST}_house_latest.png   one per state, replaced every --live run
-##   redistricting_seats_house_latest.png           all states
+##   redistricting_seats_{ST}_house_latest.png      one per state
 ##   redistricting_districts_house_latest.csv       the numbers: state, cd, plan (old / new),
 ##                                                  dem, rep, rep2 (Republican two-party
 ##                                                  share), margin (R - D, points), lean
 ##   history/..._house_YYYYmmdd_HHMM.*              every --live run, kept (ET time of the
 ##                                                  latest CBS pull)
 ##   ..._2024pres.png / .csv                        the 2024 baseline (mode a)
+##   redistricting_map_{ST}_old_house_latest.png / _new_house_latest.png   (mode a: plain
+##                                                  redistricting_map_{ST}_old.png / _new.png,
+##                                                  and redistricting_map_{ST}.html) every
+##                                                  precinct shaded by its
+##                                                  DISTRICT's Republican two-party share
+##                                                  (House counted so far with --live, old
+##                                                  districts estimated; 2024 Trump in mode a),
+##                                                  district lines and labels on top. Same
+##                                                  extent and size, so flipping between them
+##                                                  shows the precincts changing district.
+##                                                  Blank areas are water / no precinct.
+##   redistricting_map_{ST}_house_latest.html       flips between the two (buttons, Play, space
+##                                                  bar; reloads the images every minute); keep
+##                                                  it beside the PNGs
+##   redistricting_map_{ST}_moved.png               (mode a) precincts whose main district
+##                                                  number changes, new lines on top
+##   The maps draw from 26_general/input_data/redistricting/{ST}_map.gpkg, written by mode
+##   (a) (--no-maps skips the maps in either mode).
 ## Every file is written under a temporary name and renamed, so the dashboard never reads a
 ## half-written one.
 ##
@@ -116,6 +134,7 @@ opt = function(k, d = NA) {
   if (length(v)) v[1] else d
 }
 LIVE = "--live" %in% args
+MAPS = !"--no-maps" %in% args # (a) only: the old / new map pair per state
 PULL = !"--no-pull" %in% args
 ENV = opt("env", "live")
 AT = if (is.na(opt("at"))) NULL else as.POSIXct(opt("at"), tz = "America/New_York")
@@ -140,6 +159,11 @@ if (LIVE) {
 }
 vh_dir = file.path(d26, "input_data", "votehub-shapefiles")
 ca_dir = path.expand(opt("ca-dir", file.path(d26, "input_data", "swdb_g24")))
+# OH: VoteHub's OH results are keyed by precinct CODE (39001-:-AAA) but its polygons by NAME
+# (39001-:-BRATTON TOWNSHIP), and they match for only ~25% of the vote, so OH's votes come
+# from MEDSL's official 2024 precinct returns (names), github.com/MEDSL/2024-elections-official
+# individual_states/oh24.zip, saved here:
+oh_zip = path.expand(opt("oh-zip", file.path(d26, "input_data", "medsl24", "oh24.zip")))
 w_dir = file.path(d26, "input_data", "redistricting")
 
 lean = function(rep2) {
@@ -200,6 +224,93 @@ ca_precincts = function() {
   out
 }
 
+#' OH precincts' 2024 presidential votes from MEDSL (oh_zip), as unit_id = "{fips}-:-{name}"
+oh_votes = function() {
+  if (!file.exists(oh_zip)) stop("OH needs MEDSL's oh24.zip at ", oh_zip, " (github.com/MEDSL/2024-elections-official, individual_states/), or --oh-zip=")
+  x = readr::read_csv(unz(oh_zip, utils::unzip(oh_zip, list = TRUE)$Name[1]), col_types = readr::cols(.default = "c"), progress = FALSE) |>
+    filter(office == "US PRESIDENT") |>
+    mutate(votes = suppressWarnings(as.numeric(votes)), county_fips = stringr::str_pad(county_fips, 5, pad = "0"))
+  v = x |>
+    summarize(pres24_dem = sum(votes[party_simplified == "DEMOCRAT"], na.rm = TRUE),
+              pres24_rep = sum(votes[party_simplified == "REPUBLICAN"], na.rm = TRUE),
+              pres24_total = sum(votes, na.rm = TRUE), .by = c(county_fips, precinct)) |>
+    transmute(unit_id = paste0(county_fips, "-:-", toupper(precinct)), pres24_dem, pres24_rep,
+              pres24_oth = pres24_total - pres24_dem - pres24_rep, pres24_total, cong24_district = NA_character_)
+  cat(sprintf("OH (MEDSL): Harris %s, Trump %s\n", format(sum(v$pres24_dem), big.mark = ","), format(sum(v$pres24_rep), big.mark = ",")))
+  v
+}
+
+#' Normalised precinct key: county FIPS + the name/code upper-cased, with any "|..." suffix,
+#' a leading "PRECINCT", punctuation and leading zeros in numbers dropped ("12033-:-001" and
+#' "12033-:-Precinct 1" both -> "12033 1")
+norm_key = function(id) {
+  x = sub("^[0-9]{5}-:-", "", id)
+  x = toupper(sub("\\|.*$", "", x))
+  x = sub("^PRECINCT\\s+", "", x)
+  x = gsub("[^A-Z0-9]+", " ", x)
+  x = gsub("\\b0+([0-9])", "\\1", x)
+  paste(substr(id, 1, 5), trimws(gsub("\\s+", " ", x)))
+}
+
+#' Put precinct votes on precinct polygons
+#'
+#' 1. exact id match; 2. among what is left, the normalised key (norm_key()) where it is
+#' unique on both sides; 3. a county's votes still unplaced are spread over its polygons
+#' still without votes -- in proportion to `wvotes` (another source's votes for those same
+#' polygons, party by party) where it has them, else to their AREA (an estimate either way;
+#' if every polygon in the county already has votes, over all of them in proportion to their
+#' votes). Prints how much went each way; returns the polygons with votes and attribute
+#' `est_counties` (counties with any step-3 votes).
+attach_votes = function(poly, votes, st, wvotes = NULL) {
+  poly$cty = substr(poly$unit_id, 1, 5)
+  votes$cty = substr(votes$unit_id, 1, 5)
+  vcols = c("pres24_dem", "pres24_rep", "pres24_oth", "pres24_total")
+  m1 = intersect(poly$unit_id, votes$unit_id)
+  # a polygon can be matched on its id or on its name ("{fips}-:-{PCT}", alt_id): VoteHub's OH
+  # file uses precinct codes as the id in some counties and names in others
+  pd = filter(st_drop_geometry(poly), !unit_id %in% m1)
+  pu = bind_rows(mutate(select(pd, unit_id), k = norm_key(unit_id)),
+                 if ("alt_id" %in% names(pd)) mutate(select(pd, unit_id), k = norm_key(pd$alt_id))) |>
+    distinct() |>
+    filter(!duplicated(k) & !duplicated(k, fromLast = TRUE))
+  vu = filter(votes, !unit_id %in% m1) |> mutate(k = norm_key(unit_id)) |> filter(!duplicated(k) & !duplicated(k, fromLast = TRUE))
+  m2 = inner_join(select(pu, unit_id, k), select(vu, k, vid = unit_id), by = "k") |>
+    filter(!duplicated(unit_id), !duplicated(vid)) # one result per polygon and vice versa
+  vmap = bind_rows(tibble(unit_id = m1, vid = m1), select(m2, unit_id, vid))
+  pv = poly |> left_join(vmap, by = "unit_id") |> left_join(select(votes, vid = unit_id, all_of(vcols), cong24_district), by = "vid")
+  left = filter(votes, !unit_id %in% vmap$vid) |> summarize(across(all_of(vcols), sum), .by = cty)
+  pv$area0 = as.numeric(st_area(pv))
+  est = character()
+  wv = if (is.null(wvotes)) NULL else wvotes[match(pv$unit_id, wvotes$unit_id), vcols]
+  n_wv = 0
+  for (c in left$cty) {
+    i = which(pv$cty == c & is.na(pv$vid))
+    if (length(i)) {
+      wa = pv$area0[i] / sum(pv$area0[i])
+    } else {
+      i = which(pv$cty == c)
+      wa = coalesce(pv$pres24_total[i], 0) / max(sum(pv$pres24_total[i], na.rm = TRUE), 1)
+    }
+    if (!length(i) || !is.finite(sum(wa)) || sum(wa) <= 0) next
+    for (v in vcols) {
+      # the other source's votes for these polygons, party by party, where it covers them
+      x = if (is.null(wv)) NA else coalesce(wv[[v]][i], 0)
+      w = if (!is.null(wv) && sum(!is.na(wv[[v]][i])) >= 0.8 * length(i) && sum(x) > 0) x / sum(x) else wa
+      pv[[v]][i] = coalesce(pv[[v]][i], 0) + w * left[[v]][left$cty == c]
+    }
+    if (!is.null(wv) && sum(!is.na(wv$pres24_total[i])) >= 0.8 * length(i)) n_wv = n_wv + 1
+    est = c(est, c)
+  }
+  for (v in vcols) pv[[v]] = coalesce(pv[[v]], 0)
+  tot = sum(votes$pres24_total)
+  cat(sprintf("%s votes on polygons: %.1f%% by id, %.1f%% by normalised name, %.1f%% spread within %d counties (estimates; %d of them by VoteHub's precinct votes, the rest by area)\n",
+              st, 100 * sum(votes$pres24_total[votes$unit_id %in% m1]) / tot, 100 * sum(votes$pres24_total[votes$unit_id %in% m2$vid]) / tot,
+              100 * sum(left$pres24_total[left$cty %in% est]) / tot, length(est), n_wv))
+  out = select(pv, unit_id, all_of(vcols), cong24_district)
+  attr(out, "est_counties") = est
+  out
+}
+
 #' District polygons for one state and plan, with a `cd` column like "NC-01"
 districts = function(st, plan) {
   f = opt(plan)
@@ -241,6 +352,60 @@ overlay = function(prec, dist) {
   }))
 }
 
+#' Map geometry for one state, saved for the old / new maps (file header, MAPS)
+#'
+#' Simplified precinct polygons with each precinct's main old and new district (the one
+#' holding most of its area), and both maps' district lines, to
+#' input_data/redistricting/{ST}_map.gpkg: the --live run draws from this file, so it never
+#' redoes the overlay. Also draws the "moved" map (precincts whose main district number
+#' changes), which does not depend on the votes.
+map_geometry = function(st, prec, dists, sh) {
+  main = function(plan) sh[[plan]] |> slice_max(share, n = 1, with_ties = FALSE, by = unit_id) |> select(unit_id, cd)
+  mv = full_join(rename(main("old"), cd_old = cd), rename(main("new"), cd_new = cd), by = "unit_id") |>
+    mutate(moved = coalesce(cd_old != cd_new, FALSE))
+  pv = prec |>
+    select(unit_id) |>
+    st_simplify(dTolerance = 30, preserveTopology = TRUE) |>
+    left_join(mv, by = "unit_id")
+  f = file.path(w_dir, paste0(st, "_map.gpkg"))
+  dir.create(w_dir, recursive = TRUE, showWarnings = FALSE)
+  unlink(f)
+  write_sf(pv, f, layer = "precincts", quiet = TRUE)
+  for (plan in c("old", "new")) {
+    write_sf(st_simplify(dists[[plan]], dTolerance = 100, preserveTopology = TRUE), f, layer = plan, quiet = TRUE, append = TRUE)
+  }
+  bb = map_bbox(list(pv, dists$old, dists$new))
+  sz = map_size(bb)
+  g = ggplot() +
+    geom_sf(data = pv, aes(fill = if_else(moved, "Moved to a different district number", "Same district number")), colour = "white", linewidth = 0.02) +
+    geom_sf(data = read_sf(f, layer = "new", quiet = TRUE), fill = NA, colour = "grey10", linewidth = 0.45) +
+    scale_fill_manual(values = c("Moved to a different district number" = "#eb6834", "Same district number" = "grey88"), name = NULL) +
+    coord_sf(xlim = c(bb$xmin, bb$xmax), ylim = c(bb$ymin, bb$ymax), datum = NA) +
+    labs(title = sprintf("%s: precincts whose district changes, old map to new map", st),
+         subtitle = sprintf("%s of %s precincts (main district by area); lines = new map", format(sum(mv$moved), big.mark = ","), format(nrow(mv), big.mark = ",")),
+         caption = "A precinct split by a line counts under the district holding most of its area. Blank areas are water or land with no precinct. Lines: Census TIGER via fourthirtyfive.") +
+    map_theme()
+  ggsave(file.path(out_dir, sprintf("redistricting_map_%s_moved.png", st)), g, width = sz[1], height = sz[2], dpi = 200, bg = "white")
+}
+
+#' Map extent: everything drawn (precincts and both maps' lines), so nothing is cut off
+map_bbox = function(layers) {
+  b = do.call(rbind, lapply(layers, \(x) as.numeric(st_bbox(st_transform(x, 5070)))))
+  st_bbox(c(xmin = min(b[, 1]), ymin = min(b[, 2]), xmax = max(b[, 3]), ymax = max(b[, 4])), crs = st_crs(5070))
+}
+map_size = function(bb) {
+  # width x height in inches: the map fits in 9 x 10.5 (plus room for titles and legend),
+  # whatever the state's shape
+  aspect = (bb$ymax - bb$ymin) / (bb$xmax - bb$xmin)
+  w = if (aspect > 10.5 / 9) 10.5 / aspect else 9
+  c(max(w, 6.5), min(w * aspect, 10.5) + 2.2)
+}
+map_theme = function() {
+  theme_void(base_size = 11) +
+    theme(legend.position = "bottom", plot.caption = element_text(colour = "grey40", hjust = 0),
+          plot.background = element_rect(fill = "white", colour = NA))
+}
+
 #' One state's 2024 overlay: district totals per map, precinct pieces, and the county x
 #' new district x old district weights (written to w_dir)
 baseline_state = function(st, res) {
@@ -250,11 +415,14 @@ baseline_state = function(st, res) {
     shp = list.files(file.path(vh_dir, VH_DIR[[st]]), "\\.shp$", full.names = TRUE)[1]
     prec = read_sf(shp)
     if (!"UNIQUE_ID" %in% names(prec)) stop(basename(shp), " has no UNIQUE_ID column (VoteHub precinct id)")
-    prec = prec |>
-      clean_geom() |>
-      transmute(unit_id = UNIQUE_ID) |>
-      inner_join(filter(res, state_abbr == st) |> select(unit_id, pres24_dem, pres24_rep, pres24_oth, pres24_total, cong24_district), by = "unit_id")
+    vh = filter(res, state_abbr == st) |> select(unit_id, pres24_dem, pres24_rep, pres24_oth, pres24_total, cong24_district)
+    # OH: official MEDSL totals, with VoteHub's votes (matched by id) placing what MEDSL's
+    # names can't; elsewhere VoteHub
+    prec = attach_votes(clean_geom(prec) |> transmute(unit_id = UNIQUE_ID, alt_id = if ("PCT" %in% names(prec)) paste0(FIPS, "-:-", PCT) else UNIQUE_ID),
+                        if (st == "OH") oh_votes() else vh, st, wvotes = if (st == "OH") vh else NULL)
   }
+  est_cty = attr(prec, "est_counties")
+  if (is.null(est_cty)) est_cty = character()
   prec$area = as.numeric(st_area(prec))
   if (any(e <- st_is_empty(prec))) {
     cat(sprintf("  %d precincts have no shape after repair (%s votes); left out\n", sum(e), format(sum(prec$pres24_total[e]), big.mark = ",")))
@@ -265,8 +433,10 @@ baseline_state = function(st, res) {
   pv = st_drop_geometry(prec)
   tabs = list()
   sh = list()
+  dists = list()
   for (plan in c("old", "new")) {
     dist = districts(st, plan) |> clean_geom()
+    dists[[plan]] = dist
     pc = overlay(select(prec, unit_id, area), dist)
     pc$a = as.numeric(st_area(pc))
     # each precinct's pieces by area, summing to 1; a precinct whose pieces have no area
@@ -281,7 +451,7 @@ baseline_state = function(st, res) {
     tot = sh[[plan]] |> inner_join(pv, by = "unit_id") |> summarize(t = sum(share * pres24_total)) |> pull(t)
     cat(sprintf("  %s map: %d districts; votes in precincts touching no district: %s (%.3f%%)\n",
                 plan, nrow(tb), format(round(st_total - tot), big.mark = ","), 100 * (st_total - tot) / st_total))
-    if (plan == "old" && st != "CA") {
+    if (plan == "old" && !st %in% c("CA", "OH")) {
       vh = pv |>
         filter(!is.na(cong24_district), cong24_district != "") |>
         summarize(vd = sum(pres24_dem), vr = sum(pres24_rep), .by = cong24_district) |>
@@ -314,7 +484,10 @@ baseline_state = function(st, res) {
     summarize(n = n_distinct(cd), .by = unit_id) |>
     filter(n > 1) |>
     nrow()
-  list(tab = bind_rows(tabs), split_prec = split_prec)
+  if (MAPS) {
+    tryCatch(map_geometry(st, prec, dists, sh), error = function(e) cat(sprintf("  %s map geometry failed: %s\n", st, conditionMessage(e))))
+  }
+  list(tab = bind_rows(tabs), split_prec = split_prec, est_cty = length(est_cty))
 }
 
 # ==== (b) election night: CBS county House results =============================================
@@ -472,8 +645,10 @@ save_out(paste0("redistricting_districts", sfx, ".csv"), \(p) readr::write_csv(t
 note_text = function(st) {
   r = runs[[st]]
   if (!LIVE) {
-    return(sprintf("Estimates: precincts split by a district line (%s in %s) have their votes divided by area. Results are by precinct everywhere, so no county is divided as a whole.",
-                   format(r$split_prec, big.mark = ","), st))
+    return(paste0(
+      sprintf("Estimates: precincts split by a district line (%s in %s) have their votes divided by area.", format(r$split_prec, big.mark = ","), st),
+      if (r$est_cty > 0) sprintf(" In %d %s where not every precinct's results could be matched to the precinct map, the unmatched votes are spread over its unmatched precincts by area.",
+                                 r$est_cty, if (r$est_cty == 1) "county" else "counties") else ""))
   }
   f = unlist(r$fill)
   top_name = TOP_NAME[[TOP_RACE[[st]]]]
@@ -487,13 +662,101 @@ note_text = function(st) {
   )
 }
 
+stamp = function(st) format(runs[[st]]$as_of, "%b %d, %I:%M %p ET", tz = "America/New_York")
+
+# ---- 0. old / new maps, every district shaded as a whole ---------------------------------------
+#' The old / new map pair for one state, from {ST}_map.gpkg (map_geometry())
+#'
+#' Every precinct takes its district's colour -- the district's Republican two-party share
+#' (2024 Trump in mode a; tonight's House vote counted so far with --live, old districts
+#' estimated) -- so the two maps have the same precincts and extent and only the lines and
+#' the colours they carry change. Precinct borders are drawn faint so the units moving
+#' between districts show. Plus an HTML page that flips between the two.
+draw_maps = function(st) {
+  f = file.path(w_dir, paste0(st, "_map.gpkg"))
+  if (!file.exists(f)) {
+    cat(sprintf("  %s: no map geometry (%s); run without --live first\n", st, basename(f)))
+    return(invisible(NULL))
+  }
+  t0 = Sys.time()
+  pv = read_sf(f, layer = "precincts", quiet = TRUE)
+  bb = map_bbox(list(pv, read_sf(f, layer = "old", quiet = TRUE), read_sf(f, layer = "new", quiet = TRUE)))
+  sz = map_size(bb)
+  sh = tab |> filter(state == st)
+  shade = scale_fill_gradient2(
+    low = "#2a78d6", mid = "#e9e6df", high = "#d03b3b", midpoint = 0.5, limits = c(0.25, 0.75),
+    oob = scales::squish, labels = \(x) paste0(round(100 * x), "%"), na.value = "grey80",
+    name = if (LIVE) "Republican share of the two-party House vote, counted so far (by district)" else "2024 Trump share of the two-party vote (by district)"
+  )
+  # the 2024 maps keep the plain names (redistricting_map_{ST}_old.png); the night's get _house_latest
+  msfx = if (LIVE) sfx else ""
+  files = c(old = sprintf("redistricting_map_%s_old%s.png", st, msfx), new = sprintf("redistricting_map_%s_new%s.png", st, msfx))
+  for (plan in c("old", "new")) {
+    d = read_sf(f, layer = plan, quiet = TRUE) |> left_join(filter(sh, plan == !!plan) |> select(cd, rep2), by = "cd")
+    p = mutate(pv, cd = .data[[paste0("cd_", plan)]]) |> left_join(st_drop_geometry(d) |> select(cd, rep2), by = "cd")
+    lab = suppressWarnings(st_point_on_surface(d)) |>
+      mutate(txt = if_else(is.na(rep2), as.character(as.integer(sub("^[A-Z]{2}-", "", cd))),
+                           sprintf("%d\n%.0f%%", as.integer(sub("^[A-Z]{2}-", "", cd)), 100 * rep2)))
+    g = ggplot() +
+      geom_sf(data = p, aes(fill = rep2), colour = "white", linewidth = 0.02) +
+      geom_sf(data = d, fill = NA, colour = "grey10", linewidth = 0.45) +
+      geom_sf_label(data = lab, aes(label = txt), size = 2.3, lineheight = 0.85, label.size = 0.15,
+                    label.padding = unit(0.08, "lines"), fill = "white", alpha = 0.85) +
+      shade +
+      coord_sf(xlim = c(bb$xmin, bb$xmax), ylim = c(bb$ymin, bb$ymax), datum = NA) +
+      labs(
+        title = sprintf("%s congressional districts: %s map%s", st, if (plan == "old") "OLD (2024)" else "NEW (2026)",
+                        if (LIVE) " -- House vote COUNTED SO FAR" else ""),
+        subtitle = if (LIVE) {
+          sprintf("As of %s, not a projection. %s", stamp(st),
+                  if (plan == "old") "Old-district shares are ESTIMATES (votes regrouped from the new districts)." else "Actual results by district.")
+        } else {
+          "Same precincts in both maps -- only the district lines, and so each district's 2024 vote, change"
+        },
+        caption = paste0(
+          "Each district shaded as a whole; labels: district number and Republican two-party share. Blank areas are water or land with no precinct.\n",
+          if (LIVE) "Votes: CBS News county results. " else if (st == "CA") "Votes: CA Statewide Database. " else if (st == "OH") "Votes: MEDSL official 2024 precinct returns (some precincts placed with VoteHub). " else "Votes: VoteHub. ",
+          "Precincts: ", if (st == "CA") "CA Statewide Database" else "VoteHub", ". Lines: Census TIGER via fourthirtyfive."
+        )
+      ) +
+      map_theme() +
+      guides(fill = guide_colourbar(barwidth = unit(7, "cm"), barheight = unit(0.3, "cm"), title.position = "top"))
+    save_out(files[[plan]], \(x) ggsave(x, g, device = "png", width = sz[1], height = sz[2], dpi = 200, bg = "white"))
+  }
+  # flip page between the two PNGs (same size), kept beside them
+  html = sprintf('<!doctype html><html><head><meta charset="utf-8"><title>%s districts: old vs new</title>
+<style>body{margin:0;font-family:system-ui,sans-serif;background:#fff;color:#222}
+.bar{padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button{font-size:15px;padding:6px 14px;border:1px solid #999;background:#fff;border-radius:6px;cursor:pointer}
+button.on{background:#222;color:#fff}.wrap{position:relative;max-width:1200px}
+.wrap img{width:100%%;display:block}.wrap img.new{position:absolute;top:0;left:0;opacity:0;transition:opacity .35s}
+.wrap.shownew img.new{opacity:1}</style></head><body>
+<div class="bar"><button id="b0" class="on">Old map (2024)</button><button id="b1">New map (2026)</button>
+<button id="bp">Play</button><span style="color:#666;font-size:13px">click a button, or press space to flip</span></div>
+<div class="wrap" id="w"><img src="%s" alt="%s old map"><img class="new" src="%s" alt="%s new map"></div>
+<script>const w=document.getElementById("w"),b0=document.getElementById("b0"),b1=document.getElementById("b1"),bp=document.getElementById("bp");let t=null;
+function show(n){w.classList.toggle("shownew",n);b1.classList.toggle("on",n);b0.classList.toggle("on",!n)}
+b0.onclick=()=>show(false);b1.onclick=()=>show(true);
+bp.onclick=()=>{if(t){clearInterval(t);t=null;bp.textContent="Play"}else{t=setInterval(()=>show(!w.classList.contains("shownew")),1500);bp.textContent="Stop"}};
+document.addEventListener("keydown",e=>{if(e.code==="Space"){e.preventDefault();show(!w.classList.contains("shownew"))}});
+setInterval(()=>{document.querySelectorAll("img").forEach(i=>{i.src=i.src.split("?")[0]+"?t="+Date.now()})},60000);</script></body></html>',
+                 st, files[["old"]], st, files[["new"]], st)
+  save_out(sprintf("redistricting_map_%s%s.html", st, msfx), \(x) writeLines(html, x))
+  if (!LIVE) {
+    # names used by an earlier version of this script (2026-10-30), now replaced by the above
+    unlink(file.path(out_dir, c(sprintf("redistricting_map_%s_old_2024pres.png", st), sprintf("redistricting_map_%s_new_2024pres.png", st),
+                                sprintf("redistricting_map_%s_2024pres.html", st))))
+  }
+  cat(sprintf("  %s maps drawn (%.0fs)\n", st, as.numeric(difftime(Sys.time(), t0, units = "secs"))))
+}
+if (MAPS || LIVE) for (st in states) tryCatch(draw_maps(st), error = function(e) cat(sprintf("  %s maps failed: %s\n", st, conditionMessage(e))))
+
 # ---- 1. dumbbell: one row per district number ------------------------------------------------
 names_new = if (requireNamespace("fourthirtyfive", quietly = TRUE)) {
   fourthirtyfive::cd_names(2027) |> select(cd, cd_description) |> distinct(cd, .keep_all = TRUE)
 } else {
   tibble(cd = character(), cd_description = character())
 }
-stamp = function(st) format(runs[[st]]$as_of, "%b %d, %I:%M %p ET", tz = "America/New_York")
 for (st in states) {
   w = tab |>
     filter(state == st) |>
@@ -533,7 +796,7 @@ for (st in states) {
       caption = paste0(
         "Districts compared by number: an old and a new district with the same number can cover different places.\n",
         stringr::str_wrap(note_text(st), 125), "\n",
-        if (LIVE) "Votes: CBS News county results. " else if (st == "CA") "Votes: CA Statewide Database 2024 precinct results. " else "Votes: VoteHub 2024 precinct results. ",
+        if (LIVE) "Votes: CBS News county results. " else if (st == "CA") "Votes: CA Statewide Database 2024 precinct results. " else if (st == "OH") "Votes: MEDSL official 2024 precinct returns. " else "Votes: VoteHub 2024 precinct results. ",
         "Lines: Census TIGER via fourthirtyfive."
       )
     ) +
@@ -544,32 +807,37 @@ for (st in states) {
          width = 10, height = 2 + 0.24 * nrow(w), dpi = 200, bg = "white"))
 }
 
-# ---- 2. seats by lean category -----------------------------------------------------------------
+# ---- 2. seats by lean category, one graphic per state ------------------------------------------
 seats = tab |>
   count(state, plan, lean, .drop = FALSE) |>
   mutate(plan = factor(plan, c("new", "old"), if (LIVE) c("New map (2026), actual", "Old map (2024), estimated") else c("New map (2026)", "Old map (2024)")))
-g2 = ggplot(seats, aes(y = plan, x = n, fill = lean)) +
-  geom_col(width = 0.6, colour = "white", linewidth = 0.6, position = position_stack(reverse = TRUE)) +
-  geom_text(aes(label = if_else(n > 0, as.character(n), "")), position = position_stack(vjust = 0.5, reverse = TRUE), size = 3.3,
-            colour = ifelse(seats$lean == "Competitive", "grey20", "white")) +
-  facet_wrap(~state, ncol = 1, scales = "free_x") +
-  scale_fill_manual(values = c("Safe D" = "#185fa5", "Lean D" = "#85b7eb", "Competitive" = "#b4b2a9", "Lean R" = "#f09595", "Safe R" = "#a32d2d"),
-                    breaks = c("Safe D", "Lean D", "Competitive", "Lean R", "Safe R"), name = NULL, drop = FALSE) +
-  labs(
-    title = if (LIVE) "House seats by Republican two-party share COUNTED SO FAR, old map vs new map" else "Seats by 2024 presidential lean, old map vs new map",
-    subtitle = if (LIVE) paste("Votes counted as of", paste(sprintf("%s %s", states, vapply(states, stamp, "")), collapse = "; "), "-- not a projection") else NULL,
-    x = "Districts", y = NULL,
-    caption = paste0(
-      sprintf("Two-party margin: Safe = %d+ pts, Lean = %d-%d pts, Competitive = within %d pts.\n", LEAN_SAFE, LEAN_TOSS, LEAN_SAFE, LEAN_TOSS),
-      paste(vapply(states, \(s) stringr::str_wrap(note_text(s), 125), ""), collapse = "\n"), "\n",
-      if (LIVE) "Votes: CBS News county results." else "Votes: VoteHub 2024 precinct results (CA: Statewide Database).",
-      " Lines: Census TIGER via fourthirtyfive."
-    )
-  ) +
-  theme_minimal(base_size = 11) +
-  theme(legend.position = "top", panel.grid = element_blank(), axis.text.x = element_blank(), plot.caption = element_text(colour = "grey40", hjust = 0))
-save_out(paste0("redistricting_seats", sfx, ".png"), \(p) ggsave(p, g2, device = "png", width = 10,
-       height = 1.8 + 1.3 * length(states) + 0.45 * length(states), dpi = 200, bg = "white"))
+src_note = function(st) {
+  if (LIVE) "Votes: CBS News county results." else if (st == "CA") "Votes: CA Statewide Database 2024 precinct results." else if (st == "OH") "Votes: MEDSL official 2024 precinct returns." else "Votes: VoteHub 2024 precinct results."
+}
+for (st in states) {
+  ss = filter(seats, state == st)
+  g2 = ggplot(ss, aes(y = plan, x = n, fill = lean)) +
+    geom_col(width = 0.6, colour = "white", linewidth = 0.6, position = position_stack(reverse = TRUE)) +
+    geom_text(aes(label = if_else(n > 0, as.character(n), "")), position = position_stack(vjust = 0.5, reverse = TRUE), size = 3.6,
+              colour = ifelse(ss$lean == "Competitive", "grey20", "white")) +
+    scale_fill_manual(values = c("Safe D" = "#185fa5", "Lean D" = "#85b7eb", "Competitive" = "#b4b2a9", "Lean R" = "#f09595", "Safe R" = "#a32d2d"),
+                      breaks = c("Safe D", "Lean D", "Competitive", "Lean R", "Safe R"), name = NULL, drop = FALSE) +
+    labs(
+      title = if (LIVE) sprintf("%s House seats by Republican two-party share COUNTED SO FAR, old map vs new map", st) else sprintf("%s: seats by 2024 presidential lean, old map vs new map", st),
+      subtitle = if (LIVE) sprintf("Votes counted as of %s -- not a projection", stamp(st)) else NULL,
+      x = sprintf("%d districts", sum(ss$n[ss$plan == levels(ss$plan)[1]])), y = NULL,
+      caption = paste0(
+        sprintf("Two-party margin: Safe = %d+ pts, Lean = %d-%d pts, Competitive = within %d pts.\n", LEAN_SAFE, LEAN_TOSS, LEAN_SAFE, LEAN_TOSS),
+        stringr::str_wrap(note_text(st), 125), "\n", src_note(st), " Lines: Census TIGER via fourthirtyfive."
+      )
+    ) +
+    theme_minimal(base_size = 11) +
+    theme(legend.position = "top", panel.grid = element_blank(), axis.text.x = element_blank(), plot.caption = element_text(colour = "grey40", hjust = 0),
+          plot.title = element_text(size = if (LIVE) 12 else 13))
+  save_out(sprintf("redistricting_seats_%s%s.png", st, sfx), \(p) ggsave(p, g2, device = "png", width = 10, height = 3.6, dpi = 200, bg = "white"))
+}
+# one combined file from an earlier version of this script (2026-10-30), replaced by the above
+unlink(file.path(out_dir, paste0("redistricting_seats", sfx, ".png")))
 
 print(tab |> count(state, plan, lean) |> tidyr::pivot_wider(names_from = lean, values_from = n, values_fill = 0))
 cat("Wrote", out_dir, "\n")

@@ -14,6 +14,11 @@
 ##   4. writes 26_general/model_results/predictions_<time>.csv + predictions_latest.csv and
 ##      turnout_<time>.csv + turnout_latest.csv and status_<time>.csv + status_latest.csv
 ##      (write_predictions(); format in R/output.R)
+##   5. starts the redistricting charts in the background (scripts/model/reports/
+##      redistricting_compare.R --live: tonight's House vote by old vs new district, written
+##      to 26_general/model_results/redistricting/*_house_latest.*). It never holds up or
+##      breaks the models; its log is model_results/redistricting/live.log. Needs its
+##      one-time setup first (BEFORE THE NIGHT in that script / live/README.md).
 ## A race or model that fails is recorded in the status table; the rest carry on.
 ##
 ## From the cbs-enr folder:
