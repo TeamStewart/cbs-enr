@@ -177,6 +177,7 @@ HY_LEVEL = Sys.getenv("HY_LEVEL", unset = "1") == "1" # theta's prior
 HY_COMP = Sys.getenv("HY_COMP", unset = "1") == "1" # eta's prior
 HY_SHARE = Sys.getenv("HY_SHARE", unset = "1") == "1" # s's prior
 HY_COUNTY = Sys.getenv("HY_COUNTY", unset = "1") == "1" # county aggregate constraints
+HY_BUCKET = Sys.getenv("HY_BUCKET", unset = "1") == "1" # s's prior from non-precinct votes
 
 # How many counted-out cells before the TURNOUT level/composition model is fitted at all.
 # This is now only a "can the covariate slopes be estimated" gate, not the level gate:
@@ -206,6 +207,41 @@ SH_MIN_CM = as.integer(Sys.getenv("SH_MIN_CM", unset = "10"))
 # is already a very large statewide share surprise (calibrate_swing.R: 9 states x 37
 # contest pairs move 0.22-0.26 logit between a prior contest and its target).
 SH_MAX_SHIFT = as.numeric(Sys.getenv("SH_MAX_SHIFT", unset = "0.25"))
+
+# BUCKET SHARE ARM (HY_BUCKET=0 to ablate). Votes that land on NO precinct -- AK reports
+# mail, early and provisional at house-district level, NC reports early at one-stop-site
+# level in 33 of 100 counties -- are dropped by cell_counts(), which joins FROM `cells`.
+# bucket_counts() recovers them and returns c_dem / c_rep / c_oth / c_tot, but fit_stage()
+# reads only `c_tot`, for CTY_BOUND's turnout lower bound. The PARTISAN SPLIT is in hand
+# and thrown away.
+#
+# Measured on ak_base at 91.2% counted: 36.3% of all AK votes sit in buckets (early 15.0%,
+# mail 21.3%), the mail buckets are 63.7% Dem, and mail_s sits at its dem2-derived prior
+# of about 0.43. 0.213 * (0.637 - 0.43) = 4.4pp, against an observed two-party error of
+# -4.09pp -- the whole error. Turnout is unaffected (101-103%) precisely BECAUSE CTY_BOUND
+# does use c_tot. This is coverage_report.md item 1, open and undiagnosed since 2026-10-19
+# ("medsl_sur in AK stays at its prior all night ... Not diagnosed").
+#
+# Minimum two-party ballots in a bucket before it is believed at all.
+BK_MIN_TWOP = as.numeric(Sys.getenv("BK_MIN_TWOP", unset = "500"))
+# Minimum share of a county x mode's two-party vote that the BUCKET accounts for. This is
+# the anti-double-counting gate, not a quality gate: where precinct cells also report that
+# county x mode, estimate_share()'s county^mode fixed effect already carries the
+# information and adding a bucket offset on top would count it twice. Where a county
+# buckets a mode ENTIRELY the bucket simply is that mode, and the offset is exact. That is
+# AK's case for mail and early, and NC's for early -- reporting_levels.csv assigns each
+# (county, method) to one level, and on NC the split is clean (67 counties at 0.0% of
+# early on virtual precincts, 33 at 100.0%, nothing in between; lookups/README.md).
+BK_MIN_SHARE = as.numeric(Sys.getenv("BK_MIN_SHARE", unset = "0.8"))
+# Clamp on a BUCKET-derived share offset, in logit points. Wider than SH_MAX_SHIFT for the
+# same reason CTY_MAX_LEVEL is wider than ST_MAX_LEVEL: a bucket is DATA, not a fit. 0.25
+# is calibrated for an offset INFERRED by regression from thin early returns, where a
+# large value means the fit has run away; a bucket is the whole of that county x mode's
+# vote, directly counted, and a large value just means the prior was wrong.
+# Measured: AK's mail buckets are 63.7% Dem against a dem2-derived prior near 0.43, which
+# needs +0.844 logit. At 0.25 the clamp admitted 30% of that and the arm recovered only
+# ~40% of the available error. If this one binds it is worth seeing -- hence the warning.
+BK_MAX_SHIFT = as.numeric(Sys.getenv("BK_MAX_SHIFT", unset = "1.0"))
 
 # County-constraint arm. The snapshot normally arrives as fit_stage_hybrid()'s
 # `cbs_county` argument; CTY_SNAPSHOT is a file-path fallback for testing, pointing at a
@@ -566,6 +602,101 @@ estimate_share = function(cells, returns, covs = HY_COVS_SHARE) {
   off
 }
 
+# ---- the BUCKET share arm ------------------------------------------------------------
+#' Share offsets from votes that land on no precinct
+#'
+#' `bucket_counts()` (live/R/returns.R) returns one row per county x mode for the votes
+#' cell_counts() drops, carrying `c_dem` and `c_rep`. For a county x mode the bucket
+#' accounts for, solve the common logit shift that makes the county's prior shares
+#' aggregate to the bucket's observed two-party share -- the same operation
+#' derive_mode_priors() does against a HISTORICAL share, here against tonight's.
+#'
+#' KEYED ON geo_county(geo), NOT cells$county. bucket_counts() keys on the 3-digit code in
+#' the precinct id, and in AK that code and the borough name in `cells$county` are
+#' different partitions (see the note at the top of model_turnout.R). Joining on the name
+#' would silently match nothing and the arm would go inert.
+#'
+#' @param cells Cells, carrying `prior_s` and `prior_tau`.
+#' @param county_obs `bucket_counts()` output, or NULL.
+#' @param returns Precinct x mode returns, for the anti-double-counting gate.
+#' @return Tibble: geo, mode, off (logit points); 0 rows when the arm is off or inert.
+estimate_bucket_share = function(cells, county_obs, returns) {
+  zero = tibble::tibble(geo = character(), mode = character(), off = numeric())
+  if (!HY_BUCKET || is.null(county_obs) || !nrow(county_obs)) {
+    return(zero)
+  }
+  need = c("county", "mode", "c_dem", "c_rep")
+  if (!all(need %in% names(county_obs))) {
+    cli_alert_warning(
+      "hybrid/bucket: county_obs lacks {setdiff(need, names(county_obs))} \\
+                       -- bucket shares skipped"
+    )
+    return(zero)
+  }
+  ck = cells |> dplyr::mutate(.cty = geo_county(geo))
+  # precinct-level two-party already reporting in each county x mode: the bucket is only
+  # believed where it is essentially the whole of that county x mode
+  pr2 = ck |>
+    dplyr::left_join(returns, by = c("geo", "mode")) |>
+    dplyr::mutate(t2 = dplyr::coalesce(votes_dem, 0) + dplyr::coalesce(votes_rep, 0)) |>
+    dplyr::summarize(prec2 = sum(t2), .by = c(.cty, mode))
+  b = county_obs |>
+    dplyr::mutate(bk2 = c_dem + c_rep, s_obs = c_dem / pmax(c_dem + c_rep, 1)) |>
+    dplyr::left_join(pr2, by = c("county" = ".cty", "mode")) |>
+    dplyr::mutate(
+      prec2 = dplyr::coalesce(prec2, 0),
+      frac = bk2 / pmax(bk2 + prec2, 1)
+    ) |>
+    dplyr::filter(bk2 >= BK_MIN_TWOP, frac >= BK_MIN_SHARE, s_obs > 0, s_obs < 1)
+  n_seen = dplyr::n_distinct(paste(county_obs$county, county_obs$mode))
+  if (!nrow(b)) {
+    cli_inform(
+      "hybrid/bucket: {n_seen} county x mode bucket(s), none past the gates \\
+              (>= {BK_MIN_TWOP} two-party ballots and >= {round(100*BK_MIN_SHARE)}% of the \\
+              county x mode)"
+    )
+    return(zero)
+  }
+  out = dplyr::bind_rows(lapply(seq_len(nrow(b)), function(i) {
+    z = dplyr::filter(ck, .cty == b$county[i], mode == b$mode[i], prior_s > 0, prior_s < 1)
+    if (!nrow(z)) {
+      return(NULL)
+    }
+    # logit_shift() returns the SHIFTED VALUES; the shift itself is the logit difference,
+    # and is common to every row by construction
+    sh = enightmodels::logit_shift(z$prior_s, b$s_obs[i], w = z$prior_tau)
+    d = logit(sh[1]) - logit(z$prior_s[1])
+    if (!is.finite(d)) {
+      return(NULL)
+    }
+    tibble::tibble(
+      geo = z$geo,
+      mode = z$mode,
+      raw = d,
+      off = pmin(pmax(d, -BK_MAX_SHIFT), BK_MAX_SHIFT)
+    )
+  }))
+  if (!nrow(out)) {
+    return(zero)
+  }
+  nclamp = sum(abs(out$raw - out$off) > 1e-9)
+  if (nclamp) {
+    cli_alert_warning(
+      "hybrid/bucket: {nclamp} offset(s) hit +/-{BK_MAX_SHIFT} logit, so those county x \\
+                       mode shares are NOT reproduced. A bucket is counted votes, so a \\
+                       binding clamp means the prior is very wrong for that mode, or the \\
+                       bucket is being matched to the wrong county x mode -- check both."
+    )
+  }
+  cli_inform(
+    "hybrid/bucket: {nrow(b)} of {n_seen} county x mode bucket(s) used \\
+            ({format(round(sum(b$bk2)), big.mark = ',')} two-party ballots), \\
+            offset median {sprintf('%+.3f', stats::median(out$off))} logit, \\
+            range {sprintf('%+.3f', min(out$off))} to {sprintf('%+.3f', max(out$off))}"
+  )
+  dplyr::select(out, geo, mode, off)
+}
+
 # ---- county-level returns as exact aggregate constraints ------------------------------
 #' County x mode-group targets from a CBS snapshot
 #'
@@ -918,11 +1049,14 @@ recentre_prior = function(cells, off) {
 #'
 #' @param cells Cells.
 #' @param returns Precinct x mode returns.
-#' @param ... Passed to `fit_stage()` (draws, cross_mode, Sigma_hist, level, county_obs).
+#' @param ... Passed to `fit_stage()` (draws, cross_mode, Sigma_hist, level).
+#' @param county_obs `bucket_counts()` output: county x mode votes on no precinct. Named
+#'   rather than left in `...` because the bucket share arm reads it; still forwarded to
+#'   `fit_stage()`, where CTY_BOUND uses its `c_tot`.
 #' @param cbs_county CBS county x method snapshot for this race (`read_cbs_latest()`); must
 #'   be named. NULL and no `CTY_SNAPSHOT` leaves the county-constraint arm inert.
 #' @return `fit_stage()` result.
-fit_stage_hybrid = function(cells, returns, ..., cbs_county = NULL) {
+fit_stage_hybrid = function(cells, returns, ..., cbs_county = NULL, county_obs = NULL) {
   if ((HY_LEVEL || HY_COUNTY) && isTRUE(get0("LEVEL_UPDATE", ifnotfound = FALSE))) {
     cli_abort(c(
       "LEVEL_UPDATE=1 and model_hybrid apply the level correction TWICE.",
@@ -944,5 +1078,32 @@ fit_stage_hybrid = function(cells, returns, ..., cbs_county = NULL) {
     off = apply_county(cells, off, county_targets(cells, cbs_county))
   }
   off$share = estimate_share(cells, returns)
-  fit_stage(recentre_prior(cells, off), returns, ...)
+  # Votes on no precinct carry a partisan split the rest of the model never sees. Add it
+  # to the share offsets and re-clamp the sum: the two arms describe DIFFERENT votes (the
+  # share arm reads reporting precinct cells, this one the county piles), so they are
+  # complementary rather than duplicative, and BK_MIN_SHARE keeps them from overlapping.
+  bk = estimate_bucket_share(cells, county_obs, returns)
+  if (nrow(bk)) {
+    off$share = dplyr::full_join(
+      off$share,
+      bk,
+      by = c("geo", "mode"),
+      suffix = c("", ".bk")
+    ) |>
+      dplyr::transmute(
+        geo,
+        mode,
+        # each component is already clamped at its own bound, so the natural bound on
+        # the sum is their sum -- re-clamping at SH_MAX_SHIFT would silently undo the
+        # wider allowance a bucket is given
+        off = pmin(
+          pmax(
+            dplyr::coalesce(off, 0) + dplyr::coalesce(off.bk, 0),
+            -(SH_MAX_SHIFT + BK_MAX_SHIFT)
+          ),
+          SH_MAX_SHIFT + BK_MAX_SHIFT
+        )
+      )
+  }
+  fit_stage(recentre_prior(cells, off), returns, ..., county_obs = county_obs)
 }
