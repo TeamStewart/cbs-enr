@@ -218,7 +218,13 @@ ca_precincts = function() {
     mutate(pres24_total = pres24_dem + pres24_rep + pres24_oth, cong24_district = NA_character_)
   cat(sprintf("CA statement of vote: Harris %s, Trump %s, others %s (compare with the official canvass)\n",
               format(sum(v$pres24_dem), big.mark = ","), format(sum(v$pres24_rep), big.mark = ","), format(sum(v$pres24_oth), big.mark = ",")))
-  out = shp |> transmute(unit_id = as.character(.data[[key]])) |> inner_join(v, by = "unit_id")
+  out = shp |> transmute(unit_id = as.character(.data[[key]]))
+  if (anyDuplicated(out$unit_id)) {
+    # one SRPREC drawn as several features: merge them, or each would get its full vote
+    cat(sprintf("CA: %d duplicate SRPREC features merged into their precincts\n", sum(duplicated(out$unit_id))))
+    out = out |> st_make_valid() |> summarize(do_union = TRUE, .by = unit_id)
+  }
+  out = inner_join(out, v, by = "unit_id")
   miss = sum(v$pres24_total[!v$unit_id %in% out$unit_id])
   cat(sprintf("CA: votes in SRPRECs with no polygon: %s\n", format(miss, big.mark = ",")))
   out
@@ -415,6 +421,15 @@ baseline_state = function(st, res) {
     shp = list.files(file.path(vh_dir, VH_DIR[[st]]), "\\.shp$", full.names = TRUE)[1]
     prec = read_sf(shp)
     if (!"UNIQUE_ID" %in% names(prec)) stop(basename(shp), " has no UNIQUE_ID column (VoteHub precinct id)")
+    # a precinct drawn as several features with the same id (TX, FL) is one precinct: merge
+    # them, or each piece would get the precinct's full vote
+    if (anyDuplicated(prec$UNIQUE_ID)) {
+      nd = sum(duplicated(prec$UNIQUE_ID))
+      prec = prec |>
+        st_make_valid() |>
+        summarize(FIPS = first(FIPS), PCT = if ("PCT" %in% names(prec)) first(PCT) else NA_character_, do_union = TRUE, .by = UNIQUE_ID)
+      cat(sprintf("%s: %d duplicate precinct features merged into their precincts\n", st, nd))
+    }
     vh = filter(res, state_abbr == st) |> select(unit_id, pres24_dem, pres24_rep, pres24_oth, pres24_total, cong24_district)
     # OH: official MEDSL totals, with VoteHub's votes (matched by id) placing what MEDSL's
     # names can't; elsewhere VoteHub
