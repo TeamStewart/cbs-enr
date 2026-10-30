@@ -120,6 +120,10 @@ suppressPackageStartupMessages({
 source("scripts/model/live/R/paths.R")
 sf_use_s2(FALSE)
 
+# the dashboard's party colours (scripts/plotters.R, enightmodels::PARTIES_PAL)
+COL_D = "#005599"
+COL_R = "#ce0008"
+LEAN_COLS = c("Safe D" = COL_D, "Lean D" = "#7fa9cc", "Competitive" = "#d9d9d9", "Lean R" = "#e67f84", "Safe R" = COL_R)
 LEAN_SAFE = 10 # margin (points) at or beyond which a district is "Safe"
 LEAN_TOSS = 3 # margin within which a district is "Competitive"
 SPLIT_MIN = 0.01 # a piece below this share of its precinct / county x district is a boundary sliver
@@ -222,7 +226,7 @@ ca_precincts = function() {
   if (anyDuplicated(out$unit_id)) {
     # one SRPREC drawn as several features: merge them, or each would get its full vote
     cat(sprintf("CA: %d duplicate SRPREC features merged into their precincts\n", sum(duplicated(out$unit_id))))
-    out = out |> st_make_valid() |> summarize(do_union = TRUE, .by = unit_id)
+    out = out |> st_make_valid() |> group_by(unit_id) |> summarize(do_union = TRUE) |> ungroup()
   }
   out = inner_join(out, v, by = "unit_id")
   miss = sum(v$pres24_total[!v$unit_id %in% out$unit_id])
@@ -387,9 +391,7 @@ map_geometry = function(st, prec, dists, sh) {
     geom_sf(data = read_sf(f, layer = "new", quiet = TRUE), fill = NA, colour = "grey10", linewidth = 0.45) +
     scale_fill_manual(values = c("Moved to a different district number" = "#eb6834", "Same district number" = "grey88"), name = NULL) +
     coord_sf(xlim = c(bb$xmin, bb$xmax), ylim = c(bb$ymin, bb$ymax), datum = NA) +
-    labs(title = sprintf("%s: precincts whose district changes, old map to new map", st),
-         subtitle = sprintf("%s of %s precincts (main district by area); lines = new map", format(sum(mv$moved), big.mark = ","), format(nrow(mv), big.mark = ",")),
-         caption = "A precinct split by a line counts under the district holding most of its area. Blank areas are water or land with no precinct. Lines: Census TIGER via fourthirtyfive.") +
+    labs(title = sprintf("%s: precincts whose district changes, old map to new map", st)) +
     map_theme()
   ggsave(file.path(out_dir, sprintf("redistricting_map_%s_moved.png", st)), g, width = sz[1], height = sz[2], dpi = 200, bg = "white")
 }
@@ -404,7 +406,7 @@ map_size = function(bb) {
   # whatever the state's shape
   aspect = (bb$ymax - bb$ymin) / (bb$xmax - bb$xmin)
   w = if (aspect > 10.5 / 9) 10.5 / aspect else 9
-  c(max(w, 6.5), min(w * aspect, 10.5) + 2.2)
+  c(max(w, 6.5), min(w * aspect, 10.5) + 1.3)
 }
 map_theme = function() {
   theme_void(base_size = 11) +
@@ -427,7 +429,9 @@ baseline_state = function(st, res) {
       nd = sum(duplicated(prec$UNIQUE_ID))
       prec = prec |>
         st_make_valid() |>
-        summarize(FIPS = first(FIPS), PCT = if ("PCT" %in% names(prec)) first(PCT) else NA_character_, do_union = TRUE, .by = UNIQUE_ID)
+        group_by(UNIQUE_ID) |>
+        summarize(FIPS = first(FIPS), PCT = if ("PCT" %in% names(prec)) first(PCT) else NA_character_, do_union = TRUE) |>
+        ungroup()
       cat(sprintf("%s: %d duplicate precinct features merged into their precincts\n", st, nd))
     }
     vh = filter(res, state_abbr == st) |> select(unit_id, pres24_dem, pres24_rep, pres24_oth, pres24_total, cong24_district)
@@ -699,9 +703,9 @@ draw_maps = function(st) {
   sz = map_size(bb)
   sh = tab |> filter(state == st)
   shade = scale_fill_gradient2(
-    low = "#2a78d6", mid = "#e9e6df", high = "#d03b3b", midpoint = 0.5, limits = c(0.25, 0.75),
+    low = COL_D, mid = "#f2f2f2", high = COL_R, midpoint = 0.5, limits = c(0.25, 0.75),
     oob = scales::squish, labels = \(x) paste0(round(100 * x), "%"), na.value = "grey80",
-    name = if (LIVE) "Republican share of the two-party House vote, counted so far (by district)" else "2024 Trump share of the two-party vote (by district)"
+    name = if (LIVE) "Republican share of the two-party House vote, counted so far" else "2024 Trump share of the two-party vote"
   )
   # the 2024 maps keep the plain names (redistricting_map_{ST}_old.png); the night's get _house_latest
   msfx = if (LIVE) sfx else ""
@@ -720,19 +724,8 @@ draw_maps = function(st) {
       shade +
       coord_sf(xlim = c(bb$xmin, bb$xmax), ylim = c(bb$ymin, bb$ymax), datum = NA) +
       labs(
-        title = sprintf("%s congressional districts: %s map%s", st, if (plan == "old") "OLD (2024)" else "NEW (2026)",
-                        if (LIVE) " -- House vote COUNTED SO FAR" else ""),
-        subtitle = if (LIVE) {
-          sprintf("As of %s, not a projection. %s", stamp(st),
-                  if (plan == "old") "Old-district shares are ESTIMATES (votes regrouped from the new districts)." else "Actual results by district.")
-        } else {
-          "Same precincts in both maps -- only the district lines, and so each district's 2024 vote, change"
-        },
-        caption = paste0(
-          "Each district shaded as a whole; labels: district number and Republican two-party share. Blank areas are water or land with no precinct.\n",
-          if (LIVE) "Votes: CBS News county results. " else if (st == "CA") "Votes: CA Statewide Database. " else if (st == "OH") "Votes: MEDSL official 2024 precinct returns (some precincts placed with VoteHub). " else "Votes: VoteHub. ",
-          "Precincts: ", if (st == "CA") "CA Statewide Database" else "VoteHub", ". Lines: Census TIGER via fourthirtyfive."
-        )
+        title = sprintf("%s congressional districts: %s map%s", st, if (plan == "old") "old (2024)" else "new (2026)",
+                        if (LIVE) ", House vote" else ""),
       ) +
       map_theme() +
       guides(fill = guide_colourbar(barwidth = unit(7, "cm"), barheight = unit(0.3, "cm"), title.position = "top"))
@@ -790,34 +783,25 @@ for (st in states) {
     geom_vline(xintercept = 50, colour = "grey60", linetype = "dashed", linewidth = 0.3) +
     # Republican share: a district moving toward Democrats moves left, toward Republicans right
     geom_segment(aes(x = 100 * old, xend = 100 * new, yend = label, colour = dir), linewidth = 1.2, lineend = "round") +
-    geom_point(aes(x = 100 * old), shape = 21, fill = "white", colour = "grey40", size = 2.2, stroke = 0.8) +
-    geom_point(aes(x = 100 * new, colour = dir), size = 2.4) +
-    scale_colour_manual(values = c("Toward R" = "#d03b3b", "Toward D" = "#2a78d6", "Moved < 1 pt" = "grey60", "No match" = "grey80"), name = NULL) +
+    geom_point(aes(x = 100 * old, shape = "old"), fill = "white", colour = "grey40", size = 2.2, stroke = 0.8) +
+    geom_point(aes(x = 100 * new, colour = dir, shape = "new"), fill = "grey40", size = 2.4) +
+    scale_colour_manual(values = c("Toward R" = COL_R, "Toward D" = COL_D, "Moved < 1 pt" = "grey60", "No match" = "grey80"), name = NULL) +
+    scale_shape_manual(values = c(old = 21, new = 16), breaks = c("old", "new"), name = NULL,
+                       labels = c(old = if (LIVE) "Old map (2024), estimated" else "Old map (2024)", new = if (LIVE) "New map (2026), actual" else "New map (2026)")) +
+    guides(shape = guide_legend(order = 1, override.aes = list(shape = c(21, 16), fill = "white", colour = "grey40", size = 2.4)),
+           colour = guide_legend(order = 2)) +
     labs(
       title = if (LIVE) {
-        sprintf("%s House: Republican share of the two-party vote COUNTED SO FAR, old map vs new map", st)
+        sprintf("%s House: Republican share of the two-party vote, old map vs new map", st)
       } else {
         sprintf("%s: 2024 Trump share of the two-party vote by district, old map vs new map", st)
       },
-      subtitle = if (LIVE) {
-        sprintf("Votes counted as of %s (%s of expected) -- not a projection.\nOpen circle = 2024 (old) lines, estimated; filled = 2026 (new) lines, actual",
-                stamp(st), if (is.finite(runs[[st]]$pct)) sprintf("%.0f%%", 100 * runs[[st]]$pct) else "share unknown")
-      } else {
-        "Open circle = 2024 (old) lines, filled = 2026 (new) lines"
-      },
       x = paste(if (LIVE) "Republican House candidate's share of the two-party vote (%)" else "Trump share of the two-party vote (%)",
                 "   \u2190 more Democratic  |  more Republican \u2192"),
-      y = NULL,
-      caption = paste0(
-        "Districts compared by number: an old and a new district with the same number can cover different places.\n",
-        stringr::str_wrap(note_text(st), 125), "\n",
-        if (LIVE) "Votes: CBS News county results. " else if (st == "CA") "Votes: CA Statewide Database 2024 precinct results. " else if (st == "OH") "Votes: MEDSL official 2024 precinct returns. " else "Votes: VoteHub 2024 precinct results. ",
-        "Lines: Census TIGER via fourthirtyfive."
-      )
+      y = NULL
     ) +
-    theme_minimal(base_size = 11) +
-    theme(legend.position = "top", panel.grid.major.y = element_blank(), plot.caption = element_text(colour = "grey40", hjust = 0),
-          plot.title = element_text(size = if (LIVE) 12 else 13))
+    theme_bw(base_size = 11) +
+    theme(legend.position = "top", panel.grid.major.y = element_blank(), plot.title = element_text(size = if (LIVE) 12 else 13))
   save_out(sprintf("redistricting_dumbbell_%s%s.png", st, sfx), \(p) ggsave(p, g, device = "png",
          width = 10, height = 2 + 0.24 * nrow(w), dpi = 200, bg = "white"))
 }
@@ -835,19 +819,17 @@ for (st in states) {
     geom_col(width = 0.6, colour = "white", linewidth = 0.6, position = position_stack(reverse = TRUE)) +
     geom_text(aes(label = if_else(n > 0, as.character(n), "")), position = position_stack(vjust = 0.5, reverse = TRUE), size = 3.6,
               colour = ifelse(ss$lean == "Competitive", "grey20", "white")) +
-    scale_fill_manual(values = c("Safe D" = "#185fa5", "Lean D" = "#85b7eb", "Competitive" = "#b4b2a9", "Lean R" = "#f09595", "Safe R" = "#a32d2d"),
-                      breaks = c("Safe D", "Lean D", "Competitive", "Lean R", "Safe R"), name = NULL, drop = FALSE) +
+    scale_fill_manual(values = LEAN_COLS, breaks = names(LEAN_COLS), name = NULL, drop = FALSE,
+                      labels = c(sprintf("Safe D (D+%d or more)", LEAN_SAFE), sprintf("Lean D (D+%d-%d)", LEAN_TOSS, LEAN_SAFE),
+                                 sprintf("Competitive (within %d)", LEAN_TOSS), sprintf("Lean R (R+%d-%d)", LEAN_TOSS, LEAN_SAFE),
+                                 sprintf("Safe R (R+%d or more)", LEAN_SAFE))) +
     labs(
-      title = if (LIVE) sprintf("%s House seats by Republican two-party share COUNTED SO FAR, old map vs new map", st) else sprintf("%s: seats by 2024 presidential lean, old map vs new map", st),
+      title = if (LIVE) sprintf("%s House seats by Republican two-party share, old map vs new map", st) else sprintf("%s: seats by 2024 presidential lean, old map vs new map", st),
       subtitle = if (LIVE) sprintf("Votes counted as of %s -- not a projection", stamp(st)) else NULL,
-      x = sprintf("%d districts", sum(ss$n[ss$plan == levels(ss$plan)[1]])), y = NULL,
-      caption = paste0(
-        sprintf("Two-party margin: Safe = %d+ pts, Lean = %d-%d pts, Competitive = within %d pts.\n", LEAN_SAFE, LEAN_TOSS, LEAN_SAFE, LEAN_TOSS),
-        stringr::str_wrap(note_text(st), 125), "\n", src_note(st), " Lines: Census TIGER via fourthirtyfive."
-      )
+      x = sprintf("%d districts", sum(ss$n[ss$plan == levels(ss$plan)[1]])), y = NULL
     ) +
-    theme_minimal(base_size = 11) +
-    theme(legend.position = "top", panel.grid = element_blank(), axis.text.x = element_blank(), plot.caption = element_text(colour = "grey40", hjust = 0),
+    theme_bw(base_size = 11) +
+    theme(legend.position = "top", panel.grid = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank(),
           plot.title = element_text(size = if (LIVE) 12 else 13))
   save_out(sprintf("redistricting_seats_%s%s.png", st, sfx), \(p) ggsave(p, g2, device = "png", width = 10, height = 3.6, dpi = 200, bg = "white"))
 }
