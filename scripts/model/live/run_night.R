@@ -14,6 +14,11 @@
 ##   4. writes 26_general/model_results/predictions_<time>.csv + predictions_latest.csv and
 ##      turnout_<time>.csv + turnout_latest.csv and status_<time>.csv + status_latest.csv
 ##      (write_predictions(); format in R/output.R)
+##   5. starts the redistricting charts in the background (scripts/model/reports/
+##      redistricting_compare.R --live: tonight's House vote by old vs new district, written
+##      to 26_general/model_results/redistricting/*_house_latest.*). It never holds up or
+##      breaks the models; its log is model_results/redistricting/live.log. Needs its
+##      one-time setup first (BEFORE THE NIGHT in that script / live/README.md).
 ## A race or model that fails is recorded in the status table; the rest carry on.
 ##
 ## From the cbs-enr folder:
@@ -27,6 +32,7 @@
 ##                 method, votes, stage, observed_at); parquet or csv
 ##   --candidates  CONTRACT.md section 5 (race_id, candidate_id, name, party)
 ##   --cbs=test    CBS's test feed instead of live (default live)
+##   --no-redistricting   don't start the redistricting charts (step 5)
 ##   --config=<file>  the model config (default 26_general/model_config.csv, R/config.R): its
 ##                 run = TRUE rows are the models run. RUN in R/run.R if the file is missing
 ##   --models=swing,pois_bayes   (overrides the config; any of MODELS); a model may carry a
@@ -72,6 +78,7 @@ check_models(MODELS_RUN)
 SIM = opt("sim")
 EVERY = as.numeric(opt("every", "0"))
 CBS_ENV = opt("cbs", "live")
+REDIST = !"--no-redistricting" %in% commandArgs(trailingOnly = TRUE)
 CORES = as.integer(opt("cores", max(1L, parallel::detectCores() - 1L)))
 TZ = "America/New_York"
 d26 = find_26_general()
@@ -186,6 +193,30 @@ if (!is.na(SIM)) {
   }
 }
 
+# ---- redistricting charts (step 5) -------------------------------------------------------
+#' Start the redistricting charts in the background
+#'
+#' Runs scripts/model/reports/redistricting_compare.R --live as a separate process, so a slow
+#' or failed chart never delays or breaks the models. That script skips itself if the
+#' previous run is still going. Output and log in 26_general/model_results/redistricting/.
+start_redistricting = function() {
+  f = "scripts/model/reports/redistricting_compare.R"
+  dir_r = file.path(d26, "model_results", "redistricting")
+  if (!file.exists(f) || !length(list.files(file.path(d26, "input_data", "redistricting"), "_county_district_weights\\.csv$"))) {
+    cli::cli_alert_warning("Redistricting charts not set up (no weights in input_data/redistricting/): see BEFORE THE NIGHT in {f}")
+    return(invisible(FALSE))
+  }
+  dir.create(dir_r, recursive = TRUE, showWarnings = FALSE)
+  system2(
+    file.path(R.home("bin"), "Rscript"),
+    c(shQuote(f), "--live", paste0("--env=", CBS_ENV)),
+    stdout = file.path(dir_r, "live.log"),
+    stderr = file.path(dir_r, "live.log"),
+    wait = FALSE
+  )
+  invisible(TRUE)
+}
+
 # ---- one refresh -------------------------------------------------------------------------
 #' One refresh: every race x model, scraped and statewide
 #'
@@ -270,6 +301,7 @@ refresh = function(at = NULL) {
   }
   write_predictions(res, out_dir)
   write_precincts(res, out_dir)
+  if (REDIST && is.na(SIM)) start_redistricting()
   sec = function(a, b) as.numeric(difftime(b, a, units = "secs"))
   cat(sprintf(
     "%s  %d races x %d models, %d prediction rows (%d statewide) in %.0fs [inputs %.0fs, CBS %.0fs, models %.0fs on %d cores] -> %s\n",
