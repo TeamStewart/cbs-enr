@@ -533,6 +533,12 @@ SIGMA_SOURCE = Sys.getenv("SIGMA_SOURCE", unset = "measured")
 # there is no alternative but to borrow or to assume zero, and zero is not the safer choice
 # (see the memo's discussion of why an "uninformative" value does not exist here).
 RHO_TAU_S = c(mail = 0.204, early = 0.052, eday = -0.140) # within mode
+# `all` is the single pseudo-mode of a state modelled without vote method, so there is no
+# measured value for it. 0 is not a shrug: the three measured correlations roughly cancel
+# at any realistic composition -- turnout-weighting them gives -0.001 on the TX 2022 mix,
+# -0.021 on NC's and -0.044 on OH's. (Aggregation does not strictly preserve a weighted
+# mean of within-group correlations, so treat this as well-motivated rather than derived.)
+RHO_TAU_S["all"] = 0
 RHO_S_CROSS = if (Sys.getenv("RHO_ME_CORRECTED") == "1") 0.40 else 0.232 # mail<->early
 
 #' Prior correlation matrix among the equations
@@ -768,6 +774,17 @@ MODE_OFFSET_SOURCE = Sys.getenv("MODE_OFFSET_SOURCE", unset = "history")
 
 # --------------------------------------------------------------------------------
 
+# DEGENERATE SCOPE: a state modelled WITHOUT vote method (MN; also any state whose feed
+# gives precinct totals only, and MI, whose L2 history has no early in any year). MODES is
+# then the single pseudo-mode "all", M = 1, and the model collapses to three equations
+# instead of 3M: softmax over one element is 1, so tau = T exactly and eta disappears.
+# The fallbacks below are keyed on mail/early/eday and would abort on the scope check, so
+# set them explicitly rather than letting the renormalisation block try to subset them.
+if (identical(MODES, "all")) {
+  MODE_TURN_SHARE = c(all = 1)
+  MODE_SHARE_OFFSET = rbind(all = c(a = 0, b = 0))
+}
+
 # The fallback constants above are written for the legacy mail/early/eday scope. When a
 # state's MODES differ (CA drops `early`), subset and RENORMALISE so the fallback still
 # sums to 1, rather than tripping the assertion below with a scope mismatch. Only the
@@ -903,7 +920,11 @@ derive_mode_priors = function(hist, prec, k_turn = 40, k_share = 60) {
                     forcing delta_m to 0"
     )
   } else if (MODE_OFFSET_SOURCE == "nc") {
-    off = NC_DELTA[MODES, , drop = FALSE]
+    off = if (identical(MODES, "all")) {
+      rbind(all = c(a = 0, b = 0)) # no mode to differentiate; see RHO_TAU_S["all"]
+    } else {
+      NC_DELTA[MODES, , drop = FALSE]
+    }
     cli_alert_info(
       "MODE_OFFSET_SOURCE=nc -- keeping the derived turnout split, \\
                     borrowing NC-measured delta_m"

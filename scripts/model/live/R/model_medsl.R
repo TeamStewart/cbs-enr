@@ -182,10 +182,11 @@ medsl_spec = function(demo) {
 #' @param counties County names, or NULL for the whole state.
 #' @param demo Spec name.
 #' @return Character key.
-medsl_key = function(state, counties, demo = "medsl_cov") {
+medsl_key = function(state, counties, demo = "medsl_cov", by_method = TRUE) {
   paste0(
     if (is.null(counties)) state else paste(state, paste(sort(unique(counties)), collapse = "|")),
-    if (demo != "medsl_cov") paste0("|", demo)
+    if (demo != "medsl_cov") paste0("|", demo),
+    if (!by_method) "|nomode"
   )
 }
 
@@ -209,9 +210,10 @@ medsl_setup = function(
   dir_26 = find_26_general(),
   refresh = FALSE,
   counties = NULL,
-  demo = "medsl_cov"
+  demo = "medsl_cov",
+  by_method = TRUE
 ) {
-  key = medsl_key(state, counties, demo)
+  key = medsl_key(state, counties, demo, by_method)
   if (!refresh && !is.null(.medsl_env[[key]])) {
     return(.medsl_env[[key]])
   }
@@ -229,6 +231,10 @@ medsl_setup = function(
   # settings model_turnout.R reads from the environment, restored on exit: the spec's
   # covariates and grouping, and zero mode offsets unless the caller chose otherwise
   vars = c(
+    # modelled without vote method: one pseudo-mode, so 3 equations rather than 3M.
+    # model_turnout.R reads both of these at SOURCE time, which is why they go here
+    # rather than being passed as arguments.
+    if (!by_method) c(MODES = "all", REF_MODE = "all"),
     if (!nzchar(Sys.getenv("MODE_OFFSET_SOURCE"))) c(MODE_OFFSET_SOURCE = "zero"),
     if (!is.null(spec)) {
       c(COVS_TURN = paste(spec$covs, collapse = ","), COVS_SHARE = paste(spec$covs, collapse = ","))
@@ -305,6 +311,11 @@ medsl_setup = function(
 #' @param demo Demographic spec.
 #' @return The environment (`medsl_setup()`).
 medsl_setup_for = function(cells, state, dir_26 = find_26_general(), demo = "medsl_cov") {
+  # A cells frame carrying only `all` means the state is modelled WITHOUT vote method --
+  # MN and MI by their mode history, or any race whose feed gives precinct totals only
+  # (shape_for_method() collapses the frame in that case). MODES must follow the cells,
+  # or the model builds 3M equations against 1 method and nothing joins.
+  by_method = !all(as.character(cells$method) == "all")
   key = paste0("counties_", state)
   if (is.null(.medsl_env[[key]])) {
     .medsl_env[[key]] =
@@ -322,7 +333,8 @@ medsl_setup_for = function(cells, state, dir_26 = find_26_general(), demo = "med
     state,
     dir_26,
     counties = if (setequal(ctys, .medsl_env[[key]])) NULL else ctys,
-    demo = demo
+    demo = demo,
+    by_method = by_method
   )
 }
 

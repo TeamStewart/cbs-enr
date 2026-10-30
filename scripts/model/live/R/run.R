@@ -247,21 +247,6 @@ run_race = function(model, cells, returns, ...) {
   demo = p$demo %||% DEMO_DEFAULT[[base]]
   interval = p$interval %||% MODEL_INTERVALS[[base]][1]
   sh = shape_for_method(cells, returns)
-  needs_method = function(m) {
-    list(
-      model = m,
-      settings = NA_character_,
-      status = if (returns_by_method(returns)) {
-        paste0(
-          "skipped: the state's vote-method history has no split (see build_cells()), which ",
-          m,
-          " needs"
-        )
-      } else {
-        paste0("skipped: this race's results have no vote-method split, which ", m, " needs")
-      }
-    )
-  }
   fit = switch(
     base,
     swing = fit_swing(sh$cells, sh$returns, demo = demo, interval = interval, ...),
@@ -275,11 +260,10 @@ run_race = function(model, cells, returns, ...) {
     ),
     pois_bayes = fit_pois_bayes(sh$cells, sh$returns, demo = demo, interval = interval, ...),
     lm_bayes = fit_lm_bayes(sh$cells, sh$returns, demo = demo, interval = interval, ...),
-    medsl_sur = if (sh$by_method) {
-      fit_medsl_sur(sh$cells, sh$returns, demo = demo, interval = interval, ...)
-    } else {
-      needs_method("medsl_sur")
-    }
+    # medsl_sur used to be skipped without a method split, because its equations are by
+    # method. It now collapses to the single pseudo-mode `all` (3 equations instead of 3M;
+    # medsl_setup_for() sets MODES from the cells), so it runs either way.
+    medsl_sur = fit_medsl_sur(sh$cells, sh$returns, demo = demo, interval = interval, ...)
   )
   if (!sh$by_method && !is.null(fit$settings) && !is.na(fit$settings)) {
     fit$settings = paste0(
