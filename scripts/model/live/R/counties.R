@@ -452,6 +452,24 @@ project_rest_bounds = function(rest, swing, turn_ratio, level = 0.95) {
   )
 }
 
+#' Rest-of-state turnout bounds for a fit with bounds
+#'
+#' The rest's total at each end of the turnout ratio, plus the quantiles of the REST_*
+#' terms (`DRAWS` draws around the point, seeded as `project_rest_bounds()`). The total
+#' does not depend on the swing.
+#'
+#' @param rest `rest_of_state()`.
+#' @param turn_ratio `c(point, lower, upper)` (`fit_swing_bounds()`).
+#' @param level Interval level.
+#' @return `c(lower, upper)` of the rest's total votes.
+rest_turnout_bounds = function(rest, turn_ratio, level = 0.95) {
+  a = (1 - level) / 2
+  sc = rowSums(project_rest(rest, rep(0, 3), turn_ratio, noise = FALSE))
+  set.seed(SEED)
+  nz = rowSums(project_rest(rest, rep(0, DRAWS), rep(turn_ratio[1], DRAWS))) - sc[1]
+  c(sc[2] + quantile(nz, a, names = FALSE), sc[3] + quantile(nz, 1 - a, names = FALSE))
+}
+
 #' Swing and turnout ratio of a fit with bounds
 #'
 #' @param fit Fit with bounds (conf_seq or conformal).
@@ -483,7 +501,8 @@ fit_swing_bounds = function(fit, pt, base_s, E) {
 #' @param base `county_baseline()`.
 #' @param level Interval level.
 #' @return Tibble in enightmodels' prediction format (model_conf ending "_plus_rest"), or
-#'   NULL when the fit is not ok or there is no CBS snapshot.
+#'   NULL when the fit is not ok or there is no CBS snapshot. Attribute "turnout": the
+#'   statewide total's `c(lower, upper)` (NA without an interval), for `to_turnout_data()`.
 state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, level = 0.95) {
   if (!fit_ok(fit) || is.null(cbs) || !nrow(cbs)) {
     return(NULL)
@@ -531,6 +550,14 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
     i = match(rb$party, b32$grp) # NA: no candidate of that party in the race
     lo = setNames(ifelse(is.na(i), 0, b32$pred_min[i]) + rb$pred_min, rb$party)
     hi = setNames(ifelse(is.na(i), 0, b32$pred_max[i]) + rb$pred_max, rb$party)
+    # turnout: the scraped counties' bounds plus the rest's; NA when the fit has none
+    # (conformal, whose turnout is a point)
+    r = fit$race
+    turn = if (is.na(r$lo_turnout) || is.na(r$hi_turnout)) {
+      c(NA_real_, NA_real_)
+    } else {
+      c(r$lo_turnout, r$hi_turnout) + rest_turnout_bounds(rest, sb$turn_ratio, level)
+    }
   }
 
   # rest of the state: point (no noise, from the point fit) and per-draw
@@ -564,6 +591,9 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
   }
   tot_pt = sum(P)
   tot_d = if (has_draws) Dd$dem + Dd$rep + Dd$oth else NULL
+  if (has_draws) {
+    turn = unname(cred(tot_d, level))
+  }
 
   # reported: scraped counties from our returns, the rest from CBS
   rep_rest = c(dem = sum(rest$d), rep = sum(rest$r), oth = sum(rest$o))
@@ -611,7 +641,7 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
   pct = (pct_reporting(cells, returns) * n_prec + sum(rest$prec_in, na.rm = TRUE)) /
     (n_prec + sum(rest$prec_of, na.rm = TRUE))
   # race_id carried, not reconstructed -- see the note in output.R::to_pred_data()
-  bind_cols(
+  out = bind_cols(
     race[
       rep(1, nrow(out)),
       c("race_id", "state", "election", "jurisdiction", "contest", "district")
@@ -650,4 +680,6 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
       race_id
     ) |>
     arrange(pred_type, desc(pred))
+  attr(out, "turnout") = turn
+  out
 }

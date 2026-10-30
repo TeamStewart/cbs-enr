@@ -21,7 +21,7 @@ Rscript scripts/model/live/run_night.R --every=5
 reads the scrapers' clean files, `26_general/{ST}/clean/*_latest.parquet` (`returns_from_clean()` in `R/returns.R`, which matches their precinct ids to our inputs). `--returns=<file> --candidates=<file>` reads a CONTRACT.md section 8 file instead.
 Every 5 minutes: pulls fresh CBS county results for each race in `priors.csv`, runs every
 model switched on in `26_general/model_config.csv` on every race, and writes `26_general/model_results/predictions_latest.csv` (scraped
-counties, `geo = "scraped"`, and statewide, `geo = "all"`) and `status_latest.csv`. Drop
+counties, `geo = "scraped"`, and statewide, `geo = "all"`), `turnout_latest.csv` and `status_latest.csv`. Drop
 `--every` for a single refresh. To try the whole path on a simulated night with a simulated
 CBS feed (writes to `model_tests/run_night_sim/`, never to `model_results/`):
 ```
@@ -33,9 +33,10 @@ Rscript scripts/model/live/run_night.R --sim=tx_base --at="2026-11-03 22:00"
 `predict_all(cells, returns)` runs every race x model and returns `$pred`, in enightmodels'
 tidy prediction format (the columns in `enightmodels::COLS_PRED`: one row per race x model
 x candidate x `pred_type`, with `pred_type` "vote" and "share", `rep`, `pred`, `pred_min`,
-`pred_max`, `pct_rep`, plus `p_win`), and `$status`, one row per race x model saying "ok",
-"no_votes" or "error: ...". `write_predictions(res)` writes both to `26_general/model_results/` in the shared
-Dropbox, as timestamped CSVs plus `predictions_latest.csv` / `status_latest.csv`. Test
+`pred_max`, `pct_rep`, plus `p_win`), `$turnout`, the race total with its interval (one row
+per race x model x geo; CONTRACT.md section 15.4), and `$status`, one row per race x model saying "ok",
+"no_votes" or "error: ...". `write_predictions(res)` writes all three to `26_general/model_results/` in the shared
+Dropbox, as timestamped CSVs plus `predictions_latest.csv` / `turnout_latest.csv` / `status_latest.csv`. Test
 runs should pass another `dir` so they never mix with the night's results. Details at the top of `R/output.R`.
 Every prediction row passes `enightmodels::check_pred_data()`.
 

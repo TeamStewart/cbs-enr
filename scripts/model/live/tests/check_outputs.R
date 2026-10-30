@@ -231,6 +231,33 @@ if (!file.exists(f_prec)) {
   ck(iv$bad == 0, paste0("turn_hi >= turn_lo on the ", iv$n, " rows with intervals"))
 }
 
+# ---- 15.4 turnout -----------------------------------------------------------------
+f_turn = file.path(DIR, "turnout_latest.csv")
+if (!file.exists(f_turn)) {
+  cli::cli_alert_warning("no turnout_latest.csv -- 15.4 skipped")
+} else {
+  tu = readr::read_csv(f_turn, show_col_types = FALSE, progress = FALSE)
+  cli::cli_h2("15.4 turnout ({nrow(tu)} rows)")
+  pv = pred |>
+    filter(pred_type == "vote") |>
+    summarize(tot = sum(pred), .by = c(race_id, model, geo))
+  j = full_join(pv, tu, by = c("race_id", "model", "geo"))
+  ck(
+    !anyNA(j$tot) && !anyNA(j$pred),
+    "one turnout row for every race x model x geo with predictions, and no others"
+  )
+  ck(
+    isTRUE(all.equal(j$tot, j$pred, tolerance = 1e-6)),
+    "turnout pred equals the race's vote rows summed"
+  )
+  iv = filter(tu, !is.na(pred_min), !is.na(pred_max))
+  ck(all(iv$pred_min <= iv$pred_max), paste0("pred_min <= pred_max on the ", nrow(iv), " rows with intervals"))
+  ck(
+    !anyDuplicated(select(tu, race_id, model, geo)),
+    "exactly one row per race x model x geo"
+  )
+}
+
 # ---- verdict ----------------------------------------------------------------------
 if (length(fails)) {
   cli::cli_h1("FAILED")

@@ -733,18 +733,19 @@ unversioned places — `enightmodels::COLS_PRED`, `live/README.md`, and the head
 against. This section is that document. Consumer: the dashboard (`index.qmd`) and anyone
 reading the night's files afterwards. Producer: `live/R/output.R`.
 
-Three artifacts, written to `26_general/model_results/` in the shared Dropbox:
+Four artifacts, written to `26_general/model_results/` in the shared Dropbox:
 
 | artifact | schema | written by |
 |---|---|---|
 | `predictions_{stamp}.csv` + `predictions_latest.csv` | `enightmodels::COLS_PRED` + the extras in §15.1 | `write_predictions()` |
 | `status_{stamp}.csv` + `status_latest.csv` | §15.2 | `write_predictions()` |
+| `turnout_{stamp}.csv` + `turnout_latest.csv` | §15.4 — **new** | `write_predictions()` |
 | `precincts_{stamp}.parquet` + `precincts_latest.parquet` | §15.3 — **new** | `write_precincts()` |
 
 `{stamp}` is `max(status$time)` as `%Y%m%d_%H%M%S` in `America/New_York`. The stamped file
 is never overwritten, so the night's history is kept; the `_latest` copy is written to a
 hidden `.tmp` and renamed, so a reader never sees half a file. Both forms exist for all
-three artifacts — a consumer polling `_latest` and a consumer reconstructing the night
+four artifacts — a consumer polling `_latest` and a consumer reconstructing the night
 from the stamped series must see the same thing. Test runs point `dir` elsewhere
 (`tempdir()`), never at `model_results/`.
 
@@ -946,7 +947,38 @@ own prediction is a signal, not a rounding artifact; and `n_obs_modes <=` the nu
 explicitly, because the existing flag-gated dump gets this wrong, reading 10,956 on a
 227-registrant precinct.
 
-### 15.4 Delivery order
+### 15.4 `turnout` — the race total and its interval
+
+**New artifact (2026-10-29).** Every fit already computes `est_turnout`, `lo_turnout` and
+`hi_turnout` (`model_result()`, `live/R/results.R`), and §15.1 has no place for them: it has
+one row per candidate, and the candidates' `pred_min` / `pred_max` do not add up to the
+total's interval (a sum of quantiles is not the quantile of the sum). So the total goes in
+its own table, `turnout_<stamp>.csv` + `turnout_latest.csv`, written by
+`write_predictions()` beside the other two.
+
+Grain: one row per `race_id` x `model` x `geo` x `time`, for exactly the race x model x geo
+combinations that have §15.1 rows. The columns are named as in §15.1 so a consumer can treat
+a turnout row as a prediction row.
+
+| column | meaning |
+|---|---|
+| `race_id`, `model`, `time`, `geo`, `model_conf`, `pct_rep` | as §15.1 |
+| `rep` | votes counted so far, all candidates |
+| `pred` | predicted final votes: the race's §15.1 `"vote"` rows summed, so it matches them exactly |
+| `pred_min`, `pred_max` | the total's interval ends, at §15.1's level; NA when the model gives none |
+
+Where the interval comes from:
+
+| model / interval | `geo = "scraped"` | `geo = "all"` |
+|---|---|---|
+| bootstrap, credible (draws) | quantiles of the draws of the total | quantiles of scraped + rest-of-state draws |
+| `conf_seq` | `conf_seq()` on the log total | scraped bounds + the rest projected at the turnout-ratio ends, plus the rest's noise quantiles (`rest_turnout_bounds()`, `counties.R`) |
+| `conformal`, `none` | NA: conformal shifts shares only, so turnout is a point | NA |
+
+*Acceptance:* every race x model x geo in `predictions_latest.csv` has exactly one row here;
+`pred` equals the sum of its `"vote"` rows; `pred_min <= pred_max` where both are non-NA.
+
+### 15.5 Delivery order
 
 1. **§15.1 and §15.2** — these describe what `output.R` already emits, so the work is the
    assertions, not the writer: the sanctioned-extras check, the `geo`-literals check, and

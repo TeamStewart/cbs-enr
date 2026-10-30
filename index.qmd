@@ -30,6 +30,7 @@ ojs_define(
   l2 = if (is.null(dd$l2)) data.frame(key = character(), geo = character(), mode = character()) else dd$l2,
   models = if (is.null(dd$models)) data.frame(key = character(), model = character(), time = numeric()) else transform(dd$models, time = to_ms(time)),
   model_status = if (is.null(dd$model_status)) data.frame(key = character(), model = character()) else transform(dd$model_status, time = to_ms(time)),
+  model_turnout = if (is.null(dd$model_turnout) || !nrow(dd$model_turnout)) data.frame(key = character(), model = character(), geo = character(), time = numeric()) else transform(dd$model_turnout, time = to_ms(time)),
   mres = if (is.null(dd$mres)) data.frame(key = character(), unit_id = character()) else dd$mres,
   mprec = if (is.null(dd$mprec)) data.frame(key = character(), model = character(), unit_id = character()) else dd$mprec,
   mprec_runs = if (is.null(dd$mprec_runs)) data.frame(key = character(), model = character(), time = numeric()) else transform(dd$mprec_runs, time = to_ms(time)),
@@ -60,6 +61,8 @@ P = transpose(prec)
 L2 = transpose(l2)
 MP = transpose(models).map(d => ({ ...d, time: new Date(d.time) }))
 MS = transpose(model_status)
+// race turnout intervals by key|model|geo|time (CONTRACT.md section 15.4)
+MT = new Map(transpose(model_turnout).map(d => [`${d.key}|${d.model}|${d.geo}|${d.time}`, d]))
 // Models page maps: counted votes and each model's projected remaining vote per VoteHub unit
 MRES = transpose(mres)
 MPREC = transpose(mprec)
@@ -731,10 +734,13 @@ modelRows = mpc
   .map(d => ({ ...d, series: `${partyName(d.party)} · ${GEO_LABELS[d.geo] ?? d.geo}`, pname: partyName(d.party) }))
   .sort((a, b) => a.time - b.time)
 
-// turnout: every party's predicted votes summed per run (no interval)
+// turnout: every party's predicted votes summed per run, with the race total's interval when
+// the model gives one (the turnout table; the candidates' bounds don't add up to it)
 turnoutRows = d3.rollups(modelRows.filter(d => d.pred_type === "vote"),
-  v => ({ time: v[0].time, geo: v[0].geo, pct_rep: v[0].pct_rep, pred: d3.sum(v, d => d.pred), rep: d3.sum(v, d => d.rep),
-          series: `Total · ${GEO_LABELS[v[0].geo] ?? v[0].geo}` }),
+  v => { const b = MT.get(`${sel}|${model_pick}|${v[0].geo}|${+v[0].time}`);
+         return { time: v[0].time, geo: v[0].geo, pct_rep: v[0].pct_rep, pred: d3.sum(v, d => d.pred), rep: d3.sum(v, d => d.rep),
+                  pred_min: b?.pred_min ?? null, pred_max: b?.pred_max ?? null,
+                  series: `Total · ${GEO_LABELS[v[0].geo] ?? v[0].geo}` }; },
   d => d.geo, d => +d.time).flatMap(([, g]) => g.map(([, r]) => r)).sort((a, b) => a.time - b.time)
 
 // solid line = prediction, ribbon = interval, dotted = reported; "all" draws dashed with a lighter ribbon
@@ -796,6 +802,7 @@ summaryRows = {
       // two-party bounds from the share bounds (exact when the shares split a two-party interval)
       lo: two(dm?.pred_min, rp?.pred_max), hi: two(dm?.pred_max, rp?.pred_min),
       turnout: d3.sum(run.filter(d => d.pred_type === "vote"), d => d.pred),
+      tlo: MT.get(`${sel}|${m}|scraped|${t}`)?.pred_min ?? null, thi: MT.get(`${sel}|${m}|scraped|${t}`)?.pred_max ?? null,
       pct_rep: run[0].pct_rep
     };
   }).sort((a, b) => d3.ascending(a.base, b.base) || d3.ascending(Object.keys(SPEC_LABELS).indexOf(a.spec), Object.keys(SPEC_LABELS).indexOf(b.spec)) ||
@@ -969,6 +976,9 @@ viewof mctl = {
     s.dispatchEvent(new Event("input", { bubbles: true }));
   };
   const turnFmt = d3.format(".3s");
+  // "4.14–4.26M": the low end drops the SI suffix it shares with the high end
+  const turnRange = (lo, hi) => { const [a, b] = [turnFmt(lo), turnFmt(hi)]; const u = b.replace(/[\d.]/g, "");
+    return `${u && a.endsWith(u) ? a.slice(0, -u.length) : a}–${b}`; };
   // rows built with the DOM: a bare <tr> fragment doesn't survive html``'s parser
   const td = (text, cls = "") => Object.assign(document.createElement("td"), { textContent: text, className: cls });
   const rows = summaryRows.map(d => {
@@ -983,7 +993,7 @@ viewof mctl = {
     spec.append(Object.assign(document.createElement("code"), { textContent: d.spec }));
     tr.append(first, spec, td(`${INTERVAL_SHORT[d.interval] ?? d.interval} ${confLevel(d.conf)}`.trim()),
       td(d.d2 == null ? "—" : d.lo == null || d.hi == null ? pct(d.d2) : `${pct(d.d2)} (${pct(d.lo)}–${pct(d.hi)})`, "num"),
-      td(d.turnout > 0 ? turnFmt(d.turnout) : "—", "num"),
+      td(!(d.turnout > 0) ? "—" : d.tlo == null || d.thi == null ? turnFmt(d.turnout) : `${turnFmt(d.turnout)} (${turnRange(d.tlo, d.thi)})`, "num"),
       td(cur.match_of > 0 ? pct(cur.match_n / cur.match_of) : "—", "num"));
     return tr;
   });
@@ -995,7 +1005,7 @@ viewof mctl = {
       <thead><tr>
         <th>Model</th><th title="Demographic spec (hover a row for its description)">Spec</th><th>Interval</th>
         <th class="num" title="Predicted Dem share of the two-party vote (interval)">Est. D (interval)</th>
-        <th class="num" title="Predicted total votes, all candidates">Turnout</th>
+        <th class="num" title="Predicted total votes, all candidates (interval, when the model gives one)">Turnout (interval)</th>
         <th class="num" title="Reporting precincts found in the models' historical inputs (input_data/model_inputs/{ST}_precinct.parquet); the same for every model">Match</th>
       </tr></thead>
       ${tbody}

@@ -38,13 +38,29 @@ DASHBOARD_CBS_ENV = "test"
 
 SIM_DIR = fs::path(PATH_DROPBOX, "26_sim")
 # sim_night.R runs: main has each model's default fits, specs_conformal the other
-# demographic specs with the conformal interval; stacked, a model in both read from the first
-TEST_DIRS = fs::path(PATH_DROPBOX, "26_general", "model_tests", "coverage", c("main", "specs_conformal"))
+# demographic specs with the conformal interval; stacked, a model in both read from the first.
+# CBS_DASH_SIM_DIRS lists other coverage/ folders, comma-separated, in that order (e.g. a
+# fresh rerun ahead of the older ones)
+TEST_DIRS = fs::path(PATH_DROPBOX, "26_general", "model_tests", "coverage",
+                     str_split_1(Sys.getenv("CBS_DASH_SIM_DIRS", "main,specs_conformal"), ","))
+# a run on an older version of the sim (the sims get regenerated) has a different truth: its
+# predictions would be plotted against tonight's counts, so it is dropped
 read_live_sim <- function(scenario) {
+  st = toupper(str_sub(scenario, 1, 2))
+  truth = nanoparquet::read_parquet(fs::path(SIM_DIR, scenario, glue("{st}_truth.parquet"))) |>
+    summarise(truth_now = sum(votes), .by = contest)
   files = fs::path(TEST_DIRS, glue("live_sim_{scenario}.csv"))
   files = files[fs::file_exists(files)]
-  map(files, \(f) readr::read_csv(f, col_types = readr::cols(.default = "c"), progress = FALSE) |>
-        mutate(source = fs::path_rel(f, fs::path(PATH_DROPBOX, "26_general")))) |>
+  map(files, \(f) {
+    d = readr::read_csv(f, col_types = readr::cols(.default = "c"), progress = FALSE) |>
+      mutate(source = fs::path_rel(f, fs::path(PATH_DROPBOX, "26_general")))
+    t = distinct(d, race_id, truth_turnout) |> full_join(truth, by = c(race_id = "contest"))
+    if (any(is.na(t$truth_turnout) | is.na(t$truth_now) | as.numeric(t$truth_turnout) != t$truth_now)) {
+      cli::cli_warn("{.path {f}} is from an older version of the {scenario} sim (truth differs): skipped")
+      return(NULL)
+    }
+    d
+  }) |>
     bind_rows() |>
     filter(source == first(source), .by = model)
 }
@@ -135,7 +151,7 @@ live_sim_models <- function(scenario, state) {
   runs = read_live_sim(scenario) |>
     mutate(
       time = lubridate::ymd_hm(time, tz = SIM_TZ),
-      across(c(est_twop, lo_twop, hi_twop, est_turnout, pct_votes), as.numeric),
+      across(c(est_twop, lo_twop, hi_twop, est_turnout, lo_turnout, hi_turnout, pct_votes), as.numeric),
       status = coalesce(status, "no result (status missing in live_sim)")
     ) |>
     rename(contest = race_id)
@@ -181,7 +197,15 @@ live_sim_models <- function(scenario, state) {
       model_conf = if_else(has_int, CONF_LABEL[parts$model_interval[match(model, parts$model)]], NA_character_)
     ) |>
     select(-has_int)
-  list(pred = pred, status = status)
+  # race totals with live_sim's turnout interval (output.R's turnout table)
+  turnout = pred |>
+    filter(pred_type == "vote") |>
+    summarise(rep = sum(rep), pred = sum(pred), .by = c(race_id, model, time, geo, model_conf, pct_rep)) |>
+    left_join(
+      runs |> transmute(race_id = paste(state, contest, sep = "_"), model, time, pred_min = lo_turnout, pred_max = hi_turnout),
+      by = c("race_id", "model", "time")
+    )
+  list(pred = pred, turnout = turnout, status = status)
 }
 
 model_dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_results")
@@ -190,12 +214,14 @@ fs::dir_create(model_dir)
 fm = map2(SCENARIOS, STATES, live_sim_models)
 fm_pred = map(fm, "pred") |> bind_rows()
 fm_status = map(fm, "status") |> bind_rows()
+fm_turnout = map(fm, "turnout") |> bind_rows()
 iso = \(t) format(t, "%Y-%m-%dT%H:%M:%S%z", tz = "UTC")
 stamp = \(t) format(t, "%Y%m%d_%H%M%S", tz = "UTC")
 for (t in sort(unique(c(fm_pred$time, fm_status$time)))) {
   t = as.POSIXct(t, tz = "UTC")
   readr::write_csv(mutate(filter(fm_pred, time == t), time = iso(time)), fs::path(model_dir, glue("predictions_{stamp(t)}.csv")), na = "")
   readr::write_csv(mutate(filter(fm_status, time == t), time = iso(time)), fs::path(model_dir, glue("status_{stamp(t)}.csv")), na = "")
+  readr::write_csv(mutate(filter(fm_turnout, time == t), time = iso(time)), fs::path(model_dir, glue("turnout_{stamp(t)}.csv")), na = "")
 }
 cli::cli_inform("model results: {n_distinct(fm_pred$time)} runs, {n_distinct(fm_pred$race_id)} races in {model_dir}")
 

@@ -32,13 +32,19 @@
 ## seconds (how long that model took on that race), settings. So a broken model shows up there instead of
 ## silently vanishing.
 ##
+## The TURNOUT table has the race total, one row per race x model x geo per run, in the
+## prediction rows' terms: race_id, model, time, geo, model_conf, pct_rep, rep (votes
+## counted), pred (the candidates' predicted votes summed), pred_min, pred_max (the total's
+## interval; NA without one). The prediction table can't carry it: the candidates' bounds
+## don't add up to the total's (CONTRACT.md section 15.4).
+##
 ## Margins ("margin_share", "margin_vote") are left to the dashboard: enightmodels' schema
 ## requires pred >= 0, so a negative margin row would fail check_pred_data().
 ##
 ##   res = predict_all(cells, returns, races = race_info(returns), models = RUN)
-##   res$pred, res$status
+##   res$pred, res$turnout, res$status
 ##   write_predictions(res)           to 26_general/model_results: a timestamped file per
-##                                    run + "latest", for both tables
+##                                    run + "latest", for all three tables
 # ========================================
 
 #' Race columns for each race in the returns
@@ -225,6 +231,31 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
     arrange(pred_type, desc(pred))
 }
 
+#' Race turnout rows for one race x model
+#'
+#' The prediction table has no row for the race total, and the candidates' bounds don't add
+#' up to one (the sum of quantiles is not the quantile of the sum), so the total's interval
+#' comes from the fit (scraped) or `state_pred_data()` (statewide).
+#'
+#' @param pred `to_pred_data()` rows, plus `state_pred_data()`'s when there are any.
+#' @param bounds Named list, geo -> `c(lower, upper)` of total votes (NA: no interval).
+#' @return Tibble, one row per geo: race_id, model, time, geo, model_conf, pct_rep, rep
+#'   (votes counted), pred (the candidates' predicted votes summed), pred_min, pred_max;
+#'   NULL without prediction rows.
+to_turnout_data = function(pred, bounds) {
+  if (is.null(pred) || !nrow(pred)) {
+    return(NULL)
+  }
+  b = function(g, k) vapply(g, \(x) unname(bounds[[x]][k] %||% NA_real_), 0)
+  pred |>
+    filter(pred_type == "vote") |>
+    summarize(
+      across(c(rep, pred), sum),
+      .by = c(race_id, model, time, geo, model_conf, pct_rep)
+    ) |>
+    mutate(pred_min = pmax(b(geo, 1), 0), pred_max = b(geo, 2))
+}
+
 # ---- the per-precinct dump -----------------------------------------------------------
 #' Precinct rows for one race x model
 #'
@@ -281,8 +312,8 @@ write_precincts = function(res, dir = file.path(find_26_general(), "model_result
 #' @param base `county_baseline(state)`, or NULL. With `cbs`, adds statewide rows.
 #' @param level Interval level.
 #' @return List: pred (prediction rows: scraped, plus statewide when `cbs` and `base` are
-#'   given), prec (precinct rows), status (one row: race_id, model, time, status, statewide,
-#'   seconds, settings).
+#'   given), turnout (`to_turnout_data()` rows, the same geos), prec (precinct rows),
+#'   status (one row: race_id, model, time, status, statewide, seconds, settings).
 predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, level = 0.95) {
   r = race$race_id[1]
   m = model
@@ -321,6 +352,7 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
     NULL
   })
   st_status = NA_character_
+  bounds = list(scraped = c(fit$race$lo_turnout %||% NA_real_, fit$race$hi_turnout %||% NA_real_))
   if (!is.null(pred) && !is.null(base)) {
     if (is.null(cbs)) {
       st_status = "no CBS county snapshot yet"
@@ -333,14 +365,17 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
         }
       )
       if (!is.null(st)) {
+        bounds$all = attr(st, "turnout")
         pred = bind_rows(pred, st)
         st_status = "ok"
       }
     }
   }
   prec = tryCatch(to_prec_data(fit, m, race, time), error = function(e) NULL)
+  turnout = tryCatch(to_turnout_data(pred, bounds), error = function(e) NULL)
   list(
     pred = pred,
+    turnout = turnout,
     prec = prec,
     status = tibble(
       race_id = r,
@@ -378,7 +413,7 @@ run_par = function(x, f, cores = 1) {
 #'
 #' @param jobs List of `predict_one()` argument lists (`make_jobs()`).
 #' @param cores Parallel workers.
-#' @return List: pred, prec, status, each bound across jobs.
+#' @return List: pred, turnout, prec, status, each bound across jobs.
 run_jobs = function(jobs, cores = 1) {
   # each model's own set-up (MODEL_SETUP, run.R) for each state x county set, before forking
   for (j in jobs) {
@@ -425,6 +460,7 @@ run_jobs = function(jobs, cores = 1) {
   })
   list(
     pred = bind_rows(lapply(res, `[[`, "pred")),
+    turnout = bind_rows(lapply(res, `[[`, "turnout")),
     prec = bind_rows(lapply(res, `[[`, "prec")),
     status = bind_rows(lapply(res, `[[`, "status"))
   )
@@ -513,7 +549,7 @@ make_jobs = function(cells, returns, races, models, time, cbs = NULL, base = NUL
 #'   statewide rows (geo = "all").
 #' @param base `county_baseline(state)`.
 #' @param cores Parallel workers (`run_jobs()`).
-#' @return List: pred (prediction table), prec (precinct table), status (one row per race x
+#' @return List: pred (prediction table), turnout (turnout table), prec (precinct table), status (one row per race x
 #'   model, with `seconds` each took).
 predict_all = function(
   cells,
@@ -529,10 +565,11 @@ predict_all = function(
   run_jobs(make_jobs(cells, returns, races, models, time, cbs, base, level), cores)
 }
 
-# Writes, for the predictions and the status table each:
-#   <dir>/predictions_<YYYYmmdd_HHMMSS>.csv, <dir>/status_<...>.csv   one per run, never
+# Writes, for the predictions, turnout and status tables each:
+#   <dir>/predictions_<YYYYmmdd_HHMMSS>.csv, <dir>/turnout_<...>.csv, <dir>/status_<...>.csv
+#                                         one per run, never
 #                                         overwritten, so the night's history is kept
-#   <dir>/predictions_latest.csv, <dir>/status_latest.csv             overwritten each run,
+#   <dir>/{predictions,turnout,status}_latest.csv                     overwritten each run,
 #                                         via a temporary file so a reader never sees half a file
 # dir defaults to 26_general/model_results in the shared Dropbox, where the dashboard reads
 # from. Point test runs somewhere else (e.g. tempdir()) so they never mix with the night's.
@@ -603,10 +640,10 @@ check_pred = function(d, cols = enightmodels::COLS_PRED) {
   invisible(TRUE)
 }
 
-#' Write the prediction and status tables
+#' Write the prediction, turnout and status tables
 #'
-#' Writes `predictions_<time>.csv` and `status_<time>.csv`, and replaces
-#' `predictions_latest.csv` / `status_latest.csv` atomically (`.tmp` + rename). A schema
+#' Writes `predictions_<time>.csv`, `turnout_<time>.csv` and `status_<time>.csv`, and
+#' replaces each `*_latest.csv` atomically (`.tmp` + rename). A schema
 #' problem only warns: one bad row must not stop the other races from being written (the
 #' tests call `check_pred()` directly and do stop).
 #'
@@ -642,6 +679,7 @@ write_predictions = function(res, dir = file.path(find_26_general(), "model_resu
     file.rename(tmp, file.path(dir, sprintf("%s_latest.csv", name)))
   }
   put(if (nrow(res$pred)) res$pred else tibble(), "predictions")
+  put(if (!is.null(res$turnout) && nrow(res$turnout)) res$turnout else tibble(), "turnout")
   put(res$status, "status")
   invisible(file.path(dir, sprintf("predictions_%s.csv", stamp)))
 }

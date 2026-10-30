@@ -200,6 +200,22 @@ read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "mo
       arrange(time)
   }
 
+  # race totals with their interval (CONTRACT.md section 15.4); runs from before the table
+  # existed have none, and the dashboard falls back to summing the vote rows
+  turnout = read_runs("turnout")
+  if (!is.null(turnout)) {
+    turnout = turnout |>
+      mutate(
+        time = lubridate::ymd_hms(time, quiet = TRUE),
+        across(c(pct_rep, rep, pred, pred_min, pred_max), as.numeric)
+      ) |>
+      filter(!is.na(time)) |>
+      arrange(desc(file)) |>
+      distinct(race_id, model, geo, time, .keep_all = TRUE) |>
+      select(race_id, model, geo, time, pred, pred_min, pred_max) |>
+      arrange(time)
+  }
+
   status = read_runs("status")
   if (!is.null(status)) {
     status = status |>
@@ -212,7 +228,7 @@ read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "mo
   parts = model_parts(c(pred$model, status$model))
   if (!is.null(pred)) pred = left_join(pred, parts, by = "model")
   if (!is.null(status)) status = left_join(status, parts, by = "model")
-  list(pred = pred, status = status, prec = read_model_precincts(dir))
+  list(pred = pred, turnout = turnout, status = status, prec = read_model_precincts(dir))
 }
 
 # per-precinct projections (write_precincts() in scripts/model/live/R/output.R): the
@@ -396,6 +412,9 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
                     spec_default = logical(), interval_default = logical())
   mp_all = bind_rows(mp_empty, models$pred)
   ms_all = bind_rows(ms_empty, models$status)
+  mt_all = bind_rows(tibble(race_id = character(), model = character(), geo = character(), time = as.POSIXct(character()),
+                            pred_min = numeric(), pred_max = numeric()),
+                     select(models$turnout, any_of(c("race_id", "model", "geo", "time", "pred_min", "pred_max"))))
 
   out = pmap(contests, \(state, contest, district, key, label, hist_contest, ...) {
     p = filter(prec_all, .env$state == .data$state, .env$contest == .data$contest)
@@ -510,6 +529,9 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     race_ids = unique(c(mp$race_id, paste(state, contest, sep = "_"),
                         if (!is.na(district)) paste(state, contest, district, sep = "_")))
     ms = filter(ms_all, race_id %in% race_ids)
+    # race turnout intervals (the pred line itself is the vote rows summed, client-side)
+    mt = filter(mt_all, race_id %in% unique(mp$race_id), !is.na(pred_min) | !is.na(pred_max)) |>
+      select(-race_id)
 
     # Models page: share of counted votes in precincts the model inputs know (history);
     # for states with a map file (make_dashboard_geo.R), counted votes and each model's
@@ -564,6 +586,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
       ts = mutate(ts, key = key, .before = 1),
       models = mp |> select(-any_of(c("state", "contest", "district", "race_id"))) |> mutate(key = key, .before = 1),
       model_status = select(ms, -race_id) |> mutate(key = key, .before = 1),
+      model_turnout = mutate(mt, key = key, .before = 1),
       prec = mutate(prec, key = key, .before = 1),
       l2 = mutate(l2, key = key, .before = 1),
       mres = mutate(mres, key = key, .before = 1),
@@ -580,6 +603,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     l2 = map(out, "l2") |> bind_rows(),
     models = map(out, "models") |> bind_rows(),
     model_status = map(out, "model_status") |> bind_rows(),
+    model_turnout = map(out, "model_turnout") |> bind_rows(),
     mres = map(out, "mres") |> bind_rows(),
     mprec = map(out, "mprec") |> bind_rows(),
     mprec_runs = map(out, "mprec_runs") |> bind_rows(),

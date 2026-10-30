@@ -12,7 +12,8 @@
 ##      (the models on our precincts) and geo = "all" (statewide: scraped counties + CBS
 ##      counties)
 ##   4. writes 26_general/model_results/predictions_<time>.csv + predictions_latest.csv and
-##      status_<time>.csv + status_latest.csv (write_predictions(); format in R/output.R)
+##      turnout_<time>.csv + turnout_latest.csv and status_<time>.csv + status_latest.csv
+##      (write_predictions(); format in R/output.R)
 ## A race or model that fails is recorded in the status table; the rest carry on.
 ##
 ## From the cbs-enr folder:
