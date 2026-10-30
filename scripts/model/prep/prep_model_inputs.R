@@ -635,11 +635,33 @@ prec = prec |>
 #   reg22      n x yg_turnout22 -- the precinct's current registrants who voted in 2022
 #              (precincts with no YouGov rate: the county's rate, then the vendor score)
 #   k_c        the county's ACTUAL 2022 votes (county_baseline(): votehub gov22_total, or
-#              county_history/{ST}_county_history.csv) / its sum of reg22. reg22 misses 2022
-#              voters who have since left the rolls, and k_c restores the county's 2022
-#              level. A county with no 2022 total (NC had no 2022 governor race), or whose
-#              k_c is implausible (outside [0.8, 1.6]: usually our precincts don't cover the
-#              whole county), takes the state's median k_c.
+#              county_history/{ST}_county_history.csv) / its sum of reg22. A county with no
+#              2022 total, or whose k_c is implausible (outside [0.8, 1.6]: usually our
+#              precincts don't cover the whole county, so sum(reg22) is short and k_raw
+#              inflates), takes the state's median k_c.
+#
+#              WHAT k_c ACTUALLY IS, measured 2026-10-30 over the eight model states:
+#                 TX 0.990  NC 1.004  CA 1.051  FL 1.009
+#                 GA 1.009  MI 0.973  OH 1.042  AK 0.942      (median per state)
+#              i.e. ~1, with a per-county spread of about +/-15% (TX 0.87-1.18). 98-100%
+#              of counties get their own value; only one county each in GA and AK falls
+#              back to the median.
+#
+#              So k_c is a per-county REDISTRIBUTION, not a level correction. An earlier
+#              version of this comment said reg22 "misses 2022 voters who have since left
+#              the rolls" and that k_c "restores the county's 2022 level" -- that would
+#              imply k_c ~ 1.1-1.3, the inverse of four years of roll attrition, and it is
+#              not what the data shows. `yg_turnout22` is a MODELLED rate for current
+#              registrants, evidently already calibrated against realised turnout, so
+#              n x yg_turnout22 lands on the county's 2022 vote before k_c touches it.
+#
+#              NOT to be confused with the L2 `vote22_{mail,early,eday}` counts behind
+#              mode_turn_share, which ARE raw survivor counts and are NOT calibrated by
+#              anything (NC 2022: 3.45M against an official 3.77M, 91.5%). Those survive
+#              uncorrected only because the model uses them as within-precinct SHARES, so
+#              a uniform precinct-level undercount divides out. It would bite if attrition
+#              were mode-dependent, which in TX it should be -- mail is restricted to
+#              65+/disabled.
 #   est_turnout = min(reg22 x k_c, n), at least 0.5
 # So the expectation is each county's 2022 turnout, spread over its precincts by where its
 # 2022 voters live now. Tonight's turnout ratio (each model's turnout fit, and the

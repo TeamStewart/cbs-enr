@@ -444,10 +444,15 @@ estimate_level = function(cells, returns, covs = HY_COVS_TURN) {
   if (!HY_LEVEL && !HY_COMP) {
     return(zero)
   }
-  # Same completeness preference order as fit_stage: the feed's own flag, else the
-  # COMPLETE_FRAC * prior_tau fallback (poor, because it inherits prior_tau's error --
-  # the very thing this estimator exists to correct -- but better than refusing to run).
-  if (!"complete" %in% names(returns)) {
+  # Same completeness preference order as fit_stage, including complete_usable(): a
+  # `complete` column that is present but never TRUE is treated as absent, because taking
+  # it at face value holds this estimator at zero rows for the whole night -- which is the
+  # production state (see complete_usable() in model_turnout.R). The COMPLETE_FRAC
+  # fallback does inherit prior_tau's error, the very thing this estimator exists to
+  # correct, but that error is a BOUNDED per-mode counted-fraction gate
+  # (g >= COMPLETE_FRAC * prior/true) rather than an unbounded one, and it beats refusing
+  # to run.
+  if (!complete_usable(returns)) {
     returns = dplyr::mutate(returns, complete = NA)
   }
   d = cells |>
