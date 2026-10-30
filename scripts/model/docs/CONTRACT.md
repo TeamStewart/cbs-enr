@@ -771,38 +771,74 @@ Keyed on `obs` (`stage >= STAGE_DONE`), and genuinely flag-free:
 the partial-count mixture, the counted-votes floor `f_tau`, `CTY_BOUND`, and
 `model_hybrid`'s share arm. These work today.
 
-Keyed on `complete` via `obs_turn`, and therefore **inert in production**:
+Keyed on `complete` via `obs_turn` — `obs_turn`, `fit_tau = all_done`, `q_share` →
+`PIN_DONE`, `CTY_SUBSTITUTE` / `piles_done`, `model_hybrid::estimate_level()` and
+`SD_UNREP`. Until 2026-10-30 every one of these was **inert in production**, because
+`complete = stage >= 6` is never TRUE (§8): the turnout equation fit 0 rows and returned
+its prior, the pin never fired, and `SD_UNREP` widened every cell all night.
 
-| site | consequence |
-|---|---|
-| `obs_turn` (`model_turnout.R:1069`) | no cell's turnout is ever treated as observed |
-| `fit_tau = all_done` | the turnout equation fits 0 rows and returns its prior |
-| `q_share` → `PIN_DONE` | the pin never fires |
-| `CTY_SUBSTITUTE` / `piles_done` | never substitutes a known county total |
-| `model_hybrid::estimate_level()` | level offsets held at 0 — the prior turnout echo returns |
-| `SD_UNREP` | widens *every* cell all night; intervals never tighten as counting completes |
+**RESOLVED 2026-10-30 (`014c117e`), and the fix is not a better `stage`.** Two changes:
 
-*Why this is not bookkeeping:* `stage` is the only completeness signal the model has, and
-it cannot currently deliver one. Realistic values are 0 / 4 / 6 with 6 meaning complete,
-and 6 can take **days**; the TX primary emitted only 0/2/5; our own loader downgrades a
-reported 6 to 5 unless `trust_stage=TRUE`, which is set nowhere; and `pct_rep` has been
-observed moving *backwards* in production (0.997 -> 0.269 -> 0.364). The measurement in §8
-shows the net effect: **zero rows at stage 6 across 171 clean files.**
+- `complete_usable()` — a `complete` column that is present but never TRUE is treated as
+  **absent**, not as "nothing is counted out". `COMPLETE_TRUST=1` restores the old
+  behaviour.
+- `COMPLETE_FRAC` 1.1 → **0.6** — the fallback test `tau >= COMPLETE_FRAC * prior_tau`,
+  which needs no `stage` at all. It is really a per-mode counted-fraction gate,
+  `g >= COMPLETE_FRAC * (prior/true)`; at 1.1 that exceeded 100% for two of three modes,
+  so a correctly finished cell of those modes could never pass.
 
-So the semantics are wanted, and so is a signal that does not depend on `stage` at all —
-a per-state `stage_meaning` table, a trustworthy `pct_reported`, or the right-censoring
-route in §8 that needs no completeness signal. This is on the critical path for turnout.
+Measured on three TX sims spanning the turnout level, `complete` forced all-FALSE as in
+production. Statewide turnout as % of truth, first checkpoint → last:
+
+| | low (0.854×) | base (1.0×) | high (1.206×) |
+|---|---|---|---|
+| before | 117.2 → 117.7 | 100.6 → 105.7 | 84.0 → 98.3 |
+| after | 100.8 → 100.2 | 100.5 → 100.0 | 98.4 → 100.1 |
+
+The gross-up stays off: `MIN_MODE_SHARE` remains 1, and relaxing it to 0.7 measured
+*worse* than the threshold fix in all three scenarios. See
+`scripts/model/prep/measure_complete_frac.R`.
+
+**Why 0.6.** It is the point at which no county × mode is *structurally* excluded. A
+finished cell passes only if `prior/true <= 1/f`, so a county × mode whose prior is
+further out than that can never be flagged done, at any hour. Measured across six sim
+states, the share of county × mode groups in that position is 0–18% at `f = 0.8`
+(NC mail worst) and ~0% at 0.6. On real data (L2 mode history, 2016→2018 — a midterm
+pair in a settled mail regime, the closest analogue to 2022→2026) it is 2.9% for TX mail
+and 0% for early and eday. 0.5 removes nothing further structurally and admits more
+partly-counted cells, so 0.6 is the knee.
+
+**Mail is the fragile mode, and no threshold fixes it.** TX mail's county-level prior
+error tracks whether mail *usage* moved between the two elections: 0.75 (2016→2018),
+1.19 (2018→2022, spanning the surge), 2.02 (2020→2024, the surge reversing). At that
+last one 88.6% of county × mode groups are unreachable at 0.6 and 52.9% even at 0.5.
+Early and eday are stable across all three. If mail access changes before 2026, the mode
+history (§3) is the thing to fix, not `COMPLETE_FRAC`.
+
+**What this means for the data side — the ask has changed, but has not gone away.**
+The model no longer *depends* on `stage`, so it is no longer on the critical path. But
+`COMPLETE_FRAC` is a proxy calibrated against `prior_tau`, and it is only as good as that
+prior: it mis-flags whenever a mode's prior is badly off, and ~27% of precincts stay
+unrecognised at any threshold because some mode's prior is more than 2× out. A real
+completeness signal would still be strictly better, and the three routes are unchanged:
+a per-state `stage_meaning` table (§8 still calls this Required and it still does not
+exist), a trustworthy `pct_reported`, or the right-censoring route in §8 that needs no
+completeness signal at all.
+
+So: please do document the per-state semantics. What changed is that turnout no longer
+*breaks* without them.
 
 ### 14.6 Delivery order
 
 1. **IA §1–§3** — `IA_sen` is in `priors.csv` with no precinct file, no mode history and
    no `mode_scope` row, so it cannot be modelled at all
-2. **A completeness signal that does not depend on `stage`** (§14.5) — the binding item
-   for turnout; without it the turnout equation sits at its prior all night
-3. §14.2 registrants + the exceedance report (cheap, and it validates §14.1)
-4. §14.4 `dem2`
-5. §14.3 mode history series
-6. §13 backtest data for NC and GA, with T1-T6
+2. §14.2 registrants + the exceedance report (cheap, and it validates §14.1)
+3. §14.4 `dem2`
+4. §14.3 mode history series
+5. §13 backtest data for NC and GA, with T1-T6
+6. ~~A completeness signal that does not depend on `stage`~~ — **no longer blocking**
+   (§14.5, resolved 2026-10-30). Still wanted, and still improves on the `COMPLETE_FRAC`
+   proxy, but turnout no longer breaks without it
 
 ---
 
