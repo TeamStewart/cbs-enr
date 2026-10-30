@@ -89,8 +89,31 @@ MIN_MODE_CTY = as.integer(Sys.getenv("MIN_MODE_CTY", unset = "1"))
 # of 1.1 that is 1.18 for early and 1.23 for mail: over 100%, i.e. a correctly FINISHED
 # cell of those modes could never pass, at any point in the night. Two of three modes were
 # structurally excluded, which is the real defect -- a threshold error, not a prior error.
-# 0.8 is the largest value leaving every mode reachable on that analogue (0.86 / 0.89 /
-# 0.68), and it is what the "strict settings never pin mail" note at obs_turn describes.
+#
+# 0.6 CHOSEN BY SWEEP, not by the reachability argument alone. Measured 2026-10-30 on three
+# TX sims spanning the turnout level (TURNOUT_RATIO 0.854 / 1.0 / 1.206), five checkpoints
+# each, `complete` forced all-FALSE as in production. Statewide turnout as % of truth,
+# first checkpoint -> last:
+#
+#                   low (0.854x)     base (1.0x)     high (1.206x)
+#   today           117.2 -> 117.7  100.6 -> 105.7   84.0 ->  98.3
+#   f = 0.8         113.1 -> 104.9  102.2 -> 102.5  101.6 -> 101.0
+#   f = 0.7         108.5 -> 100.9  100.6 -> 100.1   99.5 -> 100.2
+#   f = 0.6         100.8 -> 100.2  100.5 -> 100.0   98.4 -> 100.1  <- best in all three
+#   f = 0.5         100.8 -> 100.2  100.5 -> 100.0   98.5 -> 100.1
+#
+# 0.5 is indistinguishable from 0.6, so this is a knee and not a cliff edge. The pure
+# reachability floor (0.8, the largest value leaving every mode reachable at 0.86 / 0.89 /
+# 0.68) is too strict in practice: on the low-turnout night at 0.8 only 29.9% of precincts
+# that are 100% COUNTED are recognised as all_done, because a finished cell reads ~0.854
+# and the threshold cuts into the per-precinct noise. At 0.6 that recovers to 67.8%.
+#
+# WHY NOT RELAX THE PRECINCT GUARD INSTEAD. MIN_MODE_SHARE < 1 admits a precinct before all
+# its modes are done and grosses the total up by 1/q_share -- the gross-up, which fabricated
+# votes on the real TX 2024 backtest (103.7% -> 109.0%). Measured here at MIN_MODE_SHARE=0.7
+# it gives 102.3 -> 103.2 / 99.6 -> 101.9 / 95.6 -> 100.6, i.e. WORSE than f = 0.6 in all
+# three scenarios. The guard was never the binding constraint; the threshold was. Leave
+# MIN_MODE_SHARE at 1 and keep 1/q switched off.
 #
 # SUPERSEDES an earlier comment here that read "off by ~1.7x for eday and ~0.5x for mail
 # on TX 2024". The eday figure holds; the mail one is wrong in DIRECTION and does not
@@ -105,7 +128,7 @@ MIN_MODE_CTY = as.integer(Sys.getenv("MIN_MODE_CTY", unset = "1"))
 # opposite sign to the gross-up's 1/q, which fabricates votes without bound. The
 # principled fix is right-censoring (USE_CENSOR; CONTRACT.md 8), which needs no threshold
 # at all; this is the bounded stopgap.
-COMPLETE_FRAC = as.numeric(Sys.getenv("COMPLETE_FRAC", unset = "0.8"))
+COMPLETE_FRAC = as.numeric(Sys.getenv("COMPLETE_FRAC", unset = "0.6"))
 
 #' Is a returns frame's `complete` column carrying any information?
 #'
@@ -113,8 +136,9 @@ COMPLETE_FRAC = as.numeric(Sys.getenv("COMPLETE_FRAC", unset = "0.8"))
 #' it is an absent signal wearing the shape of a present one, and taking it at face value
 #' silently disables every component gated on `obs_turn`. That is the production state:
 #' `complete = stage >= 6` (live/R/returns.R), `functions.R` rewrites a reported 6 to 5
-#' unless `trust_stage = TRUE`, and `trust_stage` is FALSE for all 381 rows of
-#' 26_general/metadata.csv. Measured 2026-10-30 across 171 clean files (1,202,773 rows):
+#' unless `trust_stage = TRUE`, and `trust_stage` is FALSE for every row of
+#' 26_general/metadata.csv (397 of 397 on 2026-10-30; never set TRUE in any cycle).
+#' Across 171 clean files (1,202,773 rows) on the same date:
 #' the only stage values present are 0, 2 and 5 -- zero rows at 6.
 #'
 #' So the column is trusted only once it has fired at least once. Early in a real night
@@ -1149,8 +1173,8 @@ fit_stage = function(
       #     for two of three modes, so a correctly finished cell of those modes could
       #     never pass -- which is exactly the measured symptom here, "strict settings
       #     never pin mail" (turnout ends the night at 113%). Loose settings have the
-      #     opposite failure: they treat 5%-counted eday cells as final (87%). 0.8 is the
-      #     largest value leaving every mode reachable; see the COMPLETE_FRAC block.
+      #     opposite failure: they treat 5%-counted eday cells as final (87%). 0.6 is the
+      #     swept optimum across three turnout levels; see the COMPLETE_FRAC block.
       obs_turn = obs & if (has_complete) complete else tau >= COMPLETE_FRAC * prior_tau,
       # RAW observed values -- used to substitute counted cells in the aggregation.
       # o_tau is gated on obs_turn, the shares on obs.
