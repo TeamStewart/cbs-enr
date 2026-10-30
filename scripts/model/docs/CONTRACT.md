@@ -32,7 +32,7 @@ county's own label is kept unchanged in `precinct_raw` (§1). Where the crosswal
 |---|---|---|
 | L2 (`precinct_l2` via crosswalk) | 90.3% of precincts (5,537 / 6,134), 98.2% of registrants | usable; measured 2026-10-19 on the 2026-10-11 L2 file |
 | L2 (direct `county` + `precinct`) | 62.4% | **do not join directly** |
-| live ENR feed (`precinct_enr`) | **0.8%** | hard blocker, see §8 |
+| live ENR feed (`precinct_enr`) | 37.8% TX, 99.0% NC, 100% MN (2026-10-30) | was 0.8%; see §14.1 |
 | votehub past results | 88% / 38% / 0% | varies by county (BEXAR / KAUFMAN / BELL) |
 
 **Do not backfill crosswalk gaps by normalizing ids.** For 92 TX precincts the crosswalk
@@ -137,7 +137,9 @@ Grain: one row per `geo`. Source: L2 precinct frame, except `dem2` / `oth_base`.
   (§11.1); the source is recorded per row in `dem2_source`, and the model version is
   kept as `dem2_model` / `oth_model`. `vote_imputed` flags the 231 precincts filled from
   the county average.
-- `est_turnout` = vendor `turnoutPred × n`, capped at `n` (§11.3 still open).
+- `est_turnout` = `min(reg22 × k_c, n)` — registrants × their 2022 turnout rate, scaled
+  so each county matches its actual 2022 vote (§11.3, decided 2026-10-29). The vendor
+  score is kept as `est_turnout_vendor`; `EST_TURNOUT_SOURCE=vendor` switches back.
 - Extra columns: the join ids (`precinct26_code`, `precinct_l2`, `precinct_enr`,
   `l2_rule`), YouGov values (`yg_*`), `cd_main`, and the flags above.
 
@@ -146,10 +148,17 @@ Grain: one row per `geo`. Source: L2 precinct frame, except `dem2` / `oth_base`.
 ## 3. `precinct_mode_history` — mode turnout composition
 
 Grain: one row per `geo` × `election` × `method`. Source: L2
-`vote{YY}_{mail,early,eday}`. **Available now:** TX built as
-`TX_precinct_mode_history.parquet` (2016–2024 generals, 5,537 precincts with an L2 match).
+`vote{YY}_{mail,early,eday}`. **Available now for nine states** — AK, CA, FL, GA, MI, MN,
+NC, OH, TX — each as `{ST}_precinct_mode_history.parquet` with the 2016–2024 generals.
 In the 32 TX scope counties the 2022 split is mail 4.4% / early 65.0% / election day 30.5%,
 and the mode columns cover 99.8% of 2022 voters (93.6% in 2016).
+
+**NC is served by a derived file instead.** `make_mode_results.R` writes
+`NC_precinct_mode_results.parquet` (`2022_split_2024_pattern`: early 53.0 / eday 42.1 /
+mail 4.9), taking county method totals from 2022 and the within-county precinct pattern
+from the 2024 scrape. `mode_history()` prefers it where it exists, so all three models get
+the same split. The raw L2 file remains wrong for NC 2020 (mail 80.1%, early 3.5%) and
+2024 (early 0.0%); production reads neither.
 
 | field | type | null | unit | notes |
 |---|---|---|---|---|
@@ -166,6 +175,10 @@ understates election day by ~10pp for a midterm. **Do not pre-aggregate across e
 
 **Caveat to record in the table comment:** these count *current* registrants who voted
 that way, so they are survivorship-biased — voters since deceased or moved are absent.
+Measured 2026-10-30: NC's L2 2022 total is 3,450,967 against an official 3,773,555, i.e.
+**91.5% coverage**. This matters beyond the caveat, because `est_turnout` **is** corrected
+to the official scale (by `k_c`, §2) while this table is not — so the two are not on the
+same scale and must not be compared directly without accounting for coverage.
 
 ---
 
@@ -271,7 +284,15 @@ in Republican-leaning precincts and shrinks as the precinct gets more Democratic
 number per mode is misspecified, not approximately right. Supplying a correct
 lean-dependent offset cut the trial's error at 10% reported from 1.07pp to 0.17pp.
 
-**Why blocked.** Every partisan source available is mode-blind, and every mode-resolved
+---
+
+**Everything below in §7 is the superseded 2026-10-18 reasoning**, kept because it records
+which sources were checked and rejected. The operative status is above and at the end of
+the section: δ_m is measured for TX 2024, is **not** used in production
+(`MODE_OFFSET_SOURCE=zero` in `live/R/model_medsl.R:232`), and `delta_source` stays
+`assumed_zero`.
+
+**Why it was blocked.** Every partisan source available is mode-blind, and every mode-resolved
 source is partisan-blind — voter files record *how* people voted, never *for whom*. L2's
 `vote22_{mode}_{dem,rep}` looks like a bridge but the "party" there is modeled affiliation
 and fails validation: it puts TX 2022 voters at 53.5% two-party Dem against an actual
@@ -360,13 +381,31 @@ What this means concretely for the model:
   what we see, as with a subject still alive at study end. I first wrote "left" here,
   which is the opposite case. Conjugacy can be kept by data augmentation (impute the
   censored tau from the truncated normal, refit in closed form, iterate).**
-- `STAGE_DONE = 2` in `model_turnout.R` is written against yet another vocabulary and must
-  be replaced by the `stage_meaning` lookup once it exists.
+- `STAGE_DONE = 2` in `model_turnout.R` now matches what the feeds actually emit (see the
+  2026-10-30 measurement below). The `stage_meaning` lookup is still absent and still
+  required; it is on the critical path, not bookkeeping.
 
-**Blocker.** `precinct_enr` in the TX crosswalk is populated for 92 of 11,563 rows (0.8%),
-covering two counties. Until that is filled, returns cannot be joined to covariates for
-30 of 32 counties and the model cannot ingest them. This is independent of everything
-about vote mode and is, in my read, the highest-priority item in this document.
+**UPDATE 2026-10-30 — measured: `stage >= 6` can never fire, so `complete` is always FALSE.**
+- `trust_stage` is FALSE for **all 381 rows** of `26_general/metadata.csv`, all 80 of
+  `26_primaries`, and all 96 `build = TRUE` rows. It has never been set TRUE in any cycle.
+- `functions.R:30-35` rewrites `stage == 6` to `5` whenever it is FALSE, so a reported 6
+  never survives into the clean files.
+- Across 171 clean files (1,202,773 rows) the only values present are **0, 2 and 5** —
+  **zero rows at stage 6**.
+- Confirmed end to end: PA Dauphin (5,372 votes) and Erie (25,155) are the stage-6
+  pre-election *test* votes the enr_cycle log records, and they read stage 5 in
+  `clean/`. The downgrade is doing its job; the model's only completeness signal is what
+  it suppresses.
+
+Consequence: `complete = stage >= complete_stage` (`returns.R:306`) is FALSE for every row
+in production, so every component gated on `obs_turn` is inert on the night. See §14.5.
+
+**`precinct_enr` coverage — no longer the blocker this section described.** Measured
+2026-10-30 in `26_general/input_data/crosswalks/`: TX 4,104 / 10,851 (37.8%),
+NC 3,505 / 3,539 (99.0%), MN 4,080 / 4,080 (100%), with crosswalks now built for 15
+states. Combined with the §0 leading-zero rule, returns join for the great majority of
+precincts. What remains worth having is `precinct_enr` for the counties where the
+normalization rule does not work — see §14.1.
 
 ---
 
@@ -510,8 +549,11 @@ prediction — is never identified from the current night's data.
    voter's `pr_harris + pr_trump + pr_other = 1`, the residual `1 − pr_harris − pr_trump`
    of the precinct averages equals the precinct's mean `pr_other`, so the current
    `oth_base` is already that quantity.
-3. **`est_turnout`.** Either the vendor's `turnoutPred × n`, or built from L2 `vote18`/
-   `vote22` history. The latter is more grounded but needs a midterm-trend assumption.
+3. ~~**`est_turnout`.**~~ **DECIDED 2026-10-29** (`40cca05a`): registrants × their 2022
+   turnout rate, scaled so each county matches its actual 2022 vote —
+   `est_turnout = min(reg22 × k_c, n)`, after Ansolabehere, Brown, Khanna, Phillips &
+   Stewart (2024), "Forecasting Turnout", HDSR 6.4. The vendor score is kept as
+   `est_turnout_vendor` and `EST_TURNOUT_SOURCE=vendor` switches back.
 4. **`stratum_demo` definition.** The TX primary's version is a hard majority-threshold
    cascade with a 21% "other" catch-all and an order dependence (white tested first). Worth
    redesigning as continuous demographic covariates plus a coarser geographic effect before
@@ -528,7 +570,8 @@ To run the model at all, in dependency order:
 1. §1 `precinct` and §2 `precinct_covariate` — with `dem2` from any of the §11 options
 2. §4 `race`, §5 `candidate`, §6 `race_prior`
 3. §3 `precinct_mode_history` for a midterm election
-4. §8 `returns_live` **with `precinct_enr` reconciled** — currently the binding blocker
+4. §8 `returns_live`, joined to §1 (§0 normalization plus `precinct_enr`; see §14.1 — no
+   longer the binding blocker)
 5. §9 only if sub-state races are in scope
 
 With §7 and §10 absent the model runs and converges, but early-night estimates carry a
@@ -606,11 +649,13 @@ These are cheap and each one caught a real defect:
 ### Priority states for backtesting
 
 In descending order of what we would learn. The model has only ever been validated on one
-state-election, so breadth matters more than depth here.
+state-election, so breadth matters more than depth here. **Blockers below were assessed
+2026-10-19 and have moved since** — re-check against the current crosswalks before
+planning around them.
 
 | state | why | known blocker |
 |---|---|---|
-| **NC** | full-state L2 coverage, 100 counties, has mode x party via MEDSL | the 17% join — needs a precinct name/abbreviation crosswalk |
+| **NC** | full-state L2 coverage, 100 counties, has mode x party via MEDSL | ~~the 17% join~~ — crosswalk now 3,505/3,539 (99.0%) as of 2026-10-30 |
 | **GA** | full state, all four modes, 2024 scrape exists | the T2 replication problem in 64 counties |
 | **MI** | dense election-night sampling (141 night snapshots) | only 4 counties in the scrape |
 | **FL** | 97.6% join already | confirm night coverage |
@@ -620,8 +665,18 @@ state-election, so breadth matters more than depth here.
 
 ## 14. 2026 prep datasets — per state, before election night
 
-Scope is the 12 races in `26_general/input_data/priors.csv`: **AK, CA, FL, MI, NC, NY, TX**
-(Senate / Governor / House as listed). Crosswalks exist for all but **NY**.
+Scope as of 2026-10-30 is the **11 races** in `26_general/input_data/priors.csv`:
+AK_sen, FL_sen, GA_gov, GA_sen, IA_sen, MI_sen, MN_sen, NC_sen, OH_sen, TX_gov, TX_sen —
+i.e. **AK, FL, GA, IA, MI, MN, NC, OH, TX**. CA and NY are no longer in scope; GA, IA, MN
+and OH are new.
+
+**Two mismatches to resolve:**
+- **IA has a race but no inputs.** There is no `IA_precinct.parquet`, no
+  `IA_precinct_mode_history.parquet` and no `lookups/mode_scope.csv` row. `IA_sen` cannot
+  be modelled until §1–§3 exist for it.
+- **CA is prepped but out of scope.** It has a precinct file, a mode history and a
+  mode_scope row, but no race in `priors.csv`. Harmless, but decide whether it is dropped
+  or a race is pending.
 
 The intent of this section is that we do no data wrangling during the run-up. Each item
 below is a deliverable with an acceptance test.
@@ -639,12 +694,15 @@ One row per 2026 precinct, carrying **every id we will need to join on**:
 | `precinct_shp` | shapefile id, if mapping |
 | `county_fips` | 5-digit |
 
-**UPDATE 2026-10-19 — largely mitigated, and not the way this section expected.**
-`precinct_enr` is still populated for only 92 of 11,563 TX rows (0.8%), but the §0
-normalization rule removes most of the dependency on it: stripping leading zeros takes
-Harris live ids from **15.8% to 99.6%** matched against the frame. So the live feed can be
-joined without a filled `precinct_enr` wherever that rule works. What remains worth
-having is `precinct_enr` for the counties where it does not.
+**UPDATE 2026-10-30 — largely resolved, by both routes.** The §0 normalization rule
+removed most of the dependency (stripping leading zeros took Harris live ids from
+**15.8% to 99.6%** matched against the frame), and the crosswalks themselves have since
+been filled: TX 4,104 / 10,851 (**37.8%**), NC 3,505 / 3,539 (**99.0%**),
+MN 4,080 / 4,080 (**100%**), with crosswalks now built for 15 states
+(ak, az, ca, fl, ga, mi, mn, nc, ne, oh, pa, tx, va, plus CA consolidated frames).
+This is no longer the binding blocker earlier drafts described.
+What remains worth having is `precinct_enr` for the counties where the normalization
+rule does not work.
 
 **And a correction to the instinct this section encouraged.** Do NOT close crosswalk gaps
 by normalizing ids. For 92 TX precincts a normalized-id match exists in L2 and is WRONG —
@@ -704,23 +762,47 @@ before we rely on it.
 Document which emitted values mean "nothing yet", "partially counted", and "complete", per
 state and per feed.
 
-*Why this is not bookkeeping:* the model is now built so that **nothing gates on
-completeness** — partial counts enter as a vote-weighted mixture and a counted-out cell
-pins itself — precisely because this field cannot be relied on. Realistic values are
-0 / 4 / 6 with 6 meaning complete, and 6 can take **days**. The TX primary emitted only
-0/2/5, so code filtering `stage >= 6` never fired. Our own loader downgrades a reported 6
-to 5 unless `trust_stage=TRUE`. And `pct_rep` has been observed moving *backwards* in
-production (0.997 -> 0.269 -> 0.364). We still want the semantics documented so the few
-places that do read it are correct — but please do not spend effort making the field
-reliable, because the model no longer depends on it.
+**CORRECTION 2026-10-30. This section previously said nothing in the model gates on
+completeness, and asked that no effort be spent making the field reliable. Both were
+wrong, and the guidance invited the state we are now in.** What is true is §8's narrower
+split: the *aggregate* needs no flag, the *turnout equation* does.
+
+Keyed on `obs` (`stage >= STAGE_DONE`), and genuinely flag-free:
+the partial-count mixture, the counted-votes floor `f_tau`, `CTY_BOUND`, and
+`model_hybrid`'s share arm. These work today.
+
+Keyed on `complete` via `obs_turn`, and therefore **inert in production**:
+
+| site | consequence |
+|---|---|
+| `obs_turn` (`model_turnout.R:1069`) | no cell's turnout is ever treated as observed |
+| `fit_tau = all_done` | the turnout equation fits 0 rows and returns its prior |
+| `q_share` → `PIN_DONE` | the pin never fires |
+| `CTY_SUBSTITUTE` / `piles_done` | never substitutes a known county total |
+| `model_hybrid::estimate_level()` | level offsets held at 0 — the prior turnout echo returns |
+| `SD_UNREP` | widens *every* cell all night; intervals never tighten as counting completes |
+
+*Why this is not bookkeeping:* `stage` is the only completeness signal the model has, and
+it cannot currently deliver one. Realistic values are 0 / 4 / 6 with 6 meaning complete,
+and 6 can take **days**; the TX primary emitted only 0/2/5; our own loader downgrades a
+reported 6 to 5 unless `trust_stage=TRUE`, which is set nowhere; and `pct_rep` has been
+observed moving *backwards* in production (0.997 -> 0.269 -> 0.364). The measurement in §8
+shows the net effect: **zero rows at stage 6 across 171 clean files.**
+
+So the semantics are wanted, and so is a signal that does not depend on `stage` at all —
+a per-state `stage_meaning` table, a trustworthy `pct_reported`, or the right-censoring
+route in §8 that needs no completeness signal. This is on the critical path for turnout.
 
 ### 14.6 Delivery order
 
-1. §14.1 `precinct_enr` for the 7 in-scope states — nothing else matters until this lands
-2. §14.2 registrants + the exceedance report (cheap, and it validates §14.1)
-3. §14.4 `dem2`
-4. §14.3 mode history series
-5. §13 backtest data for NC and GA, with T1-T6
+1. **IA §1–§3** — `IA_sen` is in `priors.csv` with no precinct file, no mode history and
+   no `mode_scope` row, so it cannot be modelled at all
+2. **A completeness signal that does not depend on `stage`** (§14.5) — the binding item
+   for turnout; without it the turnout equation sits at its prior all night
+3. §14.2 registrants + the exceedance report (cheap, and it validates §14.1)
+4. §14.4 `dem2`
+5. §14.3 mode history series
+6. §13 backtest data for NC and GA, with T1-T6
 
 ---
 
@@ -810,9 +892,12 @@ a consumer can reject an unexpected column rather than silently ignore it.
 (`live/R/races.R`) decomposes it into `state` / `contest` / `district`. **That decomposition
 is not invertible:** it SYNTHESISES `district = 1` for house races in at-large states, so
 `AK_house` arrives as contest `house` with district `1` and no district in its id. Measured
-on the current 12 races, `paste(state, contest, sep = "_")` recovers `race_id` 12 of 12
-while `paste(state, contest, district, sep = "_")` recovers 11 of 12 — and a districted id
-such as `NY_house_12` breaks the first rule. No paste rule covers both shapes, and picking
+on the 12-race scope of 2026-10-19 (which included `AK_house` and `NY_house_12`),
+`paste(state, contest, sep = "_")` recovered `race_id` 12 of 12 while
+`paste(state, contest, district, sep = "_")` recovered 11 of 12 — and a districted id
+such as `NY_house_12` breaks the first rule. The current 11-race scope (§14) has no
+districted races, so the hazard is latent rather than active; it returns the moment a
+House race does. No paste rule covers both shapes, and picking
 the wrong one fails *silently*: an anti-join reports every row as missing rather than
 erroring. One column removes the class.
 
