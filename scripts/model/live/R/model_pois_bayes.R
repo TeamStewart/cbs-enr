@@ -49,7 +49,9 @@ pois_bayes_inputs = function(cells, counts, state, demo) {
   d = demo_frame(cells, state) |>
     mutate(county = as.character(county), method = as.character(method)) |>
     bind_cols(select(counts, c_dem, c_rep, c_oth, c_tot, complete)) |>
-    mutate(obs = complete & c_tot > 0)
+    # obs: counted out for the turnout fit (turnout_done(), returns.R: the feed's flag, or
+    # the COMPLETE_FRAC fallback when the feed never sets it); pin: final votes = the count
+    mutate(obs = turnout_done(counts, cells$exp_votes), pin = complete & c_tot > 0)
   X = demo_design(d, demo)
   # congressional-district intercepts for the turnout equation (dummies; none if one district)
   cdv = cell_cd(cells, state)
@@ -203,7 +205,7 @@ pois_bayes_method = function(d, form, draws, pr, prior = FALSE, xd = character()
     xd = xd,
     sd_d = sd_d
   )
-  T = ifelse(cnt(d$obs), cnt(d$c_tot), pmax(Tf$post, cnt(d$c_tot)))
+  T = ifelse(cnt(d$pin), cnt(d$c_tot), pmax(Tf$post, cnt(d$c_tot)))
   rem = T - cnt(d$c_tot)
 
   # party counts at the remaining expected votes, normalised to shares of what remains

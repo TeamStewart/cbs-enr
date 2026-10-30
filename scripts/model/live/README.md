@@ -192,14 +192,17 @@ Speed, one race per refresh on a slow 2-core test server: swing 4-7 s, medsl_sur
   our precinct inputs. `--returns=` (`returns_from_live()`, `../docs/CONTRACT.md` section 8)
   expects `geo` already reconciled to the precinct spine and `method` already canonical
   (`../lookups/vote_mode_map.csv`).
-- **"Complete" means different things in the sims and live.** The sims say when each
-  precinct x method cell is fully counted; a live feed only gives the precinct's `stage`,
-  and stage 6 can take days (CONTRACT.md section 8). `returns_from_live()` marks a cell
-  complete only at stage 6, so on election night the swing model's turnout equation
-  (fit on complete cells only) will have few or no cells and fall back to expected
-  turnout. medsl_sur uses turnout only from complete cells too, so the same applies.
-  Sim results therefore overstate how much these models learn about turnout live. Tested: with the completeness flags made equal, the live and sim paths give
-  identical estimates.
+- **"Complete" is never set live.** A live feed gives only the precinct's `stage`, and
+  `get_data()` (`scripts/functions.R`) rewrites stage 6 to 5 unless `trust_stage`, which is
+  FALSE everywhere, so `complete` is never TRUE on election night. Every model's turnout fit
+  therefore uses a fallback once the flag is empty: a cell counts as counted out when its
+  votes reach `COMPLETE_FRAC` (default 0.6) x its expected votes (`turnout_done()` in
+  `R/returns.R` for swing, pois_bayes and ratio_strata's district adjustment;
+  `complete_usable()` in `medsl/model_turnout.R` for medsl_sur). The feed's flag is used
+  instead as soon as it is TRUE for any cell, or always with `COMPLETE_TRUST=1`. A cell is
+  pinned at its count only on the real flag. The sims return feed-like rows by default
+  (stage 6 -> 5, `complete` FALSE, `returns_from_sim()`), so sim runs test the fallback;
+  `SIM_TRUST_COMPLETE=1` gives the sim's exact completion instead.
 - **Splitting votes among candidates.** ratio_strata's `past` uses Cory's equal split
   (tx-prim-26 `run_model_cty()`): each party's baseline share goes equally to its candidates,
   and the third-party share equally to every third-party candidate, the write-in line

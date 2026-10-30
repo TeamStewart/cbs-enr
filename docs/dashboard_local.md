@@ -78,11 +78,11 @@ On the Results page, the Dem/Rep boxes add a "Proj." line with the latest scrape
 Builds test data in `26_dashtest` from the simulated nights, then renders against it without touching the targets store:
 
 - **Live results:** each `26_sim/{st}_base` scenario (truth + schedule, `scripts/sim/sim_snapshot.R`) is replayed at the sim test checkpoints (every 15 minutes 8pm-4am ET, then Nov 4/5/7/10 at noon) through `make_summary()`, as one statewide feed per state.
-- **Models:** `live_sim_{st}_base.csv` from `26_general/model_tests/coverage/main` (each model's default fits) and `coverage/specs_conformal` (every other demographic spec with the conformal interval), both from `scripts/model/live/tests/sim_night.R` and stacked, with `main` winning for a model in both. `26_general/model_config.csv` is copied alongside. These are converted to enightmodels `predictions_*.csv` / `turnout_*.csv` / `status_*.csv` in `26_dashtest/model_results`, all with `geo = "scraped"`; the turnout interval is `live_sim`'s `lo_turnout` / `hi_turnout`. `CBS_DASH_SIM_DIRS=a,b,...` reads other `coverage/` folders in that order (default `main,specs_conformal`); a `live_sim` file whose truth differs from the current sim (the sims get regenerated) is skipped with a warning. `live_sim` has only the two-party share and turnout, so each party's share is the predicted two-party share times the counted two-party share of the vote at that checkpoint, and predicted votes are share x `est_turnout`. Models with no result at a checkpoint are left out of that run; models with no result at all are listed as failed. `precincts_latest.parquet` is faked from each model's latest run: every precinct's uncounted truth (including sim precincts the feed never reports) projected with noise in turnout and two-party split.
+- **Models:** `live_sim_{st}_base.csv` from `26_general/model_tests/coverage/run_config` (`scripts/model/live/tests/sim_night.R` with the `run = TRUE` models in `model_config.csv`, as on the night, on feed-like returns: no cell is ever flagged complete, see `scripts/model/live/README.md`). `26_general/model_config.csv` is copied alongside. These are converted to enightmodels `predictions_*.csv` / `turnout_*.csv` / `status_*.csv` in `26_dashtest/model_results`, all with `geo = "scraped"`; the turnout interval is `live_sim`'s `lo_turnout` / `hi_turnout`. `CBS_DASH_SIM_DIRS=a,b,...` reads other `coverage/` folders in that order, a model in more than one read from the first (e.g. `main,specs_conformal` for every spec); a `live_sim` file whose truth differs from the current sim (the sims get regenerated) is skipped with a warning. `live_sim` has only the two-party share and turnout, so each party's share is the predicted two-party share times the counted two-party share of the vote at that checkpoint, and predicted votes are share x `est_turnout`. Models with no result at a checkpoint are left out of that run; models with no result at all are listed as failed. `precincts_latest.parquet` is faked from each model's latest run: every precinct's uncounted truth (including sim precincts the feed never reports) projected with noise in turnout and two-party split.
 - **CBS counties:** the CBS test feed's latest snapshots (`DASHBOARD_CBS_ENV = "test"`), unrelated to the sim night. TX fills; MI's 10 unscraped counties have all-zero method rows in the test feed and stay grey; OH has no snapshot.
 - **Other inputs:** fake history from the final count (with vote methods, except GA), and the sim states' crosswalks and L2 files copied from `26_general/input_data`.
 
-Only `DASHBOARD_CONTESTS` rows that have a `_base` sim are shown (currently AK, GA, MI, MN, NC, OH Senate and TX Senate + Governor). A new `{st}_base` scenario with a `live_sim` file is picked up automatically once its contest is in `DASHBOARD_CONTESTS`.
+Only `DASHBOARD_CONTESTS` rows that have a `_base` sim are shown (currently AK, FL, GA, MI, MN, NC, OH, TX Senate and GA, TX Governor; IA is left out until it has a zero file). A new `{st}_base` scenario with a `live_sim` file is picked up automatically once its contest is in `DASHBOARD_CONTESTS`.
 
 ```bash
 CBS_ELECTION_FOLDER=26_dashtest Rscript scripts/util/make_dashboard_test_data.R
@@ -99,6 +99,21 @@ The script saves the rds to both `26_dashtest/dashboard_data.rds` in Dropbox and
 ## Public test site (GitHub Pages)
 
 The test dashboard is published at <https://teamstewart.github.io/cbs-enr/>. `.github/workflows/pages.yml` renders `index.qmd` against the committed `data/dashboard/dashtest_data.rds` and deploys it on every push to `main` that touches `index.qmd`, `custom.scss`, `cbs_white.svg`, or `data/dashboard/`. To refresh the data, rerun `make_dashboard_test_data.R`, then commit and push the new rds. To redeploy by hand: `gh workflow run pages.yml`. Check status with `gh run list -w pages.yml`.
+
+### Regenerating the model runs
+
+The sims (`scripts/sim/make_sim.R`; FL, MI, OH and TX with `--counties=zero`) and then the `run = TRUE` models:
+
+```bash
+CFG="$HOME/Dropbox (MIT)/Research/CBS-MIT Election Data/26_general/model_config.csv"
+MODELS=$(awk -F, 'NR>1 && $6=="TRUE" {print $1}' "$CFG" | sort -u | paste -sd, -)
+for sc in ak_base fl_base ga_base mi_base mn_base nc_base oh_base tx_base; do
+  Rscript scripts/model/live/tests/sim_night.R $sc --models=$MODELS --cores=8 \
+    --out="$(dirname "$CFG")/model_tests/coverage/run_config"
+done
+```
+
+One turnout scenario per state (drawn with `set.seed(20261030)`) checks the turnout fits away from the prior: `{st}_test_turnout_low` (`TURNOUT_RATIO=0.85`: GA, MI, MN, TX), `oh_test_turnout_high` (`TURNOUT_RATIO=1.2`), `{st}_test_turnout_demo` (`TURNOUT_DEMO=his=-0.6,col=0.3`: AK, FL, NC). Their runs are in `coverage/run_config_turnout`; the dashboard shows only the `_base` nights.
 
 ### Regenerating the spec runs
 

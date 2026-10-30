@@ -5,7 +5,7 @@
 ## scripts/sim/sim_snapshot.R) is replayed at the sim test checkpoints (every 15 min
 ## 8pm-4am ET, then Nov 4/5/7/10 noon) through make_summary() into
 ## {TEST_FOLDER}/{STATE}/summaries, one statewide feed per state.
-## Models: live_sim_{st}_base.csv in 26_general/model_tests/coverage/{main,specs_conformal}
+## Models: live_sim_{st}_base.csv in 26_general/model_tests/coverage/run_config
 ## (scripts/model/live/tests/sim_night.R; model names as in model_config.csv, which is
 ## copied alongside) is converted to enightmodels predictions/status csvs in
 ## {TEST_FOLDER}/model_results.
@@ -37,12 +37,11 @@ stopifnot(ELECTION_FOLDER != "26_primaries", ELECTION_FOLDER != "26_general")
 DASHBOARD_CBS_ENV = "test"
 
 SIM_DIR = fs::path(PATH_DROPBOX, "26_sim")
-# sim_night.R runs: main has each model's default fits, specs_conformal the other
-# demographic specs with the conformal interval; stacked, a model in both read from the first.
-# CBS_DASH_SIM_DIRS lists other coverage/ folders, comma-separated, in that order (e.g. a
-# fresh rerun ahead of the older ones)
+# sim_night.R runs: run_config has the model_config.csv run = TRUE models, as on the night.
+# CBS_DASH_SIM_DIRS lists other coverage/ folders, comma-separated, stacked in that order with
+# a model in more than one read from the first (e.g. main,specs_conformal for every spec)
 TEST_DIRS = fs::path(PATH_DROPBOX, "26_general", "model_tests", "coverage",
-                     str_split_1(Sys.getenv("CBS_DASH_SIM_DIRS", "main,specs_conformal"), ","))
+                     str_split_1(Sys.getenv("CBS_DASH_SIM_DIRS", "run_config"), ","))
 # a run on an older version of the sim (the sims get regenerated) has a different truth: its
 # predictions would be plotted against tonight's counts, so it is dropped
 read_live_sim <- function(scenario) {

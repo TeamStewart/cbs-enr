@@ -59,26 +59,25 @@ local({
 # - district: integer district for district-level contests, NA for statewide
 # - label: dropdown text; NA -> "{state} {contest}[-{district}]"
 # - hist_contest: contest to compare against in {STATE}_history.parquet; NA -> same contest
+# The races in 26_general/input_data/priors.csv, less IA (no zero file yet).
 DASHBOARD_CONTESTS = tibble::tribble(
   ~state, ~contest, ~district, ~label, ~hist_contest,
   "AK", "sen", NA_integer_, "AK Senate", NA_character_,
+  "FL", "sen", NA_integer_, "FL Senate", NA_character_,
   "GA", "sen", NA_integer_, "GA Senate", NA_character_,
   "GA", "gov", NA_integer_, "GA Governor", NA_character_,
   "MI", "sen", NA_integer_, "MI Senate", NA_character_,
   "MN", "sen", NA_integer_, "MN Senate", NA_character_,
   "NC", "sen", NA_integer_, "NC Senate", NA_character_,
-  "NE", "sen", NA_integer_, "NE Senate", NA_character_,
   "OH", "sen", NA_integer_, "OH Senate", NA_character_,
-  "PA", "gov", NA_integer_, "PA Governor", NA_character_,
   "TX", "sen", NA_integer_, "TX Senate", NA_character_,
   "TX", "gov", NA_integer_, "TX Governor", NA_character_,
-  "TX", "house", 33L, NA_character_, NA_character_,
 )
 
 # Model whose latest projection shows under the Dem/Rep toplines on the Results page, as
 # "<model_base>/<model_spec>/<model_interval>" (see model_parts() in scripts/functions.R) or the
 # raw model name. Left blank for contests where it has no rows or its latest run did not fit.
-DASHBOARD_MODEL = "ratio_strata/strat_g/conformal"
+DASHBOARD_MODEL = "ratio_strata/strat_dg/conformal"
 
 # Precinct maps on the Models page: {st}.json from scripts/util/make_dashboard_geo.R, built once.
 # The page fetches DASHBOARD_GEO_URL/{st}.json at view time (relative to the page, or a full
