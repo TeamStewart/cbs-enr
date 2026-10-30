@@ -283,6 +283,12 @@ HY_COVS_SHARE = hy_covs("HY_COVS_SHARE", COVS_SHARE)
 #' @return Character vector of the model modes in its group (within `MODES`). Stops on an
 #'   unknown method or one that maps to none of this state's modes.
 cbs_method_group = function(method) {
+  # A state modelled without vote method has one pseudo-mode: every CBS method, whatever
+  # it is called, constrains that single group. Without this, `adv` intersects
+  # c("early","mail") with "all", gets the empty set, and aborts.
+  if (identical(MODES, "all")) {
+    return("all")
+  }
   g = switch(
     method,
     eday = "eday",
