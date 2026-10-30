@@ -246,7 +246,13 @@ build_state = function(st) {
     select(county, precinct_enr, precinct_vh, vh_rule) |>
     slice_sample(n = 15) |>
     print(n = 15)
-  cli::cli_alert_info("{st}: {sum(!is.na(crosswalk$unit_id))}/{nrow(crosswalk)} ENR precincts matched ({round(mean(!is.na(crosswalk$unit_id)) * 100, 1)}%) to {nrow(vh)} VoteHub precincts ({paste(unique(vh$geography), collapse = '/')})")
+  # previous build's rate, to spot drops
+  out_file = election_path(OUT_DIR, paste0(str_to_lower(st), ".csv"))
+  prev = if (fs::file_exists(out_file)) {
+    old = read_csv(out_file, col_types = cols(.default = "c"))
+    glue::glue("; was {sum(!is.na(old$unit_id))}/{nrow(old)} ({round(mean(!is.na(old$unit_id)) * 100, 1)}%)")
+  } else ""
+  cli::cli_alert_info("{st}: {sum(!is.na(crosswalk$unit_id))}/{nrow(crosswalk)} ENR precincts matched ({round(mean(!is.na(crosswalk$unit_id)) * 100, 1)}%) to {nrow(vh)} VoteHub precincts ({paste(unique(vh$geography), collapse = '/')}){prev}")
 
   fs::dir_create(election_path(OUT_DIR))
   enightdata::write_local(crosswalk, paste0(OUT_DIR, "/", str_to_lower(st), ".csv"), parquet = FALSE)

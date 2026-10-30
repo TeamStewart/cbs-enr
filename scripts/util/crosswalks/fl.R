@@ -19,7 +19,7 @@ fl_counties = unique(fl_frame$county)
 ## ENR
 # ========================================
 
-# Polling place -> code; sources in docs/crosswalk_todo.md Results (Gadsden/Levy:
+# Polling place -> code; sources in docs/crosswalk_todo.md State notes (Gadsden/Levy:
 # county lists; Franklin, Gulf, Jackson, Liberty, Union: VoterFocus directories).
 place_codes = c(
   "GADSDEN|Centenary Church" = "1", "GADSDEN|Havana Public Library" = "2",

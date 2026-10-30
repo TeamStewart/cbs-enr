@@ -9,8 +9,9 @@ Scope: $ARGUMENTS
 (If the scope is empty, cover all states and all phases. If it names states, pass
 them to `probe`, `verify` and `status`. If it names phases, run only those.)
 
-1. Run `Rscript scripts/util/enr_cycle/cycle.R sync`, then `status`. Read the last
-   `SESSION` line in `docs/enr_cycle/log.md` and pick up anything left half done.
+1. Run `Rscript scripts/util/enr_cycle/cycle.R sync`, then `status`. Read
+   `docs/enr_cycle/log.md` (short: the last `SESSION end` line plus anything
+   since) and pick up anything left half done.
 2. Discovery: run `probe` (never `probe --deep` unless the scope asks for a "deep"
    Clarity search). Then hand-check the pending PDF and custom rows, frame
    counties first, and web-search the Clarity rows noted "web search by hand" (see
@@ -18,19 +19,21 @@ them to `probe`, `verify` and `status`. If it names phases, run only those.)
 3. Scrapers: `verify` every row in the scraper queue. Fix failing enightdata scrapers
    per its `CLAUDE.md`, with a test, `devtools::document()` and `devtools::test()`.
 4. Crosswalks: rebuild each stale state per `docs/crosswalk_todo.md`, update its
-   Results entry, then run `xwalk-done`. Then run
+   table row (and State notes only if an NA case or check changed), then run
+   `xwalk-done`. Then run
    `Rscript scripts/util/crosswalks/votehub.R` (rebuilds the ENR <-> VoteHub
    crosswalk for every state with a VoteHub shapefile whose clean files or
    shapefile changed, and refreshes `precinct_votehub` in its frame crosswalk;
    states without one are skipped). Rebuild frame crosswalks first, so the
-   refresh lands on the new file. Check each state's match rate against the
-   last `votehub` log line and eyeball the fuzzy-rule rows it prints; if a
-   state's rate drops, inspect the unmatched ids and add keys or recodes in
-   `votehub.R`. Log the rates with `cycle.R log "votehub xwalk: ST n/N (x%), ..."`.
+   refresh lands on the new file. It prints each state's match rate and the previous
+   build's (`was ...`); eyeball the fuzzy-rule rows it prints. If a state's
+   rate drops, inspect the unmatched ids and add keys or recodes in `votehub.R`.
 5. Google Sheet: run `cycle.R sheet` as a dry run. If there are no conflicts, run
    `sheet --apply`. Report any conflicts instead of resolving them.
 
 Do not commit or push. Finish with
-`cycle.R log "SESSION end: <done>; <half-done>; <next>"`, then summarize: sheet edits
+`cycle.R log "SESSION end: <done>; <half-done>; <next>"` (short; carry forward
+anything still open from the previous SESSION line), then `cycle.R compact`,
+and delete finished items from `docs/enr_cycle/open_problems.md`. Then summarize: sheet edits
 applied, scraper fixes (uncommitted), crosswalks rebuilt, new blockers, and anything
 that needs Mason (build flags, conflicts, auth).

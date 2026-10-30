@@ -11,6 +11,7 @@
 ## Rscript scripts/util/enr_cycle/cycle.R sheet-add ST county field=value "note=why"
 ## Rscript scripts/util/enr_cycle/cycle.R sheet [--apply]
 ## Rscript scripts/util/enr_cycle/cycle.R log "message"
+## Rscript scripts/util/enr_cycle/cycle.R compact
 ##
 ## Use "-" as county for statewide rows. County matching is case-insensitive.
 # ========================================
@@ -82,6 +83,17 @@ find_row = function(tr, st, cty) {
 append_log = function(msg) {
   if (!fs::file_exists(LOG)) writeLines("# ENR cycle log\n", LOG)
   cat(glue::glue("- {format(Sys.time(), '%Y-%m-%d %H:%M')} {msg}"), "\n", file = LOG, append = TRUE, sep = "")
+}
+
+# Drop log entries before the last "SESSION end" line (git keeps the history)
+cmd_compact = function() {
+  lines = readLines(LOG)
+  entry = which(startsWith(lines, "- "))
+  last = max(c(0, grep("^- \\S+ \\S+ SESSION end", lines)))
+  if (!last) return(cli::cli_alert_info("No SESSION end line; log unchanged."))
+  drop = entry[entry < last]
+  writeLines(lines[-drop], LOG)
+  cli::cli_alert_success("Log compacted: dropped {length(drop)} entries.")
 }
 
 # Path the scraper should use: metadata once `updated`, otherwise the discovered one
@@ -651,5 +663,6 @@ switch(args[1],
   `sheet-add` = cmd_sheet_add(args[2], args[3], args[-(1:3)]),
   sheet = cmd_sheet(apply = "--apply" %in% args),
   log = append_log(paste(args[-1], collapse = " ")),
+  compact = cmd_compact(),
   cli::cli_abort("Unknown command {args[1]}.")
 )

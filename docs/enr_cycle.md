@@ -12,16 +12,12 @@ From the project root, in a fresh Claude Code session:
 
 ```
 /enr-cycle                 # all states, all phases
-/enr-cycle MI TX           # only these states
-/enr-cycle phases 1-2 only # discovery + scraper checks, no crosswalks/sheet
-/enr-cycle FL; recheck not_posted PDF rows   # free-text instructions also work
+/enr-cycle MI TX; phases 1-2 only   # states and free-text instructions
 ```
 
-The command lives in `.claude/commands/enr-cycle.md`. It runs the steps below
-(sync, status, log, phases 1-3, then the sheet dry run and `--apply` if there
-are no conflicts). It never commits or pushes, and it ends with a `SESSION`
-line in `log.md` plus a summary. To stop partway, tell it to stop and log;
-the next `/enr-cycle` resumes from that line.
+The command lives in `.claude/commands/enr-cycle.md`. It never commits or
+pushes, and ends with a `SESSION end` line in `log.md` (then `compact`) plus a
+summary. The next `/enr-cycle` resumes from that line.
 
 ## Files
 
@@ -32,8 +28,8 @@ the next `/enr-cycle` resumes from that line.
 | `docs/enr_cycle/sheet_changes.csv` | pending Google Sheet cell edits (`state, county, field, old, new, note`): verified URLs plus the manual queue | `cycle.R` (regenerated on every write) |
 | `docs/enr_cycle/sheet_manual.csv` | hand-queued sheet edits (`sheet-add`) | `cycle.R` |
 | `docs/enr_cycle/open_problems.md` | self-contained briefs for open problems, for handing to agents | end of each session |
-| `docs/enr_cycle/log.md` | append-only log: automatic probe/verify/xwalk lines plus a `SESSION` line per session | `cycle.R` |
-| `docs/crosswalk_todo.md`, `docs/precinct_crosswalks.md` | crosswalk method, per-state results | crosswalk work |
+| `docs/enr_cycle/log.md` | current session's automatic lines plus the last `SESSION end` line; `compact` drops older entries (history in git) | `cycle.R` |
+| `docs/crosswalk_todo.md`, `docs/precinct_crosswalks.md` | crosswalk procedure, per-state coverage and notes; method | crosswalk work |
 | `scripts/util/crosswalks/votehub.R` | ENR <-> VoteHub shapefile crosswalks (`input_data/crosswalks/votehub/`) | phase 3 |
 | enightdata `tasks/todo.md`, `CLAUDE.md` | scraper rules, known scraper blockers | scraper work |
 
@@ -57,7 +53,13 @@ whenever; everything is saved after each command.
 
 ```sh
 Rscript scripts/util/enr_cycle/cycle.R log "SESSION end: <done>; <half-done>; <next>"
+Rscript scripts/util/enr_cycle/cycle.R compact
 ```
+
+`compact` deletes every log entry before the new `SESSION end` line, so that
+line must carry forward anything still open from the previous one. Keep it
+short: per-row detail belongs in the tracker notes, and open problems in
+`open_problems.md`. Delete finished items from `open_problems.md`.
 
 Then ask Mason before committing `docs/enr_cycle/`, the crosswalk scripts, or
 enightdata changes. Never push enightdata: `automation.R` pulls it on election
@@ -96,14 +98,11 @@ Rscript scripts/util/enr_cycle/cycle.R probe TX bexar   # one row
   in `json/en/electionsettings.json`, then `set ... disc_status=found`.
   Counties often link the general's EID before election night (Oakland and
   Genesee did by 10-26).
-- `probe --deep` (only when Mason asks for a deep search) also scans
-  `/{ST}/{County}/{EID}/current_ver.txt` over the EID window around the known
-  2026 general EIDs (-100/+250) for list-empty counties. A county not on the
-  standard Clarity domain or slug needs a hand check.
+- `probe --deep` (only when Mason asks) also scans EIDs around the known 2026
+  general EIDs for list-empty counties.
 - Clarity rate limits: its AWS WAF blocks the IP for hours (HTTP 405 on every
-  URL) after a burst; the old 8-way parallel scan triggered it on 10-25 and
-  10-26. So Clarity requests go one at a time at 2/s (`CLARITY_RATE`; a deep
-  scan takes about 5 min per county). A deep scan of a county repeats at most
+  URL) after a burst. Clarity requests go one at a time at 2/s
+  (`CLARITY_RATE`; a deep scan takes about 5 min per county). A deep scan of a county repeats at most
   every 3 days (`CLARITY_RESCAN_DAYS`; daily from Nov 1). After the first 405
   the run sends no more Clarity requests and leaves the remaining Clarity rows
   as they were; wait or use another IP.
@@ -170,24 +169,21 @@ clean file) differs from the one the state's crosswalk was last built on.
 1. Follow the "Rerun procedure" in `docs/crosswalk_todo.md`. For a state with
    no script yet, use its per-state steps and agent prompt template.
 2. `Rscript scripts/util/crosswalks/{st}.R`; check coverage against that
-   state's Results entry; if ENR coverage dropped, inspect the new ids.
-3. Update the state's row and Results entry in `docs/crosswalk_todo.md`.
+   state's table row; if ENR coverage dropped, inspect the new ids.
+3. Update the state's table row in `docs/crosswalk_todo.md`, and its State
+   notes entry only if an NA-by-design case or check changed.
 4. `Rscript scripts/util/enr_cycle/cycle.R xwalk-done {ST}` marks every
    clean row of the state as current.
 
 ### VoteHub crosswalks
 
 States with a VoteHub precinct shapefile in `input_data/votehub-shapefiles/`
-(AK, FL, GA, IA, MI, NC, NE, OH, SC in `26_pct_bdrys.gpkg`; CA as
-`CA26G.zip`; TX as `TX26G.zip`) also get an ENR <-> VoteHub crosswalk. A
-state's own file (`{ST}26G` or `{ST}26P`, folder or `.zip`) is picked up
-automatically if the state is not in the gpkg, or if the file is newer than the
-gpkg (it then replaces the gpkg's rows for that state; `G` wins over `P`). The separate crosswalk covers every ENR precinct in
-the state's `clean/*_latest.parquet` files, not only frame counties. Its
-`unit_id` is also added to the frame crosswalk `crosswalks/{st}.csv` as
-`precinct_votehub` (through `precinct_enr`): `write_crosswalk()` adds it when a
-frame script runs, and `votehub.R` refreshes it after each build. States
-without a VoteHub layer are skipped (their frame crosswalks get an NA column).
+(`26_pct_bdrys.gpkg`, or a newer per-state `{ST}26G`/`{ST}26P` file; see the
+header of `votehub.R`) also get an ENR <-> VoteHub crosswalk covering every
+ENR precinct in the state's `clean/*_latest.parquet` files, not only frame
+counties. `votehub.R` also writes `unit_id` into the frame crosswalk
+`crosswalks/{st}.csv` as `precinct_votehub`. States without a layer are
+skipped.
 
 ```sh
 Rscript scripts/util/crosswalks/votehub.R          # states whose clean files or VoteHub layer are newer than their csv
@@ -195,17 +191,14 @@ Rscript scripts/util/crosswalks/votehub.R MI TX    # these states
 Rscript scripts/util/crosswalks/votehub.R --all    # every VoteHub state with clean data
 ```
 
-Output: `input_data/crosswalks/votehub/{st}.csv` with `state, county,
-precinct_enr, unit_id, precinct_vh, vh_geography, vh_rule` (`unit_id` NA if
-unmatched). Matching is within county and strict 1:1, through the ordered tiers
-in `votehub.R` (ENR id against the VoteHub code in `unit_id` and the name in
-`precinct_sos`, exact first). The FL layer is 2026 primary precincts
-(`vh_geography = primary`).
+Output: `input_data/crosswalks/votehub/{st}.csv` (`unit_id` NA if unmatched).
+Matching is within county and strict 1:1 through the ordered tiers in
+`votehub.R`.
 
 Run it after the frame crosswalks in every pass. For each state:
 
-- Compare the match rate with the last `votehub xwalk` line in `log.md`, then
-  log the new rates: `cycle.R log "votehub xwalk: MI 2393/2625 (91.2%), ..."`.
+- The script prints each state's match rate and the previous build's
+  (`was ...`). Investigate any drop.
 - Eyeball the fuzzy-rule rows the script prints (`name_bag`, `name_mi`,
   `name_abbr`, `name_short`, `name_init`, `*_lead`). Exact and code rules can be
   trusted.
@@ -214,10 +207,8 @@ Run it after the frame crosswalks in every pass. For each state:
   drops for real precincts, inspect the new ids and add keys or recodes in
   `state_keys()` / `tiers` in `votehub.R`.
 
-Rates on 2026-10-28: AK 76.6%, CA 86.4%, FL 99.1%, GA 97.9%, MI 91.2%,
-NC 92.4%, NE 85.6%, OH 93.2%, TX 99.3% (IA, SC: no clean data yet). CA San
-Diego ENR has 2,994 precincts against VoteHub's 2,239; the unmatched rest
-are expected.
+CA San Diego ENR has 2,994 precincts against VoteHub's 2,239; the unmatched
+rest are expected.
 
 ## Google Sheet
 
