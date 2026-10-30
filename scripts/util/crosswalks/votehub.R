@@ -8,6 +8,7 @@ source("scripts/util/crosswalks/helpers.R")
 # VoteHub boundaries: input_data/votehub-shapefiles/26_pct_bdrys.gpkg, plus a
 # per-state {ST}26G/{ST}26P shapefile (folder or .zip) for any state not in
 # the gpkg (the gpkg's states have the same polygons in their per-state files).
+# MN26G.zip is built from the MN SoS mn-precincts.json by votehub_mn.R.
 # States with no VoteHub layer or no clean data are skipped.
 #
 #   Rscript scripts/util/crosswalks/votehub.R          # states whose clean files or VoteHub layer are newer than their csv
