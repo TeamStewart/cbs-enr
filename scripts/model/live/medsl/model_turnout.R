@@ -69,11 +69,70 @@ STAGE_DONE = 2L # a mode cell counts as observed at this reporting stage
 MIN_FIT_OBS = as.integer(Sys.getenv("MIN_FIT_OBS", unset = "30"))
 MIN_MODE_CELLS = as.integer(Sys.getenv("MIN_MODE_CELLS", unset = "10"))
 MIN_MODE_CTY = as.integer(Sys.getenv("MIN_MODE_CTY", unset = "1"))
-# Fallback completeness test for TURNOUT when the feed carries no `pct_reported`:
-# a cell's turnout counts as observed once counted >= COMPLETE_FRAC * prior_tau.
-# It is only as good as prior_tau, which on TX 2024 is off by ~1.7x for eday and ~0.5x
-# for mail -- so prefer a real pct_reported field wherever the feed has one.
-COMPLETE_FRAC = as.numeric(Sys.getenv("COMPLETE_FRAC", unset = "1.1"))
+# Fallback completeness test for TURNOUT: a cell's turnout counts as observed once
+# counted >= COMPLETE_FRAC * prior_tau. Used whenever the feed's own `complete` flag is
+# unusable (see complete_usable() below), which in production is always.
+#
+# MEASURED 2026-10-30, scripts/model/prep/measure_complete_frac.R, TX, per-cell median of
+# prior_tau / truth -- and therefore of what a FINISHED cell reads as tau/prior_tau:
+#
+#                        prior/true        finished cell reads
+#   2018->2022  early       1.07                 0.93        <- the 2026 analogue:
+#   (midterm ->  mail       1.12                 0.90           a 2022 prior on a midterm
+#    midterm)    eday       0.85                 1.18
+#   2022->2024  early       0.85                 1.18        <- midterm -> presidential
+#               mail        1.20                 0.83
+#               eday        1.54                 0.65
+#
+# THE THRESHOLD IS REALLY A PER-MODE COUNTED-FRACTION GATE. A cell counted to fraction g
+# passes iff g >= COMPLETE_FRAC * (prior/true). On the 2026 analogue at the old default
+# of 1.1 that is 1.18 for early and 1.23 for mail: over 100%, i.e. a correctly FINISHED
+# cell of those modes could never pass, at any point in the night. Two of three modes were
+# structurally excluded, which is the real defect -- a threshold error, not a prior error.
+# 0.8 is the largest value leaving every mode reachable on that analogue (0.86 / 0.89 /
+# 0.68), and it is what the "strict settings never pin mail" note at obs_turn describes.
+#
+# SUPERSEDES an earlier comment here that read "off by ~1.7x for eday and ~0.5x for mail
+# on TX 2024". The eday figure holds; the mail one is wrong in DIRECTION and does not
+# reproduce. prior_tau / truth is (est_tot/T) * (p_m/q_m) -- ONE common level factor times
+# a per-mode share ratio -- so for mail to read 0.5x while eday read 1.7x, p/q would have
+# to differ between them by 3.4x. On TX it differs by 1.31x, and no level factor
+# reconciles the pair. Mail and eday priors both run high; early runs the other way.
+#
+# WHAT THIS DOES NOT FIX: admitting a cell at counted fraction g enters it in the fit as
+# if final, contributing log(g) -- a DOWNWARD bias, bounded by the threshold itself
+# (worst admitted cell on the analogue sits at g = 0.68, so -0.39 log points). That is the
+# opposite sign to the gross-up's 1/q, which fabricates votes without bound. The
+# principled fix is right-censoring (USE_CENSOR; CONTRACT.md 8), which needs no threshold
+# at all; this is the bounded stopgap.
+COMPLETE_FRAC = as.numeric(Sys.getenv("COMPLETE_FRAC", unset = "0.8"))
+
+#' Is a returns frame's `complete` column carrying any information?
+#'
+#' A column that is PRESENT but never TRUE is not evidence that nothing is counted out --
+#' it is an absent signal wearing the shape of a present one, and taking it at face value
+#' silently disables every component gated on `obs_turn`. That is the production state:
+#' `complete = stage >= 6` (live/R/returns.R), `functions.R` rewrites a reported 6 to 5
+#' unless `trust_stage = TRUE`, and `trust_stage` is FALSE for all 381 rows of
+#' 26_general/metadata.csv. Measured 2026-10-30 across 171 clean files (1,202,773 rows):
+#' the only stage values present are 0, 2 and 5 -- zero rows at 6.
+#'
+#' So the column is trusted only once it has fired at least once. Early in a real night
+#' nothing is complete and this is FALSE, which is correct: the ratio test then admits
+#' nothing either, because cells are barely counted. Set COMPLETE_TRUST=1 to force the
+#' old behaviour (trust the column whenever it exists).
+#'
+#' @param returns Returns frame, with or without a `complete` column.
+#' @return TRUE when `complete` exists and is TRUE for at least one row.
+complete_usable = function(returns) {
+  if (!"complete" %in% names(returns)) {
+    return(FALSE)
+  }
+  if (Sys.getenv("COMPLETE_TRUST", unset = "0") == "1") {
+    return(TRUE)
+  }
+  any(returns$complete, na.rm = TRUE)
+}
 # Wide prior on the unreported set's share offset, in logit units, shared within a
 # (county, mode). Measured on TX 2024 at 0.26-0.45 raw / 0.15-0.30 vote-weighted; 0.25 is
 # the starting point. SD_UNREP=0 disables it (ablation). See the block in fit_stage.
@@ -279,8 +338,9 @@ USE_CENSOR = Sys.getenv("USE_CENSOR", unset = "0") == "1"
 # or better. On the real TX 2024 cadence, two-party coverage 11/15 (prior) vs 10/15
 # (both or flag), mean |err| 0.48 vs 0.47 / 0.60, and late turnout within 0.1pp of
 # "both" at every checkpoint. The flag signal earns nothing and costs a checkpoint.
-# NOTE this is flag-free, not assumption-free: r_prior leans on prior_tau, which is off
-# ~1.7x for eday and ~0.5x for mail on TX 2024. The difference is that the prior's error
+# NOTE this is flag-free, not assumption-free: r_prior leans on prior_tau, whose per-cell
+# median ratio to truth is early 1.07 / mail 1.12 / eday 0.85 on the 2018->2022 midterm
+# analogue (measure_complete_frac.R, 2026-10-30). The difference is that the prior's error
 # is measurable and the flag's is not.
 ATOM_SOURCE = Sys.getenv("ATOM_SOURCE", unset = "prior") # prior | flag | both
 stopifnot("ATOM_SOURCE must be both, flag or prior" = ATOM_SOURCE %in% c("both", "flag", "prior"))
@@ -1051,12 +1111,12 @@ fit_stage = function(
   level = 0.95,
   county_obs = NULL
 ) {
-  has_complete = "complete" %in% names(returns)
+  has_complete = complete_usable(returns)
   if (!has_complete) {
     cli_alert_warning(
-      "returns carry no `complete` flag -- falling back to \\
-                       COMPLETE_FRAC * prior_tau, which is known to be unreliable \\
-                       (see the note in fit_stage)"
+      "`complete` is {if ('complete' %in% names(returns)) 'present but never TRUE' else 'absent'} \\
+                       -- turnout completeness falls back to COMPLETE_FRAC ({COMPLETE_FRAC}) \\
+                       * prior_tau (see the COMPLETE_FRAC block)"
     )
   }
   d = cells |>
@@ -1082,11 +1142,15 @@ fit_stage = function(
       #     it from the feed's pct_reported >= 0.98; the TX backtest sets it from whether
       #     the cell has stopped growing across that county's last two snapshots. Both
       #     are unbiased with respect to the cell's final size.
-      #  2. COMPLETE_FRAC * prior_tau -- last-resort fallback, and a poor one: it
-      #     inherits prior_tau's error, which on TX 2024 is ~0.5x for mail and ~1.7x for
-      #     eday, so no single threshold works. Strict settings never pin mail (turnout
-      #     ends the night at 113%); loose ones treat 5%-counted eday cells as final
-      #     (turnout ends at 87%). Supply `complete` instead wherever possible.
+      #  2. COMPLETE_FRAC * prior_tau -- the fallback, and in production the ONLY branch
+      #     that runs, because `complete` is present but never TRUE (complete_usable()).
+      #     It inherits prior_tau's error, which acts as a per-mode counted-fraction gate:
+      #     g >= COMPLETE_FRAC * (prior/true). The old default of 1.1 put that over 100%
+      #     for two of three modes, so a correctly finished cell of those modes could
+      #     never pass -- which is exactly the measured symptom here, "strict settings
+      #     never pin mail" (turnout ends the night at 113%). Loose settings have the
+      #     opposite failure: they treat 5%-counted eday cells as final (87%). 0.8 is the
+      #     largest value leaving every mode reachable; see the COMPLETE_FRAC block.
       obs_turn = obs & if (has_complete) complete else tau >= COMPLETE_FRAC * prior_tau,
       # RAW observed values -- used to substitute counted cells in the aggregation.
       # o_tau is gated on obs_turn, the shares on obs.
@@ -1094,8 +1158,9 @@ fit_stage = function(
       # CENSORING FLOOR: whatever is counted in a cell is a hard LOWER BOUND on its
       # final turnout, whether or not the cell is counted out. This needs no threshold
       # and no completeness classifier, so it carries the cases the classifier gets
-      # wrong -- which on TX 2024 is most of them, since prior_tau is off by ~0.5x for
-      # mail and ~1.7x for eday and no single COMPLETE_FRAC can serve both.
+      # wrong -- which in production is ALL of them, since `complete` never fires and the
+      # ratio test admits a cell only once it is roughly g >= COMPLETE_FRAC * (prior/true)
+      # counted.
       f_tau = if_else(obs, tau, 0),
       f_dem = if_else(obs, votes_dem, 0),
       f_rep = if_else(obs, votes_rep, 0),
