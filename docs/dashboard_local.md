@@ -68,6 +68,10 @@ Both maps zoom (wheel, pinch, double-click) and pan (drag); Reset at the top rig
 
 Each render embeds only the per-unit numbers (`mres`, `mprec` in `build_dashboard_data()`).
 
+### Swing tabs
+
+Swing by Race, Swing by Urbanicity and Swing by Turnout plot each counted precinct's shift in Dem two-party share against its share in the history year, in blocks with each block's vote-weighted shift as a line. They use counted votes only (the latest count, not "As of"), so they don't depend on the picked model. Race blocks are precincts with at least the toolbar's "Race ≥" share of L2 registrants Black or Hispanic, plus all matched precincts and the rest; Turnout blocks are thirds of precincts by L2 turnout in the history year. Urbanicity is the county's USDA RUCC 2023 label from `scripts/model/lookups/model_counties.csv` (urban 1–3, suburban 4, rural 5–9), read by the render's setup chunk; states that file doesn't cover (currently GA, MN, OH) show a message instead, and AK's district-keyed rows are mostly blank.
+
 On the Results page, the Dem/Rep boxes add a "Proj." line with the latest scraped-geo vote projection and two-party share from `DASHBOARD_MODEL` (`scripts/util/globals.R`, written as `base/spec/interval`, e.g. `ratio_strata/strat_g/conformal`, or the raw model name). The line is blank when that model has no rows for the contest or its latest status is not `ok`.
 
 ## Test data (no live election)
