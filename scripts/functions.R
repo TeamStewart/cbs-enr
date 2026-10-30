@@ -286,6 +286,17 @@ read_geo_units <- function(state) {
     mutate(frame = coalesce(frame, FALSE))
 }
 
+# Models page Shift Map: VoteHub's 2024 presidential Dem / Rep votes per unit_id, estimated
+# onto the 2026 precinct boundaries (input_data/votehub-shapefiles/estimated_past_results.csv)
+read_pres24 <- function() {
+  f = fs::path(PATH_DROPBOX, "26_general", "input_data", "votehub-shapefiles", "estimated_past_results.csv")
+  if (!fs::file_exists(f)) return(tibble(unit_id = character(), dem24 = numeric(), rep24 = numeric()))
+  readr::read_csv(f, col_types = readr::cols(.default = "c"), col_select = c("unit_id", "pres24_dem", "pres24_rep"),
+                  progress = FALSE) |>
+    transmute(unit_id, dem24 = as.numeric(pres24_dem), rep24 = as.numeric(pres24_rep)) |>
+    filter(dem24 + rep24 > 0)
+}
+
 # Models page maps, counties we don't scrape: the latest CBS county snapshot for a race
 # (written by cbs_county_pull.R at each model run), one row per county. dem / rep sum the
 # per-method rows, which can fall short of the county total (`method_shortfall`), so only
@@ -394,6 +405,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
   histories = map(states, read_history) |> set_names(states)
   l2s = map(states, read_l2) |> set_names(states)
   geo_units = map(states, read_geo_units) |> set_names(states)
+  pres24 = read_pres24()
   mprec_all = bind_rows(tibble(race_id = character(), model = character(), time = as.POSIXct(character()),
                                geo = character(), turn_est = numeric(), dem_est = numeric(), est_dem2 = numeric()),
                         models$prec)
@@ -534,8 +546,9 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
       select(-race_id)
 
     # Models page: share of counted votes in precincts the model inputs know (history);
-    # for states with a map file (make_dashboard_geo.R), counted votes and each model's
-    # latest projected remaining vote (rem, with its Dem two-party share d2) per VoteHub unit
+    # for states with a map file (make_dashboard_geo.R), counted votes (with VoteHub's 2024
+    # presidential votes, dem24 / rep24) and each model's latest projected remaining vote
+    # (rem, with its Dem two-party share d2) per VoteHub unit
     gu = geo_units[[state]]
     gt = summarise(prec, across(c(dem, rep, total), sum), .by = geo) |>
       mutate(g = norm_geo(geo)) |>
@@ -546,19 +559,20 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     match_n = if (has_frame) sum(rep_geo$frame %in% TRUE) else NA_integer_
     match_of = if (has_frame) nrow(rep_geo) else NA_integer_
     hist_match = if (has_frame) sum(rep_geo$total[rep_geo$frame %in% TRUE]) / sum(rep_geo$total) else NA_real_
-    mres = tibble(unit_id = character(), dem = numeric(), rep = numeric(), total = numeric())
+    mres = tibble(unit_id = character(), dem = numeric(), rep = numeric(), total = numeric(), dem24 = numeric(), rep24 = numeric())
     mprec = tibble(model = character(), unit_id = character(), rem = numeric(), d2 = numeric())
     mprec_runs = tibble(model = character(), time = as.POSIXct(character()))
     if (fs::file_exists(fs::path(DASHBOARD_GEO_DIR, glue("{tolower(state)}.json")))) {
       mres = gt |>
         filter(!is.na(unit_id)) |>
-        summarise(across(c(dem, rep, total), sum), .by = unit_id)
+        summarise(across(c(dem, rep, total), sum), .by = unit_id) |>
+        left_join(pres24, by = "unit_id")
       mr = filter(mprec_all, race_id %in% race_ids)
       mprec = mr |>
         mutate(g = norm_geo(geo), dv = dem_est * turn_est, rv = dv * (1 - est_dem2) / est_dem2) |>
         inner_join(filter(gu, !is.na(unit_id)) |> select(g, unit_id), by = "g") |>
         summarise(tot = sum(turn_est, na.rm = TRUE), dv = sum(dv, na.rm = TRUE), rv = sum(rv, na.rm = TRUE), .by = c(model, unit_id)) |>
-        left_join(mres, by = "unit_id") |>
+        left_join(select(mres, unit_id, dem, rep, total), by = "unit_id") |>
         mutate(
           across(c(dem, rep, total), \(x) coalesce(x, 0)),
           rem = pmax(tot - total, 0), rd = pmax(dv - dem, 0), rr = pmax(rv - rep, 0),

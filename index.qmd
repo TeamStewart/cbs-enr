@@ -268,7 +268,7 @@ EXPORT_THEME = { return {
 } }
 EXPORTS = new Map()
 // legend: { swatch, keys } where swatch is the key shape for the color scale's entries and keys are extra
-// entries { mark: "rect" | "band" | "line" | "dot", label, color, opacity, width, dash, r }
+// entries { mark: "rect" | "band" | "line" | "dot" | "arrow", label, color, opacity, width, dash, r, dir }
 exportable = (name, s, title, legend = {}) => (EXPORTS.set(`${cur.key}|${name}`, { s, title: title ?? name, legend }), s)
 
 // Styrene B for the canvas text; the rasterized SVG carries its own @font-face (an <img> can't see page fonts)
@@ -359,6 +359,13 @@ exportChart = {
       if (k.mark === "rect") g.fillRect(x + 12 - kh / 2, y, kh, kh);
       else if (k.mark === "band") g.fillRect(x, cy - 5, 24, 10);
       else if (k.mark === "dot") { g.beginPath(); g.arc(x + 12, cy, k.r ?? 3, 0, 2 * Math.PI); g.fill(); }
+      else if (k.mark === "arrow") {
+        // up-left (dir -1) or up-right (dir 1) at 35°, as on the Shift Map
+        const a = (k.dir < 0 ? 215 : -35) * Math.PI / 180, L = 20, x0 = x + 12 - L / 2 * Math.cos(a), y0 = cy - L / 2 * Math.sin(a);
+        const [x1, y1] = [x0 + L * Math.cos(a), y0 + L * Math.sin(a)], hd = (t) => [x1 - 6 * Math.cos(a + t), y1 - 6 * Math.sin(a + t)];
+        g.lineWidth = k.width ?? 2;
+        g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.moveTo(...hd(0.6)); g.lineTo(x1, y1); g.lineTo(...hd(-0.6)); g.stroke();
+      }
       else {
         g.lineWidth = k.width ?? 2;
         g.setLineDash(k.dash ? k.dash.split(",").map(Number) : []);
@@ -862,6 +869,40 @@ outlineMarks = g => [
   Plot.geo(g.counties, { fill: "none", stroke: "#868e96", strokeWidth: 0.6 }),
   ...(g.state ? [Plot.geo([g.state], { fill: "none", stroke: INK, strokeWidth: 1.2 })] : [])
 ]
+// capital (cap) and major cities per state: [name, lon, lat, cap, anchor]; anchor "end" puts the
+// label left of the point, for cities near the right edge of the state. Block form, not ({...}):
+// dashboard autosize regenerates every cell and drops those parentheses, which breaks the chunk
+CITIES = { return {
+  AK: [["Juneau", -134.42, 58.30, true, "end"], ["Anchorage", -149.90, 61.22], ["Fairbanks", -147.72, 64.84]],
+  CA: [["Sacramento", -121.49, 38.58, true], ["San Francisco", -122.42, 37.77, false, "end"], ["San Jose", -121.89, 37.34],
+       ["Los Angeles", -118.24, 34.05], ["San Diego", -117.16, 32.72]],
+  FL: [["Tallahassee", -84.28, 30.44, true], ["Jacksonville", -81.66, 30.33, false, "end"], ["Orlando", -81.38, 28.54],
+       ["Tampa", -82.46, 27.95, false, "end"], ["Miami", -80.19, 25.76, false, "end"]],
+  GA: [["Atlanta", -84.39, 33.75, true], ["Augusta", -81.97, 33.47, false, "end"], ["Columbus", -84.99, 32.46],
+       ["Savannah", -81.10, 32.08, false, "end"]],
+  MI: [["Lansing", -84.56, 42.73, true], ["Detroit", -83.05, 42.33, false, "end"], ["Grand Rapids", -85.67, 42.96, false, "end"]],
+  MN: [["Minneapolis", -93.27, 44.98], ["Duluth", -92.10, 46.79, false, "end"], ["Rochester", -92.46, 44.02]],
+  NC: [["Raleigh", -78.64, 35.78, true], ["Charlotte", -80.84, 35.23], ["Greensboro", -79.79, 36.07], ["Asheville", -82.55, 35.60]],
+  NE: [["Lincoln", -96.68, 40.81, true], ["Omaha", -95.94, 41.26, false, "end"]],
+  OH: [["Columbus", -83.00, 39.96, true], ["Cleveland", -81.69, 41.50], ["Cincinnati", -84.51, 39.10], ["Toledo", -83.54, 41.65]],
+  PA: [["Harrisburg", -76.88, 40.27, true], ["Philadelphia", -75.17, 39.95, false, "end"], ["Pittsburgh", -80.00, 40.44]],
+  TX: [["Austin", -97.74, 30.27, true], ["Dallas", -96.80, 32.78], ["Houston", -95.37, 29.76], ["San Antonio", -98.49, 29.42, false, "end"],
+       ["El Paso", -106.49, 31.76]]
+} }
+// city points and labels, the last marks on every map so they sit over the arrows and circles.
+// The text has no font family or size of its own: it inherits the page font live and Styrene B
+// in exports. mapZoom moves both with the map but keeps their size.
+cityMarks = st => {
+  const c = (CITIES[st] ?? []).map(([name, lon, lat, cap = false, anchor = "start"]) => ({ name, lon, lat, cap, anchor }));
+  // constant options only: an r or symbol channel would bring in a scale (the Remaining Vote Map has its own r)
+  // aria-label "city" on every point and label is how mapZoom finds them
+  const opts = { x: "lon", y: "lat", ariaLabel: () => "city", pointerEvents: "none", fill: "#212529", stroke: "white" };
+  return [true, false].flatMap(cap => [
+    Plot.dot(c.filter(d => d.cap === cap), { ...opts, symbol: cap ? "star" : "circle", r: cap ? 4.5 : 2.5, strokeWidth: 1 }),
+    ...["start", "end"].map(a => Plot.text(c.filter(d => d.cap === cap && d.anchor === a), { ...opts, text: "name", textAnchor: a,
+      dx: a === "start" ? 6 : -6, fontWeight: cap ? 700 : 500, strokeWidth: 3, strokeOpacity: 0.9, paintOrder: "stroke" }))
+  ]);
+}
 mresc = MRES.filter(d => d.key === sel)
 mprecc = MPREC.filter(d => d.key === sel && d.model === model_pick)
 mprecRun = MPRECRUN.find(d => d.key === sel && d.model === model_pick)
@@ -875,21 +916,38 @@ marginColor = { return {
   range: marginRange(DEM, REP)
 } }
 MAP_BLANK = "#e9ecef"
+// Plot.vector shape: Plot's "arrow" scales its head with the length; this one's head is fixed
+ARROW = { return { draw(c, l) { c.moveTo(0, 0); c.lineTo(0, -l); c.moveTo(-3.5, -l + 5); c.lineTo(0, -l); c.lineTo(3.5, -l + 5); } } }
 
 // zoom (wheel / pinch / double-click) and pan (drag) on every map (className "dash-map"); attached
 // from here so the map cells keep the literal Plot.plot({...}) that dashboard autosize needs.
-// Lines keep their width and circles grow only with the square root of the zoom.
+// Lines keep their width, circles grow only with the square root of the zoom, and arrows
+// (Plot.vector) move with their precinct but keep their length.
 mapZoom = {
   const init = el => {
     el.dataset.zoom = "1";
     const svg = [el, ...el.querySelectorAll("svg")].find(x => x.tagName === "svg" && x.querySelector('g[aria-label="geo"]'));
     if (!svg) return;
-    const layers = svg.querySelectorAll(':scope > g[aria-label="geo"], :scope > g[aria-label="dot"]');
-    svg.querySelectorAll('g[aria-label="geo"] path, g[aria-label="dot"] circle').forEach(x => x.setAttribute("vector-effect", "non-scaling-stroke"));
-    const dots = [...svg.querySelectorAll('g[aria-label="dot"] circle')].map(c => [c, +c.getAttribute("r")]);
+    const city = '[aria-label="city"]';
+    const layers = [...svg.querySelectorAll(':scope > g[aria-label="geo"], :scope > g[aria-label="dot"]')].filter(g => !g.querySelector(city));
+    svg.querySelectorAll(`g[aria-label="geo"] path, g[aria-label="dot"] circle:not(${city})`).forEach(x => x.setAttribute("vector-effect", "non-scaling-stroke"));
+    const dots = [...svg.querySelectorAll(`g[aria-label="dot"] circle:not(${city})`)].map(c => [c, +c.getAttribute("r")]);
+    const vecs = [...svg.querySelectorAll('g[aria-label="vector"] path')].map(p => {
+      const m = /^translate\(([^,]+),([^)]+)\)(.*)$/.exec(p.getAttribute("transform") ?? "");
+      return m && [p, +m[1], +m[2], m[3]];
+    }).filter(Boolean);
+    // city points and labels (cityMarks): circles by cx/cy, stars and text by their translate; size fixed
+    const cities = [...svg.querySelectorAll(city)].map(e => {
+      if (e.tagName === "circle") return [e, +e.getAttribute("cx"), +e.getAttribute("cy"), null];
+      const m = /^translate\(([^,]+),([^)]+)\)(.*)$/.exec(e.getAttribute("transform") ?? "");
+      return m && [e, +m[1], +m[2], m[3]];
+    }).filter(Boolean);
     const zoom = d3.zoom().scaleExtent([1, 60]).on("zoom", ({ transform: t }) => {
       layers.forEach(g => g.setAttribute("transform", t));
       dots.forEach(([c, r]) => c.setAttribute("r", r / Math.sqrt(t.k)));
+      vecs.forEach(([p, x, y, rest]) => p.setAttribute("transform", `translate(${t.applyX(x)},${t.applyY(y)})${rest}`));
+      cities.forEach(([e, x, y, rest]) => rest === null ? (e.setAttribute("cx", t.applyX(x)), e.setAttribute("cy", t.applyY(y)))
+        : e.setAttribute("transform", `translate(${t.applyX(x)},${t.applyY(y)})${rest}`));
     });
     d3.select(svg).style("cursor", "grab").call(zoom);
     const reset = html`<button type="button" class="btn btn-sm btn-outline-secondary map-reset" title="Reset zoom">Reset</button>`;
@@ -1098,12 +1156,60 @@ viewof mctl = {
         title: cty.map(d => `${d.county_name} County (CBS)\n${partyName("dem")} ${fmt(Math.round(d.dem))} · ${partyName("rep")} ${fmt(Math.round(d.rep))}\n${marginColor.tickFormat(Math.round(d.margin * 100) / 100)} · ${fmt(Math.round(d.total))} votes · ${Math.round(d.pct_exp)}% of expected vote`) }),
       Plot.geo(res.map(d => d.feature), { fill: res.map(d => d.margin), stroke: "white", strokeWidth: 0.3,
         title: res.map(d => `${d.unit_id}\n${partyName("dem")} ${fmt(d.dem)} · ${partyName("rep")} ${fmt(d.rep)}\n${marginColor.tickFormat(Math.round(d.margin * 100) / 100)} · ${fmt(d.total)} votes`) }),
-      ...outlineMarks(g)
+      ...outlineMarks(g),
+      ...cityMarks(cur.state)
     ]
   }, "Precinct Results", { keys: [
     { mark: "rect", label: "No results yet or not matched", color: MAP_BLANK }
   ] });
   return Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, caption: s.caption, marks: s.marks });
+}
+```
+
+```{ojs}
+//| title: Shift Map
+{
+  const g = geoData;
+  if (!g) return noMap(g);
+  // counted votes only (no projections), against VoteHub's 2024 presidential estimate for the same unit
+  const res = mresc.filter(d => d.dem + d.rep > 0 && d.dem24 + d.rep24 > 0 && g.byId.has(d.unit_id))
+    .map(d => {
+      const p = g.byId.get(d.unit_id).properties;
+      const m26 = (d.dem - d.rep) / (d.dem + d.rep), m24 = (d.dem24 - d.rep24) / (d.dem24 + d.rep24);
+      return { ...d, cx: p.cx, cy: p.cy, m26, m24, shift: m26 - m24 };
+    })
+    .sort((a, b) => Math.abs(a.shift) - Math.abs(b.shift));
+  if (res.length === 0) return empty(mresc.length ? "No reporting precincts with a 2024 presidential result (VoteHub estimated_past_results.csv)." : "No precincts reporting yet.");
+  // the same units' totals, 2026 counted vs 2024
+  const marg = (d, r) => (d - r) / (d + r);
+  const all26 = marg(d3.sum(res, d => d.dem), d3.sum(res, d => d.rep)), all24 = marg(d3.sum(res, d => d.dem24), d3.sum(res, d => d.rep24));
+  const mfmt = x => marginColor.tickFormat(Math.round(x * 100) / 100);
+  const sfmt = x => `${x >= 0 ? "D" : "R"}+${Math.abs(x * 100).toFixed(1)}`;
+  const CAP = 0.3;
+  const s = exportable("Shift Map", {
+    projection: g.projection,
+    length: { domain: [0, CAP], range: [0, 28], clamp: true },
+    caption: `Counted votes as of ${fmtTime(cur.time)} ET vs. 2024 president (VoteHub, on 2026 precincts) · ${fmt(res.length)} reporting precincts` +
+      ` · shift in two-party margin ${sfmt(all26 - all24)} (${mfmt(all24)} to ${mfmt(all26)})` +
+      ` · arrows: ↖ toward ${partyName("dem")}, ↗ toward ${partyName("rep")}, length = shift, capped at ${CAP * 100} pts` +
+      " · partly counted precincts compare against their full 2024 vote",
+    exportCaption: `${fmt(res.length)} reporting precincts`,
+    marks: [
+      Plot.geo(g.counties, { fill: MAP_BLANK }),
+      Plot.geo(g.features, { fill: MAP_BLANK, stroke: "white", strokeWidth: 0.3 }),
+      ...outlineMarks(g),
+      // tilted 35° up from horizontal; ARROW keeps the head one size whatever the length
+      Plot.vector(res, { x: "cx", y: "cy", length: d => Math.abs(d.shift), rotate: d => d.shift > 0 ? -55 : 55, anchor: "start", shape: ARROW,
+        stroke: d => d.shift > 0 ? DEM : REP, strokeWidth: 1.5, strokeOpacity: 0.85,
+        title: d => `${d.unit_id}\n2024 president ${mfmt(d.m24)} · 2026 counted ${mfmt(d.m26)}\nShift ${sfmt(d.shift)}\n` +
+          `${fmt(d.total)} votes counted · 2024 two-party ${fmt(d.dem24 + d.rep24)}` }),
+      ...cityMarks(cur.state)
+    ]
+  }, "Shift Since 2024", { keys: [
+    { mark: "arrow", label: `Toward ${partyName("dem")}`, color: DEM, dir: -1 },
+    { mark: "arrow", label: `Toward ${partyName("rep")}`, color: REP, dir: 1 }
+  ] });
+  return Plot.plot({ className: "dash-map", projection: s.projection, length: s.length, caption: s.caption, marks: s.marks });
 }
 ```
 
@@ -1130,7 +1236,8 @@ viewof mctl = {
       Plot.geo(g.features, { fill: MAP_BLANK, stroke: "white", strokeWidth: 0.3 }),
       ...outlineMarks(g),
       Plot.dot(rows, { x: "cx", y: "cy", r: "rem", fill: "margin", fillOpacity: 0.85, stroke: "white", strokeWidth: 0.5,
-        title: d => `${d.unit_id}\n${fmt(d.rem)} votes expected outstanding\n${pct(d.d2)} D two-party (${marginColor.tickFormat(Math.round(d.margin * 100) / 100)})` })
+        title: d => `${d.unit_id}\n${fmt(d.rem)} votes expected outstanding\n${pct(d.d2)} D two-party (${marginColor.tickFormat(Math.round(d.margin * 100) / 100)})` }),
+      ...cityMarks(cur.state)
     ]
   }, "Expected Remaining Vote", { keys: [
     { mark: "dot", label: "Expected remaining votes (area)", r: 6, opacity: 0.6 }
