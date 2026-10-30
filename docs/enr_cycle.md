@@ -31,6 +31,7 @@ the next `/enr-cycle` resumes from that line.
 | `docs/enr_cycle/tracker.csv` | one row per `metadata.csv` row: discovery, scraper and crosswalk status | `cycle.R` only (use `set` for hand edits) |
 | `docs/enr_cycle/sheet_changes.csv` | pending Google Sheet cell edits (`state, county, field, old, new, note`): verified URLs plus the manual queue | `cycle.R` (regenerated on every write) |
 | `docs/enr_cycle/sheet_manual.csv` | hand-queued sheet edits (`sheet-add`) | `cycle.R` |
+| `docs/enr_cycle/open_problems.md` | self-contained briefs for open problems, for handing to agents | end of each session |
 | `docs/enr_cycle/log.md` | append-only log: automatic probe/verify/xwalk lines plus a `SESSION` line per session | `cycle.R` |
 | `docs/crosswalk_todo.md`, `docs/precinct_crosswalks.md` | crosswalk method, per-state results | crosswalk work |
 | `scripts/util/crosswalks/votehub.R` | ENR <-> VoteHub shapefile crosswalks (`input_data/crosswalks/votehub/`) | phase 3 |

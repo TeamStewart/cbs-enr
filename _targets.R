@@ -70,19 +70,13 @@ metadata = enightdata::read_local("metadata.csv", colClasses=list(character=1:4,
 
 create_dirs(metadata)
 
-# office_filter = tibble::tribble(
-#   ~state, ~jurisdiction, ~contest, ~district,
-#   "TX", "tx", "sen_dem", NA,
-#   "TX", "tx", "sen_rep", NA,
-#   "TX", "tx", "gov_dem", NA,
-#   "TX", "tx", "gov_rep", NA,
-#   "TX", "tx", "ag_dem", NA,
-#   "TX", "tx", "ag_rep", NA,
-#   "TX", "tx", "house_dem", 30,
-#   "TX", "tx", "house_rep", 30,
-#   "TX", "tx", "house_dem", 33,
-#   "TX", "tx", "house_rep", 33,
-# )
+# Filter for what to upload to S3
+# In 2026, VoteHub only interested in MI and OH
+office_filter = tibble::tribble(
+  ~state, ~jurisdiction, ~contest, ~district,
+  "MI", "mi", "sen", NA,
+  "OH", "oh", "sen", NA,
+)
 
 office_filter = NULL
 

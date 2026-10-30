@@ -31,7 +31,7 @@ pinal_abbrev = c("STV" = "SAN TAN VALLEY", "CG" = "CASA GRANDE", "FLO" = "FLOREN
                  "MAR" = "MARICOPA", "AJ" = "APACHE JUNCTION")
 
 parse_pct = function(county, x) {
-  x = str_squish(str_to_upper(x))
+  x = str_squish(str_replace_all(str_to_upper(x), "_", " ")) # Mohave ENR "223_Moccasin"
   lead = str_match(x, "^(\\d+)\\s*(?:-\\s*)?(.*)$")   # "0216 NAME", "40 - NAME", "005YORK/SHELDON", "097"
   trail = str_match(x, "^(.*?)\\s*-\\s*(\\d+)$")      # Coconino L2 "BELLEMONT-40"
   pre = str_match(x, "^PRECINCT\\s+(\\d+)$")          # Pima/Yuma frame "PRECINCT 221"

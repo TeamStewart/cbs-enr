@@ -19,7 +19,8 @@ fl_counties = unique(fl_frame$county)
 ## ENR
 # ========================================
 
-# Polling place -> code; sources in docs/crosswalk_todo.md Follow-ups.
+# Polling place -> code; sources in docs/crosswalk_todo.md Results (Gadsden/Levy:
+# county lists; Franklin, Gulf, Jackson, Liberty, Union: VoterFocus directories).
 place_codes = c(
   "GADSDEN|Centenary Church" = "1", "GADSDEN|Havana Public Library" = "2",
   "GADSDEN|Concordia Baptist Church" = "3", "GADSDEN|Everybody's Church" = "4",
@@ -40,7 +41,34 @@ place_codes = c(
   "LEVY|Williston City Hall" = "07", "LEVY|Morriston Baptist Church" = "08",
   "LEVY|Inglis Community Center" = "09", "LEVY|Pine Grove Baptist Church" = "10",
   "LEVY|Miracle Vision Tabernacle" = "11", "LEVY|College of Central Florida" = "12",
-  "LEVY|Tommy Usher Center" = "13"
+  "LEVY|Tommy Usher Center" = "13",
+  "FRANKLIN|Eastpoint" = "01", "FRANKLIN|Alligator Point" = "02",
+  "FRANKLIN|Holy Family Center" = "03", "FRANKLIN|Historic Holy Family" = "04",
+  "FRANKLIN|Carrabelle" = "05", "FRANKLIN|Lanark Village" = "06",
+  "FRANKLIN|St. George Island" = "07", "FRANKLIN|American Legion" = "08",
+  "GULF|Honeyville Community Center" = "1", "GULF|Wewahitchka Public Library" = "2",
+  "GULF|St. Joe Beach Fire Station" = "3", "GULF|Port St Joe Fire Station" = "4",
+  "GULF|Centennial Building" = "5", "GULF|White City Fire Station" = "6",
+  "GULF|Cape San Blas Fire Station" = "7", "GULF|Howard Creek Fire Station" = "8",
+  "GULF|Overstreet Fire Station" = "9", "GULF|Highland View Fire Station" = "10",
+  "JACKSON|Malone Joy Club" = "1", "JACKSON|Campbellton Comm Center" = "2",
+  "JACKSON|Citizens Lodge" = "3", "JACKSON|Alford Comm Ctr" = "4",
+  "JACKSON|Cypress Park" = "5", "JACKSON|Penn Ave Ag Complex" = "6",
+  "JACKSON|Eastside Baptist Church" = "7", "JACKSON|Shady Grove Methodist Ch" = "8",
+  "JACKSON|Grand Ridge Comm Ctr" = "9", "JACKSON|Welcome Assembly of God Ch" = "10",
+  "JACKSON|Sneads City Hall" = "11", "JACKSON|Cottondale First Baptist Ch" = "12",
+  "JACKSON|Greenwood Town Hall" = "13", "JACKSON|Graceville Civic Ctr" = "14",
+  # Liberty 2 and 4 both normally vote at the Annex (L2 names both LAKE MYSTIC);
+  # ENR lists units in precinct order (Rock Bluff, Annex, Bristol, Lake Mystic,
+  # ...), so Annex = 2 and Lake Mystic = 4.
+  "LIBERTY|Rock Bluff" = "1", "LIBERTY|Annex" = "2", "LIBERTY|Bristol" = "3",
+  "LIBERTY|Lake Mystic" = "4", "LIBERTY|Hosford" = "5", "LIBERTY|Telogia" = "6",
+  "LIBERTY|Sumatra" = "7", "LIBERTY|Orange" = "8",
+  # Union: only single-precinct places. The others are sums of 2 frame precincts
+  # and stay NA (strict 1:1): Lake Butler CC 1 = 1A+1B, Raiford CC 2A & = 2A+2B,
+  # Worthington Springs = 3A+3B, SREC 4A & 4C, Lake Butler CC 5 = 5A+5C.
+  "UNION|SREC Building 3C" = "3C", "UNION|Providence Community Center 4B" = "4B",
+  "UNION|Palestine Fire Station 5B" = "5B"
 )
 
 enr_files = Sys.glob(election_path("FL/clean/*_latest.parquet")) |> fs::path_rel(election_path())
@@ -80,7 +108,7 @@ fl = read_enr(enr_files) |>
       county %in% c("NASSAU", "SANTA ROSA", "SUMTER", "WAKULLA") ~ str_extract(precinct, "^[0-9]+"),
       county == "WASHINGTON" ~ as.character(as.integer(str_extract(precinct, "^[0-9]+"))),
       county == "ST JOHNS" ~ str_remove(precinct, "^PCT "),
-      county %in% c("GADSDEN", "LEVY") ~ unname(place_codes[paste(county, precinct, sep = "|")]),
+      county %in% c("GADSDEN", "LEVY", "FRANKLIN", "GULF", "JACKSON", "LIBERTY", "UNION") ~ unname(place_codes[paste(county, precinct, sep = "|")]),
       .default = precinct
     )
   )

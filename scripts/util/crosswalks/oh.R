@@ -3,8 +3,8 @@ source("scripts/util/crosswalks/helpers.R")
 # Build the OH precinct crosswalk (YouGov frame <-> ENR <-> L2).
 # Process and general rules: docs/precinct_crosswalks.md. Reference: nc.R.
 #
-# OH is partial: 26_general ENR exists only for some of the 13 frame counties
-# (Franklin and Stark as of 2026-10-23). L2 matching covers all frame counties.
+# OH is partial: 26_general ENR exists only for some of the 15 frame counties
+# (13 as of 2026-10-30; Lake and Warren have none). L2 matching covers all frame counties.
 # Rerun when new `OH/clean/OH_*_latest.parquet` files land; they are picked up
 # by the glob, but each new county's ENR id format must be checked (see ENR).
 #
@@ -27,6 +27,14 @@ stopifnot(!anyDuplicated(oh_frame_names[c("county", "precinct_yougov")]))
 # Each was checked against the other source: same precinct suffixes on both
 # sides and the same number of precincts per municipality.
 abbr = list(
+  # Butler frame city ids are precinct then ward ("FAIR10WD3" = L2 "FAIRFIELD
+  # CITY 3-10"; FAIR11WD3 and MIDD11WD3 exist, ward 11 does not); ENR uses the
+  # frame form. Frame "OXFORD 1-3" is Oxford city (L2 also has Oxford Twp).
+  BUTLER = c(
+    "^FAIRFIELD CITY (\\d+) (\\d+)$" = "FAIR\\2WD\\1", "^HAMILTON CITY (\\d+) (\\d+)$" = "HAM\\2WD\\1",
+    "^MIDDLETOWN CITY (\\d+) (\\d+)$" = "MIDD\\2WD\\1", "^SHARONVILLE CITY (\\d+)$" = "SHARON\\1",
+    "^OXFORD (\\d+)$" = "OXFORD CITY \\1"
+  ),
   CLARK = c(
     "^BETH\\b" = "BETHEL", "^GERM\\b" = "GERMAN", "^GREE\\b" = "GREEN", "^HARM\\b" = "HARMONY",
     "^MFLD\\b" = "MOOREFIELD", "^MR\\b" = "MAD RIVER", "^PLES\\b" = "PLEASANT",
@@ -36,6 +44,10 @@ abbr = list(
     "^COLS\\b" = "COLUMBUS", "^DUB\\b" = "DUBLIN", "^GAH\\b" = "GAHANNA", "^HILL\\b" = "HILLIARD",
     "^REYNS\\b" = "REYNOLDSBURG", "^UA\\b" = "UPPER ARLINGTON", "^WORTH\\b" = "WORTHINGTON",
     "^CANAL WIN\\b" = "CANAL WINCHESTER", "^GRANDVIEW\\b(?! HEIGHTS)" = "GRANDVIEW HEIGHTS"
+  ),
+  GREENE = c(
+    "^YEL SPG\\b" = "YELLOW SPRINGS", "^SPG VLY\\b" = "SPRING VALLEY", "^JAMESTOWN V\\b" = "JAMESTOWN VLG",
+    "^JEFFERSN TW\\b" = "JEFFERSON TWP"
   ),
   HAMILTON = c("^NO COLL HILL\\b" = "NORTH COLL HILL"),
   SUMMIT = c("^CUY FALLS\\b" = "CUYAHOGA FALLS", "^NFLD CTR\\b" = "NORTHFIELD CENTER")
@@ -81,13 +93,69 @@ fr_keys = oh_frame_names |>
 # Hamilton (Clarity): code + short municipality + precinct ("3206 fr pk f" =
 #   FOREST PARK F); `hamilton_pfx` spells out the municipality. "harr" is
 #   Harrison city for codes 34xx and Harrison Township for 76xx.
+# Hocking (EV): sequence number + name ("04 logan 4").
+# Clark (EV): sequence number + short name ("038 beth 6"). Mad River ("mr",
+#   050-055) and Springfield Twp ("t", 071-078) drop the precinct number;
+#   elsewhere the sequence runs in precinct-number order (carl 028-032 = 1-5),
+#   so these get the rank within the group (MR-1..6, T-1..8; counts match).
+# Butler (EV) and Montgomery (EV): short codes ("liberty2" = LIBERTY TWP 2,
+#   "wc29" = WEST CHESTER TWP 29, "cv-m" = CENTERVILLE-M, "wastwp-a" =
+#   WASHINGTON TWP A); `enr_abbr` spells them out. Per-prefix counts equal the
+#   frame's. Butler ward ids ("fair7wd2") match the frame as is.
+# Greene (EV): precinct number + name ("310 xenia city" = XENIA CITY 310);
+#   matched on the number (unique in the county). Three ENR numbers (041
+#   beavercreek, 157 and 158 sugarcreek) are numberless in the frame; a name
+#   match takes the unique one (BEAVERCREEK). The two SUGARCREEK rows take the
+#   numbers of the L2 precincts they match by registered voters (l2_manual).
+# Cuyahoga, Fulton, Lucas (EV/Clarity/LVT): full names; standardized names match the frame.
 # Any other county: stop until its id format has been checked.
 
 enr_files = fs::path_rel(Sys.glob(election_path("OH/clean/OH_*_latest.parquet")), election_path())
 stopifnot(length(enr_files) > 0)
 
 oh = read_enr(enr_files)
-stopifnot(all(oh$county %in% c("FRANKLIN", "STARK", "SUMMIT", "CARROLL", "HAMILTON")))
+stopifnot(all(oh$county %in% c(
+  "FRANKLIN", "STARK", "SUMMIT", "CARROLL", "HAMILTON",
+  "BUTLER", "CLARK", "CUYAHOGA", "FULTON", "GREENE", "HOCKING", "LUCAS", "MONTGOMERY"
+)))
+
+# ENR-only expansions (L2 spells these out), applied to std_name() output.
+enr_abbr = list(
+  BUTLER = c(
+    "^(?!SHARON)([A-Z]+)(\\d+)$" = "\\1 \\2", # "LIBERTY2" -> "LIBERTY 2"; frame keeps "SHARON1" and ward ids ("FAIR7WD2")
+    "^FFTWP\\b" = "FAIRFIELD TWP", "^HANOVER\\b" = "HANOVER TWP", "^LEMON\\b" = "LEMON TWP",
+    "^LIBERTY\\b" = "LIBERTY TWP", "^MADISON\\b" = "MADISON TWP", "^MILFORD\\b" = "MILFORD TWP",
+    "^MORGAN\\b" = "MORGAN TWP", "^OXTWP\\b" = "OXFORD TWP", "^REILY\\b" = "REILY TWP",
+    "^ROSS\\b" = "ROSS TWP", "^STCLAIR\\b" = "ST CLAIR TWP", "^WAYNE\\b" = "WAYNE TWP",
+    "^WC\\b" = "WEST CHESTER TWP"
+  ),
+  MONTGOMERY = c(
+    "^BRK\\b" = "BROOKVILLE", "^BTLTWP\\b" = "BUTLER TWP", "^CLATWP\\b" = "CLAY TWP", "^CTN\\b" = "CLAYTON",
+    "^CV\\b" = "CENTERVILLE", "^DAY\\b" = "DAYTON", "^ENG\\b" = "ENGLEWOOD", "^FARM\\b" = "FARMERSVILLE",
+    "^GERTWP\\b" = "GERMAN TWP", "^GTN\\b" = "GERMANTOWN", "^HARTWP\\b" = "HARRISON TWP",
+    "^HUB\\b" = "HUBER HEIGHTS", "^JAKTWP\\b" = "JACKSON TWP", "^JEFTWP\\b" = "JEFFERSON TWP",
+    "^JNLB\\b" = "JACK NEW LEBANON", "^KT\\b" = "KETTERING", "^MBG\\b" = "MIAMISBURG", "^MIATWP\\b" = "MIAMI TWP",
+    "^MOR\\b" = "MORAINE", "^OAK\\b" = "OAKWOOD", "^PERTWP\\b" = "PERRY TWP", "^PHBG\\b" = "PHILLIPSBURG",
+    "^PM\\b" = "PAGE MANOR", "^PNLB\\b" = "PER NEW LEBANON", "^RV\\b" = "RIVERSIDE", "^TR\\b" = "TROTWOOD",
+    "^UN\\b" = "UNION", "^VD\\b" = "VANDALIA", "^WASTWP\\b" = "WASHINGTON TWP", "^WCR\\b" = "W CARROLLTON"
+  )
+)
+enr_expand = function(county, x) {
+  x = std_name(x)
+  for (cty in names(enr_abbr)) {
+    i = county == cty
+    x[i] = str_replace_all(x[i], enr_abbr[[cty]])
+  }
+  x
+}
+
+clark_name = function(x) {
+  seq = as.integer(str_extract(x, "^\\d+"))
+  name = str_remove(x, "^\\d+ ")
+  bare = name %in% c("mr", "t")
+  rank = ave(seq, name, FUN = rank)
+  if_else(bare, paste(name, rank), name)
+}
 
 hamilton_pfx = c(
   addy = "ADDYSTON", amber = "AMBERLEY", and = "ANDERSON", arln = "ARLINGTON HGTS", blue = "BLUE ASH",
@@ -128,17 +196,39 @@ enr_keys = oh |>
       county == "SUMMIT" ~ str_remove(precinct, "^\\d+ "),
       county == "CARROLL" ~ str_remove(precinct, " \\d+$"),
       county == "HAMILTON" ~ hamilton_name(precinct),
+      county %in% c("HOCKING", "GREENE") ~ str_remove(precinct, "^\\d+ "),
+      county == "CLARK" ~ clark_name(precinct),
+      county %in% names(enr_abbr) ~ enr_expand(county, precinct),
       .default = precinct
     ),
     n_l2 = NA_integer_, precinct_l2 = precinct_enr,
-    k_std = oh_std(county, name), k_type = drop_type(k_std)
+    k_raw = str_to_upper(name), k_std = oh_std(county, name), k_type = drop_type(k_std),
+    k_num = if_else(county == "GREENE", as.character(as.integer(str_extract(precinct, "^\\d+"))), NA_character_)
   )
 print(filter(enr_keys, is.na(name)))
 
+# Greene: precinct number keys; the bare name only for frame rows without a number
+fr_keys = fr_keys |>
+  mutate(
+    k_num = case_when(
+      county != "GREENE" ~ NA_character_,
+      # numberless SUGARCREEK rows: numbers from the L2 match by size (l2_manual)
+      precinct_yougov == "29AJH" ~ "157",
+      precinct_yougov == "29AJI" ~ "158",
+      .default = str_extract(k_std, "(?<= )\\d+$")
+    ),
+    k_bare = if_else(county == "GREENE" & is.na(k_num), k_std, NA_character_)
+  )
+enr_keys = enr_keys |>
+  mutate(k_bare = if_else(county == "GREENE" & !k_num %in% fr_keys$k_num[fr_keys$county == "GREENE"], k_std, NA_character_))
+
 enr_tiers = tribble(
-  ~rule,       ~l2_key,  ~fr_key,
-  "name_std",  "k_std",  "k_std",
-  "name_type", "k_type", "k_type"
+  ~rule,        ~l2_key,  ~fr_key,
+  "name_exact", "k_raw",  "k_raw",  # Hocking "WARD" (std_name drops WARD)
+  "name_std",   "k_std",  "k_std",
+  "name_type",  "k_type", "k_type",
+  "greene_num", "k_num",  "k_num",
+  "greene_bare", "k_bare", "k_bare"
 )
 enr_matched = match_tiers(enr_keys, fr_keys, enr_tiers)
 print(count(enr_matched, county, l2_rule))
@@ -169,6 +259,9 @@ oh_l2 = enightdata::read_local(Sys.glob(election_path("input_data/l2/oh_*_precin
 # municipality, ratio in the normal range.
 l2_manual = tribble(
   ~county,      ~precinct_l2,                 ~precinct_yougov, # frame name; n_l2 / n_frame
+  "GREENE",     "BEAVERCREEK 041",            "29AJG",          # BEAVERCREEK (numberless); 857 / 822
+  "GREENE",     "SUGARCREEK 157",             "29AJH",          # SUGARCREEK (numberless); 262 / 248 (other: 596)
+  "GREENE",     "SUGARCREEK 158",             "29AJI",          # SUGARCREEK (numberless); 630 / 596 (other: 248)
   "LAKE",       "MENTOR-ON-THE-LAKE CITY DD", "43ACJ",          # MENTOR-ON-THE-LAKE CITY 4A; 1261 / 1134
   "LUCAS",      "RICHFIELD",                  "48ASK",          # RICHFIELD 1; 1200 / 1118
   "MONTGOMERY", "P/NEW LEB A",                "57AWO",          # PER/NEW LEBANON; 737 / 622

@@ -3,7 +3,7 @@ source("scripts/util/crosswalks/helpers.R")
 # Build the CA precinct crosswalk (YouGov frame <-> ENR <-> L2).
 # Process and general rules: docs/precinct_crosswalks.md. Reference state: nc.R.
 #
-# CA is partial: as of 2026-10-15 only San Diego has 26_general ENR data. L2 is
+# CA is partial: only some frame counties have 26_general ENR data. L2 is
 # matched for all 17 frame counties, since it does not depend on ENR.
 #
 # In CA the frame "names" (precinct26_name) are just the codes, so every L2 match
@@ -44,7 +44,13 @@ stopifnot(length(enr_files) > 0)
 # n (11,043 vs 11,040; ratios 0.67-1.11), so they are single precincts and join 1:1.
 # San Francisco ENR is "pct 1101" or "pct 1103 mb" (mail-ballot precinct), 1:1
 # with frame "1101"; ENR 9901-9904 have no frame row.
-ca_consolidated = c("SAN DIEGO", "SOLANO")
+# Riverside (1,206 ENR vs 3,433 frame) and Nevada (105 "CP001-C3A1S1-B23" vs 386)
+# also report consolidations: only 969 Riverside ENR ids are frame bases, and the
+# other 2,464 frame bases (64% of voters) have none, so joining on the id attached
+# each consolidation to its namesake member. Both stay NA here; membership comes
+# from a spatial join (SWDB MPREC x VoteHub CA26G) in ca_riverside_consolidated.R
+# and ca_nevada_consolidated.R.
+ca_consolidated = c("SAN DIEGO", "SOLANO", "RIVERSIDE", "NEVADA")
 
 ca_enr = read_enr(enr_files) |>
   mutate(precinct = case_when(

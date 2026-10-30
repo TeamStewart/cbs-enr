@@ -104,18 +104,18 @@ counties) and TX (Kaufman, Wood). NY also has Columbia but is not in the frame.
 |---|---|---|---|---|---|
 | NC | 100 (all) | 3,539 rows | nc_20261006 | `01`, `PR24`, `01-01` | done 2026-10-15 |
 | AK | 30 (all) | 402 | ak_20261008 | `748`, `002` (frame_name `DD-PPP`) | done 2026-10-15 |
-| AZ | 9 | 1,545 | az_20260901 | `0009`, `0133` | partial 2026-10-23 (ENR: Cochise, Maricopa; L2 all 9 counties) |
-| CA | 17 | 26,682 rows | ca_20260901 | `47252`, `1204` | partial 2026-10-27 (L2 all counties; ENR San Francisco, Sonoma singletons, Ventura; San Diego and Solano consolidated builds; Sonoma `07` consolidations NA) |
-| FL | 65 | 6,252 rows | fl_20261011 | `8735`, `127` | partial 2026-10-27 (ENR: 34 frame counties incl. Osceola; Franklin, Gulf, Jackson, Liberty NA; see Results) |
-| GA | 159 (all) | 2,581 (2,618 rows) | ga_20261006 | `CP04A`, `029` | done 2026-10-25 |
+| AZ | 9 | 1,545 | az_20260901 | `0009`, `0133` | partial 2026-10-30 (ENR: Cochise, Maricopa, Mohave, Navajo, Pinal; L2 all 9 counties) |
+| CA | 17 | 29,961 rows | ca_20260901 | `47252`, `1204` | partial 2026-10-30 (L2 all counties; ENR San Francisco, Sonoma singletons, Ventura; San Diego, Solano, Riverside and Nevada NA with consolidated builds; Sonoma `07` consolidations NA) |
+| FL | 65 | 6,252 rows | fl_20261011 | `8735`, `127` | partial 2026-10-30 (ENR: 39 frame counties incl. Osceola, Franklin, Gulf, Jackson, Liberty, Union; Union 3/13, rest are combined places; see Results) |
+| GA | 159 (all) | 2,616 rows | ga_20261006 | `CP04A`, `029` | done 2026-10-30 |
 | IA | 99 (all) | 1,658 | ia_20260901 | `DOWS`, `FC2` (name-like) | waiting |
-| MI | 73 | 3,722 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-27 (ENR: Berrien, Branch, Clare, Emmet, Genesee, Gratiot, Ingham, Iosco, Isabella, Kalamazoo, Kent, Macomb, Monroe, Newaygo, Oakland, Osceola, Ottawa, Roscommon, Saginaw, Shiawassee, St. Clair, St. Joseph, Van Buren, Wayne) |
+| MI | 73 | 3,722 rows (keyed on `precinct26_code`) | mi_20260929 | `MI_KENT_ADA TOWNSHIP_001` | partial 2026-10-27 (ENR: Berrien, Branch, Clare, Delta, Emmet, Genesee, Gratiot, Ingham, Iosco, Isabella, Kalamazoo, Kent, Lake, Macomb, Midland, Monroe, Newaygo, Oakland, Osceola, Ottawa, Roscommon, Saginaw, Shiawassee, St. Clair, St. Joseph, Van Buren, Wayne) |
 | MN | 87 (all) | 4,080 | mn_20261009 | `0115`, `0005` | done 2026-10-27 |
 | NE | 93 (all) | 1,321 | ne_20261002 | `03`, `16` | done 2026-10-23 |
 | NM | 33 (all) | 2,203 | nm_20260914 | `034`, `012` | waiting |
-| OH | 13 | 4,535 rows | oh_20260929 | `83AHA`, `31BLU` | partial 2026-10-27 (ENR: Carroll, Franklin, Hamilton, Stark, Summit; L2 all counties) |
-| PA | 20 | 6,378 rows | pa_20260911 | `2403`, `1680100`, `011905S` | partial 2026-10-27 (ENR: Allegheny, Chester, Dauphin, Delaware, Erie, Philadelphia, Washington; L2 all 20 counties incl. Northampton) |
-| TX | 71 | 10,840 rows | tx_20261011 | `2305`, `4608` | partial 2026-10-27 (ENR: Bastrop, Bexar, Denton, El Paso, Galveston, Hardin, Harris, Kaufman, Lamar, Parker, Rusk, Victoria, Wood; L2 94.8%, see Results) |
+| OH | 15 | 5,052 rows | oh_20260929 | `83AHA`, `31BLU` | partial 2026-10-30 (ENR: 13 counties, not Lake, Warren; L2 all counties) |
+| PA | 20 | 6,492 rows | pa_20260911 | `2403`, `1680100`, `011905S` | partial 2026-10-30 (ENR: Allegheny, Chester, Dauphin, Delaware, Erie, Philadelphia, Washington; L2 all 20 counties incl. Northampton) |
+| TX | 71 | 10,851 rows | tx_20261011 | `2305`, `4608` | partial 2026-10-30 (ENR: Bastrop, Bexar, Denton, El Paso, Ellis, Galveston, Hardin, Harris, Hood, Jefferson, Kaufman, Lamar, Parker, Reeves, Rockwall, Rusk, Victoria, Wood; L2 94.7%, see Results) |
 | VA | 133 (all) | 2,538 rows | va_20261006 | `0206`, `0412` | done 2026-10-25 |
 | WA | 4 | 167 | wa_20260917 | `0001` | waiting |
 
@@ -136,6 +136,59 @@ some counties only; list them in Results. `done` means built.
 > Results entry in `docs/crosswalk_todo.md`.
 
 ## Results
+
+Rerun of 2026-10-30 (ENR cycle). `sync` rebuilt the frame on 10-28 after the
+new-jurisdiction rows were appended, so CA (26,682 -> 29,961 rows), OH (4,535
+-> 5,052), PA (6,378 -> 6,492), TX (10,840 -> 10,851) and GA (2,618 -> 2,616)
+were out of step; those plus AZ, FL and MI (new clean files) were rerun.
+
+- OH: ENR 4,626/5,052 (91.6%), up from 2,323; L2 5,050/5,052 (99.96%). `oh.R` now takes Butler,
+  Clark, Cuyahoga, Fulton (29/29, names match), Greene, Hocking, Lucas and Montgomery (all 1:1 counts with
+  the frame): `enr_abbr` (ENR-only) expands the Butler and Montgomery short
+  codes; Clark strips the sequence number and numbers the bare `mr`/`t` rows by
+  sequence rank; Hocking strips the sequence number; Greene matches on the
+  precinct number (`greene_num`), plus a unique bare-name tier (BEAVERCREEK).
+  Every new county is 100%. Lake and Warren have no ENR. L2 for Butler went
+  61.4% -> 100% and Greene 89.1% -> 100% (later pass, 2026-10-30): Butler city
+  frame ids are precinct then ward (`FAIR10WD3` = L2 `FAIRFIELD CITY 3-10`;
+  also HAM, MIDD, SHARON, numberless OXFORD 1-3) and Greene frame names
+  abbreviate (`YEL SPG VLG`, `SPG VLY TWP`, `JEFFERSN TW`, `JAMESTOWN V`), both
+  via `abbr`; n_l2/n_frame 1.03-1.44. The three numberless Greene frame rows
+  (BEAVERCREEK, two SUGARCREEK) are `l2_manual` rows matched by registered
+  voters (262/248 and 630/596), and the two SUGARCREEK rows take those L2
+  precinct numbers for ENR (157/158 sugarcreek). The only L2 gaps left are
+  Summit AKRON 1-I and 3-I (no L2 row). No other county changed.
+- AZ: ENR 1,172/1,545 (75.9%). Mohave 24/24 (`parse_pct` reads `_` as a
+  separator, "223_Moccasin"), Pinal 133/135, Navajo 17/17.
+- TX: ENR 4,307/10,851 (39.7%), L2 94.7%. Jefferson 131/133 (Clarity 127579). Ellis 115/115 (drops the shared
+  polling-place suffix, "1001-501"), Rockwall 52/52, Reeves 9/11; Hood 12/31
+  rows (split units "101 - GCTY_GISD" are sums, NA by the Wood rule).
+- MI: ENR 2,536/3,722 (68.1%). Delta 21/21, Lake 15/15, Midland 33/33.
+- CA: ENR 1,853/29,961 (6.2%), down from 3,000: Riverside is now NA in
+  `ca.csv`. Its 1,206 ENR ids are consolidations: only 969 are frame bases, and
+  the other 2,464 frame bases (914k of 1.43M voters) have no ENR id, so the
+  1,147 id matches joined consolidations to their namesake member. Riverside
+  and Nevada (105 "CP001-C3A1S1-B23" vs 386 bases, 0/387 before) are in
+  `ca_consolidated` and get consolidated builds, `ca_riverside_consolidated.R`
+  and `ca_nevada_consolidated.R` (run after `ca.R`). No county member list was
+  found (both are vote-center counties), so membership is spatial: Statewide
+  Database 2026 primary MPREC base polygons (`input_data/swdb/`) go to the
+  VoteHub CA26G consolidation with the largest area share (Riverside namesakes
+  go to their own consolidation). Voter-weighted area share is 0.99 in both.
+  `use` = cd_ok and geo_ok (no member split below 0.75 area share): Riverside
+  951/970 consolidations with frame voters, 97.8% of frame voters; Nevada
+  86/90, 92.5%. Recheck on real results (ballots <= n per consolidation).
+- FL: ENR 3,072/6,252 (49.1%), up from 3,029. `place_codes` now covers
+  Franklin 8/8, Gulf 10/10, Jackson 14/14, Liberty 8/8 and Union 3/13, from the
+  VoterFocus precinct directories (voterfocus.com/PrecinctFinder/precinctDirectory?county=FL-UNI,
+  -FRA, -GUL, -JAC, -LIB; one polling place per precinct). Liberty 2 and 4 both
+  normally vote at the Annex; ENR lists units in precinct order (Annex second,
+  Lake Mystic fourth), so Annex = 2, Lake Mystic = 4. Union ENR has 8 units for
+  13 precincts: only 3C, 4B and 5B are single-precinct places; Lake Butler CC 1
+  (1A+1B), Raiford CC 2A & (2A+2B), Worthington Springs (3A+3B), SREC 4A & 4C
+  and Lake Butler CC 5 (5A+5C) are sums and stay NA.
+- PA 4,101/6,492 (new frame counties have no ENR), GA 2,592/2,616: reruns on the
+  new frame, no rule changes.
 
 Rerun of 2026-10-27 (ENR cycle). The voter-file frame moved to
 `vf_frame_current_202610` (the 202609 folder is gone; `create_frame.R` reads

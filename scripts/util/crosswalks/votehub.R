@@ -133,6 +133,40 @@ state_keys = function(st, enr) {
   }
   if (!"enr_name" %in% names(enr)) enr$enr_name = NA_character_
   if (!"id_label" %in% names(enr)) enr$id_label = enr$precinct_enr
+  if (st == "CA") {
+    enr = mutate(enr, id_label = case_when(
+      county == county_key("CA", "Riverside") ~ str_replace(precinct_enr, "^(\\d{3})(\\d{3})$", "\\1-\\2"), # "101100" = VH "101-100"
+      county == county_key("CA", "Nevada") ~ str_extract(precinct_enr, "^CP\\d+"),               # "CP001-C3A1S1-B23" = VH "CP001"
+      .default = id_label
+    ))
+  }
+  if (st == "OH") {
+    # Lucas "toledo 14a" = "City of Toledo 14 Precinct A" (alt_mi)
+    # Montgomery short codes, from enr_abbr$MONTGOMERY in oh.R in VoteHub spelling (TWP
+    # = TOWNSHIP, "JACKSON TOWNSHIP_NEW LEBANON"): "cv-m" = "CENTERVILLE M"
+    # Clark bare "050 mr" / "071 t" (no precinct number) = VoteHub "MR-1" /
+    # "T-1": numbered by sequence rank within the group, as in oh.R clark_name()
+    oh_montgomery = c(
+      "^BRK\\b" = "BROOKVILLE", "^BTLTWP\\b" = "BUTLER TOWNSHIP", "^CLATWP\\b" = "CLAY TOWNSHIP", "^CTN\\b" = "CLAYTON",
+      "^CV\\b" = "CENTERVILLE", "^DAY\\b" = "DAYTON", "^ENG\\b" = "ENGLEWOOD", "^FARM\\b" = "FARMERSVILLE",
+      "^GERTWP\\b" = "GERMAN TOWNSHIP", "^GTN\\b" = "GERMANTOWN", "^HARTWP\\b" = "HARRISON TOWNSHIP",
+      "^HUB\\b" = "HUBER HEIGHTS", "^JAKTWP\\b" = "JACKSON TOWNSHIP", "^JEFTWP\\b" = "JEFFERSON TOWNSHIP",
+      "^JNLB\\b" = "JACKSON TOWNSHIP_NEW LEBANON", "^KT\\b" = "KETTERING", "^MBG\\b" = "MIAMISBURG", "^MIATWP\\b" = "MIAMI TOWNSHIP",
+      "^MOR\\b" = "MORAINE", "^OAK\\b" = "OAKWOOD", "^PERTWP\\b" = "PERRY TOWNSHIP", "^PHBG\\b" = "PHILLIPSBURG",
+      "^PM\\b" = "PAGE MANOR", "^PNLB\\b" = "PERRY TOWNSHIP_NEW LEBANON", "^RV\\b" = "RIVERSIDE", "^TR\\b" = "TROTWOOD",
+      "^UN\\b" = "UNION", "^VD\\b" = "VANDALIA", "^WASTWP\\b" = "WASHINGTON TOWNSHIP", "^WCR\\b" = "WEST CARROLLTON"
+    )
+    clark = enr$county == county_key("OH", "Clark")
+    clark_seq = as.integer(str_extract(enr$precinct_enr, "^\\d+"))
+    clark_grp = if_else(clark, str_remove(enr$precinct_enr, "^\\d+ "), NA_character_)
+    clark_rank = ave(coalesce(clark_seq, 0L), coalesce(clark_grp, ""), FUN = rank)
+    enr = mutate(enr, enr_name = case_when(
+      county == county_key("OH", "Lucas") ~ str_replace_all(precinct_enr, "(?<=\\d)(?=[a-z])", " "),
+      county == county_key("OH", "Montgomery") ~ str_replace_all(std_name(precinct_enr), oh_montgomery),
+      clark & clark_grp %in% c("mr", "t") ~ paste(clark_grp, clark_rank),
+      .default = enr_name
+    ))
+  }
   enr
 }
 
@@ -163,7 +197,8 @@ tiers = tribble(
   "alt_codenum", "a_num",  "c_num",
   "alt_pnum",    "a_pnum", "n_pnum",
   "alt_lead",    "a_lead", "n_lead",
-  "alt_bag",     "a_bag",  "n_bag"
+  "alt_bag",     "a_bag",  "n_bag",
+  "alt_mi",      "a_mi",   "n_mi"
 )
 
 build_state = function(st) {

@@ -29,11 +29,14 @@ pad4 = function(x) if_else(str_detect(x, "^[0-9A-Z]{1,4}$"), str_pad(x, 4, pad =
 # Galveston labels every unit with its ballot style ("137 - BS1", "142 - BS2"):
 # a precinct with a single unit is 1:1 with the frame; one with several units
 # (a sum) stays NA, as in Wood.
+# Ellis appends a shared polling-place code with no spaces ("1001-501"); the
+# base precinct ids are unique, so the suffix is dropped.
 
 enr_files = fs::path_rel(Sys.glob(election_path("TX/clean/*_latest.parquet")), election_path())
 stopifnot(length(enr_files) > 0)
 
 tx = read_enr(enr_files) |>
+  mutate(precinct = if_else(county == "ELLIS", str_remove(precinct, "-\\d+$"), precinct)) |>
   mutate(base = coalesce(str_match(precinct, "^(\\S+) - .+$")[, 2], precinct)) |>
   mutate(split = n() > 1, .by = c(county, base)) |>
   mutate(precinct = if_else(split, NA_character_, pad4(base))) |>

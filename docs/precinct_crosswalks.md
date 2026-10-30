@@ -101,7 +101,7 @@ Reference implementation: `scripts/util/crosswalks/nc.R` (NC); shared code in `s
 
 ## Logged exception: San Diego consolidated precincts (2026-10-15)
 
-San Diego and Solano (below) are the **only** places where the frame is aggregated to match ENR. This
+San Diego, Solano, Riverside and Nevada (below) are the **only** places where the frame is aggregated to match ENR. This
 breaks rule 3 on purpose, and only in the separate files listed below.
 `ca.csv` itself stays strictly 1:1, and San Diego ENR stays NA there.
 
@@ -165,4 +165,32 @@ Same exception as San Diego, built the same way. `ca.csv` keeps Solano ENR NA.
 - **Sonoma is not built this way.** Its 331 `07xxxxx` consolidations are
   numbered separately from base precincts, so there is no namesake to range
   over. It needs the ROV's membership list (see `crosswalk_todo.md`).
+
+## Logged exception: Riverside and Nevada consolidated precincts (2026-10-30)
+
+Same exception as San Diego and Solano. `ca.csv` keeps both counties' ENR NA.
+
+- **Why:** Riverside ENR (LVT) reports 1,206 consolidations over 3,433 frame
+  base precincts. Only 969 ENR ids are frame base codes, and the 2,464 bases
+  that aren't hold 914k of 1.43M frame voters, so the earlier 1:1 match joined
+  each consolidation to its namesake base. Nevada ENR (Clarity) reports 105
+  consolidations (`CP001-C3A1S1-B23`) over 386 base precincts.
+- **Scripts:** `scripts/util/crosswalks/ca_riverside_consolidated.R` and
+  `ca_nevada_consolidated.R`. Run them after `ca.R`.
+- **Outputs** (in `input_data/crosswalks/`): `ca_{riverside,nevada}_members.csv`
+  and `ca_{riverside,nevada}_frame_consolidated.csv`, laid out like the San
+  Diego files.
+- **Membership is inferred, not official.** Both counties use vote centers and
+  publish no consolidation list.
+  - Rule: spatial. Each base precinct (Statewide Database 2026 primary base
+    polygons, `input_data/swdb/`) goes to the VoteHub `CA26G` consolidation
+    covering most of its area. A Riverside base whose code is an ENR id goes
+    to its own consolidation (1,200 of 1,201 would anyway). Voter-weighted
+    area share is 0.99 in both counties.
+  - `use` requires the house district to agree and no member base split below
+    75% area. Bases redrawn after the primary (e.g. Riverside 104120, 104124)
+    fail this.
+- **Results:** Riverside 951/970 consolidations with members usable (97.8% of
+  frame voters); Nevada 86/90 (92.5%).
+- **Recheck on real results**, as for San Diego.
 
