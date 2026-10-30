@@ -95,6 +95,12 @@ sim_frac_at = function(sim, time) {
 #' precincts never report. `stage` is precinct-level, as a feed reports it: 6 when every
 #' method is fully counted, 4 when anything is in, else 0.
 #'
+#' By default the returns look like the live feed's: `get_data()` (scripts/functions.R)
+#' rewrites stage 6 to 5 unless `trust_stage`, so on the night `complete` is never TRUE
+#' and the models fall back to `turnout_done()`. Here stage 6 becomes 5 and `complete` and
+#' `frac` are dropped the same way. SIM_TRUST_COMPLETE=1 (or `trust_complete = TRUE`) keeps
+#' the sim's exact completion instead, as a feed with a trustworthy stage 6 would give.
+#'
 #' @param sim `read_sim()` list.
 #' @param race_id The sim's contest (e.g. "gov").
 #' @param time POSIXct checkpoint.
@@ -102,8 +108,17 @@ sim_frac_at = function(sim, time) {
 #' @param round_by "candidate" (default) rounds each candidate's counted votes, as a real
 #'   feed reports them; "party" sums dem / rep / third party first, then rounds. They differ
 #'   by at most 1 vote per cell, and only when a party has more than one candidate.
-#' @return Standard returns (file header), with `frac` the share of the cell counted.
-returns_from_sim = function(sim, race_id, time, geos = NULL, round_by = c("candidate", "party")) {
+#' @param trust_complete Keep the sim's stage 6 and `complete` (see above).
+#' @return Standard returns (file header), with `frac` the share of the cell counted (NA
+#'   unless `trust_complete`).
+returns_from_sim = function(
+  sim,
+  race_id,
+  time,
+  geos = NULL,
+  round_by = c("candidate", "party"),
+  trust_complete = Sys.getenv("SIM_TRUST_COMPLETE", unset = "0") == "1"
+) {
   round_by = match.arg(round_by)
   tr = filter(sim$truth, contest == race_id)
   if (!is.null(geos)) {
@@ -135,9 +150,9 @@ returns_from_sim = function(sim, race_id, time, geos = NULL, round_by = c("candi
       candidate,
       party,
       votes = round(votes * frac),
-      stage,
-      complete = frac >= 1,
-      frac,
+      stage = if (trust_complete) stage else pmin(stage, 5L),
+      complete = trust_complete & frac >= 1,
+      frac = if (trust_complete) frac else NA_real_,
       time = time
     )
 }
@@ -547,4 +562,33 @@ cell_counts = function(cells, returns) {
       complete = coalesce(complete, FALSE),
       c_tot = c_dem + c_rep + c_oth
     )
+}
+
+# Fallback turnout-completeness test: a cell counts as counted out once its votes reach
+# COMPLETE_FRAC x its expected votes. The same env var and default as the medsl model
+# (medsl/model_turnout.R, where the threshold is measured and the 0.6 sweep is written up).
+CELL_COMPLETE_FRAC = as.numeric(Sys.getenv("COMPLETE_FRAC", unset = "0.6"))
+
+#' Cells counted out, for the turnout fits
+#'
+#' The feed's `complete` when it carries information, else the COMPLETE_FRAC ratio test, as
+#' `complete_usable()` does for medsl_sur. A `complete` column that is never TRUE is the
+#' production state (`get_data()` rewrites stage 6 to 5 unless `trust_stage`), and taken
+#' at face value it leaves every turnout fit with no rows, so turnout is the prior all
+#' night. The flag is trusted once it is TRUE for any cell of the race, or always with
+#' COMPLETE_TRUST=1.
+#'
+#' Only for FITTING turnout. A cell admitted by the ratio test may still be counting, so
+#' callers pin a cell's final votes at its count only when `counts$complete` is TRUE.
+#' Admitting a cell at counted fraction g biases its log turnout ratio down by at most
+#' log(COMPLETE_FRAC).
+#'
+#' @param counts `cell_counts()` output.
+#' @param exp_votes Expected votes per cell, in the same order.
+#' @return Logical per cell.
+turnout_done = function(counts, exp_votes) {
+  if (any(counts$complete) || Sys.getenv("COMPLETE_TRUST", unset = "0") == "1") {
+    return(counts$complete & counts$c_tot > 0)
+  }
+  counts$c_tot > 0 & counts$c_tot >= CELL_COMPLETE_FRAC * exp_votes
 }

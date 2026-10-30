@@ -8,6 +8,8 @@
 ##   1. swing     y_c = d_c / (d_c + r_c) - D_p  =  a_k + g_m + e_c
 ##                WLS on reporting cells, weights E_c:  feols(y ~ 1 | county + method)
 ##   2. turnout   l_c = log(t_c / E_c), on complete cells only, PER METHOD m, nested
+##                (complete for this fit: turnout_done(), returns.R -- the feed's flag, or
+##                t_c >= COMPLETE_FRAC * E_c when the feed never sets it)
 ##                state -> congressional district -> county (swing_turnout_predict()):
 ##                  l_c = mu_m + delta_{district,m} + delta_{county,m}
 ##                mu_m = E-weighted mean over the method's complete cells; each district's
@@ -143,9 +145,11 @@ swing_once = function(d, cw, x = character()) {
   w = d$exp_votes * cw[d$county]
   w[is.na(w)] = 0
   rep_cell = d$c_dem + d$c_rep > 0
+  # pinned at its count only when the feed says so; the turnout fit also takes cells the
+  # COMPLETE_FRAC fallback admits when the feed's flag is empty (turnout_done(), returns.R)
   done = rep_cell & d$complete
   sw = swing_fe_predict(d, "y", rep_cell, w, x)
-  lr = swing_turnout_predict(d, done, w, x)
+  lr = swing_turnout_predict(d, rep_cell & d$fit_turn, w, x)
   tot = if_else(done, d$c_tot, pmax(d$c_tot, d$exp_votes * exp(lr)))
   s = pmin(pmax(d$dem2 + sw, 0.001), 0.999)
   rem2 = (tot - d$c_tot) * (1 - d$oth)
@@ -189,7 +193,7 @@ fit_swing = function(
     select(cells, geo, method, county, dem2, oth, exp_votes),
     select(counts, c_dem, c_rep, c_oth, c_tot, complete)
   ) |>
-    mutate(cd = cell_cd(cells, returns$state[1])) |>
+    mutate(cd = cell_cd(cells, returns$state[1]), fit_turn = turnout_done(counts, cells$exp_votes)) |>
     mutate(y = c_dem / pmax(c_dem + c_rep, 1) - dem2, lr = log(pmax(c_tot, 0.5) / exp_votes))
   X = if (demo == "ratio") {
     matrix(numeric(), nrow(d), 0)

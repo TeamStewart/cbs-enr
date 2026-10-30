@@ -214,7 +214,8 @@ re_shrink = function(r, w, g, mu = NULL, weights = c("analytic", "precision")) {
 #' @param state Two-letter state code.
 #' @return Numeric multiplier per cell.
 district_turnout_adjust = function(cells, counts, state) {
-  done = counts$complete & counts$c_tot > 0
+  # counted out: the feed's flag, or the COMPLETE_FRAC fallback (turnout_done(), returns.R)
+  done = turnout_done(counts, cells$exp_votes)
   out = rep(1, nrow(cells))
   if (!any(done)) {
     return(out)
