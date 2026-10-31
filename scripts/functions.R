@@ -2,6 +2,7 @@ source("scripts/util/utils.R")
 source("scripts/util/globals.R")
 source("scripts/models.R")
 source("scripts/plotters.R")
+source("scripts/util/full_join.R")
 
 get_timestamp <- function(state, county, path) {
 

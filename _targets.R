@@ -119,6 +119,21 @@ map_single = tar_map(
   names = c(state, county)
 )
 
+# fully joined files for the team: per state, every contest in the clean *_latest.parquet
+# files joined to L2 precinct covariates through the crosswalks, written to
+# 26_general/full/{ST}_latest_full.parquet (scripts/util/full_join.R). Reruns when the
+# state's scrapes (`feed`), its crosswalk, or its L2 file change.
+data_names = vapply(map_single[["data"]], \(t) t$settings$name, "")
+full_values = tibble::tibble(ST = sort(unique(metadata$state))) |>
+  dplyr::mutate(feed = purrr::map(ST, \(s) as.call(c(as.symbol("list"), rlang::syms(grep(paste0("^data_", s, "_"), data_names, value = TRUE))))))
+
+map_full = tar_map(
+  full_values,
+  names = "ST",
+  tar_target(full_files, l2_map_files(ST), format = "file"),
+  tar_target(full, build_full(ST, full_inputs(ST, metadata), feed, full_files), format = "file")
+)
+
 # election-night models: per state in priors.csv (or the MODEL_SIM state), each waiting
 # only on that state's scrapes; within a state, one branch per race x model
 # (scripts/model_targets.R). `feed` is the state's scrape summaries, for ordering; a sim
@@ -138,6 +153,7 @@ map_models = tar_map(
 
 list(
   map_single,
+  map_full,
   map_models,
   # dashboard: contests shown are set by DASHBOARD_CONTESTS in scripts/util/globals.R
   # which models run: the run = TRUE rows of model_config.csv, on the real returns unless
