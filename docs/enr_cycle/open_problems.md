@@ -74,13 +74,15 @@ IA, OH Carroll, FL Franklin) and GA L2 except Burke. Left:
 |---|---|---|---|---|
 | CA | l2 | Nevada, Riverside, San Diego, Solano, Ventura | 5,934 | first four: L2 comes through the consolidated members files (full files and model prep read them; `match_rates.R` doesn't). Ventura: L2's `precinct` is another scheme ("CALLEGUAS 5-001", 1,148 units) with no link to ENR's 7-digit codes, and no newer L2 exists. Accepted. |
 | GA | l2 | Burke | 12 | renumbered for 2026; L2 (10-06) has the old numbers. Needs a newer Burke L2 pull. |
-| IA | l2 (direct) | 27 counties (Adair, Allamakee, Audubon, Harrison, Johnson, Lee, Scott, ...) | 383 | direct names don't match; many need `vh_manual`-style pairs (see `votehub.R`). Overlaps problem 5. |
 | NY | l2 (direct) | Chemung, Clinton, Madison, Ontario, Orange, Putnam, Sullivan, Ulster | 967 | not yet inspected |
 | WI | l2 (direct) | Barron, Dane, Oneida | 340 | not yet inspected |
 
 Also NA by choice in VoteHub: NE Howard (Boelus, Cushing, Farwell vs Loup
 Fork, Posen, Spring Creek) and NE Webster's two Red Cloud precincts. The
 pairing is unknown.
+IA L2 is 1,638 of 1,666 ENR precincts since `ia.R` (10-31); the other 28 are
+NA by design (Mahaska polling-place acronyms, Muscatine city/township pieces,
+Warren and Johnson merges, Plymouth polling-place names; see `ia.R`).
 
 For L2 gaps in states with no frame crosswalk, add county rules or hand pairs to
 `l2_direct.R`. For frame counties, add a rule in `scripts/util/crosswalks/{st}.R`
@@ -93,40 +95,7 @@ For L2 gaps in states with no frame crosswalk, add county rules or hand pairs to
    ids, the model inputs didn't.
 2. `l2_direct.R {ST}`, then `match_rates.R --write`, and update this table.
 
-### 5. IA: frame ids have no names
-
-For the full files this is partly moot: `l2_direct.R` gives 940 of 1,666 IA
-ENR precincts an L2 id (10-31) without the frame. The model still needs it.
-
-IA ENR (statewide Clarity, `IA/clean/IA_latest.parquet`, 1,666 precincts) is
-clean, but no frame crosswalk exists. Why: every other state's frame has
-either precinct names in the voter file (`precinct26_name`) or codes that the
-ENR/L2 ids share. IA has neither. The frame `precinct26_id` is a county-made
-short code and `precinct26_name` repeats it, while ENR and L2 use names:
-
-| county | frame | ENR | L2 |
-|---|---|---|---|
-| Guthrie | BP, CP, GCP, PP, SP, YP | BAYARD, CASEY, GUTHRIE CENTER, PANORA, ... | BAYARD, CASEY, GUTHRIE CENTER, ... |
-| Monona | AS001, CP002, ..., ON105 | AS-BV-CS-CN-KB-TU, ..., Onawa Ward 1 | 01 ASHTON/BELVIDERE/..., 05 ONAWA WARD 1 |
-| Carroll | 01 ... 08 | Arcadia Precinct, Carroll Ward Four, ... | ARCADIA, CARROLL 1/GRANT TWP, ... |
-| Audubon | 01, 02 | Precinct #1 Audubon N1/2, Precinct #2 Exira S1/2 | 1, 2 |
-
-Counting codes that appear verbatim (punctuation ignored): 203 of 1,658 frame
-codes are in ENR, 112 in L2, 148 in VoteHub IA26G; only 4 counties match fully
-and 72 counties match nowhere. ENR <-> L2 is name to name and doable with the
-usual tiers; the missing link is frame code -> name.
-
-Possible routes, per county: (a) a leading or trailing sequence number shared
-with L2 (Monona `ON105` = L2 `05 ONAWA WARD 1`; Audubon `01` = L2 `1`);
-(b) initials (Guthrie `GCP` = GUTHRIE CENTER PRECINCT); (c) where neither
-works, assign frame codes to L2 names by voter count within county (frame `n`
-vs L2 `n`) and accept only unambiguous, close pairs; (d) county auditor
-precinct lists. Every pair needs the voter-count check. Write
-`scripts/util/crosswalks/ia.R` following `docs/crosswalk_todo.md` "Per-state
-steps", then `votehub.R IA`, `xwalk-done IA`, `match_rates.R --write`, and
-prep IA model inputs.
-
-### 6. CA live ids: 70.7% join (10-31)
+### 5. CA live ids: 70.7% join (10-31)
 
 Since 10-31 `prep_model_inputs.R` reads the `ca_{name}_members.csv` /
 `ca_{name}_frame_consolidated.csv` files: each usable consolidation (`use`) is
@@ -166,6 +135,13 @@ exact vs 99.9% production; MI 0.5% vs 94.2%). CA has no races in
   CA consolidations).
 - VA model inputs exist now but `VA_race_prior.csv` has 0 races (no VA rows
   in `input_data/priors.csv`) and there is no `VA_county_history.csv`.
+- IA (`ia.R`, 10-31) matches frame codes to L2 names by voter profile plus
+  code/name/township evidence, not by shared ids. Election-night check: the
+  Clarity detail XML's `totalVoters` per precinct (0 before results) against
+  frame `n` for each matched ENR precinct; a ratio far from ~1 means a wrong
+  pair. IA has `IA_race_prior.csv` (sen) but no `IA_county_history.csv`.
+  `l2_direct.R` pairs Muscatine ENR "FUL TWP" with L2 "FULTON TWP/MONTPELLIER
+  TWP", a merge (ENR reports "MONT TWP" separately).
 - `build` / `trust_stage` for the 27 rows made live on 10-30.
 - `ICX` → `eday` in `general_method()` (Orange NY ImageCast X ballots; the
   source doesn't say whether they were cast early or on election day).
