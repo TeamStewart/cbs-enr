@@ -25,8 +25,11 @@ local({
 # enightdata install (update_enightdata() installs from GitHub instead)
 Sys.setenv(CBS_DASH_RENDER = "FALSE", CBS_AUTOMATION = "1")
 
-googlesheets4::gs4_auth(email = TRUE)
+# One Google token for both: Drive's scope covers Sheets. A non-interactive Rscript can't open
+# the browser, so cache it once first:
+#   Rscript -e 'options(rlang_interactive = TRUE); googledrive::drive_auth()'
 googledrive::drive_auth(email = TRUE)
+googlesheets4::gs4_auth(token = googledrive::drive_token())
 
 # The published dashboard's data: tar_make() writes it here (dashboard_export in _targets.R)
 DASH_DATA = "data/dashboard/live/dashboard_data.rds"
