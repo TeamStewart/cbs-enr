@@ -1,6 +1,6 @@
 # Election-night watcher agents: plan
 
-Status: plan, 2026-10-30. Nothing here is built yet except the Step 0 fixes (section 0).
+Status: built 2026-10-31 (`scripts/watch/`, setup in `scripts/watch/README.md`, progress in `docs/watcher_tasks.md`).
 Drafted with Claude, reviewed by two subagents (codebase grounding; agent reliability),
 then revised with Mason's answers.
 
@@ -74,7 +74,7 @@ Moving the watcher to its own laptop also means:
 
 ### Modes
 
-`watch/mode` holds `llm` or `deterministic`. Change it with the Slack verb `!mode llm` or
+`$WATCH_HOME/mode` holds `llm` or `deterministic`. Change it with the Slack verb `!mode llm` or
 `!mode deterministic`, or by editing the file. An optional schedule such as
 `llm until 23:30, then deterministic` can live in the same file.
 
@@ -176,7 +176,7 @@ laptop), then when it trips. Open for Mason's edits.
 
 **How this is enforced**
 - The watcher has its own `settings.json` with a Bash allowlist. A deny-list on Edit/Write alone isn't enough, because `sed -i` or `Rscript -e` gets around it.
-- A PreToolUse hook blocks every tool while `watch/STOP` exists. The Slack verb `!stop` creates that file.
+- A PreToolUse hook blocks every tool while `$WATCH_HOME/STOP` exists. The Slack verb `!stop` creates that file.
 
 ## 4. Slack and human feedback
 
@@ -196,14 +196,14 @@ Who can act:
 - Free text is context for the LLM, never permission.
 
 Avoiding repeat questions:
-- The supervisor (not the LLM) writes each ruling to `watch/decisions.yaml` from the parsed verb, and echoes the ruling in the thread.
+- The supervisor (not the LLM) writes each ruling to `state/decisions.json` from the parsed verb, and echoes the ruling in the thread.
 - A ruling matches the exact `check_id+key`. A wildcard applies only if the human types one.
 - Rulings expire by default at the end of the night.
-- L1 and L2 check `watch/decisions.yaml` before alerting or asking.
+- L1 and L2 check `state/decisions.json` before alerting or asking.
 - If nobody answers, the default is always "no change". Nothing auto-acts when a deadline passes.
 
 Notes:
-- The night's notes go to `watch/notes/2026-11-03.md`.
+- The night's notes go to `$WATCH_HOME/notes/2026-11-03.md`.
 - After the night, good rulings get promoted to `watch/playbook.md` for the next election.
 
 ## 5. Catchpoints

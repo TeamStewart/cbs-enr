@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "incidents", "observations", "notes"],
+  "properties": {
+    "summary": {"type": "string", "description": "2-4 sentences on the pipeline's state this cycle, for the status message"},
+    "incidents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "diagnosis", "confidence", "proposal"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^I-[0-9]+$"},
+          "diagnosis": {"type": "string", "description": "what is wrong and the evidence (file, line, value)"},
+          "confidence": {"type": "string", "enum": ["low", "medium", "high"]},
+          "expected": {"type": "boolean", "description": "true if this is normal for now (e.g. results not posted yet) and needs nobody"},
+          "proposal": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action", "text"],
+            "properties": {
+              "action": {"type": "string", "enum": ["none", "patch", "invalidate", "human"]},
+              "text": {"type": "string", "description": "one or two sentences: what approving does"},
+              "branch": {"type": "string", "description": "patch only: watch/I-<n> branch in $WATCH_HOME/enightdata with one commit"},
+              "targets": {"type": "array", "items": {"type": "string"}, "description": "targets to invalidate after the patch, or for action invalidate"}
+            }
+          }
+        }
+      }
+    },
+    "observations": {
+      "type": "array",
+      "description": "problems the deterministic checks missed",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "severity", "message"],
+        "properties": {
+          "key": {"type": "string", "description": "stable id, e.g. tx_harris_prov_missing"},
+          "severity": {"type": "string", "enum": ["P1", "P2"]},
+          "state": {"type": "string"},
+          "message": {"type": "string"}
+        }
+      }
+    },
+    "notes": {"type": "string", "description": "one line for tonight's notes, or empty"}
+  }
+}

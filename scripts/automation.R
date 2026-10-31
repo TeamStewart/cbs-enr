@@ -171,12 +171,42 @@ upload_dashboard_geo <- function(dir = "data/dashboard/geo") {
 # STATE_BRANCH: targets metadata, the last STATE_LOGS cycle logs, logs/console.log (when
 # automation.R is started with `>> logs/console.log 2>&1`), the installed enightdata sha and
 # this cycle's step results (cycle.json)
+# Approved watcher commands (scripts/watch/apply.R): branch CMD_BRANCH holds commands.json, a
+# list of {id, action = "invalidate", targets}. Each id runs once on this laptop, between
+# tar_make() runs, and only for jurisdiction targets. Returns the ids run this cycle.
+CMD_BRANCH = "pipeline-commands"
+CMD_DONE = path.expand("~/.cache/cbs-enr-commands.done")
+CMD_TARGET_RX = "^(timestamp|data|tbl_cbs|summary)_[A-Z]{2}_"
+
+run_watch_commands <- function() {
+  heads = git("ls-remote", "origin", paste0("refs/heads/", CMD_BRANCH))
+  if (!length(heads) || !nzchar(heads[1])) return(character())
+  git("fetch", "--quiet", "origin", CMD_BRANCH)
+  cmds = jsonlite::fromJSON(paste(git("show", "FETCH_HEAD:commands.json"), collapse = "\n"), simplifyVector = FALSE)
+  done = if (file.exists(CMD_DONE)) readLines(CMD_DONE, warn = FALSE) else character()
+  ran = character()
+  for (cmd in cmds) {
+    if (cmd$id %in% done || !identical(cmd$action, "invalidate")) next
+    tg = unlist(cmd$targets)
+    tg = tg[grepl(CMD_TARGET_RX, tg)]
+    if (length(tg)) targets::tar_invalidate(names = dplyr::any_of(tg))
+    message("Watcher command ", cmd$id, " (by ", cmd$by, "): invalidated ", paste(tg, collapse = ", "))
+    cat(cmd$id, "\n", sep = "", file = CMD_DONE, append = TRUE)
+    ran = c(ran, cmd$id)
+  }
+  ran
+}
+
 push_pipeline_state <- function(run_time, steps) {
   meta = file.path("_targets", "meta", c("meta", "progress", "process"))
   logs = tail(sort(list.files("logs", "^automation_.*\\.log$", full.names = TRUE)), STATE_LOGS)
   extra = c("logs/console.log", ENIGHTDATA_STAMP)
   cycle = tempfile(fileext = ".json")
-  jsonlite::write_json(c(list(run_time = run_time, finished = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")), steps),
+  # free space on the volume holding the repo, for the watcher's disk check
+  df = suppressWarnings(system2("df", c("-k", "."), stdout = TRUE))
+  free_gb = round(as.numeric(strsplit(trimws(df[length(df)]), "[[:space:]]+")[[1]][4]) / 1024^2, 1)
+  jsonlite::write_json(c(list(run_time = run_time, finished = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
+                              disk_free_gb = free_gb, commands_done = as.list(COMMANDS_DONE)), steps),
                        cycle, auto_unbox = TRUE)
   files = c(meta, logs, extra)
   files = setNames(files, replace(files, files == ENIGHTDATA_STAMP, "enightdata_sha"))
@@ -208,8 +238,14 @@ while (TRUE) {
   sink(con, append = TRUE)
   sink(con, append = TRUE, type = "message")
 
+  # this laptop's dead-man ping (healthchecks.io), for when the watcher laptop can't see it
+  if (nzchar(Sys.getenv("CBS_HEALTHCHECK_URL"))) {
+    try(system2("curl", c("-fsS", "-m", "10", "-o", "/dev/null", shQuote(Sys.getenv("CBS_HEALTHCHECK_URL")))), silent = TRUE)
+  }
+  COMMANDS_DONE = character()
   steps = list(
     enightdata = step("enightdata update (kept the installed version)", update_enightdata()),
+    commands = step("Watcher commands", COMMANDS_DONE <- run_watch_commands()),
     tar_make = step("tar_make", execute_script())
   )
 
