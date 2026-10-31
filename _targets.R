@@ -24,7 +24,8 @@ source("scripts/model_targets.R")
 # is in renv's ignored.packages since each machine installs its own checkout.
 # Only when the checkout changed (commit or uncommitted edits) since this machine last
 # installed it: document + install take ~20s, a big slice of a 5-minute cycle.
-local({
+# automation.R (CBS_AUTOMATION=1) installs enightdata from GitHub main instead.
+if (Sys.getenv("CBS_AUTOMATION") != "1") local({
   stamp = file.path(tools::R_user_dir("cbs-enr", "cache"), "enightdata_installed")
   git = \(...) suppressWarnings(system2("git", c("-C", shQuote(path.expand(PATH_ENIGHTDATA)), ...), stdout = TRUE, stderr = TRUE))
   state = rlang::hash(c(git("rev-parse", "HEAD"), git("status", "--porcelain"), git("diff", "HEAD")))
@@ -104,8 +105,6 @@ office_filter = tibble::tribble(
   "MI", "mi", "sen", NA,
   "OH", "oh", "sen", NA,
 )
-
-office_filter = NULL
 
 # ========================================
 ## PIPELINE

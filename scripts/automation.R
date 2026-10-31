@@ -6,6 +6,25 @@
 ##################################################
 
 INTERVAL = 5 # minutes
+
+# Production settings. A rehearsal leftover (e.g. CBS_MODEL_SIM) would put test numbers on the
+# live dashboard, so refuse to start unless CBS_AUTOMATION_TEST=1.
+local({
+  bad = c(
+    CBS_MODEL_SIM = Sys.getenv("CBS_MODEL_SIM") != "",
+    CBS_ELECTION_FOLDER = !Sys.getenv("CBS_ELECTION_FOLDER") %in% c("", "26_general"),
+    CBS_MODEL_CBS_ENV = !Sys.getenv("CBS_MODEL_CBS_ENV") %in% c("", "live")
+  )
+  if (any(bad) && Sys.getenv("CBS_AUTOMATION_TEST") != "1") {
+    stop("Not production settings: ", paste(names(bad)[bad], collapse = ", "),
+         ". Unset them, or set CBS_AUTOMATION_TEST=1 for a rehearsal.")
+  }
+})
+# tar_make() (and _targets.R, which reads these) runs in a callr process that inherits them:
+# skip the in-pipeline dashboard render (mit.html is rendered below) and the local-checkout
+# enightdata install (update_enightdata() installs from GitHub instead)
+Sys.setenv(CBS_DASH_RENDER = "FALSE", CBS_AUTOMATION = "1")
+
 googlesheets4::gs4_auth(email = TRUE)
 googledrive::drive_auth(email = TRUE)
 
@@ -23,6 +42,16 @@ DASH_PUSH_DIR = path.expand(Sys.getenv("CBS_DASH_PUSH_DIR", "~/.cache/cbs-enr-da
 DASH_S3_BUCKET = "cbsn-elections-external-models" # PATH_CBS_S3 in scripts/util/globals.R
 DASH_S3_DIR = "20261103-US-G"
 DASH_S3_HTML = "data/dashboard/live/mit.html"
+# What the watcher on another laptop reads (docs/watcher_plan.md): targets metadata (not the
+# objects) and the last cycles' logs, force-pushed each run like DASH_BRANCH
+STATE_BRANCH = "pipeline-state"
+STATE_LOGS = 24 # cycles of logs/automation_*.log kept on the branch
+# enightdata comes from GitHub, never from anyone's working copy: teammates push scraper fixes
+# to ENIGHTDATA_BRANCH. A clean clone outside Dropbox is reset to it and installed when it moves.
+ENIGHTDATA_REPO = Sys.getenv("CBS_ENIGHTDATA_REPO", "git@github.com:TeamStewart/enightdata.git")
+ENIGHTDATA_BRANCH = Sys.getenv("CBS_ENIGHTDATA_BRANCH", "main")
+ENIGHTDATA_DIR = path.expand(Sys.getenv("CBS_ENIGHTDATA_DIR", "~/.cache/cbs-enr-enightdata"))
+ENIGHTDATA_STAMP = paste0(ENIGHTDATA_DIR, ".installed") # sha of the installed commit
 
 # Function to execute the R script
 execute_script <- function() {
@@ -30,12 +59,58 @@ execute_script <- function() {
   targets::tar_make()
 }
 
-git <- function(..., dir = DASH_PUSH_DIR, input = NULL) {
-  out = suppressWarnings(system2("git", c("-C", shQuote(dir), ...), stdout = TRUE, stderr = TRUE, input = input))
+git <- function(..., dir = DASH_PUSH_DIR, input = NULL, env = character()) {
+  out = suppressWarnings(system2("git", c("-C", shQuote(dir), ...), stdout = TRUE, stderr = TRUE, input = input, env = env))
   if (!is.null(attr(out, "status")) && attr(out, "status") != 0) {
     stop("git ", paste(c(...), collapse = " "), ": ", paste(out, collapse = "\n"))
   }
   out
+}
+
+# Install enightdata from GitHub when ENIGHTDATA_BRANCH moved since the last install: reset the clean
+# clone to it, document (a pushed NAMESPACE can be stale) and install. Any error keeps the
+# installed version.
+update_enightdata <- function() {
+  sha = sub("\t.*", "", git("ls-remote", shQuote(ENIGHTDATA_REPO), paste0("refs/heads/", ENIGHTDATA_BRANCH), dir = "."))
+  if (file.exists(ENIGHTDATA_STAMP) && readLines(ENIGHTDATA_STAMP, warn = FALSE)[1] == sha &&
+      requireNamespace("enightdata", quietly = TRUE)) {
+    return(invisible(FALSE))
+  }
+  if (!dir.exists(file.path(ENIGHTDATA_DIR, ".git"))) {
+    git("clone", "--quiet", shQuote(ENIGHTDATA_REPO), shQuote(ENIGHTDATA_DIR), dir = ".")
+  }
+  if (!nzchar(sha)) stop("no branch ", ENIGHTDATA_BRANCH, " on ", ENIGHTDATA_REPO)
+  git("fetch", "--quiet", "origin", ENIGHTDATA_BRANCH, dir = ENIGHTDATA_DIR)
+  git("reset", "--hard", "--quiet", sha, dir = ENIGHTDATA_DIR)
+  git("clean", "-fdxq", dir = ENIGHTDATA_DIR)
+  devtools::document(ENIGHTDATA_DIR)
+  renv::install(ENIGHTDATA_DIR, prompt = FALSE)
+  writeLines(sha, ENIGHTDATA_STAMP)
+  message("Installed enightdata ", substr(sha, 1, 7), " from GitHub ", ENIGHTDATA_BRANCH)
+  invisible(TRUE)
+}
+
+# Force-push `files` as the only contents of `branch`: one commit, replaced each run, so the
+# branch never grows. Names of `files` are their paths on the branch, values the local files.
+push_files <- function(files, branch, msg) {
+  if (!dir.exists(file.path(DASH_PUSH_DIR, ".git"))) {
+    fs::dir_create(DASH_PUSH_DIR)
+    git("init", "--quiet")
+    git("remote", "add", "origin", system2("git", c("remote", "get-url", "origin"), stdout = TRUE))
+  }
+  # a throwaway index, so the branch can hold nested paths
+  idx = paste0("GIT_INDEX_FILE=", shQuote(file.path(DASH_PUSH_DIR, ".git", paste0("index-", branch))))
+  git("read-tree", "--empty", env = idx)
+  for (f in names(files)) {
+    blob = git("hash-object", "-w", shQuote(normalizePath(files[[f]])))
+    git("update-index", "--add", "--cacheinfo", shQuote(paste0("100644,", blob, ",", f)), env = idx)
+  }
+  tree = git("write-tree", env = idx)
+  commit = git("-c", "user.name='cbs-enr automation'", "-c", "user.email=noreply@github.com",
+               "commit-tree", tree, "-m", shQuote(msg))
+  git("push", "--force", "--quiet", "origin", paste0(commit, ":refs/heads/", branch))
+  git("gc", "--prune=now", "--quiet") # drop the previous runs' blobs
+  invisible(TRUE)
 }
 
 # Force-push DASH_DATA as the only file on DASH_BRANCH, then ask GitHub Actions to render
@@ -45,17 +120,7 @@ push_dashboard_data <- function(run_time) {
     message("No ", DASH_DATA, " (did dashboard_export build?); nothing pushed")
     return(invisible(FALSE))
   }
-  if (!dir.exists(file.path(DASH_PUSH_DIR, ".git"))) {
-    fs::dir_create(DASH_PUSH_DIR)
-    git("init", "--quiet")
-    git("remote", "add", "origin", system2("git", c("remote", "get-url", "origin"), stdout = TRUE))
-  }
-  blob = git("hash-object", "-w", shQuote(normalizePath(DASH_DATA)))
-  tree = git("mktree", input = sprintf("100644 blob %s\tdashboard_data.rds", blob))
-  commit = git("-c", "user.name='cbs-enr automation'", "-c", "user.email=noreply@github.com",
-               "commit-tree", tree, "-m", shQuote(glue::glue("dashboard data {run_time}")))
-  git("push", "--force", "--quiet", "origin", paste0(commit, ":refs/heads/", DASH_BRANCH))
-  git("gc", "--prune=now", "--quiet") # drop the previous runs' blobs
+  push_files(c(dashboard_data.rds = DASH_DATA), DASH_BRANCH, glue::glue("dashboard data {run_time}"))
   gh = suppressWarnings(system2(
     "gh", c("workflow", "run", "pages.yml", "-R", "TeamStewart/cbs-enr", "--ref", "main", "-f", "data=live"),
     stdout = TRUE, stderr = TRUE
@@ -100,6 +165,22 @@ upload_dashboard_geo <- function(dir = "data/dashboard/geo") {
   }
 }
 
+# STATE_BRANCH: targets metadata, the last STATE_LOGS cycle logs, logs/console.log (when
+# automation.R is started with `>> logs/console.log 2>&1`), the installed enightdata sha and
+# this cycle's step results (cycle.json)
+push_pipeline_state <- function(run_time, steps) {
+  meta = file.path("_targets", "meta", c("meta", "progress", "process"))
+  logs = tail(sort(list.files("logs", "^automation_.*\\.log$", full.names = TRUE)), STATE_LOGS)
+  extra = c("logs/console.log", ENIGHTDATA_STAMP)
+  cycle = tempfile(fileext = ".json")
+  jsonlite::write_json(c(list(run_time = run_time, finished = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")), steps),
+                       cycle, auto_unbox = TRUE)
+  files = c(meta, logs, extra)
+  files = setNames(files, replace(files, files == ENIGHTDATA_STAMP, "enightdata_sha"))
+  files = files[file.exists(files)]
+  push_files(c(files, cycle.json = cycle), STATE_BRANCH, glue::glue("pipeline state {run_time}"))
+}
+
 tryCatch(upload_dashboard_geo(), error = function(e) message("Dashboard geo upload failed: ", conditionMessage(e)))
 
 # Main loop to schedule and execute the script every INTERVAL minutes
@@ -115,31 +196,39 @@ while (TRUE) {
 
   fs::dir_create("logs/")
 
-  # pull down latest `enightdata`
-  cred <- git2r::cred_token()
-  git2r::pull("../enightdata/", credentials = cred)
+  # each step: TRUE, or FALSE after logging why; nothing here may stop the loop
+  step <- function(what, expr) {
+    tryCatch({ force(expr); TRUE }, error = function(e) { message(what, " failed: ", conditionMessage(e)); FALSE })
+  }
 
   con <- file(glue::glue("logs/automation_{run_time}.log"))
   sink(con, append = TRUE)
   sink(con, append = TRUE, type = "message")
 
-  # a failed run must not leave output sunk or stop the loop
-  tryCatch(execute_script(), error = function(e) message("tar_make failed: ", conditionMessage(e)))
+  steps = list(
+    enightdata = step("enightdata update (kept the installed version)", update_enightdata()),
+    tar_make = step("tar_make", execute_script())
+  )
 
   # Restore output to console
   sink()
   sink(type = "message")
+  close(con)
 
-  tryCatch(push_dashboard_data(run_time), error = function(e) message("Dashboard push failed: ", conditionMessage(e)))
-  tryCatch(upload_dashboard_s3(), error = function(e) message("Dashboard S3 upload failed: ", conditionMessage(e)))
+  steps$dashboard_push = step("Dashboard push", push_dashboard_data(run_time))
+  steps$dashboard_s3 = step("Dashboard S3 upload", upload_dashboard_s3())
 
-  googlesheets4::read_sheet(
-    ss = "https://docs.google.com/spreadsheets/d/1zWKr_cXeDHnw6sbxzAPpGG92E-Di6nmB4Q4fa-OWuic/edit?gid=0#gid=0",
-    sheet = "Sheet1",
-    col_types = "cccclclllc"
-  ) |>
-    enightdata::write_local("metadata.csv") |>
-    invisible()
+  # read here, used by the next cycle's tar_make(); a failed read keeps the last metadata.csv
+  steps$sheet = step("Google Sheet read (kept the last metadata.csv)", {
+    googlesheets4::read_sheet(
+      ss = "https://docs.google.com/spreadsheets/d/1zWKr_cXeDHnw6sbxzAPpGG92E-Di6nmB4Q4fa-OWuic/edit?gid=0#gid=0",
+      sheet = "Sheet1",
+      col_types = "cccclclllc"
+    ) |>
+      enightdata::write_local("metadata.csv")
+  })
+
+  step("Pipeline state push", push_pipeline_state(run_time, steps))
 
   elapsed <- as.numeric(Sys.time() - start_time, units = "secs")
   sleep_time <- max(0, 60 * INTERVAL - elapsed)

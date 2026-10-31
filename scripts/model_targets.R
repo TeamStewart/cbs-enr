@@ -157,6 +157,9 @@ start_redistricting <- function(env = MODEL_CBS_ENV) {
 # The dashboard's data for the published page: written where automation.R pushes it from
 # (data/dashboard/live/, gitignored on main; see push_dashboard_data() in automation.R).
 export_dashboard_data <- function(dd, path = "data/dashboard/live/dashboard_data.rds") {
+  # a failed dashboard_data arrives as NULL (error = "null"): erroring here keeps the last good
+  # export in place for automation.R to push, and shows up in tar_meta()
+  if (is.null(dd) || !NROW(dd$meta)) stop("dashboard_data is empty; kept the previous ", path)
   fs::dir_create(fs::path_dir(path))
   tmp = paste0(path, ".tmp")
   saveRDS(dd, tmp)

@@ -41,7 +41,7 @@ Before the election, it is our goal to both identify how data *will* be released
 
 #### Election Night
 
-On election night, run the `automation.R` script once and it will continuously loop on a predetermined interval (set in the script), running the pipeline every time the script starts. The pipeline mainly relies on `functions.R`, which in turns imports `scrapers.R`, `plotters.R`, `models.R`, `/util/util.R` and `util/globals.R`. The most likely things to change for each election is `globals.R` and `scrapers.R`.
+On election night, run the `automation.R` script once and it will continuously loop on a predetermined interval (set in the script), running the pipeline every time the script starts. Start it with `Rscript scripts/automation.R >> logs/console.log 2>&1`. It refuses to start with rehearsal settings (`CBS_MODEL_SIM` etc.; override with `CBS_AUTOMATION_TEST=1`). Each cycle it installs `enightdata` from GitHub (`CBS_ENIGHTDATA_BRANCH`, default `main`) when that branch has moved, so push scraper fixes to GitHub rather than editing the scraper laptop's checkout. It also force-pushes targets metadata and recent logs to the `pipeline-state` branch for the watcher (`docs/watcher_plan.md`). The pipeline mainly relies on `functions.R`, which in turns imports `scrapers.R`, `plotters.R`, `models.R`, `/util/util.R` and `util/globals.R`. The most likely things to change for each election is `globals.R` and `scrapers.R`.
 
 #### Post-Election
 
