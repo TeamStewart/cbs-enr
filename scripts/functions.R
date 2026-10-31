@@ -329,7 +329,9 @@ read_summaries <- function(state, keys) {
 }
 
 # L2 precinct shares for the precinct explorer, keyed on ENR geo through
-# input_data/crosswalks/{st}.csv (docs/precinct_crosswalks.md). Variables are the
+# input_data/crosswalks/{st}.csv (docs/precinct_crosswalks.md), then
+# input_data/crosswalks/l2_direct/{st}.csv for ENR ids the frame route leaves without
+# L2 (scripts/util/crosswalks/l2_direct.R). Variables are the
 # frame's (yougov_precinct_frame.parquet) that L2 has. Long by mode: "Total" plus
 # eday/early/mail, where turnout uses that mode's vote columns.
 read_l2 <- function(state) {
@@ -338,26 +340,38 @@ read_l2 <- function(state) {
   l2_path = fs::dir_ls(fs::path(dir, "l2"), regexp = glue("/{tolower(state)}_\\d{{8}}_precincts\\.parquet$"), fail = FALSE) |>
     sort() |>
     tail(1)
-  if (!fs::file_exists(xw_path) || length(l2_path) == 0) return(NULL)
+  dx_path = fs::path(dir, "crosswalks", "l2_direct", glue("{tolower(state)}.csv"))
+  if (!any(fs::file_exists(c(xw_path, dx_path))) || length(l2_path) == 0) return(NULL)
 
   # cbs_counties spells MIAMIDADE; ENR geo carries the cbs county number, not FIPS
-  norm = \(x) str_remove_all(toupper(x), "[^A-Z]")
+  # (and VA L2 "ACCOMACK COUNTY", frame "KING & QUEEN")
+  norm = \(x) str_remove_all(str_replace_all(str_remove(str_squish(toupper(x)), " COUNTY$"), "&", "AND"), "[^A-Z]")
   cty = enightmodels::cbs_counties |>
     filter(.data$state == .env$state) |>
     transmute(cty = norm(county), county_cbs)
-  xw = readr::read_csv(xw_path, col_types = readr::cols(.default = "c")) |>
-    filter(!is.na(precinct_enr), !is.na(precinct_l2)) |>
-    distinct(county, precinct_enr, precinct_l2) |> # frame rows repeat per cd
-    mutate(cty = norm(county)) |>
-    inner_join(cty, by = "cty") |>
-    mutate(geo = tolower(sprintf("%s_%03d_%s", state, county_cbs, precinct_enr))) |>
-    select(geo, county, precinct_l2)
+  cbs_keys = rename(cty, cbs = cty)
+  rd = \(p) if (fs::file_exists(p)) {
+    readr::read_csv(p, col_types = readr::cols(.default = "c"), col_select = c("county", "precinct_enr", "precinct_l2")) |>
+      filter(!is.na(precinct_enr), !is.na(precinct_l2)) |>
+      distinct(county, precinct_enr, precinct_l2) |> # frame rows repeat per cd
+      # VA independent cities: "ALEXANDRIA CITY" in the frame, "Alexandria" in cbs_counties
+      mutate(cty = norm(county), cbs = if_else(!cty %in% cbs_keys$cbs & str_remove(cty, "CITY$") %in% cbs_keys$cbs,
+                                                str_remove(cty, "CITY$"), cty)) |>
+      inner_join(cbs_keys, by = "cbs") |>
+      mutate(geo = tolower(sprintf("%s_%03d_%s", state, county_cbs, precinct_enr))) |>
+      select(geo, cty, precinct_l2)
+  } else tibble(geo = character(), cty = character(), precinct_l2 = character())
+  xw = rd(xw_path)
+  # direct rows carry the ENR county spelling, so L2 joins on the normalized county
+  dx = rd(dx_path) |> filter(!geo %in% xw$geo)
+  xw = bind_rows(xw, dx)
 
   l2 = nanoparquet::read_parquet(l2_path) |>
     as_tibble() |>
     filter(n > 0) |>
-    rename(precinct_l2 = precinct)
-  base = transmute(l2, county, precinct_l2,
+    rename(precinct_l2 = precinct) |>
+    mutate(cty = norm(county))
+  base = transmute(l2, cty, precinct_l2,
     l2_n = n,
     l2_male = male / n,
     l2_white = race1 / (n - race_unk),
@@ -366,15 +380,15 @@ read_l2 <- function(state) {
     l2_asian = race4 / (n - race_unk)
   )
   turnout = l2 |>
-    select(county, precinct_l2, n, matches("^vote(20|22|24)(_(eday|early|mail))?$")) |>
+    select(cty, precinct_l2, n, matches("^vote(20|22|24)(_(eday|early|mail))?$")) |>
     pivot_longer(starts_with("vote"), names_to = c("year", "mode"), names_pattern = "^vote(\\d+)_?(.*)$") |>
     mutate(mode = if_else(mode == "", "Total", mode), name = paste0("l2_turnout", year), value = value / n) |>
-    select(county, precinct_l2, mode, name, value) |>
+    select(cty, precinct_l2, mode, name, value) |>
     pivot_wider()
 
   xw |>
-    inner_join(base, by = c("county", "precinct_l2")) |>
-    inner_join(turnout, by = c("county", "precinct_l2"), relationship = "one-to-many") |>
+    inner_join(base, by = c("cty", "precinct_l2")) |>
+    inner_join(turnout, by = c("cty", "precinct_l2"), relationship = "one-to-many") |>
     select(geo, mode, starts_with("l2_")) |>
     mutate(across(starts_with("l2_"), \(x) if_else(is.finite(x), x, NA_real_)))
 }
