@@ -56,9 +56,6 @@ Runtime state lives in `~/.cache/cbs-enr-watch` (`CBS_WATCH_HOME`), outside Drop
    - If ticks fail with "Operation not permitted" on the Dropbox paths, give `/bin/bash`
      Full Disk Access (System Settings > Privacy & Security).
    - Stop the job with `scripts/watch/install.sh remove`.
-7. Optional: two healthchecks.io checks, each with a 10-minute period and phone alerts.
-   - The watcher's goes in `CBS_WATCH_HEALTHCHECK_URL` in the env file.
-   - The scraper laptop's goes in `CBS_HEALTHCHECK_URL` in that laptop's `~/.Renviron`.
 
 ### Slack app
 
@@ -119,10 +116,7 @@ Run the watcher with Slack live. For each fault, note how long it takes to show 
 - [ ] Break a scraper: push a commit to enightdata that errors for one county. Expect an incident, an L2 diagnosis and a proposal; `approve` pushes the fix and the invalidate runs next cycle.
 - [ ] A new vote-method label in one county's clean file: a methods-check incident, with proposal `human`.
 - [ ] Freeze a timestamp: a P1 after 30 min, after poll close.
-- [ ] Kill `automation.R`: a P0 within about 11 min, and the scraper's healthchecks.io alert.
-- [ ] Sleep the watcher laptop: the watcher's healthchecks.io alert.
-- [ ] `gh auth logout` on the watcher laptop: an auth P1 within the hour.
-- [ ] A reply from someone not on the allowlist: ignored and noted.
+- [ ] Kill `automation.R`: a P0 within about 11 min.
 - [ ] `!stop`: no L2 runs, and L2 tool calls are blocked. `!start` resumes.
 - [ ] `!mode llm`, then `!mode deterministic`: L2 every cycle, then only on events.
 - [ ] Two hours unattended: no runaway L2 runs, and usage stays within the subscription limits.

@@ -24,7 +24,6 @@ SLACK_BOT_TOKEN=
 SLACK_CHANNEL=
 # comma-separated Slack member IDs allowed to approve (Mason, Joe)
 CBS_WATCH_APPROVERS=
-CBS_WATCH_HEALTHCHECK_URL=
 CBS_WATCH_MODEL=sonnet
 EOF
   chmod 600 "$env_file"

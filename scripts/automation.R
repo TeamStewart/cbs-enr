@@ -238,10 +238,6 @@ while (TRUE) {
   sink(con, append = TRUE)
   sink(con, append = TRUE, type = "message")
 
-  # this laptop's dead-man ping (healthchecks.io), for when the watcher laptop can't see it
-  if (nzchar(Sys.getenv("CBS_HEALTHCHECK_URL"))) {
-    try(system2("curl", c("-fsS", "-m", "10", "-o", "/dev/null", shQuote(Sys.getenv("CBS_HEALTHCHECK_URL")))), silent = TRUE)
-  }
   COMMANDS_DONE = character()
   steps = list(
     enightdata = step("enightdata update (kept the installed version)", update_enightdata()),

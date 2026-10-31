@@ -12,7 +12,6 @@ state needs no locking of its own. Each step:
 
 1. **sync**
    - Fetches `pipeline-state` and `dashboard-live` from GitHub into `$WATCH_HOME`.
-   - Pings `CBS_WATCH_HEALTHCHECK_URL`, if set.
 2. **checks (L1)**
    - Runs once for each new `cycle.json` `run_time`.
    - Writes `state/cycles/{run_time}.json`.
@@ -35,8 +34,7 @@ state needs no locking of its own. Each step:
 L2 is `claude -p` on Mason's subscription (`ANTHROPIC_API_KEY` unset), with a 600 s timeout.
 It never posts or pushes. It writes one JSON result, which the next tick ingests.
 
-The scraper laptop's `automation.R` does three new things each cycle:
-- Pings `CBS_HEALTHCHECK_URL`, if set.
+The scraper laptop's `automation.R` does two new things each cycle:
 - Adds `disk_free_gb` to `cycle.json`.
 - Runs approved commands from branch `pipeline-commands` (see "Command channel").
 
@@ -76,7 +74,6 @@ Settings in the environment (`~/.config/cbs-enr-watch/env`, chmod 600, read by `
 | `SLACK_BOT_TOKEN` | Bot token. Unset means dry-run: calls go to `slack_outbox.log`. |
 | `SLACK_CHANNEL` | Channel ID |
 | `CBS_WATCH_APPROVERS` | Comma-separated Slack user IDs allowed to use verbs |
-| `CBS_WATCH_HEALTHCHECK_URL` | Dead-man ping for the watcher |
 | `CBS_WATCH_MODEL` | L2 model, default `sonnet` |
 | `CBS_WATCH_REPO` | Repo checkout on the watcher laptop, default this repo |
 | `CBS_WATCH_DASH_AUTH` | `user:pass` for the CloudFront dashboard (HTTP 401 without it) |

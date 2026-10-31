@@ -28,9 +28,6 @@ fold = function(findings, checks_run) {
 }
 
 # ---- 1. sync ----
-if (nzchar(Sys.getenv("CBS_WATCH_HEALTHCHECK_URL"))) {
-  try(httr2::req_perform(httr2::req_timeout(httr2::request(Sys.getenv("CBS_WATCH_HEALTHCHECK_URL")), 10)), silent = TRUE)
-}
 s = tryCatch(sync_pipeline_state(), error = function(e) list(ok = FALSE, error = conditionMessage(e)))
 cycle_json = read_json_file(watch_path("pipeline-state", "cycle.json"), list())
 

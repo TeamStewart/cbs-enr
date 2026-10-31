@@ -26,7 +26,7 @@ A fresh session should start by reading this file, then the design.
 - [x] B12 findings to incidents: reconcile, rulings, resolve after 2 clean cycles (incidents.R reconcile(); test_watch.R)
 
 ## C. Supervisor (`scripts/watch/tick.R`)
-- [x] C1 tick order, lock, health ping (dry-run ticks against the real pipeline-state)
+- [x] C1 tick order, lock (dry-run ticks against the real pipeline-state)
 - [x] C2 watchdog: pipeline stale (P0), hourly auth (gh, Slack, aws optional) (P0 fired on the real 36-min-old cycle)
 - [x] C3 Slack in: verb parser, approver allowlist, rulings, `mode`, `STOP` (parse_verb() and dispatch in tick.R; parser covered by test_watch.R)
 - [x] C4 Slack out: incident threads, digest, pinned status message, P0 `@here`, rate limit (dry-run: P0 root post with <!here>, a 128-line P2 digest, status pinned once and then updated)
@@ -41,7 +41,7 @@ A fresh session should start by reading this file, then the design.
 
 ## E. Apply and the command channel
 - [x] E1 `apply.R`: patch (rebase, check, push to main), invalidate (commands branch), human (queue_invalidate()/push_commands() tested against a local bare repo; patch path untested)
-- [x] E2 `automation.R`: run `pipeline-commands` invalidations, `commands_done`, disk, health ping (run_watch_commands() tested end to end with a throwaway targets project (runs once, records the id))
+- [x] E2 `automation.R`: run `pipeline-commands` invalidations, `commands_done`, disk (run_watch_commands() tested end to end with a throwaway targets project (runs once, records the id))
 
 ## F. Ops and tests
 - [x] F1 `tick.sh`, launchd plist, `install.sh` (launchd loaded on the watcher laptop 2026-10-31, the one with this Dropbox checkout; the scraper laptop is a separate machine. Ticks every ~60 s, exit 0, launchd.err empty. Then unloaded with `install.sh remove` after the test; run `bash scripts/watch/install.sh` to start it again. The env file is kept.)
@@ -76,5 +76,4 @@ A fresh session should start by reading this file, then the design.
 
 ## Needs Mason
 - [x] Slack workspace, bot token, channel ID, approver user IDs (done 2026-10-31; values in `~/.config/cbs-enr-watch/env` on the watcher laptop)
-- healthchecks.io URLs (watcher and scraper)
 - [x] The watcher laptop: this machine (Mason's, with the MIT Dropbox checkout); install.sh run and tested 2026-10-31, then unloaded (not running). The scraper laptop is a different machine.

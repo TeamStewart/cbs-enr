@@ -48,8 +48,7 @@ WATCHER LAPTOP
     L1 checks.R    deterministic, no LLM. Runs once per new cycle (keyed by run_time in the
                    pushed log). Writes watch/state/cycle_{run_time}.json and deduped
                    watch/state/incidents.jsonl. Posts P0s straight to Slack.
-    watchdog.sh    staleness of the pushed cycle markers, hourly auth checks,
-                   healthchecks.io dead-man ping
+    watchdog.sh    staleness of the pushed cycle markers, hourly auth checks
     supervisor     deterministic. Reads incidents.jsonl and Slack threads, parses reply
                    verbs, writes rulings. Starts L2 when there is work (see Modes).
   L2 claude -p     one stateless call per wake: timeout 600, --max-turns, locked-down
