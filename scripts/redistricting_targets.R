@@ -1,14 +1,15 @@
 # ========================================
 ## Redistricting tab of the dashboard (index.qmd), as targets: each redrawn state's
 ## congressional districts under the 2024 map (old, 119th Congress) and the 2026 map (new),
-## from three kinds of votes, picked on the page. Tonight's votes are the state's top-of-ticket
-## race (redist_contest(): the Senate or governor race the models project), not the House
-## races, so every model can be compared without modeling the House:
+## from the votes picked on the page:
+##   count:sen / count:gov / count:house   each race's votes counted so far: ENR precinct results
+##           where we scrape (redist_enr(), every contest in the scrapes), CBS county results
+##           elsewhere (redist_cbs_votes()). House: the new districts are the races' own totals;
+##           the old ones are estimated. A House race without both a Democrat and a Republican
+##           is split by the top-of-ticket race's share (redist_contest())
 ##   pres24  the 2024 presidential vote regrouped into each map's districts
 ##           (model_results/redistricting/redistricting_districts_2024pres.csv)
-##   count   the race's votes counted so far: ENR precinct results where we scrape, CBS county
-##           results elsewhere (pulled every cycle, redist_top_votes())
-##   model   each model's projected final vote in the race, precinct by precinct
+##   model   each model's projected final vote in the top-of-ticket race, precinct by precinct
 ##           (model_results/precincts_latest.parquet)
 ## Precinct votes go to each map's districts by the precinct's share of each (a precinct
 ## with no polygon in the prep's map, and a county's CBS votes, by the county's 2024 vote in
@@ -77,25 +78,46 @@ redist_contest <- function(st) {
                 error = function(e) character())
   if (length(pr) == 1) pr else if (!length(pr) || TOP_RACE[[st]] %in% pr) TOP_RACE[[st]] else sort(pr)[1]
 }
-REDIST_RACE_NAME = c(gov = "Governor", sen = "Senate")
+REDIST_RACE_NAME = c(gov = "Governor", sen = "Senate", house = "House")
+REDIST_RACES = c("sen", "gov", "house")
 
-# CBS county results for the state's top-of-ticket race (redist_cbs_county(), saved to
-# 26_general/cbs_api/{env}/redistricting/): one row per county, with attribute "as_of". NULL in
-# a sim, with CBS_MODEL_REDISTRICTING=FALSE, or when CBS has nothing yet.
-redist_top_votes <- function(state, env = MODEL_CBS_ENV, sim = MODEL_SIM, enabled = MODEL_REDISTRICTING) {
+# CBS county results for the tab's races (redist_cbs_county(), saved to
+# 26_general/cbs_api/{env}/redistricting/): Senate and governor pulled here, each House
+# district read from the last pull saved by redistricting_compare.R --live (run_night.R starts
+# it every refresh) unless pull_house. One row per race x county (state, contest, district,
+# county_fips, dem, rep, total, pct_exp, as_of). NULL in a sim, with
+# CBS_MODEL_REDISTRICTING=FALSE, or when CBS has nothing yet.
+redist_cbs_votes <- function(state, env = MODEL_CBS_ENV, sim = MODEL_SIM, enabled = MODEL_REDISTRICTING, pull_house = FALSE) {
   if (!enabled || nzchar(sim)) return(NULL)
-  contest = redist_contest(state)
-  x = tryCatch(redist_cbs_county(state, contest, env = env), error = function(e) {
-    cli::cli_alert_info("Redistricting {state}: {conditionMessage(e)}")
-    NULL
-  })
-  if (is.null(x) || !nrow(x)) return(NULL)
-  out = x |>
-    summarise(dem = sum(votes[party == "dem"]), rep = sum(votes[party == "rep"]), total = sum(votes),
-              pct_exp = first(pct_exp), .by = county_fips) |>
-    mutate(state = state, contest = contest, .before = 1)
-  attr(out, "as_of") = attr(x, "as_of")
-  out
+  one = function(contest, district = NA, pull = TRUE) {
+    x = tryCatch(suppressMessages(redist_cbs_county(state, contest, district, env = env, pull = pull)), error = function(e) NULL)
+    if (is.null(x) || !nrow(x)) return(NULL)
+    x |>
+      summarise(dem = sum(votes[party == "dem"]), rep = sum(votes[party == "rep"]), total = sum(votes),
+                pct_exp = first(pct_exp), .by = county_fips) |>
+      mutate(state = state, contest = contest, district = as.integer(district), as_of = attr(x, "as_of"), .before = 1)
+  }
+  wf = fs::path(find_26_general(), "input_data", "redistricting", glue("{state}_county_district_weights.csv"))
+  cds = if (fs::file_exists(wf)) sort(unique(readr::read_csv(wf, col_types = readr::cols(.default = "c"), progress = FALSE)$cd_new)) else character()
+  out = bind_rows(one("sen"), one("gov"),
+                  lapply(as.integer(sub("^[A-Z]{2}-", "", cds)), \(d) one("house", d, pull = pull_house)))
+  if (!nrow(out)) NULL else out
+}
+
+# ENR precinct votes for the tab's races from make_summary() outputs (dash_inputs): state,
+# contest, district (NA for statewide), geo, dem, rep, total, time (the jurisdiction's scrape)
+redist_enr <- function(dash_inputs, states = REDIST_STATES) {
+  p = purrr::compact(dash_inputs) |>
+    keep(\(x) x$state %in% states) |>
+    map(\(x) mutate(x$prec, state = x$state, time = x$time)) |>
+    bind_rows()
+  if (!nrow(p)) return(tibble(state = character(), contest = character(), district = integer(), geo = character(),
+                              dem = numeric(), rep = numeric(), total = numeric(), time = as.POSIXct(character())))
+  p |>
+    filter(contest %in% REDIST_RACES) |>
+    mutate(district = if_else(contest == "house", as.integer(district), NA_integer_)) |>
+    summarise(dem = sum(votes[party == "dem"]), rep = sum(votes[party == "rep"]), total = sum(votes), time = max(time),
+              .by = c(state, contest, district, geo))
 }
 
 # Each precinct's (VoteHub unit's) share in each district of each map: the prep's
@@ -174,10 +196,10 @@ redist_geo_ids <- function(st, dir = DASHBOARD_GEO_DIR) {
 }
 
 # The tab's data: dist (state, src, plan, cd, dem, rep, cov) and src (one row per state x vote
-# source: kind, label, race, model and its parts, time, note). `top` is the list of
-# redist_top_votes() results (NULL for states without any); `models` is model_results; `dash`
-# is build_dashboard_data()'s output, for the ENR precinct results.
-build_redist_data <- function(files, top = list(), models = NULL, dash = NULL, contests = DASHBOARD_CONTESTS) {
+# source: kind, label, race, model and its parts, time, note, p_prec), plus unit / cty (the
+# map's fills). `cbs` is redist_cbs_votes() for every state, bound (NULL for none); `models` is
+# model_results; `enr` is redist_enr(), the ENR precinct votes for every race.
+build_redist_data <- function(files, cbs = NULL, models = NULL, enr = NULL, contests = DASHBOARD_CONTESTS) {
   dist = list()
   src = list()
   unit = list()
@@ -194,8 +216,6 @@ build_redist_data <- function(files, top = list(), models = NULL, dash = NULL, c
   pprec = \(u, k) { a = sum(u$dem + u$rep); b = sum(k$dem + k$rep); if (a + b > 0) a / (a + b) else NA_real_ }
   sp = \(n, w) if (n == 1) w else sub("y$", "ie", w) |> paste0("s")
   fmtn = \(x) format(x, big.mark = ",")
-  top = Filter(Negate(is.null), top)
-  names(top) = vapply(top, \(x) x$state[1], "")
 
   # 2024 president
   f24 = grep("redistricting_districts_2024pres\\.csv$", files, value = TRUE)
@@ -248,54 +268,94 @@ build_redist_data <- function(files, top = list(), models = NULL, dash = NULL, c
     cw = redist_county_districts(st, files)
     cty_of = \(geo) as.integer(str_extract(geo, "(?<=^[A-Za-z]{2}_)\\d{3}"))
 
-    # the race's votes counted so far: ENR precincts in the counties we scrape, CBS's county
-    # results in the rest
-    key = paste(st, contest, sep = "-")
-    enr = if (!is.null(dash$prec)) filter(dash$prec, .data$key == .env$key) else tibble()
-    cbs = top[[st]]
-    if (!is.null(cbs) && cbs$contest[1] != contest) cbs = NULL
-    v = if (nrow(enr)) {
-      enr |> summarise(dv = sum(dem), rv = sum(rep), .by = geo) |> transmute(g = norm_geo(geo), county_cbs = cty_of(geo), dv, rv)
-    } else {
-      tibble(g = character(), county_cbs = integer(), dv = numeric(), rv = numeric())
-    }
-    scraped = unique(v$county_cbs)
-    v = filter(v, dv + rv > 0)
-    cbs_rest = if (is.null(cbs)) tibble() else
-      cbs |> inner_join(distinct(cw, county_fips, county_cbs), by = "county_fips") |> filter(!county_cbs %in% scraped, dem + rep > 0)
-    if (nrow(v) || nrow(cbs_rest)) {
-      d = redist_allocate(mutate(v, k = 1), "k", gu, ud, cw)
-      p = attr(d, "placed")$p
-      cu = select(attr(d, "units"), unit_id, dem, rep)
-      ck = bind_rows(select(attr(d, "counties"), county_fips, dem, rep),
-                     if (nrow(cbs_rest)) select(cbs_rest, county_fips, dem, rep)) |>
-        summarise(dem = sum(dem), rep = sum(rep), .by = county_fips)
-      if (nrow(cbs_rest)) {
-        d = bind_rows(d, cbs_rest |>
-          inner_join(select(cw, -county_fips), by = "county_cbs", relationship = "many-to-many") |>
-          summarise(dem = sum(dem * share), rep = sum(rep * share), .by = c(plan, cd)))
-        d = summarise(d, dem = sum(dem), rep = sum(rep), .by = c(plan, cd))
+    gid = redist_geo_ids(st)
+    cmap = distinct(cw, county_fips, county_cbs)
+    fw = grep(paste0("/", st, "_county_district_weights\\.csv$"), files, value = TRUE)
+    ws = if (length(fw)) readr::read_csv(fw, col_types = readr::cols(county_fips = "c", cd_new = "c", cd_old = "c", .default = "d"), progress = FALSE) |>
+      mutate(f = votes / sum(votes), .by = c(county_fips, cd_new)) |> select(county_fips, cd_new, cd_old, f) else
+      tibble(county_fips = character(), cd_new = character(), cd_old = character(), f = numeric())
+    e_st = if (is.null(enr)) tibble() else filter(enr, state == st) |> mutate(g = norm_geo(geo), county_cbs = cty_of(geo))
+    c_st = if (is.null(cbs)) tibble() else filter(cbs, state == st) |> inner_join(cmap, by = "county_fips")
+    # the top-of-ticket race's Dem two-party share by precinct and by county: splits the votes
+    # of House races without both a Democrat and a Republican
+    s_g = if (nrow(e_st)) e_st |> filter(contest == .env$contest) |> summarise(s = sum(dem) / sum(dem + rep), .by = g) |> filter(is.finite(s)) else tibble(g = character(), s = numeric())
+    s_k = bind_rows(if (nrow(e_st)) e_st |> filter(contest == .env$contest) |> transmute(county_cbs, d = dem, r = rep),
+                    if (nrow(c_st)) c_st |> filter(contest == .env$contest) |> transmute(county_cbs, d = dem, r = rep)) |>
+      bind_rows(tibble(county_cbs = integer(), d = numeric(), r = numeric())) |>
+      summarise(sk = sum(d) / sum(d + r), .by = county_cbs) |> filter(is.finite(sk))
+
+    # each race's votes counted so far: ENR precincts in the counties we scrape for it, CBS's
+    # county results in the rest. House: the new districts are the races themselves; the old
+    # ones get each precinct's votes by its area shares, CBS county votes by the county x new
+    # district's 2024 vote in each old district
+    for (ct in REDIST_RACES) {
+      e = if (nrow(e_st)) filter(e_st, contest == ct) else tibble()
+      k = if (nrow(c_st)) filter(c_st, contest == ct) else tibble()
+      if (!nrow(e) && !nrow(k)) next
+      scraped = unique(e$county_cbs)
+      if (nrow(k)) k = filter(k, !county_cbs %in% scraped)
+      rname = REDIST_RACE_NAME[[ct]]
+      unc = integer()
+      if (ct == "house") {
+        both = bind_rows(if (nrow(e)) select(e, district, dem, rep), if (nrow(k)) select(k, district, dem, rep)) |>
+          summarise(ok = sum(dem) > 0 & sum(rep) > 0, .by = district)
+        unc = both$district[!both$ok]
+        if (length(unc)) {
+          if (nrow(e)) e = e |> left_join(s_g, by = "g") |> left_join(s_k, by = "county_cbs") |>
+            mutate(s = coalesce(s, sk, 0.5), u = district %in% unc,
+                   dem = if_else(u, total * s, dem), rep = if_else(u, total * (1 - s), rep)) |> select(-s, -sk, -u)
+          if (nrow(k)) k = k |> left_join(s_k, by = "county_cbs") |>
+            mutate(s = coalesce(sk, 0.5), u = district %in% unc,
+                   dem = if_else(u, total * s, dem), rep = if_else(u, total * (1 - s), rep)) |> select(-s, -sk, -u)
+        }
       }
-      n_cbs = n_distinct(cbs_rest$county_cbs)
-      t_enr = filter(dash$meta, .data$key == .env$key)$time
-      t_cbs = attr(cbs, "as_of")
-      pct_cbs = if (nrow(cbs_rest)) with(filter(cbs_rest, pct_exp > 0), sum(total) / sum(total / (pct_exp / 100))) else NA_real_
+      v = if (nrow(e)) e |> filter(dem + rep > 0) |> transmute(g, county_cbs, district, dv = dem, rv = rep) else
+        tibble(g = character(), county_cbs = integer(), district = integer(), dv = numeric(), rv = numeric())
+      if (nrow(k)) k = filter(k, dem + rep > 0)
+      if (!nrow(v) && !nrow(k)) next
+      d = redist_allocate(mutate(v, kk = 1), "kk", gu, ud, cw)
+      cu = select(attr(d, "units"), unit_id, dem, rep)
+      ck = bind_rows(select(attr(d, "counties"), county_fips, dem, rep), if (nrow(k)) select(k, county_fips, dem, rep)) |>
+        summarise(dem = sum(dem), rep = sum(rep), .by = county_fips)
+      d = select(d, plan, cd, dem, rep)
+      if (ct == "house") {
+        cdf = \(x) sprintf("%s-%02d", st, as.integer(x))
+        new = bind_rows(summarise(v, dem = sum(dv), rep = sum(rv), .by = district),
+                        if (nrow(k)) summarise(k, dem = sum(dem), rep = sum(rep), .by = district)) |>
+          summarise(dem = sum(dem), rep = sum(rep), .by = district) |>
+          transmute(plan = "new", cd = cdf(district), dem, rep)
+        old_k = if (nrow(k)) k |> mutate(cd_new = cdf(district)) |>
+          inner_join(ws, by = c("county_fips", "cd_new"), relationship = "many-to-many") |>
+          summarise(dem = sum(dem * f), rep = sum(rep * f), .by = cd_old) |> transmute(plan = "old", cd = cd_old, dem, rep)
+        d = bind_rows(new, filter(d, plan == "old"), old_k) |> summarise(dem = sum(dem), rep = sum(rep), .by = c(plan, cd))
+      } else if (nrow(k)) {
+        d = bind_rows(d, k |>
+          inner_join(select(cw, -county_fips), by = "county_cbs", relationship = "many-to-many") |>
+          summarise(dem = sum(dem * share), rep = sum(rep * share), .by = c(plan, cd))) |>
+          summarise(dem = sum(dem), rep = sum(rep), .by = c(plan, cd))
+      }
+      n_cbs = n_distinct(k$county_cbs)
+      t_all = c(if (nrow(e) && "time" %in% names(e)) max(e$time), if (nrow(k)) max(k$as_of))
+      pct_cbs = if (nrow(k)) with(filter(k, pct_exp > 0), sum(total) / sum(total / (pct_exp / 100))) else NA_real_
+      sid = paste0("count:", ct)
       add(
-        mutate(d, state = st, src = "count") |> select(state, src, plan, cd, dem, rep),
-        tibble(state = st, src = "count", kind = "count", label = glue("{race} votes counted"), race_id, race,
-               time = if (any(!is.na(c(t_enr, t_cbs)))) max(c(t_enr, t_cbs), na.rm = TRUE) else as.POSIXct(NA),
+        mutate(d, state = st, src = sid) |> select(state, src, plan, cd, dem, rep),
+        tibble(state = st, src = sid, kind = "count", label = rname, race_id = if (ct == "house") NA_character_ else paste(st, ct, sep = "_"),
+               race = paste(st, rname),
+               time = if (length(t_all)) max(t_all, na.rm = TRUE) else as.POSIXct(NA),
                p_prec = pprec(cu, ck),
                note = paste0(
-                 glue("Counted {race} vote, not the House vote"),
+                 glue("Counted {rname} vote"),
                  if (nrow(v)) glue(" · precinct results in {length(scraped)} scraped {sp(length(scraped), 'county')}") else "",
                  if (n_cbs) glue(" · CBS county results in {n_cbs} other {sp(n_cbs, 'county')}",
-                                 "{if (is.finite(pct_cbs)) paste0(' (', scales::percent(pct_cbs, 1), ' of expected)') else ''}",
-                                 ", split by 2024 vote") else ""
+                                 "{if (is.finite(pct_cbs)) paste0(' (', scales::percent(pct_cbs, 1), ' of expected)') else ''}") else "",
+                 if (length(unc)) glue(" · {length(unc)} uncontested {sp(length(unc), 'district')} split by the {REDIST_RACE_NAME[[contest]]} vote") else ""
                )),
-        mutate(filter(cu, unit_id %in% redist_geo_ids(st)), state = st, src = "count", .before = 1),
-        mutate(ck, state = st, src = "count", .before = 1)
+        mutate(filter(cu, unit_id %in% gid), state = st, src = sid, .before = 1),
+        mutate(ck, state = st, src = sid, .before = 1)
       )
     }
+
 
     # models: each one's projected final vote per precinct
     m = if (is.null(mp)) tibble() else filter(mp, .data$race_id == .env$race_id)
@@ -323,7 +383,7 @@ build_redist_data <- function(files, top = list(), models = NULL, dash = NULL, c
                 race_id, race, model, model_base, model_spec, model_interval, spec_default, interval_default, time, p_prec,
                 note = as.character(glue("Projected {race} vote, not the House vote")))
     tag = \(x) mutate(x, state = st, src = paste("model", race_id, model, sep = ":"), .before = 1) |> select(-model)
-    add(select(d, state, src, plan, cd, dem, rep, cov), s, tag(filter(mu, unit_id %in% redist_geo_ids(st))), tag(mk))
+    add(select(d, state, src, plan, cd, dem, rep, cov), s, tag(filter(mu, unit_id %in% gid)), tag(mk))
   }
 
   desc = if (requireNamespace("fourthirtyfive", quietly = TRUE)) {

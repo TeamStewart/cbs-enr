@@ -331,10 +331,18 @@ districts = function(st, plan) {
     num = suppressWarnings(as.integer(sub("^[A-Z]{2}-", "", x[[col]])))
     return(transmute(x, cd = sprintf("%s-%02d", st, num)) |> filter(!is.na(num)))
   }
+  # old map: Census TIGER 2024 cd119 at full resolution (tigris), since fourthirtyfive's 2025
+  # layer is generalized (NC: ~800 vertices vs ~200,000) and its lines look smoothed on the maps
+  if (plan == "old" && requireNamespace("tigris", quietly = TRUE)) {
+    options(tigris_use_cache = TRUE)
+    x = tigris::congressional_districts(state = st, cb = FALSE, year = 2024, progress_bar = FALSE)
+    num = suppressWarnings(as.integer(x$CD119FP))
+    return(transmute(x, cd = sprintf("%s-%02d", st, num)) |> filter(!is.na(num)))
+  }
   if (!requireNamespace("fourthirtyfive", quietly = TRUE)) {
     stop("Install fourthirtyfive (remotes::install_github(\"kuriwaki/fourthirtyfive\")) or give --old= and --new=")
   }
-  fourthirtyfive::cd_boundaries(year = if (plan == "old") 2025 else 2027, state = st) |> select(cd)
+  fourthirtyfive::cd_boundaries(year = if (plan == "old") 2025 else 2027, state = st, simplify = FALSE) |> select(cd)
 }
 
 #' Projected (EPSG 5070, metres), coordinates snapped to 1 m and repaired: reprojection and
@@ -380,7 +388,7 @@ map_geometry = function(st, prec, dists, sh) {
   unlink(f)
   write_sf(pv, f, layer = "precincts", quiet = TRUE)
   for (plan in c("old", "new")) {
-    write_sf(st_simplify(dists[[plan]], dTolerance = 100, preserveTopology = TRUE), f, layer = plan, quiet = TRUE, append = TRUE)
+    write_sf(st_simplify(dists[[plan]], dTolerance = 10, preserveTopology = TRUE), f, layer = plan, quiet = TRUE, append = TRUE)
   }
   bb = map_bbox(list(pv, dists$old, dists$new))
   sz = map_size(bb)

@@ -254,10 +254,13 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  max-width: 28rem;
+  max-width: 40rem;
   margin: 0 auto 0.25rem;
   font-size: 0.8rem;
 
   .form-range { flex: 1 1 auto; }
+  // District / Precinct view toggle: the picked view filled, the other outlined
+  .btn-group .btn { font-size: 0.8rem; padding: 0.1rem 0.6rem; background: transparent; color: $body-color; border-color: #adb5bd; }
+  .btn-group .btn.active { background: #495057; color: #fff; border-color: #495057; }
   .btn-link { font-size: 0.8rem; font-weight: 600; padding: 0 0.25rem; color: $body-color; text-decoration: none; white-space: nowrap; }
 }

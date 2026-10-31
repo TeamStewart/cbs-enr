@@ -154,12 +154,12 @@ map_models = tar_map(
   tar_target(model_fits, model_fit(model_slices, model_names, model_inputs), pattern = cross(model_slices, model_names), format = "qs", iteration = "list")
 )
 
-# redistricting tab: CBS county results for each redrawn state's top-of-ticket race, pulled
+# redistricting tab: CBS county results for each redrawn state's Senate, governor and House races, pulled
 # every cycle (NULL in a sim or with CBS_MODEL_REDISTRICTING=FALSE)
 map_redist = tar_map(
   tibble::tibble(ST = REDIST_STATES),
   names = "ST",
-  tar_target(redist_cbs, redist_top_votes(ST), cue = tar_cue(mode = "always"))
+  tar_target(redist_cbs, redist_cbs_votes(ST), cue = tar_cue(mode = "always"))
 )
 
 list(
@@ -182,7 +182,7 @@ list(
   tar_target(redist_geojson, redist_geo(redist_inputs), format = "file"),
   tar_combine(redist_top, map_redist[["redist_cbs"]], command = list(!!!.x)),
   tar_target(dashboard_core, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS, model_results)),
-  tar_target(redist_data, build_redist_data(redist_inputs, redist_top, model_results, dashboard_core)),
+  tar_target(redist_data, build_redist_data(redist_inputs, dplyr::bind_rows(redist_top), model_results, redist_enr(dash_inputs))),
   tar_target(dashboard_data, c(dashboard_core, list(redist = redist_data))),
   # data/dashboard/live/dashboard_data.rds, which automation.R pushes for the published page
   tar_target(dashboard_export, export_dashboard_data(dashboard_data), format = "file"),

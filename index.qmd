@@ -471,7 +471,7 @@ exportChart = {
     let dir = null;
     try { dir = await getDir(repick); } catch (e) { if (e.name === "AbortError") return "Cancelled."; console.warn(e); }
     // one image, or one per entry.multi item (same projection and text, so the same size)
-    const files = [];
+    const files = [], blobs = [];
     for (const it of entry.multi ?? [entry]) {
       const file = `${entry.file ?? cur.key}_${slug(name)}${it.suffix ? `_${it.suffix}` : ""}_${stamp}.${T.format === "jpeg" ? "jpg" : T.format}`;
       const blob = await render({ ...entry, ...it });
@@ -479,12 +479,18 @@ exportChart = {
         const w = await (await dir.getFileHandle(file, { create: true })).createWritable();
         await w.write(blob);
         await w.close();
-      } else {
-        const a = html`<a download=${file} href=${URL.createObjectURL(blob)}>`;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-      }
+      } else blobs.push([file, blob]);
       files.push(file);
+    }
+    // downloads: all rendered first, then started a moment apart (browsers drop a second download
+    // started in the same instant; Chrome may ask once to allow multiple downloads)
+    for (const [i, [file, blob]] of blobs.entries()) {
+      if (i) await new Promise(r => setTimeout(r, 600));
+      const a = html`<a download=${file} href=${URL.createObjectURL(blob)} hidden>`;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
     }
     return `${dir ? `Saved ${dir.name}/` : "Downloaded "}${files.join(", ")}`;
   };
@@ -1297,7 +1303,7 @@ RD_COV_MIN = 0.5
 rdMfmt = m => Math.round(m * 100) === 0 ? "Even" : `${m > 0 ? "R" : "D"}+${Math.round(Math.abs(m) * 100)}`
 
 rsrc = RSRC.find(d => d.state === rst && d.src === rctl) ?? null
-rdKindText = s => s == null ? "" : s.kind === "model" ? `${s.race} · ${modelLabel(s)}` : s.label
+rdKindText = s => s == null ? "" : s.kind === "model" ? `${s.race} · ${modelLabel(s)}` : s.kind === "count" ? `${s.label} votes counted` : s.label
 // "ratio_strata · Majority race + region · Conformal (approx.)"
 modelLabel = s => [s.model_base, s.model_spec && s.model_spec !== "default" ? specLabel(s.model_spec) : null,
   s.model_interval && s.model_interval !== "default" ? intervalLabel(s.model_interval) : null].filter(Boolean).join(" · ") || s.model
@@ -1328,7 +1334,7 @@ rdRows = {
 }
 rdOk = rdRows.filter(d => d.ok)
 rdLeftOut = rdRows.length - rdOk.length
-rdLeftNote = rdLeftOut ? ` · ${rdLeftOut} ${rdLeftOut === 1 ? "district" : "districts"} left out (projections cover under half the vote)` : ""
+rdLeftNote = rdLeftOut ? ` · ${rdLeftOut} ${rdLeftOut === 1 ? "district" : "districts"} left out (${rsrc?.kind === "model" ? "projections cover under half the vote" : "no votes counted in them yet"})` : ""
 rdEmpty = () => empty(RSRC.length === 0
   ? "No redistricting data. Run scripts/model/reports/redistricting_compare.R (no --live) before the night."
   : `No district results for ${rst} from this source yet.`)
@@ -1390,14 +1396,18 @@ rdFillMarks = (g, unit, cty) => {
   const tip = (name, v) => `${name}\n${rdMfmt(-dm(v))} · Dem ${fmt(v.dem)} · Rep ${fmt(v.rep)}`;
   const cv = x => cty.get(x.id) ?? null, uv = x => unit.get(x.id) ?? null;
   const prec = (g.prec ?? []).filter(uv);
+  const t = "rd-prec-fill";
   return [
-    Plot.geo(g.counties.filter(x => !cv(x)), { fill: MAP_BLANK, stroke: MAP_BLANK, title: x => `${x.properties.name ?? x.id} County\nNo votes` }),
-    Plot.geo(g.counties.filter(cv), { fill: x => dm(cv(x)), stroke: x => dm(cv(x)),
+    Plot.geo(g.counties.filter(x => !cv(x)), { fill: MAP_BLANK, stroke: MAP_BLANK, ariaDescription: t, title: x => `${x.properties.name ?? x.id} County\nNo votes` }),
+    Plot.geo(g.counties.filter(cv), { fill: x => dm(cv(x)), stroke: x => dm(cv(x)), ariaDescription: t,
       title: x => tip(`${x.properties.name ?? x.id} County (votes placed by county)`, cv(x)) }),
-    Plot.geo(prec, { fill: x => dm(uv(x)), stroke: x => dm(uv(x)), strokeWidth: 0.3, title: x => tip(`Precinct ${x.id}`, uv(x)) })
+    Plot.geo(prec, { fill: x => dm(uv(x)), stroke: x => dm(uv(x)), strokeWidth: 0.3, ariaDescription: t, title: x => tip(`Precinct ${x.id}`, uv(x)) })
   ];
 }
-// one map's district lines and labels; aria-description tags them for the 2024 / 2026 fade
+// the map's view (District or Precinct fills), kept across redraws; no inputs
+rdViewMemo = { return { v: "district" } }
+// one map's district fills (the District view: precincts and counties summed into districts) and
+// lines and labels; aria-description tags them for the 2024 / 2026 fade and the view toggle
 rdMapMarks = (g, plan, rows) => {
   const by = new Map(rows.map(d => [d.cd, d.ok ? d[plan] : null]));
   const f = g.features.filter(x => x.properties.plan === plan);
@@ -1405,7 +1415,14 @@ rdMapMarks = (g, plan, rows) => {
   const tag = part => `rd-${plan}-${part}`;
   const lab = f.map(x => { const v = val(x); return { lon: x.properties.lx, lat: x.properties.ly,
     text: v ? `${+x.properties.cd.slice(3)}\n${rdMfmt(v.m)}` : `${+x.properties.cd.slice(3)}` }; });
+  const yr = plan === "old" ? 2024 : 2026;
   return {
+    fill: [
+      Plot.geo(f.filter(x => !val(x)), { fill: MAP_BLANK, stroke: MAP_BLANK, ariaDescription: tag("fill"),
+        title: x => `${x.properties.cd} (${yr} map)\nNo estimate` }),
+      Plot.geo(f.filter(x => val(x)), { fill: x => -val(x).m, stroke: x => -val(x).m, ariaDescription: tag("fill"),
+        title: x => { const v = val(x); return `${x.properties.cd} (${yr} map)\n${rdMfmt(v.m)} · Dem ${fmt(v.dem)} · Rep ${fmt(v.rep)}`; } })
+    ],
     top: [
       Plot.geo(f, { fill: "none", stroke: INK, strokeWidth: 1.2, ariaDescription: tag("top") }),
       Plot.text(lab, { x: "lon", y: "lat", text: "text", ariaLabel: () => "cd-label", ariaDescription: tag("top"), pointerEvents: "none",
@@ -1426,10 +1443,12 @@ rdOutlines = g => [
 ## {.toolbar}
 
 ```{ojs redist-controls}
-// value = the vote source id: "pres24", "count" (the top-of-ticket race counted) or "model:{race}:{model}"
+// value = the vote source id: "count:sen" / "count:gov" / "count:house" (each race's counted vote),
+// "pres24" or "model:{race}:{model}"
 viewof rctl = {
-  const opts = RSRC.filter(d => d.state === rst);
-  const form = html`<form class="model-ctl"><label>Model <select name="model" class="form-select form-select-sm"></select></label></form>`;
+  const order = d => ({ "count:sen": 0, "count:gov": 1, "count:house": 2, pres24: 3 })[d.src] ?? 4;
+  const opts = RSRC.filter(d => d.state === rst).sort((a, b) => order(a) - order(b));
+  const form = html`<form class="model-ctl"><label>Votes <select name="model" class="form-select form-select-sm"></select></label></form>`;
   const { model } = form.elements;
   const opt = d => Object.assign(document.createElement("option"), { value: d.src,
     text: d.kind === "model" ? modelLabel(d) + (d.spec_default && d.interval_default ? " (default)" : "") : d.label,
@@ -1441,10 +1460,10 @@ viewof rctl = {
     ...races.map(r => group(`${r} projection`, opts.filter(d => d.race === r).sort((a, b) => d3.ascending(a.model, b.model))))
   );
   const isTop = d => d.model === top_model || `${d.model_base}/${d.model_spec}/${d.model_interval}` === top_model;
-  // the last pick (or the same kind / model in this state), else the default model, the counted vote, 2024
+  // the last pick (or the same kind / model in this state), else a counted race (Senate, governor, House), 2024
   const pick = [opts.find(d => d.src === rctlMemo.src), opts.find(d => rctlMemo.model && d.model === rctlMemo.model),
-    opts.find(d => !rctlMemo.model && d.kind === rctlMemo.kind), opts.find(d => d.kind === "model" && isTop(d)),
-    opts.find(d => d.kind === "count"), opts.find(d => d.kind === "pres24"), opts[0]].find(Boolean);
+    opts.find(d => !rctlMemo.model && d.kind === rctlMemo.kind),
+    opts.find(d => d.kind === "count"), opts.find(d => d.kind === "pres24"), opts.find(d => d.kind === "model" && isTop(d)), opts[0]].find(Boolean);
   if (pick) model.value = pick.src;
   const update = () => {
     form.value = model.value || null;
@@ -1537,33 +1556,48 @@ viewof rctl = {
   const old = rdMapMarks(g, "old", rdRows), neu = rdMapMarks(g, "new", rdRows);
   const fill = rdFillMarks(g, rdUnit, rdCty);
   const placed = rdPlaced(rsrc);
-  // exports: one image per map, same projection and text so the two are the same size
-  const one = p => ({ projection: g.projection, color: marginColor, exportCaption: `${rsrc?.note ?? ""}${placed ? ` · ${placed}` : ""}${rdLeftNote}.`,
-    marks: [...fill, ...rdOutlines(g), ...p.top] });
-  const s = exportable("District Map", {
+  const cap = placed || " ";
+  // exports: one image per map in the view showing, same projection and text so the two are the same size
+  const one = (p, view) => ({ projection: g.projection, color: marginColor, exportCaption: placed ? `${placed}.` : "",
+    marks: [...(view === "precinct" ? fill : p.fill), ...rdOutlines(g), ...p.top] });
+  const register = view => exportable("District Map", {
     projection: g.projection,
     color: marginColor,
-    caption: `Precincts shaded by their own vote; counties by the votes placed by county · ${rdHead(rsrc)}${rdLeftNote}`,
-    marks: [...fill, ...rdOutlines(g), ...old.top, ...neu.top]
-  }, `${rst} Congressional Districts`, {}, { ...rdExportOpt, basemap: "VoteHub precincts and U.S. Census Bureau district lines",
-    multi: [{ s: one(old), title: `${rst} Congressional Districts, 2024 Map`, suffix: "2024-map" },
-            { s: one(neu), title: `${rst} Congressional Districts, 2026 Map`, suffix: "2026-map" }] });
+    caption: cap,
+    marks: [...old.fill, ...neu.fill, ...fill, ...rdOutlines(g), ...old.top, ...neu.top]
+  }, `${rst} Congressional Districts`, {}, { ...rdExportOpt,
+    basemap: view === "precinct" ? "VoteHub precincts and U.S. Census Bureau district lines" : "U.S. Census Bureau district lines",
+    multi: [{ s: one(old, view), title: `${rst} Congressional Districts, 2024 Map`, suffix: "2024-map" },
+            { s: one(neu, view), title: `${rst} Congressional Districts, 2026 Map`, suffix: "2026-map" }] });
+  const s = register(rdViewMemo.v);
   const plot = Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, caption: s.caption, marks: s.marks });
-  // the fade: each map's district lines and labels at its own weight over the same precinct fills
+  // the fade: each map's lines and labels at its own weight; in the District view the 2026 fills over
+  // the 2024 ones at opacity t (the hidden map's fills stop taking the pointer); the Precinct view's
+  // fills are the same under both maps
   const fade = html`<input type="range" min="0" max="1" step="0.01" class="form-range" aria-label="2024 map to 2026 map">`;
   fade.value = rdFadeMemo.t;
+  const q = tag => plot.querySelectorAll(`[aria-description="${tag}"]`);
   const set = t => {
     rdFadeMemo.t = t;
-    const q = tag => plot.querySelectorAll(`[aria-description="${tag}"]`);
+    const dist = rdViewMemo.v === "district";
+    q("rd-new-fill").forEach(e => { e.style.display = dist ? "" : "none"; e.style.opacity = t; e.style.pointerEvents = t < 0.5 ? "none" : ""; });
+    q("rd-old-fill").forEach(e => { e.style.display = dist ? "" : "none"; e.style.pointerEvents = t >= 0.5 ? "none" : ""; });
+    q("rd-prec-fill").forEach(e => { e.style.display = dist ? "none" : ""; });
     q("rd-old-top").forEach(e => { e.style.opacity = 1 - t; });
     q("rd-new-top").forEach(e => { e.style.opacity = t; });
   };
   const btn = (label, t) => Object.assign(html`<button type="button" class="btn btn-sm btn-link">${label}</button>`,
     { onclick: () => { fade.value = t; set(t); } });
   fade.addEventListener("input", () => set(+fade.value));
+  // District / Precinct view toggle
+  const views = [["district", "Districts"], ["precinct", "Precincts"]];
+  const vbtns = views.map(([v, label]) => Object.assign(html`<button type="button" class="btn btn-sm btn-outline-secondary">${label}</button>`,
+    { onclick: () => { rdViewMemo.v = v; sync(); register(v); set(+fade.value); } }));
+  const sync = () => vbtns.forEach((b, i) => b.classList.toggle("active", views[i][0] === rdViewMemo.v));
+  sync();
   set(rdFadeMemo.t);
   return html`<div class="redist-map">
-    <div class="redist-fade">${btn("2024 map", 0)}${fade}${btn("2026 map", 1)}</div>
+    <div class="redist-fade"><div class="btn-group btn-group-sm me-3" role="group" aria-label="Map view">${vbtns}</div>${btn("2024 map", 0)}${fade}${btn("2026 map", 1)}</div>
     ${plot}
   </div>`;
 }
