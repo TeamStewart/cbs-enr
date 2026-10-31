@@ -1,0 +1,959 @@
+ℹ Updating enightdata documentation
+✖ Installed roxygen2 is older than the version used with this package
+ℹ You have "8.0.0" but you need "8.1.1"
+Writing 'NAMESPACE'
+ℹ Loading enightdata
+The following package(s) will be installed:
+- enightdata [0.0.0.9000]
+These packages will be installed into "~/MIT Dropbox/Mason Reece/Research/cbs-enr/renv/library/macos/R-4.6/aarch64-apple-darwin23".
+
+# Downloading packages -------------------------------------------------------
+[32m✔[0m enightdata 0.0.0.9000                   
+Successfully downloaded 1 package in 3.7 milliseconds.
+
+# Installing packages --------------------------------------------------------
+[?25l  (0/1) Installing: enightdata                                                    (0/1) Installing: enightdata                                                                                                                                  [32m✔[0m enightdata 0.0.0.9000                    [built from source in 5.0s]
+Successfully installed 1 package in 5.1 seconds.
+[?25hInstalled enightdata 9b3f05b from GitHub main
+2026-10-30 23:29:15: Running tar_make
+- The project is out-of-sync -- use `renv::status()` for details.
++ timestamp_TX_lamar dispatched
++ timestamp_KS_anderson dispatched
++ timestamp_NY_westchester dispatched
++ timestamp_TX_robertson dispatched
++ timestamp_MI_oakland dispatched
++ timestamp_FL_pasco dispatched
++ timestamp_FL_marion dispatched
++ timestamp_TX_el.paso dispatched
++ timestamp_ID_NA dispatched
++ timestamp_TX_harris dispatched
++ timestamp_PA_dauphin dispatched
++ model_inputs_MI dispatched
+✔ timestamp_KS_anderson completed [2s, 72 B]
++ tbl_cbs_KS_anderson dispatched
+✔ timestamp_TX_lamar completed [2.2s, 71 B]
++ tbl_cbs_TX_lamar dispatched
+✔ timestamp_TX_el.paso completed [152ms, 71 B]
++ tbl_cbs_TX_el.paso dispatched
+✔ timestamp_TX_harris completed [218ms, 72 B]
++ tbl_cbs_TX_harris dispatched
+✔ timestamp_TX_robertson completed [1.7s, 68 B]
++ tbl_cbs_TX_robertson dispatched
+✔ timestamp_MI_oakland completed [1.8s, 71 B]
++ tbl_cbs_MI_oakland dispatched
+✔ model_inputs_MI completed [486ms, 112.35 kB]
++ timestamp_MI_iosco dispatched
+✔ timestamp_ID_NA completed [1.1s, 72 B]
++ tbl_cbs_ID_NA dispatched
+✖ timestamp_FL_pasco errored
++ data_FL_pasco dispatched
+✔ tbl_cbs_ID_NA completed [28ms, 44 B]
++ timestamp_AL_madison dispatched
+✖ data_FL_pasco errored
++ tbl_cbs_FL_pasco dispatched
+✔ timestamp_FL_marion completed [1.7s, 72 B]
++ tbl_cbs_FL_marion dispatched
+✖ tbl_cbs_FL_pasco errored
++ timestamp_NY_columbia dispatched
+✔ tbl_cbs_FL_marion completed [5ms, 44 B]
++ model_inputs_MN dispatched
+✔ timestamp_AL_madison completed [133ms, 70 B]
++ data_AL_madison dispatched
+✔ timestamp_PA_dauphin completed [1.7s, 72 B]
++ tbl_cbs_PA_dauphin dispatched
+✔ tbl_cbs_PA_dauphin completed [5ms, 44 B]
++ model_inputs_NC dispatched
+✔ timestamp_NY_columbia completed [517ms, 72 B]
++ tbl_cbs_NY_columbia dispatched
+✔ tbl_cbs_NY_columbia completed [2ms, 44 B]
++ timestamp_OH_hamilton dispatched
+✔ model_inputs_NC completed [263ms, 114.47 kB]
++ timestamp_OH_franklin dispatched
+✔ timestamp_OH_franklin completed [2ms, 72 B]
++ data_OH_franklin dispatched
+✔ tbl_cbs_KS_anderson completed [2s, 44 B]
++ timestamp_FL_gadsden dispatched
+✔ timestamp_OH_hamilton completed [306ms, 71 B]
++ tbl_cbs_OH_hamilton dispatched
+✔ timestamp_FL_gadsden completed [230ms, 72 B]
+✔ tbl_cbs_TX_robertson completed [1.7s, 44 B]
++ tbl_cbs_FL_gadsden dispatched
++ timestamp_TX_victoria dispatched
+✔ tbl_cbs_FL_gadsden completed [1ms, 44 B]
++ timestamp_MI_newaygo dispatched
+✔ timestamp_TX_victoria completed [71ms, 72 B]
++ tbl_cbs_TX_victoria dispatched
+✔ tbl_cbs_TX_harris completed [2s, 44 B]
++ timestamp_NY_clinton dispatched
+✔ timestamp_MI_iosco completed [1.7s, 70 B]
++ tbl_cbs_MI_iosco dispatched
+✔ timestamp_NY_clinton completed [278ms, 72 B]
++ tbl_cbs_NY_clinton dispatched
+✔ tbl_cbs_NY_clinton completed [1ms, 44 B]
++ timestamp_CA_san.joaquin dispatched
+✔ timestamp_MI_newaygo completed [582ms, 71 B]
+✔ model_inputs_MN completed [1.4s, 95.24 kB]
++ tbl_cbs_MI_newaygo dispatched
++ timestamp_NJ_morris dispatched
+✔ timestamp_CA_san.joaquin completed [128ms, 72 B]
++ data_CA_san.joaquin dispatched
+✔ timestamp_NJ_morris completed [150ms, 70 B]
++ data_NJ_morris dispatched
+✔ tbl_cbs_MI_oakland completed [2.4s, 44 B]
++ timestamp_CA_sonoma dispatched
+✔ timestamp_CA_sonoma completed [65ms, 72 B]
++ tbl_cbs_CA_sonoma dispatched
+✔ tbl_cbs_CA_sonoma completed [1ms, 44 B]
++ timestamp_WI_rock dispatched
+✖ data_CA_san.joaquin errored
++ tbl_cbs_CA_san.joaquin dispatched
+✖ tbl_cbs_CA_san.joaquin errored
++ model_inputs_OH dispatched
+✔ timestamp_NY_westchester completed [5.2s, 72 B]
++ tbl_cbs_NY_westchester dispatched
+✔ tbl_cbs_NY_westchester completed [5ms, 44 B]
++ timestamp_FL_alachua dispatched
+✔ tbl_cbs_TX_lamar completed [1.6s, 44 B]
++ timestamp_MI_st.joseph dispatched
+✔ timestamp_FL_alachua completed [124ms, 70 B]
+✔ model_inputs_OH completed [199ms, 165.72 kB]
++ tbl_cbs_FL_alachua dispatched
++ timestamp_MI_genesee dispatched
+✔ tbl_cbs_FL_alachua completed [1ms, 44 B]
++ timestamp_TX_bastrop dispatched
+✔ tbl_cbs_TX_el.paso completed [1.7s, 44 B]
++ timestamp_OH_carroll dispatched
+✔ timestamp_WI_rock completed [371ms, 71 B]
+✔ timestamp_MI_genesee completed [70ms, 72 B]
++ tbl_cbs_WI_rock dispatched
++ tbl_cbs_MI_genesee dispatched
+✔ tbl_cbs_WI_rock completed [1ms, 44 B]
++ timestamp_MI_st.clair dispatched
+✔ tbl_cbs_TX_victoria completed [1.4s, 44 B]
++ timestamp_AZ_pima dispatched
+✔ timestamp_TX_bastrop completed [121ms, 69 B]
++ tbl_cbs_TX_bastrop dispatched
+✔ timestamp_AZ_pima completed [118ms, 72 B]
++ data_AZ_pima dispatched
+✔ timestamp_MI_st.joseph completed [504ms, 70 B]
++ tbl_cbs_MI_st.joseph dispatched
+✖ data_AZ_pima errored
++ tbl_cbs_AZ_pima dispatched
+✖ tbl_cbs_AZ_pima errored
++ timestamp_FL_monroe dispatched
+✔ timestamp_FL_monroe completed [70ms, 69 B]
++ tbl_cbs_FL_monroe dispatched
+✔ timestamp_OH_carroll completed [660ms, 72 B]
+✔ tbl_cbs_OH_hamilton completed [2.1s, 44 B]
++ tbl_cbs_OH_carroll dispatched
+✔ tbl_cbs_FL_monroe completed [1ms, 44 B]
++ timestamp_CA_ventura dispatched
++ timestamp_FL_nassau dispatched
+✔ tbl_cbs_MI_iosco completed [1.7s, 44 B]
++ timestamp_NY_cattaraugus dispatched
+✔ tbl_cbs_MI_newaygo completed [1.5s, 44 B]
++ timestamp_MO_st..charles dispatched
+✔ timestamp_CA_ventura completed [97ms, 71 B]
++ tbl_cbs_CA_ventura dispatched
+✔ tbl_cbs_CA_ventura completed [2ms, 44 B]
++ timestamp_CA_san.diego dispatched
+✔ timestamp_MI_st.clair completed [777ms, 69 B]
++ tbl_cbs_MI_st.clair dispatched
+✔ timestamp_FL_nassau completed [196ms, 70 B]
++ tbl_cbs_FL_nassau dispatched
+✔ tbl_cbs_FL_nassau completed [2ms, 44 B]
++ timestamp_NY_livingston dispatched
+✔ timestamp_CA_san.diego completed [182ms, 70 B]
++ tbl_cbs_CA_san.diego dispatched
+✔ tbl_cbs_CA_san.diego completed [2ms, 44 B]
++ timestamp_MI_delta dispatched
+✔ timestamp_MO_st..charles completed [416ms, 72 B]
++ tbl_cbs_MO_st..charles dispatched
+✔ tbl_cbs_MO_st..charles completed [2ms, 44 B]
++ timestamp_MO_lincoln dispatched
+✔ timestamp_NY_cattaraugus completed [487ms, 72 B]
++ tbl_cbs_NY_cattaraugus dispatched
+✔ tbl_cbs_NY_cattaraugus completed [2ms, 44 B]
++ timestamp_NY_rensselaer dispatched
+✔ timestamp_NY_livingston completed [361ms, 72 B]
++ tbl_cbs_NY_livingston dispatched
+✔ tbl_cbs_NY_livingston completed [1ms, 44 B]
++ timestamp_RI_NA dispatched
+✔ timestamp_MO_lincoln completed [90ms, 72 B]
++ tbl_cbs_MO_lincoln dispatched
+✔ tbl_cbs_MO_lincoln completed [2ms, 44 B]
++ timestamp_KS_douglas dispatched
+✔ timestamp_MI_delta completed [449ms, 70 B]
++ tbl_cbs_MI_delta dispatched
+✔ tbl_cbs_TX_bastrop completed [1.4s, 44 B]
++ timestamp_FL_bay dispatched
+✔ timestamp_KS_douglas completed [103ms, 72 B]
++ tbl_cbs_KS_douglas dispatched
+✖ timestamp_FL_bay errored
++ data_FL_bay dispatched
+✔ tbl_cbs_MI_genesee completed [1.6s, 44 B]
++ timestamp_MI_midland dispatched
+✖ data_FL_bay errored
++ tbl_cbs_FL_bay dispatched
+✖ tbl_cbs_FL_bay errored
++ timestamp_NY_nyc dispatched
+✔ tbl_cbs_MI_st.joseph completed [1.5s, 44 B]
++ timestamp_TX_fort.bend dispatched
+✔ timestamp_NY_rensselaer completed [634ms, 72 B]
++ tbl_cbs_NY_rensselaer dispatched
+✔ tbl_cbs_NY_rensselaer completed [1ms, 44 B]
++ model_cbs_IA dispatched
+✔ timestamp_NY_nyc completed [201ms, 52 B]
++ data_NY_nyc dispatched
+✔ timestamp_TX_fort.bend completed [142ms, 71 B]
++ tbl_cbs_TX_fort.bend dispatched
+✔ model_cbs_IA completed [131ms, 243 B]
++ timestamp_FL_gulf dispatched
+✔ tbl_cbs_OH_carroll completed [1.5s, 44 B]
++ timestamp_MI_branch dispatched
+✔ tbl_cbs_MI_st.clair completed [1.4s, 44 B]
++ timestamp_TX_denton dispatched
+✖ data_NY_nyc errored
++ tbl_cbs_NY_nyc dispatched
+✔ timestamp_FL_gulf completed [147ms, 71 B]
+✖ tbl_cbs_NY_nyc errored
++ tbl_cbs_FL_gulf dispatched
++ timestamp_MO_ste..genevieve dispatched
+✔ timestamp_MI_midland completed [635ms, 72 B]
+✔ tbl_cbs_FL_gulf completed [1ms, 44 B]
++ tbl_cbs_MI_midland dispatched
++ timestamp_NY_oneida dispatched
+✔ timestamp_TX_denton completed [84ms, 72 B]
++ tbl_cbs_TX_denton dispatched
+✔ timestamp_MO_ste..genevieve completed [135ms, 72 B]
++ tbl_cbs_MO_ste..genevieve dispatched
+✔ tbl_cbs_MO_ste..genevieve completed [1ms, 44 B]
++ timestamp_AZ_cochise dispatched
+✔ timestamp_MI_branch completed [394ms, 72 B]
++ tbl_cbs_MI_branch dispatched
+✔ tbl_cbs_KS_douglas completed [1.4s, 44 B]
++ timestamp_FL_osceola dispatched
+✖ data_NJ_morris errored
++ tbl_cbs_NJ_morris dispatched
+✖ tbl_cbs_NJ_morris errored
++ timestamp_FL_walton dispatched
+✖ data_AL_madison errored
++ tbl_cbs_AL_madison dispatched
+✔ timestamp_FL_osceola completed [72ms, 71 B]
++ tbl_cbs_FL_osceola dispatched
+✖ tbl_cbs_AL_madison errored
++ timestamp_WI_oneida dispatched
+✔ tbl_cbs_MI_delta completed [1.5s, 44 B]
++ timestamp_NJ_bergen dispatched
+✔ tbl_cbs_FL_osceola completed [2ms, 44 B]
++ timestamp_FL_broward dispatched
+✔ timestamp_WI_oneida completed [4ms, 72 B]
++ data_WI_oneida dispatched
+✔ timestamp_NJ_bergen completed [102ms, 72 B]
++ data_NJ_bergen dispatched
+✔ timestamp_FL_walton completed [160ms, 69 B]
+✔ timestamp_FL_broward completed [107ms, 72 B]
++ tbl_cbs_FL_walton dispatched
++ data_FL_broward dispatched
+✔ tbl_cbs_FL_walton completed [1ms, 44 B]
++ timestamp_NY_madison dispatched
+✔ timestamp_AZ_cochise completed [864ms, 72 B]
++ tbl_cbs_AZ_cochise dispatched
+✔ tbl_cbs_AZ_cochise completed [1ms, 44 B]
++ timestamp_FL_miami.dade dispatched
+✖ data_NJ_bergen errored
++ tbl_cbs_NJ_bergen dispatched
+✖ tbl_cbs_NJ_bergen errored
++ model_cbs_NC dispatched
+✔ data_WI_oneida completed [333ms, 1.20 kB]
++ tbl_cbs_WI_oneida dispatched
+✔ tbl_cbs_WI_oneida completed [1ms, 44 B]
++ timestamp_MO_ray dispatched
+✔ model_cbs_NC completed [26ms, 243 B]
++ timestamp_MI_gratiot dispatched
+✔ tbl_cbs_TX_fort.bend completed [1.4s, 44 B]
++ timestamp_NJ_cumberland dispatched
+✖ data_FL_broward errored
++ tbl_cbs_FL_broward dispatched
+✔ timestamp_NY_oneida completed [1.1s, 72 B]
++ tbl_cbs_NY_oneida dispatched
+✖ tbl_cbs_FL_broward errored
+✔ tbl_cbs_NY_oneida completed [2ms, 44 B]
++ timestamp_NY_monroe dispatched
+✔ timestamp_FL_miami.dade completed [132ms, 72 B]
++ timestamp_MO_franklin dispatched
++ tbl_cbs_FL_miami.dade dispatched
+✔ timestamp_NJ_cumberland completed [80ms, 72 B]
++ data_NJ_cumberland dispatched
+✔ timestamp_MO_ray completed [119ms, 72 B]
++ data_MO_ray dispatched
+✔ timestamp_NY_madison completed [399ms, 72 B]
++ tbl_cbs_NY_madison dispatched
+✔ tbl_cbs_NY_madison completed [1ms, 44 B]
++ timestamp_MI_van.buren dispatched
+✔ timestamp_RI_NA completed [2.4s, 72 B]
++ tbl_cbs_RI_NA dispatched
+✔ tbl_cbs_TX_denton completed [1.4s, 44 B]
++ timestamp_MO_buchanan dispatched
+✔ timestamp_MO_franklin completed [194ms, 69 B]
+✔ tbl_cbs_RI_NA completed [2ms, 44 B]
++ tbl_cbs_MO_franklin dispatched
++ timestamp_FL_polk dispatched
+✔ tbl_cbs_MO_franklin completed [6ms, 44 B]
++ timestamp_OH_fulton dispatched
+✔ timestamp_MO_buchanan completed [104ms, 72 B]
++ data_MO_buchanan dispatched
+✖ data_NJ_cumberland errored
++ tbl_cbs_NJ_cumberland dispatched
+✔ timestamp_OH_fulton completed [82ms, 72 B]
++ tbl_cbs_OH_fulton dispatched
+✖ tbl_cbs_NJ_cumberland errored
++ model_cbs_OH dispatched
+✔ tbl_cbs_MI_branch completed [1.3s, 44 B]
++ timestamp_PA_allegheny dispatched
+✔ timestamp_FL_polk completed [144ms, 71 B]
++ tbl_cbs_FL_polk dispatched
+✔ tbl_cbs_MI_midland completed [1.6s, 44 B]
++ timestamp_FL_wakulla dispatched
+✖ data_MO_ray errored
+✔ tbl_cbs_FL_polk completed [2ms, 44 B]
++ tbl_cbs_MO_ray dispatched
++ timestamp_PA_york dispatched
+✖ tbl_cbs_MO_ray errored
++ timestamp_FL_indian.river dispatched
+✔ timestamp_MI_gratiot completed [492ms, 72 B]
++ tbl_cbs_MI_gratiot dispatched
+✔ timestamp_FL_wakulla completed [55ms, 72 B]
++ tbl_cbs_FL_wakulla dispatched
+✔ timestamp_PA_allegheny completed [89ms, 70 B]
++ tbl_cbs_PA_allegheny dispatched
+✔ tbl_cbs_FL_wakulla completed [2ms, 44 B]
++ timestamp_KS_harvey dispatched
+✔ timestamp_NY_monroe completed [484ms, 72 B]
+✔ tbl_cbs_PA_allegheny completed [2ms, 44 B]
++ tbl_cbs_NY_monroe dispatched
++ timestamp_NJ_salem dispatched
+✔ tbl_cbs_NY_monroe completed [2ms, 44 B]
++ timestamp_MI_macomb dispatched
+✔ model_cbs_OH completed [124ms, 243 B]
++ timestamp_NJ_hudson dispatched
+✔ timestamp_FL_indian.river completed [168ms, 72 B]
++ tbl_cbs_FL_indian.river dispatched
+✔ tbl_cbs_FL_indian.river completed [2ms, 44 B]
++ timestamp_OH_lucas dispatched
+✔ timestamp_PA_york completed [210ms, 72 B]
+✔ timestamp_KS_harvey completed [134ms, 72 B]
++ tbl_cbs_PA_york dispatched
++ tbl_cbs_KS_harvey dispatched
+✔ tbl_cbs_PA_york completed [1ms, 44 B]
++ timestamp_MI_ingham dispatched
+✔ timestamp_NJ_hudson completed [107ms, 72 B]
+✖ data_MO_buchanan errored
+✔ timestamp_MI_macomb completed [115ms, 72 B]
++ tbl_cbs_NJ_hudson dispatched
++ tbl_cbs_MO_buchanan dispatched
++ tbl_cbs_MI_macomb dispatched
+✖ tbl_cbs_MO_buchanan errored
++ timestamp_NY_putnam dispatched
+✔ timestamp_NJ_salem completed [192ms, 72 B]
+✔ tbl_cbs_NJ_hudson completed [2ms, 44 B]
++ tbl_cbs_NJ_salem dispatched
++ timestamp_MI_ottawa dispatched
+✔ tbl_cbs_NJ_salem completed [2ms, 44 B]
++ timestamp_IL_macoupin dispatched
+✔ timestamp_MI_van.buren completed [693ms, 70 B]
++ tbl_cbs_MI_van.buren dispatched
+✔ timestamp_IL_macoupin completed [81ms, 70 B]
++ tbl_cbs_IL_macoupin dispatched
+✔ timestamp_MI_ottawa completed [108ms, 72 B]
++ tbl_cbs_MI_ottawa dispatched
+✔ tbl_cbs_IL_macoupin completed [1ms, 44 B]
++ model_inputs_TX dispatched
+✔ model_inputs_TX completed [320ms, 322.31 kB]
++ timestamp_FL_lake dispatched
+✔ timestamp_FL_lake completed [111ms, 72 B]
++ tbl_cbs_FL_lake dispatched
+✔ tbl_cbs_FL_lake completed [11ms, 44 B]
++ timestamp_MO_jefferson dispatched
+✔ timestamp_NY_putnam completed [798ms, 70 B]
++ tbl_cbs_NY_putnam dispatched
+✔ tbl_cbs_NY_putnam completed [1ms, 44 B]
++ model_cbs_MI dispatched
+✔ model_cbs_MI completed [34ms, 243 B]
++ timestamp_FL_hardee dispatched
+✔ timestamp_MI_ingham completed [1s, 72 B]
++ tbl_cbs_MI_ingham dispatched
+✔ timestamp_FL_hardee completed [107ms, 69 B]
+✔ timestamp_MO_jefferson completed [334ms, 72 B]
++ tbl_cbs_FL_hardee dispatched
++ tbl_cbs_MO_jefferson dispatched
+✔ tbl_cbs_FL_hardee completed [1ms, 44 B]
++ model_cbs_MN dispatched
+✔ tbl_cbs_MO_jefferson completed [1ms, 44 B]
++ timestamp_FL_hillsborough dispatched
+✔ model_cbs_MN completed [5ms, 243 B]
++ timestamp_OH_cuyahoga dispatched
+✔ tbl_cbs_FL_miami.dade completed [1.8s, 44 B]
++ timestamp_CA_riverside dispatched
+✔ timestamp_FL_hillsborough completed [65ms, 68 B]
++ tbl_cbs_FL_hillsborough dispatched
+✔ tbl_cbs_MI_gratiot completed [1.5s, 44 B]
++ timestamp_FL_jefferson dispatched
+✔ timestamp_CA_riverside completed [143ms, 72 B]
++ tbl_cbs_CA_riverside dispatched
+✔ tbl_cbs_CA_riverside completed [1ms, 44 B]
++ timestamp_NY_broome dispatched
+✔ timestamp_OH_lucas completed [1.4s, 72 B]
++ tbl_cbs_OH_lucas dispatched
+✔ timestamp_FL_jefferson completed [132ms, 72 B]
+✔ tbl_cbs_KS_harvey completed [1.4s, 44 B]
++ tbl_cbs_FL_jefferson dispatched
++ timestamp_FL_sumter dispatched
+✔ tbl_cbs_FL_jefferson completed [1ms, 44 B]
++ timestamp_AZ_mohave dispatched
+✔ tbl_cbs_OH_fulton completed [1.8s, 44 B]
++ timestamp_FL_okeechobee dispatched
+✔ timestamp_FL_okeechobee completed [52ms, 70 B]
++ tbl_cbs_FL_okeechobee dispatched
+✔ tbl_cbs_FL_okeechobee completed [2ms, 44 B]
++ timestamp_FL_levy dispatched
+✔ timestamp_FL_sumter completed [140ms, 70 B]
++ tbl_cbs_FL_sumter dispatched
+✔ tbl_cbs_FL_sumter completed [1ms, 44 B]
++ timestamp_WA_wahkiakum dispatched
+✔ tbl_cbs_MI_ottawa completed [1.4s, 44 B]
++ timestamp_NY_sullivan dispatched
+✔ timestamp_FL_levy completed [125ms, 72 B]
++ tbl_cbs_FL_levy dispatched
+✔ tbl_cbs_MI_macomb completed [1.6s, 44 B]
++ timestamp_OH_hocking dispatched
+✔ tbl_cbs_FL_levy completed [1ms, 44 B]
++ timestamp_IL_effingham dispatched
+✔ tbl_cbs_MI_van.buren completed [1.6s, 44 B]
++ timestamp_MI_wayne dispatched
+✔ timestamp_AZ_mohave completed [582ms, 72 B]
++ tbl_cbs_AZ_mohave dispatched
+✔ tbl_cbs_AZ_mohave completed [1ms, 44 B]
++ timestamp_MI_clare dispatched
+✔ data_OH_franklin completed [7.9s, 12.43 kB]
++ summary_OH_franklin dispatched
+✔ timestamp_IL_effingham completed [386ms, 70 B]
++ tbl_cbs_IL_effingham dispatched
+✔ tbl_cbs_IL_effingham completed [2ms, 44 B]
++ timestamp_AZ_navajo dispatched
+✔ timestamp_WA_wahkiakum completed [756ms, 72 B]
++ data_WA_wahkiakum dispatched
+✔ summary_OH_franklin completed [235ms, 51.50 kB]
++ timestamp_KS_leavenworth dispatched
+✔ timestamp_OH_hocking completed [700ms, 71 B]
++ tbl_cbs_OH_hocking dispatched
+✔ tbl_cbs_MI_ingham completed [1.4s, 44 B]
++ timestamp_TX_wood dispatched
+✔ timestamp_MI_wayne completed [677ms, 72 B]
++ tbl_cbs_MI_wayne dispatched
+✔ timestamp_KS_leavenworth completed [95ms, 72 B]
++ data_KS_leavenworth dispatched
+✔ timestamp_AZ_navajo completed [418ms, 72 B]
+✔ timestamp_TX_wood completed [80ms, 72 B]
++ tbl_cbs_AZ_navajo dispatched
++ tbl_cbs_TX_wood dispatched
+✔ tbl_cbs_AZ_navajo completed [1ms, 44 B]
++ timestamp_PA_philadelphia dispatched
+✔ tbl_cbs_FL_hillsborough completed [1.4s, 44 B]
++ timestamp_IL_madison dispatched
+✔ timestamp_NY_sullivan completed [997ms, 72 B]
++ tbl_cbs_NY_sullivan dispatched
+✔ tbl_cbs_NY_sullivan completed [1ms, 44 B]
++ timestamp_FL_hendry dispatched
+✔ timestamp_MI_clare completed [589ms, 72 B]
++ tbl_cbs_MI_clare dispatched
+✔ timestamp_IL_madison completed [75ms, 71 B]
++ tbl_cbs_IL_madison dispatched
+✖ data_WA_wahkiakum errored
++ tbl_cbs_WA_wahkiakum dispatched
+✔ tbl_cbs_IL_madison completed [1ms, 44 B]
++ timestamp_FL_union dispatched
+✖ tbl_cbs_WA_wahkiakum errored
++ timestamp_FL_st..johns dispatched
+✔ timestamp_FL_hendry completed [80ms, 71 B]
+✖ data_KS_leavenworth errored
++ tbl_cbs_FL_hendry dispatched
++ tbl_cbs_KS_leavenworth dispatched
+✖ tbl_cbs_KS_leavenworth errored
++ timestamp_WA_skamania dispatched
+✔ timestamp_FL_union completed [62ms, 71 B]
++ tbl_cbs_FL_union dispatched
+✔ tbl_cbs_FL_union completed [1ms, 44 B]
++ timestamp_FL_washington dispatched
+✔ timestamp_FL_st..johns completed [126ms, 70 B]
+✔ tbl_cbs_OH_lucas completed [1.5s, 44 B]
++ tbl_cbs_FL_st..johns dispatched
++ timestamp_FL_leon dispatched
+✔ tbl_cbs_FL_st..johns completed [1ms, 44 B]
++ timestamp_AZ_maricopa dispatched
+✔ timestamp_PA_philadelphia completed [318ms, 71 B]
++ tbl_cbs_PA_philadelphia dispatched
+✔ tbl_cbs_PA_philadelphia completed [2ms, 44 B]
++ timestamp_FL_martin dispatched
+✔ timestamp_FL_washington completed [137ms, 68 B]
++ tbl_cbs_FL_washington dispatched
+✔ tbl_cbs_FL_washington completed [1ms, 44 B]
++ timestamp_MO_cape.girardeau dispatched
+✔ timestamp_FL_leon completed [95ms, 69 B]
++ tbl_cbs_FL_leon dispatched
+✔ tbl_cbs_FL_leon completed [1ms, 44 B]
++ timestamp_TX_hood dispatched
+✔ timestamp_FL_martin completed [79ms, 72 B]
++ tbl_cbs_FL_martin dispatched
+✔ tbl_cbs_FL_martin completed [1ms, 44 B]
++ timestamp_OH_summit dispatched
+✔ timestamp_TX_hood completed [69ms, 72 B]
++ tbl_cbs_TX_hood dispatched
+✔ timestamp_WA_skamania completed [349ms, 72 B]
++ data_WA_skamania dispatched
+✔ timestamp_NY_broome completed [1.9s, 70 B]
++ tbl_cbs_NY_broome dispatched
+✔ tbl_cbs_NY_broome completed [1ms, 44 B]
++ timestamp_AK_NA dispatched
+✖ data_WA_skamania errored
++ tbl_cbs_WA_skamania dispatched
+✖ tbl_cbs_WA_skamania errored
++ timestamp_WI_pierce dispatched
+✔ timestamp_AZ_maricopa completed [524ms, 72 B]
++ tbl_cbs_AZ_maricopa dispatched
+✔ tbl_cbs_AZ_maricopa completed [4ms, 44 B]
++ timestamp_NY_jefferson dispatched
+✔ timestamp_MO_cape.girardeau completed [530ms, 72 B]
++ tbl_cbs_MO_cape.girardeau dispatched
+✔ tbl_cbs_MO_cape.girardeau completed [1ms, 44 B]
++ timestamp_PA_chester dispatched
+✔ timestamp_AK_NA completed [341ms, 72 B]
++ tbl_cbs_AK_NA dispatched
+✔ tbl_cbs_TX_wood completed [1.2s, 44 B]
++ timestamp_NE_NA dispatched
+✔ timestamp_PA_chester completed [229ms, 72 B]
++ tbl_cbs_PA_chester dispatched
+✔ tbl_cbs_PA_chester completed [1ms, 44 B]
++ timestamp_MI_osceola dispatched
+✔ timestamp_NY_jefferson completed [388ms, 71 B]
++ tbl_cbs_NY_jefferson dispatched
+✔ tbl_cbs_NY_jefferson completed [2ms, 44 B]
++ timestamp_FL_santa.rosa dispatched
+✔ tbl_cbs_OH_hocking completed [1.5s, 44 B]
++ timestamp_FL_glades dispatched
+✖ timestamp_WI_pierce errored
++ data_WI_pierce dispatched
+✔ timestamp_FL_santa.rosa completed [65ms, 72 B]
++ tbl_cbs_FL_santa.rosa dispatched
+✔ tbl_cbs_FL_hendry completed [1.2s, 44 B]
++ timestamp_CA_contra.costa dispatched
+✔ tbl_cbs_FL_santa.rosa completed [1ms, 44 B]
++ timestamp_TX_hardin dispatched
+✔ timestamp_FL_glades completed [152ms, 72 B]
++ tbl_cbs_FL_glades dispatched
+✔ timestamp_CA_contra.costa completed [76ms, 71 B]
++ data_CA_contra.costa dispatched
+✔ tbl_cbs_FL_glades completed [2ms, 44 B]
++ timestamp_NC_NA dispatched
+✔ timestamp_NE_NA completed [286ms, 72 B]
+✔ timestamp_MI_osceola completed [273ms, 71 B]
++ tbl_cbs_NE_NA dispatched
++ tbl_cbs_MI_osceola dispatched
+✔ tbl_cbs_MI_clare completed [1.5s, 44 B]
++ timestamp_WI_barron dispatched
+✔ timestamp_NC_NA completed [146ms, 70 B]
+✔ tbl_cbs_MI_wayne completed [1.8s, 44 B]
++ tbl_cbs_NC_NA dispatched
++ model_slices_NC dispatched
+✖ data_WI_pierce errored
++ tbl_cbs_WI_pierce dispatched
+✖ tbl_cbs_WI_pierce errored
++ timestamp_NY_steuben dispatched
+✔ tbl_cbs_TX_hood completed [1.3s, 44 B]
++ model_cbs_TX dispatched
+✔ model_cbs_TX completed [28ms, 252 B]
++ timestamp_MO_stone dispatched
+✔ timestamp_TX_hardin completed [607ms, 72 B]
++ tbl_cbs_TX_hardin dispatched
+✔ timestamp_MO_stone completed [160ms, 71 B]
++ data_MO_stone dispatched
+✔ timestamp_WI_barron completed [519ms, 72 B]
++ tbl_cbs_WI_barron dispatched
+✔ tbl_cbs_WI_barron completed [1ms, 44 B]
++ model_cbs_AK dispatched
+✔ model_cbs_AK completed [42ms, 243 B]
++ model_inputs_AK dispatched
+✔ timestamp_NY_steuben completed [480ms, 72 B]
++ tbl_cbs_NY_steuben dispatched
+✔ tbl_cbs_NY_steuben completed [1ms, 44 B]
++ timestamp_TX_galveston dispatched
+✔ model_inputs_AK completed [150ms, 20.84 kB]
++ model_slices_AK dispatched
+✔ timestamp_OH_summit completed [2s, 70 B]
++ tbl_cbs_OH_summit dispatched
+✔ timestamp_TX_galveston completed [192ms, 72 B]
++ tbl_cbs_TX_galveston dispatched
+✖ data_MO_stone errored
++ tbl_cbs_MO_stone dispatched
+✖ tbl_cbs_MO_stone errored
++ timestamp_OH_stark dispatched
+✔ tbl_cbs_MI_osceola completed [1.5s, 44 B]
++ timestamp_FL_hernando dispatched
+✔ model_slices_NC completed [1.3s, 24.09 kB]
++ model_fits_NC declared [8 branches]
+✔ timestamp_FL_hernando completed [298ms, 70 B]
+✔ tbl_cbs_TX_hardin completed [1.5s, 44 B]
++ tbl_cbs_FL_hernando dispatched
++ timestamp_TX_reeves dispatched
++ timestamp_MI_emmet dispatched
+✔ tbl_cbs_FL_hernando completed [2ms, 44 B]
++ timestamp_OH_butler dispatched
+✔ model_slices_AK completed [1.1s, 17.25 kB]
++ model_fits_AK declared [8 branches]
+✔ timestamp_OH_stark completed [1.1s, 70 B]
++ tbl_cbs_OH_stark dispatched
++ timestamp_TX_dallas dispatched
+✔ timestamp_OH_cuyahoga completed [5.2s, 72 B]
++ tbl_cbs_OH_cuyahoga dispatched
+✔ tbl_cbs_NE_NA completed [2.4s, 44 B]
++ timestamp_FL_columbia dispatched
+✔ timestamp_OH_butler completed [510ms, 70 B]
++ tbl_cbs_OH_butler dispatched
+✔ timestamp_FL_columbia completed [230ms, 72 B]
++ tbl_cbs_FL_columbia dispatched
+✔ timestamp_MI_emmet completed [581ms, 70 B]
++ tbl_cbs_MI_emmet dispatched
+✔ tbl_cbs_FL_columbia completed [2ms, 44 B]
++ timestamp_FL_citrus dispatched
+✔ timestamp_TX_dallas completed [577ms, 72 B]
++ tbl_cbs_TX_dallas dispatched
+✔ timestamp_FL_citrus completed [148ms, 70 B]
++ tbl_cbs_FL_citrus dispatched
+✔ tbl_cbs_FL_citrus completed [1ms, 44 B]
++ timestamp_CA_solano dispatched
+✔ timestamp_TX_reeves completed [856ms, 69 B]
++ tbl_cbs_TX_reeves dispatched
+✔ tbl_cbs_OH_summit completed [2s, 44 B]
++ timestamp_NY_suffolk dispatched
+✔ tbl_cbs_TX_galveston completed [2.1s, 44 B]
++ timestamp_MI_shiawassee dispatched
+✔ tbl_cbs_AK_NA completed [3.9s, 44 B]
++ timestamp_FL_sarasota dispatched
+✔ timestamp_FL_sarasota completed [377ms, 72 B]
++ tbl_cbs_FL_sarasota dispatched
+✔ tbl_cbs_FL_sarasota completed [1ms, 44 B]
++ timestamp_PA_erie dispatched
+✔ tbl_cbs_OH_stark completed [2s, 44 B]
++ timestamp_WA_pacific dispatched
+✖ data_CA_contra.costa errored
++ tbl_cbs_CA_contra.costa dispatched
+✖ tbl_cbs_CA_contra.costa errored
++ timestamp_TX_bexar dispatched
+✔ timestamp_MI_shiawassee completed [1.2s, 72 B]
++ tbl_cbs_MI_shiawassee dispatched
+✔ timestamp_NY_suffolk completed [1.4s, 71 B]
++ tbl_cbs_NY_suffolk dispatched
+✔ tbl_cbs_NY_suffolk completed [1ms, 44 B]
++ timestamp_MI_berrien dispatched
+✔ tbl_cbs_OH_butler completed [1.9s, 44 B]
++ timestamp_IL_will dispatched
+✔ timestamp_TX_bexar completed [376ms, 72 B]
++ tbl_cbs_TX_bexar dispatched
+✔ timestamp_PA_erie completed [770ms, 72 B]
+✔ tbl_cbs_TX_reeves completed [1.7s, 44 B]
++ tbl_cbs_PA_erie dispatched
++ timestamp_MI_lake dispatched
+✔ tbl_cbs_PA_erie completed [2ms, 44 B]
++ timestamp_IL_lake dispatched
+✔ timestamp_CA_solano completed [2s, 72 B]
++ tbl_cbs_CA_solano dispatched
+✔ tbl_cbs_MI_emmet completed [2.2s, 44 B]
++ timestamp_IN_porter dispatched
+✔ timestamp_IL_will completed [368ms, 70 B]
++ tbl_cbs_IL_will dispatched
+✔ tbl_cbs_IL_will completed [1ms, 44 B]
++ timestamp_PA_washington dispatched
+✔ timestamp_IL_lake completed [204ms, 71 B]
++ tbl_cbs_IL_lake dispatched
+✔ tbl_cbs_IL_lake completed [2ms, 44 B]
++ timestamp_MI_isabella dispatched
+✔ timestamp_PA_washington completed [74ms, 72 B]
++ tbl_cbs_PA_washington dispatched
+✔ tbl_cbs_CA_solano completed [1ms, 44 B]
++ timestamp_SD_NA dispatched
+✔ tbl_cbs_NC_NA completed [4.8s, 44 B]
++ timestamp_MO_caldwell dispatched
+✔ tbl_cbs_PA_washington completed [1ms, 44 B]
++ timestamp_PA_delaware dispatched
+✔ timestamp_WA_pacific completed [932ms, 72 B]
++ data_WA_pacific dispatched
+✔ timestamp_MI_lake completed [402ms, 71 B]
++ tbl_cbs_MI_lake dispatched
+✔ tbl_cbs_TX_dallas completed [2.3s, 44 B]
++ timestamp_NY_chemung dispatched
+✔ timestamp_PA_delaware completed [75ms, 72 B]
++ tbl_cbs_PA_delaware dispatched
+✔ tbl_cbs_PA_delaware completed [1ms, 44 B]
++ timestamp_NY_ulster dispatched
+✔ timestamp_MO_caldwell completed [144ms, 70 B]
++ tbl_cbs_MO_caldwell dispatched
+✔ tbl_cbs_MO_caldwell completed [2ms, 44 B]
++ timestamp_IL_kankakee dispatched
+✔ timestamp_IL_kankakee completed [134ms, 72 B]
++ tbl_cbs_IL_kankakee dispatched
+✔ tbl_cbs_IL_kankakee completed [2ms, 44 B]
++ timestamp_TX_ellis dispatched
+✔ timestamp_SD_NA completed [336ms, 72 B]
++ tbl_cbs_SD_NA dispatched
+✔ tbl_cbs_SD_NA completed [1ms, 44 B]
++ timestamp_MI_kent dispatched
+✖ data_WA_pacific errored
++ tbl_cbs_WA_pacific dispatched
+✖ tbl_cbs_WA_pacific errored
++ timestamp_FL_duval dispatched
+✔ timestamp_MI_berrien completed [1s, 70 B]
++ tbl_cbs_MI_berrien dispatched
+✔ timestamp_NY_chemung completed [367ms, 72 B]
+✔ timestamp_MI_isabella completed [563ms, 72 B]
++ tbl_cbs_NY_chemung dispatched
++ tbl_cbs_MI_isabella dispatched
+✔ tbl_cbs_NY_chemung completed [1ms, 44 B]
++ timestamp_WI_wood dispatched
+✔ tbl_cbs_OH_cuyahoga completed [3.4s, 44 B]
++ timestamp_KY_laurel dispatched
+✔ timestamp_IN_porter completed [738ms, 69 B]
++ tbl_cbs_IN_porter dispatched
+✔ timestamp_FL_duval completed [142ms, 70 B]
+✔ timestamp_TX_ellis completed [273ms, 70 B]
++ tbl_cbs_FL_duval dispatched
+✔ tbl_cbs_IN_porter completed [1ms, 44 B]
++ tbl_cbs_TX_ellis dispatched
+✔ tbl_cbs_FL_duval completed [2ms, 44 B]
++ model_inputs_IA dispatched
++ timestamp_TX_jefferson dispatched
+✔ timestamp_TX_jefferson completed [77ms, 72 B]
++ tbl_cbs_TX_jefferson dispatched
+✔ timestamp_KY_laurel completed [166ms, 71 B]
++ tbl_cbs_KY_laurel dispatched
+✔ timestamp_WI_wood completed [250ms, 72 B]
++ tbl_cbs_WI_wood dispatched
+✔ tbl_cbs_KY_laurel completed [1ms, 44 B]
++ timestamp_MI_kalamazoo dispatched
+✔ tbl_cbs_WI_wood completed [1ms, 44 B]
++ timestamp_TX_rockwall dispatched
+✔ model_inputs_IA completed [122ms, 2.66 kB]
++ model_slices_IA dispatched
+✔ model_slices_IA completed [41ms, 72 B]
++ model_fits_IA declared [8 branches]
+✔ timestamp_TX_rockwall completed [63ms, 71 B]
++ tbl_cbs_TX_rockwall dispatched
++ model_cbs_GA dispatched
+✔ model_cbs_GA completed [26ms, 251 B]
++ model_inputs_GA dispatched
+✔ timestamp_NY_ulster completed [817ms, 72 B]
++ tbl_cbs_NY_ulster dispatched
+✔ tbl_cbs_NY_ulster completed [1ms, 44 B]
++ model_inputs_FL dispatched
+✔ model_inputs_GA completed [139ms, 115.86 kB]
++ timestamp_TX_parker dispatched
+✔ tbl_cbs_TX_bexar completed [1.5s, 44 B]
++ timestamp_FL_liberty dispatched
+✔ model_inputs_FL completed [156ms, 225.48 kB]
++ timestamp_CA_nevada dispatched
+✔ timestamp_TX_parker completed [84ms, 72 B]
++ tbl_cbs_TX_parker dispatched
+✔ timestamp_FL_liberty completed [108ms, 72 B]
++ tbl_cbs_FL_liberty dispatched
+✔ tbl_cbs_FL_liberty completed [2ms, 44 B]
++ model_cbs_FL dispatched
+✔ model_cbs_FL completed [24ms, 241 B]
++ timestamp_WI_dane dispatched
+✔ tbl_cbs_MI_lake completed [1.5s, 44 B]
++ timestamp_IL_sangamon dispatched
+✔ timestamp_IL_sangamon completed [117ms, 72 B]
++ tbl_cbs_IL_sangamon dispatched
+✔ tbl_cbs_IL_sangamon completed [1ms, 44 B]
++ timestamp_MI_monroe dispatched
+✔ tbl_cbs_MI_shiawassee completed [2.5s, 44 B]
++ timestamp_TX_rusk dispatched
+✔ tbl_cbs_MI_berrien completed [1.3s, 44 B]
++ timestamp_FL_dixie dispatched
+✔ timestamp_MI_kalamazoo completed [1s, 70 B]
+✔ tbl_cbs_MI_isabella completed [1.3s, 44 B]
++ tbl_cbs_MI_kalamazoo dispatched
++ timestamp_AZ_pinal dispatched
+✔ tbl_cbs_TX_ellis completed [1.2s, 44 B]
++ timestamp_NY_ontario dispatched
+✔ timestamp_TX_rusk completed [61ms, 70 B]
++ tbl_cbs_TX_rusk dispatched
+✔ timestamp_FL_dixie completed [107ms, 72 B]
++ tbl_cbs_FL_dixie dispatched
+✔ timestamp_AZ_pinal completed [84ms, 72 B]
+✔ tbl_cbs_FL_dixie completed [1ms, 44 B]
+✔ timestamp_WI_dane completed [692ms, 72 B]
++ tbl_cbs_AZ_pinal dispatched
+✔ tbl_cbs_TX_jefferson completed [1.3s, 44 B]
++ tbl_cbs_WI_dane dispatched
++ timestamp_FL_desoto dispatched
+✔ tbl_cbs_AZ_pinal completed [1ms, 44 B]
++ timestamp_MO_jackson dispatched
+✔ tbl_cbs_WI_dane completed [1ms, 44 B]
++ timestamp_OH_clark dispatched
++ timestamp_FL_jackson dispatched
+✖ timestamp_NY_ontario errored
++ data_NY_ontario dispatched
+✖ data_NY_ontario errored
++ tbl_cbs_NY_ontario dispatched
+✔ timestamp_FL_desoto completed [63ms, 69 B]
++ tbl_cbs_FL_desoto dispatched
+✖ tbl_cbs_NY_ontario errored
++ timestamp_FL_franklin dispatched
+✔ timestamp_CA_nevada completed [946ms, 72 B]
+✔ tbl_cbs_FL_desoto completed [1ms, 44 B]
++ tbl_cbs_CA_nevada dispatched
++ timestamp_FL_pinellas dispatched
+✔ tbl_cbs_CA_nevada completed [2ms, 44 B]
++ timestamp_MI_saginaw dispatched
+✔ timestamp_FL_jackson completed [113ms, 70 B]
++ tbl_cbs_FL_jackson dispatched
+✔ timestamp_MO_jackson completed [142ms, 70 B]
+✔ tbl_cbs_FL_jackson completed [1ms, 44 B]
++ tbl_cbs_MO_jackson dispatched
++ timestamp_MN_NA dispatched
+✔ tbl_cbs_MO_jackson completed [2ms, 44 B]
++ timestamp_NY_rockland dispatched
+✔ tbl_cbs_TX_rockwall completed [1.3s, 44 B]
++ timestamp_GA_NA dispatched
+✔ timestamp_FL_pinellas completed [73ms, 72 B]
++ tbl_cbs_FL_pinellas dispatched
+✔ tbl_cbs_FL_pinellas completed [2ms, 44 B]
++ timestamp_CA_san.francisco dispatched
+✔ timestamp_FL_franklin completed [131ms, 72 B]
++ tbl_cbs_FL_franklin dispatched
+✔ tbl_cbs_FL_franklin completed [2ms, 44 B]
++ timestamp_NY_orange dispatched
+✖ timestamp_GA_NA errored
++ data_GA_NA dispatched
+✖ data_GA_NA errored
++ tbl_cbs_GA_NA dispatched
+✖ tbl_cbs_GA_NA errored
++ timestamp_NJ_union dispatched
+✔ timestamp_MN_NA completed [283ms, 72 B]
++ tbl_cbs_MN_NA dispatched
+✔ timestamp_OH_clark completed [503ms, 72 B]
++ tbl_cbs_OH_clark dispatched
+✔ timestamp_NJ_union completed [88ms, 72 B]
++ tbl_cbs_NJ_union dispatched
+✔ tbl_cbs_NJ_union completed [2ms, 44 B]
++ timestamp_OH_greene dispatched
+✔ tbl_cbs_TX_parker completed [1.5s, 44 B]
++ timestamp_NY_dutchess dispatched
+✔ timestamp_MI_monroe completed [1s, 72 B]
++ tbl_cbs_MI_monroe dispatched
+✔ timestamp_CA_san.francisco completed [586ms, 72 B]
++ tbl_cbs_CA_san.francisco dispatched
+✔ tbl_cbs_CA_san.francisco completed [1ms, 44 B]
++ timestamp_OH_montgomery dispatched
+✔ tbl_cbs_TX_rusk completed [1.2s, 44 B]
++ timestamp_MI_roscommon dispatched
+✔ timestamp_MI_saginaw completed [1s, 71 B]
++ tbl_cbs_MI_saginaw dispatched
+✔ timestamp_MI_kent completed [2.9s, 68 B]
+✔ timestamp_MI_roscommon completed [92ms, 70 B]
++ tbl_cbs_MI_kent dispatched
++ tbl_cbs_MI_roscommon dispatched
+✔ tbl_cbs_MI_kalamazoo completed [1.4s, 44 B]
++ timestamp_TX_kaufman dispatched
+✔ timestamp_OH_greene completed [781ms, 72 B]
++ tbl_cbs_OH_greene dispatched
+✔ timestamp_TX_kaufman completed [141ms, 70 B]
++ tbl_cbs_TX_kaufman dispatched
+✔ timestamp_NY_dutchess completed [1s, 72 B]
++ tbl_cbs_NY_dutchess dispatched
+✔ tbl_cbs_NY_dutchess completed [1ms, 44 B]
++ timestamp_PA_montgomery dispatched
+✔ timestamp_NY_rockland completed [1.6s, 70 B]
++ tbl_cbs_NY_rockland dispatched
+✔ tbl_cbs_NY_rockland completed [2ms, 44 B]
++ timestamp_FL_bradford dispatched
+✔ tbl_cbs_OH_clark completed [1.3s, 44 B]
++ timestamp_KS_miami dispatched
+✔ timestamp_FL_bradford completed [70ms, 71 B]
++ tbl_cbs_FL_bradford dispatched
+✔ tbl_cbs_FL_bradford completed [2ms, 44 B]
++ timestamp_VA_NA dispatched
+✔ timestamp_KS_miami completed [81ms, 68 B]
+✔ timestamp_PA_montgomery completed [218ms, 72 B]
++ tbl_cbs_KS_miami dispatched
++ tbl_cbs_PA_montgomery dispatched
+✔ tbl_cbs_PA_montgomery completed [1ms, 44 B]
++ timestamp_TX_tarrant dispatched
+✔ timestamp_NY_orange completed [1.8s, 72 B]
++ tbl_cbs_NY_orange dispatched
+✔ tbl_cbs_NY_orange completed [2ms, 44 B]
++ timestamp_FL_collier dispatched
+✔ timestamp_TX_tarrant completed [93ms, 72 B]
++ tbl_cbs_TX_tarrant dispatched
+✔ tbl_cbs_MI_monroe completed [1.4s, 44 B]
++ timestamp_UT_NA dispatched
+✔ timestamp_FL_collier completed [154ms, 72 B]
++ tbl_cbs_FL_collier dispatched
+✔ tbl_cbs_MN_NA completed [1.9s, 44 B]
++ timestamp_WA_cowlitz dispatched
+✔ timestamp_OH_montgomery completed [1.6s, 71 B]
++ tbl_cbs_OH_montgomery dispatched
+✔ tbl_cbs_MI_saginaw completed [1.4s, 44 B]
++ summary_WI_oneida dispatched
+✔ summary_WI_oneida completed [25ms, 815 B]
++ tbl_cbs_OH_franklin dispatched
+✔ tbl_cbs_TX_kaufman completed [1.3s, 44 B]
++ model_slices_GA dispatched
+✔ tbl_cbs_MI_roscommon completed [1.5s, 44 B]
++ model_slices_MN dispatched
+✔ timestamp_WA_cowlitz completed [404ms, 72 B]
++ data_WA_cowlitz dispatched
+✔ tbl_cbs_OH_greene completed [1.4s, 44 B]
++ model_slices_MI dispatched
+✔ tbl_cbs_MI_kent completed [1.6s, 44 B]
++ model_slices_TX dispatched
+✔ tbl_cbs_KS_miami completed [1.3s, 44 B]
++ model_slices_FL dispatched
+✔ model_slices_MN completed [852ms, 8.36 kB]
++ model_fits_MN declared [8 branches]
++ model_slices_OH dispatched
+✖ data_WA_cowlitz errored
++ tbl_cbs_WA_cowlitz dispatched
+✖ tbl_cbs_WA_cowlitz errored
+✔ timestamp_UT_NA completed [2s, 72 B]
++ tbl_cbs_UT_NA dispatched
+✔ tbl_cbs_UT_NA completed [2ms, 44 B]
+✔ model_slices_GA completed [1.5s, 90.00 kB]
++ model_fits_GA declared [16 branches]
+✔ model_slices_MI completed [1.7s, 44.66 kB]
++ model_fits_MI declared [8 branches]
+✔ tbl_cbs_FL_collier completed [2.4s, 44 B]
+✔ tbl_cbs_OH_montgomery completed [2.3s, 44 B]
+✔ tbl_cbs_OH_franklin completed [2.2s, 44 B]
+✔ model_slices_FL completed [1.3s, 18.40 kB]
++ model_fits_FL declared [8 branches]
+✔ tbl_cbs_TX_tarrant completed [3.5s, 44 B]
+✔ model_slices_OH completed [1.7s, 63.42 kB]
++ model_fits_OH declared [8 branches]
+✔ timestamp_VA_NA completed [4.3s, 71 B]
++ tbl_cbs_VA_NA dispatched
++ dash_inputs dispatched
+✔ tbl_cbs_VA_NA completed [14ms, 44 B]
+✔ model_slices_TX completed [4.5s, 42.07 kB]
++ model_fits_TX declared [16 branches]
+✔ model_fits_OH completed [14.2s, 61.75 kB]
++ model_out dispatched
+✔ model_out completed [112ms, 140 B]
+✔ dash_inputs completed [0ms, 1.75 MB]
++ dashboard_data dispatched
+✔ dashboard_data completed [7.7s, 3.17 MB]
++ dashboard_export dispatched
+✔ dashboard_export completed [342ms, 3.17 MB]
+✖ errored pipeline [48.7s, 422 completed, 463 skipped]
+Warning messages:
+1: 49 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
+2: 9 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 

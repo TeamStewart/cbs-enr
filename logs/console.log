@@ -1,0 +1,23 @@
+- The project is out-of-sync -- use `renv::status()` for details.
+ℹ The googlesheets4 package is using a cached token for
+  'masonreece1317@gmail.com'.
+Error in `googledrive::drive_auth()`:
+! Can't get Google credentials.
+ℹ Are you running googledrive in a non-interactive session? Consider:
+• Call `drive_deauth()` to prevent the attempt to get credentials.
+• Call `drive_auth()` directly with all necessary specifics.
+ℹ See gargle's "Non-interactive auth" vignette for more details:
+ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+Backtrace:
+    ▆
+ 1. └─googledrive::drive_auth(email = TRUE)
+ 2.   └─googledrive:::drive_abort(...)
+ 3.     └─cli::cli_abort(message = message, ..., .envir = .envir)
+ 4.       └─rlang::abort(...)
+Execution halted
+- The project is out-of-sync -- use `renv::status()` for details.
+ℹ The googledrive package is using a cached token for
+  'masonreece1317@gmail.com'.
+Started at 2026-10-30 23:29:04, waiting...
+✔ Reading from "CBS Metadata".
+✔ Range ''Sheet1''.
