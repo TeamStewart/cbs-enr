@@ -234,3 +234,30 @@
 .card.tabset:has(.dash-map) > .card-header .nav-link {
   padding: 0.4rem 0.6rem;
 }
+
+// Redistricting page map: the 2024 / 2026 fade slider above the map, which takes the rest of the card
+.quarto-dashboard .observablehq:has(> .redist-map) {
+  height: 100%;
+  min-height: 0;
+}
+
+.redist-map {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+
+  > figure, > svg { flex: 1 1 auto; min-height: 0; }
+}
+
+.redist-fade {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 28rem;
+  margin: 0 auto 0.25rem;
+  font-size: 0.8rem;
+
+  .form-range { flex: 1 1 auto; }
+  .btn-link { font-size: 0.8rem; font-weight: 600; padding: 0 0.25rem; color: $body-color; text-decoration: none; white-space: nowrap; }
+}

@@ -12,7 +12,8 @@
 ##   model_fits_{ST}     dynamic: cross(race, model), one predict_one() each. A branch
 ##                       whose race slice, model and inputs are unchanged is skipped
 ## Then model_out writes the usual model_results/ files (write_predictions(),
-## write_precincts()) and starts the redistricting charts, as run_night.R does.
+## write_precincts()). The redistricting charts are their own targets
+## (scripts/redistricting_targets.R), drawn on the dashboard's Redistricting tab.
 ##
 ## The large outputs stay in the Dropbox (model_results/); the targets store keeps only
 ## each branch's tables.
@@ -111,10 +112,10 @@ model_out_dir <- function(sim = MODEL_SIM) {
   if (nzchar(sim)) file.path(d26, "model_tests", "run_night_sim", basename(sim)) else file.path(d26, "model_results")
 }
 
-# Writes every fit to model_out_dir() (write_predictions(), write_precincts()) and starts
-# the redistricting charts. `fits` is a list of model_fits_{ST} (each a list of branches).
-# Returns the folder, so model_results reads it after the write.
-model_write <- function(fits, sim = MODEL_SIM, redistricting = MODEL_REDISTRICTING) {
+# Writes every fit to model_out_dir() (write_predictions(), write_precincts()). `fits` is a
+# list of model_fits_{ST} (each a list of branches). Returns the folder, so model_results
+# reads it after the write.
+model_write <- function(fits, sim = MODEL_SIM) {
   fits = unlist(fits, recursive = FALSE)
   res = list(
     pred = bind_rows(lapply(fits, `[[`, "pred")),
@@ -129,29 +130,9 @@ model_write <- function(fits, sim = MODEL_SIM, redistricting = MODEL_REDISTRICTI
   }
   write_predictions(res, dir)
   write_precincts(res, dir)
-  if (redistricting && !nzchar(sim)) start_redistricting(MODEL_CBS_ENV)
   bad = filter(res$status, status != "ok" | is.na(statewide) | statewide != "ok")
   if (nrow(bad)) print(as.data.frame(select(bad, race_id, model, status, statewide)), right = FALSE)
   dir
-}
-
-# scripts/model/reports/redistricting_compare.R --live in the background, as run_night.R:
-# a slow or failed chart never holds up the models. Log in model_results/redistricting/.
-start_redistricting <- function(env = MODEL_CBS_ENV) {
-  d26 = find_26_general()
-  f = "scripts/model/reports/redistricting_compare.R"
-  dir_r = file.path(d26, "model_results", "redistricting")
-  if (!file.exists(f) || !length(list.files(file.path(d26, "input_data", "redistricting"), "_county_district_weights\\.csv$"))) {
-    cli::cli_alert_warning("Redistricting charts not set up (no weights in input_data/redistricting/): see BEFORE THE NIGHT in {f}")
-    return(invisible(FALSE))
-  }
-  dir.create(dir_r, recursive = TRUE, showWarnings = FALSE)
-  system2(
-    file.path(R.home("bin"), "Rscript"),
-    c(shQuote(f), "--live", paste0("--env=", env)),
-    stdout = file.path(dir_r, "live.log"), stderr = file.path(dir_r, "live.log"), wait = FALSE
-  )
-  invisible(TRUE)
 }
 
 # The dashboard's data for the published page: written where automation.R pushes it from

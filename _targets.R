@@ -19,6 +19,9 @@ source("scripts/functions.R")
 # workers start, which inherit it) and their targets wrappers
 source("scripts/model/live/load.R")
 source("scripts/model_targets.R")
+# Redistricting tab: old vs new congressional districts (scripts/redistricting_targets.R)
+source("scripts/model/reports/redistricting_lib.R")
+source("scripts/redistricting_targets.R")
 
 # renv (not pak) so dependency versions stay at renv.lock; enightdata itself
 # is in renv's ignored.packages since each machine installs its own checkout.
@@ -151,20 +154,36 @@ map_models = tar_map(
   tar_target(model_fits, model_fit(model_slices, model_names, model_inputs), pattern = cross(model_slices, model_names), format = "qs", iteration = "list")
 )
 
+# redistricting tab: CBS county results for each redrawn state's top-of-ticket race, pulled
+# every cycle (NULL in a sim or with CBS_MODEL_REDISTRICTING=FALSE)
+map_redist = tar_map(
+  tibble::tibble(ST = REDIST_STATES),
+  names = "ST",
+  tar_target(redist_cbs, redist_top_votes(ST), cue = tar_cue(mode = "always"))
+)
+
 list(
   map_single,
   map_full,
   map_models,
+  map_redist,
   # dashboard: contests shown are set by DASHBOARD_CONTESTS in scripts/util/globals.R
   # which models run: the run = TRUE rows of model_config.csv, on the real returns unless
   # MODEL_SIM (scripts/util/globals.R) names a sim scenario
   tar_target(model_config, path.expand(fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_config.csv")), format = "file"),
   tar_target(model_names, models_from_config(model_config)),
   # writes model_results/ (or the sim's folder) and returns that folder
-  tar_combine(model_out, map_models[["model_fits"]], command = model_write(list(!!!.x), MODEL_SIM, MODEL_REDISTRICTING)),
+  tar_combine(model_out, map_models[["model_fits"]], command = model_write(list(!!!.x), MODEL_SIM)),
   tar_combine(dash_inputs, map_single[["summary"]], command = list(!!!.x)),
   tar_target(model_results, read_model_results(model_out)),
-  tar_target(dashboard_data, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS, model_results)),
+  # the prep's outputs (redistricting_compare.R without --live), the district outlines the
+  # page's map fetches (data/dashboard/geo/{st}_districts.json), and the tab's numbers
+  tar_target(redist_inputs, redist_files(), format = "file"),
+  tar_target(redist_geojson, redist_geo(redist_inputs), format = "file"),
+  tar_combine(redist_top, map_redist[["redist_cbs"]], command = list(!!!.x)),
+  tar_target(dashboard_core, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS, model_results)),
+  tar_target(redist_data, build_redist_data(redist_inputs, redist_top, model_results, dashboard_core)),
+  tar_target(dashboard_data, c(dashboard_core, list(redist = redist_data))),
   # data/dashboard/live/dashboard_data.rds, which automation.R pushes for the published page
   tar_target(dashboard_export, export_dashboard_data(dashboard_data), format = "file"),
   if (DASHBOARD_RENDER) tar_quarto(dashboard, "index.qmd", quiet = FALSE)

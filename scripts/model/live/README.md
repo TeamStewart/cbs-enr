@@ -37,16 +37,20 @@ CBS feed (writes to `model_tests/run_night_sim/`, never to `model_results/`):
 Rscript scripts/model/live/run_night.R --sim=tx_base --at="2026-11-03 22:00"
 ```
 
-**Redistricting charts.** After every refresh, `run_night.R` also starts
-`scripts/model/reports/redistricting_compare.R --live` in the background (`--no-redistricting`
-turns it off): tonight's House vote, counted so far, by new district (actual) and old district
-(estimated), for NC, FL, TX, OH and CA. It runs separately, so it never holds up or breaks the
-models. **The dashboard reads the charts from `26_general/model_results/redistricting/`:**
-`redistricting_dumbbell_{ST}_house_latest.png` and `redistricting_seats_{ST}_house_latest.png` (one each per state),
-`redistricting_districts_house_latest.csv`, and the old / new district maps
-`redistricting_map_{ST}_old_house_latest.png` / `_new_house_latest.png` (with
-`redistricting_map_{ST}_house_latest.html` to flip between them), replaced at every run; time-stamped copies go to
-`history/`, and the run's log to `live.log`.
+**Redistricting charts.** The dashboard's Redistricting tab (next to Results and Models) shows
+each redrawn state's districts (NC, FL, TX, OH, CA) under the 2024 and 2026 maps: a per-district
+dumbbell, seats by lean, and a map that fades between the two plans. Tonight's numbers are the
+state's top-of-ticket race (the Senate or governor race the models project: NC, FL, OH, TX Senate;
+CA governor), not the House races, so any model can be picked on the page without
+modeling the House. The page picks the votes: the 2024 presidential baseline, the race's votes
+counted so far (ENR precincts where we scrape, CBS county results elsewhere), or any model's
+projected vote, each summed into both maps' districts. All of it is built in the targets
+pipeline (`scripts/redistricting_targets.R`: `redist_cbs_{ST}` pulls the race's CBS county
+results every cycle, `redist_data` builds the tab's numbers, `redist_geojson` writes
+`data/dashboard/geo/{st}_districts.json`); nothing waits on it. `run_night.R` (outside the
+pipeline) still starts `scripts/model/reports/redistricting_compare.R --live` in the background
+for its House-vote PNG charts in `26_general/model_results/redistricting/` (`--no-redistricting`
+turns it off).
 
 **Before go time (once, so the first results chart straight away):**
 1. Install fourthirtyfive: `Rscript -e 'remotes::install_github("kuriwaki/fourthirtyfive")'`
@@ -59,7 +63,9 @@ models. **The dashboard reads the charts from `26_general/model_results/redistri
 3. `Rscript scripts/model/reports/redistricting_compare.R` -- all five states, ~15 minutes.
    Writes the county x district weights and map geometry the night run needs to
    `26_general/input_data/redistricting/`, and the 2024 baseline charts and maps (`*_2024pres.*`).
-   Without the weights `run_night.R` prints a warning and skips the charts.
+   It also writes `{ST}_unit_districts.csv` (each precinct's share of each district), which the
+   tab uses to sum the models' precinct projections into districts. Without these files the tab
+   is empty and `run_night.R` prints a warning and skips the charts.
 4. Dry run on CBS's test feed: `Rscript scripts/model/reports/redistricting_compare.R --live --env=test`,
    then check that the `*_house_latest` files appear in `model_results/redistricting/`.
 

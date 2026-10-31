@@ -524,6 +524,37 @@
       "Maintainer": "Dirk Eddelbuettel <edd@debian.org>",
       "Repository": "CRAN"
     },
+    "RcppHungarian": {
+      "Package": "RcppHungarian",
+      "Version": "0.3",
+      "Source": "Repository",
+      "Priority": null,
+      "Depends": [
+        null
+      ],
+      "Imports": [
+        "Rcpp (>= 1.0.1)"
+      ],
+      "LinkingTo": [
+        "Rcpp"
+      ],
+      "Suggests": [
+        "testthat (>= 2.1.0)",
+        "knitr",
+        "rmarkdown",
+        "ggplot2"
+      ],
+      "Enhances": [
+        null
+      ],
+      "License": "GPL (>= 2)",
+      "License_is_FOSS": null,
+      "License_restricts_use": null,
+      "OS_type": null,
+      "NeedsCompilation": "yes",
+      "Repository": "CRAN",
+      "Type": "source"
+    },
     "RcppParallel": {
       "Package": "RcppParallel",
       "Version": "5.1.11-2",
@@ -3813,6 +3844,55 @@
       "Maintainer": "R Core Team <R-core@R-project.org>",
       "Repository": "CRAN"
     },
+    "fourthirtyfive": {
+      "Package": "fourthirtyfive",
+      "Version": "0.1.1",
+      "Source": "GitHub",
+      "Title": "Data and Shapefiles for Visualizing Congressional Districts",
+      "Authors@R": "c( person(\"Shiro\", \"Kuriwaki\", , \"shiro.kuriwaki@yale.edu\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-5687-2647\")), person(\"Zoya\", \"Ahmer\", role = \"ctb\"), person(\"Zachary\", \"Donnini\", role = \"ctb\"), person(\"Cory\", \"McCartan\", role = \"ctb\"), person(\"Daniel\", \"Donner\", role = \"ctb\"), person(\"The Downballot\", role = \"cph\") )",
+      "Description": "Shapefiles for visualizing congressional districts.",
+      "URL": "https://www.shirokuriwaki.com/fourthirtyfive/, https://github.com/kuriwaki/fourthirtyfive",
+      "BugReports": "https://github.com/kuriwaki/fourthirtyfive/issues",
+      "License": "MIT + file LICENSE",
+      "Note": "The Downballot-derived hexmap material is licensed under CC BY 4.0. See the installed LICENSE.note for attribution, scope, and modifications.",
+      "Encoding": "UTF-8",
+      "Roxygen": "list(markdown = TRUE)",
+      "Imports": [
+        "cli",
+        "dplyr",
+        "glue",
+        "sf",
+        "purrr",
+        "tigris (>= 2.3.0)",
+        "rlang",
+        "rmapshaper",
+        "stringr",
+        "tibble",
+        "geomander (>= 2.5.3)"
+      ],
+      "Depends": [
+        "R (>= 4.1)"
+      ],
+      "Suggests": [
+        "ggredist",
+        "ggplot2",
+        "mapgl (>= 0.5.0)",
+        "patchwork",
+        "readr",
+        "testthat (>= 3.2.0)",
+        "withr"
+      ],
+      "Config/testthat/edition": "3",
+      "Remotes": "christopherkenny/geomander, CoryMcCartan/hexmap",
+      "LazyData": "true",
+      "Config/roxygen2/version": "8.0.0",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "kuriwaki",
+      "RemoteRepo": "fourthirtyfive",
+      "RemoteRef": "fd0e5c4a77057a61c69d296bd8ac5393beb60f58",
+      "RemoteSha": "fd0e5c4a77057a61c69d296bd8ac5393beb60f58"
+    },
     "fs": {
       "Package": "fs",
       "Version": "2.1.0",
@@ -4094,8 +4174,8 @@
     },
     "geomander": {
       "Package": "geomander",
-      "Version": "2.5.2",
-      "Source": "Repository",
+      "Version": "2.5.3",
+      "Source": "GitHub",
       "Type": "Package",
       "Title": "Geographic Tools for Studying Gerrymandering",
       "Authors@R": "c( person(\"Christopher T.\", \"Kenny\",  email = \"ctkenny@proton.me\", role = c(\"aut\", \"cre\"),  comment = c(ORCID = \"0000-0002-9386-6860\")), person(\"Cory\", \"McCartan\", email = \"mccartan@psu.edu\", role = \"ctb\", comment = c(ORCID = \"0000-0002-6251-669X\")) )",
@@ -4103,6 +4183,7 @@
       "License": "MIT + file LICENCE",
       "URL": "https://christophertkenny.com/geomander/, https://github.com/christopherkenny/geomander",
       "BugReports": "https://github.com/christopherkenny/geomander/issues",
+      "Roxygen": "list(markdown = TRUE)",
       "RoxygenNote": "7.3.3",
       "LinkingTo": [
         "Rcpp (>= 1.0.7)"
@@ -4139,11 +4220,14 @@
       "Encoding": "UTF-8",
       "VignetteBuilder": "knitr",
       "Config/testthat/edition": "3",
+      "Config/Needs/website": "christopherkenny/ctktemplate",
       "Language": "en-US",
-      "NeedsCompilation": "yes",
-      "Author": "Christopher T. Kenny [aut, cre] (ORCID: <https://orcid.org/0000-0002-9386-6860>), Cory McCartan [ctb] (ORCID: <https://orcid.org/0000-0002-6251-669X>)",
-      "Maintainer": "Christopher T. Kenny <ctkenny@proton.me>",
-      "Repository": "CRAN"
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "christopherkenny",
+      "RemoteRepo": "geomander",
+      "RemoteRef": "514e362ebbb3416c7bb224969e17b8b581986b4b",
+      "RemoteSha": "514e362ebbb3416c7bb224969e17b8b581986b4b"
     },
     "geometries": {
       "Package": "geometries",
@@ -4964,6 +5048,32 @@
       "Author": "Kirill Müller [aut, cre] (ORCID: <https://orcid.org/0000-0002-1416-3412>), Jennifer Bryan [ctb] (ORCID: <https://orcid.org/0000-0002-6983-2759>)",
       "Maintainer": "Kirill Müller <kirill@cynkra.com>",
       "Repository": "CRAN"
+    },
+    "hexmap": {
+      "Package": "hexmap",
+      "Version": "0.0.0.9000",
+      "Source": "GitHub",
+      "Title": "Hexagonal Cartograms Inside State Boundaries",
+      "Authors@R": "person(\"Cory\", \"McCartan\", , \"cmccartan@g.harvard.edu\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-6251-669X\"))",
+      "Description": "Automates the process of generating hexagonal cartograms for the U.S., in the style of the Daily Kos election maps <https://dkel.ec/map>. Districts are built from hexagons and placed inside state boundaries to best approximate their real-world geography. States are sized and positioned to recreate the overall shape of the country while balancing the areas of each district.",
+      "Imports": [
+        "cli",
+        "dplyr",
+        "sf",
+        "geomander",
+        "redist",
+        "RcppHungarian"
+      ],
+      "License": "MIT + file LICENSE",
+      "Encoding": "UTF-8",
+      "Roxygen": "list(markdown = TRUE)",
+      "RoxygenNote": "7.2.0",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "CoryMcCartan",
+      "RemoteRepo": "hexmap",
+      "RemoteRef": "9b0bf5a0d50fb444cd4bef8d7dabb298b1dca694",
+      "RemoteSha": "9b0bf5a0d50fb444cd4bef8d7dabb298b1dca694"
     },
     "highr": {
       "Package": "highr",
@@ -11357,46 +11467,46 @@
     },
     "tigris": {
       "Package": "tigris",
-      "Version": "2.2.1",
+      "Version": "2.3.0",
       "Source": "Repository",
-      "Type": "Package",
-      "Title": "Load Census TIGER/Line Shapefiles",
-      "Date": "2025-04-15",
-      "Authors@R": "c( person(given=\"Kyle\", family=\"Walker\", email=\"kyle@walker-data.com\", role=c(\"aut\", \"cre\")), person(given=\"Bob\", family=\"Rudis\", email=\"bob@rudis.net\", role=\"ctb\") )",
-      "URL": "https://github.com/walkerke/tigris",
-      "BugReports": "https://github.com/walkerke/tigris/issues",
-      "Description": "Download TIGER/Line shapefiles from the United States Census Bureau (<https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html>) and load into R as 'sf' objects.",
-      "License": "MIT + file LICENSE",
-      "LazyData": "TRUE",
-      "Encoding": "UTF-8",
+      "Priority": null,
       "Depends": [
-        "R (>= 3.3.0)"
-      ],
-      "Suggests": [
-        "testthat",
-        "ggplot2",
-        "ggthemes",
-        "leaflet",
-        "knitr",
-        "tidycensus",
-        "sp"
+        "R (>= 4.1)"
       ],
       "Imports": [
-        "stringr",
-        "magrittr",
-        "utils",
-        "rappdirs",
-        "httr",
-        "uuid",
-        "sf",
+        "cli",
         "dplyr",
-        "methods"
+        "httr2",
+        "magrittr",
+        "methods",
+        "rappdirs",
+        "rlang",
+        "sf",
+        "stringr",
+        "utils",
+        "zip"
       ],
-      "RoxygenNote": "7.3.2",
+      "LinkingTo": [
+        null
+      ],
+      "Suggests": [
+        "ggplot2",
+        "knitr",
+        "leaflet",
+        "sp",
+        "testthat (>= 3.0.0)",
+        "withr"
+      ],
+      "Enhances": [
+        null
+      ],
+      "License": "MIT + file LICENSE",
+      "License_is_FOSS": null,
+      "License_restricts_use": null,
+      "OS_type": null,
       "NeedsCompilation": "no",
-      "Author": "Kyle Walker [aut, cre], Bob Rudis [ctb]",
-      "Maintainer": "Kyle Walker <kyle@walker-data.com>",
-      "Repository": "CRAN"
+      "Repository": "CRAN",
+      "Type": "source"
     },
     "timeDate": {
       "Package": "timeDate",

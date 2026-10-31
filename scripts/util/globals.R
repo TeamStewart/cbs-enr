@@ -13,8 +13,9 @@ PATH_ENIGHTDATA = ""
 # model_tests/run_night_sim/<scenario>/ and never to model_results/.
 MODEL_SIM = Sys.getenv("CBS_MODEL_SIM", "")
 MODEL_SIM_AT = Sys.getenv("CBS_MODEL_SIM_AT", "2026-11-03 22:00")
-# CBS feed for the statewide rows ("live" or "test"), and whether each run starts the
-# redistricting charts (scripts/model/reports/redistricting_compare.R --live)
+# CBS feed for the statewide rows ("live" or "test"), and whether each run pulls the
+# top-of-ticket race's county results for the dashboard's Redistricting tab (redist_cbs_* in
+# _targets.R)
 MODEL_CBS_ENV = Sys.getenv("CBS_MODEL_CBS_ENV", "live")
 MODEL_REDISTRICTING = as.logical(Sys.getenv("CBS_MODEL_REDISTRICTING", "TRUE"))
 

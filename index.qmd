@@ -45,7 +45,11 @@ ojs_define(
   medsl_logo = paste0("data:image/png;base64,", base64enc::base64encode("assets/medsl_horizontal.png")),
   votehub_logo = paste0("data:image/svg+xml;base64,", base64enc::base64encode("assets/votehub-logo-simple.svg")),
   top_model = if (is.null(dd$top_model)) "" else dd$top_model,
-  truth = if (is.null(dd$truth)) data.frame(key = character(), dem = numeric(), rep = numeric(), total = numeric()) else dd$truth
+  truth = if (is.null(dd$truth)) data.frame(key = character(), dem = numeric(), rep = numeric(), total = numeric()) else dd$truth,
+  # Redistricting page (build_redist_data() in scripts/redistricting_targets.R)
+  rd_dist = if (is.null(dd$redist)) data.frame(state = character(), src = character(), plan = character(), cd = character(), dem = numeric(), rep = numeric(), cov = numeric()) else dd$redist$dist,
+  rd_src = if (is.null(dd$redist)) data.frame(state = character(), src = character(), time = numeric()) else transform(dd$redist$src, time = to_ms(time)),
+  rd_desc = if (is.null(dd$redist$desc)) data.frame(cd = character(), desc = character()) else dd$redist$desc
 )
 ```
 
@@ -269,8 +273,12 @@ EXPORT_THEME = { return {
 } }
 EXPORTS = new Map()
 // legend: { swatch, keys } where swatch is the key shape for the color scale's entries and keys are extra
-// entries { mark: "rect" | "band" | "line" | "dot" | "arrow", label, color, opacity, width, dash, r, dir }
-exportable = (name, s, title, legend = {}) => (EXPORTS.set(`${cur.key}|${name}`, { s, title: title ?? name, legend }), s)
+// entries { mark: "rect" | "band" | "line" | "dot" | "ring" | "arrow", label, color, opacity, width, dash, r, dir }
+// opt (pages not keyed on the contest, e.g. Redistricting): scope (the key the export button asks for,
+// else the contest), sub (subtitle), file (file name prefix), time, basemap (map credit; no VoteHub logo),
+// height (px at the theme's width, in place of its fixed height),
+// multi: [{ s, title, suffix }] to save several images from one button
+exportable = (name, s, title, legend = {}, opt = {}) => (EXPORTS.set(`${opt.scope ?? cur.key}|${name}`, { s, title: title ?? name, legend, ...opt }), s)
 
 // Styrene B for the canvas text; the rasterized SVG carries its own @font-face (an <img> can't see page fonts)
 exportFont = {
@@ -310,7 +318,7 @@ exportChart = {
     }
     return dir;
   };
-  const render = async ({ s, title, legend: lg }) => {
+  const render = async ({ s, title, legend: lg, sub, basemap, height }) => {
     const [medslLogo, votehubLogo] = await logos;
     const B = T.base, W = T.width, innerW = W - 2 * T.pad;
     const isMap = s.projection != null;
@@ -339,7 +347,7 @@ exportChart = {
 
     // layout first (measuring only), so maps can size the canvas to the state's shape.
     // title and subtitle, centred (plot.title / plot.subtitle)
-    const titleLines = wrap(title, 1.4), subLines = wrap(`${cur.label} · as of ${fmtTime(cur.time)} ET`, 1);
+    const titleLines = wrap(title, 1.4), subLines = wrap(sub ?? `${cur.label} · as of ${fmtTime(cur.time)} ET`, 1);
     const plotTop = T.pad + titleLines.length * lineH(1.4) + 0.75 * B + subLines.length * lineH(1) + B;
 
     // logo strip under everything (add_logo(position = "bottom-right")); maps add VoteHub to its left
@@ -348,7 +356,7 @@ exportChart = {
 
     // caption, left-aligned: the chart's own note, then the source line
     const capLines = [...(note ? wrap(note, 0.75) : []),
-      ...wrap(`Source: ${T.source}${isMap ? `. Basemap: ${T.basemap}` : ""}`, 0.75)];
+      ...wrap(`Source: ${T.source}${isMap ? `. Basemap: ${basemap ?? T.basemap}` : ""}`, 0.75)];
 
     // legend at the bottom, centred rows: the color scale, then one key per remaining mark
     const kh = 0.85 * B;
@@ -360,6 +368,7 @@ exportChart = {
       if (k.mark === "rect") g.fillRect(x + 12 - kh / 2, y, kh, kh);
       else if (k.mark === "band") g.fillRect(x, cy - 5, 24, 10);
       else if (k.mark === "dot") { g.beginPath(); g.arc(x + 12, cy, k.r ?? 3, 0, 2 * Math.PI); g.fill(); }
+      else if (k.mark === "ring") { g.lineWidth = k.width ?? 1.5; g.fillStyle = "#ffffff"; g.beginPath(); g.arc(x + 12, cy, k.r ?? 4, 0, 2 * Math.PI); g.fill(); g.stroke(); }
       else if (k.mark === "arrow") {
         // up-left (dir -1) or up-right (dir 1) at 35°, as on the Shift Map
         const a = (k.dir < 0 ? 215 : -35) * Math.PI / 180, L = 20, x0 = x + 12 - L / 2 * Math.cos(a), y0 = cy - L / 2 * Math.sin(a);
@@ -403,7 +412,7 @@ exportChart = {
     const footH = stripH + capLines.length * lineH(0.75) + 0.75 * B + (rows.length ? legendH + B / 2 : 0);
 
     // maps get the projected state's aspect ratio at full width; other charts the theme's fixed size
-    let H = T.height;
+    let H = height ?? T.height;
     if (isMap) {
       const p = s.projection;
       const [[x0, y0], [x1, y1]] = d3.geoPath(d3.geoConicEqualArea().parallels(p.parallels).rotate(p.rotate)).bounds(p.domain);
@@ -419,7 +428,7 @@ exportChart = {
     text(subLines, 1, T.subtitle, W / 2, T.pad + titleLines.length * lineH(1.4) + 0.75 * B, "center");
     const stripTop = H - stripH;
     g.drawImage(medslLogo, W - lp - logoW, stripTop + lp, logoW, logoH);
-    if (isMap) {
+    if (isMap && !basemap) {
       const vw = logoH * votehubLogo.naturalWidth / votehubLogo.naturalHeight;
       g.drawImage(votehubLogo, W - lp - logoW - 2 * B - vw, stripTop + lp, vw, logoH);
     }
@@ -452,35 +461,43 @@ exportChart = {
     g.drawImage(img, T.pad, plotTop, innerW, plotH);
     return new Promise(resolve => c.toBlob(resolve, `image/${T.format}`, 0.95));
   };
-  return async (name, repick = false) => {
-    const entry = EXPORTS.get(`${cur.key}|${name}`);
+  return async (name, repick = false, scope = cur.key) => {
+    const entry = EXPORTS.get(`${scope}|${name}`);
     if (!entry) return "Nothing to export for this chart.";
-    const stamp = new Date(cur.time ?? Date.now()).toISOString().slice(0, 16).replace(/[-:]/g, "").replace("T", "-");
-    const file = `${cur.key}_${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}_${stamp}.${T.format === "jpeg" ? "jpg" : T.format}`;
+    const stamp = new Date(entry.time ?? cur.time ?? Date.now()).toISOString().slice(0, 16).replace(/[-:]/g, "").replace("T", "-");
+    const slug = x => x.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     let dir = null;
     try { dir = await getDir(repick); } catch (e) { if (e.name === "AbortError") return "Cancelled."; console.warn(e); }
-    const blob = await render(entry);
-    if (dir) {
-      const w = await (await dir.getFileHandle(file, { create: true })).createWritable();
-      await w.write(blob);
-      await w.close();
-      return `Saved ${dir.name}/${file}`;
+    // one image, or one per entry.multi item (same projection and text, so the same size)
+    const files = [];
+    for (const it of entry.multi ?? [entry]) {
+      const file = `${entry.file ?? cur.key}_${slug(name)}${it.suffix ? `_${it.suffix}` : ""}_${stamp}.${T.format === "jpeg" ? "jpg" : T.format}`;
+      const blob = await render({ ...entry, ...it });
+      if (dir) {
+        const w = await (await dir.getFileHandle(file, { create: true })).createWritable();
+        await w.write(blob);
+        await w.close();
+      } else {
+        const a = html`<a download=${file} href=${URL.createObjectURL(blob)}>`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      }
+      files.push(file);
     }
-    const a = html`<a download=${file} href=${URL.createObjectURL(blob)}>`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    return `Downloaded ${file}`;
+    return `${dir ? `Saved ${dir.name}/` : "Downloaded "}${files.join(", ")}`;
   };
 }
 
 // one button per chart card header; exports whichever tab is showing
 exportButtons = {
-  const add = (header, nameFn) => {
+  // charts on the Redistricting page are registered under its state (rdScope), not the contest
+  const scopeOf = h => h.closest("#redistricting") ? rdScope : cur.key;
+  const add = (header, nameFn, title = "Save chart image (shift-click: choose folder)") => {
     header.querySelector(".dash-export")?.remove();
-    const b = html`<button type="button" class="btn btn-sm dash-export" title="Save chart image (shift-click: choose folder)"><i class="bi bi-download"></i></button>`;
+    const b = html`<button type="button" class="btn btn-sm dash-export" title=${title}><i class="bi bi-download"></i></button>`;
     b.onclick = async e => {
       b.disabled = true;
-      const msg = await exportChart(nameFn(), e.shiftKey).catch(err => (console.error(err), `Export failed: ${err.message}`));
+      const msg = await exportChart(nameFn(), e.shiftKey, scopeOf(header)).catch(err => (console.error(err), `Export failed: ${err.message}`));
       b.disabled = false;
       b.title = msg;
       b.classList.add("dash-export-done");
@@ -491,6 +508,10 @@ exportButtons = {
   document.querySelectorAll(".card.tabset > .card-header").forEach(h => add(h, () => h.querySelector(".nav-link.active")?.dataset.value));
   const ex = document.querySelector(".card-toolbar");
   if (ex) add(ex, () => "Precinct Explorer");
+  // untabbed cards whose title is an export name (the Redistricting map: two images)
+  document.querySelectorAll(".card:not(.tabset) > .card-header").forEach(h => {
+    if (h.textContent.trim() === "District Map") add(h, () => "District Map", "Save the 2024 and 2026 map images (shift-click: choose folder)");
+  });
   return exportChart;
 }
 ```
@@ -929,7 +950,8 @@ mapZoom = {
     el.dataset.zoom = "1";
     const svg = [el, ...el.querySelectorAll("svg")].find(x => x.tagName === "svg" && x.querySelector('g[aria-label="geo"]'));
     if (!svg) return;
-    const city = '[aria-label="city"]';
+    // city points and labels, and the Redistricting map's district labels: moved, not scaled
+    const city = '[aria-label="city"], [aria-label="cd-label"]';
     const layers = [...svg.querySelectorAll(':scope > g[aria-label="geo"], :scope > g[aria-label="dot"]')].filter(g => !g.querySelector(city));
     svg.querySelectorAll(`g[aria-label="geo"] path, g[aria-label="dot"] circle:not(${city})`).forEach(x => x.setAttribute("vector-effect", "non-scaling-stroke"));
     const dots = [...svg.querySelectorAll(`g[aria-label="dot"] circle:not(${city})`)].map(c => [c, +c.getAttribute("r")]);
@@ -1244,5 +1266,288 @@ viewof mctl = {
     { mark: "dot", label: "Expected remaining votes (area)", r: 6, opacity: 0.6 }
   ] });
   return Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, r: s.r, caption: s.caption, marks: s.marks });
+}
+```
+
+# Redistricting
+
+```{ojs redist-setup}
+//| output: false
+
+// congressional districts under the 2024 map (old) and the 2026 map (new), per redrawn state, from
+// the vote source picked in the toolbar (build_redist_data() in scripts/redistricting_targets.R)
+RD = transpose(rd_dist)
+RSRC = transpose(rd_src).map(d => ({ ...d, time: Number.isFinite(d.time) ? new Date(d.time) : null }))
+RDESC = new Map(transpose(rd_desc).map(d => [d.cd, d.desc]))
+RD_STATES = [...new Set(RSRC.map(d => d.state))]
+// the export buttons look charts on this page up by state
+rdScope = `rd-${rst}`
+
+// lean categories by Republican two-party margin (R - D), as in redistricting_lib.R
+RD_SAFE = 0.10
+RD_TOSS = 0.03
+RD_LEANS = ["Safe D", "Lean D", "Competitive", "Lean R", "Safe R"]
+rdLean = m => m <= -RD_SAFE ? "Safe D" : m <= -RD_TOSS ? "Lean D" : m < RD_TOSS ? "Competitive" : m < RD_SAFE ? "Lean R" : "Safe R"
+RD_LEAN_COLORS = { const r = marginRange(DEM, REP); return [r[7], r[5], "#d9d9d9", r[2], r[0]]; }
+// model estimates cover only the precincts the models project; districts under half covered are left out
+RD_COV_MIN = 0.5
+// R - D margin as "R+8" / "D+3" / "Even"
+rdMfmt = m => Math.round(m * 100) === 0 ? "Even" : `${m > 0 ? "R" : "D"}+${Math.round(Math.abs(m) * 100)}`
+
+rsrc = RSRC.find(d => d.state === rst && d.src === rctl) ?? null
+rdKindText = s => s == null ? "" : s.kind === "model" ? `${s.race} · ${modelLabel(s)}` : s.label
+// "ratio_strata · Majority race + region · Conformal (approx.)"
+modelLabel = s => [s.model_base, s.model_spec && s.model_spec !== "default" ? specLabel(s.model_spec) : null,
+  s.model_interval && s.model_interval !== "default" ? intervalLabel(s.model_interval) : null].filter(Boolean).join(" · ") || s.model
+// caption lead: what the votes are and when, then the source's note (build_redist_data())
+rdHead = s => s == null ? "" : s.kind === "pres24" ? s.note :
+  s.kind === "count" ? `${s.note} · as of ${fmtTime(s.time)} ET` :
+  `${s.note} · model run ${fmtTime(s.time)} ET`
+
+// one row per district number: { cd, num, old: { m, dem, rep, ok }, new: {...}, dir, change }
+rdRows = {
+  const rows = RD.filter(d => d.state === rst && d.src === rctl);
+  const side = d => d && d.dem + d.rep > 0
+    ? { m: (d.rep - d.dem) / (d.dem + d.rep), dem: d.dem, rep: d.rep, ok: !(Number.isFinite(d.cov) && d.cov < RD_COV_MIN) }
+    : null;
+  return d3.groups(rows, d => d.cd).map(([cd, v]) => {
+    const o = side(v.find(d => d.plan === "old")), n = side(v.find(d => d.plan === "new"));
+    const change = o && n ? n.m - o.m : null;
+    return { cd, num: +cd.slice(3), desc: RDESC.get(cd) ?? null, old: o, new: n, change,
+             ok: !!(o?.ok && n?.ok),
+             dir: change == null ? "No match" : Math.abs(change) < 0.01 ? "Moved < 1 pt" : change > 0 ? "Toward Rep" : "Toward Dem" };
+  }).sort((a, b) => d3.descending(a.new?.m ?? a.old?.m, b.new?.m ?? b.old?.m));
+}
+rdOk = rdRows.filter(d => d.ok)
+rdLeftOut = rdRows.length - rdOk.length
+rdLeftNote = rdLeftOut ? ` · ${rdLeftOut} ${rdLeftOut === 1 ? "district" : "districts"} left out (projections cover under half the vote)` : ""
+rdEmpty = () => empty(RSRC.length === 0
+  ? "No redistricting data. Run scripts/model/reports/redistricting_compare.R (no --live) before the night."
+  : `No district results for ${rst} from this source yet.`)
+// export subtitle and file prefix
+rdExportOpt = { return { scope: rdScope, sub: `${rst} · ${rdKindText(rsrc)}${rsrc?.time ? ` · as of ${fmtTime(rsrc.time)} ET` : ""}`,
+  file: `${rst}-redistricting`, time: rsrc?.time ?? Date.now() } }
+
+// the state picker takes the contest picker's place in the header while this page is showing
+rst = {
+  const params = new URLSearchParams(location.search);
+  const states = RD_STATES.length ? RD_STATES : ["NC"];
+  const start = states.includes(params.get("s")) ? params.get("s") : states[0];
+  const s = html`<select class="form-select form-select-sm dash-select redist-select" aria-label="State">
+    ${states.map(st => html`<option value=${st} selected=${st === start}>${st} congressional districts</option>`)}
+  </select>`;
+  s.value = start;
+  s.addEventListener("input", () => {
+    const p = new URLSearchParams(location.search);
+    p.set("s", s.value);
+    history.replaceState(null, "", `${location.pathname}?${p}${location.hash}`);
+  });
+  const title = document.querySelector("#quarto-dashboard-header .navbar-title");
+  document.querySelector(".redist-select")?.remove();
+  (document.querySelector(".dash-select:not(.redist-select)") ?? title)?.after(s);
+  const sync = () => {
+    const on = document.querySelector("#tab-redistricting")?.classList.contains("active") ?? false;
+    s.hidden = !on;
+    document.querySelectorAll(".dash-select:not(.redist-select)").forEach(e => { e.hidden = on; });
+  };
+  document.addEventListener("shown.bs.tab", sync);
+  invalidation.then(() => document.removeEventListener("shown.bs.tab", sync));
+  sync();
+  return Generators.input(s);
+}
+
+// last pick, kept across state changes (this cell has no inputs)
+rctlMemo = { return {} }
+
+// district outlines, both maps (redist_geo() in scripts/redistricting_targets.R), fetched once per state;
+// prepGeo() fixes ring order and fits the projection to the state outline
+rdGeoCache = new Map()
+rdGeo = {
+  const st = rst.toLowerCase();
+  const get = f => fetch(`${geo_url}/${f}.json`).then(r => r.ok ? r.json() : null).catch(e => (console.warn(e), null));
+  if (!rdGeoCache.has(st)) rdGeoCache.set(st, Promise.all([get(`${st}_districts`), get(`${st}_counties`)])
+    .then(([fc, cty]) => fc && prepGeo(fc, cty))
+    .catch(e => (console.warn(e), null)));
+  return rdGeoCache.get(st);
+}
+
+// one map's marks: district fills (under) and lines and labels (over); aria-description tags them
+// for the 2024 / 2026 fade
+rdMapMarks = (g, plan, rows) => {
+  const by = new Map(rows.map(d => [d.cd, d.ok ? d[plan] : null]));
+  const f = g.features.filter(x => x.properties.plan === plan);
+  const val = x => by.get(x.properties.cd) ?? null;
+  const tag = part => `rd-${plan}-${part}`;
+  const lab = f.map(x => { const v = val(x); return { lon: x.properties.lx, lat: x.properties.ly,
+    text: v ? `${+x.properties.cd.slice(3)}\n${rdMfmt(v.m)}` : `${+x.properties.cd.slice(3)}` }; });
+  const yr = plan === "old" ? 2024 : 2026;
+  return {
+    fill: [
+      Plot.geo(f.filter(x => !val(x)), { fill: MAP_BLANK, stroke: MAP_BLANK, ariaDescription: tag("fill"),
+        title: x => `${x.properties.cd} (${yr} map)\nNo estimate` }),
+      Plot.geo(f.filter(x => val(x)), { fill: x => -val(x).m, stroke: x => -val(x).m, ariaDescription: tag("fill"),
+        title: x => { const v = val(x); return `${x.properties.cd} (${yr} map)\n${rdMfmt(v.m)} · Dem ${fmt(v.dem)} · Rep ${fmt(v.rep)}`; } })
+    ],
+    top: [
+      Plot.geo(f, { fill: "none", stroke: INK, strokeWidth: 1.2, ariaDescription: tag("top") }),
+      Plot.text(lab, { x: "lon", y: "lat", text: "text", ariaLabel: () => "cd-label", ariaDescription: tag("top"), pointerEvents: "none",
+        fill: "#212529", stroke: "white", strokeWidth: 3, strokeOpacity: 0.9, paintOrder: "stroke", fontWeight: 600, lineHeight: 1.05 })
+    ]
+  };
+}
+// the map's 2024 / 2026 fade, kept across redraws (resize, state or source change); no inputs
+rdFadeMemo = { return { t: 1 } }
+
+// county lines and the state outline, between the fills and the district lines
+rdOutlines = g => [
+  Plot.geo(g.counties, { fill: "none", stroke: "white", strokeWidth: 0.5, strokeOpacity: 0.7 }),
+  ...(g.state ? [Plot.geo([g.state], { fill: "none", stroke: INK, strokeWidth: 1.2 })] : [])
+]
+```
+
+## {.toolbar}
+
+```{ojs redist-controls}
+// value = the vote source id: "pres24", "count" (the top-of-ticket race counted) or "model:{race}:{model}"
+viewof rctl = {
+  const opts = RSRC.filter(d => d.state === rst);
+  const form = html`<form class="model-ctl"><label>Model <select name="model" class="form-select form-select-sm"></select></label></form>`;
+  const { model } = form.elements;
+  const opt = d => Object.assign(document.createElement("option"), { value: d.src,
+    text: d.kind === "model" ? modelLabel(d) + (d.spec_default && d.interval_default ? " (default)" : "") : d.label,
+    title: d.note });
+  const group = (label, rows) => { const g = document.createElement("optgroup"); g.label = label; g.append(...rows.map(opt)); return g; };
+  const races = [...new Set(opts.filter(d => d.kind === "model").map(d => d.race))].sort();
+  model.replaceChildren(
+    ...opts.filter(d => d.kind !== "model").map(opt),
+    ...races.map(r => group(`${r} projection`, opts.filter(d => d.race === r).sort((a, b) => d3.ascending(a.model, b.model))))
+  );
+  const isTop = d => d.model === top_model || `${d.model_base}/${d.model_spec}/${d.model_interval}` === top_model;
+  // the last pick (or the same kind / model in this state), else the default model, the counted vote, 2024
+  const pick = [opts.find(d => d.src === rctlMemo.src), opts.find(d => rctlMemo.model && d.model === rctlMemo.model),
+    opts.find(d => !rctlMemo.model && d.kind === rctlMemo.kind), opts.find(d => d.kind === "model" && isTop(d)),
+    opts.find(d => d.kind === "count"), opts.find(d => d.kind === "pres24"), opts[0]].find(Boolean);
+  if (pick) model.value = pick.src;
+  const update = () => {
+    form.value = model.value || null;
+    const d = opts.find(x => x.src === model.value);
+    model.title = d?.note ?? "";
+    if (d) Object.assign(rctlMemo, { src: d.src, kind: d.kind, model: d.model ?? null });
+  };
+  model.addEventListener("input", update);
+  form.addEventListener("submit", e => e.preventDefault());
+  form.hidden = opts.length === 0;
+  update();
+  return form;
+}
+```
+
+## Row
+
+### Shift {.tabset width="34%"}
+
+```{ojs}
+//| title: Districts
+{
+  if (rdOk.length === 0) return rdEmpty();
+  const s = exportable("Districts", {
+    marginLeft: 48,
+    marginBottom: 36,
+    caption: `○ 2024 map · ● 2026 map · ${rdHead(rsrc)}${rdLeftNote}`,
+    exportCaption: `${rsrc?.note ?? ""}${rdLeftNote}. A district number can cover different places on each map.`,
+    x: { label: "Two-party margin →", tickFormat: rdMfmt, grid: true, ticks: 5 },
+    y: { label: null, domain: rdOk.map(d => d.cd), tickSize: 0 },
+    color: { type: "categorical", domain: ["Toward Dem", "Toward Rep", "Moved < 1 pt"], range: [DEM, REP, "#999999"], legend: true },
+    marks: [
+      Plot.ruleX([0], { stroke: "#999", strokeDasharray: "4,4" }),
+      Plot.ruleY(rdOk, { y: "cd", x1: d => d.old.m, x2: d => d.new.m, stroke: "dir", strokeWidth: 2.5 }),
+      Plot.dot(rdOk, { y: "cd", x: d => d.old.m, r: 3.5, fill: "white", stroke: INK, strokeWidth: 1.2 }),
+      Plot.dot(rdOk, { y: "cd", x: d => d.new.m, r: 3.5, fill: "dir" }),
+      Plot.tip(rdOk, Plot.pointerY({ y: "cd", x: d => d.new.m, title: d => `${d.cd}${d.desc ? ` · ${d.desc}` : ""}\n` +
+        `2024 map ${rdMfmt(d.old.m)} → 2026 map ${rdMfmt(d.new.m)}\n${rdLean(d.old.m)} → ${rdLean(d.new.m)}` }))
+    ]
+  }, "District Lean, 2024 vs. 2026 Map", { swatch: "dot", keys: [
+    { mark: "ring", label: "2024 map", color: INK },
+    { mark: "dot", label: "2026 map", color: INK, r: 4 }
+  ] }, { ...rdExportOpt, height: Math.round(240 + 28.8 * rdOk.length) });  // redistricting_compare.R's 10 x (2 + 0.24 n) inches
+  return Plot.plot({ marginLeft: s.marginLeft, marginBottom: s.marginBottom, caption: s.caption, x: s.x, y: s.y, color: s.color, marks: s.marks });
+}
+```
+
+```{ojs}
+//| title: Seats
+{
+  if (rdOk.length === 0) return rdEmpty();
+  const plans = [["old", "2024 map"], ["new", "2026 map"]];
+  const cats = rdLeftOut ? [...RD_LEANS, "No estimate"] : RD_LEANS;
+  const data = plans.flatMap(([p, label]) => cats.map(c => ({ plan: label, lean: c,
+    n: c === "No estimate" ? rdLeftOut : rdOk.filter(d => rdLean(d[p].m) === c).length })));
+  // each block's count at its middle (stacked in cats order, as the bars), dark on the light blocks
+  const lab = plans.flatMap(([, label]) => {
+    let y = 0;
+    return cats.map(c => { const n = data.find(d => d.plan === label && d.lean === c).n; y += n; return { plan: label, lean: c, n, mid: y - n / 2 }; });
+  }).filter(d => d.n > 0);
+  const light = d => ["Competitive", "No estimate"].includes(d.lean);
+  const text = (rows, fill) => Plot.text(rows, { x: "plan", y: "mid", text: "n", fill, fontSize: 13, fontWeight: 600 });
+  const s = exportable("Seats", {
+    marginBottom: 30,
+    caption: `Safe: margin 10+ pts · Lean: 3 to 10 · Competitive: under 3 · ${rdHead(rsrc)}${rdLeftNote}`,
+    exportCaption: `Safe: two-party margin of 10 points or more · Lean: 3 to 10 · Competitive: under 3. ${rsrc?.note ?? ""}${rdLeftNote}.`,
+    x: { domain: plans.map(d => d[1]), label: null, padding: 0.3 },
+    y: { label: "Seats", grid: true },
+    color: { type: "categorical", domain: cats, range: [...RD_LEAN_COLORS, MAP_BLANK], legend: true },
+    marks: [
+      Plot.barY(data, { x: "plan", y: "n", fill: "lean", order: cats, stroke: "white", strokeWidth: 1,
+        title: d => `${d.plan}: ${d.n} ${d.lean}` }),
+      text(lab.filter(d => !light(d)), "white"),
+      text(lab.filter(light), INK),
+      Plot.ruleY([0])
+    ]
+  }, "Seats by Lean, 2024 vs. 2026 Map", {}, rdExportOpt);
+  return Plot.plot({ marginBottom: s.marginBottom, caption: s.caption, x: s.x, y: s.y, color: s.color, marks: s.marks });
+}
+```
+
+### District Map {width="66%"}
+
+```{ojs}
+//| title: District Map
+{
+  const g = rdGeo;
+  if (!g) return g === null ? empty(`No district map for ${rst} (expected ${geo_url}/${rst.toLowerCase()}_districts.json).`) : empty("Loading map…");
+  if (rdOk.length === 0) return rdEmpty();
+  const old = rdMapMarks(g, "old", rdRows), neu = rdMapMarks(g, "new", rdRows);
+  // exports: one image per map, same projection and text so the two are the same size
+  const one = p => ({ projection: g.projection, color: marginColor, exportCaption: `${rsrc?.note ?? ""}${rdLeftNote}.`,
+    marks: [...p.fill, ...rdOutlines(g), ...p.top] });
+  const s = exportable("District Map", {
+    projection: g.projection,
+    color: marginColor,
+    caption: `${rdHead(rsrc)}${rdLeftNote}`,
+    marks: [...old.fill, ...neu.fill, ...rdOutlines(g), ...old.top, ...neu.top]
+  }, `${rst} Congressional Districts`, {}, { ...rdExportOpt, basemap: "U.S. Census Bureau district lines",
+    multi: [{ s: one(old), title: `${rst} Congressional Districts, 2024 Map`, suffix: "2024-map" },
+            { s: one(neu), title: `${rst} Congressional Districts, 2026 Map`, suffix: "2026-map" }] });
+  const plot = Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, caption: s.caption, marks: s.marks });
+  // the fade: the 2026 fills over the 2024 ones at opacity t, each map's lines and labels at its own weight;
+  // the hidden map's fills stop taking the pointer so the tooltips follow the map showing
+  const fade = html`<input type="range" min="0" max="1" step="0.01" class="form-range" aria-label="2024 map to 2026 map">`;
+  fade.value = rdFadeMemo.t;
+  const set = t => {
+    rdFadeMemo.t = t;
+    const q = tag => plot.querySelectorAll(`[aria-description="${tag}"]`);
+    q("rd-new-fill").forEach(e => { e.style.opacity = t; e.style.pointerEvents = t < 0.5 ? "none" : ""; });
+    q("rd-old-fill").forEach(e => { e.style.pointerEvents = t >= 0.5 ? "none" : ""; });
+    q("rd-old-top").forEach(e => { e.style.opacity = 1 - t; });
+    q("rd-new-top").forEach(e => { e.style.opacity = t; });
+  };
+  const btn = (label, t) => Object.assign(html`<button type="button" class="btn btn-sm btn-link">${label}</button>`,
+    { onclick: () => { fade.value = t; set(t); } });
+  fade.addEventListener("input", () => set(+fade.value));
+  set(rdFadeMemo.t);
+  return html`<div class="redist-map">
+    <div class="redist-fade">${btn("2024 map", 0)}${fade}${btn("2026 map", 1)}</div>
+    ${plot}
+  </div>`;
 }
 ```

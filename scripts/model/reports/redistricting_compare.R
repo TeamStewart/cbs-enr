@@ -32,7 +32,8 @@
 ##   Also writes 26_general/input_data/redistricting/{ST}_county_district_weights.csv:
 ##     county_fips, cd_new, cd_old, votes, dem24, rep24 -- the 2024 presidential two-party
 ##     votes in each county x new district x old district (a precinct split by both maps is
-##     divided as old share x new share).
+##     divided as old share x new share) -- and {ST}_unit_districts.csv: unit_id, plan, cd,
+##     share, each precinct's area share in each district (the dashboard's model estimates).
 ##
 ## (b) Election night, --live: tonight's HOUSE vote, COUNTED SO FAR (not a projection).
 ##   New districts: the actual House results, each county's votes in each district from
@@ -45,7 +46,7 @@
 ##     precinct, so every county split by a line is an estimate; the charts say how many.
 ##   Uncontested races (no Democrat or no Republican on the ballot): each county's House
 ##     votes are split by that county's two-party share in the state's top-of-ticket race
-##     tonight (TOP_RACE below: governor, or senate in NC), and by its 2024 presidential share
+##     tonight (TOP_RACE in redistricting_lib.R: senate in NC and TX, else governor), and by its 2024 presidential share
 ##     if the top-of-ticket race has no Democrat-vs-Republican matchup either (possible in CA's
 ##     top-two). The charts list the districts filled each way.
 ##   Pulls: --pull (default on; --no-pull reads the last saved pulls) fetches each House
@@ -60,8 +61,11 @@
 ## District NUMBERS are compared as numbers: NC-01 old and NC-01 new can cover different
 ## places. The dumbbell says so.
 ##
-## OUTPUT -- 26_general/model_results/redistricting/ (Dropbox; --out= to change). The
-## dashboard reads the *_latest files there:
+## THE DASHBOARD's Redistricting tab draws its own charts from the targets pipeline
+## (scripts/redistricting_targets.R, which shares redistricting_lib.R with --live here); it needs
+## mode (a)'s files in input_data/redistricting/ and the *_2024pres.csv table below.
+##
+## OUTPUT -- 26_general/model_results/redistricting/ (Dropbox; --out= to change):
 ##   redistricting_dumbbell_{ST}_house_latest.png   one per state, replaced every --live run
 ##   redistricting_seats_{ST}_house_latest.png      one per state
 ##   redistricting_districts_house_latest.csv       the numbers: state, cd, plan (old / new),
@@ -118,19 +122,15 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 source("scripts/model/live/R/paths.R")
+# STATE_FIPS, TOP_RACE, LEAN_*, SPLIT_MIN, lean(), and the --live House functions
+source("scripts/model/reports/redistricting_lib.R")
 sf_use_s2(FALSE)
 
 # the dashboard's party colours (scripts/plotters.R, enightmodels::PARTIES_PAL)
 COL_D = "#005599"
 COL_R = "#ce0008"
 LEAN_COLS = c("Safe D" = COL_D, "Lean D" = "#7fa9cc", "Competitive" = "#d9d9d9", "Lean R" = "#e67f84", "Safe R" = COL_R)
-LEAN_SAFE = 10 # margin (points) at or beyond which a district is "Safe"
-LEAN_TOSS = 3 # margin within which a district is "Competitive"
-SPLIT_MIN = 0.01 # a piece below this share of its precinct / county x district is a boundary sliver
-STATE_FIPS = c(NC = "37", FL = "12", TX = "48", OH = "39", CA = "06")
 VH_DIR = c(NC = "NC26G", FL = "FL26P", TX = "TX26P", OH = "OH26G", CA = NA) # CA: Statewide Database
-TOP_RACE = c(NC = "sen", FL = "gov", TX = "gov", OH = "gov", CA = "gov") # fills uncontested House races
-TOP_NAME = c(gov = "governor", sen = "US Senate")
 
 args = commandArgs(trailingOnly = TRUE)
 opt = function(k, d = NA) {
@@ -169,12 +169,6 @@ ca_dir = path.expand(opt("ca-dir", file.path(d26, "input_data", "swdb_g24")))
 # individual_states/oh24.zip, saved here:
 oh_zip = path.expand(opt("oh-zip", file.path(d26, "input_data", "medsl24", "oh24.zip")))
 w_dir = file.path(d26, "input_data", "redistricting")
-
-lean = function(rep2) {
-  m = 100 * (2 * rep2 - 1) # R - D margin, points
-  cut(m, c(-Inf, -LEAN_SAFE, -LEAN_TOSS, LEAN_TOSS, LEAN_SAFE, Inf),
-      labels = c("Safe D", "Lean D", "Competitive", "Lean R", "Safe R"), right = FALSE)
-}
 
 # ==== (a) 2024 baseline: precinct overlay =====================================================
 
@@ -497,6 +491,14 @@ baseline_state = function(st, res) {
     filter(votes > 0)
   dir.create(w_dir, recursive = TRUE, showWarnings = FALSE)
   readr::write_csv(w, file.path(w_dir, paste0(st, "_county_district_weights.csv")))
+  # each precinct's share in each district of either map (the dashboard's model estimates by
+  # district, scripts/redistricting_targets.R)
+  bind_rows(sh, .id = "plan") |>
+    filter(share >= SPLIT_MIN) |>
+    mutate(share = share / sum(share), .by = c(plan, unit_id)) |>
+    mutate(share = round(share, 4)) |>
+    select(unit_id, plan, cd, share) |>
+    readr::write_csv(file.path(w_dir, paste0(st, "_unit_districts.csv")))
   # split precincts (for the note): a precinct with pieces in two districts of either map
   split_prec = bind_rows(sh) |>
     filter(share >= SPLIT_MIN) |>
@@ -511,115 +513,8 @@ baseline_state = function(st, res) {
 
 # ==== (b) election night: CBS county House results =============================================
 
-#' CBS county results for one race: pull and save (PULL) or read the last saved pull
-cbs_county = function(st, contest, district = NA) {
-  tag = if (is.na(district)) paste0(st, "_", contest) else sprintf("%s_%s_%d", st, contest, district)
-  d = file.path(d26, "cbs_api", ENV, "redistricting")
-  if (PULL && is.null(AT)) {
-    if (!requireNamespace("cbsapi", quietly = TRUE)) stop("--live needs the cbsapi package (or --no-pull to use saved pulls)")
-    a = list(as.Date("2026-11-03"), st, contest, district = if (is.na(district)) NULL else district,
-             county = TRUE, addl = TRUE, env = ENV)
-    if ("by_method" %in% names(formals(cbsapi::cbs_election_data))) a$by_method = FALSE # county totals
-    raw = tryCatch(do.call(cbsapi::cbs_election_data, a), error = function(e) {
-      cat(sprintf("  %s: CBS pull failed (%s); using the last saved pull\n", tag, conditionMessage(e)))
-      NULL
-    })
-    if (!is.null(raw) && nrow(raw)) {
-      x = tibble(
-        county_fips = stringr::str_pad(as.character(raw$fips), 5, pad = "0"),
-        candidate = as.character(raw$candidate),
-        party = as.character(raw$party),
-        votes = as.numeric(raw$votes),
-        pct_exp = if ("pctExpVote" %in% names(raw)) as.numeric(raw$pctExpVote) else NA_real_
-      ) |>
-        filter(!is.na(raw$fips), nzchar(as.character(raw$fips)))
-      dir.create(d, recursive = TRUE, showWarnings = FALSE)
-      nanoparquet::write_parquet(x, file.path(d, sprintf("%s_%s.parquet", tag, format(Sys.time(), "%Y%m%d_%H%M%S", tz = "UTC"))))
-    }
-  }
-  fs = list.files(d, paste0("^", tag, "_[0-9]{8}_[0-9]{6}\\.parquet$"), full.names = TRUE)
-  ts = as.POSIXct(stringr::str_extract(basename(fs), "[0-9]{8}_[0-9]{6}"), format = "%Y%m%d_%H%M%S", tz = "UTC")
-  if (!is.null(AT)) {
-    fs = fs[ts <= AT]
-    ts = ts[ts <= AT]
-  }
-  if (!length(fs)) return(NULL)
-  x = nanoparquet::read_parquet(fs[which.max(ts)])
-  x$party = case_when(
-    tolower(x$party) %in% c("d", "dem", "democrat", "democratic") ~ "dem",
-    tolower(x$party) %in% c("r", "rep", "gop", "republican") ~ "rep",
-    TRUE ~ "oth"
-  )
-  attr(x, "as_of") = max(ts)
-  x
-}
-
-#' One state's House results by new district (actual) and old district (estimated)
-live_state = function(st) {
-  wf = file.path(w_dir, paste0(st, "_county_district_weights.csv"))
-  if (!file.exists(wf)) stop(basename(wf), " not found: run this script without --live for ", st, " first")
-  w = readr::read_csv(wf, col_types = readr::cols(county_fips = "c", cd_new = "c", cd_old = "c", .default = "d"), progress = FALSE)
-  cds = sort(unique(w$cd_new))
-  top = cbs_county(st, TOP_RACE[[st]])
-  top_ok = !is.null(top) && all(c("dem", "rep") %in% top$party)
-  top_s = if (top_ok) {
-    top |> summarize(td = sum(votes[party == "dem"]), tr = sum(votes[party == "rep"]), .by = county_fips) |>
-      mutate(s_top = if_else(td + tr > 0, td / (td + tr), NA_real_)) |> select(county_fips, s_top)
-  } else {
-    tibble(county_fips = character(), s_top = numeric())
-  }
-  # 2024 presidential Dem two-party share in each county x new district (last-resort fill)
-  s24 = w |> summarize(s24 = sum(dem24) / sum(votes), .by = c(county_fips, cd_new))
-  as_of = list()
-  fill = list()
-  # pull every district at once (each is a web request), then combine in order
-  pulled = parallel::mclapply(cds, function(cd) {
-    tryCatch(cbs_county(st, "house", as.integer(sub("^[A-Z]{2}-", "", cd))), error = function(e) NULL)
-  }, mc.cores = if (.Platform$OS.type == "windows") 1L else PULL_CORES)
-  names(pulled) = cds
-  h = bind_rows(lapply(cds, function(cd) {
-    x = pulled[[cd]]
-    if (is.null(x)) {
-      cat(sprintf("  %s: no CBS results\n", cd))
-      return(NULL)
-    }
-    as_of[[cd]] <<- attr(x, "as_of")
-    p = x |> summarize(hd = sum(votes[party == "dem"]), hr = sum(votes[party == "rep"]), ht = sum(votes),
-                       pct_exp = first(pct_exp), .by = county_fips) |>
-      mutate(cd_new = cd)
-    if (!all(c("dem", "rep") %in% x$party)) {
-      # uncontested in two-party terms: split the House votes by the top-of-ticket share,
-      # else by 2024 president (file header)
-      p = p |>
-        left_join(top_s, by = "county_fips") |>
-        left_join(s24, by = c("county_fips", "cd_new")) |>
-        mutate(src = if_else(!is.na(s_top), "top", "pres24"), s = coalesce(s_top, s24, 0.5),
-               hd = ht * s, hr = ht * (1 - s)) |>
-        select(-s_top, -s24, -s)
-      fill[[cd]] <<- if (any(p$src == "top")) "top" else "pres24"
-      p = select(p, -src)
-    }
-    p
-  }))
-  if (!nrow(h)) stop("No CBS House results for ", st)
-  new = h |> summarize(dem = sum(hd), rep = sum(hr), .by = cd_new) |> transmute(state = st, plan = "new", cd = cd_new, dem, rep)
-  ws = w |> mutate(f = votes / sum(votes), .by = c(county_fips, cd_new))
-  hj = left_join(h, select(ws, county_fips, cd_new, cd_old, f), by = c("county_fips", "cd_new"), relationship = "one-to-many")
-  unplaced = hj |> filter(is.na(cd_old)) |> summarize(v = sum(hd + hr)) |> pull(v)
-  if (unplaced > 0) cat(sprintf("  %s House votes in county x district pieces our maps don't have; left out of the old districts\n", format(round(unplaced), big.mark = ",")))
-  old = hj |> filter(!is.na(cd_old)) |> summarize(dem = sum(hd * f), rep = sum(hr * f), .by = cd_old) |>
-    transmute(state = st, plan = "old", cd = cd_old, dem, rep)
-  # counties whose House votes are divided among old districts (an estimate)
-  est_cty = ws |> filter(f >= SPLIT_MIN) |> summarize(n = n_distinct(cd_old), .by = c(county_fips, cd_new)) |>
-    filter(n > 1) |> distinct(county_fips) |> nrow()
-  # share of the expected House vote counted: CBS's pctExpVote is 0-100 per county
-  pct = h |> filter(pct_exp > 0) |> summarize(ct = sum(ht), ex = sum(ht / (pct_exp / 100))) |> mutate(p = ct / ex)
-  cat(sprintf("%s: %d House races, %s House votes counted (%s of expected), as of %s ET\n", st, length(as_of),
-              format(round(sum(h$ht)), big.mark = ","), if (is.finite(pct$p)) sprintf("%.0f%%", 100 * pct$p) else "?",
-              format(max(do.call(c, as_of)), "%b %d %H:%M", tz = "America/New_York")))
-  list(tab = bind_rows(new, old), est_cty = est_cty, fill = fill, top_ok = top_ok,
-       as_of = max(do.call(c, as_of)), pct = pct$p)
-}
+# redist_live_state() in redistricting_lib.R, with this run's flags
+live_state = function(st) redist_live_state(st, d26 = d26, env = ENV, pull = PULL, at = AT, cores = PULL_CORES)
 
 # ==== run ======================================================================================
 if (!LIVE) {
