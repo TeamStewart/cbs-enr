@@ -3,6 +3,7 @@
 /data/cbs_format/*
 figs/
 data/voteshift
+_targets/
 
 # History files
 .Rhistory
