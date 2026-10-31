@@ -139,9 +139,9 @@ fs::dir_delete(hist_dir) |> try(silent = TRUE)
 fs::dir_create(hist_dir)
 for (s in STATES) nanoparquet::write_parquet(fake_history(s, s != "GA"), fs::path(hist_dir, glue("{s}_history.parquet")))
 
-# the night's model names and their spec / interval parts (model_parts() reads the copy)
+# the night's model names and their spec / interval parts (dash_model_parts() reads the copy)
 fs::file_copy(fs::path(PATH_DROPBOX, "26_general", "model_config.csv"), fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_config.csv"), overwrite = TRUE)
-parts = model_parts(unlist(map(SCENARIOS, \(sc) unique(read_live_sim(sc)$model))))
+parts = dash_model_parts(unlist(map(SCENARIOS, \(sc) unique(read_live_sim(sc)$model))))
 # model_conf labels as scripts/model/live/R/results.R writes them (95% intervals)
 CONF_LABEL = c(bootstrap = "county_bootstrap_95", credible = "posterior_95", conf_seq = "conf_seq_95", conformal = "approx_conform_95")
 

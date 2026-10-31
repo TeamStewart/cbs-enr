@@ -79,3 +79,4 @@ scripts/model/modeling-cory/*/data/
 scripts/model/modeling-cory/*/data-out/
 scripts/model/modeling-cory/nyc/
 /.playwright-mcp
+data/dashboard/live/

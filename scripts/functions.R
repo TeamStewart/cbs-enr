@@ -145,7 +145,7 @@ read_history <- function(state) {
 # model name -> model_base / model_spec / model_interval. Names are <base>[/<spec>][/<interval>]
 # with default parts left off (scripts/model/live/R/config.R); model_config.csv has every part
 # filled in. Names not in it are split on "/", and missing parts are "default".
-model_parts <- function(models, config = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_config.csv")) {
+dash_model_parts <- function(models, config = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_config.csv")) {
   intervals = c("bootstrap", "credible", "conf_seq", "conformal", "none")
   parsed = tibble(model = unique(models)) |>
     mutate(
@@ -173,7 +173,7 @@ model_parts <- function(models, config = fs::path(PATH_DROPBOX, ELECTION_FOLDER,
 
 # enightmodels output in {ELECTION_FOLDER}/model_results: every predictions_*.csv run
 # stacked into a time series (later files win on duplicate rows), and each
-# race/model's most recent status_*.csv row; both with model_parts()
+# race/model's most recent status_*.csv row; both with dash_model_parts()
 read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_results")) {
   read_runs = \(prefix) {
     # "latest" sorts after the timestamped files, so it wins ties
@@ -225,7 +225,7 @@ read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "mo
                 statewide = cli::ansi_strip(statewide), settings = cli::ansi_strip(settings))
   }
 
-  parts = model_parts(c(pred$model, status$model))
+  parts = dash_model_parts(c(pred$model, status$model))
   if (!is.null(pred)) pred = left_join(pred, parts, by = "model")
   if (!is.null(status)) status = left_join(status, parts, by = "model")
   list(pred = pred, turnout = turnout, status = status, prec = read_model_precincts(dir))
@@ -682,24 +682,4 @@ get_castatewide <- function() {
       across(c(first_report_date_time, last_report_date_time), parse_ca_datetime)
     ) |>
     write_csv(glue("{PATH_DROPBOX}/{ELECTION_FOLDER}/CA/clean/statewide/ca_statewide_{time}.csv"))
-}
-
-# Election-night models: one refresh of scripts/model/live/run_night.R, in its own R
-# process (load.R must set single-threaded BLAS before any matrix work, and the models
-# fork their own workers). Runs the run = TRUE rows of `config`
-# ({ELECTION_FOLDER}/model_config.csv, scripts/model/live/R/config.R). `sim`: "" for the
-# real scraped returns (written to model_results/), or a 26_sim scenario run at `at`
-# (written to model_tests/run_night_sim/<sim>/). `after` is unused: it orders this after
-# the scrapes. Returns the run's status table, one row per race x model.
-run_models <- function(config, sim = MODEL_SIM, at = MODEL_SIM_AT, after = NULL) {
-  args = c("scripts/model/live/run_night.R", glue("--config={config}"))
-  if (nzchar(sim)) args = c(args, glue("--sim={sim}"), glue("--at={at}"))
-  out = suppressWarnings(system2(file.path(R.home("bin"), "Rscript"), shQuote(args), stdout = TRUE, stderr = TRUE))
-  writeLines(out)
-  if (!is.null(attr(out, "status")) && attr(out, "status") != 0) {
-    stop("run_night.R failed (exit ", attr(out, "status"), "):\n", paste(tail(out, 20), collapse = "\n"))
-  }
-  dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER)
-  dir = if (nzchar(sim)) fs::path(dir, "model_tests", "run_night_sim", sim) else fs::path(dir, "model_results")
-  readr::read_csv(fs::path(dir, "status_latest.csv"), col_types = readr::cols(.default = "c"), progress = FALSE)
 }

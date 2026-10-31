@@ -1,5 +1,8 @@
-# Render the dashboard against the committed test data and deploy to GitHub Pages.
-# Data: data/dashboard/dashtest_data.rds (written by scripts/util/make_dashboard_test_data.R)
+# Render the dashboard and deploy to GitHub Pages.
+# Data: the dashboard-live branch's dashboard_data.rds when it exists (force-pushed by
+# scripts/automation.R after each tar_make(), which then dispatches this workflow), else the
+# committed test data, data/dashboard/dashtest_data.rds (scripts/util/make_dashboard_test_data.R).
+# Dispatch with data=test to publish the test data while a dashboard-live branch exists.
 name: Deploy dashboard
 
 on:
@@ -12,6 +15,12 @@ on:
       - data/dashboard/**
       - .github/workflows/pages.yml
   workflow_dispatch:
+    inputs:
+      data:
+        description: "auto (live if the dashboard-live branch exists), live, or test"
+        default: auto
+        type: choice
+        options: [auto, live, test]
 
 permissions:
   contents: read
@@ -39,9 +48,22 @@ jobs:
         with:
           version: 1.9.38
 
+      - name: Pick data
+        id: data
+        run: |
+          want="${{ inputs.data || 'auto' }}"
+          if [ "$want" != "test" ] && git fetch --depth=1 origin dashboard-live; then
+            git show FETCH_HEAD:dashboard_data.rds > "$RUNNER_TEMP/dashboard_data.rds"
+            echo "rds=$RUNNER_TEMP/dashboard_data.rds" >> "$GITHUB_OUTPUT"
+          elif [ "$want" = "live" ]; then
+            echo "::error::data=live but there is no dashboard-live branch"; exit 1
+          else
+            echo "rds=data/dashboard/dashtest_data.rds" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Render
         env:
-          CBS_DASH_RDS: data/dashboard/dashtest_data.rds
+          CBS_DASH_RDS: ${{ steps.data.outputs.rds }}
         run: |
           quarto render index.qmd
           mkdir -p _site/data/dashboard && cp index.html _site/ && cp -r data/dashboard/geo _site/data/dashboard/ && touch _site/.nojekyll

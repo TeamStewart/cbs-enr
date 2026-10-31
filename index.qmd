@@ -684,7 +684,7 @@ msc = MS.filter(d => d.key === sel)
 modelsOk = [...new Set(mpc.map(d => d.model))].sort()
 modelList = [...modelsOk, ...[...new Set(msc.map(d => d.model))].filter(m => !modelsOk.includes(m)).sort()]
 noModels = mpc.length === 0
-// model name -> { base, spec, interval, specDefault, intervalDefault } (model_parts() in functions.R)
+// model name -> { base, spec, interval, specDefault, intervalDefault } (dash_model_parts() in functions.R)
 modelParts = {
   const m = new Map();
   for (const d of [...mpc, ...msc]) if (!m.has(d.model))

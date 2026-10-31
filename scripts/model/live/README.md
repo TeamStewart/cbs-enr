@@ -15,6 +15,15 @@ run_all(cells, returns)                           # every race x every model, on
 
 ## On election night
 
+**In the targets pipeline** (`_targets.R`, run every 5 minutes by `scripts/automation.R`) the
+same refresh runs as targets (`scripts/model_targets.R`): per state, `model_inputs_{ST}`,
+`model_cbs_{ST}` and `model_slices_{ST}` (one element per race, waiting only on that state's
+scrapes), then `model_fits_{ST}`, one dynamic branch per race x `run = TRUE` model, spread over
+the crew workers. A branch whose race returns, CBS snapshot, model and inputs are unchanged is
+skipped. `model_out` writes the same `model_results/` files as below. One difference from
+`run_night.R`: each race's `time` is its own latest return, not the latest across all races.
+`run_night.R` stays the stand-alone way to run a refresh.
+
 ```
 Rscript scripts/model/live/run_night.R --every=5
 ```
@@ -101,7 +110,7 @@ snapshot for any race whose pull fails.
 | `medsl/model_hybrid.R` | re-centres model_turnout.R's priors on tonight's returns and CBS county totals (`fit_stage_hybrid()`) |
 | `medsl/model_core.R` | fitting primitives model_turnout.R uses |
 | `R/run.R` | `run_race()`, `run_all()`; `RUN`, what runs on the night, and `MODELS`, every implemented model |
-| `R/config.R` | `26_general/model_config.csv`: every model / spec / interval name, and `run` = TRUE for the ones `run_night.R` runs (and so the targets pipeline, `model_status` in `_targets.R`; `MODEL_SIM` in `scripts/util/globals.R` points it at a sim). Rebuild with `make_model_config.R`, which keeps each row's `run` and `note` |
+| `R/config.R` | `26_general/model_config.csv`: every model / spec / interval name, and `run` = TRUE for the ones `run_night.R` runs (and so the targets pipeline, the `model_*` targets in `_targets.R` / `scripts/model_targets.R`; `MODEL_SIM` in `scripts/util/globals.R` points it at a sim). Rebuild with `make_model_config.R`, which keeps each row's `run` and `note` |
 | `R/output.R` | `predict_all()` and `write_predictions()`: results in enightmodels' prediction format for the dashboard |
 | `R/counties.R` | statewide rows: scraped counties from the models + CBS county results for the rest |
 | `R/virtual.R` | NC's county-level "virtual precinct" batches for every model but medsl_sur: `fit_model()`, `virtual_split()`, `add_virtual()` |

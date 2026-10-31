@@ -6,13 +6,17 @@ ELECTION_FOLDER = Sys.getenv("CBS_ELECTION_FOLDER", "26_general")
 PATH_DROPBOX = ""
 PATH_ENIGHTDATA = ""
 
-# Election-night models in the targets pipeline (run_models() in scripts/functions.R; which
+# Election-night models in the targets pipeline (model_* targets, scripts/model_targets.R; which
 # models run is {ELECTION_FOLDER}/model_config.csv). MODEL_SIM = "" runs them on the real
 # scraped returns and writes to model_results/. A 26_sim scenario name (e.g. "tx_base") runs
 # them on that simulated night at MODEL_SIM_AT instead, written to
 # model_tests/run_night_sim/<scenario>/ and never to model_results/.
 MODEL_SIM = Sys.getenv("CBS_MODEL_SIM", "")
 MODEL_SIM_AT = Sys.getenv("CBS_MODEL_SIM_AT", "2026-11-03 22:00")
+# CBS feed for the statewide rows ("live" or "test"), and whether each run starts the
+# redistricting charts (scripts/model/reports/redistricting_compare.R --live)
+MODEL_CBS_ENV = Sys.getenv("CBS_MODEL_CBS_ENV", "live")
+MODEL_REDISTRICTING = as.logical(Sys.getenv("CBS_MODEL_REDISTRICTING", "TRUE"))
 
 local({
   user = Sys.info()["user"]
@@ -75,7 +79,7 @@ DASHBOARD_CONTESTS = tibble::tribble(
 )
 
 # Model whose latest projection shows under the Dem/Rep toplines on the Results page, as
-# "<model_base>/<model_spec>/<model_interval>" (see model_parts() in scripts/functions.R) or the
+# "<model_base>/<model_spec>/<model_interval>" (see dash_model_parts() in scripts/functions.R) or the
 # raw model name. Left blank for contests where it has no rows or its latest run did not fit.
 DASHBOARD_MODEL = "ratio_strata/strat_dg/conformal"
 
@@ -88,6 +92,10 @@ DASHBOARD_GEO_URL = Sys.getenv("CBS_DASH_GEO_URL", "data/dashboard/geo")
 # County fills on the maps outside the scraped counties: the latest CBS county snapshot the
 # models saved (26_general/cbs_api/{env}/, scripts/model/live/R/cbs_county_pull.R)
 DASHBOARD_CBS_ENV = Sys.getenv("CBS_DASH_CBS_ENV", "live")
+# Render index.html locally in tar_make(). The published page is rendered by GitHub Actions
+# from the pushed data (automation.R), so production can set CBS_DASH_RENDER=FALSE to save
+# the render time in each 5-minute cycle.
+DASHBOARD_RENDER = as.logical(Sys.getenv("CBS_DASH_RENDER", "TRUE"))
 
 DASHBOARD_TITLE = local({
   yr = paste0("20", stringr::str_sub(ELECTION_FOLDER, 1, 2))
