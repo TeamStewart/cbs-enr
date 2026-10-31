@@ -11,6 +11,7 @@ format:
     code-copy: false
     include-in-header:
       text: |
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <link rel="shortcut icon mask-icon" type="image/svg+xml" href="https://www.cbsnews.com/fly/bundles/cbsnewscore/icons/icon.svg" color="#101010">
 ---
 

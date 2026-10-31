@@ -100,6 +100,10 @@ The script saves the rds to both `26_dashtest/dashboard_data.rds` in Dropbox and
 
 The test dashboard is published at <https://teamstewart.github.io/cbs-enr/>. `.github/workflows/pages.yml` renders `index.qmd` against the committed `data/dashboard/dashtest_data.rds` and deploys it on every push to `main` that touches `index.qmd`, `custom.scss`, `cbs_white.svg`, or `data/dashboard/`. To refresh the data, rerun `make_dashboard_test_data.R`, then commit and push the new rds. To redeploy by hand: `gh workflow run pages.yml`. Check status with `gh run list -w pages.yml`.
 
+### CBS copy (S3)
+
+On election night `scripts/automation.R` also renders `index.qmd` locally from the same `data/dashboard/live/dashboard_data.rds` it pushes, then uploads it to `cbsn-elections-external-models/20261103-US-G/mit.html` (`Content-Type: text/html`, `Cache-Control: no-cache`, as in 2024/2025), served behind CloudFront basic auth at <https://dqvla57lr7v2z.cloudfront.net/20261103-US-G/mit.html>. At startup it uploads `data/dashboard/geo/*.json` to `20261103-US-G/data/dashboard/geo/`, where the page's relative geo fetch resolves; restart the automation after rebuilding geo files. The render adds about 20 seconds and the upload about 5 seconds to each cycle.
+
 ### Regenerating the model runs
 
 The sims (`scripts/sim/make_sim.R`; FL, MI, OH and TX with `--counties=zero`) and then the `run = TRUE` models:

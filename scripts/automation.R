@@ -17,6 +17,12 @@ DASH_DATA = "data/dashboard/live/dashboard_data.rds"
 DASH_BRANCH = "dashboard-live"
 # Side repo the data branch is built in: outside Dropbox, so its objects never sync
 DASH_PUSH_DIR = path.expand(Sys.getenv("CBS_DASH_PUSH_DIR", "~/.cache/cbs-enr-dashboard-live"))
+# CBS copy of the same page, rendered here from DASH_DATA and served by CloudFront
+# (https://dqvla57lr7v2z.cloudfront.net/20261103-US-G/mit.html). The page fetches precinct
+# geometry relative to itself, so the geo folder sits next to it in the bucket.
+DASH_S3_BUCKET = "cbsn-elections-external-models" # PATH_CBS_S3 in scripts/util/globals.R
+DASH_S3_DIR = "20261103-US-G"
+DASH_S3_HTML = "data/dashboard/live/mit.html"
 
 # Function to execute the R script
 execute_script <- function() {
@@ -60,6 +66,42 @@ push_dashboard_data <- function(run_time) {
   invisible(TRUE)
 }
 
+# Render index.qmd from rds (default DASH_DATA, the data GitHub Pages renders from) and upload it to
+# DASH_S3_DIR/mit.html. As in 2024/2025: one self-contained file, text/html, and no-cache
+# so CloudFront serves each new upload.
+upload_dashboard_s3 <- function(rds = DASH_DATA) {
+  if (!file.exists(rds)) return(invisible(FALSE))
+  out = suppressWarnings(system2(
+    "quarto", c("render", "index.qmd", "--output", "mit.html"),
+    env = paste0("CBS_DASH_RDS=", shQuote(normalizePath(rds))), stdout = TRUE, stderr = TRUE
+  ))
+  if (!is.null(attr(out, "status")) && attr(out, "status") != 0) {
+    stop("quarto render: ", paste(tail(out, 20), collapse = "\n"))
+  }
+  file.rename("mit.html", DASH_S3_HTML)
+  aws.s3::put_object(
+    file = DASH_S3_HTML,
+    object = file.path(DASH_S3_DIR, "mit.html"),
+    bucket = DASH_S3_BUCKET,
+    multipart = TRUE,
+    headers = list("Content-Type" = "text/html", "Cache-Control" = "no-cache, max-age=0")
+  )
+}
+
+# Precinct maps' geometry (data/dashboard/geo, static for the night), next to mit.html
+upload_dashboard_geo <- function(dir = "data/dashboard/geo") {
+  for (f in list.files(dir, pattern = "\\.json$", full.names = TRUE)) {
+    aws.s3::put_object(
+      file = f,
+      object = file.path(DASH_S3_DIR, f),
+      bucket = DASH_S3_BUCKET,
+      headers = list("Content-Type" = "application/json")
+    )
+  }
+}
+
+tryCatch(upload_dashboard_geo(), error = function(e) message("Dashboard geo upload failed: ", conditionMessage(e)))
+
 # Main loop to schedule and execute the script every INTERVAL minutes
 while (TRUE) {
   print(glue::glue(
@@ -89,6 +131,7 @@ while (TRUE) {
   sink(type = "message")
 
   tryCatch(push_dashboard_data(run_time), error = function(e) message("Dashboard push failed: ", conditionMessage(e)))
+  tryCatch(upload_dashboard_s3(), error = function(e) message("Dashboard S3 upload failed: ", conditionMessage(e)))
 
   googlesheets4::read_sheet(
     ss = "https://docs.google.com/spreadsheets/d/1zWKr_cXeDHnw6sbxzAPpGG92E-Di6nmB4Q4fa-OWuic/edit?gid=0#gid=0",
