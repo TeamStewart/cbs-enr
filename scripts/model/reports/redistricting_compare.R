@@ -32,8 +32,11 @@
 ##   Also writes 26_general/input_data/redistricting/{ST}_county_district_weights.csv:
 ##     county_fips, cd_new, cd_old, votes, dem24, rep24 -- the 2024 presidential two-party
 ##     votes in each county x new district x old district (a precinct split by both maps is
-##     divided as old share x new share) -- and {ST}_unit_districts.csv: unit_id, plan, cd,
-##     share, each precinct's area share in each district (the dashboard's model estimates).
+##     divided as old share x new share) -- and, on the DASHBOARD's precincts (VoteHub's
+##     current layer, scripts/util/votehub_layer.R, the ids of data/dashboard/geo/{st}.json):
+##     {ST}_unit_districts.csv (unit_id, plan, cd, share: each precinct's area share in each
+##     district, which places tonight's precinct votes) and {ST}_unit_pres24.csv (unit_id, dem,
+##     rep: the 2024 votes above on those precincts, by id, else by area overlap; the page's map).
 ##
 ## (b) Election night, --live: tonight's HOUSE vote, COUNTED SO FAR (not a projection).
 ##   New districts: the actual House results, each county's votes in each district from
@@ -124,6 +127,7 @@ suppressPackageStartupMessages({
 source("scripts/model/live/R/paths.R")
 # STATE_FIPS, TOP_RACE, LEAN_*, SPLIT_MIN, lean(), and the --live House functions
 source("scripts/model/reports/redistricting_lib.R")
+source("scripts/util/votehub_layer.R") # dash_units(): the dashboard's precinct layer
 sf_use_s2(FALSE)
 
 # the dashboard's party colours (scripts/plotters.R, enightmodels::PARTIES_PAL)
@@ -408,6 +412,61 @@ map_theme = function() {
           plot.background = element_rect(fill = "white", colour = NA))
 }
 
+#' The dashboard's precincts: VoteHub's current layer (votehub_layer(), the units of
+#' data/dashboard/geo/{st}.json and of read_geo_units()), which can differ from the layer
+#' this run's votes are on (VH_DIR, or the Statewide Database for CA). Writes to w_dir:
+#'   {ST}_unit_districts.csv  unit_id, plan, cd, share: each unit's area share in each district
+#'                            of either map (scripts/redistricting_targets.R places tonight's
+#'                            counted and projected precinct votes with it)
+#'   {ST}_unit_pres24.csv     unit_id, dem, rep: this run's 2024 presidential votes on each
+#'                            unit, by id where the ids match, else by area overlap with this
+#'                            run's precincts (the dashboard's precinct map)
+dash_units = function(st, prec, dists) {
+  u = votehub_layer(st, vh_dir) |> clean_geom()
+  if (anyDuplicated(u$unit_id)) u = u |> group_by(unit_id) |> summarize(do_union = TRUE) |> ungroup() |> st_make_valid()
+  u = u[!st_is_empty(u), ]
+  sh = lapply(c(old = "old", new = "new"), function(plan) {
+    pc = overlay(u, dists[[plan]])
+    pc$a = as.numeric(st_area(pc))
+    st_drop_geometry(pc) |>
+      mutate(share = if (sum(a) > 0) a / sum(a) else rep(1 / n(), n()), .by = unit_id) |>
+      select(unit_id, cd, share)
+  })
+  bind_rows(sh, .id = "plan") |>
+    filter(share >= SPLIT_MIN) |>
+    mutate(share = share / sum(share), .by = c(plan, unit_id)) |>
+    mutate(share = round(share, 4)) |>
+    select(unit_id, plan, cd, share) |>
+    readr::write_csv(file.path(w_dir, paste0(st, "_unit_districts.csv")))
+
+  # 2024 votes: by id, then the rest by area, county by county (a precinct's votes go to the
+  # units it overlaps in proportion to the overlap's share of its area)
+  pv = select(prec, unit_id, pres24_dem, pres24_rep)
+  ids = intersect(u$unit_id, pv$unit_id)
+  by_id = st_drop_geometry(pv) |> filter(unit_id %in% ids) |> transmute(unit_id, dem = pres24_dem, rep = pres24_rep)
+  pr = filter(pv, !unit_id %in% ids)
+  pr$a0 = as.numeric(st_area(pr))
+  pr$cty = substr(pr$unit_id, 1, 5)
+  ur = filter(u, !unit_id %in% ids) |> transmute(uid = unit_id, cty = substr(unit_id, 1, 5))
+  by_area = bind_rows(lapply(intersect(unique(pr$cty), unique(ur$cty)), function(c) {
+    p = select(filter(pr, cty == c), -cty)
+    q = select(filter(ur, cty == c), uid)
+    x = tryCatch(suppressWarnings(st_intersection(p, q)),
+                 error = function(e) suppressWarnings(st_intersection(st_buffer(p, 0), st_buffer(q, 0))))
+    if (!nrow(x)) return(NULL)
+    x$s = ifelse(x$a0 > 0, as.numeric(st_area(x)) / x$a0, 0)
+    st_drop_geometry(x) |> summarize(dem = sum(pres24_dem * s), rep = sum(pres24_rep * s), .by = uid)
+  }))
+  by_area = if (nrow(by_area)) rename(by_area, unit_id = uid) else tibble(unit_id = character(), dem = numeric(), rep = numeric())
+  out = bind_rows(by_id, by_area) |> summarize(dem = round(sum(dem), 1), rep = round(sum(rep), 1), .by = unit_id)
+  readr::write_csv(out, file.path(w_dir, paste0(st, "_unit_pres24.csv")))
+  tot = sum(pv$pres24_dem + pv$pres24_rep)
+  cat(sprintf("  dashboard precincts: %d units (%d matched by id); 2024 two-party vote on them %.1f%% by id, %.1f%% by area, %.1f%% on no unit\n",
+              nrow(u), length(ids), 100 * sum(by_id$dem + by_id$rep) / tot, 100 * sum(by_area$dem + by_area$rep) / tot,
+              100 * (1 - sum(out$dem + out$rep) / tot)))
+  invisible(out)
+}
+
 #' One state's 2024 overlay: district totals per map, precinct pieces, and the county x
 #' new district x old district weights (written to w_dir)
 baseline_state = function(st, res) {
@@ -491,14 +550,8 @@ baseline_state = function(st, res) {
     filter(votes > 0)
   dir.create(w_dir, recursive = TRUE, showWarnings = FALSE)
   readr::write_csv(w, file.path(w_dir, paste0(st, "_county_district_weights.csv")))
-  # each precinct's share in each district of either map (the dashboard's model estimates by
-  # district, scripts/redistricting_targets.R)
-  bind_rows(sh, .id = "plan") |>
-    filter(share >= SPLIT_MIN) |>
-    mutate(share = share / sum(share), .by = c(plan, unit_id)) |>
-    mutate(share = round(share, 4)) |>
-    select(unit_id, plan, cd, share) |>
-    readr::write_csv(file.path(w_dir, paste0(st, "_unit_districts.csv")))
+  # the dashboard's precincts: district shares and 2024 votes (dash_units())
+  dash_units(st, prec, dists)
   # split precincts (for the note): a precinct with pieces in two districts of either map
   split_prec = bind_rows(sh) |>
     filter(share >= SPLIT_MIN) |>

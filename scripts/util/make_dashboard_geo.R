@@ -25,7 +25,6 @@ source("scripts/util/globals.R")
 
 IN = fs::path(PATH_DROPBOX, "26_general", "input_data")
 VH_DIR = fs::path(IN, "votehub-shapefiles")
-GPKG = fs::path(VH_DIR, "26_pct_bdrys.gpkg")
 OUT = "data/dashboard/geo"
 # share of vertices kept by rmapshaper (Visvalingam); shapes are never dropped
 KEEP = as.numeric(Sys.getenv("KEEP", "0.02"))
@@ -38,20 +37,9 @@ model_units = readr::read_csv("scripts/model/lookups/model_precincts.csv", col_t
                               col_select = c(state, unit_id)) |>
   filter(!is.na(unit_id))
 
-gpkg_states = st_read(GPKG, query = "SELECT DISTINCT state_abbr FROM precincts", quiet = TRUE)$state_abbr
-
-read_layer = function(st) {
-  files = fs::dir_ls(VH_DIR, regexp = glue::glue("/{st}26[GP](\\.zip)?$"))
-  files = files[!(st %in% gpkg_states) | fs::file_info(files)$modification_time > fs::file_info(GPKG)$modification_time]
-  files = files[order(str_sub(fs::path_file(files), 5, 5), fs::path_ext(files) == "zip")]  # G before P, folder before zip
-  if (length(files) == 0) {
-    return(st_read(GPKG, query = glue::glue("SELECT unit_id, geom FROM precincts WHERE state_abbr = '{st}'"), quiet = TRUE))
-  }
-  f = files[1]
-  layer = fs::path_ext_remove(fs::path_file(f))
-  dsn = if (fs::path_ext(f) == "zip") paste0("/vsizip/", f) else f
-  st_read(dsn, query = paste("SELECT UNIQUE_ID AS unit_id FROM", layer), quiet = TRUE)
-}
+# the source layer per state, shared with redistricting_compare.R so both use the same unit ids
+source("scripts/util/votehub_layer.R")
+read_layer = function(st) votehub_layer(st, VH_DIR)
 
 # valid, polygon parts only: make_valid and union leave slivers as lines / points in collections
 polys = function(x) suppressWarnings(st_collection_extract(st_make_valid(x), "POLYGON"))

@@ -12,11 +12,12 @@
 ##           (model_results/precincts_latest.parquet)
 ## Precinct votes go to each map's districts by the precinct's share of each (a precinct
 ## with no polygon in the prep's map, and a county's CBS votes, by the county's 2024 vote in
-## each district).
+## each district). The page's map shades each dashboard precinct by its own votes and each
+## county by the votes placed by county; each source reports the share placed each way (p_prec).
 ## The prep, once before the night, is scripts/model/reports/redistricting_compare.R
 ## without --live (~15 min, needs fourthirtyfive): it writes the 2024 table and, in
-## input_data/redistricting/, {ST}_county_district_weights.csv, {ST}_map.gpkg and
-## {ST}_unit_districts.csv. Without those this tab is empty; nothing else waits on it.
+## input_data/redistricting/, {ST}_county_district_weights.csv, {ST}_map.gpkg,
+## {ST}_unit_districts.csv and {ST}_unit_pres24.csv. Without those this tab is empty; nothing else waits on it.
 # ========================================
 
 REDIST_STATES = names(STATE_FIPS)
@@ -27,7 +28,7 @@ redist_files <- function(states = REDIST_STATES) {
   w = file.path(d26, "input_data", "redistricting")
   f = c(
     file.path(d26, "model_results", "redistricting", "redistricting_districts_2024pres.csv"),
-    file.path(w, paste0(rep(states, each = 3), c("_county_district_weights.csv", "_map.gpkg", "_unit_districts.csv")))
+    file.path(w, paste0(rep(states, each = 4), c("_county_district_weights.csv", "_map.gpkg", "_unit_districts.csv", "_unit_pres24.csv")))
   )
   f = f[file.exists(f)]
   if (!length(f)) stop("No redistricting inputs: run scripts/model/reports/redistricting_compare.R (no --live) first")
@@ -138,24 +139,38 @@ redist_county_districts <- function(st, files, dir = DASHBOARD_GEO_DIR) {
 # Votes `v` (columns g = norm_geo() precinct key, county_cbs, dv, rv, plus grouping columns
 # `by`) into each map's districts: through the precinct's VoteHub unit (`gu`) and its district
 # shares (`ud`), else by its county's 2024 vote in each district (`cw`). Returns `by`, plan,
-# cd, dem, rep, with attribute "placed": by `by`, the share of the votes placed by precinct.
+# cd, dem, rep, with attributes "placed" (by `by`, the share of the votes placed by precinct),
+# "units" (`by`, unit_id, dem, rep: the votes placed by precinct, for the page's map) and
+# "counties" (`by`, county_fips, dem, rep: the votes placed by county).
 redist_allocate <- function(v, by, gu, ud, cw) {
   v = v |>
     left_join(gu, by = "g", relationship = "many-to-one") |>
     mutate(unit_id = if_else(unit_id %in% ud$unit_id, unit_id, NA_character_))
   placed = summarise(v, p = sum((dv + rv)[!is.na(unit_id)]) / sum(dv + rv), .by = all_of(by))
-  by_unit = v |>
+  units = v |>
     filter(!is.na(unit_id)) |>
-    summarise(dv = sum(dv), rv = sum(rv), .by = all_of(c(by, "unit_id"))) |>
-    inner_join(ud, by = "unit_id", relationship = "many-to-many")
-  by_cty = v |>
+    summarise(dv = sum(dv), rv = sum(rv), .by = all_of(c(by, "unit_id")))
+  by_unit = inner_join(units, ud, by = "unit_id", relationship = "many-to-many")
+  ctys = v |>
     filter(is.na(unit_id)) |>
-    summarise(dv = sum(dv), rv = sum(rv), .by = all_of(c(by, "county_cbs"))) |>
-    inner_join(select(cw, -county_fips), by = "county_cbs", relationship = "many-to-many")
+    summarise(dv = sum(dv), rv = sum(rv), .by = all_of(c(by, "county_cbs")))
+  by_cty = inner_join(ctys, select(cw, -county_fips), by = "county_cbs", relationship = "many-to-many")
   out = bind_rows(by_unit, by_cty) |>
     summarise(dem = sum(dv * share), rep = sum(rv * share), .by = all_of(c(by, "plan", "cd")))
   attr(out, "placed") = placed
+  attr(out, "units") = rename(units, dem = dv, rep = rv)
+  attr(out, "counties") = ctys |>
+    inner_join(distinct(cw, county_fips, county_cbs), by = "county_cbs") |>
+    transmute(across(all_of(by)), county_fips, dem = dv, rep = rv)
   out
+}
+
+# Dashboard precinct ids with a polygon ({st}.json), to keep the page's per-precinct table to
+# what its map can draw
+redist_geo_ids <- function(st, dir = DASHBOARD_GEO_DIR) {
+  f = fs::path(dir, glue("{tolower(st)}.json"))
+  if (!fs::file_exists(f)) return(character())
+  vapply(jsonlite::read_json(f)$features, \(x) x$properties$id, "")
 }
 
 # The tab's data: dist (state, src, plan, cd, dem, rep, cov) and src (one row per state x vote
@@ -165,10 +180,18 @@ redist_allocate <- function(v, by, gu, ud, cw) {
 build_redist_data <- function(files, top = list(), models = NULL, dash = NULL, contests = DASHBOARD_CONTESTS) {
   dist = list()
   src = list()
-  add = function(d, s) {
+  unit = list()
+  cty = list()
+  # d: district totals; s: the source row; u / k: the votes placed by precinct (unit_id) and by
+  # county (county_fips), for the map (state, src, id, dem, rep)
+  add = function(d, s, u = NULL, k = NULL) {
     dist[[length(dist) + 1]] <<- d
     src[[length(src) + 1]] <<- s
+    unit[[length(unit) + 1]] <<- u
+    cty[[length(cty) + 1]] <<- k
   }
+  # share of a source's votes placed by precinct (the rest by county): p_prec on its src row
+  pprec = \(u, k) { a = sum(u$dem + u$rep); b = sum(k$dem + k$rep); if (a + b > 0) a / (a + b) else NA_real_ }
   sp = \(n, w) if (n == 1) w else sub("y$", "ie", w) |> paste0("s")
   fmtn = \(x) format(x, big.mark = ",")
   top = Filter(Negate(is.null), top)
@@ -184,11 +207,20 @@ build_redist_data <- function(files, top = list(), models = NULL, dash = NULL, c
       n_split = if (is.null(ud) || all(ud$share == 1)) NA else
         ud |> summarise(n = n_distinct(cd), .by = c(plan, unit_id)) |> filter(n > 1) |> distinct(unit_id) |> nrow()
       votes = switch(st, CA = "Statewide Database", OH = "MEDSL", "VoteHub")
+      # map: the 2024 vote on the dashboard's precincts (the prep's {ST}_unit_pres24.csv) over each
+      # county's 2024 vote, for counties the precinct map leaves out
+      fu = grep(paste0("/", st, "_unit_pres24\\.csv$"), files, value = TRUE)
+      u24 = if (length(fu)) readr::read_csv(fu, col_types = "cdd", progress = FALSE) |>
+        filter(unit_id %in% redist_geo_ids(st)) |> mutate(state = st, src = "pres24", .before = 1)
+      fw = grep(paste0("/", st, "_county_district_weights\\.csv$"), files, value = TRUE)
+      k24 = if (length(fw)) readr::read_csv(fw, col_types = readr::cols(county_fips = "c", cd_new = "c", cd_old = "c", .default = "d"), progress = FALSE) |>
+        summarise(dem = sum(dem24), rep = sum(rep24), .by = county_fips) |> mutate(state = st, src = "pres24", .before = 1)
       add(
         t24 |> filter(state == st) |> transmute(state, src = "pres24", plan, cd, dem, rep),
-        tibble(state = st, src = "pres24", kind = "pres24", label = "2024 president", time = as.POSIXct(NA),
+        tibble(state = st, src = "pres24", kind = "pres24", label = "2024 president", time = as.POSIXct(NA), p_prec = 1,
                note = paste0("2024 presidential precinct results (", votes, ") regrouped into each map's districts",
-                             if (!is.na(n_split)) glue(" · {fmtn(n_split)} split {sp(n_split, 'precinct')} divided by area") else ""))
+                             if (!is.na(n_split)) glue(" · {fmtn(n_split)} split {sp(n_split, 'precinct')} divided by area") else "")),
+        u24, k24
       )
     }
   }
@@ -234,6 +266,10 @@ build_redist_data <- function(files, top = list(), models = NULL, dash = NULL, c
     if (nrow(v) || nrow(cbs_rest)) {
       d = redist_allocate(mutate(v, k = 1), "k", gu, ud, cw)
       p = attr(d, "placed")$p
+      cu = select(attr(d, "units"), unit_id, dem, rep)
+      ck = bind_rows(select(attr(d, "counties"), county_fips, dem, rep),
+                     if (nrow(cbs_rest)) select(cbs_rest, county_fips, dem, rep)) |>
+        summarise(dem = sum(dem), rep = sum(rep), .by = county_fips)
       if (nrow(cbs_rest)) {
         d = bind_rows(d, cbs_rest |>
           inner_join(select(cw, -county_fips), by = "county_cbs", relationship = "many-to-many") |>
@@ -248,14 +284,16 @@ build_redist_data <- function(files, top = list(), models = NULL, dash = NULL, c
         mutate(d, state = st, src = "count") |> select(state, src, plan, cd, dem, rep),
         tibble(state = st, src = "count", kind = "count", label = glue("{race} votes counted"), race_id, race,
                time = if (any(!is.na(c(t_enr, t_cbs)))) max(c(t_enr, t_cbs), na.rm = TRUE) else as.POSIXct(NA),
+               p_prec = pprec(cu, ck),
                note = paste0(
                  glue("Counted {race} vote, not the House vote"),
                  if (nrow(v)) glue(" · precinct results in {length(scraped)} scraped {sp(length(scraped), 'county')}") else "",
-                 if (length(p) && !is.na(p) && p < 0.995) glue(" ({scales::percent(1 - p, 1)} placed by county)") else "",
                  if (n_cbs) glue(" · CBS county results in {n_cbs} other {sp(n_cbs, 'county')}",
                                  "{if (is.finite(pct_cbs)) paste0(' (', scales::percent(pct_cbs, 1), ' of expected)') else ''}",
                                  ", split by 2024 vote") else ""
-               ))
+               )),
+        mutate(filter(cu, unit_id %in% redist_geo_ids(st)), state = st, src = "count", .before = 1),
+        mutate(ck, state = st, src = "count", .before = 1)
       )
     }
 
@@ -269,18 +307,23 @@ build_redist_data <- function(files, top = list(), models = NULL, dash = NULL, c
     d = redist_allocate(mv, "model", gu, ud, cw)
     if (!nrow(d)) next
     placed = attr(d, "placed")
+    mu = attr(d, "units")
+    mk = attr(d, "counties")
     d = bind_rows(lapply(split(d, d$model), coverage, st = st)) |>
       mutate(state = st, src = paste("model", race_id, model, sep = ":"))
+    pp = full_join(summarise(mu, a = sum(dem + rep), .by = model), summarise(mk, b = sum(dem + rep), .by = model), by = "model") |>
+      transmute(model, p_prec = coalesce(a, 0) / (coalesce(a, 0) + coalesce(b, 0)))
     s = distinct(mv, model, time) |>
       summarise(time = max(time), .by = model) |>
       inner_join(placed, by = "model") |>
+      left_join(pp, by = "model") |>
       semi_join(d, by = "model") |>
       left_join(parts, by = "model") |>
       transmute(state = st, src = paste("model", race_id, model, sep = ":"), kind = "model", label = model,
-                race_id, race, model, model_base, model_spec, model_interval, spec_default, interval_default, time,
-                note = paste0(glue("Projected {race} vote, not the House vote"),
-                              if_else(p < 0.995, glue(" · {scales::percent(1 - p, 1)} of it placed by county, not precinct"), "")))
-    add(select(d, state, src, plan, cd, dem, rep, cov), s)
+                race_id, race, model, model_base, model_spec, model_interval, spec_default, interval_default, time, p_prec,
+                note = as.character(glue("Projected {race} vote, not the House vote")))
+    tag = \(x) mutate(x, state = st, src = paste("model", race_id, model, sep = ":"), .before = 1) |> select(-model)
+    add(select(d, state, src, plan, cd, dem, rep, cov), s, tag(filter(mu, unit_id %in% redist_geo_ids(st))), tag(mk))
   }
 
   desc = if (requireNamespace("fourthirtyfive", quietly = TRUE)) {
@@ -292,7 +335,12 @@ build_redist_data <- function(files, top = list(), models = NULL, dash = NULL, c
                             cov = numeric()), dist) |>
       mutate(across(c(dem, rep), round)),
     src = bind_rows(tibble(state = character(), src = character(), kind = character(), label = character(), time = as.POSIXct(character()),
-                           note = character()), lapply(src, \(x) mutate(x, note = as.character(note)))),
+                           note = character(), p_prec = numeric()), lapply(src, \(x) mutate(x, note = as.character(note)))),
+    # the map's fills: votes placed by precinct (unit_id = the dashboard's VoteHub precincts) and by county
+    unit = bind_rows(tibble(state = character(), src = character(), unit_id = character(), dem = numeric(), rep = numeric()), unit) |>
+      mutate(across(c(dem, rep), round)) |> filter(dem + rep > 0),
+    cty = bind_rows(tibble(state = character(), src = character(), county_fips = character(), dem = numeric(), rep = numeric()), cty) |>
+      mutate(across(c(dem, rep), round)) |> filter(dem + rep > 0),
     desc = desc
   )
 }
