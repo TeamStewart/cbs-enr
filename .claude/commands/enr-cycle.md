@@ -28,6 +28,12 @@ them to `probe`, `verify` and `status`. If it names phases, run only those.)
    refresh lands on the new file. It prints each state's match rate and the previous
    build's (`was ...`); eyeball the fuzzy-rule rows it prints. If a state's
    rate drops, inspect the unmatched ids and add keys or recodes in `votehub.R`.
+   Last, run `Rscript scripts/util/crosswalks/match_rates.R` (L2 and VoteHub match
+   rates against the feed, every state, next to the current baseline). Investigate
+   anything under "DROPPED"; then rerun with `--write` to update
+   `docs/enr_cycle/crosswalk_match_baseline.csv`, the baseline the election-night
+   watcher checks against. Work the uncovered counties it lists via
+   `open_problems.md` ("Crosswalks").
 5. Google Sheet: run `cycle.R sheet` as a dry run. If there are no conflicts, run
    `sheet --apply`. Report any conflicts instead of resolving them.
 

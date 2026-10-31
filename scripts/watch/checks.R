@@ -2,7 +2,9 @@
 ## Watcher L1: deterministic checks on one pipeline cycle (B2-B11 in docs/watcher_tasks.md).
 ##   res = run_checks()   list(findings = list of finding(), metrics = list(...))
 ## `metrics` is saved by the caller as state/metrics_prev.json and passed back as `prev`
-## next cycle, so each check can diff against the last one. Every check is its own
+## next cycle, so each check can diff against the last one. Regression checks also look at
+## `ctx$hist`, the metrics of the last HIST_N cycles (state/cycles/*.json, newest first), so a
+## drop is measured against the best of those cycles, not only the last. Every check is its own
 ## check_<name>(ctx) returning list(findings, metrics); an error in one becomes a P2
 ## finding `check_error:<name>` and the rest still run.
 ## Needs lib.R sourced first. Read-only: Dropbox, the pushed meta and GitHub are only read.
@@ -19,6 +21,8 @@ local({
   wd = setwd(WATCH_REPO)
   on.exit(setwd(wd))
   source("scripts/model/live/load.R")
+  # crosswalk match rates (B7b), shared with the ENR cycle's baseline
+  source("scripts/util/crosswalks/match_rates.R")
 })
 
 TRANSIENT_RX = "HTTP (error )?(405|429|5[0-9]{2})|[Tt]imeout|timed out|Could not resolve host|[Cc]onnection reset|Connection refused"
@@ -27,8 +31,9 @@ CBS_STALE_MIN = 15
 DASH_STALE_MIN = 15
 REDIST_STALE_MIN = 30
 CELLS_MAX_AGE_H = 12
-MATCH_SLACK = 0.05   # unknown_geo share allowed above (1 - baseline match rate)
-SHARE_JUMP = 0.05    # 5pp cycle-over-cycle rise in either dropped share
+MATCH_SLACK = 0.05   # crosswalk match: share of the crosswalk's matched ids allowed missing from the feed
+SHARE_JUMP = 0.05    # 5pp rise in a dropped share (or fall in a match rate) vs the last HIST_N cycles
+HIST_N = 3           # cycles of history the regression checks compare against
 DASH_URL = "https://dqvla57lr7v2z.cloudfront.net/20261103-US-G/mit.html"
 
 # ---- small helpers ----
@@ -39,6 +44,30 @@ sev_close = function(state, now) if (isTRUE(polls_closed(state %||% NA_character
 mins_since = function(t, now) as.numeric(difftime(now, t, units = "mins"))
 pmeta = function(...) watch_path("pipeline-state", ...)
 first_line = function(x, n = 300) substr(sub("\n.*", "", x), 1, n)
+
+# Metrics of the last `n` cycles, newest first, from state/cycles/{run_time}.json (tick.R
+# writes one per cycle; run_time names sort in time order). The current cycle is skipped.
+# With no cycle files (first cycle, test_checks.R) it is `prev` alone.
+read_hist = function(prev, run_time = NULL, n = HIST_N) {
+  fs = sort(list.files(state_path("cycles"), "\\.json$", full.names = TRUE), decreasing = TRUE)
+  if (!is.null(run_time)) fs = fs[basename(fs) != paste0(run_time, ".json")]
+  h = Filter(Negate(is.null), lapply(head(fs, n), \(f) read_json_file(f)$metrics))
+  if (!length(h) && length(prev)) h = list(prev)
+  h
+}
+# x[[p1]][[p2]]... or NULL
+dig = function(x, ...) {
+  for (p in list(...)) {
+    if (is.null(x) || is.null(x[[p]])) return(NULL)
+    x = x[[p]]
+  }
+  x
+}
+# one value per history cycle (NULLs dropped), as numeric
+hist_num = function(ctx, ...) {
+  v = lapply(ctx$hist, \(m) do.call(dig, c(list(m), list(...))))
+  as.numeric(unlist(Filter(\(x) !is.null(x) && length(x) == 1 && !is.na(x), v)))
+}
 
 # Pushed targets meta and progress. tar_meta()/tar_progress() work on a store holding only
 # meta/progress/process; fall back to reading the pipe-delimited files if they do not.
@@ -112,18 +141,41 @@ check_target_errors = function(ctx) {
     )
   }
   # warnings of targets in this run (meta keeps a target's warnings from its last build)
+  # Grouped: one finding per warning shape (quoted strings and numbers masked), so ten
+  # model_fits_AK_* branches with the same warning, or eight LVT 404s, are one line. The key
+  # is a hash of the shape, so it stays put as targets join or leave the group.
   w = m[!is.na(warnings) & nzchar(warnings) & name %in% p$name]
-  for (i in seq_len(nrow(w))) {
-    st = name_state(w$name[i])
-    out[[length(out) + 1]] = finding("target_warning", w$name[i], paste0(w$name[i], " warned: ", first_line(w$warnings[i])),
-                                     severity = "P2", state = st, evidence = list(warnings = substr(w$warnings[i], 1, 2000)))
+  w[, shape := warn_shape(warnings)]
+  for (sh in unique(w$shape)) {
+    g = w[shape == sh]
+    sts = unique(stats::na.omit(name_state(g$name)))
+    msg = if (nrow(g) == 1) {
+      paste0(g$name, " warned: ", first_line(g$warnings[1]))
+    } else {
+      sprintf("%d targets warned: %s (%s%s)", nrow(g), first_line(g$warnings[1]),
+              paste(head(g$name, 6), collapse = ", "), if (nrow(g) > 6) ", ..." else "")
+    }
+    out[[length(out) + 1]] = finding(
+      "target_warning", substr(rlang::hash(sh), 1, 12), msg,
+      severity = "P2", state = if (length(sts) == 1) sts else NA_character_, value = nrow(g),
+      evidence = list(targets = as.list(g$name), states = as.list(sts), example = substr(g$warnings[1], 1, 2000))
+    )
   }
   st_all = name_state(p$name)
   by_state = lapply(split(p$progress, st_all), \(x) list(n = length(x), errored = sum(x == "errored")))
   list(findings = out, metrics = list(
     counts = counts, n_targets = nrow(p), n_targets_errored = length(errored),
-    n_ok = sum(p$progress != "errored"), n_warnings = nrow(w), by_state = by_state
+    n_ok = sum(p$progress != "errored"), n_warnings = nrow(w), n_warning_groups = length(unique(w$shape)),
+    by_state = by_state
   ))
+}
+
+# A warning's first line with quoted strings and numbers masked: what groups duplicates.
+warn_shape = function(x) {
+  x = substr(sub("\n.*", "", x), 1, 1000)
+  x = gsub("'[^']*'", "'_'", x)
+  x = gsub("\"[^\"]*\"", "\"_\"", x)
+  gsub("[0-9][0-9,.]*", "#", x)
 }
 
 # ---- B4: enightdata change with an error jump ----
@@ -131,19 +183,32 @@ check_enightdata = function(ctx) {
   f = pmeta("enightdata_sha")
   sha = if (file.exists(f)) readLines(f, warn = FALSE)[1] else NA_character_
   n = sum(ctx$progress()$progress == "errored")
-  old = ctx$prev$enightdata$sha %||% NA_character_
-  n_old = ctx$prev$enightdata$n_errored %||% NA_real_
+  # The baseline is the newest of the last HIST_N cycles that ran a different sha, so an
+  # error rise that builds over 2-3 cycles after a change is still caught. Once the jump
+  # fires, its baseline is carried in the metrics for as long as the same sha is installed,
+  # so the P0 stays open until errors come back down (or enightdata moves again).
+  jump = ctx$prev$enightdata$jump
+  if (!is.null(jump) && !identical(jump$new_sha, sha)) jump = NULL
+  if (is.null(jump) && !is.na(sha)) {
+    for (h in ctx$hist) {
+      hs = dig(h, "enightdata", "sha"); hn = dig(h, "enightdata", "n_errored")
+      if (!is.null(hs) && !is.na(hs) && hs != sha) {
+        if (!is.null(hn)) jump = list(old_sha = hs, before = as.numeric(hn), new_sha = sha)
+        break
+      }
+    }
+  }
   out = list()
-  if (!is.na(sha) && !is.na(old) && sha != old && !is.na(n_old) && n - n_old >= max(5, 0.5 * n_old)) {
+  fired = !is.null(jump) && n - jump$before >= max(5, 0.5 * jump$before)
+  if (fired) {
     out[[1]] = finding(
       "enightdata_jump", substr(sha, 1, 12),
       sprintf("Errored targets rose %d -> %d after enightdata moved %s -> %s. Consider reverting on GitHub.",
-              as.integer(n_old), n, substr(old, 1, 7), substr(sha, 1, 7)),
-      severity = "P0", value = n, evidence = list(old_sha = old, new_sha = sha, before = n_old, after = n)
+              as.integer(jump$before), n, substr(jump$old_sha, 1, 7), substr(sha, 1, 7)),
+      severity = "P0", value = n, evidence = list(old_sha = jump$old_sha, new_sha = sha, before = jump$before, after = n)
     )
   }
-  # keep the pre-change baseline while the same sha stays installed and nothing changed
-  list(findings = out, metrics = list(sha = sha, n_errored = n))
+  list(findings = out, metrics = list(sha = sha, n_errored = n, jump = if (fired) jump))
 }
 
 # ---- B5: frozen timestamps ----
@@ -224,18 +289,21 @@ check_scraper_output = function(ctx) {
     cur[[key]] = now_m
     if (is.null(pv) || is.null(pv$rows)) next
     sev = sev_close(st, ctx$now)
-    if (pv$rows > 0 && now_m$rows == 0) {
+    # against the most of the last cycle and the HIST_N before it
+    max_rows = max(c(pv$rows, hist_num(ctx, "scraper_output", "files", key, "rows")))
+    max_votes = max(c(pv$votes, hist_num(ctx, "scraper_output", "files", key, "votes")))
+    if (max_rows > 0 && now_m$rows == 0) {
       out[[length(out) + 1]] = finding("scraper_output", paste0("rows_zero:", key),
-                                       sprintf("%s dropped from %d rows to 0.", basename(f), pv$rows),
+                                       sprintf("%s dropped from %d rows to 0.", basename(f), as.integer(max_rows)),
                                        severity = sev, state = st, value = 0)
     }
-    if (pv$votes > 0 && now_m$votes < pv$votes * (1 - 0.005)) {
+    if (max_votes > 0 && now_m$votes < max_votes * (1 - 0.005)) {
       out[[length(out) + 1]] = finding("scraper_output", paste0("votes_down:", key),
-                                       sprintf("%s total votes fell %s -> %s (%.1f%%).", basename(f),
-                                               format(pv$votes, big.mark = ","), format(now_m$votes, big.mark = ","),
-                                               100 * (now_m$votes / pv$votes - 1)),
+                                       sprintf("%s total votes fell %s -> %s (%.1f%%; most in the last %d cycles).", basename(f),
+                                               format(max_votes, big.mark = ","), format(now_m$votes, big.mark = ","),
+                                               100 * (now_m$votes / max_votes - 1), HIST_N),
                                        severity = sev, state = st, value = now_m$votes,
-                                       evidence = list(before = pv$votes, after = now_m$votes))
+                                       evidence = list(before = max_votes, last = pv$votes, after = now_m$votes))
     }
     if (!identical(pv$cands, cands) && now_m$rows > 0) {
       out[[length(out) + 1]] = finding("scraper_output", paste0("candidates:", key),
@@ -261,19 +329,11 @@ cached_cells = function(state, d26) {
   cells
 }
 
-# pct_ours (matched / our_n) summed to the state. It measures our precinct ids against
-# votehub geometry, the closest pre-election number to "how many ids reconcile".
-match_baseline = function() {
-  f = file.path(WATCH_REPO, "scripts", "model", "lookups", "precinct_geo_match_rates.csv")
-  if (!file.exists(f)) return(numeric())
-  d = fread(f)
-  d = d[, .(rate = sum(matched) / sum(our_n)), by = state]
-  setNames(d$rate, d$state)
-}
-
+# Per race: shares of the feed dropped as unknown_geo (no cell) or unknown_method, against
+# the lowest share of the last HIST_N cycles on the same basis. The absolute "do the feed's
+# ids reconcile" baseline is check_crosswalk_match(), which covers every collected state.
 check_methods_match = function(ctx) {
   races = races_from_priors(ctx$d26)
-  base = match_baseline()
   prev = ctx$prev$methods_match$races %||% list()
   cur = list()
   out = list()
@@ -321,15 +381,16 @@ check_methods_match = function(ctx) {
       cur[[rid]] = list(state = st, basis = basis, unknown_geo = sg, unknown_method = sm, methods = as.list(meths))
       pv = prev[[rid]]
       why = character()
-      if (!is.na(base[st]) && !is.na(sg) && sg > (1 - base[st]) + MATCH_SLACK) {
-        why = c(why, sprintf("unknown_geo %.1f%% vs baseline %.1f%%", 100 * sg, 100 * (1 - base[st])))
+      # the last cycle plus the HIST_N before it, same basis only (rows before votes, then votes)
+      past = Filter(\(x) !is.null(x) && identical(x$basis, basis),
+                    c(list(pv), lapply(ctx$hist, \(h) dig(h, "methods_match", "races", rid))))
+      low = function(k) { v = as.numeric(unlist(lapply(past, \(x) x[[k]]))); v = v[!is.na(v)]; if (length(v)) min(v) else NA_real_ }
+      lg = low("unknown_geo"); lmeth = low("unknown_method")
+      if (!is.na(sg) && !is.na(lg) && sg - lg > SHARE_JUMP) {
+        why = c(why, sprintf("unknown_geo up %.1fpp (vs the lowest of the last %d cycles)", 100 * (sg - lg), HIST_N))
       }
-      same_basis = !is.null(pv) && identical(pv$basis, basis)
-      if (same_basis && !is.na(sg) && !is.null(pv$unknown_geo) && sg - pv$unknown_geo > SHARE_JUMP) {
-        why = c(why, sprintf("unknown_geo up %.1fpp", 100 * (sg - pv$unknown_geo)))
-      }
-      if (same_basis && !is.na(sm) && !is.null(pv$unknown_method) && sm - pv$unknown_method > SHARE_JUMP) {
-        why = c(why, sprintf("unknown_method up %.1fpp", 100 * (sm - pv$unknown_method)))
+      if (!is.na(sm) && !is.na(lmeth) && sm - lmeth > SHARE_JUMP) {
+        why = c(why, sprintf("unknown_method up %.1fpp (vs the lowest of the last %d cycles)", 100 * (sm - lmeth), HIST_N))
       }
       new_m = if (is.null(pv)) character() else setdiff(meths, unlist(pv$methods))
       if (length(new_m)) why = c(why, paste0("new unmodelled method(s): ", paste(new_m, collapse = ", ")))
@@ -342,6 +403,102 @@ check_methods_match = function(ctx) {
     timing[[st]] = round(as.numeric(difftime(Sys.time(), t0, units = "secs")), 1)
   }
   list(findings = out, metrics = list(races = cur, seconds_by_state = timing))
+}
+
+# ---- B7b: crosswalk match, for every collected state ----
+# The rates come from scripts/util/crosswalks/match_rates.R (sourced at the top), the same
+# code the ENR cycle runs to write the baseline, docs/enr_cycle/crosswalk_match_baseline.csv.
+# Two maps, checked separately for every state with clean files: l2 (crosswalks/{st}.csv,
+# ENR -> frame -> L2) and votehub (crosswalks/votehub/{st}.csv, ENR -> VoteHub unit).
+# Trips, per state x map:
+#   - rate or present more than MATCH_SLACK below the baseline (no baseline row: present
+#     below 1 - MATCH_SLACK)
+#   - rate down more than SHARE_JUMP from the best of the last HIST_N cycles
+# Feed counties with no crosswalk are crosswalk work for the ENR cycle: the baseline lists
+# them, and only counties missing from that list are reported (P2). A crosswalk file newer
+# than its baseline row is one P2 line: rerun match_rates.R --write in the cycle.
+# Feed geos are cached per clean file in state/feed_geos.rds by mtime and size.
+feed_geos = function(files) {
+  f_cache = state_path("feed_geos.rds")
+  cache = if (file.exists(f_cache)) tryCatch(readRDS(f_cache), error = function(e) list()) else list()
+  dirty = FALSE
+  for (f in files) {
+    info = file.info(f)
+    sig = paste(round(as.numeric(info$mtime)), info$size)
+    if (!identical(cache[[f]]$sig, sig)) {
+      cache[[f]] = list(sig = sig, geo = unique(as.character(nanoparquet::read_parquet(f, col_select = "geo")$geo)))
+      dirty = TRUE
+    }
+  }
+  cache = cache[intersect(names(cache), files)]
+  if (dirty) saveRDS(cache, f_cache)
+  lapply(cache[files], `[[`, "geo")
+}
+
+check_crosswalk_match = function(ctx) {
+  files = clean_files(ctx$d26)
+  geos = feed_geos(unname(files))
+  base = read_xw_baseline(ctx$xw_baseline %||% file.path(WATCH_REPO, XW_BASELINE)) %||% data.table(state = character(), map = character())
+  out = list(); cur = list(); no_xw = character(); stale = character()
+  for (st in sort(unique(names(files)))) {
+    r = xw_match_state(st, unique(unlist(geos[names(files) == st])), ctx$d26)
+    if (!length(r)) { no_xw = c(no_xw, st); next }
+    sev = sev_close(st, ctx$now)
+    cur[[st]] = list()
+    for (nm in names(r)) {
+      x = r[[nm]]; s = XW_SOURCES[[nm]]
+      b = base[base$state == st & base$map == nm]
+      b = if (nrow(b)) as.list(b[1]) else NULL
+      if (!is.null(b) && format(x$mtime, "%Y-%m-%d %H:%M") > b$xw_mtime) stale = c(stale, paste0(st, " ", nm))
+      known = if (is.null(b) || is.na(b$uncovered)) character() else strsplit(b$uncovered, "; ", fixed = TRUE)[[1]]
+      new_unc = setdiff(x$uncovered, known)
+      cur[[st]][[nm]] = list(n = x$n, k = x$k, rate = x$rate, xw_n = x$xw_n, present = x$present,
+                             n_uncovered = x$n_uncovered, uncovered = as.list(x$uncovered),
+                             base_rate = b$rate, base_present = b$present)
+      why = character()
+      bp = b$present %||% 1
+      if (!is.na(x$present) && x$present < bp - MATCH_SLACK) {
+        why = c(why, sprintf("%d of the crosswalk's %d matched ENR ids (%.1f%%) are in the feed, vs %.1f%% at the ENR-cycle baseline; the feed's precinct ids may have changed",
+                             round(x$present * x$xw_n), x$xw_n, 100 * x$present, 100 * bp))
+      }
+      if (!is.null(b) && !is.na(x$rate) && !is.na(b$rate) && x$rate < b$rate - MATCH_SLACK) {
+        why = c(why, sprintf("%.1f%% of feed precincts match, vs %.1f%% at the ENR-cycle baseline (%s)", 100 * x$rate, 100 * b$rate, b$built))
+      }
+      best = suppressWarnings(max(hist_num(ctx, "crosswalk_match", "states", st, nm, "rate")))
+      if (!is.na(x$rate) && is.finite(best) && best - x$rate > SHARE_JUMP) {
+        why = c(why, sprintf("%.1f%% of feed precincts match, down from %.1f%% (best of the last %d cycles)", 100 * x$rate, 100 * best, HIST_N))
+      }
+      if (length(why)) {
+        out[[length(out) + 1]] = finding(
+          "crosswalk_match", paste0(st, "_", nm),
+          paste0(st, " ", s$label, " crosswalk: ", paste(why, collapse = "; "), "."),
+          severity = sev, state = st, value = x$rate,
+          evidence = list(file = x$file, rate = x$rate, present = x$present, n_feed = x$n, n_match = x$k, n_xw = x$xw_n,
+                          baseline = b, best_recent = if (is.finite(best)) best else NULL,
+                          missing_by_county = head(as.data.frame(x$missing), 10), missing_examples = x$missing_ids)
+        )
+      }
+      if (length(new_unc)) {
+        out[[length(out) + 1]] = finding(
+          "crosswalk_match", paste0(st, "_", nm, "_uncovered"),
+          sprintf("%s: %d feed count%s with no %s crosswalk, not in the ENR-cycle baseline: %s%s. Crosswalk them in the next /enr-cycle.",
+                  st, length(new_unc), if (length(new_unc) == 1) "y" else "ies", s$label,
+                  paste(head(new_unc, 8), collapse = ", "), if (length(new_unc) > 8) ", ..." else ""),
+          severity = "P2", state = st, value = length(new_unc),
+          evidence = list(file = x$file, counties = as.list(new_unc), known = as.list(known))
+        )
+      }
+    }
+  }
+  if (length(stale)) {
+    out[[length(out) + 1]] = finding(
+      "crosswalk_match", "baseline_stale",
+      paste0("Crosswalk rebuilt after its ENR-cycle baseline (", paste(stale, collapse = ", "),
+             "): run Rscript scripts/util/crosswalks/match_rates.R --write."),
+      severity = "P2", evidence = list(stale = as.list(stale))
+    )
+  }
+  list(findings = out, metrics = list(states = cur, no_crosswalk = as.list(no_xw), baseline_rows = nrow(base)))
 }
 
 # ---- B8: models ----
@@ -477,14 +634,14 @@ check_redistricting = function(ctx) {
 # ---- driver ----
 # Order matters only for check_models, which reads check_scraper_output's metrics.
 CHECKS = c("cycle_steps", "target_errors", "enightdata", "frozen_timestamps", "scraper_output",
-           "methods_match", "models", "cbs_feed", "dashboard", "redistricting")
+           "methods_match", "crosswalk_match", "models", "cbs_feed", "dashboard", "redistricting")
 
 # the finding `check` names each check emits: a check that ran resolves its incidents that it
 # no longer finds, and one that failed (check_error) resolves nothing
 CHECK_EMITS = list(
   cycle_steps = "cycle_step", target_errors = c("target_error", "target_warning"),
   enightdata = "enightdata_jump", frozen_timestamps = "frozen_timestamp", scraper_output = "scraper_output",
-  methods_match = "methods_match", models = c("model_status", "model_statewide", "model_vanished"),
+  methods_match = "methods_match", crosswalk_match = "crosswalk_match", models = c("model_status", "model_statewide", "model_vanished"),
   cbs_feed = "cbs_feed", dashboard = "dashboard", redistricting = "redistricting"
 )
 
@@ -498,6 +655,7 @@ run_checks = function(ps_dir = watch_path("pipeline-state"), prev = read_json_fi
   ctx$cycle = read_json_file(file.path(ps_dir, "cycle.json"), list())
   ctx$cycle_time = if (!is.null(ctx$cycle$run_time)) parse_run_time(ctx$cycle$run_time) else as.POSIXct(NA)
   if (is.na(ctx$cycle_time)) ctx$cycle_time = now
+  ctx$hist = read_hist(prev, ctx$cycle$run_time)
   ctx$d26 = find_26_general()
   ctx$cur = list()
   # meta and progress read once, on first use

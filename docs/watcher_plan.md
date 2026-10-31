@@ -106,14 +106,20 @@ laptop), then when it trips. Open for Mason's edits.
 - Reads: `{ST}/clean/*_latest.parquet` and `summaries/*.parquet` (Dropbox).
 - Trips: any of
   - rows drop to 0
-  - votes decrease
+  - votes decrease (from the most of the last 3 cycles)
   - the candidate set changes
   - a 0-byte Dropbox placeholder file
 
 **Methods and crosswalk match**
 - Reads: `returns_dropped(cells, returns)` (`scripts/model/live/R/returns.R`), which gives the `unknown_method` and `unknown_geo` vote share, matched through `match_live_geo()`.
-- Trips: share above the baseline in `scripts/model/lookups/precinct_geo_match_rates.csv`, or a drop of more than 5pp from the last cycle.
+- Trips: a rise of more than 5pp from the lowest of the last 3 cycles.
 - Excludes bucket rows (`bucket_class()`, `reporting_levels.csv`), which are about 31% of the vote in NC and AK.
+
+**Crosswalk match (every collected state)**
+- Reads: the feed's geos from every `{ST}/clean/*_latest.parquet`, and two different maps: `input_data/crosswalks/{st}.csv` (ENR id -> frame -> L2 precinct) and `input_data/crosswalks/votehub/{st}.csv` (ENR id -> VoteHub unit).
+- Measures, per state x map: the share of feed precincts that match, and the share of the map's matched ENR ids still present in the feed (100% when the crosswalks were built).
+- Baseline: `docs/enr_cycle/crosswalk_match_baseline.csv`, written by `/enr-cycle` (`scripts/util/crosswalks/match_rates.R --write`, same code as the check).
+- Trips: rate or present more than 5pp below the baseline, or the match rate down more than 5pp from the best of the last 3 cycles. Feed counties with no crosswalk that the baseline doesn't already list (P2); fixing them is ENR-cycle work.
 
 **`trust_stage`**
 - Reads: share of complete cells by state, compared with metadata `trust_stage`.

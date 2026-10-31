@@ -51,6 +51,40 @@ check the file starts with `%PDF`, then
 `pdf_download()` already handles this URL. If the county uploads a new file
 per update, the id changes.
 
+## Crosswalks
+
+### 4. Feed counties with no crosswalk (from `match_rates.R`, 2026-10-31)
+
+`Rscript scripts/util/crosswalks/match_rates.R` lists feed counties that a
+map doesn't cover (`l2`: `crosswalks/{st}.csv`; `votehub`:
+`crosswalks/votehub/{st}.csv`). On 2026-10-31:
+
+| state | map | counties | feed precincts |
+|---|---|---|---|
+| TX | l2, votehub | Dallas, Fort Bend, Reeves, Robertson, Tarrant | 4,122 |
+| CA | l2 | Nevada, Riverside, San Diego, Solano (consolidated crosswalks, which `match_rates.R` doesn't read), Ventura | 5,934 |
+| PA | l2 | Montgomery, York | 590 |
+| FL | l2 | Pinellas, St Johns | 343 |
+| FL | votehub | Franklin, Pinellas | 296 |
+| NE | votehub | Adams, Box Butte, Cass, Dawes, Dawson, Dodge, Hamilton, Holt, Hooker, Howard, Loup, Webster | 156 |
+| MI | l2 | St Clair, St Joseph | 85 |
+| GA | l2 | Bleckley, Burke, Candler, Glascock, Jackson, Morgan, Quitman, Webster | 26 |
+| OH | votehub | Carroll | 23 |
+
+For each frame county: rebuild `scripts/util/crosswalks/{st}.R` (and
+`votehub.R`). Check first whether the county has a clean file but isn't in the
+frame (then L2 can't apply), or whether the ids need a county rule. TX notes:
+Dallas ids carry a `-NN` suffix (`1004-01`) like Ellis (`1001-501`, which
+`tx.R` strips); Tarrant reports sub-units (`1005 - F99`), which are sums, as
+in Wood. Then:
+
+1. Rerun model prep for the state: `MODEL_INPUTS_OUT=<tmp> Rscript scripts/model/prep/prep_model_inputs.R {ST}`,
+   diff with `26_general/input_data/model_inputs/{ST}_*` (teammates prep with
+   newer code; see the prep report header), and copy only if the diff is the
+   new crosswalk rows. A stale prep is what broke Ellis: the crosswalk had the
+   ids, the model inputs didn't.
+2. `match_rates.R --write`, and delete the fixed rows from this table.
+
 ## Not for agents (Mason)
 
 - `build` / `trust_stage` for the 27 rows made live on 10-30.

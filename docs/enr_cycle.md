@@ -31,6 +31,7 @@ summary. The next `/enr-cycle` resumes from that line.
 | `docs/enr_cycle/log.md` | current session's automatic lines plus the last `SESSION end` line; `compact` drops older entries (history in git) | `cycle.R` |
 | `docs/crosswalk_todo.md`, `docs/precinct_crosswalks.md` | crosswalk procedure, per-state coverage and notes; method | crosswalk work |
 | `scripts/util/crosswalks/votehub.R` | ENR <-> VoteHub shapefile crosswalks (`input_data/crosswalks/votehub/`) | phase 3 |
+| `docs/enr_cycle/crosswalk_match_baseline.csv` | per state x map (L2, VoteHub): feed match rate, share of matched ids present, uncovered counties; the watcher's B7b baseline | `scripts/util/crosswalks/match_rates.R --write`, end of phase 3 |
 | enightdata `tasks/todo.md`, `CLAUDE.md` | scraper rules, known scraper blockers | scraper work |
 
 **Never edit `metadata.csv` by hand.** `scripts/automation.R` overwrites it
@@ -209,6 +210,31 @@ Run it after the frame crosswalks in every pass. For each state:
 
 CA San Diego ENR has 2,994 precincts against VoteHub's 2,239; the unmatched
 rest are expected.
+
+### Match baseline (last step of phase 3)
+
+```sh
+Rscript scripts/util/crosswalks/match_rates.R           # print, next to the current baseline
+Rscript scripts/util/crosswalks/match_rates.R --write   # update docs/enr_cycle/crosswalk_match_baseline.csv
+```
+
+For every state with clean files and a crosswalk, and for each map separately
+(`l2`: `crosswalks/{st}.csv`, ENR -> frame -> L2; `votehub`:
+`crosswalks/votehub/{st}.csv`, ENR -> VoteHub unit), it measures:
+
+- `rate`: share of the feed's precincts, in counties the map covers, that match.
+- `present`: share of the map's matched ENR ids found in the feed (1 right after
+  a build; lower means the feed's ids moved).
+- `uncovered`: feed counties the map doesn't cover at all.
+
+The election-night watcher (`check_crosswalk_match()` in
+`scripts/watch/checks.R`) runs the same code each cycle and alerts when `rate`
+or `present` falls more than 5pp below this baseline, or when a feed county
+not listed in `uncovered` has no crosswalk. It posts a P2 when a crosswalk file
+is newer than its baseline row, so write the baseline after every rebuild.
+Before `--write`, investigate any row printed under "DROPPED". Uncovered
+counties are crosswalk work: they're listed in `open_problems.md`
+("Crosswalks").
 
 ## Google Sheet
 

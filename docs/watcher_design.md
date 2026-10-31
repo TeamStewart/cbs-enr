@@ -54,7 +54,10 @@ $WATCH_HOME/
   state/
     incidents.json      {"next_id": n, "incidents": {"I-1": {...}, ...}}
     decisions.json      [ruling, ...]
-    cycles/{run_time}.json   L1 output (findings + metrics) per cycle
+    cycles/{run_time}.json   L1 output (findings + metrics) per cycle; the last 3 are the
+                        regression checks' history (`read_hist()` in checks.R)
+    feed_geos.rds       distinct geos per clean file, keyed by mtime + size (crosswalk_match)
+    cells_{ST}.rds      build_cells() cache for methods_match (12 h)
     metrics_prev.json   last cycle's per-jurisdiction metrics, for diffs
     slack.json          {status_ts, last_seen_ts, ...}
     slack_outbox.log    every Slack call in dry-run (no token)
