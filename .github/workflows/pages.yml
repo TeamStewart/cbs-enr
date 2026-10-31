@@ -11,7 +11,7 @@ on:
     paths:
       - index.qmd
       - custom.scss
-      - cbs_white.svg
+      - assets/**
       - data/dashboard/**
       - .github/workflows/pages.yml
   workflow_dispatch:

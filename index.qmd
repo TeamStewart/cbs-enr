@@ -7,7 +7,7 @@ format:
       - default
       - custom.scss
     embed-resources: true
-    logo: cbs_white.svg
+    logo: assets/cbs_white.svg
     code-copy: false
     include-in-header:
       text: |
@@ -39,11 +39,11 @@ ojs_define(
   geo_url = if (is.null(dd$geo_url)) "data/dashboard/geo" else dd$geo_url,
   dash_title = dd$title,
   # second header logo next to the CBS one (format: logo takes only one), inlined for embed-resources
-  mit_logo = paste0("data:image/svg+xml;base64,", base64enc::base64encode("mit_logo_std_rgb_white.svg")),
+  mit_logo = paste0("data:image/svg+xml;base64,", base64enc::base64encode("assets/mit_logo_std_rgb_white.svg")),
   # chart exports: ggmedsl's Styrene B and lab logo (assets/), VoteHub logo for the precinct maps' basemap credit
   medsl_font = paste0("data:font/ttf;base64,", base64enc::base64encode("assets/StyreneB_Regular.ttf")),
   medsl_logo = paste0("data:image/png;base64,", base64enc::base64encode("assets/medsl_horizontal.png")),
-  votehub_logo = paste0("data:image/svg+xml;base64,", base64enc::base64encode("votehub-logo-simple.svg")),
+  votehub_logo = paste0("data:image/svg+xml;base64,", base64enc::base64encode("assets/votehub-logo-simple.svg")),
   top_model = if (is.null(dd$top_model)) "" else dd$top_model,
   truth = if (is.null(dd$truth)) data.frame(key = character(), dem = numeric(), rep = numeric(), total = numeric()) else dd$truth
 )
