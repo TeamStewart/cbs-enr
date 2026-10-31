@@ -1,8 +1,10 @@
 # ========================================
 ## Fully joined ENR files: every contest in a state's clean *_latest.parquet files,
 ## joined to L2 precinct covariates through input_data/crosswalks/{st}.csv
-## (ENR id -> frame precinct -> L2 precinct; docs/precinct_crosswalks.md) and the
-## newest input_data/l2/{st}_YYYYMMDD_precincts.parquet.
+## (ENR id -> frame precinct -> L2 precinct; docs/precinct_crosswalks.md), then
+## input_data/crosswalks/l2_direct/{st}.csv for ENR ids the frame route leaves
+## without L2 (scripts/util/crosswalks/l2_direct.R), and the newest
+## input_data/l2/{st}_YYYYMMDD_precincts.parquet.
 ## Written to 26_general/full/{ST}_latest_full.parquet by the full_{ST} targets
 ## (_targets.R) whenever that state's scrapes, crosswalk, or L2 file change.
 ##
@@ -10,7 +12,7 @@
 ##   county          county name (enightmodels::cbs_counties, from the geo's county number)
 ##   precinct_l2     L2 precinct id; ";"-separated for a CA consolidation; NA when the ENR
 ##                   precinct has no L2 match
-##   l2_match        "crosswalk" ({st}.csv), or "consolidated" for the CA counties that
+##   l2_match        "crosswalk" ({st}.csv), "direct" (l2_direct/{st}.csv), or "consolidated" for the CA counties that
 ##                   report consolidated precincts (L2 summed over the member precincts in
 ##                   ca_{county}_members.csv); NA when unmatched
 ##   l2_n_precincts  L2 precincts combined into the row
@@ -49,7 +51,8 @@ l2_file = function(state) {
 
 # Every file a state's ENR -> L2 map reads (for the targets' file cue)
 l2_map_files = function(state) {
-  f = c(input_path("crosswalks", glue("{tolower(state)}.csv")), l2_file(state))
+  f = c(input_path("crosswalks", glue("{tolower(state)}.csv")), input_path("crosswalks", "l2_direct", glue("{tolower(state)}.csv")),
+        l2_file(state))
   if (state == "CA") {
     f = c(f, input_path("crosswalks", glue("ca_{CA_CONSOLIDATED}_members.csv")),
           input_path("crosswalks", glue("ca_{CA_CONSOLIDATED}_frame_consolidated.csv")))
@@ -112,8 +115,9 @@ l2_covariates = function(x) {
 #'   or no L2 file.
 l2_precinct_map = function(state) {
   xw_path = input_path("crosswalks", glue("{tolower(state)}.csv"))
+  dx_path = input_path("crosswalks", "l2_direct", glue("{tolower(state)}.csv"))
   l2_path = l2_file(state)
-  if (!fs::file_exists(xw_path) || length(l2_path) == 0) return(NULL)
+  if (!any(fs::file_exists(c(xw_path, dx_path))) || length(l2_path) == 0) return(NULL)
   rd = \(p) readr::read_csv(p, col_types = readr::cols(.default = "c"), progress = FALSE)
   pk = \(x) str_squish(toupper(x)) # L2 precinct id
 
@@ -128,7 +132,8 @@ l2_precinct_map = function(state) {
   uniq = !(duplicated(l2$precinct_l2) | duplicated(l2$precinct_l2, fromLast = TRUE))
   locate = \(lck, p) coalesce(match(paste(lck, p), paste(l2$lck, l2$precinct_l2)), which(uniq)[match(p, l2$precinct_l2[uniq])])
 
-  xw = rd(xw_path)
+  xw = if (fs::file_exists(xw_path)) rd(xw_path) else
+    tibble(county = character(), precinct_yougov = character(), precinct_enr = character(), precinct_l2 = character())
   out = xw |>
     filter(!is.na(precinct_enr), precinct_enr != "", !is.na(precinct_l2), precinct_l2 != "") |>
     distinct(county, precinct_enr, precinct_l2) |> # frame rows repeat per cd
@@ -136,8 +141,22 @@ l2_precinct_map = function(state) {
               .row = locate(l2_county(county), pk(precinct_l2))) |>
     filter(!is.na(.row))
   stopifnot(!anyDuplicated(out$gkey))
+  used = out$.row
   out = bind_cols(select(out, gkey), l2[out$.row, c("precinct_l2", L2_COUNTS)]) |>
     mutate(l2_match = "crosswalk", l2_n_precincts = 1L)
+
+  # direct ENR -> L2 matches for ENR ids the frame route left without L2, on L2
+  # precincts it doesn't use
+  if (fs::file_exists(dx_path)) {
+    dx = rd(dx_path) |>
+      transmute(gkey = paste(xw_county(.env$state, county), xw_prec(precinct_enr)),
+                .row = locate(l2_county(county), pk(precinct_l2))) |>
+      filter(!is.na(.row), !gkey %in% out$gkey, !.row %in% used) |>
+      distinct(gkey, .keep_all = TRUE)
+    dx = dx[!duplicated(dx$.row), ]
+    out = bind_rows(out, bind_cols(select(dx, gkey), l2[dx$.row, c("precinct_l2", L2_COUNTS)]) |>
+                      mutate(l2_match = "direct", l2_n_precincts = 1L))
+  }
 
   if (state == "CA") {
     # consolidations: member frame precincts (ca_{name}_members.csv, usable ones flagged

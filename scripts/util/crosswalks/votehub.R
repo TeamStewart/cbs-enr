@@ -49,7 +49,6 @@ read_vh = function() {
   })
   bind_rows(vh, list_rbind(unname(extra)))
 }
-vh_all = read_vh()
 
 num_key = function(x) str_replace_all(str_to_upper(str_squish(x)), "(^|(?<=[A-Z]))0+(?=\\d)", "")
 lead_key = function(x) num_key(str_match(x, "^\\s*([A-Za-z]?\\d+[A-Za-z]?)(?=[\\s.-]|$)")[, 2]) # "16-BPK Park" -> "16"
@@ -121,7 +120,25 @@ base_keys = function(x) {
 # - NE: ENR ids are SOS precinct names ("08-01", "Precinct 54"; scrape_ne()
 #   since 2026-10-31), so they go to the name tiers, not the id tiers.
 state_keys = function(st, enr) {
-  if (st == "NE") enr = mutate(enr, enr_name = precinct_enr, id_label = NA_character_)
+  if (st == "NE") {
+    # County-specific spellings (others are matched in vh_manual):
+    # Dawson "Goth East 008" = "Gothenburg East", "Lex 1st 012" = "Lexington 1st";
+    # Dodge "City of Fremont 1A 001" = "Fremont 1A", "Cuming/Everett Twps 023" =
+    # "Cuming/Everett Townships"; Hamilton "1 001" = "Precinct 1", "W1 009" = "Ward 1";
+    # Box Butte "City of Alliance 001" / "Rural Alliance 11" = "Precinct 1" / "Precinct 11";
+    # Cass "001 - Tipton" = "Tipton", "021 - Plattsmouth 1st Ward" = "1st Ward";
+    # Adams "11 1-A" = "1A", "02 Juniata/Verona" = "Juniata/Verona"
+    seq = str_remove(enr$precinct_enr, "\\s+\\d{3}$")
+    enr = mutate(enr, id_label = NA_character_, enr_name = case_when(
+      county == county_key("NE", "Dawson") ~ str_replace_all(seq, c("^Goth\\b" = "Gothenburg", "^Lex\\b" = "Lexington")),
+      county == county_key("NE", "Dodge") ~ str_replace(seq, "\\bTwps$", "Townships"),
+      county == county_key("NE", "Hamilton") ~ str_replace_all(seq, c("^W(\\d+)$" = "Ward \\1", "^(\\d+)$" = "Precinct \\1")),
+      county == county_key("NE", "Box Butte") ~ paste("Precinct", as.integer(str_extract(precinct_enr, "\\d+$"))),
+      county == county_key("NE", "Cass") ~ str_replace(str_remove(precinct_enr, "^\\d+ - "), "^Plattsmouth (\\d\\w\\w Ward)$", "\\1"),
+      county == county_key("NE", "Adams") ~ str_replace(str_remove(precinct_enr, "^\\d+ "), "^(\\d)-([A-Z])$", "\\1\\2"),
+      .default = precinct_enr
+    ))
+  }
   if (!"enr_name" %in% names(enr)) enr$enr_name = NA_character_
   if (!"id_label" %in% names(enr)) enr$id_label = enr$precinct_enr
   if (st == "CA") {
@@ -160,7 +177,9 @@ state_keys = function(st, enr) {
     clark_seq = as.integer(str_extract(enr$precinct_enr, "^\\d+"))
     clark_grp = if_else(clark, str_remove(enr$precinct_enr, "^\\d+ "), NA_character_)
     clark_rank = ave(coalesce(clark_seq, 0L), coalesce(clark_grp, ""), FUN = rank)
+    # Carroll "augusta 001" = "AUGUSTA" (trailing ENR sequence number)
     enr = mutate(enr, enr_name = case_when(
+      county == county_key("OH", "Carroll") ~ str_remove(precinct_enr, "\\s+\\d{3}$"),
       county == county_key("OH", "Lucas") ~ str_replace_all(precinct_enr, "(?<=\\d)(?=[a-z])", " "),
       county == county_key("OH", "Montgomery") ~ str_replace_all(std_name(precinct_enr), oh_montgomery),
       clark & clark_grp %in% c("mr", "t") ~ paste(clark_grp, clark_rank),
@@ -201,6 +220,104 @@ tiers = tribble(
   "alt_mi",      "a_mi",   "n_mi"
 )
 
+# Hand-matched pairs, ENR id = VoteHub code (the `unit_id` part after "-:-"), for
+# counties whose ENR labels are polling places, initials or reordered town lists.
+# Each county has as many ENR as VoteHub precincts and every pair is the only
+# candidate. Tried before the tiers.
+vh_pairs = function(st, county, x) tibble(state = st, county = county_key(st, county), precinct_enr = names(x), vh_code = unname(x))
+vh_manual = bind_rows(
+  vh_pairs("NE", "Adams", c("01 Wstbl/Hgh" = "West Blue/Highland")),
+  vh_pairs("NE", "Dodge", c(
+    "Platte East Township 026" = "Platte East", "Platte West Township 027" = "Platte West",
+    "UN/CT/RG/PV Twps 032" = "Union/Cott/Ridg/PV Twps")),
+  vh_pairs("NE", "Holt", c(
+    "Antelope Iowa & Verdigris" = "01 Antelope, Iowa & Verdigris", "Atkinson Surronunding TWNSPS" = "02 Atk & Surrounding Twps",
+    "Chambers & Surrounding TWNSHPS" = "03 Chmbrs/Surrounding Twps", "Emmet & Northeast TWNSHPS" = "04 Emmet & Northeast Twps",
+    "Ewing, Golden & Deloit TWNSHPS" = "05 Ewing, Golden & Deloit", "Inman Township" = "06 Inman Twp",
+    "Stuart & Cleveland Townships" = "07 Stuart & Cleveland Twps", "Grattan & Shields Townships" = "08 Grattan & Shields Twps",
+    "Atkinson Ward I" = "09 Atkinson Ward I", "Grattan-O'Neill Ward I" = "10 O'Neill Ward I",
+    "Grattan-O'Neill Ward II" = "11 O'Neill Ward II", "Grattan-O'Neill Ward III" = "12 O'Neill Ward III",
+    "Grattan-O'Neill Ward IV" = "13 O'Neill Ward IV")),
+  # Boelus, Cushing, Farwell vs Loup Fork, Posen, Spring Creek: unknown pairing, NA
+  vh_pairs("NE", "Howard", c(
+    "St. Paul Ward I" = "St. Paul Ward 1", "St. Paul Ward II" = "St. Paul Ward 2", "Village of Dannebrog & Rural" = "Dannebrog",
+    "Village of Elba & Rural" = "Elba", "Village of St. Libory & Rural" = "St. Libory")),
+  # the two Red Cloud precincts (Central Co., SW) vs Red Cloud 1st/2nd: unknown pairing, NA
+  vh_pairs("NE", "Webster", c(
+    "City of BH & Rural NE" = "Blue Hill", "Village of Bladen & Rural NW" = "Bladen", "Village of Guide Rock & Rural" = "Guide Rock")),
+  vh_pairs("IA", "Adair", c("1NW" = "1NW ADAIR", "2NE" = "2NE STUART", "3SW" = "3SW FONTANELLE", "4SE" = "4SE ORIENT", "5GF" = "5GF GREENFIELD")),
+  vh_pairs("IA", "Allamakee", c(
+    "PCT 1 - WL/HV" = "WL/HV", "PCT 2 - FC/JF/LL/MK/UP" = "UP/MK/FC/JF/LL", "Pct 3 - PO/FK/PV CITY" = "PO/FK/PV CITY",
+    "Pct 4 - LT/PC/WV CITY" = "PC/LT/WV CITY", "Pct 5 - FV/TL/HF CITY" = "FV/TL/HF CITY", "Pct 6 - CN/LF/LS/LS CITY" = "LF/CN/LS/LS CITY",
+    "Pct 7 - IA/UC/NA City" = "UC/IA/NA CITY", "Pct 8 - WAUKON WARD 1" = "WK 1 CITY", "Pct 9 - WAUKON WARD 2" = "WK 2 CITY",
+    "Pct 10 - WAUKON WARD 3" = "WK 3 CITY")),
+  vh_pairs("IA", "Audubon", c("Precinct #1 Audubon N1/2" = "PRECINCT 1", "Precinct #2 Exira S1/2" = "PRECINCT 2")),
+  vh_pairs("IA", "Benton", c(
+    "Belle Plaine 1" = "PRECINCT BP1", "Belle Plaine 2" = "PRECINCT BP2", "Belle Plaine 3" = "PRECINCT BP3",
+    "Benton-Canton-Shellsburg" = "PRECINCT BN", "Big Grove-Union-Van Horne" = "PRECINCT BG",
+    "Bruce-Cedar-Monroe-Mt. Auburn" = "PRECINCT BR", "Eden-Harrison-Taylor-Jackson-Garrison" = "PRECINCT ED",
+    "Eldorado-Newhall" = "PRECINCT EL", "Florence-St. Clair-Norway" = "PRECINCT FL", "Fremont-Atkins" = "PRECINCT FR",
+    "Homer-Kane-Keystone" = "PRECINCT HO", "Iowa-Leroy-Luzerne-Blairstown" = "PRECINCT IA", "Polk-Urbana" = "PRECINCT PO",
+    "Vinton 1" = "PRECINCT VT1", "Vinton 2" = "PRECINCT VT2", "Vinton 3" = "PRECINCT VT3", "Vinton 4" = "PRECINCT VT4",
+    "Walford" = "PRECINCT WA")),
+  vh_pairs("IA", "Grundy", setNames(paste0("P", 1:7), paste("PRECINCT", 1:7))),
+  vh_pairs("IA", "Harrison", c(
+    "Precinct #1 Little Sioux" = "LITTLE SIOUX", "Precinct #2 Pisgah" = "JACKSON ALLEN PISGAH",
+    "Precinct #3 Dunlap" = "HARRISON DOUGLAS DUNLAP", "Precinct #4 Mondamin" = "MORGAN RAGLAN MONDAMIN",
+    "Precinct #5 Magnolia" = "MAGNOLIA CALHOUN", "Precinct #6 Woodbine" = "BOYER LINCOLN WOODBINE",
+    "Precinct #7 Modale" = "CLAY TAYLOR CINCINNATI MODALE", "Precinct #8 Logan" = "JEFFERSON LAGRANGE LOGAN",
+    "Precinct #9 St John Twp" = "ST JOHN TWP", "Precinct #10 Missouri Valley City" = "MISSOURI VALLEY CITY",
+    "Precinct #11 Persia" = "CASS UNION WASHINGTON PERSIA")),
+  # precincts 1 and 2 are the two Chariton wards, paired by number
+  vh_pairs("IA", "Lucas", c(
+    "Precinct #1-Chariton City Hall" = "CHARITON WARD #1", "Precinct #2-Chariton Community Center" = "CHARITON WARD #2",
+    "Precinct #3-Lucas County Extension" = "EXTENSION PRECINCT", "Precinct #4-Lucas Community Center" = "LUCAS PRECINCT",
+    "Precinct #5-Pin Oak Marsh" = "PIN OAK MARSH", "Precinct #6-Russell Community Center" = "RUSSELL PRECINCT",
+    "Precinct #7-Williamson Community Center" = "WILLIAMSON PRECINCT")),
+  vh_pairs("IA", "Lyon", c(
+    "George Comm Ctr P1" = "PCT 1 GEORGE", "Little Rock Town and Country P2" = "PCT 2 LITTLE ROCK", "Rock Rapids N P3" = "PCT 3 ROCK RAPIDS N",
+    "Rock Rapids S P4" = "PCT 4 ROCK RAPIDS S", "Doon City Hall P5" = "PCT 5 DOON", "Inwood P6" = "PCT 6 INWOOD",
+    "Logan S P7" = "PCT 7 LOGAN S", "Logan N P8" = "PCT 8 LOGAN N", "Lester P9" = "PCT 9 LESTER", "Larchwood P10" = "PCT 10 LARCHWOOD")),
+  vh_pairs("IA", "Monroe", c(
+    "No. 1 - Albia First Ward" = "PRECINCT AL1", "No. 2 - Albia Second Ward" = "PRECINCT AL2", "No. 3 - Albia Third Ward" = "PRECINCT AL3",
+    "No. 4 - Albia Fourth Ward" = "PRECINCT AL4", "No. 5 - Courthouse(GL,TR,MT,PL,UR,MN,Eddy/Mor Cty)" = "PRECINCT COURTHSE(TR/MT/GL/UR/MN/PL)",
+    "No. 6 - Lovilia Comm Center (BC,CE,UN; Lov Cty)" = "PRECINCT LOVILIA(CE/UN/BC/LV)",
+    "No. 7 - St. Patrick's Church (FR,JK,WY; Mel Cty)" = "PRECINCT MELROSE(JK/WY/FR/ML)")),
+  vh_pairs("IA", "Montgomery", c(
+    "Gold Fair Building Ward #1" = "WARD1 PILOT GROVE FRANKFORT RO TWP", "Gold Fair Building Ward #2" = "WARD2 SHERMAN RO TWP",
+    "First Christian Church Ward #3" = "WARD3 SHERMAN PILOT GROVE FRANKFORT RO TWP",
+    "Elliott Community Building Precinct #4" = "4 GRFLD LNCLN SHER PILOT GROVE TWP ELLIOTT",
+    "Elliott Community Building Precinct #5" = "5 PILOT GROVE DOUGLAS TWP GRANT",
+    "Stanton Community Building Precinct #6" = "6 WEST GRANT FRANKFORT SCOTT TWP COBURG STANTON",
+    "Villisca Community Building Precinct #7" = "7 SCOTT EAST FRANKFORT WASHINGTON TWP VILLISCA")),
+  vh_pairs("IA", "Sac", c(
+    "Schaller" = "SCHALLER PCT 1", "Nemaha" = "NEMAHA PCT 2", "Early" = "EARLY PCT 3", "Sac City" = "SAC CITY PCT 4", "Lytton" = "LYTTON PCT 5",
+    "Odebolt" = "ODEBOLT PCT 6", "Lake View" = "LAKE VIEW PCT 7", "Auburn" = "AUBURN PCT 8", "Wall Lake" = "WALL LAKE PCT 9")),
+  vh_pairs("IA", "Taylor", c(
+    "Courthouse Precinct 1" = "PRECINCT 1", "Courthouse Precinct 2" = "PRECINCT 2", "Lenox Community Center Precinct 3" = "PRECINCT 3",
+    "Gravity Fire Station Precinct 4" = "PRECINCT 4", "New Market Community Center Precinct 5" = "PRECINCT 5")),
+  # PCT 9 "DETSUP4/SP" = VoteHub "DETSUP4 & SR" (SP/SR: Springfield, the only leftover)
+  vh_pairs("IA", "Winneshiek", c(
+    "PCT 1 - FM/BO/OR/BLF/MA" = "FR BO OR BL & MA", "PCT 2 - HE/HI/CN/PL/GL" = "HE HI CN PL & GL", "PCT 3 - DEW1/DETSUP2" = "DEW1 & DETSUP2",
+    "PCT 4 - DEW2" = "DEW2", "PCT 5 - DEW3A" = "DEW3A", "PCT 6 - DEW3B" = "DEW3B", "PCT 7 - DEW4" = "DEW4", "PCT 8 - DEW5" = "DEW5",
+    "PCT 9 - DETSUP4/SP" = "DETSUP4 & SR", "PCT 10 - FK/BM/MI" = "FR BM & MI", "PCT 11 - CA/WA/JA" = "CA WA & JA", "PCT 12 - LI/SU" = "LI & SU")),
+  # ENR polling places; VoteHub "Precinct 1 Eastpoint" (code 001) etc.
+  vh_pairs("FL", "Franklin", c(
+    "Eastpoint" = "001", "Alligator Point" = "002", "Holy Family Center" = "003", "Historic Holy Family" = "004",
+    "Carrabelle" = "005", "Lanark Village" = "006", "St. George Island" = "007", "American Legion" = "008"))
+)
+
+# A county with one ENR and one VoteHub precinct, both unmatched (NE Hooker, Loup)
+match_single = function(enr_keys, vh_keys, matched) {
+  e = anti_join(enr_keys, matched, join_by(county, precinct_l2)) |> filter(n() == 1, .by = county) |>
+    semi_join(count(enr_keys, county) |> filter(n == 1), join_by(county))
+  v = anti_join(vh_keys, matched, join_by(county, precinct_yougov)) |> filter(n() == 1, .by = county) |>
+    semi_join(count(vh_keys, county) |> filter(n == 1), join_by(county))
+  inner_join(select(e, county, precinct_l2), select(v, county, precinct_yougov), join_by(county)) |>
+    anti_join(matched, join_by(county)) |>
+    mutate(l2_rule = "single")
+}
+
 build_state = function(st) {
   files = Sys.glob(election_path(st, "clean", "*_latest.parquet")) |> fs::path_rel(election_path())
   vh = filter(vh_all, state == st)
@@ -211,18 +328,25 @@ build_state = function(st) {
     state_keys(st = st)
   vh = mutate(vh, county = county_key(st, county))
 
+  man = filter(vh_manual, state == st)
   enr_keys = bind_cols(
     transmute(enr, county, precinct_l2 = precinct_enr, n_l2 = NA_integer_),
     base_keys(enr$id_label),
     base_keys(enr$enr_name) |> rename_with(\(x) paste0("a_", x))
-  )
+  ) |>
+    left_join(transmute(man, county, precinct_l2 = precinct_enr, man = str_to_upper(vh_code)), join_by(county, precinct_l2))
   vh_keys = bind_cols(
     transmute(vh, county, precinct_yougov = unit_id, frame_name = precinct_vh, n_frame = NA_integer_),
     base_keys(str_remove(vh$unit_id, "^\\d+-:-")) |> rename_with(\(x) paste0("c_", x)),
     base_keys(vh$precinct_vh) |> rename_with(\(x) paste0("n_", x))
   )
+  # a manual pair whose ENR id or VoteHub code is gone (relabelled feed or new layer)
+  stale = anti_join(man, transmute(enr, county, precinct_enr), join_by(county, precinct_enr)) |>
+    bind_rows(anti_join(mutate(man, vh_code = str_to_upper(vh_code)), transmute(vh_keys, county, vh_code = c_upper), join_by(county, vh_code)))
+  if (nrow(stale)) cli::cli_alert_warning("{st}: {nrow(stale)} vh_manual pair{?s} not found: {paste(stale$county, stale$precinct_enr, sep = ' ', collapse = '; ')}")
 
-  matched = match_tiers(enr_keys, vh_keys, tiers) |>
+  matched = match_tiers(enr_keys, vh_keys, bind_rows(tibble(rule = "manual", l2_key = "man", fr_key = "c_upper"), tiers))
+  matched = bind_rows(matched, match_single(enr_keys, vh_keys, matched)) |>
     select(county, precinct_enr = precinct_l2, unit_id = precinct_yougov, vh_rule = l2_rule)
 
   crosswalk = enr |>
@@ -267,17 +391,21 @@ build_state = function(st) {
   crosswalk
 }
 
-vh_states = unique(vh_all$state)
-states = if ("--all" %in% args) vh_states else if (length(args)) toupper(args) else {
-  # default: states whose newest clean file or VoteHub layer is newer than their crosswalk
-  keep(vh_states, \(st) {
-    clean = Sys.glob(election_path(st, "clean", "*_latest.parquet"))
-    inputs = c(clean, unique(vh_all$src[vh_all$state == st]))
-    out = election_path(OUT_DIR, paste0(str_to_lower(st), ".csv"))
-    length(clean) > 0 && (!fs::file_exists(out) || max(fs::file_info(inputs)$modification_time) > fs::file_info(out)$modification_time)
-  })
+# run as a script (l2_direct.R sources this file for its keys and tiers)
+if (sys.nframe() == 0) {
+  vh_all = read_vh()
+  vh_states = unique(vh_all$state)
+  states = if ("--all" %in% args) vh_states else if (length(args)) toupper(args) else {
+    # default: states whose newest clean file or VoteHub layer is newer than their crosswalk
+    keep(vh_states, \(st) {
+      clean = Sys.glob(election_path(st, "clean", "*_latest.parquet"))
+      inputs = c(clean, unique(vh_all$src[vh_all$state == st]))
+      out = election_path(OUT_DIR, paste0(str_to_lower(st), ".csv"))
+      length(clean) > 0 && (!fs::file_exists(out) || max(fs::file_info(inputs)$modification_time) > fs::file_info(out)$modification_time)
+    })
+  }
+  skip = setdiff(states, vh_states)
+  if (length(skip)) cli::cli_alert_warning("No VoteHub layer for {skip}; skipped.")
+  if (!length(intersect(states, vh_states))) cli::cli_alert_success("No VoteHub crosswalk is stale.")
+  walk(intersect(states, vh_states), build_state)
 }
-skip = setdiff(states, vh_states)
-if (length(skip)) cli::cli_alert_warning("No VoteHub layer for {skip}; skipped.")
-if (!length(intersect(states, vh_states))) cli::cli_alert_success("No VoteHub crosswalk is stale.")
-walk(intersect(states, vh_states), build_state)

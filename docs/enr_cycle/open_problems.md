@@ -65,33 +65,38 @@ per update, the id changes.
 ### 4. Feed counties with no crosswalk (from `match_rates.R`, 2026-10-31)
 
 `Rscript scripts/util/crosswalks/match_rates.R` lists feed counties that a
-map doesn't cover (`l2`: `crosswalks/{st}.csv`, needs both an ENR and an L2
-id; `votehub`: `crosswalks/votehub/{st}.csv`). On 2026-10-31, after this
-session's rebuilds:
+map doesn't cover. `l2` is `crosswalks/{st}.csv` (needs both an ENR and an L2
+id) plus the direct fallback `crosswalks/l2_direct/{st}.csv`; `votehub` is
+`crosswalks/votehub/{st}.csv`. The 10-31 pass fixed every VoteHub gap (NE,
+IA, OH Carroll, FL Franklin) and GA L2 except Burke. Left:
 
 | state | map | counties | feed precincts | note |
 |---|---|---|---|---|
-| CA | l2 | Nevada, Riverside, San Diego, Solano, Ventura | 5,934 | first four: consolidated crosswalks, which `match_rates.R` doesn't read; Ventura: L2 names ("AVENUE 1-001") have no link to frame codes ("0003000") |
-| NE | votehub | Adams, Box Butte, Cass, Dawson, Dodge, Hamilton, Holt, Hooker, Howard, Loup, Webster | 145 | |
-| IA | votehub | Adair, Allamakee, Audubon, Benton, Grundy, Harrison, Lucas, Lyon, Monroe, Montgomery, Sac, Taylor, Winneshiek | 110 | first IA VoteHub build 10-31 (74.8%) |
-| GA | l2 | Bleckley, Burke, Candler, Glascock, Jackson, Morgan, Quitman, Webster | 26 | |
-| OH | votehub | Carroll | 23 | |
-| FL | votehub | Franklin | 8 | |
+| CA | l2 | Nevada, Riverside, San Diego, Solano, Ventura | 5,934 | first four: L2 comes through the consolidated members files (full files and model prep read them; `match_rates.R` doesn't). Ventura: L2's `precinct` is another scheme ("CALLEGUAS 5-001", 1,148 units) with no link to ENR's 7-digit codes, and no newer L2 exists. Accepted. |
+| GA | l2 | Burke | 12 | renumbered for 2026; L2 (10-06) has the old numbers. Needs a newer Burke L2 pull. |
+| IA | l2 (direct) | 27 counties (Adair, Allamakee, Audubon, Harrison, Johnson, Lee, Scott, ...) | 383 | direct names don't match; many need `vh_manual`-style pairs (see `votehub.R`). Overlaps problem 5. |
+| NY | l2 (direct) | Chemung, Clinton, Madison, Ontario, Orange, Putnam, Sullivan, Ulster | 967 | not yet inspected |
+| WI | l2 (direct) | Barron, Dane, Oneida | 340 | not yet inspected |
 
-For each frame county: add a rule in `scripts/util/crosswalks/{st}.R` (and
-`votehub.R`). Check first whether the county has a clean file but isn't in the
-frame (then L2 can't apply), or whether the ids need a county rule. Also check
-county spelling: FL and MI L2 wrote "ST. JOHNS"/"ST. CLAIR" while the frame
-has "ST JOHNS" (fixed 10-31 in `fl.R`, `mi.R`). Then:
+Also NA by choice in VoteHub: NE Howard (Boelus, Cushing, Farwell vs Loup
+Fork, Posen, Spring Creek) and NE Webster's two Red Cloud precincts. The
+pairing is unknown.
+
+For L2 gaps in states with no frame crosswalk, add county rules or hand pairs to
+`l2_direct.R`. For frame counties, add a rule in `scripts/util/crosswalks/{st}.R`
+(that also feeds the model). After a frame crosswalk changes:
 
 1. Rerun model prep for the state: `MODEL_INPUTS_OUT=<tmp> Rscript scripts/model/prep/prep_model_inputs.R {ST}`,
    diff with `26_general/input_data/model_inputs/{ST}_*` (teammates prep with
    newer code; see the prep report header), and copy only if the diff is the
    new crosswalk rows. A stale prep is what broke Ellis: the crosswalk had the
-   ids, the model inputs didn't. (10-31: TX, FL, MI, CA prepped and copied.)
-2. `match_rates.R --write`, and delete the fixed rows from this table.
+   ids, the model inputs didn't.
+2. `l2_direct.R {ST}`, then `match_rates.R --write`, and update this table.
 
 ### 5. IA: frame ids have no names
+
+For the full files this is partly moot: `l2_direct.R` gives 940 of 1,666 IA
+ENR precincts an L2 id (10-31) without the frame. The model still needs it.
 
 IA ENR (statewide Clarity, `IA/clean/IA_latest.parquet`, 1,666 precincts) is
 clean, but no frame crosswalk exists. Why: every other state's frame has

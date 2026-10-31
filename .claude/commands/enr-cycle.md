@@ -28,6 +28,10 @@ them to `probe`, `verify` and `status`. If it names phases, run only those.)
    refresh lands on the new file. It prints each state's match rate and the previous
    build's (`was ...`); eyeball the fuzzy-rule rows it prints. If a state's
    rate drops, inspect the unmatched ids and add keys or recodes in `votehub.R`.
+   Then run `Rscript scripts/util/crosswalks/l2_direct.R` (direct ENR <-> L2
+   fallback for ENR ids the frame crosswalk leaves without L2, and for states with
+   an L2 file but no frame crosswalk; it reads the frame crosswalks, so run it after
+   them). Read any "dropped" size-check warnings it prints.
    Last, run `Rscript scripts/util/crosswalks/match_rates.R` (L2 and VoteHub match
    rates against the feed, every state, next to the current baseline). Investigate
    anything under "DROPPED"; then rerun with `--write` to update

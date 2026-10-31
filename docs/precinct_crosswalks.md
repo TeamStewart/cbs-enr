@@ -85,6 +85,15 @@ Reference implementation: `scripts/util/crosswalks/nc.R` (NC); shared code in `s
    (add to `manual` if it is the only candidate and the ratio is normal), or
    ambiguous (leave NA).
 
+## Direct ENR <-> L2 fallback
+
+`input_data/crosswalks/l2_direct/{st}.csv` (`scripts/util/crosswalks/l2_direct.R`)
+pairs ENR ids with L2 precincts directly, for the full files only (see
+`docs/enr_cycle.md`, "Direct L2 crosswalks"). It fills cases that this
+frame-keyed file leaves NA by design but that are 1:1 between ENR and L2. One
+example is a precinct split across CDs in the frame (MI Dearborn Heights 011,
+Miami-Dade multi-part precincts). It never changes `{st}.csv`.
+
 ## NC results (2026-10-15)
 
 - 3,529 frame rows; 3,498 have a precinct code. Of those, 99.4% matched ENR,

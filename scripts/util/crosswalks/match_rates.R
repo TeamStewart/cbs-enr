@@ -1,7 +1,8 @@
 # ========================================
 ## Crosswalk match rates against the feed, for every state with clean files. Two maps,
 ## measured separately:
-##   l2       input_data/crosswalks/{st}.csv: ENR id -> frame precinct -> L2 precinct
+##   l2       input_data/crosswalks/{st}.csv: ENR id -> frame precinct -> L2 precinct, plus
+##            input_data/crosswalks/l2_direct/{st}.csv (ENR id -> L2 directly; l2_direct.R)
 ##   votehub  input_data/crosswalks/votehub/{st}.csv: ENR id -> VoteHub unit
 ## Per state x map, over the feed counties the map covers:
 ##   rate     share of the feed's distinct precinct geos that match
@@ -21,7 +22,8 @@ suppressPackageStartupMessages(library(data.table))
 
 XW_BASELINE = "docs/enr_cycle/crosswalk_match_baseline.csv"
 XW_SOURCES = list(
-  l2 = list(file = function(st) file.path("crosswalks", paste0(tolower(st), ".csv")), col = "precinct_l2", label = "L2"),
+  l2 = list(file = function(st) file.path("crosswalks", paste0(tolower(st), ".csv")), col = "precinct_l2", label = "L2",
+            extra = function(st) file.path("crosswalks", "l2_direct", paste0(tolower(st), ".csv"))),
   votehub = list(file = function(st) file.path("crosswalks", "votehub", paste0(tolower(st), ".csv")), col = "unit_id", label = "VoteHub")
 )
 
@@ -60,9 +62,12 @@ xw_match_state = function(st, g, d26) {
   for (nm in names(XW_SOURCES)) {
     s = XW_SOURCES[[nm]]
     path = file.path(d26, "input_data", s$file(st))
-    if (!file.exists(path)) next
-    x = fread(path, colClasses = "character", select = c("county", "precinct_enr", s$col))
-    setnames(x, s$col, "id")
+    extra = if (!is.null(s$extra)) file.path(d26, "input_data", s$extra(st)) else character(0)
+    extra = extra[file.exists(extra)]
+    if (!file.exists(path) && !length(extra)) next
+    rd = \(p) setnames(fread(p, colClasses = "character", select = c("county", "precinct_enr", s$col)), s$col, "id")
+    x = rbindlist(lapply(c(path[file.exists(path)], extra), rd))
+    if (!file.exists(path)) path = extra
     x = unique(x[!is.na(precinct_enr) & nzchar(precinct_enr) & !is.na(id) & nzchar(id),
                  .(ck = xw_county(st, county), p = xw_prec(precinct_enr))])
     # a feed county the map spells "<name> CITY" (VA independent cities)

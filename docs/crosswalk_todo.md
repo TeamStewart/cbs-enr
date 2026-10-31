@@ -82,7 +82,7 @@ state where `precinct26_id` repeats within county x cd.
 | AZ | 9 | 1,545 | az_20260901 | 1,172 (75.9%) | 100% | partial 10-30 (ENR: Cochise, Maricopa, Mohave, Navajo, Pinal) |
 | CA | 17 | 29,961 | ca_20260901 | 4,288 (14.3%) | 88.9% (10-30 measure; L2 rows 23,726 -> 25,353 on 10-31 with San Bernardino) | partial 10-31 (ENR: Sacramento, San Bernardino, San Francisco, Sonoma singletons, Ventura; SD, Solano, Riverside, Nevada via consolidated builds) |
 | FL | 65 | 6,252 | fl_20261011 | 3,376 (54.0%) | 99.9% | partial 10-31 (41 ENR counties; Pinellas, St Johns added; L2 St Johns/St Lucie fixed) |
-| GA | 159 (all) | 2,616 | ga_20261006 | 2,592 (99.1%) | 99.1% | done 10-30 |
+| GA | 159 (all) | 2,616 | ga_20261006 | 2,600 (99.4%) | 99.4% | done 10-31 |
 | IA | 99 (all) | 1,658 | ia_20260901 | - | - | blocked 10-31: ENR clean, but frame ids are bare county codes ("CV.04", "RP6") with no names; see open_problems.md |
 | MI | 73 | 3,722 (keyed on `precinct26_code`) | mi_20260929 | 2,549 (68.5%) | 99.4% | partial 10-31 (28 ENR counties; Leelanau added; L2 St Clair/St Joseph fixed) |
 | MN | 87 (all) | 4,080 | mn_20261009 | 4,080 (100%) | 99.9% | done 10-27 |
@@ -130,9 +130,12 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
   281, 283, 285, 462, 489, 708, 710, 730, 745, 765). Washington ENR `0010 Ebro`
   has no frame row. See the Gadsden/Levy follow-up.
 - **GA**: needs the uncommitted `scrape_ga()` change (geo keyed on EV id).
+  ENR ids also match frame names through their EV labels (`label` tier:
+  Quitman G = GEORGETOWN, Dodge PONDT = RHINE; Morgan 46026 by hand = REC).
+  L2 `PCT 1` tiers (Bleckley, Glascock, Webster), Jackson `1000` = L2 `1`, and
+  one-precinct counties (Candler) were added 10-31.
   `ga.R` reads EV labels from `GA/raw/`. NA by design: Burke (renumbered),
-  L2 for Dougherty 01/02 and Cobb WG01/WG02. Unresolved NA: Morgan, Dodge
-  PLAIN/PONDT, Fayette 20A, Newton 23FV/25HB, Forsyth 21, Gordon 849-B.
+  L2 for Dougherty 01/02 and Cobb WG01/WG02. Unresolved NA: Fayette 20A, Newton 23FV/25HB, Forsyth 21, Gordon 849-B.
 - **MI**: crosswalk keyed on `precinct26_code`. NA by design: Ottawa 22
   school-district splits, Dearborn Heights 011, Berrien Lincoln 003 and
   Royalton 001 (CD splits), Van Buren South Haven W3 P2 (Allegan piece),

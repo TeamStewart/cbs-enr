@@ -31,6 +31,7 @@ summary. The next `/enr-cycle` resumes from that line.
 | `docs/enr_cycle/log.md` | current session's automatic lines plus the last `SESSION end` line; `compact` drops older entries (history in git) | `cycle.R` |
 | `docs/crosswalk_todo.md`, `docs/precinct_crosswalks.md` | crosswalk procedure, per-state coverage and notes; method | crosswalk work |
 | `scripts/util/crosswalks/votehub.R` | ENR <-> VoteHub shapefile crosswalks (`input_data/crosswalks/votehub/`) | phase 3 |
+| `scripts/util/crosswalks/l2_direct.R` | direct ENR <-> L2 fallback crosswalks (`input_data/crosswalks/l2_direct/`), read by `full_join.R` and `match_rates.R` | phase 3, after `votehub.R` |
 | `docs/enr_cycle/crosswalk_match_baseline.csv` | per state x map (L2, VoteHub): feed match rate, share of matched ids present, uncovered counties; the watcher's B7b baseline | `scripts/util/crosswalks/match_rates.R --write`, end of phase 3 |
 | enightdata `tasks/todo.md`, `CLAUDE.md` | scraper rules, known scraper blockers | scraper work |
 
@@ -210,6 +211,36 @@ Run it after the frame crosswalks in every pass. For each state:
 
 CA San Diego ENR has 2,994 precincts against VoteHub's 2,239; the unmatched
 rest are expected.
+
+Counties whose ENR labels are polling places, initials or reordered town lists
+(NE Holt, IA Benton, FL Franklin, ...) are paired by hand in `vh_manual` in
+`votehub.R`. The script warns when a pair's ENR id or VoteHub code disappears.
+
+### Direct L2 crosswalks
+
+`l2_direct.R` matches ENR precincts to L2 precincts directly, using
+`votehub.R`'s keys and tiers. It covers ENR ids that the frame crosswalk
+(ENR -> frame -> L2) leaves without an L2 id, using L2 precincts the frame
+crosswalk does not already pair with an ENR id. It also covers states that have
+an L2 file but no frame crosswalk (NJ, NY, WI, IA). Output:
+`input_data/crosswalks/l2_direct/{st}.csv`, matched rows only. `full_join.R`
+uses these rows with `l2_match = "direct"`, and `match_rates.R` counts them
+under `l2`. The model inputs do not use them, because they stay on the frame.
+
+```sh
+Rscript scripts/util/crosswalks/l2_direct.R          # every state with clean files and an L2 file
+Rscript scripts/util/crosswalks/l2_direct.R NJ IA    # these states
+```
+
+Run it after the frame crosswalks and `votehub.R`. Safeguards in the script:
+
+- No `name_short`, `name_init` or `lead_lead` tiers. On 10-31 they agreed
+  with the frame route on only 95-99% of ids.
+- Skip lists: GA Burke (renumbered), the CA consolidated counties, and GA
+  Dougherty `2` (L2 merged 01+02).
+- Size check: where the ENR id has frame rows, L2/frame voters must be in
+  0.5-2. Out-of-range rows are dropped and printed (10-31: TX Ellis 1038,
+  1060, 1061; Harris 389, 962, ...).
 
 ### Match baseline (last step of phase 3)
 

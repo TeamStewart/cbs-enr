@@ -26,35 +26,6 @@ lead_key = function(x) num_key(str_match(x, "^\\s*(\\d+)\\b")[, 2]) # "25 LOCUST
 
 ga_enr_raw = read_enr("GA/clean/GA_latest.parquet")
 
-fr_codes = ga_frame_names |>
-  mutate(k_raw = precinct_yougov, k_upper = str_to_upper(precinct_yougov), k_std = std_name(precinct_yougov),
-         k_num = num_key(precinct_yougov), k_lead = lead_key(precinct_yougov))
-
-enr_keys = ga_enr_raw |>
-  transmute(county, precinct_l2 = precinct_enr, n_l2 = NA_integer_,
-            k_raw = precinct_enr, k_upper = str_to_upper(precinct_enr), k_std = std_name(precinct_enr),
-            k_num = num_key(precinct_enr))
-
-enr_tiers = tribble(
-  ~rule,       ~l2_key,   ~fr_key,
-  "exact",     "k_raw",   "k_raw",
-  "upper",     "k_upper", "k_upper",
-  "std",       "k_std",   "k_std",
-  "num",       "k_num",   "k_num",
-  "lead",      "k_num",   "k_lead"
-)
-
-# Burke renumbered its precincts for 2026 (ENR adds 1, 16, 17 and drops 9, 14),
-# so equal numbers need not be the same precinct. Kept NA.
-enr_skip_counties = "BURKE"
-
-enr_matched = match_tiers(filter(enr_keys, !county %in% enr_skip_counties), fr_codes, enr_tiers) |>
-  rename(precinct_enr = precinct_l2, enr_rule = l2_rule)
-count(enr_matched, enr_rule) |> print()
-enr_matched |> filter(enr_rule != "exact") |> select(county, precinct_enr, precinct_yougov, enr_rule) |> print(n = Inf)
-
-ga_enr = enr_matched |> distinct(county, precinct = precinct_yougov, precinct_enr) |> mutate(state = "GA")
-
 # EV precinct labels ("Acworth 1A" for id AC1A) from the raw file of the same
 # scrape as GA_latest. They bridge L2 names to frame codes in counties where L2
 # has names and the frame has codes (Cobb, Clayton, Catoosa, ...).
@@ -71,6 +42,47 @@ ga_enr_names = jsonlite::read_json(election_path("GA/raw", paste0(enr_stamp, ".j
   distinct(county, precinct_enr = id, enr_name = name)
 stopifnot(!anyDuplicated(ga_enr_names[c("county", "precinct_enr")]))
 
+fr_codes = ga_frame_names |>
+  mutate(k_raw = precinct_yougov, k_upper = str_to_upper(precinct_yougov), k_std = std_name(precinct_yougov),
+         k_num = num_key(precinct_yougov), k_lead = lead_key(precinct_yougov))
+
+# Morgan 46026 is EV "Community Center"; the frame code is REC (L2 REC-COMMUNITY CENTER)
+enr_manual = tribble(
+  ~county,  ~precinct_enr, ~k_manual,
+  "MORGAN", "46026",       "REC"
+)
+
+enr_keys = ga_enr_raw |>
+  transmute(county, precinct_l2 = precinct_enr, n_l2 = NA_integer_,
+            k_raw = precinct_enr, k_upper = str_to_upper(precinct_enr), k_std = std_name(precinct_enr),
+            k_num = num_key(precinct_enr)) |>
+  left_join(ga_enr_names, join_by(county, precinct_l2 == precinct_enr)) |>
+  mutate(k_label = std_name(enr_name)) |>
+  left_join(rename(enr_manual, precinct_l2 = precinct_enr), join_by(county, precinct_l2)) |>
+  select(-enr_name)
+
+enr_tiers = tribble(
+  ~rule,       ~l2_key,   ~fr_key,
+  "manual",    "k_manual", "k_raw",
+  "exact",     "k_raw",   "k_raw",
+  "upper",     "k_upper", "k_upper",
+  "std",       "k_std",   "k_std",
+  "num",       "k_num",   "k_num",
+  "lead",      "k_num",   "k_lead",
+  "label",     "k_label", "k_std"     # EV label = frame name: Quitman G = GEORGETOWN, Morgan 02 = CENTENNIAL
+)
+
+# Burke renumbered its precincts for 2026 (ENR adds 1, 16, 17 and drops 9, 14),
+# so equal numbers need not be the same precinct. Kept NA.
+enr_skip_counties = "BURKE"
+
+enr_matched = match_tiers(filter(enr_keys, !county %in% enr_skip_counties), fr_codes, enr_tiers) |>
+  rename(precinct_enr = precinct_l2, enr_rule = l2_rule)
+count(enr_matched, enr_rule) |> print()
+enr_matched |> filter(enr_rule != "exact") |> select(county, precinct_enr, precinct_yougov, enr_rule) |> print(n = Inf)
+
+ga_enr = enr_matched |> distinct(county, precinct = precinct_yougov, precinct_enr) |> mutate(state = "GA")
+
 fr_codes = fr_codes |>
   left_join(ga_enr, join_by(county, precinct_yougov == precinct)) |>
   left_join(ga_enr_names, join_by(county, precinct_enr)) |>
@@ -80,7 +92,8 @@ fr_codes = fr_codes |>
     k_pnum = str_match(precinct_yougov, "^PRECINCT (\\d+)$")[, 2],      # Spalding
     k_enrnospace = str_remove_all(k_enrname, " "),                         # Clayton LOVE JOY = Lovejoy
     k_enrname1 = str_remove(k_enrname, " 1$"),                             # Cobb ADDISON = Addison 01
-    k_numtrim = num_key(str_match(precinct_yougov, "^(\\d+)[A-Z]$")[, 2])  # Paulding 0001B = 01
+    k_numtrim = num_key(str_match(precinct_yougov, "^(\\d+)[A-Z]$")[, 2]), # Paulding 0001B = 01
+    k_thou = if_else(county == "JACKSON", str_match(precinct_yougov, "^(\\d)000$")[, 2], NA_character_) # Jackson 1000 = L2 1
   ) |>
   select(-state, -precinct_enr, -enr_name)
 
@@ -105,7 +118,8 @@ l2_keys = ga_l2 |>
     k_paren = num_key(str_match(precinct_l2, "\\(([^)]+)\\)\\s*$")[, 2]),
     k_lead = lead_key(precinct_l2),
     k_head = str_to_upper(str_match(precinct_l2, "^([A-Za-z0-9]+)\\s*-")[, 2]),
-    k_nospace = str_remove_all(k_std, " ")
+    k_nospace = str_remove_all(k_std, " "),
+    k_pct = num_key(str_match(precinct_l2, "^PCT (\\d+)$")[, 2])  # Bleckley, Glascock, Webster "PCT 1"
   )
 
 l2_tiers = tribble(
@@ -124,10 +138,20 @@ l2_tiers = tribble(
   "lead_pnum",  "k_lead",  "k_pnum",
   "enr_nospace", "k_nospace", "k_enrnospace",
   "enr_name1",  "k_std",   "k_enrname1",
-  "num_trim",   "k_num",   "k_numtrim"
+  "num_trim",   "k_num",   "k_numtrim",
+  "pct_code",   "k_pct",   "k_num",     # Bleckley, Glascock frame 1
+  "pct_sfx",    "k_pct",   "k_sfx",     # Webster frame P1
+  "thou_code",  "k_num",   "k_thou"     # Jackson frame 1000
 )
 
 l2_matched = match_tiers(l2_keys, fr_codes, l2_tiers)
+# one-precinct counties: the only frame and L2 precincts (Candler CAND = CANDLER CNTY)
+l2_single = l2_keys |> filter(n() == 1, .by = county) |>
+  select(county, precinct_l2, n_l2) |>
+  inner_join(fr_codes |> filter(n() == 1, .by = county) |> select(county, precinct_yougov, frame_name, n_frame), join_by(county)) |>
+  anti_join(l2_matched, join_by(county)) |>
+  mutate(l2_rule = "single")
+l2_matched = bind_rows(l2_matched, l2_single)
 review_matches(l2_matched, fr_codes)
 l2_matched |> filter(!l2_rule %in% c("code_exact", "upper", "paren_code", "std", "num")) |>
   select(county, precinct_l2, precinct_yougov, l2_rule, n_l2, n_frame) |> print(n = Inf)
