@@ -121,15 +121,30 @@ precinct lists. Every pair needs the voter-count check. Write
 steps", then `votehub.R IA`, `xwalk-done IA`, `match_rates.R --write`, and
 prep IA model inputs.
 
-### 6. CA live ids join at 48.5%
+### 6. CA live ids: 70.7% join (10-31)
 
-Production-equivalent join (`match_live_geo()` in `scripts/model/live/R/returns.R`)
-of CA live geos to `CA_precinct.parquet` is 48.5% (10-31): the consolidated
-counties (San Diego, Riverside, Solano, Nevada) are not in `ca.csv`, and the
-prep doesn't read the `ca_*_consolidated.R` outputs. Also note that the prep's
-own "live PRECINCT ids joining geo exactly" check compares verbatim while
-production falls back to a normalized match, so the check understates (NE
-46.7% exact vs 99.9% production; MI 0.5% vs 94.2%).
+Since 10-31 `prep_model_inputs.R` reads the `ca_{name}_members.csv` /
+`ca_{name}_frame_consolidated.csv` files: each usable consolidation (`use`) is
+one model precinct (frame pieces merged, L2 summed over members' L2 precincts,
+geo = the ENR id); members of unusable consolidations whose id equals a
+consolidation's ENR id get a `~frame` geo so live votes can't land on them.
+All 3,106 usable consolidations receive live rows. Remaining unjoined CA live
+ids (production `match_live_geo()` against `CA_precinct.parquet`):
+
+| county | joined | why not |
+|---|---|---|
+| Sonoma | 50 / 403 | 331 `07xxxxx` consolidations with their own numbering, no membership list |
+| San Diego | 1,893 / 2,994 | 904 consolidations have no frame members (no voters); 197 fail `cd_ok` |
+| San Bernardino | 1,334 / 2,066 | 732 ENR ids have no frame row |
+| Ventura | 1,147 / 1,433 | |
+| Riverside | 951 / 1,206 | 19 fail `cd_ok`/`geo_ok`; rest no frame members |
+| Nevada | 86 / 105 | 4 fail `geo_ok` |
+| Solano | 176 / 196 | 15 fail `city_ok` |
+
+The prep's own "live PRECINCT ids joining geo exactly" check compares verbatim
+while production falls back to a normalized match, so it understates (NE 46.7%
+exact vs 99.9% production; MI 0.5% vs 94.2%). CA has no races in
+`input_data/priors.csv` yet.
 
 ## Not for agents (Mason)
 
@@ -142,7 +157,8 @@ production falls back to a normalized match, so the check understates (NE
   matching. Rebuild `tx.R`/`nm.R`/`ne.R` if that happens first.
   `devtools::document()` needs roxygen2 8.1.1 (8.0.0 installed).
 - Commit the 10-31 cbs-enr changes: `tx.R`, `pa.R`, `ca.R`, `fl.R`, `mi.R`,
-  `ne.R`, `votehub.R`, new `nm.R`, `prep_model_inputs.R` (VA cities, `&`).
+  `ne.R`, `votehub.R`, new `nm.R`, `prep_model_inputs.R` (VA cities, `&`,
+  CA consolidations).
 - VA model inputs exist now but `VA_race_prior.csv` has 0 races (no VA rows
   in `input_data/priors.csv`) and there is no `VA_county_history.csv`.
 - `build` / `trust_stage` for the 27 rows made live on 10-30.

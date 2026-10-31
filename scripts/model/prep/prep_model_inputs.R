@@ -240,6 +240,75 @@ cli::cli_alert_warning(
   "Dropping {nrow(na_id)} pieces with no precinct id ({format(sum(na_id$n), big.mark=',')} registrants)"
 )
 raw = filter(raw, !is.na(precinct26_id))
+
+#' Weighted mean ignoring NA values and zero weights
+#'
+#' @param x Values.
+#' @param w Weights.
+#' @return The mean, or NA if nothing qualifies.
+wmean_na = function(x, w) {
+  ok = !is.na(x) & w > 0
+  if (any(ok)) sum(x[ok] * w[ok]) / sum(w[ok]) else NA_real_
+}
+
+# CA consolidated precincts. San Diego, Riverside, Solano and Nevada report
+# consolidations of several frame precincts, so ca.csv leaves their ENR ids NA;
+# scripts/util/crosswalks/ca_{name}_consolidated.R write the membership
+# (ca_{name}_members.csv) and which consolidations are usable (`use` in
+# ca_{name}_frame_consolidated.csv). Each usable consolidation becomes one
+# precinct here: its member frame pieces are merged per CD (n summed, rates
+# n-weighted, 2024 vote shares weighted by 2024 voters), its crosswalk row
+# carries the consolidation's ENR id, and its L2 counts are summed over the
+# members' L2 precincts (section 3). Unusable consolidations stay as base
+# precincts with no live id, as before.
+CA_CONSOLIDATED = c("sandiego", "riverside", "solano", "nevada")
+cons_map = NULL
+cons_enr_all = NULL # every consolidation's ENR id, usable or not (see the geo guard below)
+if (STATE == "CA") {
+  cons_map = lapply(CA_CONSOLIDATED, function(nm) {
+    mem = file.path(DIR_IN, "crosswalks", glue("ca_{nm}_members.csv"))
+    use = file.path(DIR_IN, "crosswalks", glue("ca_{nm}_frame_consolidated.csv"))
+    if (!file.exists(mem) || !file.exists(use)) {
+      cli::cli_alert_warning("No consolidated crosswalk for CA {nm}; its ENR stays unmatched")
+      return(NULL)
+    }
+    all = read_csv(use, col_types = cols(.default = "c"))
+    cons_enr_all <<- bind_rows(cons_enr_all, distinct(all, county_name = str_squish(toupper(county_name)), precinct_enr))
+    ok = all |>
+      filter(toupper(use) == "TRUE") |>
+      distinct(county_name, precinct_enr)
+    read_csv(mem, col_types = cols(.default = "c")) |>
+      semi_join(ok, by = c("county_name", "precinct_enr")) |>
+      distinct(county_name = str_squish(toupper(county_name)), member_id = precinct_yougov, precinct_enr)
+  }) |>
+    bind_rows() |>
+    mutate(cons_id = paste0("CONS:", precinct_enr))
+  if (anyDuplicated(cons_map[c("county_name", "member_id")])) {
+    cli::cli_abort("A frame precinct belongs to more than one CA consolidation")
+  }
+  is_mem = paste(raw$county_name, raw$precinct26_id) %in% paste(cons_map$county_name, cons_map$member_id)
+  vote_cols = intersect(c("pr_harris", "pr_trump", "prec_harris2p", "prec_harris", "prec_trump", "prec_other"), names(raw))
+  mean_cols = setdiff(names(raw)[vapply(raw, is.numeric, logical(1))], c("n", "cd", vote_cols))
+  merged = raw[is_mem, ] |>
+    inner_join(select(cons_map, county_name, precinct26_id = member_id, cons_id), by = c("county_name", "precinct26_id")) |>
+    mutate(w_vote = n * coalesce(turnout24, turnoutPred) * !is.na(pr_harris)) |>
+    summarize(
+      across(all_of(mean_cols), \(x) wmean_na(x, n)),
+      across(all_of(vote_cols), \(x) wmean_na(x, w_vote)),
+      n_members = n_distinct(precinct26_id),
+      n = sum(n),
+      .by = c(state, county_name, cd, cons_id)
+    ) |>
+    mutate(precinct26_id = cons_id, precinct26_code = paste(STATE, county_name, cons_id, sep = "_")) |>
+    select(-cons_id)
+  cli::cli_alert_info(c(
+    "CA consolidations: {n_distinct(merged$precinct26_id)} consolidated precincts from ",
+    "{sum(merged$n_members)} member pieces ({format(sum(merged$n), big.mark=',')} registrants) in ",
+    "{paste(sort(unique(merged$county_name)), collapse = ', ')}"
+  ))
+  raw = bind_rows(raw[!is_mem, ], select(merged, -n_members))
+}
+
 dup = count(raw, precinct26_code, cd) |> filter(n > 1)
 if (nrow(dup) > 0) {
   cli::cli_abort("{nrow(dup)} duplicate precinct x CD rows in the frame")
@@ -254,16 +323,6 @@ cli::cli_inform(c(
 
 # 2024 precinct RETURNS (voter file prec_*), if create_frame.R included them
 prec_cols = intersect(c("prec_harris2p", "prec_harris", "prec_trump", "prec_other"), names(pieces))
-
-#' Weighted mean ignoring NA values and zero weights
-#'
-#' @param x Values.
-#' @param w Weights.
-#' @return The mean, or NA if nothing qualifies.
-wmean_na = function(x, w) {
-  ok = !is.na(x) & w > 0
-  if (any(ok)) sum(x[ok] * w[ok]) / sum(w[ok]) else NA_real_
-}
 
 prec = pieces |>
   mutate(
@@ -304,6 +363,31 @@ xw = read_csv(path_xw, col_types = cols(.default = "c")) |>
     l2_rule
   ) |>
   distinct()
+# CA consolidations (section 1): drop the member rows, add one row per consolidation
+# with its ENR id and a synthetic L2 id (the summed L2 row is built in section 3)
+cons_l2 = NULL
+if (!is.null(cons_map) && nrow(cons_map)) {
+  mem = mutate(cons_map, precinct26_id = str_remove(member_id, "\\.0$"))
+  cons_l2 = xw |>
+    inner_join(select(mem, county_name, precinct26_id, cons_id), by = c("county_name", "precinct26_id")) |>
+    filter(!is.na(precinct_l2), precinct_l2 != "") |>
+    distinct(county_name, cons_id, precinct_l2)
+  shared = cons_l2 |> filter(n_distinct(cons_id) > 1, .by = c(county_name, precinct_l2))
+  if (nrow(shared)) {
+    cli::cli_alert_warning(
+      "{n_distinct(paste(shared$county_name, shared$precinct_l2))} L2 precinct(s) span more than one consolidation; their counts go to each"
+    )
+  }
+  xw = xw |>
+    anti_join(mem, by = c("county_name", "precinct26_id")) |>
+    bind_rows(
+      distinct(mem, county_name, precinct26_id = cons_id, precinct_enr) |>
+        mutate(
+          precinct_l2 = if_else(precinct26_id %in% cons_l2$cons_id, precinct26_id, NA_character_),
+          l2_rule = "consolidated"
+        )
+    )
+}
 # MI's crosswalk holds the full YouGov code (ids repeat across municipalities); everywhere
 # else the id. Join on whichever it is, and build the yougov geo id from the same thing.
 XW_BY_CODE = mean(xw$precinct26_id %in% prec$precinct26_code) > 0.5
@@ -365,6 +449,21 @@ prec = prec |>
       geo_yougov
     )
   )
+# CA consolidated counties: a frame precinct with no live id whose own id equals a
+# consolidation's ENR id (the consolidation is named after it, e.g. Riverside "101100")
+# would otherwise join that whole consolidation's live votes through match_live_geo().
+# These are members of consolidations not flagged `use`; give them a geo that cannot match.
+if (!is.null(cons_enr_all) && nrow(cons_enr_all)) {
+  hit = is.na(prec$precinct_enr) &
+    paste(prec$county_name, norm_prec_id(prec$precinct_local)) %in%
+      paste(cons_enr_all$county_name, norm_prec_id(cons_enr_all$precinct_enr))
+  if (any(hit)) {
+    cli::cli_alert_info(
+      "{sum(hit)} frame precinct(s) share an id with a consolidation they are not usable for; geo suffixed '~frame' so live votes don't join them"
+    )
+    prec$geo[hit] = paste0(prec$geo[hit], "~frame")
+  }
+}
 if (anyDuplicated(prec$geo)) {
   cli::cli_abort("Duplicate geo ids: {head(prec$geo[duplicated(prec$geo)])}")
 }
@@ -428,6 +527,20 @@ cli::cli_alert_info(
 l2 = filter(l2, !is.na(precinct_l2), precinct_l2 != "")
 if (anyDuplicated(l2[c("county_name", "precinct_l2")])) {
   cli::cli_abort("Duplicate county x precinct ids in L2")
+}
+# CA consolidations: one L2 row per consolidation, every count summed over its
+# members' L2 precincts (id = the consolidation's synthetic precinct_l2)
+if (!is.null(cons_l2) && nrow(cons_l2)) {
+  num = names(l2)[vapply(l2, is.numeric, logical(1))]
+  cons_rows = cons_l2 |>
+    inner_join(l2, by = c("county_name", "precinct_l2")) |>
+    summarize(
+      across(all_of(num), \(x) sum(x, na.rm = TRUE)),
+      across(c(state, county, county_fips), first),
+      .by = c(county_name, cons_id)
+    ) |>
+    rename(precinct_l2 = cons_id)
+  l2 = bind_rows(l2, cons_rows)
 }
 
 fips = distinct(l2, county_name, county_fips)
