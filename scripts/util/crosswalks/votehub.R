@@ -118,26 +118,25 @@ base_keys = function(x) {
 
 # State-specific ENR labels. `id_label` (default: the ENR id) feeds the id
 # tiers; `enr_name` (optional) is a second label tried after them.
-# - NE: ENR ids are a per-county sequence (0001, ...), so the id tiers are off;
-#   the SOS precinct names come from the raw file of the same scrape (as in ne.R).
+# - NE: ENR ids are SOS precinct names ("08-01", "Precinct 54"; scrape_ne()
+#   since 2026-10-31), so they go to the name tiers, not the id tiers.
 state_keys = function(st, enr) {
-  if (st == "NE") {
-    stamp = Sys.glob(election_path("NE/clean/NE_2*.parquet")) |> fs::path_file() |> fs::path_ext_remove() |> max()
-    stopifnot(setequal(
-      unique(as.character(enightdata::read_local(paste0("NE/clean/", stamp, ".parquet"), parquet = TRUE)$geo)),
-      unique(as.character(enightdata::read_local("NE/clean/NE_latest.parquet", parquet = TRUE)$geo))
-    ))
-    ne_names = readr::read_csv(election_path("NE/raw", paste0(stamp, ".csv")), col_types = readr::cols(.default = "c")) |>
-      filter(StatePrecinctID != "_TOT") |>
-      distinct(county = norm_county(CountyName), precinct_enr = StatePrecinctID, enr_name = PrecinctName)
-    enr = left_join(enr, ne_names, join_by(county, precinct_enr)) |> mutate(id_label = NA_character_)
-  }
+  if (st == "NE") enr = mutate(enr, enr_name = precinct_enr, id_label = NA_character_)
   if (!"enr_name" %in% names(enr)) enr$enr_name = NA_character_
   if (!"id_label" %in% names(enr)) enr$id_label = enr$precinct_enr
   if (st == "CA") {
     enr = mutate(enr, id_label = case_when(
       county == county_key("CA", "Riverside") ~ str_replace(precinct_enr, "^(\\d{3})(\\d{3})$", "\\1-\\2"), # "101100" = VH "101-100"
       county == county_key("CA", "Nevada") ~ str_extract(precinct_enr, "^CP\\d+"),               # "CP001-C3A1S1-B23" = VH "CP001"
+      .default = id_label
+    ))
+  }
+  if (st == "TX") {
+    # Robertson "Calvert 1" = VoteHub "0001". Reeves ENR "102"/"310" (as in the
+    # frame) = VoteHub "0002"/"0010": the last two digits (as in tx.R's L2 rows).
+    enr = mutate(enr, id_label = case_when(
+      county == county_key("TX", "Robertson") ~ str_extract(precinct_enr, "\\d+$"),
+      county == county_key("TX", "Reeves") ~ str_sub(precinct_enr, -2),
       .default = id_label
     ))
   }

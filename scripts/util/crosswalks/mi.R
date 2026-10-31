@@ -31,7 +31,7 @@ l2_file = fs::path_rel(Sys.glob(election_path("input_data/l2/mi_*_precincts.parq
 stopifnot(length(l2_file) == 1)
 mi_l2 = enightdata::read_local(l2_file, parquet = TRUE) |>
   select(state, county, precinct, n_l2 = n) |>
-  mutate(precinct_l2 = precinct) |>
+  mutate(county = str_replace(county, "^ST\\. ", "ST "), precinct_l2 = precinct) |> # L2 "ST. CLAIR" / frame "ST CLAIR"
   filter(county %in% mi_frame$county) |>
   arrange(county, precinct)
 

@@ -80,18 +80,18 @@ state where `precinct26_id` repeats within county x cd.
 | NC | 100 (all) | 3,539 | nc_20261006 | 3,505 (99.0%) | 99.5% | done 10-27 |
 | AK | 30 (all) | 402 | ak_20261008 | 402 (100%) | 99.0% | done 10-15 |
 | AZ | 9 | 1,545 | az_20260901 | 1,172 (75.9%) | 100% | partial 10-30 (ENR: Cochise, Maricopa, Mohave, Navajo, Pinal) |
-| CA | 17 | 29,961 | ca_20260901 | 1,853 (6.2%) | 88.9% | partial 10-30 (ENR: San Francisco, Sonoma singletons, Ventura; SD, Solano, Riverside, Nevada via consolidated builds) |
-| FL | 65 | 6,252 | fl_20261011 | 3,072 (49.1%) | 97.8% | partial 10-30 (39 ENR counties) |
+| CA | 17 | 29,961 | ca_20260901 | 4,288 (14.3%) | 88.9% (10-30 measure; L2 rows 23,726 -> 25,353 on 10-31 with San Bernardino) | partial 10-31 (ENR: Sacramento, San Bernardino, San Francisco, Sonoma singletons, Ventura; SD, Solano, Riverside, Nevada via consolidated builds) |
+| FL | 65 | 6,252 | fl_20261011 | 3,376 (54.0%) | 99.9% | partial 10-31 (41 ENR counties; Pinellas, St Johns added; L2 St Johns/St Lucie fixed) |
 | GA | 159 (all) | 2,616 | ga_20261006 | 2,592 (99.1%) | 99.1% | done 10-30 |
-| IA | 99 (all) | 1,658 | ia_20260901 | - | - | waiting |
-| MI | 73 | 3,722 (keyed on `precinct26_code`) | mi_20260929 | 2,536 (68.1%) | 97.1% | partial 10-30 (27 ENR counties) |
+| IA | 99 (all) | 1,658 | ia_20260901 | - | - | blocked 10-31: ENR clean, but frame ids are bare county codes ("CV.04", "RP6") with no names; see open_problems.md |
+| MI | 73 | 3,722 (keyed on `precinct26_code`) | mi_20260929 | 2,549 (68.5%) | 99.4% | partial 10-31 (28 ENR counties; Leelanau added; L2 St Clair/St Joseph fixed) |
 | MN | 87 (all) | 4,080 | mn_20261009 | 4,080 (100%) | 99.9% | done 10-27 |
 | NE | 93 (all) | 1,321 | ne_20261002 | 1,321 (100%) | 99.8% | done 10-23 |
-| NM | 33 (all) | 2,203 | nm_20260914 | - | - | waiting |
+| NM | 33 (all) | 2,204 | nm_20260914 | 2,203 (99.95%) | 99.95% | done 10-31 |
 | OH | 15 | 5,052 | oh_20260929 | 4,626 (91.6%) | 99.96% | partial 10-30 (no ENR: Lake, Warren) |
-| PA | 20 | 6,492 | pa_20260911 | 4,101 (63.2%) | 99.9% | partial 10-30 (ENR: Allegheny, Chester, Dauphin, Delaware, Erie, Philadelphia, Washington) |
-| TX | 71 | 10,851 | tx_20261011 | 4,307 (39.7%) | 94.7% | partial 10-30 (18 ENR counties) |
-| VA | 133 (all) | 2,538 | va_20261006 | 2,525 (99.5%) | 99.3% | done 10-27 |
+| PA | 20 | 6,492 | pa_20260911 | 4,930 (75.9%) | 99.9% | partial 10-31 (ENR: Allegheny, Chester, Dauphin, Delaware, Erie, Lancaster, Montgomery, Philadelphia, Washington, York) |
+| TX | 71 | 10,851 | tx_20261011 | 6,346 (58.5%) | 94.8% | partial 10-31 (22 ENR counties; Tarrant via consolidated sub-units) |
+| VA | 133 (all) | 2,538 | va_20261006 | 2,526 (99.5%) | 99.5% | done 10-31 |
 | WA | 4 | 167 | wa_20260917 | - | - | waiting |
 
 Statuses: `waiting` means no 26_general ENR data yet. `ready` means data has
@@ -140,9 +140,13 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
   Check: Washtenaw Ann Arbor 06/38/43 L2 ratios 0.76-0.79.
 - **MN**: 25 ENR precincts have no frame row or voters. **Check on real
   results**: ballots there should be about 0.
-- **NE**: names come from `NE/raw/` of the same scrape. **Decision (Mason):**
-  keep reading `raw/`, or have `scrape_ne()` carry `PrecinctName` into
-  `clean/`. Check Lancaster `03D00` (L2 ratio 1.52).
+- **NE**: since 10-31 `scrape_ne()` puts the SOS `PrecinctName` into geo
+  (StatePrecinctID was a per-county sequence), and `ne.R` matches it to frame
+  names directly. Check Lancaster `03D00` (L2 ratio 1.52).
+- **NM**: the SOS feed's StatePrecinctID is not the county precinct number
+  (they differ in Chaves, Rio Arriba, Lea, San Juan and others); since 10-31
+  `scrape_nm()` puts the number from `PrecinctName` into geo ("067"). NA: one
+  Sandoval ENR precinct with no frame row, Torrance frame 085 (1 voter).
 - **OH**: no ENR for Lake, Warren. Greene Sugarcreek frame rows numbered
   157/158 from L2 size match (review). L2 NA: Summit AKRON 1-I, 3-I. Check:
   516 exact-name L2 matches with ratio > 1.3 (big cities, likely vintage).
@@ -151,8 +155,10 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
   Allegheny BRADFORDWOOD, MCDONALD 00 05, ROSSLYN FARM, SEWICKLEY HT,
   PENNSBURY VLG 00 02; Washington 8th ward; Lehigh 011905S. Ambiguous, NA:
   Lancaster 4906. Dauphin and Erie carry test votes before election day.
-- **TX**: sub-unit reporters (Wood `11 - Joint COQ`, Hood `101 - GCTY_GISD`)
-  are sums, NA; Galveston single-unit ballot styles match. ~600 junk frame
+- **TX**: sub-unit reporters (Wood `11 - Joint COQ`, Hood `101 - GCTY_GISD`,
+  multi-split Dallas `1063-01`) are sums, NA. Tarrant reports every precinct as
+  `1005` + `1005 - F99`/`L01`; since 10-31 `scrape_tx()` sums the units
+  (enightdata `consolidate_units()`), so its geo is the precinct; Galveston single-unit ballot styles match. ~600 junk frame
   codes stay NA. L2 voter-count guard drops redrawn same-code pairs; ~15
   Dallas/Harris/Tarrant drops at 1.3-1.6 may be growth. Check: Galveston
   `439.1`. Possibly open: L2 rules for low-coverage counties found on 10-26

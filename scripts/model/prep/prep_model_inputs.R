@@ -189,12 +189,20 @@ norm_geo = function(geo) {
 #' @param x County names.
 #' @return Character vector of keys.
 county_key = function(x) {
-  x = str_replace(toupper(as.character(x)), "^SAINT ", "ST ")
+  x = str_replace(toupper(as.character(x)), "^SAINT ", "ST ") |>
+    str_replace_all("&", " AND ") # VA "KING & QUEEN" / "King and Queen"
   str_remove_all(x, "\\b(COUNTY|BOROUGH|CENSUS AREA|CITY AND|MUNICIPALITY|OF|PARISH)\\b|[^A-Z]")
 }
 cty = enightmodels::cbs_counties |>
   filter(state == STATE) |>
   transmute(ckey = county_key(county), county_cbs = str_pad(county_cbs, 3, pad = "0"), geostratum)
+# Key matched against cty: VA independent cities are "CHESAPEAKE CITY" in the frame
+# and L2 but "Chesapeake" in CBS (CBS keeps "City" only when a county has the same
+# name: "Richmond" / "Richmond City"), so drop a trailing CITY when only that matches.
+cbs_key = function(x) {
+  k = county_key(x)
+  if_else(!k %in% cty$ckey & str_remove(k, "CITY$") %in% cty$ckey, str_remove(k, "CITY$"), k)
+}
 if (STATE != "AK" && anyDuplicated(cty$ckey)) {
   cli::cli_abort("Two CBS counties share a name key in {STATE}")
 }
@@ -335,7 +343,7 @@ if (STATE == "AK") {
     mutate(county_fips = paste0("02", county_cbs))
 } else {
   prec = prec |>
-    mutate(ckey = county_key(county_name)) |>
+    mutate(ckey = cbs_key(county_name)) |>
     left_join(cty, by = "ckey") |>
     select(-ckey)
 }
@@ -815,7 +823,7 @@ if (!is.null(comp) && nrow(comp)) {
   if (!el_comp %in% mode_hist$election) {
     cli::cli_abort("mode_composition.csv covers {el_comp}, which is not in the L2 history")
   }
-  sh = comp |> transmute(ckey = county_key(county_name), method, share)
+  sh = comp |> transmute(ckey = cbs_key(county_name), method, share)
   before_tot = sum(mode_hist$voters[mode_hist$election == el_comp], na.rm = TRUE)
   keep = filter(mode_hist, election != el_comp)
   old = filter(mode_hist, election == el_comp)
@@ -824,7 +832,7 @@ if (!is.null(comp) && nrow(comp)) {
   pt = old |>
     summarize(tot = sum(voters, na.rm = TRUE), .by = geo) |>
     left_join(select(prec, geo, county_name), by = "geo") |>
-    mutate(ckey = county_key(county_name))
+    mutate(ckey = cbs_key(county_name))
   miss = pt |> filter(!ckey %in% sh$ckey)
   if (nrow(miss)) {
     cli::cli_alert_warning(
@@ -1073,7 +1081,7 @@ counties = if (STATE == "AK") {
       county_name = str_squish(toupper(county))
     ) |>
     filter(!is.na(county_name), county_name != "") |>
-    mutate(ckey = county_key(county_name)) |>
+    mutate(ckey = cbs_key(county_name)) |>
     left_join(select(cty, ckey, county_cbs), by = "ckey") |>
     select(county_fips, county_cbs, county_name)
 }

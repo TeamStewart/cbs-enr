@@ -1,7 +1,7 @@
 # ENR cycle: open problems
 
-Open problems for agents to pick up. Each brief stands on its own. Written
-2026-10-30 at the end of an `/enr-cycle` session; see the last `SESSION` line
+Open problems for agents to pick up. Each brief stands on its own. Updated
+2026-10-31 at the end of an `/enr-cycle` session; see the last `SESSION` line
 in `log.md` for that session's context. When an item is done, delete it here
 and add a line to `log.md` with `cycle.R log`.
 
@@ -16,7 +16,7 @@ and add a line to `log.md` with `cycle.R log`.
 - Clarity (`results.enr.clarityelections.com`): one request at a time, at
   least 2 s apart, no EID scans, and stop on any HTTP 405 (its WAF blocks the
   IP for hours).
-- enightdata (`~/Documents/github/enightdata`, branch `nov26-scrapers`):
+- enightdata (`~/Documents/github/enightdata`, branch `main`; `nov26-scrapers` was merged 10-30):
   follow its `CLAUDE.md`. Every change needs a test, plus a clean
   `devtools::document()` and `devtools::test()`. Never push.
 - Do not commit. Report what changed.
@@ -28,19 +28,28 @@ and add a line to `log.md` with `cycle.R log`.
 ### 1. SC statewide: path points at the wrong election
 
 The SC row's path `https://www.enr-scvotes.org/SC/127179` is the Aug 25 2026
-election, not the general, and scvotes.gov has no November link yet (rechecked 10-30: newest is
+election, not the general, and scvotes.gov has no November link yet (rechecked 10-31: newest is
 127227, the Sep 1 State Senate 15 special primary). Recheck
 scvotes.gov/election-results/ daily. When the general's EID appears, confirm
 `electiondate` 11/3/2026 (two Clarity requests at most), then
 `set SC - disc_status=found disc_path=...` and `verify SC -`.
 
-### 2. NJ Morris: rerun verify on election night
+### 2. Rerun verify on election night (pre-election files missing)
 
-Morris is `found` at `https://results.enr.clarityelections.com/NJ/Morris/127576/`
-(electiondate 11/3/2026). `verify` failed on 10-30 because
-`reports/detailxml.zip` returns 404 before any results post (summary only).
-On election night, once results start, run `verify NJ morris` once. If the
-zip is still missing, the scraper needs a summary-JSON fallback.
+These rows point at the right Nov 3 site, but `verify` failed on 10-31 because
+the precinct file isn't published before results post:
+
+- LiveVoterTurnout `Precincts_{id}.csv` 404: FL Broward (240), AZ Pima (7),
+  CA San Joaquin (22), KS Leavenworth (3), MO Buchanan (27), Ray (23), Stone
+  (15), NJ Bergen (20). San Bernardino's file already exists, so the format is fine.
+- Clarity `reports/detailxml.zip` 404 or not a zip (summary only): NJ Morris,
+  Monmouth (new 10-31, EID 127586), Cumberland, Gloucester; CA Contra Costa;
+  WV statewide passes with only 10 geos for the same reason.
+- WA Cowlitz, Pacific, Skamania, Wahkiakum: statewide EV export has no precinct rows.
+- NY NYC: enr.boenyc.gov is an offline stub (no AD/ED table).
+
+Once results start, run `verify {ST} {county}` once per row. If a Clarity zip
+is still missing, the scraper needs a summary-JSON fallback.
 
 ### 3. MI Ogemaw: get the PDF id from the Drive folder on election night
 
@@ -56,42 +65,90 @@ per update, the id changes.
 ### 4. Feed counties with no crosswalk (from `match_rates.R`, 2026-10-31)
 
 `Rscript scripts/util/crosswalks/match_rates.R` lists feed counties that a
-map doesn't cover (`l2`: `crosswalks/{st}.csv`; `votehub`:
-`crosswalks/votehub/{st}.csv`). On 2026-10-31:
+map doesn't cover (`l2`: `crosswalks/{st}.csv`, needs both an ENR and an L2
+id; `votehub`: `crosswalks/votehub/{st}.csv`). On 2026-10-31, after this
+session's rebuilds:
 
-| state | map | counties | feed precincts |
-|---|---|---|---|
-| TX | l2, votehub | Dallas, Fort Bend, Reeves, Robertson, Tarrant | 4,122 |
-| CA | l2 | Nevada, Riverside, San Diego, Solano (consolidated crosswalks, which `match_rates.R` doesn't read), Ventura | 5,934 |
-| PA | l2 | Montgomery, York | 590 |
-| FL | l2 | Pinellas, St Johns | 343 |
-| FL | votehub | Franklin, Pinellas | 296 |
-| NE | votehub | Adams, Box Butte, Cass, Dawes, Dawson, Dodge, Hamilton, Holt, Hooker, Howard, Loup, Webster | 156 |
-| MI | l2 | St Clair, St Joseph | 85 |
-| GA | l2 | Bleckley, Burke, Candler, Glascock, Jackson, Morgan, Quitman, Webster | 26 |
-| OH | votehub | Carroll | 23 |
+| state | map | counties | feed precincts | note |
+|---|---|---|---|---|
+| CA | l2 | Nevada, Riverside, San Diego, Solano, Ventura | 5,934 | first four: consolidated crosswalks, which `match_rates.R` doesn't read; Ventura: L2 names ("AVENUE 1-001") have no link to frame codes ("0003000") |
+| NE | votehub | Adams, Box Butte, Cass, Dawson, Dodge, Hamilton, Holt, Hooker, Howard, Loup, Webster | 145 | |
+| IA | votehub | Adair, Allamakee, Audubon, Benton, Grundy, Harrison, Lucas, Lyon, Monroe, Montgomery, Sac, Taylor, Winneshiek | 110 | first IA VoteHub build 10-31 (74.8%) |
+| GA | l2 | Bleckley, Burke, Candler, Glascock, Jackson, Morgan, Quitman, Webster | 26 | |
+| OH | votehub | Carroll | 23 | |
+| FL | votehub | Franklin | 8 | |
 
-For each frame county: rebuild `scripts/util/crosswalks/{st}.R` (and
+For each frame county: add a rule in `scripts/util/crosswalks/{st}.R` (and
 `votehub.R`). Check first whether the county has a clean file but isn't in the
-frame (then L2 can't apply), or whether the ids need a county rule. TX notes:
-Dallas ids carry a `-NN` suffix (`1004-01`) like Ellis (`1001-501`, which
-`tx.R` strips); Tarrant reports sub-units (`1005 - F99`), which are sums, as
-in Wood. Then:
+frame (then L2 can't apply), or whether the ids need a county rule. Also check
+county spelling: FL and MI L2 wrote "ST. JOHNS"/"ST. CLAIR" while the frame
+has "ST JOHNS" (fixed 10-31 in `fl.R`, `mi.R`). Then:
 
 1. Rerun model prep for the state: `MODEL_INPUTS_OUT=<tmp> Rscript scripts/model/prep/prep_model_inputs.R {ST}`,
    diff with `26_general/input_data/model_inputs/{ST}_*` (teammates prep with
    newer code; see the prep report header), and copy only if the diff is the
    new crosswalk rows. A stale prep is what broke Ellis: the crosswalk had the
-   ids, the model inputs didn't.
+   ids, the model inputs didn't. (10-31: TX, FL, MI, CA prepped and copied.)
 2. `match_rates.R --write`, and delete the fixed rows from this table.
+
+### 5. IA: frame ids have no names
+
+IA ENR (statewide Clarity, `IA/clean/IA_latest.parquet`, 1,666 precincts) is
+clean, but no frame crosswalk exists. Why: every other state's frame has
+either precinct names in the voter file (`precinct26_name`) or codes that the
+ENR/L2 ids share. IA has neither. The frame `precinct26_id` is a county-made
+short code and `precinct26_name` repeats it, while ENR and L2 use names:
+
+| county | frame | ENR | L2 |
+|---|---|---|---|
+| Guthrie | BP, CP, GCP, PP, SP, YP | BAYARD, CASEY, GUTHRIE CENTER, PANORA, ... | BAYARD, CASEY, GUTHRIE CENTER, ... |
+| Monona | AS001, CP002, ..., ON105 | AS-BV-CS-CN-KB-TU, ..., Onawa Ward 1 | 01 ASHTON/BELVIDERE/..., 05 ONAWA WARD 1 |
+| Carroll | 01 ... 08 | Arcadia Precinct, Carroll Ward Four, ... | ARCADIA, CARROLL 1/GRANT TWP, ... |
+| Audubon | 01, 02 | Precinct #1 Audubon N1/2, Precinct #2 Exira S1/2 | 1, 2 |
+
+Counting codes that appear verbatim (punctuation ignored): 203 of 1,658 frame
+codes are in ENR, 112 in L2, 148 in VoteHub IA26G; only 4 counties match fully
+and 72 counties match nowhere. ENR <-> L2 is name to name and doable with the
+usual tiers; the missing link is frame code -> name.
+
+Possible routes, per county: (a) a leading or trailing sequence number shared
+with L2 (Monona `ON105` = L2 `05 ONAWA WARD 1`; Audubon `01` = L2 `1`);
+(b) initials (Guthrie `GCP` = GUTHRIE CENTER PRECINCT); (c) where neither
+works, assign frame codes to L2 names by voter count within county (frame `n`
+vs L2 `n`) and accept only unambiguous, close pairs; (d) county auditor
+precinct lists. Every pair needs the voter-count check. Write
+`scripts/util/crosswalks/ia.R` following `docs/crosswalk_todo.md` "Per-state
+steps", then `votehub.R IA`, `xwalk-done IA`, `match_rates.R --write`, and
+prep IA model inputs.
+
+### 6. CA live ids join at 48.5%
+
+Production-equivalent join (`match_live_geo()` in `scripts/model/live/R/returns.R`)
+of CA live geos to `CA_precinct.parquet` is 48.5% (10-31): the consolidated
+counties (San Diego, Riverside, Solano, Nevada) are not in `ca.csv`, and the
+prep doesn't read the `ca_*_consolidated.R` outputs. Also note that the prep's
+own "live PRECINCT ids joining geo exactly" check compares verbatim while
+production falls back to a normalized match, so the check understates (NE
+46.7% exact vs 99.9% production; MI 0.5% vs 94.2%).
 
 ## Not for agents (Mason)
 
+- **Push enightdata before the next automation run** (uncommitted on local
+  main): `consolidate_units()` for Tarrant, `scrape_nm()` and `scrape_ne()`
+  geo from `PrecinctName`, with tests. The crosswalks and model inputs built
+  10-31 already use the new geos (`tx_220_1005`, `nm_018_067`, `ne_028_08-01`);
+  automation pulls enightdata from origin, so until this is pushed its runs
+  rewrite those clean files with the old geos and the three crosswalks stop
+  matching. Rebuild `tx.R`/`nm.R`/`ne.R` if that happens first.
+  `devtools::document()` needs roxygen2 8.1.1 (8.0.0 installed).
+- Commit the 10-31 cbs-enr changes: `tx.R`, `pa.R`, `ca.R`, `fl.R`, `mi.R`,
+  `ne.R`, `votehub.R`, new `nm.R`, `prep_model_inputs.R` (VA cities, `&`).
+- VA model inputs exist now but `VA_race_prior.csv` has 0 races (no VA rows
+  in `input_data/priors.csv`) and there is no `VA_county_history.csv`.
 - `build` / `trust_stage` for the 27 rows made live on 10-30.
 - `ICX` → `eday` in `general_method()` (Orange NY ImageCast X ballots; the
   source doesn't say whether they were cast early or on election day).
 - RI drops the "Federal" pseudo-jurisdiction (federal-only ballots, no town).
-- Commit enightdata and the cbs-enr crosswalk scripts and docs.
 - SD statewide row (`custom`, electionresults.sd.gov) appeared in the sheet
   on 10-30 (not added by the cycle): decide `build` and run discovery/verify.
 - AR: a statewide scraper is feasible (see AR `disc_note`: public
@@ -101,5 +158,3 @@ in Wood. Then:
   Lake Mystic, assigned by ENR order; confirm with the SOE), and OH Greene
   Sugarcreek rows numbered 157/158 from L2 size match (ENR now depends on L2
   evidence).
-- Commit enightdata `R/scrape-id.R`, `R/scrape-pa.R` (Montgomery CSV) and
-  tests, and the new `ca_riverside_consolidated.R` / `ca_nevada_consolidated.R`.

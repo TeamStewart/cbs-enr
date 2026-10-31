@@ -56,6 +56,11 @@ ca_enr = read_enr(enr_files) |>
   mutate(precinct = case_when(
     county %in% ca_consolidated ~ NA_character_, # see above
     county == "SAN FRANCISCO" ~ str_extract(precinct, "^pct (\\d+)( mb)?$", group = 1),
+    # San Bernardino (LVT): district-combo prefix + 4-digit precinct number,
+    # "C23S18A36E1B1NDUUNI1160" -> frame "1160.00". All 1,334 frame codes match a
+    # unique ENR id and the CD in the prefix agrees for 1,331 (2026-10-31); the
+    # 732 other ENR ids have no frame row.
+    county == "SAN BERNARDINO" ~ paste0(str_extract(precinct, "\\d{4}$"), ".00"),
     .default = precinct
   )) |>
   filter(!is.na(precinct)) |>
@@ -77,9 +82,10 @@ ca_l2 = enightdata::read_local("input_data/l2/ca_20260901_precincts.parquet", pa
 #   BUTTE/MADERA/MARIN/SAN FRANCISCO "10009" (raw); SANTA CLARA "2784" = 0002784;
 #   ORANGE "ANAHEIM-02016"; RIVERSIDE "TEMECULA-4 (334008)"; SACRAMENTO
 #   "ARCADE (0024500)"; SAN DIEGO "JAMUL 563220" = 563220.0; SOLANO "VALLEJO
-#   17195" = 17195.00; SONOMA "PCT 0500173"; IMPERIAL "245230 MAIL" = 245230.00.
+#   17195" = 17195.00; SONOMA "PCT 0500173"; IMPERIAL "245230 MAIL" = 245230.00;
+#   SAN BERNARDINO "ADELANTO 1043" = 1043.00.
 num_counties = c("BUTTE", "IMPERIAL", "MADERA", "MARIN", "ORANGE", "RIVERSIDE", "SACRAMENTO",
-                 "SAN DIEGO", "SAN FRANCISCO", "SANTA CLARA", "SOLANO", "SONOMA")
+                 "SAN BERNARDINO", "SAN DIEGO", "SAN FRANCISCO", "SANTA CLARA", "SOLANO", "SONOMA")
 l2_code_num = function(county, x) {
   num = str_match(x, "(\\d+)\\)?(?: MAIL)?$")[, 2]
   if_else(county %in% num_counties, norm_num(num), NA_character_)

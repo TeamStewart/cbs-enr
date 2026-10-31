@@ -140,6 +140,7 @@ fl_l2 = enightdata::read_local(
   parquet = TRUE
 ) |>
   as_tibble() |>
+  mutate(county = str_replace(county, "^ST\\. ", "ST ")) |> # L2 "ST. JOHNS" / frame "ST JOHNS"
   filter(county %in% fl_counties) |>
   select(state, county, precinct, n_l2 = n) |>
   mutate(precinct_l2 = precinct) |>

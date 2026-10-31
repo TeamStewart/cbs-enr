@@ -4,8 +4,8 @@ source("scripts/util/crosswalks/helpers.R")
 # Process and general rules: docs/precinct_crosswalks.md. Reference: nc.R.
 #
 # PA is partial: ENR comes as per-county files (`PA_{county}_latest.parquet`);
-# as of 2026-10-27 Allegheny, Chester, Dauphin, Delaware, Erie, Philadelphia and
-# Washington have 26_general data.
+# as of 2026-10-31 Allegheny, Chester, Dauphin, Delaware, Erie, Lancaster,
+# Montgomery, Philadelphia, Washington and York have 26_general data.
 # New county files are picked up by the glob, but each new county's id format
 # must be checked and given a rule in `enr_to_frame()` (unknown formats stay NA).
 #
@@ -112,13 +112,24 @@ print(count(pa, county))
 #   Allegheny single-district municipalities have no number in ENR ("Aleppo" /
 #   "ALEPPO 00 01"); Dauphin's "City--" is Harrisburg; Washington frame names
 #   shorten Monongahela to "MONON.". Added 2026-10-27.
-name_counties = c("ALLEGHENY", "DAUPHIN", "ERIE", "WASHINGTON")
+# - MONTGOMERY ("abington 1-1" / "ABINGTON 1-1") and YORK ("Chanceford
+#   Township 1" / "CHANCEFORD - 1ST DISTRICT", "Carroll Township" / "CARROLL")
+#   use the same name match. Added 2026-10-31.
+name_counties = c("ALLEGHENY", "DAUPHIN", "ERIE", "WASHINGTON", "MONTGOMERY", "YORK")
 enr_name_key = function(county, x, keep_type) {
   k = pa_norm(if_else(county == "DAUPHIN", str_replace(x, "^City--", "HARRISBURG "), x), keep_type)
   if_else(county == "ALLEGHENY" & !str_detect(k, "\\d"), paste(k, "1"), k)
 }
 frame_name_key = function(county, x, keep_type) {
-  pa_norm(if_else(county == "WASHINGTON", str_replace(x, "^MONON\\.", "MONONGAHELA "), x), keep_type)
+  x = if_else(county == "WASHINGTON", str_replace(x, "^MONON\\.", "MONONGAHELA "), x)
+  # York frame names: "LWR." / "MT." prefixes; York City is "YORK - 11TH WARD",
+  # York Township "YORK 1ST WARD - 1ST PRECINCT" (ENR "York City 11", "York Township 1-1")
+  x = if_else(county == "YORK", x |>
+    str_replace("^LWR\\. ", "LOWER ") |>
+    str_replace("^MT\\. ", "MOUNT ") |>
+    str_replace("^YORK - ", "YORK CITY ") |>
+    str_replace("^YORK (?=\\d)", "YORK TWP "), x)
+  pa_norm(x, keep_type)
 }
 name_match = function(e, f, keep_type) {
   squash = if (keep_type) identity else \(k) str_remove_all(k, " ")
@@ -140,6 +151,9 @@ pa = pa |>
     precinct = case_when(
       county == "CHESTER" & str_detect(precinct_enr, "^\\d{3} ") ~ str_extract(precinct_enr, "^\\d{3}"),
       county == "PHILADELPHIA" & str_detect(precinct_enr, "^\\d{2}-\\d{2}$") ~ str_remove(precinct_enr, "-"),
+      # LANCASTER (Enhanced Voting): "0701 City 7-1", "0708-3 LS" -> leading frame
+      # code; all 241 codes are frame codes with agreeing names (2026-10-31).
+      county == "LANCASTER" ~ str_extract(precinct_enr, "^\\S+"),
       county == "DELAWARE" ~ del_frame$precinct_yougov[match(del_canon(precinct_enr), del_frame$key)],
       county %in% name_counties ~ name_xw$precinct_yougov[match(paste(county, precinct_enr), paste(name_xw$county, name_xw$precinct_enr))],
       .default = NA_character_ # unknown county format: check and add a rule

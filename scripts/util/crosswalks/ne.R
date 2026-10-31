@@ -6,29 +6,12 @@ source("scripts/util/crosswalks/helpers.R")
 # ========================================
 ## ENR
 # ========================================
-# The statewide SOS GetMapData feed uses `StatePrecinctID` as the precinct id,
-# which is just a per-county sequence (0001, 0002, ...) and has no relation to
-# the frame codes. The precinct *names* (e.g. "01 Wstbl/Hgh", "01-01",
-# "Precinct 1") are only in the raw file from the same scrape, so we attach them
-# by (county, StatePrecinctID) and match them to the frame names, which come from
-# the same SOS naming. `precinct_enr` stays the raw id from clean/.
-ne = read_enr("NE/clean/NE_latest.parquet")
-
-# Raw file of the same scrape as NE_latest: the newest timestamped clean file,
-# checked to have the same geos as NE_latest.
-enr_stamp = Sys.glob(election_path("NE/clean/NE_2*.parquet")) |> fs::path_file() |> fs::path_ext_remove() |> max()
-stopifnot(setequal(
-  unique(as.character(enightdata::read_local(paste0("NE/clean/", enr_stamp, ".parquet"), parquet = TRUE)$geo)),
-  unique(as.character(enightdata::read_local("NE/clean/NE_latest.parquet", parquet = TRUE)$geo))
-))
-enr_raw_file = election_path("NE/raw", paste0(enr_stamp, ".csv"))
-ne_enr_names = readr::read_csv(enr_raw_file, col_types = readr::cols(.default = "c")) |>
-  filter(StatePrecinctID != "_TOT") |>
-  distinct(county = str_to_upper(CountyName), precinct = StatePrecinctID, enr_name = PrecinctName)
-stopifnot(!anyDuplicated(ne_enr_names[c("county", "precinct")]))
-
-ne = ne |> left_join(ne_enr_names, join_by(county, precinct))
-stopifnot(!anyNA(ne$enr_name))
+# The statewide SOS GetMapData feed's StatePrecinctID is only a per-county
+# sequence (0001, 0002, ...), so since 2026-10-31 scrape_ne() puts the SOS
+# precinct name into geo instead ("ne_028_08-01", "ne_077_Precinct 54"). The
+# names are matched to the frame names, which come from the same SOS naming.
+ne = read_enr("NE/clean/NE_latest.parquet") |>
+  mutate(enr_name = precinct)
 
 ne_frame = read_frame("NE")
 

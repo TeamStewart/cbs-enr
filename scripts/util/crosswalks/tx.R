@@ -31,12 +31,22 @@ pad4 = function(x) if_else(str_detect(x, "^[0-9A-Z]{1,4}$"), str_pad(x, 4, pad =
 # (a sum) stays NA, as in Wood.
 # Ellis appends a shared polling-place code with no spaces ("1001-501"); the
 # base precinct ids are unique, so the suffix is dropped.
+# Dallas does the same with a 2-digit split code ("1004-01"); a base with
+# several splits ("1063-01", "1063-03") is a sum and stays NA via `split`.
+# Robertson labels precincts "<place> <number>" ("Calvert 1" -> frame "0001").
+# Tarrant reports a base row plus ballot-style sub-units ("1005", "1005 - F99",
+# "1005 - L01") for every precinct; since 2026-10-31 scrape_tx() sums them
+# (enightdata consolidate_units()), so clean geo is the precinct ("1005").
 
 enr_files = fs::path_rel(Sys.glob(election_path("TX/clean/*_latest.parquet")), election_path())
 stopifnot(length(enr_files) > 0)
 
 tx = read_enr(enr_files) |>
-  mutate(precinct = if_else(county == "ELLIS", str_remove(precinct, "-\\d+$"), precinct)) |>
+  mutate(precinct = case_when(
+    county %in% c("ELLIS", "DALLAS") ~ str_remove(precinct, "-\\d+$"),
+    county == "ROBERTSON" ~ str_extract(precinct, "\\d+$"),
+    .default = precinct
+  )) |>
   mutate(base = coalesce(str_match(precinct, "^(\\S+) - .+$")[, 2], precinct)) |>
   mutate(split = n() > 1, .by = c(county, base)) |>
   mutate(precinct = if_else(split, NA_character_, pad4(base))) |>
@@ -72,9 +82,20 @@ county_codes = function(county, x) {
 }
 
 # Hand-verified one-offs: only candidate in the county, ratio in the normal range.
+# Reeves: L2 (and VoteHub) number precincts by the last two digits of the frame
+# code ("02" = frame "0102", "10" = "0310"); voter counts agree (2026-10-31).
 l2_manual = tribble(
   ~county,     ~precinct_l2, ~precinct_yougov, # note
   "GALVESTON", "232",        "232.3",          # frame has no 0232; 418 L2 vs 438 frame voters
+  "REEVES",    "02",         "0102",           # 1083 vs 1098
+  "REEVES",    "03",         "0203",           # 1078 vs 1123
+  "REEVES",    "04",         "0204",           # 68 vs 54
+  "REEVES",    "05",         "0305",           # 445 vs 432
+  "REEVES",    "06",         "0306",           # 115 vs 111
+  "REEVES",    "07",         "0407",           # 1459 vs 1429
+  "REEVES",    "08",         "0408",           # 667 vs 721
+  "REEVES",    "10",         "0310",           # 1603 vs 1548
+  "REEVES",    "11",         "0111",           # 843 vs 856
 )
 
 fr_keys = tx_frame_names |>
