@@ -144,7 +144,10 @@ tsAll = TS.filter(d => d.key === sel)
 tsc = tsAll.filter(d => +d.time <= asofT)
 // "All places" (Results toolbar): the same series with CBS's counts for the unscraped counties added
 tsPlacesAll = TSALL.filter(d => d.key === sel)
-usePlacesAll = places.all && tsPlacesAll.length > 0
+// states where we don't scrape every county; elsewhere the scraped summaries are already statewide
+PARTIAL_STATES = ["MI", "OH", "TX"]
+partialState = PARTIAL_STATES.includes(cur.state)
+usePlacesAll = partialState && places.all && tsPlacesAll.length > 0
 
 // ---- global "As of" ----
 // One control for every page: each page's bottom toolbar has an empty <div class="asof-slot">
@@ -692,7 +695,7 @@ exportButtons = {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
   const s = exportable("Total Votes", timeSpec(tsLong.filter(d => d.series === "Total"), "votes", {
     label: "Votes", tickFormat: "~s", stroke: () => INK, tip: d => fmt(Math.round(d.votes))
-  }), usePlacesAll ? "Total Votes, All Places" : "Total Votes", { keys: [{ mark: "line", label: usePlacesAll ? "Total votes reported (unscraped counties: CBS)" : "Total votes reported" }] });
+  }), usePlacesAll ? "Total Votes, Statewide" : "Total Votes", { keys: [{ mark: "line", label: usePlacesAll ? "Total votes reported (unscraped counties: CBS)" : "Total votes reported" }] });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -703,7 +706,7 @@ exportButtons = {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
   const s = exportable("Vote Count", timeSpec(tsLong.filter(d => d.party), "votes", {
     label: "Votes", tickFormat: "~s", stroke: "series", color: partyColor, tip: d => fmt(Math.round(d.votes))
-  }), usePlacesAll ? "Vote Count, All Places" : "Vote Count", { swatch: "line" });
+  }), usePlacesAll ? "Vote Count, Statewide" : "Vote Count", { swatch: "line" });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -714,7 +717,7 @@ exportButtons = {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
   const s = exportable("Vote Share", timeSpec(tsLong.filter(d => d.party && d.share != null), "share", {
     label: "Share of all votes", tickFormat: ".0%", stroke: "series", color: partyColor, domain: [0, 1], tip: d => pct(d.share)
-  }), usePlacesAll ? "Vote Share, All Places" : "Vote Share", { swatch: "line" });
+  }), usePlacesAll ? "Vote Share, Statewide" : "Vote Share", { swatch: "line" });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -820,16 +823,23 @@ viewof prec_mode = {
 
 ```{ojs results-places}
 // value = { all }: Total Votes / Vote Count / Vote Share add CBS's county counts for the
-// counties we don't scrape. Hidden when the contest has no CBS snapshots.
+// counties we don't scrape. Only toggleable in PARTIAL_STATES (hidden there when the contest
+// has no CBS snapshots); elsewhere the scrape is already statewide, so it shows checked and disabled.
 viewof places = {
   const form = html`<form class="model-ctl">
     <label title="Add CBS county results for the counties we don't scrape precinct by precinct (Total Votes, Vote Count, Vote Share). CBS's per-method counts can fall short of its county totals, and counties CBS reports as Advance add nothing to Early or Mail, so only the Total facet is complete.">
-      <input type="checkbox" name="all" class="form-check-input"> All places (CBS for unscraped counties)</label>
+      <input type="checkbox" name="all" class="form-check-input"> Statewide prediction</label>
   </form>`;
   const { all } = form.elements;
-  form.hidden = tsPlacesAll.length === 0;
-  all.checked = placesMemo.all === true;
-  const update = () => { form.value = { all: all.checked }; placesMemo.all = all.checked; };
+  if (partialState) {
+    form.hidden = tsPlacesAll.length === 0;
+    all.checked = placesMemo.all === true;
+  } else {
+    all.checked = true;
+    all.disabled = true;
+    form.querySelector("label").title = `We scrape every county in ${cur.state}, so the results are already statewide.`;
+  }
+  const update = () => { form.value = { all: all.checked }; if (partialState) placesMemo.all = all.checked; };
   form.addEventListener("input", update);
   form.addEventListener("submit", e => e.preventDefault());
   update();
