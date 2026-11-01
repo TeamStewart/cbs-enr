@@ -271,13 +271,16 @@
   align-items: center;
   gap: 0.4rem;
   margin: 0;
+  font-size: 13px; // match the Vote Mode Inputs.select (Observable Inputs forms are 13px)
 
   label { margin: 0; white-space: nowrap; }
-  .form-select { width: auto; max-width: 20rem; }
+  .form-select { width: auto; max-width: 20rem; font-size: inherit; }
 }
 
 // global "As of" (index.qmd asofCtl): one control, moved into each page's toolbar slot
 .asof-slot { margin-left: auto; }
+// the slot sits in a Quarto .cell-output wrapper: push that wrapper right in the toolbar row, even when it wraps
+.toolbar > .cell-output:has(.asof-slot), .toolbar > .cell:has(.asof-slot) { margin-left: auto; }
 .asof-ctl { width: auto; justify-content: flex-end; }
 .asof-note { color: #8a5a00; background: #fff3cd; border-radius: 0.25rem; padding: 0.1rem 0.5rem; white-space: nowrap; }
 
