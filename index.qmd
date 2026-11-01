@@ -589,7 +589,8 @@ exportChart = {
     g.drawImage(img, T.pad, plotTop, innerW, plotH);
     return new Promise(resolve => c.toBlob(resolve, `image/${T.format}`, 0.95));
   };
-  return async (name, repick = false, scope = cur.key) => {
+  // only: export just the entry.multi item with this suffix (the District Map's 2024 / 2026 buttons)
+  return async (name, repick = false, scope = cur.key, only = null) => {
     const entry = EXPORTS.get(`${scope}|${name}`);
     if (!entry) return "Nothing to export for this chart.";
     const stamp = new Date(entry.time ?? cur.time ?? Date.now()).toISOString().slice(0, 16).replace(/[-:]/g, "").replace("T", "-");
@@ -598,7 +599,9 @@ exportChart = {
     try { dir = await getDir(repick); } catch (e) { if (e.name === "AbortError") return "Cancelled."; console.warn(e); }
     // one image, or one per entry.multi item (same projection and text, so the same size)
     const files = [], blobs = [];
-    for (const it of entry.multi ?? [entry]) {
+    const items = entry.multi ? entry.multi.filter(it => only == null || it.suffix === only) : [entry];
+    if (items.length === 0) return "Nothing to export for this chart.";
+    for (const it of items) {
       const file = `${entry.file ?? cur.key}_${slug(name)}${it.suffix ? `_${it.suffix}` : ""}_${stamp}.${T.format === "jpeg" ? "jpg" : T.format}`;
       const blob = await render({ ...entry, ...it });
       if (dir) {
@@ -626,12 +629,11 @@ exportChart = {
 exportButtons = {
   // charts on the Redistricting page are registered under its state (rdScope), not the contest
   const scopeOf = h => h.closest("#redistricting") ? rdScope : cur.key;
-  const add = (header, nameFn, title = "Save chart image (shift-click: choose folder)") => {
-    header.querySelector(".dash-export")?.remove();
-    const b = html`<button type="button" class="btn btn-sm dash-export" title=${title}><i class="bi bi-download"></i></button>`;
+  const add = (header, nameFn, title = "Save chart image (shift-click: choose folder)", label = "", only = null) => {
+    const b = html`<button type="button" class="btn btn-sm dash-export" title=${title}><i class="bi bi-download"></i>${label ? ` ${label}` : ""}</button>`;
     b.onclick = async e => {
       b.disabled = true;
-      const msg = await exportChart(nameFn(), e.shiftKey, scopeOf(header)).catch(err => (console.error(err), `Export failed: ${err.message}`));
+      const msg = await exportChart(nameFn(), e.shiftKey, scopeOf(header), only).catch(err => (console.error(err), `Export failed: ${err.message}`));
       b.disabled = false;
       b.title = msg;
       b.classList.add("dash-export-done");
@@ -639,12 +641,14 @@ exportButtons = {
     };
     header.append(b);
   };
+  document.querySelectorAll(".dash-export").forEach(b => b.remove());
   document.querySelectorAll(".card.tabset > .card-header").forEach(h => add(h, () => h.querySelector(".nav-link.active")?.dataset.value));
   const ex = document.querySelector(".card-toolbar");
   if (ex) add(ex, () => "Precinct Explorer");
-  // untabbed cards whose title is an export name (the Redistricting map: two images)
+  // the Redistricting map: one button per map image
   document.querySelectorAll(".card:not(.tabset) > .card-header").forEach(h => {
-    if (h.textContent.trim() === "District Map") add(h, () => "District Map", "Save the 2024 and 2026 map images (shift-click: choose folder)");
+    if (h.textContent.trim() !== "District Map") return;
+    for (const yr of ["2024", "2026"]) add(h, () => "District Map", `Save the ${yr} map image (shift-click: choose folder)`, yr, `${yr}-map`);
   });
   return exportChart;
 }
