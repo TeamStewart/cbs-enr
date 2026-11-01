@@ -1308,9 +1308,12 @@ rdKindText = s => s == null ? "" : s.kind === "model" ? `${s.race} · ${modelLab
 modelLabel = s => [s.model_base, s.model_spec && s.model_spec !== "default" ? specLabel(s.model_spec) : null,
   s.model_interval && s.model_interval !== "default" ? intervalLabel(s.model_interval) : null].filter(Boolean).join(" · ") || s.model
 // caption lead: what the votes are and when, then the source's note (build_redist_data())
-rdHead = s => s == null ? "" : (s.kind === "pres24" ? s.note :
-  s.kind === "count" ? `${s.note} · as of ${fmtTime(s.time)} ET` :
-  `${s.note} · model run ${fmtTime(s.time)} ET`) + (rdPlaced(s) ? ` · ${rdPlaced(s)}` : "")
+// (the counted races' notes without their "Counted Senate vote" lead: the picker names the race)
+rdHead = s => s == null ? "" : [
+  s.kind === "count" ? s.note.replace(/^Counted [^·]* vote( · )?/, "") : s.note,
+  s.kind === "count" ? `as of ${fmtTime(s.time)} ET` : s.kind === "model" ? `model run ${fmtTime(s.time)} ET` : "",
+  rdPlaced(s)
+].filter(Boolean).join(" · ")
 // share of the source's votes placed in districts by precinct vs by county (p_prec, build_redist_data())
 rdPlaced = s => s == null || !Number.isFinite(s.p_prec) ? "" :
   `Votes placed by precinct ${pct(s.p_prec)}, by county ${pct(1 - s.p_prec)}`
@@ -1491,7 +1494,7 @@ viewof rctl = {
     marginLeft: 48,
     marginBottom: 36,
     caption: `○ 2024 map · ● 2026 map · ${rdHead(rsrc)}${rdLeftNote}`,
-    exportCaption: `${rsrc?.note ?? ""}${rdPlaced(rsrc) ? ` · ${rdPlaced(rsrc)}` : ""}${rdLeftNote}. A district number can cover different places on each map.`,
+    exportCaption: `${rdHead(rsrc)}${rdLeftNote}. A district number can cover different places on each map.`,
     x: { label: "Two-party margin →", tickFormat: rdMfmt, grid: true, ticks: 5 },
     y: { label: null, domain: rdOk.map(d => d.cd), tickSize: 0 },
     color: { type: "categorical", domain: ["Toward Dem", "Toward Rep", "Moved < 1 pt"], range: [DEM, REP, "#999999"], legend: true },
@@ -1529,7 +1532,7 @@ viewof rctl = {
   const s = exportable("Seats", {
     marginBottom: 30,
     caption: `Safe: margin 10+ pts · Lean: 3 to 10 · Competitive: under 3 · ${rdHead(rsrc)}${rdLeftNote}`,
-    exportCaption: `Safe: two-party margin of 10 points or more · Lean: 3 to 10 · Competitive: under 3. ${rsrc?.note ?? ""}${rdPlaced(rsrc) ? ` · ${rdPlaced(rsrc)}` : ""}${rdLeftNote}.`,
+    exportCaption: `Safe: two-party margin of 10 points or more · Lean: 3 to 10 · Competitive: under 3. ${rdHead(rsrc)}${rdLeftNote}.`,
     x: { domain: plans.map(d => d[1]), label: null, padding: 0.3 },
     y: { label: "Seats", grid: true },
     color: { type: "categorical", domain: cats, range: [...RD_LEAN_COLORS, MAP_BLANK], legend: true },
@@ -1555,15 +1558,12 @@ viewof rctl = {
   if (rdOk.length === 0) return rdEmpty();
   const old = rdMapMarks(g, "old", rdRows), neu = rdMapMarks(g, "new", rdRows);
   const fill = rdFillMarks(g, rdUnit, rdCty);
-  const placed = rdPlaced(rsrc);
-  const cap = placed || " ";
   // exports: one image per map in the view showing, same projection and text so the two are the same size
-  const one = (p, view) => ({ projection: g.projection, color: marginColor, exportCaption: placed ? `${placed}.` : "",
+  const one = (p, view) => ({ projection: g.projection, color: marginColor, exportCaption: `${rdHead(rsrc)}${rdLeftNote}.`,
     marks: [...(view === "precinct" ? fill : p.fill), ...rdOutlines(g), ...p.top] });
   const register = view => exportable("District Map", {
     projection: g.projection,
     color: marginColor,
-    caption: cap,
     marks: [...old.fill, ...neu.fill, ...fill, ...rdOutlines(g), ...old.top, ...neu.top]
   }, `${rst} Congressional Districts`, {}, { ...rdExportOpt,
     basemap: view === "precinct" ? "VoteHub precincts and U.S. Census Bureau district lines" : "U.S. Census Bureau district lines",
