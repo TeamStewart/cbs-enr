@@ -217,6 +217,11 @@ read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "mo
       arrange(time)
   }
 
+  # points hidden with scripts/model/live/rerun.R drop
+  drops = read_model_drops(dir)
+  pred = drop_model_points(pred, drops)
+  turnout = drop_model_points(turnout, drops)
+
   status = read_runs("status")
   if (!is.null(status)) {
     status = status |>
@@ -230,6 +235,26 @@ read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "mo
   if (!is.null(pred)) pred = left_join(pred, parts, by = "model")
   if (!is.null(status)) status = left_join(status, parts, by = "model")
   list(pred = pred, turnout = turnout, status = status, prec = read_model_precincts(dir))
+}
+
+# {dir}/drops.csv (scripts/model/live/rerun.R drop): race_id and model globs with a time
+# window (from, to, ISO); the model points inside are left off the dashboard
+read_model_drops <- function(dir) {
+  f = fs::path(dir, "drops.csv")
+  if (!fs::file_exists(f)) return(NULL)
+  readr::read_csv(f, col_types = readr::cols(.default = "c"), progress = FALSE) |>
+    mutate(from = lubridate::ymd_hms(from, quiet = TRUE), to = lubridate::ymd_hms(to, quiet = TRUE))
+}
+
+drop_model_points <- function(d, drops) {
+  if (is.null(d) || is.null(drops) || !nrow(drops)) return(d)
+  hit = logical(nrow(d))
+  for (i in seq_len(nrow(drops))) {
+    x = drops[i, ]
+    hit = hit | (grepl(utils::glob2rx(x$race_id), d$race_id) & grepl(utils::glob2rx(x$model), d$model) &
+      d$time >= x$from & d$time <= x$to)
+  }
+  d[!hit, ]
 }
 
 # per-precinct projections (write_precincts() in scripts/model/live/R/output.R): the

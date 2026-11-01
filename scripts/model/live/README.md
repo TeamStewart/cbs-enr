@@ -37,6 +37,20 @@ CBS feed (writes to `model_tests/run_night_sim/`, never to `model_results/`):
 Rscript scripts/model/live/run_night.R --sim=tx_base --at="2026-11-03 22:00"
 ```
 
+**Fixing past points (`rerun.R`).** If a model broke or a scrape was bad earlier in the night, rerun
+chosen models for chosen races at past times, on the archived scrapes
+(`{ST}/clean/<name>_YYYY_MM_DD_HH_MM_SS.parquet`) and CBS snapshots from then, with tonight's code
+and inputs. Runs are staged in `model_results/reruns/<id>/` with an old-vs-new table; `publish`
+writes `predictions_rerun_<id>.csv`, which sorts after every other run and so replaces those
+points on the dashboard at the next `tar_make()`. `drop` hides points no rerun can fix. All of it
+is reversible (`unpublish`, `undrop`) and never touches `*_latest` files or the targets store,
+so it is safe while `automation.R` runs. Options at the top of `rerun.R`.
+```
+Rscript scripts/model/live/rerun.R points --states=TX --from=20:00 --to=21:30
+Rscript scripts/model/live/rerun.R run --races=TX_sen --models='swing*' --from=20:00 --to=21:30
+Rscript scripts/model/live/rerun.R publish <id>
+```
+
 **Redistricting charts.** The dashboard's Redistricting tab (next to Results and Models) shows
 each redrawn state's districts (NC, FL, TX, OH, CA) under the 2024 and 2026 maps: a per-district
 dumbbell, seats by lean, and a map that fades between the two plans. Tonight's numbers are the

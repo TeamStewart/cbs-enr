@@ -182,7 +182,9 @@ list(
   # writes model_results/ (or the sim's folder) and returns that folder
   tar_combine(model_out, map_models[["model_fits"]], command = model_write(list(!!!.x), MODEL_SIM)),
   tar_combine(dash_inputs, map_single[["summary"]], command = list(!!!.x)),
-  tar_target(model_results, read_model_results(model_out)),
+  # always: model_out returns the same folder every run, so its hash never changes; this
+  # also picks up published reruns (scripts/model/live/rerun.R)
+  tar_target(model_results, read_model_results(model_out), cue = tar_cue(mode = "always")),
   # the prep's outputs (redistricting_compare.R without --live), the district outlines the
   # page's map fetches (data/dashboard/geo/{st}_districts.json), and the tab's numbers
   tar_target(redist_inputs, redist_files(), format = "file"),
