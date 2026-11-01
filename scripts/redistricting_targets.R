@@ -373,15 +373,34 @@ build_redist_data <- function(files, cbs = NULL, models = NULL, enr = NULL, cont
       mutate(state = st, src = paste("model", race_id, model, sep = ":"))
     pp = full_join(summarise(mu, a = sum(dem + rep), .by = model), summarise(mk, b = sum(dem + rep), .by = model), by = "model") |>
       transmute(model, p_prec = coalesce(a, 0) / (coalesce(a, 0) + coalesce(b, 0)))
+    # map only: the counties a model projects no precinct in get the top-of-ticket race's counted
+    # votes (ENR precincts summed to the county where we scrape, CBS county results elsewhere),
+    # flagged `reported`; the district totals stay projections only
+    rc = bind_rows(
+      if (nrow(e_st)) e_st |> filter(contest == .env$contest) |> transmute(county_cbs, dem, rep),
+      if (nrow(c_st)) c_st |> filter(contest == .env$contest, !county_cbs %in% e_st$county_cbs) |> transmute(county_cbs, dem, rep),
+      tibble(county_cbs = integer(), dem = numeric(), rep = numeric())
+    ) |>
+      summarise(dem = sum(dem), rep = sum(rep), .by = county_cbs) |>
+      filter(dem + rep > 0) |>
+      inner_join(cmap, by = "county_cbs")
+    mr = cross_join(distinct(mv, model), rc) |>
+      anti_join(distinct(mv, model, county_cbs), by = c("model", "county_cbs")) |>
+      transmute(model, county_fips, dem, rep, reported = TRUE)
+    mk = bind_rows(mutate(mk, reported = FALSE), mr)
+    n_rep = count(mr, model, name = "n_rep")
     s = distinct(mv, model, time) |>
       summarise(time = max(time), .by = model) |>
       inner_join(placed, by = "model") |>
       left_join(pp, by = "model") |>
       semi_join(d, by = "model") |>
       left_join(parts, by = "model") |>
+      left_join(n_rep, by = "model") |>
       transmute(state = st, src = paste("model", race_id, model, sep = ":"), kind = "model", label = model,
                 race_id, race, model, model_base, model_spec, model_interval, spec_default, interval_default, time, p_prec,
-                note = as.character(glue("Projected {race} vote, not the House vote")))
+                note = paste0("Projected ", race, " vote, not the House vote",
+                              if_else(coalesce(n_rep, 0L) > 0, paste0(" · map: counted votes in ", n_rep, " unprojected ",
+                                                                      if_else(n_rep == 1, "county", "counties")), "")))
     tag = \(x) mutate(x, state = st, src = paste("model", race_id, model, sep = ":"), .before = 1) |> select(-model)
     add(select(d, state, src, plan, cd, dem, rep, cov), s, tag(filter(mu, unit_id %in% gid)), tag(mk))
   }
@@ -399,8 +418,10 @@ build_redist_data <- function(files, cbs = NULL, models = NULL, enr = NULL, cont
     # the map's fills: votes placed by precinct (unit_id = the dashboard's VoteHub precincts) and by county
     unit = bind_rows(tibble(state = character(), src = character(), unit_id = character(), dem = numeric(), rep = numeric()), unit) |>
       mutate(across(c(dem, rep), round)) |> filter(dem + rep > 0),
-    cty = bind_rows(tibble(state = character(), src = character(), county_fips = character(), dem = numeric(), rep = numeric()), cty) |>
-      mutate(across(c(dem, rep), round)) |> filter(dem + rep > 0),
+    # (reported: a model source's county shown with counted votes, no projection there)
+    cty = bind_rows(tibble(state = character(), src = character(), county_fips = character(), dem = numeric(), rep = numeric(),
+                           reported = logical()), cty) |>
+      mutate(across(c(dem, rep), round), reported = coalesce(reported, FALSE)) |> filter(dem + rep > 0),
     desc = desc
   )
 }

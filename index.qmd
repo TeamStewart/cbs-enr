@@ -1494,7 +1494,7 @@ rdFillMarks = (g, unit, cty) => {
   return [
     Plot.geo(g.counties.filter(x => !cv(x)), { fill: MAP_BLANK, stroke: MAP_BLANK, ariaDescription: t, title: x => `${x.properties.name ?? x.id} County\nNo votes` }),
     Plot.geo(g.counties.filter(cv), { fill: x => dm(cv(x)), stroke: x => dm(cv(x)), ariaDescription: t,
-      title: x => tip(`${x.properties.name ?? x.id} County (votes placed by county)`, cv(x)) }),
+      title: x => tip(`${x.properties.name ?? x.id} County (${cv(x).reported ? "counted votes, no projection" : "votes placed by county"})`, cv(x)) }),
     Plot.geo(prec, { fill: x => dm(uv(x)), stroke: x => dm(uv(x)), strokeWidth: 0.3, ariaDescription: t, title: x => tip(`Precinct ${x.id}`, uv(x)) })
   ];
 }
