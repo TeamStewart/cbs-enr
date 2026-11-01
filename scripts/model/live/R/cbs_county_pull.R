@@ -7,6 +7,9 @@
 ##
 ##   26_general/cbs_api/{env}/{ST}_{contest}[_{district}]/
 ##     {ST}_{contest}_{YYYYmmdd_HHMMSS}.parquet   one snapshot per pull
+##     expected/{ST}_{contest}_expected_{YYYYmmdd_HHMMSS}.parquet
+##                                  CBS's expected vote, race total and county x method,
+##                                  written only when it changes (save_cbs_expected())
 ##
 ## Functions (loaded by load.R; nothing runs at load time):
 ##   pull_cbs_race("TX", "gov", env = "live")   pull, check, save; returns the snapshot
@@ -109,6 +112,109 @@ cbs_county_lookup = function(state, fips, dir_26) {
   tibble(county_fips = fips, county_cbs = stringr::str_pad(seq_along(fips), 3, pad = "0"))
 }
 
+# CBS expected-vote fields by method (county feed) and the reported field for the same
+# method. Codes follow cbsapi's by_method codes where it has one (adv, eday, mail, early);
+# absentee, early_ip and in_person have no reported counterpart.
+CBS_EXPECTED_FIELDS = tibble::tribble(
+  ~method,     ~cbs_field,                 ~rep_field,
+  "total",     "totalExpVote",             "totalVote",
+  "eday",      "expectedEDay",             "eDay",
+  "adv",       "expectedAdvanceTotal",     "advance",
+  "mail",      "expectedAbsenteeMail",     "earlyByMail",
+  "early",     "expectedAdvanceInPerson",  "earlyInPerson",
+  "absentee",  "expectedAbsentee",         NA,
+  "early_ip",  "expectedEarlyInPerson",    NA,
+  "in_person", "expectedInPersonTotal",    NA
+)
+
+#' Save CBS's expected vote for a race, total and by method
+#'
+#' Writes `cbs_api/{env}/{tag}/expected/{tag}_expected_{YYYYmmdd_HHMMSS}.parquet`, long:
+#' one row per county x method (`level` "county", from the county feed) plus one
+#' race-level row (`level` "race", method "total", CBS's race totalExpVote, county_fips
+#' NA). Columns: level, county_fips, county_name, method, cbs_field, expected, reported,
+#' observed_at, env. reported is the counted vote for that method (NA where CBS has no
+#' matching field). A file is written only when expected or reported changed since the
+#' newest saved file, so `observed_at` marks changes, not every pull; the main snapshot
+#' times (or now) say how long the last value held.
+#'
+#' Per-method county fields are CBS's as given: a county reports either `adv` or
+#' `mail` + `early` (see pull_cbs_race), so statewide sums of one method across counties
+#' are not comparable, and zero means "no expectation", not "none expected".
+#'
+#' @param api Raw county feed (cbsapi:::cbs_fetch_county_races()).
+#' @param race Race-level cbs_election_data(county = FALSE, addl = TRUE), or NULL.
+#' @param tag,env,observed_at,dir_26 As in pull_cbs_race().
+#' @return The rows (invisibly), or NULL if nothing was available.
+save_cbs_expected = function(api, race, tag, env, observed_at, dir_26, verbose = TRUE) {
+  rows = list()
+  if (!is.null(race) && nrow(race) && "exp_votes" %in% names(race)) {
+    rows$race = tibble(
+      level = "race",
+      county_fips = NA_character_,
+      county_name = NA_character_,
+      method = "total",
+      cbs_field = "totalExpVote",
+      expected = as.numeric(race$exp_votes[1]),
+      reported = as.numeric(race$rep_votes[1])
+    )
+  }
+  if (!is.null(api) && nrow(api)) {
+    num = \(f) if (f %in% names(api)) as.numeric(api[[f]]) else rep(NA_real_, nrow(api))
+    unit = paste(api$fips %||% NA, api$name %||% NA)
+    rows$county = purrr::pmap(CBS_EXPECTED_FIELDS, function(method, cbs_field, rep_field) {
+      exp_f = cbs_field
+      rep_f = rep_field
+      by_cand = !is.na(rep_f) && method != "total" # totalVote is a unit field
+      tibble(
+        unit = unit,
+        county_fips = stringr::str_pad(as.character(api$fips %||% NA), 5, pad = "0"),
+        county_name = as.character(api$name %||% NA),
+        method = method,
+        cbs_field = exp_f,
+        expected = num(exp_f),
+        rep_cand = if (is.na(rep_f)) NA_real_ else num(rep_f)
+      ) |>
+        summarise(
+          expected = dplyr::first(expected),
+          # expected fields repeat on each candidate row of a unit; method votes are per candidate
+          reported = if (is.na(rep_f)) NA_real_ else if (by_cand) sum(rep_cand, na.rm = TRUE) else dplyr::first(rep_cand),
+          .by = c(unit, county_fips, county_name, method, cbs_field)
+        )
+    }) |>
+      bind_rows() |>
+      # a county split into several reporting units sums to one row
+      summarise(
+        across(c(expected, reported), \(x) if (all(is.na(x))) NA_real_ else sum(x, na.rm = TRUE)),
+        .by = c(county_fips, county_name, method, cbs_field)
+      ) |>
+      mutate(level = "county", .before = 1)
+  }
+  if (!length(rows)) {
+    return(NULL)
+  }
+  out = bind_rows(rows) |>
+    mutate(observed_at = observed_at, env = env)
+
+  dir_out = file.path(dir_26, "cbs_api", env, tag, "expected")
+  prev = sort(list.files(dir_out, pattern = paste0("^", tag, "_expected_[0-9]{8}_[0-9]{6}\\.parquet$"), full.names = TRUE))
+  if (length(prev)) {
+    key = \(x) arrange(select(x, level, county_fips, method, expected, reported), level, county_fips, method)
+    old = nanoparquet::read_parquet(prev[length(prev)])
+    if (isTRUE(all.equal(key(as_tibble(old)), key(out), check.attributes = FALSE))) {
+      return(invisible(out))
+    }
+  }
+  dir.create(dir_out, recursive = TRUE, showWarnings = FALSE)
+  f = file.path(dir_out, paste0(tag, "_expected_", format(observed_at, "%Y%m%d_%H%M%S"), ".parquet"))
+  nanoparquet::write_parquet(out, f)
+  if (verbose) {
+    tot = out$expected[out$level == "race"]
+    cli::cli_alert_success("CBS expected vote{if (length(tot)) paste0(' (race total ', format(tot, big.mark = ','), ')') else ''} saved to {f}")
+  }
+  invisible(out)
+}
+
 #' Pull one race's CBS county results
 #'
 #' Pulls, checks (no county double-counted through `adv` / `all` beside per-method rows),
@@ -145,6 +251,41 @@ pull_cbs_race = function(
     )
   }
 
+  # The raw county feed is fetched once and handed to cbs_election_data(data = ): the
+  # parsed rows drop CBS's expected-vote fields, which save_cbs_expected() keeps.
+  # cbs_fetch_county_races() is internal to cbsapi; this is the call cbs_election_data()
+  # makes itself when `data` is NULL.
+  api = cbsapi:::cbs_fetch_county_races(
+    CBS_ELECTION,
+    state,
+    contest,
+    district,
+    cbsapi:::cbs_resolve_type("general", contest, FALSE),
+    env,
+    cbsapi::get_cbs_key()
+  )
+  # race-level results: CBS's own expected total (totalExpVote) and, when verbose, the
+  # county-sum check below
+  race = tryCatch(
+    cbsapi::cbs_election_data(
+      CBS_ELECTION,
+      state,
+      contest,
+      district = district,
+      county = FALSE,
+      addl = TRUE,
+      env = env
+    ),
+    error = function(e) {
+      cli::cli_alert_warning("CBS race-level pull failed for {tag}: {conditionMessage(e)}")
+      NULL
+    }
+  )
+  tryCatch(
+    save_cbs_expected(api, race, tag, env, observed_at, dir_26, verbose = verbose),
+    error = function(e) cli::cli_alert_warning("CBS expected vote not saved for {tag}: {conditionMessage(e)}")
+  )
+
   # by_method: cbsapi ffe4e9d (2026-10-26) returns one row per county x method x candidate.
   # reassign_prov: distributes county provisionals across the remaining methods in
   #   proportion to expected method counts and drops the `prov` rows. Verified on NC:
@@ -155,6 +296,7 @@ pull_cbs_race = function(
     state,
     contest,
     district = district,
+    data = api,
     county = TRUE,
     addl = TRUE,
     by_method = TRUE,
@@ -349,14 +491,9 @@ pull_cbs_race = function(
       )
     }
     # county sums should equal the race-level totals when both feeds are in sync
-    race = cbsapi::cbs_election_data(
-      CBS_ELECTION,
-      state,
-      contest,
-      district = district,
-      county = FALSE,
-      env = env
-    )
+    if (is.null(race)) {
+      race = tibble(candidate = character(), party = character(), votes = numeric())
+    }
     sum_check = cty |>
       summarize(county_sum = sum(votes, na.rm = TRUE), .by = c(candidate, party)) |>
       full_join(

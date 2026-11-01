@@ -344,6 +344,116 @@ read_cbs_counties <- function(state, contest, district = NA, env = DASHBOARD_CBS
     )
 }
 
+# Models page Predicted Turnout: CBS's expected vote for a race over time, from the files
+# save_cbs_expected() (cbs_county_pull.R) writes when the figures change. Long: geo, method,
+# time, expected. geo "all" is statewide (method total from the race feed's totalExpVote,
+# other methods summed over counties); geo "scraped" sums the counties in `scraped_cbs`
+# (3-digit CBS county numbers), mapped to FIPS through `cbs_cty` (read_cbs_counties()).
+# Each series' last value is repeated at `until` (the newest pull) so a step line runs to
+# it. Per-method rows are CBS's fields as given (a county reports adv or mail + early).
+read_cbs_expected <- function(state, contest, district = NA, scraped_cbs = character(), cbs_cty = NULL,
+                              until = NULL, env = DASHBOARD_CBS_ENV) {
+  tag = if (is.na(district)) paste0(state, "_", contest) else paste0(state, "_", contest, "_", district)
+  d = fs::path(PATH_DROPBOX, "26_general", "cbs_api", env, tag, "expected")
+  fs = if (fs::dir_exists(d)) fs::dir_ls(d, regexp = "_expected_\\d{8}_\\d{6}\\.parquet$") else character()
+  empty = tibble(geo = character(), method = character(), time = as.POSIXct(character()), expected = numeric())
+  if (length(fs) == 0) return(empty)
+  x = map(fs, nanoparquet::read_parquet) |> bind_rows() |> rename(time = observed_at)
+  cty = filter(x, level == "county")
+  race_t = x$time[x$level == "race"]
+  all = bind_rows(
+    filter(x, level == "race", method == "total"),
+    # county total only for pulls where the race feed failed
+    filter(cty, method != "total" | !time %in% race_t)
+  ) |>
+    summarise(expected = sum(expected, na.rm = TRUE), .by = c(method, time)) |>
+    mutate(geo = "all")
+  scr = empty
+  if (length(scraped_cbs) && !is.null(cbs_cty)) {
+    fips = cbs_cty$county_fips[cbs_cty$county_cbs %in% scraped_cbs]
+    scr = filter(cty, county_fips %in% fips) |>
+      summarise(expected = sum(expected, na.rm = TRUE), .by = c(method, time)) |>
+      mutate(geo = "scraped")
+  }
+  out = bind_rows(all, scr) |> select(names(empty)) |> arrange(geo, method, time)
+  if (!is.null(until) && !is.na(until)) {
+    out = bind_rows(out, slice_max(out, time, by = c(geo, method), with_ties = FALSE) |>
+                      filter(time < until) |> mutate(time = until))
+  }
+  out
+}
+
+# Results page "All places": CBS county counts over time, one row per snapshot x county x
+# method, plus method "Total" from CBS's county total. CBS's per-method rows can sum short
+# of the county total (`method_shortfall`, cbs_county_pull.R), so the Total row scales the
+# method-summed dem / rep up to the county total. Snapshots are append-only, so each file's
+# aggregate is cached in _targets/user/cbs_cache/ and only new files are read.
+# Columns: time (pull time, UTC), county_cbs, method, dem, rep, total.
+read_cbs_county_ts <- function(state, contest, district = NA, env = DASHBOARD_CBS_ENV) {
+  tag = if (is.na(district)) paste0(state, "_", contest) else paste0(state, "_", contest, "_", district)
+  empty = tibble(time = as.POSIXct(character(), tz = "UTC"), county_cbs = character(), method = character(),
+                 dem = numeric(), rep = numeric(), total = numeric())
+  d = fs::path(PATH_DROPBOX, "26_general", "cbs_api", env, tag)
+  fs = if (fs::dir_exists(d)) sort(fs::dir_ls(d, regexp = "_\\d{8}_\\d{6}\\.parquet$")) else character()
+  if (length(fs) == 0) return(empty)
+  cache_f = fs::path("_targets", "user", "cbs_cache", glue("{env}_{tag}.rds"))
+  cache = if (fs::file_exists(cache_f)) readRDS(cache_f) else list()
+  new = setdiff(basename(fs), names(cache))
+  for (f in fs[basename(fs) %in% new]) {
+    x = nanoparquet::read_parquet(f)
+    # schema_version 1 snapshots: no method, and some carry CBS's d / r party labels
+    if (!"method" %in% names(x)) x$method = "all"
+    p = tolower(as.character(x$party))
+    x$party = case_when(p %in% c("d", "dem") ~ "dem", p %in% c("r", "rep") ~ "rep", .default = "oth")
+    t = as.POSIXct(str_extract(basename(f), "\\d{8}_\\d{6}"), format = "%Y%m%d_%H%M%S", tz = "UTC")
+    by_m = summarise(x,
+      dem = sum(votes[party == "dem"], na.rm = TRUE), rep = sum(votes[party == "rep"], na.rm = TRUE),
+      total = sum(votes, na.rm = TRUE), county_total = first(county_total_vote),
+      .by = c(county_cbs, method))
+    # no county total from CBS: fall back to the method sum
+    tot = summarise(by_m, ct = coalesce(first(county_total), sum(total)),
+                    k = if (sum(total) > 0) ct / sum(total) else 0,
+                    dem = sum(dem) * k, rep = sum(rep) * k, total = ct, .by = county_cbs) |>
+      select(-ct) |>
+      mutate(method = "Total", .after = county_cbs) |>
+      select(-k)
+    cache[[basename(f)]] = bind_rows(select(by_m, -county_total), tot) |>
+      mutate(time = t, .before = 1) |>
+      mutate(across(c(dem, rep, total), \(v) coalesce(as.numeric(v), 0)))
+  }
+  if (length(new)) {
+    fs::dir_create(fs::path_dir(cache_f))
+    saveRDS(cache, cache_f)
+  }
+  bind_rows(empty, bind_rows(cache[basename(fs)]))
+}
+
+# Results page "All places" time series: the scraped summaries (`ts`, one row per time x
+# method, carried forward per jurisdiction) plus CBS's counts for the counties with no ENR
+# precincts. Both are carried forward on the union of their times (from the first summary
+# on). Rows: time, method ("Total" or a vote method), dem, rep, total. Method rows add
+# CBS only where CBS uses the same code; a county CBS reports as `adv` adds nothing to
+# Early or Mail, and per-method CBS rows can fall short of the county total, so only the
+# Total rows are complete.
+all_places_ts <- function(ts, cbs_ts, scraped_cbs) {
+  out = tibble(time = as.POSIXct(character(), tz = "UTC"), method = character(), dem = numeric(), rep = numeric(), total = numeric())
+  if (nrow(ts) == 0) return(out)
+  enr = bind_rows(ts, summarise(ts, across(c(dem, rep, total), sum), .by = time) |> mutate(method = "Total")) |>
+    select(time, method, dem, rep, total)
+  cbs = filter(cbs_ts, !county_cbs %in% scraped_cbs) |>
+    summarise(across(c(dem, rep, total), sum), .by = c(time, method))
+  times = sort(unique(c(enr$time, cbs$time)))
+  times = times[times >= min(enr$time)]
+  carry = \(x) if (nrow(x) == 0) x else
+    x |> complete(method, time = sort(unique(c(x$time, times)))) |>
+      arrange(time) |> group_by(method) |> fill(dem, rep, total) |> ungroup() |>
+      filter(time %in% times) |> mutate(across(c(dem, rep, total), \(v) coalesce(v, 0)))
+  bind_rows(carry(enr), carry(cbs)) |>
+    filter(method %in% enr$method) |>
+    summarise(across(c(dem, rep, total), sum), .by = c(time, method)) |>
+    arrange(time, method)
+}
+
 read_summaries <- function(state, keys) {
   files = fs::dir_ls(fs::path(PATH_DROPBOX, ELECTION_FOLDER, state, "summaries"), regexp = "summary_.*\\.parquet$", fail = FALSE)
   if (length(files) == 0) return(NULL)
@@ -640,11 +750,16 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
                   total = numeric(), pct_exp = numeric())
     cbs = read_cbs_counties(state, contest, district)
     meta = mutate(meta, cbs_time = as.POSIXct(NA))
+    scraped = unique(str_extract(prec$geo, "(?<=_)[0-9]{3}(?=_)"))
     if (!is.null(cbs)) {
-      scraped = unique(str_extract(prec$geo, "(?<=_)[0-9]{3}(?=_)"))
       mcty = filter(cbs, !county_cbs %in% scraped) |> select(names(mcty))
       meta = mutate(meta, cbs_time = max(cbs$cbs_time))
     }
+    # CBS expected vote over time (Predicted Turnout), statewide and for the scraped counties
+    cbs_exp = read_cbs_expected(state, contest, district, scraped_cbs = scraped, cbs_cty = cbs,
+                                until = if (!is.null(cbs)) max(cbs$cbs_time) else NULL)
+    # Results page "All places": scraped summaries + CBS counts for the other counties
+    ts_all = all_places_ts(ts, read_cbs_county_ts(state, contest, district), scraped)
 
     list(
       meta = meta,
@@ -657,7 +772,9 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
       mres = mutate(mres, key = key, .before = 1),
       mprec = mutate(mprec, key = key, .before = 1),
       mprec_runs = mutate(mprec_runs, key = key, .before = 1),
-      mcty = mutate(mcty, key = key, .before = 1)
+      mcty = mutate(mcty, key = key, .before = 1),
+      cbs_exp = mutate(cbs_exp, key = key, .before = 1),
+      ts_all = mutate(ts_all, key = key, .before = 1)
     )
   })
 
@@ -673,6 +790,8 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     mprec = map(out, "mprec") |> bind_rows(),
     mprec_runs = map(out, "mprec_runs") |> bind_rows(),
     mcty = map(out, "mcty") |> bind_rows(),
+    cbs_exp = map(out, "cbs_exp") |> bind_rows(),
+    ts_all = map(out, "ts_all") |> bind_rows(),
     geo_url = DASHBOARD_GEO_URL,
     title = DASHBOARD_TITLE,
     top_model = DASHBOARD_MODEL

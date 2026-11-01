@@ -27,6 +27,8 @@ to_ms = \(x) as.numeric(x) * 1000
 ojs_define(
   meta = transform(dd$meta, time = to_ms(time), cbs_time = if (is.null(dd$meta$cbs_time)) NA_real_ else to_ms(dd$meta$cbs_time)),
   ts = transform(dd$ts, time = to_ms(time)),
+  # Results "All places": scraped summaries + CBS counts for unscraped counties (all_places_ts() in functions.R)
+  ts_all = if (is.null(dd$ts_all) || !nrow(dd$ts_all)) data.frame(key = character(), time = numeric(), method = character()) else transform(dd$ts_all, time = to_ms(time)),
   prec = dd$prec,
   l2 = if (is.null(dd$l2)) data.frame(key = character(), geo = character(), mode = character()) else dd$l2,
   models = if (is.null(dd$models)) data.frame(key = character(), model = character(), time = numeric()) else transform(dd$models, time = to_ms(time)),
@@ -36,6 +38,8 @@ ojs_define(
   mprec = if (is.null(dd$mprec)) data.frame(key = character(), model = character(), unit_id = character()) else dd$mprec,
   mprec_runs = if (is.null(dd$mprec_runs)) data.frame(key = character(), model = character(), time = numeric()) else transform(dd$mprec_runs, time = to_ms(time)),
   mcty = if (is.null(dd$mcty)) data.frame(key = character(), county_fips = character()) else dd$mcty,
+  # CBS expected vote over time, total and by method (read_cbs_expected() in functions.R)
+  cbs_exp = if (is.null(dd$cbs_exp) || !nrow(dd$cbs_exp)) data.frame(key = character(), geo = character(), method = character(), time = numeric(), expected = numeric()) else transform(dd$cbs_exp, time = to_ms(time)),
   geo_url = if (is.null(dd$geo_url)) "data/dashboard/geo" else dd$geo_url,
   dash_title = dd$title,
   # test data (pages.yml sets CBS_DASH_SOURCE from dashboard_mode.txt): a TEST DATA badge in the header
@@ -66,6 +70,7 @@ ojs_define(
 
 M = transpose(meta).map(d => ({ ...d, cbs_time: Number.isFinite(d.cbs_time) ? new Date(d.cbs_time) : null }))
 TS = transpose(ts).map(d => ({ ...d, time: new Date(d.time) }))
+TSALL = transpose(ts_all).map(d => ({ ...d, time: new Date(d.time) }))
 P = transpose(prec)
 L2 = transpose(l2)
 MP = transpose(models).map(d => ({ ...d, time: new Date(d.time) }))
@@ -78,6 +83,8 @@ MPREC = transpose(mprec)
 MPRECRUN = transpose(mprec_runs).map(d => ({ ...d, time: new Date(d.time) }))
 // CBS county results for the counties we don't scrape (read_cbs_counties() in functions.R)
 MCTY = transpose(mcty)
+// CBS expected vote by key, geo (scraped / all), method (total, eday, adv, mail, ...) and time
+CBSX = transpose(cbs_exp).map(d => ({ ...d, time: new Date(d.time) }))
 
 // L2 precinct shares, joined to ENR geos through input_data/crosswalks (see read_l2() in functions.R)
 L2_COLS = ["l2_n", "l2_turnout20", "l2_turnout22", "l2_turnout24", "l2_male", "l2_white", "l2_black", "l2_hispanic", "l2_asian"]
@@ -135,6 +142,9 @@ pc = P.filter(d => d.key === sel)
 tsAll = TS.filter(d => d.key === sel)
 // summaries up to the global "As of"
 tsc = tsAll.filter(d => +d.time <= asofT)
+// "All places" (Results toolbar): the same series with CBS's counts for the unscraped counties added
+tsPlacesAll = TSALL.filter(d => d.key === sel)
+usePlacesAll = places.all && tsPlacesAll.length > 0
 
 // ---- global "As of" ----
 // One control for every page: each page's bottom toolbar has an empty <div class="asof-slot">
@@ -250,12 +260,20 @@ precRows = withShares([...geoTotal, ...pc.filter(d => modes.includes(d.method))]
 reported = precRows.filter(d => d.total > 0)
 
 // time series: Total facet + one facet per method present
-tsRows = {
+// scraped summaries only (the Overview boxes), or with "All places" (the time plots)
+tsRowsFor = all => {
+  if (all) {
+    const r = tsPlacesAll.filter(d => +d.time <= asofT && (d.method === "Total" || modes.includes(d.method)))
+      .map(d => ({ time: d.time, facet: d.method === "Total" ? "Total" : METHOD_LABELS[d.method], dem: d.dem, rep: d.rep, total: d.total }));
+    return r.sort((a, b) => a.time - b.time);
+  }
   const tot = d3.rollups(tsc, v => ({ dem: d3.sum(v, d => d.dem), rep: d3.sum(v, d => d.rep), total: d3.sum(v, d => d.total) }), d => +d.time)
     .map(([t, r]) => ({ time: new Date(t), facet: "Total", ...r }));
   const byMode = tsc.filter(d => modes.includes(d.method)).map(d => ({ time: d.time, facet: METHOD_LABELS[d.method], dem: d.dem, rep: d.rep, total: d.total }));
   return [...tot, ...byMode].sort((a, b) => a.time - b.time);
 }
+tsRows = tsRowsFor(usePlacesAll)
+tsRowsScraped = tsRowsFor(false)
 tsLong = tsRows.flatMap(d => [
   { time: d.time, facet: d.facet, series: "Total", votes: d.total, share: null },
   { time: d.time, facet: d.facet, series: cur.dem_name ?? "Dem", party: "dem", votes: d.dem, share: d.total > 0 ? d.dem / d.total : null },
@@ -635,8 +653,8 @@ exportButtons = {
     ${sub2 ? html`<div class="dbox-sub">${sub2}</div>` : ""}
   </div>`;
   // before the latest data: vote totals from the summaries at "As of" (no precinct snapshots back then)
-  const tLast = d3.max(tsRows, d => +d.time);
-  const at = f => tsRows.find(d => +d.time === tLast && d.facet === f) ?? { dem: 0, rep: 0, total: 0 };
+  const tLast = d3.max(tsRowsScraped, d => +d.time);
+  const at = f => tsRowsScraped.find(d => +d.time === tLast && d.facet === f) ?? { dem: 0, rep: 0, total: 0 };
   const c = asofLatest ? cur : { ...cur, time: tLast ?? null, total: at("Total").total, dem_votes: at("Total").dem, rep_votes: at("Total").rep,
     eday: cur.eday == null ? null : at(METHOD_LABELS.eday).total };
   const yy = c.hist_year ? `'${String(c.hist_year).slice(2)}` : null;
@@ -673,8 +691,8 @@ exportButtons = {
 {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
   const s = exportable("Total Votes", timeSpec(tsLong.filter(d => d.series === "Total"), "votes", {
-    label: "Votes", tickFormat: "~s", stroke: () => INK, tip: d => fmt(d.votes)
-  }), "Total Votes", { keys: [{ mark: "line", label: "Total votes reported" }] });
+    label: "Votes", tickFormat: "~s", stroke: () => INK, tip: d => fmt(Math.round(d.votes))
+  }), usePlacesAll ? "Total Votes, All Places" : "Total Votes", { keys: [{ mark: "line", label: usePlacesAll ? "Total votes reported (unscraped counties: CBS)" : "Total votes reported" }] });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -684,8 +702,8 @@ exportButtons = {
 {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
   const s = exportable("Vote Count", timeSpec(tsLong.filter(d => d.party), "votes", {
-    label: "Votes", tickFormat: "~s", stroke: "series", color: partyColor, tip: d => fmt(d.votes)
-  }), "Vote Count", { swatch: "line" });
+    label: "Votes", tickFormat: "~s", stroke: "series", color: partyColor, tip: d => fmt(Math.round(d.votes))
+  }), usePlacesAll ? "Vote Count, All Places" : "Vote Count", { swatch: "line" });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -696,7 +714,7 @@ exportButtons = {
   if (tsc.length === 0) return empty("No summaries yet for this contest.");
   const s = exportable("Vote Share", timeSpec(tsLong.filter(d => d.party && d.share != null), "share", {
     label: "Share of all votes", tickFormat: ".0%", stroke: "series", color: partyColor, domain: [0, 1], tip: d => pct(d.share)
-  }), "Vote Share", { swatch: "line" });
+  }), usePlacesAll ? "Vote Share, All Places" : "Vote Share", { swatch: "line" });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```
@@ -800,6 +818,25 @@ viewof prec_mode = {
 
 ## {.toolbar}
 
+```{ojs results-places}
+// value = { all }: Total Votes / Vote Count / Vote Share add CBS's county counts for the
+// counties we don't scrape. Hidden when the contest has no CBS snapshots.
+viewof places = {
+  const form = html`<form class="model-ctl">
+    <label title="Add CBS county results for the counties we don't scrape precinct by precinct (Total Votes, Vote Count, Vote Share). CBS's per-method counts can fall short of its county totals, and counties CBS reports as Advance add nothing to Early or Mail, so only the Total facet is complete.">
+      <input type="checkbox" name="all" class="form-check-input"> All places (CBS for unscraped counties)</label>
+  </form>`;
+  const { all } = form.elements;
+  form.hidden = tsPlacesAll.length === 0;
+  all.checked = placesMemo.all === true;
+  const update = () => { form.value = { all: all.checked }; placesMemo.all = all.checked; };
+  form.addEventListener("input", update);
+  form.addEventListener("submit", e => e.preventDefault());
+  update();
+  return form;
+}
+```
+
 ```{ojs results-asof}
 // global "As of" (asofCtl); the precinct rows are the latest scrape only
 html`<div class="asof-slot" data-note="Precinct charts show the latest scrape"></div>`
@@ -877,6 +914,8 @@ etOffset = ms => {
   return Date.UTC(+p.year, p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(ms / 1000) * 1000;
 }
 
+// last "All places" choice (Results toolbar); no inputs, so it survives contest changes
+placesMemo = { return {} }
 // last model-control choices; this cell has no inputs, so it survives contest changes and mctl restores from it
 mctlMemo = { return {} }
 
@@ -898,6 +937,21 @@ turnoutRows = d3.rollups(modelRows.filter(d => d.pred_type === "vote"),
                   pred_min: b?.pred_min ?? null, pred_max: b?.pred_max ?? null,
                   series: `Total · ${GEO_LABELS[v[0].geo] ?? v[0].geo}` }; },
   d => d.geo, d => +d.time).flatMap(([, g]) => g.map(([, r]) => r)).sort((a, b) => a.time - b.time)
+  .map(d => ({ ...d, cbs: cbsAt(d.geo, +d.time) }))
+
+// CBS's expected total vote for the race (statewide, and summed over the scraped counties),
+// a step series between the first model run and "As of". Per-method rows (CBSX method !=
+// "total") are kept in the data for a by-method plot later.
+cbsExp = CBSX.filter(d => d.key === sel && d.method === "total")
+cbsAt = (geo, t) => d3.least(cbsExp.filter(d => d.geo === geo && +d.time <= t), d => -d.time)?.expected ?? null
+cbsRows = !runTimes.length ? [] : ["scraped", "all"].filter(g => g === "scraped" || mctl.all).flatMap(g => {
+  const t0 = runTimes[0];
+  const pts = [...new Set([t0, ...cbsExp.filter(d => d.geo === g && +d.time > t0 && +d.time <= asof).map(d => +d.time), asof])]
+    .sort((a, b) => a - b);
+  return pts.map(t => ({ time: new Date(t), geo: g, expected: cbsAt(g, t), series: `CBS expected · ${GEO_LABELS[g] ?? g}` }))
+    .filter(d => d.expected != null);
+})
+CBS_COLOR = "#e8590c"
 
 // solid line = prediction, ribbon = interval, dotted = reported; "all" draws dashed with a lighter ribbon
 modelSpec = (rows, opts) => {
@@ -915,6 +969,7 @@ modelSpec = (rows, opts) => {
     );
   }
   if (opts.rule != null) marks.push(Plot.ruleY([opts.rule], { stroke: "#999", strokeDasharray: "4,4" }));
+  if (opts.extra) marks.push(...opts.extra);
   // final truth (test data only): rows of { y, pname }, labelled at the right edge
   if (opts.truth?.length) marks.push(
     Plot.ruleY(opts.truth, { y: "y", stroke: opts.stroke, strokeWidth: 1.5, strokeOpacity: 0.7 }),
@@ -923,7 +978,8 @@ modelSpec = (rows, opts) => {
   marks.push(
     Plot.ruleX(rows, Plot.pointerX({ x: "time", stroke: "#999" })),
     Plot.tip(rows, Plot.pointerX({ x: "time", y: "pred", title: d => `${d.series}\n${fmtTime(d.time)} · ${pct(d.pct_rep)} reporting\n` +
-      `Predicted ${opts.fmt(d.pred)}${d.pred_min != null ? ` (${opts.fmt(d.pred_min)} to ${opts.fmt(d.pred_max)})` : ""}\nReported ${opts.fmt(d.rep)}` }))
+      `Predicted ${opts.fmt(d.pred)}${d.pred_min != null ? ` (${opts.fmt(d.pred_min)} to ${opts.fmt(d.pred_max)})` : ""}\nReported ${opts.fmt(d.rep)}` +
+      (d.cbs != null ? `\nCBS expected ${opts.fmt(d.cbs)}` : "") }))
   );
   return {
     marginBottom: 30,
@@ -931,7 +987,8 @@ modelSpec = (rows, opts) => {
       { mark: "line", label: "Predicted" },
       { mark: "line", label: "Reported", width: 1, dash: "1,3" },
       rows.some(d => d.geo === "all") && { mark: "line", label: `Predicted: ${GEO_LABELS.all}`, dash: "6,3" },
-      opts.rule != null && { mark: "line", label: opts.fmt(opts.rule), color: "#999", width: 1, dash: "4,4" }
+      opts.rule != null && { mark: "line", label: opts.fmt(opts.rule), color: "#999", width: 1, dash: "4,4" },
+      ...(opts.extraKeys ?? [])
     ],
     x: { label: null, ticks: 5 },
     y: { grid: true, label: opts.label, tickFormat: opts.tickFormat },
@@ -1209,7 +1266,7 @@ html`<div class="asof-slot"></div>`
     <div class="model-note">
       As of ${fmtTime(asof)} ET · ${summaryRows.length ? pct(d3.max(summaryRows, d => d.pct_rep)) : "—"} of precincts reporting · click a row to plot it
       ${cur.match_of > 0 ? html`<div>Match: ${fmt(cur.match_n)} of ${fmt(cur.match_of)} reporting precincts are in the models' historical inputs (${pct(cur.hist_match)} of counted votes); the inputs have ${fmt(cur.n_frame)} precincts. Same for every model.</div>` : ""}
-      <div>Plots: solid prediction · band interval · dotted reported${hasAll ? " · dashed statewide (all counties)" : ""}</div>
+      <div>Plots: solid prediction · band interval · dotted reported${hasAll ? " · dashed statewide (all counties)" : ""}${cbsExp.length ? html`&nbsp;· <span style="color:${CBS_COLOR}">orange</span> CBS expected vote (Predicted Turnout)` : ""}</div>
     </div>
   </div>`;
 }
@@ -1245,9 +1302,17 @@ html`<div class="asof-slot"></div>`
 //| title: Predicted Turnout
 {
   if (noModels) return noModelsMsg();
+  // CBS's expected vote: step line, dashed for statewide like the model's "all" series
+  const cbsMarks = ["scraped", "all"].map(g => Plot.lineY(cbsRows.filter(d => d.geo === g), { x: "time", y: "expected", z: "series",
+    stroke: CBS_COLOR, strokeWidth: 1.5, curve: "step-after", strokeDasharray: g === "all" ? "6,3" : null }));
   const s = exportable("Predicted Turnout", modelSpec(turnoutRows, {
     label: "Total votes (all candidates)", tickFormat: "~s", stroke: () => INK, fmt: fmt,
-    truth: truthc ? [{ y: truthc.total }] : null
+    truth: truthc ? [{ y: truthc.total }] : null,
+    extra: cbsMarks,
+    extraKeys: [
+      cbsRows.some(d => d.geo === "scraped") && { mark: "line", label: "CBS expected", color: CBS_COLOR, width: 1.5 },
+      cbsRows.some(d => d.geo === "all") && { mark: "line", label: `CBS expected: ${GEO_LABELS.all}`, color: CBS_COLOR, width: 1.5, dash: "6,3" }
+    ]
   }), "Predicted Turnout");
   return Plot.plot({ marginBottom: s.marginBottom, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
