@@ -493,6 +493,16 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
       prec = mutate(prec, county = src, hist_dem = NA_real_, hist_rep = NA_real_, hist_total = NA_real_)
     }
 
+    # Results page: VoteHub's 2024 presidential votes per ENR geo (through its unit_id), repeated
+    # on every method row; a unit shared by several geos is split evenly so county sums hold
+    pg = distinct(prec, geo) |>
+      mutate(g = norm_geo(geo)) |>
+      inner_join(filter(geo_units[[state]], !is.na(unit_id)) |> select(g, unit_id), by = "g") |>
+      inner_join(pres24, by = "unit_id") |>
+      mutate(k = n(), .by = unit_id) |>
+      transmute(geo, pres_dem = dem24 / k, pres_rep = rep24 / k)
+    prec = left_join(prec, pg, by = "geo")
+
     geo_stage = summarise(prec, stage = suppressWarnings(max(stage, na.rm = TRUE)), .by = geo)
 
     # crosswalk geos are lowercased; ENR geos vary in case (prefix and precinct)
@@ -522,6 +532,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
       hist_year = if (is.null(h)) NA_integer_ else as.integer(max(h$year)),
       hist_total = if (is.null(h)) NA_real_ else sum(h$votes),
       hist_eday = hist_eday,
+      has_pres = nrow(pg) > 0,
       # share of ENR precincts with an L2 match (0 when the state has no crosswalk)
       l2_match = if (nrow(geo_stage) > 0) n_distinct(l2$geo) / nrow(geo_stage) else NA_real_
     )

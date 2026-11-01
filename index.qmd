@@ -129,7 +129,70 @@ sel = {
 
 cur = M.find(m => m.key === sel)
 pc = P.filter(d => d.key === sel)
-tsc = TS.filter(d => d.key === sel)
+tsAll = TS.filter(d => d.key === sel)
+// summaries up to the global "As of"
+tsc = tsAll.filter(d => +d.time <= asofT)
+
+// ---- global "As of" ----
+// One control for every page: each page's bottom toolbar has an empty <div class="asof-slot">
+// (data-note: what that page can't rewind) and the control moves into the shown page's slot.
+// It steps among the contest's summary times, model runs and latest scrape; at the newest time
+// it follows new data. A new page needs only that slot in a `## {.toolbar}`.
+asofTimes = [...new Set([...tsAll.map(d => +d.time), ...MP.filter(d => d.key === sel).map(d => +d.time), cur.time])]
+  .filter(Number.isFinite).sort((a, b) => a - b)
+// last pick; no inputs, so it survives contest changes
+asofMemo = { return {} }
+// "As of" is a datetime-local in Eastern time, whatever the viewer's zone
+toET = ms => new Date(ms + etOffset(ms)).toISOString().slice(0, 16)
+fromET = s => { const u = Date.parse(`${s}:00Z`); return u - etOffset(u - etOffset(u)); }
+// { el }: an object, not the node, so the hidden setup cell never takes the node back from its slot
+asofCtl = {
+  const el = html`<form class="model-ctl asof-ctl">
+    <span class="asof-note" hidden></span>
+    <span class="model-ctl-asof">
+      <label>As of <input type="datetime-local" name="asof" class="form-control form-control-sm"></label>
+      <span class="model-ctl-tz">ET</span>
+      <button type="button" name="latest" class="btn btn-sm btn-outline-secondary">Latest</button>
+    </span>
+  </form>`;
+  const { asof, latest } = el.elements;
+  const note = el.querySelector(".asof-note");
+  const first = asofTimes[0], last = asofTimes.at(-1);
+  if (last != null) { asof.min = toET(first); asof.max = toET(last); }
+  const setAsof = t => { asof.value = t == null ? "" : toET(t); };
+  const place = () => {
+    const slot = document.querySelector(".dashboard-page.tab-pane.active .asof-slot") ?? document.querySelector(".asof-slot");
+    if (slot && el.parentElement !== slot) slot.append(el);
+    // write only on change: this runs from a MutationObserver
+    const text = slot?.dataset.note ?? "", hide = !text || !(el.value < last);
+    if (note.textContent !== text) note.textContent = text;
+    if (note.hidden !== hide) note.hidden = hide;
+  };
+  const update = () => {
+    // minute precision; the end of that minute so anything stamped inside it counts
+    let t = asof.value ? fromET(asof.value) + 59999 : last;
+    if (t == null || t >= last) t = Infinity;
+    if (first != null && t < first) { t = first; setAsof(first); }
+    el.value = t;
+    asofMemo.asof = t;
+    place();
+  };
+  latest.addEventListener("click", () => { setAsof(last); update(); el.dispatchEvent(new Event("input", { bubbles: true })); });
+  el.addEventListener("input", update);
+  el.addEventListener("submit", e => e.preventDefault());
+  // follow the newest data unless an earlier time was picked
+  setAsof(Number.isFinite(asofMemo.asof) && last != null ? Math.min(Math.max(asofMemo.asof, first), last) : last);
+  update();
+  // slots render after this cell on first load, and the shown page changes
+  const obs = new MutationObserver(place);
+  obs.observe(document.body, { childList: true, subtree: true });
+  document.addEventListener("shown.bs.tab", place);
+  invalidation.then(() => { obs.disconnect(); document.removeEventListener("shown.bs.tab", place); el.remove(); });
+  return { el };
+}
+// ms; Infinity at the latest (follows new data)
+asofT = Generators.input(asofCtl.el)
+asofLatest = !(asofT < (asofTimes.at(-1) ?? Infinity))
 
 // methods with any votes, in a fixed order; a lone "all" would just duplicate Total
 modes = {
@@ -146,7 +209,8 @@ geoTotal = d3.rollups(pc, v => ({
   stage: d3.max(v, d => d.stage),
   hist_dem: histByMethod ? d3.sum(v, d => d.hist_dem) : v[0].hist_dem,
   hist_rep: histByMethod ? d3.sum(v, d => d.hist_rep) : v[0].hist_rep,
-  hist_total: histByMethod ? d3.sum(v, d => d.hist_total) : v[0].hist_total
+  hist_total: histByMethod ? d3.sum(v, d => d.hist_total) : v[0].hist_total,
+  pres_dem: v[0].pres_dem, pres_rep: v[0].pres_rep
 }), d => d.geo).map(([, r]) => r)
 
 withShares = rows => rows.map(d => ({
@@ -157,7 +221,11 @@ withShares = rows => rows.map(d => ({
   margin: d.total > 0 ? (d.dem - d.rep) / d.total : null,
   hist_dem_share: d.hist_total > 0 ? d.hist_dem / d.hist_total : null,
   hist_margin: d.hist_total > 0 ? (d.hist_dem - d.hist_rep) / d.hist_total : null,
-  swing: d.total > 0 && d.hist_total > 0 ? d.dem / d.total - d.hist_dem / d.hist_total : null
+  // vs. VoteHub's 2024 president on the same precinct (all modes): two-party, as VoteHub has only D and R
+  dem_share2: d.dem + d.rep > 0 ? d.dem / (d.dem + d.rep) : null,
+  pres_dem_share: d.pres_dem + d.pres_rep > 0 ? d.pres_dem / (d.pres_dem + d.pres_rep) : null,
+  pres_margin: d.pres_dem + d.pres_rep > 0 ? (d.pres_dem - d.pres_rep) / (d.pres_dem + d.pres_rep) : null,
+  swing: d.dem + d.rep > 0 && d.pres_dem + d.pres_rep > 0 ? d.dem / (d.dem + d.rep) - d.pres_dem / (d.pres_dem + d.pres_rep) : null
 }))
 
 l2c = new Map(L2.filter(d => d.key === sel).map(d => [`${d.geo}|${d.mode}`, d]))
@@ -168,6 +236,10 @@ withL2 = d => {
   const m = l2c.get(`${d.geo}|${L2_MODE[d.method]}`);
   const o = { ...d };
   for (const k of L2_COLS) o[k] = k.startsWith("l2_turnout") ? (m ? m[k] : null) : t[k];
+  // votes counted per L2 registrant, against L2's '22 / '24 turnout of the same registrants (same vote mode)
+  o.turnout = m && t.l2_n > 0 ? d.total / t.l2_n : null;
+  o.turnout_chg22 = o.turnout != null && o.l2_turnout22 != null ? o.turnout - o.l2_turnout22 : null;
+  o.turnout_chg24 = o.turnout != null && o.l2_turnout24 != null ? o.turnout - o.l2_turnout24 : null;
   return o;
 }
 
@@ -193,28 +265,55 @@ noData = pc.length === 0
 // precincts exist but every count is still zero (pre-election / zero files)
 noVotes = reported.length === 0
 noVotesMsg = () => empty(noData ? "No data yet for this contest." : "No votes reported yet for this contest.")
-noHist = () => empty(`No history file for ${cur.state} (${cur.contest}). Expected history/${cur.state}_history.parquet.`)
+noPres = () => empty(`No 2024 presidential match for ${cur.label} (VoteHub estimated_past_results.csv through the ENR-to-VoteHub crosswalk).`)
 
 // precinct + county points for the history scatter
 scatterRows = {
-  if (!cur.has_hist) return [];
+  if (!cur.has_pres) return [];
   const geo = reported
-    .filter(d => d.method === "Total" && d.hist_dem_share != null)
+    .filter(d => d.method === "Total" && d.pres_dem_share != null && d.dem_share2 != null)
     .map(d => ({ ...d, level: "Precincts" }));
   const county = d3.rollups(geo, v => ({
     level: "Counties",
-    county: v[0].county,
-    dem_share: d3.sum(v, d => d.dem) / d3.sum(v, d => d.total),
-    hist_dem_share: d3.sum(v, d => d.hist_dem) / d3.sum(v, d => d.hist_total),
+    // the geo's county code (st_cbs); the history's county name when there is one
+    county: v[0].county === v[0].src ? v[0].geo.split("_").slice(0, 2).join("_") : v[0].county,
+    dem_share2: d3.sum(v, d => d.dem) / d3.sum(v, d => d.dem + d.rep),
+    pres_dem_share: d3.sum(v, d => d.pres_dem) / d3.sum(v, d => d.pres_dem + d.pres_rep),
     total: d3.sum(v, d => d.total)
-  }), d => d.county).map(([, r]) => r);
+  }), d => d.geo.split("_").slice(0, 2).join("_")).map(([, r]) => r);
   return [...geo, ...county];
 }
 
 // precinct explorer (controls live in the explorer card toolbar)
-explorerCols = ["dem", "rep", "total", "dem_share", "rep_share", "margin", "stage",
-  ...(cur.has_hist ? ["hist_dem", "hist_rep", "hist_total", "hist_dem_share", "hist_margin", "swing"] : []),
-  ...L2_COLS]
+// picker groups: [group, [[column, label], ...]]; '22 history only when the contest has a history file
+explorerGroups = {
+  const yy = cur.hist_year ? `'${String(cur.hist_year).slice(2)}` : "";
+  return [
+    ["Vote Share", [["dem", "Dem votes"], ["rep", "Rep votes"], ["total", "Total votes"], ["dem_share", "Dem share"], ["rep_share", "Rep share"],
+      ["dem_share2", "Dem two-party share"], ["margin", "Margin (D − R)"], ["swing", "Dem two-party swing vs. '24 Pres."]]],
+    ["Turnout", [["turnout", "Turnout (votes / L2 registrants)"], ["l2_turnout20", "Turnout '20"], ["l2_turnout22", "Turnout '22"], ["l2_turnout24", "Turnout '24"],
+      ["turnout_chg22", "Turnout change vs. '22"], ["turnout_chg24", "Turnout change vs. '24"]]],
+    ["L2", [["l2_n", "Registrants"], ["l2_male", "% male"], ["l2_white", "% white"], ["l2_black", "% Black"],
+      ["l2_hispanic", "% Hispanic"], ["l2_asian", "% Asian"]]],
+    ["Past Votes", [
+      ...(cur.has_pres ? [["pres_dem_share", "'24 Pres. Dem two-party share"], ["pres_margin", "'24 Pres. margin (D − R)"]] : []),
+      ...(cur.has_hist ? [["hist_dem", `${yy} Dem votes`], ["hist_rep", `${yy} Rep votes`], ["hist_total", `${yy} total votes`],
+        ["hist_dem_share", `${yy} Dem share`], ["hist_margin", `${yy} margin (D − R)`]] : [])]]
+  ].filter(([, v]) => v.length);
+}
+explorerLabel = new Map(explorerGroups.flatMap(([, v]) => v))
+explorerCols = [...explorerLabel.keys()]
+// grouped <select> as a view (Inputs.select has no optgroups)
+explorerSelect = (label, value) => {
+  const s = html`<select class="form-select">${explorerGroups.map(([g, v]) => html`<optgroup label="${g}">${v.map(([k, l]) =>
+    html`<option value=${k}>${l}</option>`)}</optgroup>`)}</select>`;
+  s.value = explorerLabel.has(value) ? value : explorerCols[0];
+  const form = html`<form class="explorer-pick"><label>${label}</label>${s}</form>`;
+  form.value = s.value;
+  s.addEventListener("input", () => { form.value = s.value; });
+  form.addEventListener("submit", e => e.preventDefault());
+  return form;
+}
 // precincts without an L2 match have null L2 vars and drop out here
 explorerRows = reported.filter(d => d.facet === prec_mode && d[prec_x] != null && d[prec_y] != null)
 explorerType = k => d3.max(explorerRows, d => d[k]) > 2 ? "sqrt" : "linear"
@@ -532,15 +631,19 @@ exportButtons = {
     <div class="dbox-sub">${sub}</div>
     ${sub2 ? html`<div class="dbox-sub">${sub2}</div>` : ""}
   </div>`;
-  const c = cur;
+  // before the latest data: vote totals from the summaries at "As of" (no precinct snapshots back then)
+  const tLast = d3.max(tsRows, d => +d.time);
+  const at = f => tsRows.find(d => +d.time === tLast && d.facet === f) ?? { dem: 0, rep: 0, total: 0 };
+  const c = asofLatest ? cur : { ...cur, time: tLast ?? null, total: at("Total").total, dem_votes: at("Total").dem, rep_votes: at("Total").rep,
+    eday: cur.eday == null ? null : at(METHOD_LABELS.eday).total };
   const yy = c.hist_year ? `'${String(c.hist_year).slice(2)}` : null;
   const ofHist = (x, h) => x != null && h > 0 && yy ? `${pct(x / h)} of ${yy}` : "";
   const two = c.dem_votes + c.rep_votes;
   const reportedGeo = c.n_complete + c.n_partial;
   // top_model's latest scraped-geo vote projection; blank if not modeled or its latest run didn't fit
   const isTop = d => d.model === top_model || `${d.model_base}/${d.model_spec}/${d.model_interval}` === top_model;
-  const topStatus = d3.greatest(MS.filter(d => d.key === sel && isTop(d)), d => +new Date(d.time));
-  const topRows = MP.filter(d => d.key === sel && isTop(d) && d.geo === "scraped" && d.pred_type === "vote");
+  const topStatus = d3.greatest(MS.filter(d => d.key === sel && isTop(d) && +new Date(d.time) <= asofT), d => +new Date(d.time));
+  const topRows = MP.filter(d => d.key === sel && isTop(d) && d.geo === "scraped" && d.pred_type === "vote" && +d.time <= asofT);
   const topTime = d3.max(topRows, d => +d.time);
   const topPred = p => topRows.find(d => +d.time === topTime && d.party === p)?.pred;
   const [pd, pr] = [topPred("dem"), topPred("rep")];
@@ -549,7 +652,7 @@ exportButtons = {
   return html`<div class="dbox-row">
     ${box("Last Updated", fmtTime(c.time), c.n_juris > 1 ? html`<span title=${c.juris}>ET · ${c.n_juris} jurisdictions pooled</span>` : `ET · ${c.juris}`)}
     ${box("Precincts Reported", c.n_geo ? `${fmt(reportedGeo)} / ${fmt(c.n_geo)}` : "—",
-      c.n_geo ? `${fmt(c.n_complete)} done · ${fmt(c.n_partial)} partial` : "")}
+      c.n_geo ? `${fmt(c.n_complete)} done · ${fmt(c.n_partial)} partial${asofLatest ? "" : " · latest"}` : "")}
     ${box("Total Votes Reported", fmt(c.total), ofHist(c.total, c.hist_total))}
     ${box("EDay Votes Reported", c.eday == null ? "—" : fmt(c.eday), c.eday == null ? "No Election Day split" : ofHist(c.eday, c.hist_eday))}
     ${box(c.dem_name ?? "Democrat", fmt(c.dem_votes), two > 0 ? `${pct(c.dem_votes / two)} of two-party` : "", "dbox-dem", proj(pd))}
@@ -610,9 +713,9 @@ exportButtons = {
 ```{ojs}
 //| title: Swing
 {
-  if (!cur.has_hist) return noHist();
+  if (!cur.has_pres) return noPres();
   if (noVotes) return noVotesMsg();
-  const s = exportable("Swing", histSpec(reported.filter(d => d.swing != null), "swing", `Dem share swing vs '${String(cur.hist_year).slice(2)} →`),
+  const s = exportable("Swing", histSpec(reported.filter(d => d.swing != null), "swing", "Dem two-party swing vs. '24 Pres. →"),
     "Swing", { keys: histKeys("No swing") });
   return Plot.plot({ marginBottom: s.marginBottom, fx: s.fx, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
@@ -621,21 +724,21 @@ exportButtons = {
 ```{ojs}
 //| title: Swing Scatter
 {
-  if (!cur.has_hist) return noHist();
+  if (!cur.has_pres) return noPres();
   if (noVotes) return noVotesMsg();
   const s = exportable("Swing Scatter", {
   fx: { domain: ["Precincts", "Counties"], label: null },
-  x: { domain: [0, 1], label: `Dem share '${String(cur.hist_year).slice(2)} →`, tickFormat: ".0%", grid: true },
-  y: { domain: [0, 1], label: "↑ Dem share now", tickFormat: ".0%", grid: true },
+  x: { domain: [0, 1], label: "'24 Pres. Dem two-party share →", tickFormat: ".0%", grid: true },
+  y: { domain: [0, 1], label: "↑ Dem two-party share now", tickFormat: ".0%", grid: true },
   r: { range: [1.5, 9] },
   marks: [
     Plot.link(["Precincts", "Counties"], { fx: d => d, x1: 0, y1: 0, x2: 1, y2: 1, stroke: "#999", strokeDasharray: "4,4" }),
     Plot.dot(scatterRows.filter(d => d.level === "Precincts"), {
-      fx: "level", x: "hist_dem_share", y: "dem_share", r: 2,
+      fx: "level", x: "pres_dem_share", y: "dem_share2", r: 2,
       fill: DEM, fillOpacity: 0.4, channels: { county: "county", geo: "geo", total: "total" }, tip: true
     }),
     Plot.dot(scatterRows.filter(d => d.level === "Counties"), {
-      fx: "level", x: "hist_dem_share", y: "dem_share", r: "total",
+      fx: "level", x: "pres_dem_share", y: "dem_share2", r: "total",
       fill: DEM, fillOpacity: 0.4, stroke: "white", strokeWidth: 0.5, channels: { county: "county" }, tip: true
     })
   ]
@@ -655,7 +758,7 @@ exportButtons = {
 ```{ojs ctrl-prec}
 //| content: card-toolbar
 l2Warn = {
-  if (![prec_x, prec_y].some(k => k.startsWith("l2_"))) return html`<span></span>`;
+  if (![prec_x, prec_y].some(k => k.startsWith("l2_") || k.startsWith("turnout"))) return html`<span></span>`;
   return html`<span class="l2-warn" title="ENR precincts in this contest matched to L2 via input_data/crosswalks. Unmatched precincts are dropped from the plot.">⚠ L2 matched for ${pct(cur.l2_match ?? 0)} of precincts</span>`;
 }
 viewof line45 = {
@@ -663,16 +766,8 @@ viewof line45 = {
   out.querySelector("input").classList.add("form-check-input");
   return out;
 }
-viewof prec_y = {
-  const s = Inputs.select(explorerCols, { value: "dem_share", label: "Y" });
-  s.querySelector("select").classList.add("form-select");
-  return s;
-}
-viewof prec_x = {
-  const s = Inputs.select(explorerCols, { value: cur.has_hist ? "hist_dem_share" : "total", label: "X" });
-  s.querySelector("select").classList.add("form-select");
-  return s;
-}
+viewof prec_y = explorerSelect("Y", cur.has_pres ? "dem_share2" : "dem_share")
+viewof prec_x = explorerSelect("X", cur.has_pres ? "pres_dem_share" : "total")
 viewof prec_mode = {
   const s = Inputs.select(facets, { value: "Total", label: "Vote Mode" });
   s.querySelector("select").classList.add("form-select");
@@ -684,20 +779,27 @@ viewof prec_mode = {
 {
   if (noVotes) return noVotesMsg();
   const s = exportable("Precinct Explorer", {
-  x: { label: `${prec_x} →`, grid: true, type: explorerType(prec_x), domain: explorerDomain(prec_x) },
-  y: { label: `↑ ${prec_y}`, grid: true, type: explorerType(prec_y), domain: explorerDomain(prec_y) },
+  x: { label: `${explorerLabel.get(prec_x)} →`, grid: true, type: explorerType(prec_x), domain: explorerDomain(prec_x) },
+  y: { label: `↑ ${explorerLabel.get(prec_y)}`, grid: true, type: explorerType(prec_y), domain: explorerDomain(prec_y) },
   marks: [
     Plot.dot(explorerRows, { x: prec_x, y: prec_y, r: 2, fill: INK, fillOpacity: 0.45, channels: { geo: "geo", county: "county", total: "total" }, tip: true }),
     Plot.linearRegressionY(explorerRows, { x: prec_x, y: prec_y, stroke: "black" }),
     line45.length > 0 && explorerLo < explorerHi ? Plot.link([0], { x1: explorerLo, y1: explorerLo, x2: explorerHi, y2: explorerHi, stroke: "#999", strokeDasharray: "4,4" }) : null
   ]
-  }, `Precincts: ${prec_y} vs ${prec_x} (${prec_mode})`, { keys: [
+  }, `Precincts: ${explorerLabel.get(prec_y)} vs. ${explorerLabel.get(prec_x)} (${prec_mode})`, { keys: [
     { mark: "dot", label: "Precinct", opacity: 0.45, r: 2.5 },
     { mark: "line", label: "Linear fit", color: "black", width: 1.5 },
     line45.length > 0 && explorerLo < explorerHi && { mark: "line", label: "45° line", color: "#999", width: 1, dash: "4,4" }
   ] });
   return Plot.plot({ x: s.x, y: s.y, marks: s.marks });
 }
+```
+
+## {.toolbar}
+
+```{ojs results-asof}
+// global "As of" (asofCtl); the precinct rows are the latest scrape only
+html`<div class="asof-slot" data-note="Precinct charts show the latest scrape"></div>`
 ```
 
 # Models
@@ -762,24 +864,22 @@ GEO_LABELS = { return { scraped: "Scraped", all: "Statewide (all)" } }
 partyName = p => p === "dem" ? (cur.dem_name ?? "Dem") : (cur.rep_name ?? "Rep")
 modelColor = { return { type: "categorical", domain: [partyName("dem"), partyName("rep")], range: [DEM, REP], legend: true } }
 
-// run times across every model for the contest; the "As of" input moves among these
+// run times across every model for the contest
 runTimes = [...new Set(mpc.map(d => +d.time))].sort((a, b) => a - b)
 
-// "As of" is a datetime-local in Eastern time, whatever the viewer's zone
 etOffset = ms => {
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hourCycle: "h23",
     year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
     .formatToParts(ms).map(x => [x.type, x.value]));
   return Date.UTC(+p.year, p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(ms / 1000) * 1000;
 }
-toET = ms => new Date(ms + etOffset(ms)).toISOString().slice(0, 16)
-fromET = s => { const u = Date.parse(`${s}:00Z`); return u - etOffset(u - etOffset(u)); }
 
 // last model-control choices; this cell has no inputs, so it survives contest changes and mctl restores from it
 mctlMemo = { return {} }
 
 model_pick = mctl.model
-asof = mctl.asof
+// the global "As of", snapped up to the first run: before it there is nothing to show
+asof = runTimes.length ? Math.min(Math.max(asofT, runTimes[0]), runTimes.at(-1)) : asofT
 hasAll = mpc.some(d => d.model === model_pick && d.geo === "all")
 modelRows = mpc
   .filter(d => d.model === model_pick && (d.geo === "scraped" || (d.geo === "all" && mctl.all)))
@@ -998,8 +1098,8 @@ noMap = g => empty(g === null ? `No VoteHub precinct map for ${cur.state} (expec
 ## {.toolbar}
 
 ```{ojs model-controls}
-// value = { model, all, asof }: model is the full name (e.g. pois_bayes/strat_d/conformal),
-// asof a time in ms; plots run up to it and the table shows each model's last run at or before it
+// value = { model, all }: model is the full name (e.g. pois_bayes/strat_d/conformal); the
+// toolbar's global "As of" (asofT) sets how far the plots run and which run the table shows
 viewof mctl = {
   const isTop = m => m === top_model || `${modelParts.get(m)?.base}/${modelParts.get(m)?.spec}/${modelParts.get(m)?.interval}` === top_model;
   const start = [mctlMemo.model, modelsOk.find(isTop), modelsOk.find(m => mpc.some(d => d.model === m && d.pred_min != null)), modelsOk[0]]
@@ -1007,13 +1107,8 @@ viewof mctl = {
   const form = html`<form class="model-ctl">
     <label>Model <select name="model" class="form-select form-select-sm"></select></label>
     <label name="all-wrap"><input type="checkbox" name="all" class="form-check-input"> Statewide</label>
-    <span class="model-ctl-asof">
-      <label>As of <input type="datetime-local" name="asof" class="form-control form-control-sm"></label>
-      <span class="model-ctl-tz">ET</span>
-      <button type="button" name="latest" class="btn btn-sm btn-outline-secondary">Latest</button>
-    </span>
   </form>`;
-  const { model, all, asof, latest } = form.elements;
+  const { model, all } = form.elements;
   // one select, grouped by base model; the base's default spec/interval first, then label order
   const rank = (labels, v) => { const o = Object.keys(labels); return o.includes(v) ? o.indexOf(v) : o.length; };
   const bases = [...new Set(modelList.map(m => modelParts.get(m).base))].sort();
@@ -1033,11 +1128,6 @@ viewof mctl = {
     }));
     return g;
   }));
-  const first = runTimes[0], last = runTimes.at(-1);
-  if (last != null) { asof.min = toET(first); asof.max = toET(last); }
-  // follow the newest run unless an earlier time was picked
-  const t0 = mctlMemo.asof != null && mctlMemo.atLatest === false ? Math.min(Math.max(mctlMemo.asof, first), last) : last;
-  const setAsof = t => { asof.value = t == null ? "" : toET(t); };
   const allWrap = form.querySelector("[name=all-wrap]");
   const setModel = () => {
     allWrap.hidden = !mpc.some(d => d.model === model.value && d.geo === "all");
@@ -1045,26 +1135,24 @@ viewof mctl = {
     model.title = model.selectedOptions[0]?.title ?? "";
   };
   const update = () => {
-    // minute precision; the end of that minute so a run stamped inside it counts
-    let t = asof.value ? fromET(asof.value) + 59999 : last;
-    if (t == null || t >= last) t = last ?? Infinity;
-    // before the first run there is nothing to show: snap to it
-    if (first != null && t < first) { t = first; setAsof(first); }
-    form.value = { model: model.value || null, all: all.checked, asof: t };
-    if (!noModels) Object.assign(mctlMemo, { model: model.value, asof: t, atLatest: t >= last });
+    form.value = { model: model.value || null, all: all.checked };
+    if (!noModels) Object.assign(mctlMemo, { model: model.value });
   };
   model.addEventListener("input", setModel);
   all.addEventListener("input", () => { mctlMemo.all = all.checked; });
-  latest.addEventListener("click", () => { setAsof(last); update(); form.dispatchEvent(new Event("input", { bubbles: true })); });
   form.addEventListener("input", update);
   form.addEventListener("submit", e => e.preventDefault());
   form.hidden = noModels;
   if (start) model.value = start;
-  setAsof(t0);
   setModel();
   update();
   return form;
 }
+```
+
+```{ojs models-asof}
+// global "As of" (asofCtl)
+html`<div class="asof-slot"></div>`
 ```
 
 ## Row
@@ -1480,6 +1568,11 @@ viewof rctl = {
   update();
   return form;
 }
+```
+
+```{ojs redist-asof}
+// global "As of" (asofCtl); this page's sources are their latest count or model run only
+html`<div class="asof-slot" data-note="This page shows the latest data"></div>`
 ```
 
 ## Row

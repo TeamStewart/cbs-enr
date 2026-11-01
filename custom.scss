@@ -264,3 +264,19 @@
   .btn-group .btn.active { background: #495057; color: #fff; border-color: #495057; }
   .btn-link { font-size: 0.8rem; font-weight: 600; padding: 0 0.25rem; color: $body-color; text-decoration: none; white-space: nowrap; }
 }
+
+// precinct explorer X / Y pickers (grouped selects built in index.qmd)
+.explorer-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+
+  label { margin: 0; white-space: nowrap; }
+  .form-select { width: auto; max-width: 20rem; }
+}
+
+// global "As of" (index.qmd asofCtl): one control, moved into each page's toolbar slot
+.asof-slot { margin-left: auto; }
+.asof-ctl { width: auto; justify-content: flex-end; }
+.asof-note { color: #8a5a00; background: #fff3cd; border-radius: 0.25rem; padding: 0.1rem 0.5rem; white-space: nowrap; }
