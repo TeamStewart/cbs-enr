@@ -44,8 +44,8 @@ ojs_define(
   dash_title = dd$title,
   # test data (pages.yml sets CBS_DASH_SOURCE from dashboard_mode.txt): a TEST DATA badge in the header
   dash_test = Sys.getenv("CBS_DASH_SOURCE") == "test" || grepl("dashtest", Sys.getenv("CBS_DASH_RDS")),
-  # second header logo next to the CBS one (format: logo takes only one), inlined for embed-resources
-  mit_logo = paste0("data:image/svg+xml;base64,", base64enc::base64encode("assets/mit_logo_std_rgb_white.svg")),
+  # MEDSL header logo on the right (format: logo takes only one, the CBS one on the left), inlined for embed-resources
+  medsl_header_logo = paste0("data:image/png;base64,", base64enc::base64encode("assets/MEDSL_horizontal_RGB_KO.png")),
   # chart exports: ggmedsl's Styrene B and lab logo (assets/), VoteHub logo for the precinct maps' basemap credit
   medsl_font = paste0("data:font/ttf;base64,", base64enc::base64encode("assets/StyreneB_Regular.ttf")),
   medsl_logo = paste0("data:image/png;base64,", base64enc::base64encode("assets/medsl_horizontal.png")),
@@ -124,8 +124,8 @@ sel = {
   });
   // charts in hidden tabs render at 0 size; nudge Quarto's card sizing when a tab is shown
   document.addEventListener("shown.bs.tab", () => window.dispatchEvent(new Event("resize")));
-  const logo = document.querySelector("#quarto-dashboard-header .navbar-logo");
-  if (logo && !document.querySelector(".navbar-logo-mit")) logo.after(html`<img src=${mit_logo} alt="MIT" class="navbar-logo navbar-logo-mit">`);
+  const navbar = document.querySelector("#quarto-dashboard-header .navbar-container");
+  if (navbar && !document.querySelector(".navbar-logo-medsl")) navbar.append(html`<img src=${medsl_header_logo} alt="MIT Election Data and Science Lab" class="navbar-logo-medsl">`);
   const title = document.querySelector("#quarto-dashboard-header .navbar-title");
   if (title) {
     title.textContent = dash_title;
