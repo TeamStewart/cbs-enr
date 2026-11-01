@@ -1,0 +1,30 @@
+# enightdata is in renv ignored.packages (each machine installs its own checkout),
+# so renv::snapshot() does not follow its dependencies. This file lists enightdata's
+# Imports so the lockfile keeps them. Never sourced; keep in sync with its DESCRIPTION.
+if (FALSE) {
+  library(chromote)
+  library(cli)
+  library(data.table)
+  library(dplyr)
+  library(enightmodels)
+  library(fs)
+  library(glue)
+  library(googledrive)
+  library(httr2)
+  library(janitor)
+  library(jsonlite)
+  library(lubridate)
+  library(nanoparquet)
+  library(pdftools)
+  library(purrr)
+  library(readr)
+  library(readxl)
+  library(reticulate)
+  library(rlang)
+  library(rvest)
+  library(stringi)
+  library(stringr)
+  library(tibble)
+  library(tidyr)
+  library(xml2)
+}
