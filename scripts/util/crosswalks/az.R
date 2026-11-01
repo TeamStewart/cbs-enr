@@ -41,6 +41,9 @@ parse_pct = function(county, x) {
     .default = x
   )
   name = std_name(name)
+  # The frame writes Pinal 0040 "APACHE JCT" where its sibling precincts and the
+  # feed both spell JUNCTION.
+  name = str_replace_all(name, "\\bJCT\\b", "JUNCTION")
   # Drop a trailing number equal to the precinct number: Coconino frame
   # "01 - FLAGSTAFF 1" vs L2 "FLAGSTAFF-01" -> both (0001, "FLAGSTAFF").
   tail_n = str_match(name, "^(.*\\S) (\\d+)$")
@@ -98,6 +101,29 @@ enr_matched = c("k_code_name", "k_code_bare") |>
   list_rbind()
 
 stopifnot(!anyDuplicated(enr_matched[c("county", "precinct_enr")]))
+
+# The feed caps a precinct label at 30 characters, which cuts Pinal 0040 mid-word
+# ("040 APACHE JUNCTION SUPERSTITI"), so no exact key can match it. Pair the
+# leftovers on the number and keep a prefix match only for labels at that cap.
+enr_trunc = az_enr |>
+  anti_join(enr_matched, join_by(county, precinct_enr)) |>
+  filter(!is.na(code4), nzchar(pname), nchar(precinct_enr) >= 30) |>
+  select(state, county, precinct_enr, code4, pname) |>
+  inner_join(
+    fr_keys |>
+      anti_join(enr_matched, join_by(county, precinct_yougov)) |>
+      select(county, precinct_yougov, code4, fr_pname = pname),
+    join_by(county, code4)
+  ) |>
+  filter(startsWith(fr_pname, pname)) |>
+  filter(n() == 1, .by = c(county, code4)) |>
+  select(state, county, precinct_enr, precinct_yougov)
+
+enr_matched = bind_rows(enr_matched, enr_trunc)
+stopifnot(
+  !anyDuplicated(enr_matched[c("county", "precinct_enr")]),
+  !anyDuplicated(enr_matched[c("county", "precinct_yougov")])
+)
 
 # ENR ids whose number is in the frame but whose name differs (would signal a
 # renamed or renumbered precinct, left NA).

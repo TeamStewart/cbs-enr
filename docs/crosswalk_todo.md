@@ -79,7 +79,7 @@ state where `precinct26_id` repeats within county x cd.
 |---|---|---|---|---|---|---|
 | NC | 100 (all) | 3,539 | nc_20261006 | 3,505 (99.0%) | 99.5% | done 10-27 |
 | AK | 30 (all) | 402 | ak_20261008 | 402 (100%) | 99.0% | done 10-15 |
-| AZ | 9 | 1,545 | az_20260901 | 1,544 (99.9%) expected | 100% | pending rerun on statewide ENR (measured 11-01, all 9 frame counties; was 1,172 / 5 counties) |
+| AZ | 9 | 1,545 | az_20260901 | 1,545 (100%) | 100% | done 11-01 (statewide ENR, all 9 frame counties; was 1,172 / 5 counties) |
 | CA | 17 | 29,961 | ca_20260901 | 4,288 (14.3%) | 88.9% (10-30 measure; L2 rows 23,726 -> 25,353 on 10-31 with San Bernardino) | partial 10-31 (ENR: Sacramento, San Bernardino, San Francisco, Sonoma singletons, Ventura; SD, Solano, Riverside, Nevada via consolidated builds) |
 | FL | 65 | 6,252 | fl_20261011 | 3,376 (54.0%) | 99.9% | partial 10-31 (41 ENR counties; Pinellas, St Johns added; L2 St Johns/St Lucie fixed) |
 | GA | 159 (all) | 2,616 | ga_20261006 | 2,600 (99.4%) | 99.4% | done 10-31 |
@@ -111,7 +111,11 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
 - **AZ**: ENR is one statewide Enhanced Voting file, covering all 9 frame
   counties (was 5). Pima and Yuma ENR print the number with no name
   ("PRECINCT 001") and match only on `k_code_bare`, as their L2 already did, so
-  the ENR join runs both key tiers. Unmatched: Pinal 134/135.
+  the ENR join runs both key tiers. All 9 counties are 100% ENR. Pinal 0040
+  needed two local rules: `parse_pct()` rewrites JCT to JUNCTION (the frame
+  abbreviates it there, its siblings 0056-0059 do not), and a third ENR tier
+  pairs still-unmatched rows on the number and accepts a prefix match when the
+  feed's label is at its 30-character cap ("040 APACHE JUNCTION SUPERSTITI").
 - **CA**: San Diego, Solano, Riverside and Nevada ENR are consolidations, NA
   in `ca.csv`, with separate builds run after `ca.R`:
   `ca_sandiego_consolidated.R` (1,893 consolidations, 88.9% of SD frame
@@ -186,6 +190,11 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
 
 ## Follow-ups
 
+- **Truncated ENR labels.** `az.R` carries a local third ENR tier for feeds that
+  cap a precinct label (Enhanced Voting cuts Arizona's at 30 characters): pair
+  the leftovers on the precinct number, accept a prefix match only at the cap,
+  and require it to be unique within the county. Worth promoting to
+  `helpers.R` if a second state needs it.
 - **Recheck on 2026-11-02 and 2026-11-03: FL Gadsden and Levy polling
   places.** If a county moved a polling place, that precinct silently drops to
   NA. Compare ENR names with the county lists above, rerun `fl.R`, and confirm
