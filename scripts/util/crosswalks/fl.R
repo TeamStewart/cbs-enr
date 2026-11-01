@@ -142,6 +142,8 @@ fl_l2 = enightdata::read_local(
   as_tibble() |>
   mutate(county = str_replace(county, "^ST\\. ", "ST ")) |> # L2 "ST. JOHNS" / frame "ST JOHNS"
   filter(county %in% fl_counties) |>
+  # stray 1-voter "34" next to "HIDDEN CREEK (34)" (11k voters): code_exact would take it
+  filter(!(county == "SANTA ROSA" & precinct %in% "34")) |>
   select(state, county, precinct, n_l2 = n) |>
   mutate(precinct_l2 = precinct) |>
   arrange(county, precinct)

@@ -253,7 +253,8 @@ withL2 = d => {
   const o = { ...d };
   for (const k of L2_COLS) o[k] = k.startsWith("l2_turnout") ? (m ? m[k] : null) : t[k];
   // votes counted per L2 registrant, against L2's '22 / '24 turnout of the same registrants (same vote mode)
-  o.turnout = m && t.l2_n > 0 ? d.total / t.l2_n : null;
+  // above 200% is a bad L2 match (e.g. a stray 1-voter L2 precinct), not turnout: drop it
+  o.turnout = m && t.l2_n > 0 && d.total / t.l2_n <= 2 ? d.total / t.l2_n : null;
   o.turnout_chg22 = o.turnout != null && o.l2_turnout22 != null ? o.turnout - o.l2_turnout22 : null;
   o.turnout_chg24 = o.turnout != null && o.l2_turnout24 != null ? o.turnout - o.l2_turnout24 : null;
   return o;
@@ -388,9 +389,10 @@ histKeys = zero => [
 // Each chart cell registers its spec here, with legend keys for any marks the color scale doesn't cover;
 // the card-header button re-renders it in the MIT Election Lab house style (ggmedsl's theme_medsl(),
 // medsl_caption() and add_logo(): Styrene B, centred title, bottom legend, source caption, lab logo strip)
-// at a fixed size and saves a PNG. Precinct maps also credit VoteHub for the basemap. The live charts are untouched.
+// at a fixed size and saves a PNG with a transparent background (opt.format "svg" saves a vector SVG instead;
+// the District Map does). Precinct maps also credit VoteHub for the basemap. The live charts are untouched.
 EXPORT_THEME = { return {
-  width: 1200, height: 675, scale: 3, format: "png",   // pixels = width/height x scale (maps: height follows the state); "png" or "jpeg"
+  width: 1200, height: 675, scale: 3, format: "png",   // pixels = width/height x scale (maps: height follows the state); "png", "jpeg" or "svg"
   font: "'Styrene B', 'Helvetica Neue', Helvetica, Arial, sans-serif",
   base: 16,   // theme_medsl(base_size); every other size is one of its rel() multiples
   ink: "#000000", subtitle: "#444444", muted: "#666666", grid: "#D0D0D0", background: "#ffffff", pad: 24,
@@ -404,7 +406,7 @@ EXPORTS = new Map()
 // entries { mark: "rect" | "band" | "line" | "dot" | "ring" | "arrow", label, color, opacity, width, dash, r, dir }
 // opt (pages not keyed on the contest, e.g. Redistricting): scope (the key the export button asks for,
 // else the contest), sub (subtitle), file (file name prefix), time, basemap (map credit; no VoteHub logo),
-// height (px at the theme's width, in place of its fixed height),
+// height (px at the theme's width, in place of its fixed height), format (in place of the theme's),
 // multi: [{ s, title, suffix }] to save several images from one button
 exportable = (name, s, title, legend = {}, opt = {}) => (EXPORTS.set(`${opt.scope ?? cur.key}|${name}`, { s, title: title ?? name, legend, ...opt }), s)
 
@@ -446,7 +448,71 @@ exportChart = {
     }
     return dir;
   };
-  const render = async ({ s, title, legend: lg, sub, basemap, height }) => {
+  // a stand-in for the canvas 2D context that records the same drawing calls as SVG elements (the vector
+  // export), so both formats share one layout; text is measured on a real canvas
+  const svgContext = () => {
+    const NS = "http://www.w3.org/2000/svg", XL = "http://www.w3.org/1999/xlink";
+    const ruler = document.createElement("canvas").getContext("2d");
+    const root = document.createElementNS(NS, "svg");
+    const el = (tag, attrs) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(attrs)) if (v != null) k === "href" ? e.setAttributeNS(XL, "xlink:href", v) : e.setAttribute(k, v);
+      root.append(e);
+      return e;
+    };
+    const keys = ["fillStyle", "strokeStyle", "lineWidth", "globalAlpha", "font", "textAlign", "textBaseline", "dash"], stack = [];
+    let d = "";
+    const op = () => g.globalAlpha === 1 ? null : g.globalAlpha;
+    const g = {
+      fillStyle: "#000000", strokeStyle: "#000000", lineWidth: 1, globalAlpha: 1, font: "10px sans-serif",
+      textAlign: "left", textBaseline: "alphabetic", dash: [],
+      scale() {},
+      save() { stack.push(Object.fromEntries(keys.map(k => [k, g[k]]))); },
+      restore() { Object.assign(g, stack.pop()); },
+      setLineDash(a) { g.dash = a; },
+      measureText(t) { ruler.font = g.font; return ruler.measureText(t); },
+      fillRect(x, y, width, height) { el("rect", { x, y, width, height, fill: g.fillStyle, "fill-opacity": op() }); },
+      beginPath() { d = ""; },
+      moveTo(x, y) { d += `M${x},${y}`; },
+      lineTo(x, y) { d += `L${x},${y}`; },
+      arc(x, y, r, a0, a1) {   // clockwise, as the canvas default
+        const pt = a => `${x + r * Math.cos(a)},${y + r * Math.sin(a)}`;
+        d += `${d ? "L" : "M"}${pt(a0)}`;
+        d += a1 - a0 >= 2 * Math.PI - 1e-9
+          ? `A${r},${r} 0 1 1 ${pt(a0 + Math.PI)}A${r},${r} 0 1 1 ${pt(a0)}Z`
+          : `A${r},${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${pt(a1)}`;
+      },
+      fill() { el("path", { d, fill: g.fillStyle, "fill-opacity": op() }); },
+      stroke() {
+        el("path", { d, fill: "none", stroke: g.strokeStyle, "stroke-width": g.lineWidth, "stroke-opacity": op(),
+          "stroke-dasharray": g.dash.length ? g.dash.join(",") : null });
+      },
+      fillText(t, x, y) {
+        const m = g.measureText(t);
+        const dy = g.textBaseline === "top" ? (m.emHeightAscent ?? m.fontBoundingBoxAscent ?? 0) : 0;
+        el("text", { x, y: y + dy, fill: g.fillStyle, "fill-opacity": op(), style: `font: ${g.font}`,
+          "text-anchor": { center: "middle", right: "end", end: "end" }[g.textAlign] ?? "start" }).textContent = t;
+      },
+      // the plot comes in as its <svg> element and is nested as is (vector); logos as embedded images
+      drawImage(img, x, y, width, height) {
+        if (img instanceof SVGSVGElement) {
+          Object.entries({ x, y, width, height }).forEach(([k, v]) => img.setAttribute(k, v));
+          root.append(img);
+        } else el("image", { href: img.src, x, y, width, height, preserveAspectRatio: "none" });
+      },
+      toBlob(W, H) {
+        root.setAttribute("xmlns", NS);
+        root.setAttribute("xmlns:xlink", XL);
+        Object.entries({ width: W, height: H, viewBox: `0 0 ${W} ${H}` }).forEach(([k, v]) => root.setAttribute(k, v));
+        const face = document.createElementNS(NS, "style");
+        face.textContent = `@font-face { font-family: "Styrene B"; src: url(${medsl_font}) format("truetype"); }`;
+        root.prepend(face);
+        return new Blob([new XMLSerializer().serializeToString(root)], { type: "image/svg+xml" });
+      }
+    };
+    return g;
+  };
+  const render = async ({ s, title, legend: lg, sub, basemap, height, format = T.format }) => {
     const [medslLogo, votehubLogo] = await logos;
     const B = T.base, W = T.width, innerW = W - 2 * T.pad;
     const isMap = s.projection != null;
@@ -455,8 +521,9 @@ exportChart = {
     // (modelSpec) carries for its own marks
     const { caption, exportCaption, keys: specKeys = [], ...spec } = s;
     const note = exportCaption ?? caption;
-    const c = document.createElement("canvas");
-    const g = c.getContext("2d");
+    const vector = format === "svg";
+    const c = vector ? null : document.createElement("canvas");
+    const g = vector ? svgContext() : c.getContext("2d");
     const font = rel => `400 ${rel * B}px ${T.font}`;
     const measure = (t, rel) => (g.font = font(rel), g.measureText(t).width);
     const lineH = rel => rel * B * 1.25;
@@ -548,9 +615,10 @@ exportChart = {
     }
     const plotH = H - plotTop - footH;
 
-    c.width = W * T.scale; c.height = H * T.scale;
+    if (c) { c.width = W * T.scale; c.height = H * T.scale; }
     g.scale(T.scale, T.scale);
-    g.fillStyle = T.background; g.fillRect(0, 0, W, H);
+    // transparent background, except JPEG (no alpha); white marks keep their own fill
+    if (format === "jpeg") { g.fillStyle = T.background; g.fillRect(0, 0, W, H); }
     g.textBaseline = "top";
     text(titleLines, 1.4, T.ink, W / 2, T.pad, "center");
     text(subLines, 1, T.subtitle, W / 2, T.pad + titleLines.length * lineH(1.4) + 0.75 * B, "center");
@@ -585,6 +653,10 @@ exportChart = {
     const face = document.createElementNS("http://www.w3.org/2000/svg", "style");
     face.textContent = `@font-face { font-family: "Styrene B"; src: url(${medsl_font}) format("truetype"); }`;
     svg.prepend(face);
+    if (vector) {
+      g.drawImage(svg, T.pad, plotTop, innerW, plotH);
+      return g.toBlob(W, H);
+    }
     const img = await loadImg("data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(svg)));
     g.drawImage(img, T.pad, plotTop, innerW, plotH);
     return new Promise(resolve => c.toBlob(resolve, `image/${T.format}`, 0.95));
@@ -602,7 +674,8 @@ exportChart = {
     const items = entry.multi ? entry.multi.filter(it => only == null || it.suffix === only) : [entry];
     if (items.length === 0) return "Nothing to export for this chart.";
     for (const it of items) {
-      const file = `${entry.file ?? cur.key}_${slug(name)}${it.suffix ? `_${it.suffix}` : ""}_${stamp}.${T.format === "jpeg" ? "jpg" : T.format}`;
+      const fmt = it.format ?? entry.format ?? T.format;
+      const file = `${entry.file ?? cur.key}_${slug(name)}${it.suffix ? `_${it.suffix}` : ""}_${stamp}.${fmt === "jpeg" ? "jpg" : fmt}`;
       const blob = await render({ ...entry, ...it });
       if (dir) {
         const w = await (await dir.getFileHandle(file, { create: true })).createWritable();
@@ -648,7 +721,7 @@ exportButtons = {
   // the Redistricting map: one button per map image
   document.querySelectorAll(".card:not(.tabset) > .card-header").forEach(h => {
     if (h.textContent.trim() !== "District Map") return;
-    for (const yr of ["2024", "2026"]) add(h, () => "District Map", `Save the ${yr} map image (shift-click: choose folder)`, yr, `${yr}-map`);
+    for (const yr of ["2024", "2026"]) add(h, () => "District Map", `Save the ${yr} map as SVG (shift-click: choose folder)`, yr, `${yr}-map`);
   });
   return exportChart;
 }
@@ -1746,7 +1819,7 @@ html`<div class="asof-slot" data-note="This page shows the latest data"></div>`
     projection: g.projection,
     color: marginColor,
     marks: [...old.fill, ...neu.fill, ...fill, ...rdOutlines(g), ...old.top, ...neu.top]
-  }, `${rst} Congressional Districts`, {}, { ...rdExportOpt,
+  }, `${rst} Congressional Districts`, {}, { ...rdExportOpt, format: "svg",
     basemap: view === "precinct" ? "VoteHub precincts and U.S. Census Bureau district lines" : "U.S. Census Bureau district lines",
     multi: [{ s: one(old, view), title: `${rst} Congressional Districts, 2024 Map`, suffix: "2024-map" },
             { s: one(neu, view), title: `${rst} Congressional Districts, 2026 Map`, suffix: "2026-map" }] });
