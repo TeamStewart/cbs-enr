@@ -119,7 +119,8 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
   VoteHub CA26G). San Diego is the logged exception to the merges-stay-NA rule
   (see `docs/precinct_crosswalks.md`). **Check on real results**: ballots <=
   n per consolidation. Sonoma `07xxxxx` consolidations (331) stay NA until the
-  ROV's membership list is found. L2 NA by design: Ventura, Merced, Shasta,
+  ROV's membership list is found. Ventura L2 joins through the county's precinct map
+  (`Ventura_PrecinctMap.csv`, NUMBER_ -> ELECTID; see `ca.R`). L2 NA by design: Merced, Shasta,
   Marin split codes, Sacramento Vineyard merges, San Mateo 71.
 - **FL**: `place_codes` in `fl.R` maps polling-place ENR ids to codes for
   Gadsden (votegadsdenfl.gov list of precincts), Levy, Franklin, Gulf, Jackson,

@@ -68,11 +68,11 @@ per update, the id changes.
 map doesn't cover. `l2` is `crosswalks/{st}.csv` (needs both an ENR and an L2
 id) plus the direct fallback `crosswalks/l2_direct/{st}.csv`; `votehub` is
 `crosswalks/votehub/{st}.csv`. The 10-31 pass fixed every VoteHub gap (NE,
-IA, OH Carroll, FL Franklin) and GA L2 except Burke. Left:
+IA, OH Carroll, FL Franklin) and GA L2 except Burke; 11-01 fixed CA Ventura. Left:
 
 | state | map | counties | feed precincts | note |
 |---|---|---|---|---|
-| CA | l2 | Nevada, Riverside, San Diego, Solano, Ventura | 5,934 | first four: L2 comes through the consolidated members files (full files and model prep read them; `match_rates.R` doesn't). Ventura: L2's `precinct` is another scheme ("CALLEGUAS 5-001", 1,148 units) with no link to ENR's 7-digit codes, and no newer L2 exists. Accepted. |
+| CA | l2 | Nevada, Riverside, San Diego, Solano | 4,501 | L2 comes through the consolidated members files (full files and model prep read them; `match_rates.R` doesn't). Ventura fixed 11-01 from the county's `Ventura_PrecinctMap.csv` (1,252 of 1,254 frame rows). |
 | GA | l2 | Burke | 12 | renumbered for 2026; L2 (10-06) has the old numbers. Needs a newer Burke L2 pull. |
 | NY | l2 (direct) | Chemung, Clinton, Madison, Ontario, Orange, Putnam, Sullivan, Ulster | 967 | not yet inspected |
 | WI | l2 (direct) | Barron, Dane, Oneida | 340 | not yet inspected |

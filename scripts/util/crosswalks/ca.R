@@ -146,11 +146,36 @@ sm_codes = ca_l2 |>
   filter(n() == 1, .by = precinct_l2) |>
   select(county, precinct_l2, code)
 
+# VENTURA: L2 "CALLEGUAS 5-007" -> frame "0005306". The county's precinct map
+# (input_data/crosswalks/Ventura_PrecinctMap.csv; NUMBER_ "Calleguas 5-007",
+# ELECTID "0005306") shows ELECTID = number + a fixed offset within each place
+# and district (Calleguas 5: 5299), so the offset also covers L2 precincts the
+# map lacks (FILLMORE 3-016..023, SIMI 4-115..123; L2 n within 5% of frame n).
+# The map writes "CASITAS SPRGS" and L2 pads "TEAG MCKEV 3-0001". The one
+# map row off the rule is LOCKWOOD 3-008, which shares 0031006 with 3-007.
+vt_parse = function(x) {
+  g = str_match(x, "^(.*) (\\d+)-(\\d+)$")
+  tibble(pd = paste(g[, 2], as.integer(g[, 3])), num = as.integer(g[, 4]))
+}
+vt_map = read_csv(election_path("input_data/crosswalks/Ventura_PrecinctMap.csv"), col_types = cols(.default = "c")) |>
+  transmute(name = str_replace(toupper(str_squish(NUMBER_)), "^CASITAS SPRGS ", "CASITAS SPRINGS "), ELECTID)
+vt_off = bind_cols(vt_map, vt_parse(vt_map$name)) |>
+  count(pd, off = as.integer(ELECTID) - num) |>
+  slice_max(n, n = 1, with_ties = FALSE, by = pd) |>
+  select(pd, off)
+vt_code = function(x) {
+  p = vt_parse(x) |> left_join(vt_off, join_by(pd))
+  if_else(is.na(p$off), NA_character_, sprintf("%07d", p$num + p$off))
+}
+stopifnot(sum(vt_code(vt_map$name) != vt_map$ELECTID) == 1) # LOCKWOOD 3-008
+
 county_codes = function(county, x) {
   out = rep(NA_character_, length(x))
   cc = county == "CONTRA COSTA"
   ccx = str_match(x, "^(.*) (\\d{3})$")
   out[cc] = if_else(is.na(cc_pfx[ccx[cc, 2]]), NA, paste0(cc_pfx[ccx[cc, 2]], ccx[cc, 3]))
+  vt = county == "VENTURA"
+  out[vt] = vt_code(x[vt])
   out
 }
 
@@ -160,8 +185,6 @@ l2_manual = tribble(~county, ~precinct_l2, ~precinct_yougov)
 # Not matched on purpose (no reliable name -> code link in the inputs):
 #   MERCED, SHASTA: L2 has place names ("BEACHWOOD 1", "REDDING 15"), frame has
 #     numeric codes ("17202", "0290630").
-#   VENTURA: L2 "OXNARD 5-001" vs frame "0055001"; the numbers do not line up
-#     with any prefix mapping.
 #   Frame split codes ("10906-B" in MARIN, "0121120-A" in SHASTA, "38003-0" in
 #     SAN MATEO) have no L2 counterpart; L2 carries only the parent precinct.
 
