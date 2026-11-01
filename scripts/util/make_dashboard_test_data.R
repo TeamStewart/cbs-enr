@@ -17,6 +17,7 @@
 ## crosswalks and L2 files from 26_general/input_data, and saves the dashboard data rds.
 ## Counties outside the sim get the CBS test feed's latest county snapshot.
 ## Only DASHBOARD_CONTESTS rows with a sim are shown.
+## Ends by running scripts/util/make_redist_test_data.R (the Redistricting tab's data).
 ##
 ## Usage (from project root):
 ##   CBS_ELECTION_FOLDER=26_dashtest Rscript scripts/util/make_dashboard_test_data.R
@@ -259,8 +260,20 @@ dd$truth = bind_rows(final) |>
   semi_join(TEST_CONTESTS, by = c("state", "contest")) |>
   transmute(key = paste0(state, "-", contest), dem, rep, total)
 saveRDS(dd, fs::path(PATH_DROPBOX, ELECTION_FOLDER, "dashboard_data.rds"))
+# the Redistricting tab's data from the last build, kept if make_redist_test_data.R fails below
+old_redist = tryCatch(readRDS("data/dashboard/dashtest_data.rds")$redist, error = \(e) NULL)
 # committed copy; pushing it to main redeploys GitHub Pages (.github/workflows/pages.yml)
 saveRDS(dd, "data/dashboard/dashtest_data.rds")
 
 print(dd$meta, width = Inf)
 cli::cli_inform("ts rows: {nrow(dd$ts)}; prec rows: {nrow(dd$prec)}; model rows: {nrow(dd$models)}")
+
+# Redistricting tab: counted votes (sim + CBS test feed) and the fake precinct projections above,
+# by old and new district. make_redist_test_data.R adds dd$redist to the committed copy; if it
+# fails (e.g. no CBS_API_KEY), keep the last build's redist so the tab is never dropped.
+rc = system2("Rscript", "scripts/util/make_redist_test_data.R")
+if (rc != 0) {
+  dd$redist = old_redist
+  saveRDS(dd, "data/dashboard/dashtest_data.rds")
+  cli::cli_warn("make_redist_test_data.R failed (exit {rc}); kept the previous build's redist ({if (is.null(old_redist)) 'none' else 'yes'})")
+}

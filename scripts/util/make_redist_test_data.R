@@ -5,7 +5,10 @@
 ## House race (redist_cbs_votes(): Senate / governor pulled now; House read from the pulls
 ## saved under 26_general/cbs_api/test/redistricting/ -- pull them first with
 ##   Rscript scripts/model/reports/redistricting_compare.R --live --env=test --out=<tmp folder>
-## ). Needs the prep's files (redistricting_compare.R without --live) and CBS_API_KEY in ~/.Renviron.
+## ). Model estimates: the fake precinct projections make_dashboard_test_data.R writes to
+## {ELECTION_FOLDER}/model_results/precincts_latest.parquet, regrouped into districts as on the night.
+## Needs the prep's files (redistricting_compare.R without --live) and CBS_API_KEY in ~/.Renviron.
+## make_dashboard_test_data.R runs this at its end; run it alone to refresh only `redist`:
 ##
 ##   CBS_ELECTION_FOLDER=26_dashtest Rscript scripts/util/make_redist_test_data.R
 # ========================================
@@ -26,7 +29,11 @@ enr = d$prec |>
   transmute(state = substr(key, 1, 2), contest = sub("^..-", "", key), district = NA_integer_, geo, dem, rep, total, time)
 cbs = bind_rows(lapply(REDIST_STATES, \(s) redist_cbs_votes(s, env = "test", sim = "", enabled = TRUE, pull_house = FALSE)))
 print(count(cbs, state, contest))
-r = build_redist_data(files, cbs, NULL, enr)
-print(r$src |> select(state, src, p_prec, note) |> mutate(note = substr(note, 1, 110)), n = 50)
+# the night passes model_results; build_redist_data() reads only its precinct projections
+mp = read_model_precincts()
+if (is.null(mp)) warning("No precincts_latest.parquet in ", ELECTION_FOLDER, "/model_results: no model estimates")
+r = build_redist_data(files, cbs, list(prec = mp), enr)
+print(r$src |> select(state, src, p_prec, note) |> mutate(note = substr(note, 1, 110)), n = 100)
+print(count(r$src, state, kind))
 d$redist = r
 saveRDS(d, f)

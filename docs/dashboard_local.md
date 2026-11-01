@@ -94,7 +94,7 @@ quarto render index.qmd --output dashtest.html
 open "http://127.0.0.1:8000/dashtest.html"   # server above running
 ```
 
-The script saves the rds to both `26_dashtest/dashboard_data.rds` in Dropbox and `data/dashboard/dashtest_data.rds` in the repo. After the first run, only the `quarto render` step is needed when editing `index.qmd` or `custom.scss`.
+The script saves the rds to both `26_dashtest/dashboard_data.rds` in Dropbox and `data/dashboard/dashtest_data.rds` in the repo. After the first run, only the `quarto render` step is needed when editing `index.qmd` or `custom.scss`. It ends by running `scripts/util/make_redist_test_data.R`, which adds the Redistricting tab's data (`redist`) to the repo copy: the 2024 president baseline, counted Senate/governor/House votes (sim precincts plus the CBS test feed's counties, so it needs `CBS_API_KEY`), and the fake model precinct projections regrouped into old and new districts. If that step fails, the previous build's `redist` is kept. To refresh only `redist`: `CBS_ELECTION_FOLDER=26_dashtest Rscript scripts/util/make_redist_test_data.R`.
 
 ## Public test site (GitHub Pages)
 
