@@ -98,11 +98,32 @@ The script saves the rds to both `26_dashtest/dashboard_data.rds` in Dropbox and
 
 ## Public test site (GitHub Pages)
 
-The test dashboard is published at <https://teamstewart.github.io/cbs-enr/>. `.github/workflows/pages.yml` renders `index.qmd` against the committed `data/dashboard/dashtest_data.rds` and deploys it on every push to `main` that touches `index.qmd`, `custom.scss`, `cbs_white.svg`, or `data/dashboard/`. To refresh the data, rerun `make_dashboard_test_data.R`, then commit and push the new rds. To redeploy by hand: `gh workflow run pages.yml`. Check status with `gh run list -w pages.yml`.
+The dashboard is published at <https://teamstewart.github.io/cbs-enr/>. `.github/workflows/pages.yml` renders `index.qmd` and deploys it on every push to `main` that touches `index.qmd`, `custom.scss`, `assets/`, `data/dashboard/`, or `dashboard_mode.txt`, on each automation dispatch, and once at the default cutover (cron, 2026-11-03 23:01 UTC). To redeploy by hand: `gh workflow run pages.yml`. Check status with `gh run list -w pages.yml`.
+
+### Test or live data: `dashboard_mode.txt`
+
+`dashboard_mode.txt` (repo root, committed on `main`) decides which data both published copies show. `scripts/util/dashboard_mode.R` implements it for the workflow, `automation.R`, and the watcher.
+
+| `mode` | Before `cutover` (default 2026-11-03 18:00 ET) | After `cutover` | `automation.R` uploads `mit.html` / starts Pages builds |
+|---|---|---|---|
+| `auto` (default) | test data | live data pushed to `dashboard-live` at or after the cutover; else an "awaiting results" page | only after the cutover |
+| `test` | test data | test data | never |
+| `live` | whatever `dashboard-live` holds | same | every cycle |
+
+Test data renders carry a red TEST DATA badge in the header.
+
+Common actions:
+
+- Switch to live early and drop older rehearsal data: `Rscript scripts/util/dashboard_mode.R cutover-now`, then commit and push `dashboard_mode.txt`. The page shows "awaiting results" until the next automation push.
+- One-off look at whatever `dashboard-live` holds: `gh workflow run pages.yml -f data=live`. It stays until the next build without `data=live`. Before the cutover the automation does not start builds, so only a push to `main` replaces it.
+- Force test data once: `gh workflow run pages.yml -f data=test`.
+- Rehearsals (`CBS_AUTOMATION_TEST=1`) before the cutover still push to `dashboard-live` (the watcher reads it), but neither copy publishes it. To test the S3 upload, call `upload_dashboard_s3()` by hand or set `mode: live` for the rehearsal.
+
+To refresh the test data, rerun `make_dashboard_test_data.R`, then commit and push the new rds.
 
 ### CBS copy (S3)
 
-On election night `scripts/automation.R` also renders `index.qmd` locally from the same `data/dashboard/live/dashboard_data.rds` it pushes, then uploads it to `cbsn-elections-external-models/20261103-US-G/mit.html` (`Content-Type: text/html`, `Cache-Control: no-cache`, as in 2024/2025), served behind CloudFront basic auth at <https://dqvla57lr7v2z.cloudfront.net/20261103-US-G/mit.html>. At startup it uploads `data/dashboard/geo/*.json` to `20261103-US-G/data/dashboard/geo/`, where the page's relative geo fetch resolves; restart the automation after rebuilding geo files. The render adds about 20 seconds and the upload about 5 seconds to each cycle.
+After the `dashboard_mode.txt` cutover, `scripts/automation.R` also renders `index.qmd` locally from the same `data/dashboard/live/dashboard_data.rds` it pushes, then uploads it to `cbsn-elections-external-models/20261103-US-G/mit.html` (`Content-Type: text/html`, `Cache-Control: no-cache`, as in 2024/2025), served behind CloudFront basic auth at <https://dqvla57lr7v2z.cloudfront.net/20261103-US-G/mit.html>. At startup it uploads `data/dashboard/geo/*.json` to `20261103-US-G/data/dashboard/geo/`, where the page's relative geo fetch resolves; restart the automation after rebuilding geo files. The render adds about 20 seconds and the upload about 5 seconds to each cycle.
 
 ### Regenerating the model runs
 

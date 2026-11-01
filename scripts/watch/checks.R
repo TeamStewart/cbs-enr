@@ -23,6 +23,8 @@ local({
   source("scripts/model/live/load.R")
   # crosswalk match rates (B7b), shared with the ENR cycle's baseline
   source("scripts/util/crosswalks/match_rates.R")
+  # dashboard_is_live(): whether automation.R uploads mit.html yet (B10)
+  source("scripts/util/dashboard_mode.R")
 })
 
 TRANSIENT_RX = "HTTP (error )?(405|429|5[0-9]{2})|[Tt]imeout|timed out|Could not resolve host|[Cc]onnection reset|Connection refused"
@@ -604,7 +606,8 @@ check_dashboard = function(ctx) {
                                             if (length(hdr)) trimws(hdr[1]) else "no response",
                                             if (!nzchar(auth)) "; CBS_WATCH_DASH_AUTH unset" else "", ")."),
                                      severity = "P2", transient = TRUE)
-  } else if (fresh && mins_since(lm, ctx$now) > DASH_STALE_MIN) {
+  } else if (fresh && dashboard_is_live(ctx$now, read_dashboard_mode(file.path(WATCH_REPO, DASHBOARD_MODE_FILE))) && mins_since(lm, ctx$now) > DASH_STALE_MIN) {
+    # before dashboard_mode.txt's cutover, automation.R does not upload mit.html
     out[[length(out) + 1]] = finding("dashboard", "cloudfront_stale",
                                      sprintf("CloudFront mit.html last modified %d min ago while cycles are fresh.", round(mins_since(lm, ctx$now))),
                                      severity = "P1", value = round(mins_since(lm, ctx$now)))

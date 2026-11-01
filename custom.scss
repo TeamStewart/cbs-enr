@@ -280,3 +280,16 @@
 .asof-slot { margin-left: auto; }
 .asof-ctl { width: auto; justify-content: flex-end; }
 .asof-note { color: #8a5a00; background: #fff3cd; border-radius: 0.25rem; padding: 0.1rem 0.5rem; white-space: nowrap; }
+
+// TEST DATA badge next to the navbar title (index.qmd, when rendered from test data)
+.dash-test-badge {
+  margin-left: 1rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 0.25rem;
+  background: #d62728;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}

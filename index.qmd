@@ -38,6 +38,8 @@ ojs_define(
   mcty = if (is.null(dd$mcty)) data.frame(key = character(), county_fips = character()) else dd$mcty,
   geo_url = if (is.null(dd$geo_url)) "data/dashboard/geo" else dd$geo_url,
   dash_title = dd$title,
+  # test data (pages.yml sets CBS_DASH_SOURCE from dashboard_mode.txt): a TEST DATA badge in the header
+  dash_test = Sys.getenv("CBS_DASH_SOURCE") == "test" || grepl("dashtest", Sys.getenv("CBS_DASH_RDS")),
   # second header logo next to the CBS one (format: logo takes only one), inlined for embed-resources
   mit_logo = paste0("data:image/svg+xml;base64,", base64enc::base64encode("assets/mit_logo_std_rgb_white.svg")),
   # chart exports: ggmedsl's Styrene B and lab logo (assets/), VoteHub logo for the precinct maps' basemap credit
@@ -121,6 +123,7 @@ sel = {
   if (title) {
     title.textContent = dash_title;
     title.after(s);
+    if (dash_test && !document.querySelector(".dash-test-badge")) title.after(html`<span class="dash-test-badge" title="Simulated results, not live data">TEST DATA</span>`);
   } else {
     document.body.prepend(s);
   }

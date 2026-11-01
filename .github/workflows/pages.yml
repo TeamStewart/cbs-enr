@@ -1,8 +1,10 @@
 # Render the dashboard and deploy to GitHub Pages.
-# Data: the dashboard-live branch's dashboard_data.rds when it exists (force-pushed by
-# scripts/automation.R after each tar_make(), which then dispatches this workflow), else the
-# committed test data, data/dashboard/dashtest_data.rds (scripts/util/make_dashboard_test_data.R).
-# Dispatch with data=test to publish the test data while a dashboard-live branch exists.
+# Data: dashboard_mode.txt decides (scripts/util/dashboard_mode.R): the committed test data,
+# data/dashboard/dashtest_data.rds (scripts/util/make_dashboard_test_data.R), before the
+# cutover; after it, the dashboard-live branch's dashboard_data.rds (force-pushed by
+# scripts/automation.R after each tar_make(), which then dispatches this workflow) if pushed
+# at or after the cutover, else an "awaiting results" page.
+# Dispatch with data=live or data=test to override once; the next build goes back to the file.
 name: Deploy dashboard
 
 on:
@@ -14,10 +16,16 @@ on:
       - assets/**
       - data/dashboard/**
       - .github/workflows/pages.yml
+      - dashboard_mode.txt
+      - scripts/util/dashboard_mode.R
+  # the default cutover, 2026-11-03 18:00 EST (UTC-5): clears the test data off the page even
+  # if no live push has arrived yet
+  schedule:
+    - cron: "1 23 3 11 *"
   workflow_dispatch:
     inputs:
       data:
-        description: "auto (live if the dashboard-live branch exists), live, or test"
+        description: "auto (dashboard_mode.txt), live (whatever dashboard-live holds), or test"
         default: auto
         type: choice
         options: [auto, live, test]
@@ -52,21 +60,45 @@ jobs:
         id: data
         run: |
           want="${{ inputs.data || 'auto' }}"
-          if [ "$want" != "test" ] && git fetch --depth=1 origin dashboard-live; then
+          live_time=NA
+          if git fetch --depth=1 origin dashboard-live; then
             git show FETCH_HEAD:dashboard_data.rds > "$RUNNER_TEMP/dashboard_data.rds"
+            live_time=$(git log -1 --format=%ct FETCH_HEAD)
+          fi
+          case "$want" in
+            test) src=test ;;
+            live) src=live
+                  if [ "$live_time" = NA ]; then echo "::error::data=live but there is no dashboard-live branch"; exit 1; fi ;;
+            *)    src=$(Rscript --vanilla scripts/util/dashboard_mode.R source "$live_time") ;;
+          esac
+          echo "data=$want, dashboard_mode.txt: $(grep -E '^(mode|cutover):' dashboard_mode.txt | tr '\n' ' '), live data time: $live_time -> $src"
+          echo "src=$src" >> "$GITHUB_OUTPUT"
+          if [ "$src" = live ]; then
             echo "rds=$RUNNER_TEMP/dashboard_data.rds" >> "$GITHUB_OUTPUT"
-          elif [ "$want" = "live" ]; then
-            echo "::error::data=live but there is no dashboard-live branch"; exit 1
           else
             echo "rds=data/dashboard/dashtest_data.rds" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Render
+        if: steps.data.outputs.src != 'empty'
         env:
           CBS_DASH_RDS: ${{ steps.data.outputs.rds }}
+          CBS_DASH_SOURCE: ${{ steps.data.outputs.src }}
         run: |
           quarto render index.qmd
           mkdir -p _site/data/dashboard && cp index.html _site/ && cp -r data/dashboard/geo _site/data/dashboard/ && touch _site/.nojekyll
+
+      - name: Awaiting results page
+        if: steps.data.outputs.src == 'empty'
+        run: |
+          mkdir -p _site && touch _site/.nojekyll
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>CBS-MIT Election Night</title>
+          <style>body{font-family:system-ui,sans-serif;margin:0;display:grid;place-items:center;min-height:100vh;background:#101010;color:#eee;text-align:center}p{color:#aaa}</style>
+          </head><body><div><h1>CBS-MIT Election Night</h1><p>Awaiting results. The dashboard appears after the first pipeline run.</p></div></body></html>
+          HTML
 
       - uses: actions/upload-pages-artifact@v5
         with:

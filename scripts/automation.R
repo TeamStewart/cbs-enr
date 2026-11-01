@@ -55,6 +55,9 @@ ENIGHTDATA_REPO = Sys.getenv("CBS_ENIGHTDATA_REPO", "git@github.com:TeamStewart/
 ENIGHTDATA_BRANCH = Sys.getenv("CBS_ENIGHTDATA_BRANCH", "main")
 ENIGHTDATA_DIR = path.expand(Sys.getenv("CBS_ENIGHTDATA_DIR", "~/.cache/cbs-enr-enightdata"))
 ENIGHTDATA_STAMP = paste0(ENIGHTDATA_DIR, ".installed") # sha of the installed commit
+# dashboard_is_live(): before dashboard_mode.txt's cutover, the data is still pushed to
+# DASH_BRANCH (the watcher reads it) but neither GitHub Pages nor mit.html publishes it
+source("scripts/util/dashboard_mode.R")
 
 # Function to execute the R script
 execute_script <- function() {
@@ -124,8 +127,12 @@ push_dashboard_data <- function(run_time) {
     return(invisible(FALSE))
   }
   push_files(c(dashboard_data.rds = DASH_DATA), DASH_BRANCH, glue::glue("dashboard data {run_time}"))
+  if (!dashboard_is_live()) {
+    message("Before the dashboard_mode.txt cutover: pushed the data, no Pages build")
+    return(invisible(TRUE))
+  }
   gh = suppressWarnings(system2(
-    "gh", c("workflow", "run", "pages.yml", "-R", "TeamStewart/cbs-enr", "--ref", "main", "-f", "data=live"),
+    "gh", c("workflow", "run", "pages.yml", "-R", "TeamStewart/cbs-enr", "--ref", "main"),
     stdout = TRUE, stderr = TRUE
   ))
   if (!is.null(attr(gh, "status")) && attr(gh, "status") != 0) {
@@ -136,7 +143,8 @@ push_dashboard_data <- function(run_time) {
 
 # Render index.qmd from rds (default DASH_DATA, the data GitHub Pages renders from) and upload it to
 # DASH_S3_DIR/mit.html. As in 2024/2025: one self-contained file, text/html, and no-cache
-# so CloudFront serves each new upload.
+# so CloudFront serves each new upload. The loop calls it only when dashboard_is_live(); call
+# it by hand to test the upload before the cutover.
 upload_dashboard_s3 <- function(rds = DASH_DATA) {
   if (!file.exists(rds)) return(invisible(FALSE))
   out = suppressWarnings(system2(
@@ -251,7 +259,8 @@ while (TRUE) {
   close(con)
 
   steps$dashboard_push = step("Dashboard push", push_dashboard_data(run_time))
-  steps$dashboard_s3 = step("Dashboard S3 upload", upload_dashboard_s3())
+  # before the cutover: NA, so the watcher does not count it as a failure
+  steps$dashboard_s3 = if (dashboard_is_live()) step("Dashboard S3 upload", upload_dashboard_s3()) else NA
 
   # read here, used by the next cycle's tar_make(); a failed read keeps the last metadata.csv
   steps$sheet = step("Google Sheet read (kept the last metadata.csv)", {

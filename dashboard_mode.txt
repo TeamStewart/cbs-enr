@@ -1,0 +1,16 @@
+# Which data the published dashboard shows: GitHub Pages (.github/workflows/pages.yml)
+# and CBS's CloudFront mit.html (scripts/automation.R). Logic: scripts/util/dashboard_mode.R.
+#
+# mode: auto  test data before the cutover. After it, live data pushed to the dashboard-live
+#             branch at or after the cutover, else an "awaiting results" page (so rehearsal
+#             data pushed earlier never shows). automation.R uploads mit.html and starts
+#             Pages builds only after the cutover.
+# mode: test  always test data (data/dashboard/dashtest_data.rds); no mit.html uploads.
+# mode: live  always whatever dashboard-live holds, however old; mit.html uploads every cycle.
+#
+# cutover is Eastern time. To switch to live early and drop older live data, set cutover to
+# now (Rscript scripts/util/dashboard_mode.R cutover-now), then commit and push to main.
+# One-off look at live data without changing this file: gh workflow run pages.yml -f data=live
+# (stays until the next push to main that rebuilds the page).
+mode: auto
+cutover: 2026-11-03 18:00
