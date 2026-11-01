@@ -1,9 +1,77 @@
 # Interval coverage on the simulated nights
 
-Written 2026-10-27. All 10 scenarios in `26_sim/`. **lm_bayes not run** (dropped on time, see
+Written 2026-10-27, updated 2026-11-01. The 2026-11-01 section below covers the models that
+run on the night, on the current code and sims; the sections after it are the original
+2026-10-27 run (`coverage/main`), kept for the spec and interval comparisons.
+
+## 2026-11-01: the run = TRUE models on the current code
+
+The `run_config` runs behind the test dashboard predated `b3dbd600` (AK bucket votes' partisan
+split) and `4a31f2ec` (medsl_sur without a vote-method split), so they were rerun on all eight
+`_base` sims with only the `run = TRUE` models in `model_config.csv`:
+
+```
+CFG=<26_general>/model_config.csv
+MODELS=$(awk -F, 'NR>1 && $6=="TRUE" {print $1}' "$CFG" | paste -sd, -)
+for sc in ak_base fl_base ga_base mi_base mn_base nc_base oh_base tx_base; do
+  Rscript scripts/model/live/tests/sim_night.R $sc --models=$MODELS --cores=5 \
+    --out=<26_general>/model_tests/coverage/run_config
+done
+```
+
+The previous CSVs are in `model_tests/archive/run_config_20261030`. The sims were regenerated
+after 2026-10-27 (e.g. tx_base is now Senate only), and the model set differs, so these numbers
+are not directly comparable with the tables further down.
+
+- 2,760 fits, 2,748 ok. Not ok: medsl_sur `prior_only` at the first 3 AK checkpoints and the
+  first MN checkpoint (each x 3 medsl_sur variants).
+- medsl_sur now fits MI and MN (one pseudo-mode `all`). medsl_sur/tpsob_g/conf_seq has no
+  interval on 10 fits (8 under 25% counted), and pois_bayes/conf_seq on 2.
+- Coverage counts only fits with an interval. Columns as in the original run below.
+
+| model | fits | no interval | MAE (pts) | coverage | width (pts) |
+|---|--:|--:|--:|--:|--:|
+| swing | 345 | 0 | 0.55 | 0.580 | 0.98 |
+| swing/conformal | 345 | 0 | 0.55 | 0.968 | 3.22 |
+| ratio_strata/strat_dg/conformal | 345 | 0 | 0.55 | 0.991 | 4.22 |
+| pois_bayes | 345 | 0 | 0.53 | 0.383 | 1.02 |
+| pois_bayes/conf_seq | 345 | 2 | 0.53 | 0.732 | 2.50 |
+| medsl_sur/conformal | 341 | 0 | 0.48 | 0.933 | 3.50 |
+| medsl_sur/tpsob_g/conformal | 341 | 0 | 0.51 | 0.944 | 3.74 |
+| medsl_sur/tpsob_g/conf_seq | 341 | 10 | 0.51 | 0.909 | 3.65 |
+
+By scenario, coverage (MAE, width):
+
+| scenario | swing | swing conf | ratio_strata conf | pois_bayes | pois conf_seq | medsl_sur conf | medsl tpsob_g conf | medsl tpsob_g conf_seq |
+|---|---|---|---|---|---|---|---|---|
+| ak_base | 0.70 (0.74, 1.8) | 1.00 (4.5) | 1.00 (0.89, 5.0) | 0.60 (0.86, 1.7) | 1.00 (6.2) | 1.00 (0.48, 7.9) | 1.00 (0.64, 7.4) | 1.00 (10.2) |
+| fl_base | 0.35 (0.47, 0.9) | 1.00 (2.3) | 1.00 (0.13, 3.0) | 0.00 (0.42, 0.2) | 0.16 (1.0) | 0.95 (0.37, 1.8) | 1.00 (0.36, 1.9) | 0.51 (1.1) |
+| ga_base | 1.00 (0.06, 0.7) | 1.00 (1.8) | 1.00 (0.07, 2.7) | 0.76 (0.06, 0.2) | 1.00 (0.7) | 1.00 (0.15, 1.8) | 1.00 (0.18, 1.9) | 1.00 (0.8) |
+| mi_base | 0.22 (1.81, 1.6) | 0.97 (7.1) | 0.94 (1.95, 9.6) | 0.86 (1.49, 5.4) | 0.92 (8.6) | 0.97 (1.31, 7.2) | 1.00 (1.27, 8.0) | 0.97 (8.8) |
+| mn_base | 1.00 (0.12, 0.9) | 1.00 (3.4) | 1.00 (0.30, 5.2) | 0.22 (0.24, 0.7) | 0.31 (1.2) | 1.00 (0.10, 4.0) | 1.00 (0.09, 4.7) | 1.00 (4.0) |
+| nc_base | 0.11 (0.34, 0.4) | 1.00 (2.2) | 1.00 (0.40, 3.5) | 0.11 (0.39, 0.5) | 1.00 (2.9) | 1.00 (0.10, 4.2) | 1.00 (0.21, 5.4) | 1.00 (3.5) |
+| oh_base | 0.11 (1.42, 1.6) | 0.73 (4.3) | 1.00 (1.31, 4.2) | 0.00 (1.45, 0.3) | 0.03 (0.6) | 0.46 (1.54, 3.9) | 0.49 (1.51, 3.5) | 0.68 (5.5) |
+| tx_base | 0.71 (0.27, 0.8) | 1.00 (2.7) | 0.99 (0.26, 3.4) | 0.31 (0.24, 0.7) | 1.00 (2.5) | 1.00 (0.25, 2.5) | 1.00 (0.33, 2.4) | 1.00 (3.1) |
+
+What changed since 2026-10-27:
+
+- **AK medsl_sur is fixed** (item 1 below, by `b3dbd600`): MAE 0.5-0.6 points and every
+  interval holds, against 4.37 and 0 of 17 before.
+- **MI and MN medsl_sur run** (item 2 below, by `4a31f2ec`). In MI medsl_sur has the lowest
+  error of any model (1.3 points) but is 3-7 points too Democratic before about 40% counted.
+- **OH is the new problem scenario.** Every model is off by 1.3-1.5 points and only
+  ratio_strata/strat_dg/conformal holds the truth every time; medsl_sur's conformal intervals
+  cover about half the fits and swing/conformal 73%. Not diagnosed.
+- All three medsl_sur variants and the conformal intervals for swing and ratio_strata stay
+  above 90% overall; pois_bayes credible (38%) and conf_seq (73%) under-cover, worst in FL,
+  MN and OH.
+
+## Original run (2026-10-27)
+
+All 10 scenarios in `26_sim/` as of that date. **lm_bayes not run** (dropped on time, see
 "Not covered").
 
-## How it was run
+### How it was run
 
 ```
 for s in tx_base tx_hispanic_swing tx_turnout_demo tx_turnout_partisan_D0.1 nc_base mi_base ga_base oh_base mn_base ak_base; do
@@ -27,10 +95,9 @@ Rscript scripts/model/live/tests/coverage_summary.R <26_general>/model_tests/cov
 - Fits within one scenario are refits of the same night every 15 minutes and are strongly
   correlated: 487 fits are closer to 10 independent nights than to 487 trials. Read 1.000 as
   "never missed on these nights".
-- 3,338 fits ok. Not ok: medsl_sur in MI and MN (skipped: no vote-method split, by design)
-  and 3 early AK medsl_sur fits (`prior_only`).
-
-## Results
+- 3,338 fits ok. Not ok: medsl_sur in MI and MN (skipped: no vote-method split, by design
+  at the time; medsl_sur fits them since `4a31f2ec`, see the 2026-11-01 section) and 3 early
+  AK medsl_sur fits (`prior_only`).
 
 ### By model x interval, all scenarios
 
@@ -147,14 +214,17 @@ If the conformal widths are too wide for the dashboard, the next step would be a
 calibrated in-between (e.g. a conformal quantile below 95%, or inflating the credible
 interval by a measured factor), not the current bootstrap / credible intervals.
 
-## Model issues found (not fixed: outside this agent's files)
+## Model issues found on 2026-10-27
 
-1. **medsl_sur in AK stays at its prior all night.** Estimates 0.43-0.46 against a true
+Both are fixed; see the 2026-11-01 section for the reruns.
+
+1. **(Fixed by `b3dbd600`.) medsl_sur in AK stays at its prior all night.** Estimates 0.43-0.46 against a true
    0.505, interval never holds the truth (0 of 17), status "ok (partial prior: 7 of 9
    equations ...)" from 1am to the last checkpoint, and `prior_only` before that, while
    pois_bayes converges to 0.503. Not diagnosed: the 2 equations left at the prior are the
    first place to look. Relevant to `R/model_medsl.R` and `medsl/model_turnout.R`.
-2. **medsl_sur's set-up aborts for a state with no vote-method split.** On MN,
+2. **(Fixed by `4a31f2ec`: medsl_sur now fits such states on one pseudo-mode `all`.)
+   medsl_sur's set-up aborts for a state with no vote-method split.** On MN,
    `fit_medsl_setup_for()` stops at `scripts/model/live/medsl/model_turnout.R:783` with
    `MODES names all with no MODE_TURN_SHARE fallback value.` (MI did not hit it). The fits
    themselves are skipped correctly ("no vote-method split"), but anything that calls the
