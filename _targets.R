@@ -99,15 +99,22 @@ metadata = enightdata::read_local("metadata.csv", colClasses=list(character=c(1:
   ) |> 
   dplyr::filter(build, updated)
 
+# Send every jurisdiction to S3 (adds "s3_parquet" to each row's `upload`), whatever the
+# metadata's `upload` column says; Drive still follows the column. FALSE: S3 follows the column.
+# 2026 general: everything goes to S3 for the team.
+s3_all = TRUE
+if (s3_all) {
+  metadata = dplyr::mutate(metadata, upload = dplyr::if_else(
+    grepl("s3_", upload), upload, sub("^,", "", paste(upload, "s3_parquet", sep = ","))
+  ))
+}
+
 create_dirs(metadata)
 
-# Filter for what to upload to S3
-# In 2026, VoteHub only interested in MI and OH
-office_filter = tibble::tribble(
-  ~state, ~jurisdiction, ~contest, ~district,
-  "MI", "mi", "sen", NA,
-  "OH", "oh", "sen", NA,
-)
+# Offices to send to S3 (state, jurisdiction, contest, district rows); NULL sends every office.
+# Drive always gets every office. Earlier in 2026 VoteHub only wanted MI and OH Senate, e.g.
+#   tibble::tribble(~state, ~jurisdiction, ~contest, ~district, "MI", "mi", "sen", NA)
+office_filter = NULL
 
 # ========================================
 ## PIPELINE
