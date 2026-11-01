@@ -335,19 +335,19 @@ build_redist_data <- function(files, cbs = NULL, models = NULL, enr = NULL, cont
           summarise(dem = sum(dem), rep = sum(rep), .by = c(plan, cd))
       }
       n_cbs = n_distinct(k$county_cbs)
-      t_all = c(if (nrow(e) && "time" %in% names(e)) max(e$time), if (nrow(k)) max(k$as_of))
+      t_all = c(as.POSIXct(NA), if (nrow(e) && "time" %in% names(e)) max(e$time), if (nrow(k)) max(k$as_of)) # POSIXct first: c() keeps its class
       pct_cbs = if (nrow(k)) with(filter(k, pct_exp > 0), sum(total) / sum(total / (pct_exp / 100))) else NA_real_
       sid = paste0("count:", ct)
       add(
         mutate(d, state = st, src = sid) |> select(state, src, plan, cd, dem, rep),
         tibble(state = st, src = sid, kind = "count", label = rname, race_id = if (ct == "house") NA_character_ else paste(st, ct, sep = "_"),
                race = paste(st, rname),
-               time = if (length(t_all)) max(t_all, na.rm = TRUE) else as.POSIXct(NA),
+               time = if (any(!is.na(t_all))) max(t_all, na.rm = TRUE) else as.POSIXct(NA),
                p_prec = pprec(cu, ck),
                note = paste0(
                  glue("Counted {rname} vote"),
                  if (nrow(v)) glue(" · precinct results in {length(scraped)} scraped {sp(length(scraped), 'county')}") else "",
-                 if (n_cbs) glue(" · CBS county results in {n_cbs} other {sp(n_cbs, 'county')}",
+                 if (n_cbs) glue(" · CBS county results in {n_cbs} {if (nrow(v)) 'other ' else ''}{sp(n_cbs, 'county')}",
                                  "{if (is.finite(pct_cbs)) paste0(' (', scales::percent(pct_cbs, 1), ' of expected)') else ''}") else "",
                  if (length(unc)) glue(" · {length(unc)} uncontested {sp(length(unc), 'district')} split by the {REDIST_RACE_NAME[[contest]]} vote") else ""
                )),
