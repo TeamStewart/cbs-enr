@@ -90,7 +90,7 @@ state where `precinct26_id` repeats within county x cd.
 | NM | 33 (all) | 2,204 | nm_20260914 | 2,203 (99.95%) | 99.95% | done 10-31 |
 | OH | 15 | 5,052 | oh_20260929 | 4,626 (91.6%) | 99.96% | partial 10-30 (no ENR: Lake, Warren) |
 | PA | 20 | 6,492 | pa_20260911 | 4,930 (75.9%) | 99.9% | partial 10-31 (ENR: Allegheny, Chester, Dauphin, Delaware, Erie, Lancaster, Montgomery, Philadelphia, Washington, York) |
-| TX | 71 | 10,851 | tx_20261011 | 6,346 (58.5%) | 94.8% | partial 10-31 (22 ENR counties; Tarrant via consolidated sub-units) |
+| TX | 72 | 10,851 | tx_20261011 | 6,712 (61.9%) | 94.8% | partial 11-01 (23 ENR counties; Collin added on its Enhanced Voting switch; Tarrant via consolidated sub-units) |
 | VA | 133 (all) | 2,538 | va_20261006 | 2,526 (99.5%) | 99.5% | done 10-31 |
 | WA | 4 | 167 | wa_20260917 | - | - | waiting |
 
@@ -182,7 +182,12 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
   (enightdata `consolidate_units()`), so its geo is the precinct; Galveston single-unit ballot styles match. ~600 junk frame
   codes stay NA. L2 voter-count guard drops redrawn same-code pairs; ~15
   Dallas/Harris/Tarrant drops at 1.3-1.6 may be growth. Check: Galveston
-  `439.1`. Possibly open: L2 rules for low-coverage counties found on 10-26
+  `439.1`. Collin moved to Enhanced Voting on 11-01 and went 0 -> 366/367
+  (99.7%), the whole statewide gain; `scrape_tx()` strips its "PCT " prefix so
+  the ids pad to frame codes, and its 26 "LB" limited-ballot units are NA by
+  design (no frame row). Collin's one NA is a frame row with no precinct code.
+  Reeves 9/11: `002B` and `0136` are absent from its feed, not a join failure.
+  Possibly open: L2 rules for low-coverage counties found on 10-26
   (Van Zandt, Grayson, Ellis, Wood, Burnet); recheck per-county L2 rates.
 - **VA**: NA by design: Buchanan, Highland, Rockbridge, Russell merges;
   Amherst 0201, Norfolk 0405 splits. **Check on real results**: Halifax 0603
