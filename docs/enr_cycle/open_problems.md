@@ -148,9 +148,6 @@ exact vs 99.9% production; MI 0.5% vs 94.2%). CA has no races in
 - RI drops the "Federal" pseudo-jurisdiction (federal-only ballots, no town).
 - SD statewide row (`custom`, electionresults.sd.gov) appeared in the sheet
   on 10-30 (not added by the cycle): decide `build` and run discovery/verify.
-- AR: a statewide scraper is feasible (see AR `disc_note`: public
-  `FullDataFile.json` with county and precinct results, no vote-method split).
-  Decide whether to write it; AR is not a frame state.
 - Review two inferred crosswalk calls: FL Liberty precincts 2 and 4 (Annex vs
   Lake Mystic, assigned by ENR order; confirm with the SOE), and OH Greene
   Sugarcreek rows numbered 157/158 from L2 size match (ENR now depends on L2

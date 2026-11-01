@@ -13,3 +13,6 @@ in git history.
 - 2026-10-31 17:02 open problem 5: new scripts/util/crosswalks/ia.R. Frame codes matched to L2 names within county by voter profile + code/digit/town evidence (lp.assign), ENR names to frame rows by name similarity. IA frame crosswalk 1658 rows: L2 100%, ENR 1632 (98.4%); NA by design Mahaska, Muscatine non-ward, Warren/Johnson merges, Plymouth. match_rates IA l2 98.3% (was 73.3%). IA model inputs prepped and copied (new; live join 98.0% via match_live_geo). Check on e-night: Clarity totalVoters vs frame n.
 - 2026-10-31 19:36 xwalk-done IA: 1 rows ()
 - 2026-11-01 07:00 CA Ventura L2 crosswalk: ca.R county rule from Ventura_PrecinctMap.csv (NUMBER_ -> ELECTID, per place-district offset); 1,252/1,254 frame rows get L2; CA prep rerun and copied (L2 coverage 80.4% -> 86.1%); match_rates CA l2 68.9% -> 72.0%
+- 2026-11-01 07:04 AR: tally-enr statewide scraper written (enightdata ar-tally worktree, uncommitted); verify pass 2768 precincts; sheet path+type=custom queued, not applied
+- 2026-11-01 07:07 sheet --apply: wrote 3 cells (AR  path; AR  type; AR  updated); metadata.csv refreshed
+- 2026-11-01 07:10 AR: scraper pushed to enightdata main (de82cec); sheet AR path/type=custom/updated=TRUE applied
