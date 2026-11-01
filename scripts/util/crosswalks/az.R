@@ -3,10 +3,8 @@ source("scripts/util/crosswalks/helpers.R")
 # Build the AZ precinct crosswalk (YouGov frame <-> ENR <-> L2).
 # Process and general rules: docs/precinct_crosswalks.md. Reference: nc.R.
 #
-# AZ is partial: 26_general ENR exists only for some frame counties (Cochise and
-# Maricopa as of 2026-10-23). L2 matching covers all 9 frame counties. New
-# `AZ/clean/AZ_*_latest.parquet` files are picked up by the glob on rerun; check
-# the id format of each new county (see `parse_pct()`).
+# ENR is one statewide Enhanced Voting file from 2026-11-01, so it lands as
+# `AZ_latest.parquet` with no county segment and covers all 9 frame counties.
 #
 # Frame ids are 4-digit, zero-padded county precinct numbers ("0009"). Frame
 # names, L2 and ENR ids all carry that number plus a name, in county-specific
@@ -16,7 +14,7 @@ source("scripts/util/crosswalks/helpers.R")
 #          "ACACIA" (Cochise, Maricopa: name only, number is the id)
 #   L2:    "0216 DESERT ...", "08 COCHISE ...", "BELLEMONT-40" (Coconino),
 #          "097" / "41" (Pima, Yuma: number only)
-#   ENR:   "0783 SPUR" (Maricopa), "06 BI WARREN" (Cochise)
+#   ENR:   "0783 SPUR" (Maricopa), "06 BI WARREN" (Cochise), "201_Wikieup" (Mohave)
 # Every source is parsed to (4-digit number, standardized name). A match needs
 # both the number and the name to agree (or the name to be absent on a side
 # that never has names, e.g. Pima/Yuma L2), so a renumbered or renamed precinct
@@ -43,6 +41,9 @@ parse_pct = function(county, x) {
     .default = x
   )
   name = std_name(name)
+  # The frame writes Pinal 0040 "APACHE JCT" where its sibling precincts and the
+  # feed both spell JUNCTION.
+  name = str_replace_all(name, "\\bJCT\\b", "JUNCTION")
   # Drop a trailing number equal to the precinct number: Coconino frame
   # "01 - FLAGSTAFF 1" vs L2 "FLAGSTAFF-01" -> both (0001, "FLAGSTAFF").
   tail_n = str_match(name, "^(.*\\S) (\\d+)$")
@@ -76,29 +77,64 @@ fr_keys = fr_keys |>
 ## ENR
 # ========================================
 
-enr_files = fs::path_rel(Sys.glob(election_path("AZ/clean/AZ_*_latest.parquet")), election_path())
+# "AZ*_latest" matches the statewide "AZ_latest" and the legacy per-county stems.
+enr_files = fs::path_rel(Sys.glob(election_path("AZ/clean/AZ*_latest.parquet")), election_path())
 stopifnot(length(enr_files) > 0)
 
 az_enr = read_enr(enr_files) |>
-  filter(!is.na(precinct_enr), precinct_enr != "NA") |> # Maricopa "az_013_NA" bucket
-  mutate(parse_pct(county, precinct_enr), k_code_name = paste(code4, pname, sep = "|"))
+  filter(!is.na(precinct_enr), precinct_enr != "NA") |> # legacy Maricopa TSV NA bucket
+  mutate(
+    parse_pct(county, precinct_enr),
+    k_code_name = if_else(pname != "", paste(code4, pname, sep = "|"), NA),
+    k_code_bare = if_else(pname == "", code4, NA)
+  )
 
-enr_dup = az_enr |> filter(n() > 1, .by = c(county, k_code_name))
-stopifnot(nrow(enr_dup) == 0)
+# Two keys, as on the frame and L2 sides: Pima and Yuma ENR print the number
+# with no name ("PRECINCT 001"), so they can only match on the bare code.
+enr_matched = c("k_code_name", "k_code_bare") |>
+  map(\(k) {
+    e = az_enr |> select(state, county, precinct_enr, key = all_of(k)) |> filter(!is.na(key))
+    f = fr_keys |> select(county, precinct_yougov, key = all_of(k)) |> filter(!is.na(key))
+    stopifnot(!anyDuplicated(e[c("county", "key")]), !anyDuplicated(f[c("county", "key")]))
+    inner_join(e, f, join_by(county, key)) |> select(-key)
+  }) |>
+  list_rbind()
 
-enr_matched = az_enr |>
-  inner_join(select(fr_keys, county, precinct_yougov, k_code_name), join_by(county, k_code_name), na_matches = "never")
+stopifnot(!anyDuplicated(enr_matched[c("county", "precinct_enr")]))
 
-# ENR ids whose number is in the frame but whose name differs (none as of
-# 2026-10-23; would signal a renamed/renumbered precinct, left NA).
+# The feed caps a precinct label at 30 characters, which cuts Pinal 0040 mid-word
+# ("040 APACHE JUNCTION SUPERSTITI"), so no exact key can match it. Pair the
+# leftovers on the number and keep a prefix match only for labels at that cap.
+enr_trunc = az_enr |>
+  anti_join(enr_matched, join_by(county, precinct_enr)) |>
+  filter(!is.na(code4), nzchar(pname), nchar(precinct_enr) >= 30) |>
+  select(state, county, precinct_enr, code4, pname) |>
+  inner_join(
+    fr_keys |>
+      anti_join(enr_matched, join_by(county, precinct_yougov)) |>
+      select(county, precinct_yougov, code4, fr_pname = pname),
+    join_by(county, code4)
+  ) |>
+  filter(startsWith(fr_pname, pname)) |>
+  filter(n() == 1, .by = c(county, code4)) |>
+  select(state, county, precinct_enr, precinct_yougov)
+
+enr_matched = bind_rows(enr_matched, enr_trunc)
+stopifnot(
+  !anyDuplicated(enr_matched[c("county", "precinct_enr")]),
+  !anyDuplicated(enr_matched[c("county", "precinct_yougov")])
+)
+
+# ENR ids whose number is in the frame but whose name differs (would signal a
+# renamed or renumbered precinct, left NA).
 az_enr |>
   anti_join(enr_matched, join_by(county, precinct_enr)) |>
   left_join(select(fr_keys, county, code4, frame_name, n_frame), join_by(county, code4)) |>
   select(county, precinct_enr, frame_name, n_frame) |>
   print(n = Inf)
-# Unmatched as of 2026-10-23 (none in the frame, presumably no registered
-# voters): Cochise 55 MONTEZUMA; Maricopa 0564/0568/0569/0570/0576/0577 NVP *,
-# 0773-0777 SOUTH *, 0860 UNO.
+# Unmatched 2026-11-01, 20 of 1,564, none in the frame (presumably no registered
+# voters): Maricopa 0564-0577 NVP *, 0773-0777 SOUTH *, 0860 UNO; Yuma 045-047;
+# Cochise 55 MONTEZUMA; Navajo 07 PALOMINO, 17 CANYON BUTTE; Pinal 040, 103.
 
 az_enr = enr_matched |>
   select(state, county, precinct = precinct_yougov, precinct_enr)

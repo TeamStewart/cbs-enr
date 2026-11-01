@@ -79,7 +79,7 @@ state where `precinct26_id` repeats within county x cd.
 |---|---|---|---|---|---|---|
 | NC | 100 (all) | 3,539 | nc_20261006 | 3,505 (99.0%) | 99.5% | done 10-27 |
 | AK | 30 (all) | 402 | ak_20261008 | 402 (100%) | 99.0% | done 10-15 |
-| AZ | 9 | 1,545 | az_20260901 | 1,172 (75.9%) | 100% | partial 10-30 (ENR: Cochise, Maricopa, Mohave, Navajo, Pinal) |
+| AZ | 9 | 1,545 | az_20260901 | 1,545 (100%) | 100% | done 11-01 (statewide ENR, all 9 frame counties; was 1,172 / 5 counties) |
 | CA | 17 | 29,961 | ca_20260901 | 4,288 (14.3%) | 88.9% (10-30 measure; L2 rows 23,726 -> 25,353 on 10-31 with San Bernardino) | partial 10-31 (ENR: Sacramento, San Bernardino, San Francisco, Sonoma singletons, Ventura; SD, Solano, Riverside, Nevada via consolidated builds) |
 | FL | 65 | 6,252 | fl_20261011 | 3,376 (54.0%) | 99.9% | partial 10-31 (41 ENR counties; Pinellas, St Johns added; L2 St Johns/St Lucie fixed) |
 | GA | 159 (all) | 2,616 | ga_20261006 | 2,600 (99.4%) | 99.4% | done 10-31 |
@@ -90,7 +90,7 @@ state where `precinct26_id` repeats within county x cd.
 | NM | 33 (all) | 2,204 | nm_20260914 | 2,203 (99.95%) | 99.95% | done 10-31 |
 | OH | 15 | 5,052 | oh_20260929 | 4,626 (91.6%) | 99.96% | partial 10-30 (no ENR: Lake, Warren) |
 | PA | 20 | 6,492 | pa_20260911 | 4,930 (75.9%) | 99.9% | partial 10-31 (ENR: Allegheny, Chester, Dauphin, Delaware, Erie, Lancaster, Montgomery, Philadelphia, Washington, York) |
-| TX | 71 | 10,851 | tx_20261011 | 6,346 (58.5%) | 94.8% | partial 10-31 (22 ENR counties; Tarrant via consolidated sub-units) |
+| TX | 72 | 10,851 | tx_20261011 | 6,712 (61.9%) | 94.8% | partial 11-01 (23 ENR counties; Collin added on its Enhanced Voting switch; Tarrant via consolidated sub-units) |
 | VA | 133 (all) | 2,538 | va_20261006 | 2,526 (99.5%) | 99.5% | done 10-31 |
 | WA | 4 | 167 | wa_20260917 | - | - | waiting |
 
@@ -108,8 +108,14 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
   is the house district). L2 `paren_code_xcounty` (5) and `paren_code_split`
   (15, >=90% of L2 voters in the frame borough). NA: 4 splits under 90%.
   **Decision (Mason):** keep the 90% threshold and `xcounty`, or NA them.
-- **AZ**: ENR Cochise, Maricopa, Mohave, Navajo, Pinal (Pinal 133/135). Check
-  each new county's id format against `parse_pct()`.
+- **AZ**: ENR is one statewide Enhanced Voting file, covering all 9 frame
+  counties (was 5). Pima and Yuma ENR print the number with no name
+  ("PRECINCT 001") and match only on `k_code_bare`, as their L2 already did, so
+  the ENR join runs both key tiers. All 9 counties are 100% ENR. Pinal 0040
+  needed two local rules: `parse_pct()` rewrites JCT to JUNCTION (the frame
+  abbreviates it there, its siblings 0056-0059 do not), and a third ENR tier
+  pairs still-unmatched rows on the number and accepts a prefix match when the
+  feed's label is at its 30-character cap ("040 APACHE JUNCTION SUPERSTITI").
 - **CA**: San Diego, Solano, Riverside and Nevada ENR are consolidations, NA
   in `ca.csv`, with separate builds run after `ca.R`:
   `ca_sandiego_consolidated.R` (1,893 consolidations, 88.9% of SD frame
@@ -176,7 +182,12 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
   (enightdata `consolidate_units()`), so its geo is the precinct; Galveston single-unit ballot styles match. ~600 junk frame
   codes stay NA. L2 voter-count guard drops redrawn same-code pairs; ~15
   Dallas/Harris/Tarrant drops at 1.3-1.6 may be growth. Check: Galveston
-  `439.1`. Possibly open: L2 rules for low-coverage counties found on 10-26
+  `439.1`. Collin moved to Enhanced Voting on 11-01 and went 0 -> 366/367
+  (99.7%), the whole statewide gain; `scrape_tx()` strips its "PCT " prefix so
+  the ids pad to frame codes, and its 26 "LB" limited-ballot units are NA by
+  design (no frame row). Collin's one NA is a frame row with no precinct code.
+  Reeves 9/11: `002B` and `0136` are absent from its feed, not a join failure.
+  Possibly open: L2 rules for low-coverage counties found on 10-26
   (Van Zandt, Grayson, Ellis, Wood, Burnet); recheck per-county L2 rates.
 - **VA**: NA by design: Buchanan, Highland, Rockbridge, Russell merges;
   Amherst 0201, Norfolk 0405 splits. **Check on real results**: Halifax 0603
@@ -184,6 +195,11 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
 
 ## Follow-ups
 
+- **Truncated ENR labels.** `az.R` carries a local third ENR tier for feeds that
+  cap a precinct label (Enhanced Voting cuts Arizona's at 30 characters): pair
+  the leftovers on the precinct number, accept a prefix match only at the cap,
+  and require it to be unique within the county. Worth promoting to
+  `helpers.R` if a second state needs it.
 - **Recheck on 2026-11-02 and 2026-11-03: FL Gadsden and Levy polling
   places.** If a county moved a polling place, that precinct silently drops to
   NA. Compare ENR names with the county lists above, rerun `fl.R`, and confirm
