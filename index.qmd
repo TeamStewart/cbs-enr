@@ -345,6 +345,9 @@ explorerType = k => d3.max(explorerRows, d => d[k]) > 2 ? "sqrt" : "linear"
 explorerDomain = k => { const [lo, hi] = d3.extent(explorerRows, d => d[k]); return lo >= 0 && hi <= 1 ? [0, 1] : undefined; }
 explorerLo = Math.max(d3.min(explorerRows, d => d[prec_x]), d3.min(explorerRows, d => d[prec_y]))
 explorerHi = Math.min(d3.max(explorerRows, d => d[prec_x]), d3.max(explorerRows, d => d[prec_y]))
+// dashed blue zero line on an axis only when its values fall on both sides of 0
+explorerCrosses = k => { const [lo, hi] = d3.extent(explorerRows, d => d[k]); return lo < 0 && hi > 0; }
+ZERO_LINE = "#3c78d8"
 
 // Plot specs (no width/height): chart cells pass these into a literal Plot.plot({ key: value }) call.
 // Quarto's dashboard autosize only injects card width/height when every option is a plain property (no spread).
@@ -808,12 +811,15 @@ viewof prec_mode = {
   marks: [
     Plot.dot(explorerRows, { x: prec_x, y: prec_y, r: 2, fill: INK, fillOpacity: 0.45, channels: { geo: "geo", county: "county", total: "total" }, tip: true }),
     Plot.linearRegressionY(explorerRows, { x: prec_x, y: prec_y, stroke: "black" }),
-    line45.length > 0 && explorerLo < explorerHi ? Plot.link([0], { x1: explorerLo, y1: explorerLo, x2: explorerHi, y2: explorerHi, stroke: "#999", strokeDasharray: "4,4" }) : null
+    line45.length > 0 && explorerLo < explorerHi ? Plot.link([0], { x1: explorerLo, y1: explorerLo, x2: explorerHi, y2: explorerHi, stroke: "#999", strokeDasharray: "4,4" }) : null,
+    explorerCrosses(prec_x) ? Plot.ruleX([0], { stroke: ZERO_LINE, strokeDasharray: "4,4" }) : null,
+    explorerCrosses(prec_y) ? Plot.ruleY([0], { stroke: ZERO_LINE, strokeDasharray: "4,4" }) : null
   ]
   }, `Precincts: ${explorerLabel.get(prec_y)} vs. ${explorerLabel.get(prec_x)} (${prec_mode})`, { keys: [
     { mark: "dot", label: "Precinct", opacity: 0.45, r: 2.5 },
     { mark: "line", label: "Linear fit", color: "black", width: 1.5 },
-    line45.length > 0 && explorerLo < explorerHi && { mark: "line", label: "45° line", color: "#999", width: 1, dash: "4,4" }
+    line45.length > 0 && explorerLo < explorerHi && { mark: "line", label: "45° line", color: "#999", width: 1, dash: "4,4" },
+    (explorerCrosses(prec_x) || explorerCrosses(prec_y)) && { mark: "line", label: "Zero", color: ZERO_LINE, width: 1, dash: "4,4" }
   ] });
   return Plot.plot({ x: s.x, y: s.y, marks: s.marks });
 }
