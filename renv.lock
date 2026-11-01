@@ -1730,37 +1730,13 @@
     "cbsapi": {
       "Package": "cbsapi",
       "Version": "0.1.0.9000",
-      "Source": "Local",
-      "Title": "Access the CBS News Elections API",
-      "Authors@R": "person(\"Cory\", \"McCartan\", email = \"mccartan@psu.edu\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-6251-669X\"))",
-      "Author": "Cory McCartan [aut, cre]",
-      "Maintainer": "Cory McCartan <mccartan@psu.edu>",
-      "Description": "Direct R access to the CBS News Elections API, which covers race metadata, results, maps, and exit polls.",
-      "Depends": [
-        "R (>= 4.2)"
-      ],
-      "Imports": [
-        "aws.s3",
-        "cli",
-        "dplyr",
-        "httr2",
-        "jsonlite",
-        "purrr",
-        "tibble",
-        "tidyr"
-      ],
-      "Suggests": [
-        "testthat (>= 3.0.0)",
-        "withr"
-      ],
-      "Config/testthat/edition": "3",
-      "License": "All Rights Reserved",
-      "Encoding": "UTF-8",
-      "Roxygen": "list(markdown = TRUE)",
-      "RoxygenNote": "8.0.0",
-      "RemotePkgRef": "local::/Users/mason/Documents/github/cbsapi",
-      "RemoteType": "local",
-      "NeedsCompilation": "no"
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "cbs-data-desk-ext",
+      "RemoteRepo": "cbsapi",
+      "RemoteRef": "main",
+      "RemoteSha": "9d4b266fbf7846f2fa190bb43ddbb49b05ab5da6"
     },
     "cellranger": {
       "Package": "cellranger",
