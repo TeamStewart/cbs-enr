@@ -528,6 +528,51 @@ read_l2 <- function(state) {
     mutate(across(starts_with("l2_"), \(x) if_else(is.finite(x), x, NA_real_)))
 }
 
+# Demographics page: basic ecological inference (seine, McCartan & Kuriwaki) of each L2 race group's
+# Dem two-party share, from the counted votes and from the history year on the same precincts: those
+# with two-party votes in both years and an L2 match. Predictors are L2 race shares of registrants of
+# known race (L2 has no other group), so each estimate assumes a group's share of two-party voters is
+# its share of registrants. No covariates. Ridge regression + Riesz representer (DML), unbounded, so an
+# estimate can fall outside [0, 1]. r2 is the regression's R-squared and nu2 the representer's second
+# moment for the group (larger: harder to estimate).
+dashboard_ei <- function(prec, l2, hist_by_method) {
+  empty = tibble(year = character(), group = character(), estimate = numeric(), conf_low = numeric(),
+                 conf_high = numeric(), r2 = numeric(), nu2 = numeric(), reg_share = numeric(), n = integer())
+  race = c("white", "black", "hispanic", "asian")
+  if (!nrow(l2) || all(is.na(prec$hist_dem))) return(empty)
+  p = summarise(prec,
+    dem = sum(dem), rep = sum(rep),
+    # history repeats on every method row when it isn't split by method
+    hist_dem = if (hist_by_method) sum(hist_dem) else first(hist_dem),
+    hist_rep = if (hist_by_method) sum(hist_rep) else first(hist_rep),
+    .by = geo
+  )
+  d = filter(l2, mode == "Total") |>
+    inner_join(p, by = "geo") |>
+    filter(dem + rep > 0, hist_dem + hist_rep > 0, l2_n > 0, if_all(paste0("l2_", race), \(x) !is.na(x)))
+  if (nrow(d) < 50) return(empty)
+  s = rowSums(d[paste0("l2_", race)])
+  for (g in race) d[[g]] = d[[paste0("l2_", g)]] / s
+
+  fit = \(dv, rv, year) {
+    x = mutate(d, dem2 = .data[[dv]] / (.data[[dv]] + .data[[rv]]), tot = .data[[dv]] + .data[[rv]])
+    spec = seine::ei_spec(x, all_of(race), dem2, total = tot)
+    m = seine::ei_ridge(spec)
+    rr = seine::ei_riesz(spec, penalty = m$penalty)
+    seine::ei_est(m, rr, spec, conf_level = 0.95) |>
+      as_tibble() |>
+      transmute(year = year, group = predictor, estimate, conf_low = conf.low, conf_high = conf.high,
+                r2 = unname(m$r2[1]), nu2 = unname(rr$nu2[group]))
+  }
+  out = tryCatch(
+    bind_rows(fit("dem", "rep", "now"), fit("hist_dem", "hist_rep", "hist")),
+    error = \(e) { warning("dashboard_ei: ", conditionMessage(e)); NULL }
+  )
+  if (is.null(out)) return(empty)
+  reg = map_dbl(race, \(g) sum(d$l2_n * d[[g]]) / sum(d$l2_n))
+  mutate(out, reg_share = reg[match(group, race)], n = nrow(d))
+}
+
 # Build everything index.qmd needs for each row of `contests`.
 # `dash` is a list of make_summary() outputs (one per jurisdiction);
 # `models` is read_model_results() output (NULL for no modeling).
@@ -744,6 +789,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
       mprec_runs = distinct(mr, model, time)
     }
     meta = mutate(meta, hist_match = hist_match, match_n = match_n, match_of = match_of, n_frame = sum(gu$frame))
+    ei = dashboard_ei(prec, l2, meta$hist_by_method)
 
     # CBS county results for the counties with no ENR precincts (the geo prefix is county_cbs)
     mcty = tibble(county_fips = character(), county_name = character(), dem = numeric(), rep = numeric(),
@@ -774,7 +820,8 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
       mprec_runs = mutate(mprec_runs, key = key, .before = 1),
       mcty = mutate(mcty, key = key, .before = 1),
       cbs_exp = mutate(cbs_exp, key = key, .before = 1),
-      ts_all = mutate(ts_all, key = key, .before = 1)
+      ts_all = mutate(ts_all, key = key, .before = 1),
+      ei = mutate(ei, key = key, .before = 1)
     )
   })
 
@@ -792,6 +839,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     mcty = map(out, "mcty") |> bind_rows(),
     cbs_exp = map(out, "cbs_exp") |> bind_rows(),
     ts_all = map(out, "ts_all") |> bind_rows(),
+    ei = map(out, "ei") |> bind_rows(),
     geo_url = DASHBOARD_GEO_URL,
     title = DASHBOARD_TITLE,
     top_model = DASHBOARD_MODEL

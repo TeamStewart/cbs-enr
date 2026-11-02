@@ -51,6 +51,12 @@ ojs_define(
   medsl_logo = paste0("data:image/png;base64,", base64enc::base64encode("assets/medsl_horizontal.png")),
   votehub_logo = paste0("data:image/svg+xml;base64,", base64enc::base64encode("assets/votehub-logo-simple.svg")),
   top_model = if (is.null(dd$top_model)) "" else dd$top_model,
+  # county urbanicity (USDA RUCC 2023) for the Demographics page swing plots, from the model reference table
+  # (scripts/model/prep/make_model_reference.R); states it doesn't cover get no Urbanicity blocks
+  rurality = subset(read.csv("scripts/model/lookups/model_counties.csv", colClasses = "character"),
+                    rurality != "", c(state, county_cbs, rucc, rurality)),
+  # Demographics page race EI (dashboard_ei() in scripts/functions.R)
+  ei = if (is.null(dd$ei)) data.frame(key = character(), year = character(), group = character()) else dd$ei,
   truth = if (is.null(dd$truth)) data.frame(key = character(), dem = numeric(), rep = numeric(), total = numeric()) else dd$truth,
   # Redistricting page (build_redist_data() in scripts/redistricting_targets.R)
   rd_dist = if (is.null(dd$redist)) data.frame(state = character(), src = character(), plan = character(), cd = character(), dem = numeric(), rep = numeric(), cov = numeric()) else dd$redist$dist,
@@ -1523,6 +1529,233 @@ html`<div class="asof-slot"></div>`
     { mark: "dot", label: "Expected remaining votes (area)", r: 6, opacity: 0.6 }
   ] });
   return Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, r: s.r, caption: s.caption, marks: s.marks });
+}
+```
+
+
+# Demographics
+
+```{ojs demo-setup}
+//| output: false
+
+noHist = () => empty(`No history file for ${cur.state} (${cur.contest}). Expected history/${cur.state}_history.parquet.`)
+
+// ---- swing plots: each counted precinct's shift in Dem two-party share vs the history year, in blocks ----
+// (two-party on both sides, so third-party votes in either year don't read as swing)
+RURALITY = new Map(transpose(rurality).map(d => [`${d.state}|${d.county_cbs}`, d.rurality]))
+RURAL_LABELS = { return { urban: "Urban (RUCC 1–3)", suburban: "Suburban (RUCC 4)", rural: "Rural (RUCC 5–9)" } }
+histYY = `'${String(cur.hist_year).slice(2)}`
+swingRows = !cur.has_hist ? [] : reported
+  .filter(d => d.method === "Total" && d.dem + d.rep > 0 && d.hist_dem + d.hist_rep > 0)
+  .map(d => {
+    const d2 = d.dem / (d.dem + d.rep), h2 = d.hist_dem / (d.hist_dem + d.hist_rep);
+    // ENR geo carries the cbs county number: ga_001_1B
+    const cty = /^[a-z]{2}_(\d{3})_/i.exec(d.geo)?.[1];
+    return { ...d, d2, h2, shift: d2 - h2, rurality: RURALITY.get(`${cur.state}|${cty}`) ?? null };
+  })
+// vote-weighted least squares of shift on h2, drawn across the block's h2 range; null when it can't be fit
+swingFit = rows => {
+  const W = d3.sum(rows, d => d.total);
+  if (rows.length < 2 || !(W > 0)) return null;
+  const mx = d3.sum(rows, d => d.total * d.h2) / W, my = d3.sum(rows, d => d.total * d.shift) / W;
+  const sxx = d3.sum(rows, d => d.total * (d.h2 - mx) ** 2);
+  if (!(sxx > 0)) return null;
+  const b = d3.sum(rows, d => d.total * (d.h2 - mx) * (d.shift - my)) / sxx;
+  return d3.extent(rows, d => d.h2).map(x => ({ x, y: my + b * (x - mx) }));
+}
+// groups: [{ label, rows }]; each block gets its fit line and its precinct-average shift (line and corner)
+swingSpec = (groups, caption) => {
+  const rows = groups.flatMap(g => g.rows.map(d => ({ ...d, group: g.label })));
+  const stats = groups.map(g => ({ group: g.label, n: g.rows.length, avg: d3.mean(g.rows, d => d.shift) ?? null }));
+  const fits = groups.flatMap(g => (swingFit(g.rows) ?? []).map(p => ({ ...p, group: g.label })));
+  // symmetric y, trimmed to the 99th percentile so a few tiny precincts don't flatten the rest
+  const m = Math.min(0.5, Math.max(0.05, d3.quantile(rows.map(d => Math.abs(d.shift)).sort(d3.ascending), 0.99) ?? 0.05));
+  return {
+    marginLeft: 56,
+    fx: { domain: groups.map(g => g.label), label: null, padding: 0.12 },
+    x: { domain: [0, 1], label: `Dem two-party share ${histYY} →`, tickFormat: ".0%", ticks: [0.25, 0.5, 0.75], grid: true },
+    y: { domain: [-m, m], label: `Shift in Dem two-party share vs ${histYY}`, labelAnchor: "center", tickFormat: "+.0%", grid: true },
+    r: { type: "sqrt", domain: [0, d3.max(rows, d => d.total)], range: [0.5, 5] },
+    caption,
+    marks: [
+      Plot.ruleY([0], { stroke: "#d9d9d9", strokeWidth: 0.75 }),
+      Plot.dot(rows, { fx: "group", x: "h2", y: "shift", r: "total", fill: INK, fillOpacity: 0.3, clip: true,
+        channels: { geo: "geo", county: "county", votes: "total" }, tip: true }),
+      Plot.ruleY(stats.filter(s => s.avg != null), { fx: "group", y: "avg", stroke: INK, strokeWidth: 1.5, strokeDasharray: "4,4" }),
+      Plot.line(fits, { fx: "group", x: "x", y: "y", z: "group", stroke: DEM, strokeWidth: 2, clip: true }),
+      Plot.text(stats, { fx: "group", frameAnchor: "top-left", dx: 4, dy: 4, lineAnchor: "top", fontSize: 10,
+        text: s => s.n ? `Avg ${d3.format("+.1f")(s.avg * 100)} pts\n${fmt(s.n)} precincts` : "No precincts" })
+    ]
+  };
+}
+swingKeys = [
+  { mark: "dot", label: "Precinct (area: votes counted)", opacity: 0.3, r: 4 },
+  { mark: "line", label: "Linear fit (vote-weighted)", color: DEM },
+  { mark: "line", label: "Precinct average shift", color: INK, width: 1.5, dash: "4,4" },
+  { mark: "line", label: "No shift", color: "#d9d9d9", width: 1 }
+]
+swingCaption = what => `Counted votes as of ${fmtTime(cur.time)} ET vs ${cur.hist_year} · ${what} · ` +
+  "groups of precincts, not of voters"
+
+// ---- race EI: each L2 race group's Dem two-party share, counted votes vs the history year, same precincts ----
+EI_GROUPS = { return { white: "White", black: "Black", hispanic: "Hispanic", asian: "Asian" } }
+eic = transpose(ei).filter(d => d.key === sel)
+eiYears = { return { hist: `${cur.hist_year}`, now: "Now" } }
+eiColor = { return { type: "categorical", domain: [eiYears.hist, eiYears.now], range: ["#999999", DEM], legend: true } }
+noEI = () => empty(cur.l2_match > 0 ? `Not enough precincts with votes in both years and an L2 match for EI.` :
+  `No L2 race shares for ${cur.state} precincts (input_data/crosswalks/${cur.state.toLowerCase()}.csv).`)
+eiNote = d => `${fmt(d.n)} precincts with votes in both years and an L2 match · L2 race shares of registrants of known race, ` +
+  "so each estimate assumes a group's share of two-party voters is its share of registrants · " +
+  "seine (McCartan & Kuriwaki), no covariates, 95% intervals"
+```
+
+## {.toolbar}
+
+```{ojs demo-controls}
+// Swing by Race: blocks are precincts with at least this share of L2 registrants of a race
+viewof group_cut = {
+  const s = Inputs.select(new Map([["25%", 0.25], ["50%", 0.5], ["75%", 0.75]]), { value: 0.5, label: "Race ≥" });
+  s.querySelector("select").classList.add("form-select", "form-select-sm");
+  return s;
+}
+```
+
+## Row
+
+### Swing Plots {.tabset}
+
+```{ojs}
+//| title: Swing by Race
+{
+  if (!cur.has_hist) return noHist();
+  if (noVotes) return noVotesMsg();
+  const rows = swingRows.filter(d => d.l2_black != null && d.l2_hispanic != null);
+  if (rows.length === 0) return empty(`No L2 race shares for ${cur.state} precincts (input_data/crosswalks/${cur.state.toLowerCase()}.csv).`);
+  const c = d3.format(".0%")(group_cut);
+  const s = exportable("Swing by Race", swingSpec([
+    { label: "All matched", rows },
+    { label: `Black ≥${c}`, rows: rows.filter(d => d.l2_black >= group_cut) },
+    { label: `Hispanic ≥${c}`, rows: rows.filter(d => d.l2_hispanic >= group_cut) },
+    { label: "Neither", rows: rows.filter(d => d.l2_black < group_cut && d.l2_hispanic < group_cut) }
+  ], swingCaption(`share of L2 registrants by race (known race only); ${fmt(rows.length)} of ${fmt(swingRows.length)} precincts matched to L2`)),
+    "Precinct Swing by Race", { keys: swingKeys });
+  return Plot.plot({ marginLeft: s.marginLeft, fx: s.fx, x: s.x, y: s.y, r: s.r, caption: s.caption, marks: s.marks });
+}
+```
+
+```{ojs}
+//| title: Swing by Urbanicity
+{
+  if (!cur.has_hist) return noHist();
+  if (noVotes) return noVotesMsg();
+  const rows = swingRows.filter(d => d.rurality != null);
+  if (rows.length === 0) return empty(`No county urbanicity for ${cur.state} (scripts/model/lookups/model_counties.csv).`);
+  const s = exportable("Swing by Urbanicity", swingSpec(
+    Object.entries(RURAL_LABELS).map(([k, label]) => ({ label, rows: rows.filter(d => d.rurality === k) })),
+    swingCaption(`county USDA Rural-Urban Continuum Code 2023` +
+      (rows.length < swingRows.length ? `; ${fmt(swingRows.length - rows.length)} precincts in counties without a code left out` : ""))),
+    "Precinct Swing by County Urbanicity", { keys: swingKeys });
+  return Plot.plot({ marginLeft: s.marginLeft, fx: s.fx, x: s.x, y: s.y, r: s.r, caption: s.caption, marks: s.marks });
+}
+```
+
+```{ojs}
+//| title: Swing by Turnout
+{
+  if (!cur.has_hist) return noHist();
+  if (noVotes) return noVotesMsg();
+  // L2 turnout in the history year when there is one, else '22
+  const col = L2_COLS.includes(`l2_turnout${histYY.slice(1)}`) ? `l2_turnout${histYY.slice(1)}` : "l2_turnout22";
+  const yr = `'${col.slice(-2)}`;
+  const rows = swingRows.filter(d => d[col] != null);
+  if (rows.length === 0) return empty(`No L2 turnout for ${cur.state} precincts (input_data/crosswalks/${cur.state.toLowerCase()}.csv).`);
+  const v = rows.map(d => d[col]).sort(d3.ascending);
+  const [q1, q2] = [d3.quantile(v, 1 / 3), d3.quantile(v, 2 / 3)];
+  const p0 = d3.format(".0%");
+  const s = exportable("Swing by Turnout", swingSpec([
+    { label: `Low (<${p0(q1)})`, rows: rows.filter(d => d[col] < q1) },
+    { label: `Middle`, rows: rows.filter(d => d[col] >= q1 && d[col] < q2) },
+    { label: `High (≥${p0(q2)})`, rows: rows.filter(d => d[col] >= q2) }
+  ], swingCaption(`thirds of precincts by ${yr} turnout of L2 registrants; ${fmt(rows.length)} of ${fmt(swingRows.length)} precincts matched to L2`)),
+    `Precinct Swing by ${yr} Turnout`, { keys: swingKeys });
+  return Plot.plot({ marginLeft: s.marginLeft, fx: s.fx, x: s.x, y: s.y, r: s.r, caption: s.caption, marks: s.marks });
+}
+```
+
+```{ojs}
+//| title: Race EI
+{
+  if (!cur.has_hist) return noHist();
+  if (noVotes) return noVotesMsg();
+  if (eic.length === 0) return noEI();
+  const rows = eic.map(d => ({ ...d, label: eiYears[d.year], name: EI_GROUPS[d.group] ?? d.group }));
+  const pp = v => d3.format(".0%")(v);
+  const shifts = Object.keys(EI_GROUPS).map(g => {
+    const [h, n] = ["hist", "now"].map(y => rows.find(d => d.group === g && d.year === y));
+    return h && n ? { group: g, shift: n.estimate - h.estimate } : null;
+  }).filter(Boolean);
+  const outside = rows.filter(d => d.estimate < 0 || d.estimate > 1).length;
+  const reg = new Map(rows.map(d => [d.group, d.reg_share]));
+  const s = exportable("Race EI", {
+    marginLeft: 120,
+    marginRight: 64,
+    x: { domain: [0, 1], clamp: true, label: "Dem two-party share →", tickFormat: ".0%", ticks: [0, 0.25, 0.5, 0.75, 1], grid: true },
+    y: { domain: [eiYears.hist, eiYears.now], axis: null },
+    fy: { domain: Object.keys(EI_GROUPS), label: null, tickFormat: g => `${EI_GROUPS[g]} (${pp(reg.get(g))} of reg.)`, padding: 0.25 },
+    color: eiColor,
+    caption: `Counted votes as of ${fmtTime(cur.time)} ET vs ${cur.hist_year} · ${eiNote(rows[0])}` +
+      (outside ? ` · ${outside} estimate${outside > 1 ? "s" : ""} outside 0–100% pinned to the edge (see EI Diagnostics)` : ""),
+    marks: [
+      Plot.frame({ stroke: "#ddd" }),
+      Plot.ruleX([0.5], { stroke: "#d9d9d9", strokeWidth: 0.75 }),
+      Plot.ruleY(rows, { fy: "group", y: "label", x1: "conf_low", x2: "conf_high", stroke: "label", strokeWidth: 10, strokeOpacity: 0.35 }),
+      // estimates outside 0-100% are pinned to the edge, hollow
+      ...[[false, d => d.label], [true, "white"]].map(([out, fill]) =>
+        Plot.dot(rows.filter(d => (d.estimate < 0 || d.estimate > 1) === out), { fy: "group", y: "label", x: "estimate",
+          stroke: "label", strokeWidth: 1.5, fill, r: 4, channels: { year: "label", low: "conf_low", high: "conf_high" },
+          tip: { format: { x: ".1%", low: ".1%", high: ".1%", fy: false, y: false, stroke: false } } })),
+      Plot.text(shifts, { fy: "group", frameAnchor: "right", dx: 8, textAnchor: "start", fontSize: 11,
+        text: d => `${d3.format("+.1f")(d.shift * 100)} pts` })
+    ]
+  }, "Dem Two-Party Share by Race (Ecological Inference)", { swatch: "dot" });
+  return Plot.plot({ marginLeft: s.marginLeft, marginRight: s.marginRight, x: s.x, y: s.y, fy: s.fy, color: s.color, caption: s.caption, marks: s.marks });
+}
+```
+
+```{ojs}
+//| title: EI Diagnostics
+{
+  if (!cur.has_hist) return noHist();
+  if (noVotes) return noVotesMsg();
+  if (eic.length === 0) return noEI();
+  const p1 = d3.format(".1%"), get = (g, y) => eic.find(d => d.group === g && d.year === y);
+  const td = (text, cls = "") => Object.assign(document.createElement("td"), { textContent: text, className: cls });
+  const cell = d => d ? `${p1(d.estimate)} (${p1(d.conf_low)} to ${p1(d.conf_high)})` : "—";
+  const tbody = document.createElement("tbody");
+  for (const g of Object.keys(EI_GROUPS)) {
+    const [h, n] = [get(g, "hist"), get(g, "now")];
+    if (!h && !n) continue;
+    const tr = document.createElement("tr");
+    tr.append(td(EI_GROUPS[g]), td(p1((h ?? n).reg_share), "num"), td(cell(h), "num"), td(cell(n), "num"),
+      td(h && n ? `${d3.format("+.1f")((n.estimate - h.estimate) * 100)} pts` : "—", "num"),
+      td(d3.format(",.1f")((h ?? n).nu2), "num"));
+    tbody.append(tr);
+  }
+  const r2 = y => eic.find(d => d.year === y)?.r2;
+  return html`<div class="model-table-wrap">
+    <table class="table table-sm model-table">
+      <thead><tr>
+        <th>Group</th><th class="num" title="Group's share of L2 registrants of known race in these precincts">Share of reg.</th>
+        <th class="num">${cur.hist_year} (95% CI)</th><th class="num">Now (95% CI)</th><th class="num">Shift</th>
+        <th class="num" title="Second moment of the Riesz representer: larger means less information about the group">ν²</th>
+      </tr></thead>
+      ${tbody}
+    </table>
+    <div class="model-note">
+      <div>Dem two-party share by L2 race group, estimated with seine (McCartan & Kuriwaki): ridge regression and Riesz representer, debiased, no covariates. Each assumes a group's share of two-party voters is its share of L2 registrants of known race. Estimates are not bounded to 0–100%; ones outside it, or with a large ν², mean the race shares carry little information about that group.</div>
+      <div>R²: ${d3.format(".2f")(r2("hist"))} (${cur.hist_year}) · ${d3.format(".2f")(r2("now"))} (now) · ${fmt(eic[0].n)} precincts with votes in both years and an L2 match · 95% intervals</div>
+    </div>
+  </div>`;
 }
 ```
 
