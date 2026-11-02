@@ -55,6 +55,23 @@ NETWORKENR_DIR = Sys.getenv("MEDSL_NETWORKENR_DIR", "~/.cache/medsl-enr-networke
 
 source("scripts/medsl/lib.R")
 
+# _targets_medsl.R and scripts/medsl/lib.R need no restart: tar_make() re-reads them every
+# cycle. This file is the running process, so a new version of it cannot take effect in
+# place -- the cycle exits 7 and scripts/medsl/run_medsl.sh starts the new one.
+SELF = "scripts/automation_medsl.R"
+self_hash <- function() unname(tools::md5sum(SELF))
+SELF_HASH = self_hash()
+
+# --ff-only: a checkout with local commits should stop and be looked at, not merged blind.
+update_repo <- function() {
+  out <- suppressWarnings(system2("git", c("pull", "--ff-only", "--quiet"),
+                                  stdout = TRUE, stderr = TRUE))
+  if (!is.null(attr(out, "status")) && attr(out, "status") != 0) {
+    stop("git pull: ", paste(out, collapse = " "))
+  }
+  invisible(TRUE)
+}
+
 # Read at the top of the cycle, not the bottom as in automation.R: metadata.csv resolves under
 # the MEDSL folder, so a fresh one has none and the first tar_make() would build nothing. A
 # failed read keeps the previous file.
@@ -85,6 +102,8 @@ while (TRUE) {
   sink(con, append = TRUE, type = "message")
 
   steps = list(
+    # first, so a pulled _targets_medsl.R or lib.R is what this cycle's tar_make() reads
+    repo = step("cbs-enr pull (kept the current checkout)", update_repo()),
     sheet = step("Google Sheet read (kept the last metadata.csv)", pull_metadata()),
     enightdata = step("enightdata update (kept the installed version)", update_pkg_from_git(
       "enightdata", ENIGHTDATA_REPO, ENIGHTDATA_BRANCH, ENIGHTDATA_DIR
@@ -102,6 +121,12 @@ while (TRUE) {
   print(glue::glue(
     "Cycle {run_time}: {paste(names(steps), unlist(steps), sep='=', collapse=' ')}"
   ))
+
+  # Hand off before sleeping, so a pushed fix starts working now rather than in ten minutes.
+  if (!identical(self_hash(), SELF_HASH)) {
+    print("automation_medsl.R changed; exiting 7 for run_medsl.sh to start the new one")
+    quit(save = "no", status = 7)
+  }
 
   elapsed <- as.numeric(Sys.time() - start_time, units = "secs")
   sleep_time <- max(0, 60 * INTERVAL - elapsed)
