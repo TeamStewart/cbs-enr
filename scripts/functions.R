@@ -599,6 +599,20 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
   histories = map(states, read_history) |> set_names(states)
   l2s = map(states, read_l2) |> set_names(states)
   geo_units = map(states, read_geo_units) |> set_names(states)
+  # Models page Shift Map basemap: L2 shares per VoteHub unit, registrant-weighted over its ENR precincts
+  mdemo = map(states, \(s) {
+    l = l2s[[s]]
+    gu = filter(geo_units[[s]], !is.na(unit_id))
+    if (is.null(l) || !nrow(gu) || !fs::file_exists(fs::path(DASHBOARD_GEO_DIR, glue("{tolower(s)}.json")))) return(NULL)
+    l |>
+      filter(mode == "Total", l2_n > 0) |>
+      mutate(g = norm_geo(geo)) |>
+      inner_join(select(gu, g, unit_id), by = "g") |>
+      summarise(across(c(l2_male, l2_white, l2_black, l2_hispanic, l2_asian),
+                       \(x) round(weighted.mean(x, if_else(is.na(x), 0, l2_n), na.rm = TRUE), 3)),
+                l2_n = sum(l2_n), .by = unit_id) |>
+      mutate(across(starts_with("l2_"), \(x) if_else(is.finite(x), x, NA_real_)), state = s, .before = 1)
+  }) |> bind_rows()
   pres24 = read_pres24()
   mprec_all = bind_rows(tibble(race_id = character(), model = character(), time = as.POSIXct(character()),
                                geo = character(), turn_est = numeric(), dem_est = numeric(), est_dem2 = numeric()),
@@ -839,6 +853,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     cbs_exp = map(out, "cbs_exp") |> bind_rows(),
     ts_all = map(out, "ts_all") |> bind_rows(),
     ei = map(out, "ei") |> bind_rows(),
+    mdemo = mdemo,
     geo_url = DASHBOARD_GEO_URL,
     title = DASHBOARD_TITLE,
     top_model = DASHBOARD_MODEL
