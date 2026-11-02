@@ -186,7 +186,10 @@ medsl_key = function(state, counties, demo = "medsl_cov", by_method = TRUE) {
   paste0(
     if (is.null(counties)) state else paste(state, paste(sort(unique(counties)), collapse = "|")),
     if (demo != "medsl_cov") paste0("|", demo),
-    if (!by_method) "|nomode"
+    if (!by_method) "|nomode",
+    # the composition prior depends on lookups/mode_fold.csv, so an edit to it must not be
+    # served a fit cached from the old table
+    mode_fold_tag(state)
   )
 }
 
