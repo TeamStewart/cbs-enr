@@ -341,6 +341,16 @@ clarity_get = function(url) {
   list(status = httr2::resp_status(resp), body = tryCatch(httr2::resp_body_string(resp), error = \(e) ""))
 }
 
+# Clarity writes "DuPage" and "McHenry" where str_to_title() gives "Dupage" and
+# "Mchenry"; a wrong slug 404s and reads as a dead site. Junk variants cost one GET.
+clarity_slugs = function(cty) {
+  t = str_to_title(cty)
+  v = unique(c(str_replace_all(t, " ", "_"), str_replace_all(str_remove_all(t, "\\."), " ", "_")))
+  bump = \(s) str_replace(s, "^(Mc|Mac|Du|De|La|Le|O)([a-z])",
+                          \(m) paste0(str_sub(m, 1, nchar(m) - 1), toupper(str_sub(m, -1))))
+  unique(c(v, map_chr(v, bump)))
+}
+
 # Returns NULL (leave the row as it is) when blocked or when a deep EID scan is not due.
 probe_clarity = function(st, cty, path, deep = FALSE, scan = deep) {
   base = "https://results.enr.clarityelections.com"
@@ -349,8 +359,7 @@ probe_clarity = function(st, cty, path, deep = FALSE, scan = deep) {
   } else if (cty == "") {
     ""
   } else {
-    t = str_to_title(cty)
-    unique(c(str_replace_all(t, " ", "_"), str_replace_all(str_remove_all(t, "\\."), " ", "_")))
+    clarity_slugs(cty)
   }
   for (s in slugs) {
     u = if (s == "") glue::glue("{base}/{st}/elections.json") else glue::glue("{base}/{st}/{s}/elections.json")
