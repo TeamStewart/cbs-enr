@@ -395,10 +395,10 @@ histKeys = zero => [
 // Each chart cell registers its spec here, with legend keys for any marks the color scale doesn't cover;
 // the card-header button re-renders it in the MIT Election Lab house style (ggmedsl's theme_medsl(),
 // medsl_caption() and add_logo(): Styrene B, centred title, bottom legend, source caption, lab logo strip)
-// at a fixed size and saves a PNG with a transparent background (opt.format "svg" saves a vector SVG instead;
-// the District Map does). Precinct maps also credit VoteHub for the basemap. The live charts are untouched.
+// at a fixed size and saves a high-resolution JPEG on white (opt.format "png" keeps a transparent background,
+// "svg" saves a vector SVG; the District Map does). Precinct maps also credit VoteHub for the basemap. The live charts are untouched.
 EXPORT_THEME = { return {
-  width: 1200, height: 675, scale: 3, format: "png",   // pixels = width/height x scale (maps: height follows the state); "png", "jpeg" or "svg"
+  width: 1200, height: 675, scale: 3, format: "jpeg",   // pixels = width/height x scale (maps: height follows the state); "png", "jpeg" or "svg"
   font: "'Styrene B', 'Helvetica Neue', Helvetica, Arial, sans-serif",
   base: 16,   // theme_medsl(base_size); every other size is one of its rel() multiples
   ink: "#000000", subtitle: "#444444", muted: "#666666", grid: "#D0D0D0", background: "#ffffff", pad: 24,
@@ -665,7 +665,7 @@ exportChart = {
     }
     const img = await loadImg("data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(svg)));
     g.drawImage(img, T.pad, plotTop, innerW, plotH);
-    return new Promise(resolve => c.toBlob(resolve, `image/${T.format}`, 0.95));
+    return new Promise(resolve => c.toBlob(resolve, `image/${format}`, 0.95));
   };
   // only: export just the entry.multi item with this suffix (the District Map's 2024 / 2026 buttons)
   return async (name, repick = false, scope = cur.key, only = null) => {
