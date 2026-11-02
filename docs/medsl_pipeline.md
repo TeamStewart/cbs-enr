@@ -35,22 +35,66 @@ RETICULATE_PYTHON=".../renv/python/virtualenvs/renv-python-3.9/bin/python3" \
 Rscript -e 'targets::tar_make()'
 ```
 
+On the server that is just:
+
+```bash
+cd /d/research/cbs-enr && source /home/agent/medsl-env.sh
+export TAR_PROJECT=medsl CBS_AUTOMATION=1 RETICULATE_PYTHON=$MEDSL_PYTHON
+export PATH_DROPBOX=$MEDSL_DROPBOX PATH_ENIGHTDATA=$MEDSL_ENIGHTDATA ENIGHTDATA_CONFIG=$MEDSL_CONFIG
+Rscript -e 'targets::tar_make()'
+```
+
+`tar_make(names = )` uses tidyselect, which cannot see a variable from the calling scope — pass
+the target names as a literal vector (`any_of(c("data_AK_NA", ...))`), not via a variable.
+
 ## On medsl.mit.edu
 
 Every host-specific value in `automation_medsl.R` is an env var, so the server only sets them:
 
-| Variable | Default (laptop) |
-|---|---|
-| `MEDSL_DROPBOX` | `~/MIT Dropbox/Joseph Loffredo/medsl-enr` |
-| `MEDSL_ENIGHTDATA` | `~/Desktop/GitHub/enightdata` |
-| `MEDSL_PYTHON` | the renv 3.9 venv; empty skips it |
-| `MEDSL_CONFIG` | `~/.cache/medsl-enr-config` |
-| `MEDSL_WORKERS` | `max(12, cores - 2)` |
-| `MEDSL_ENIGHTDATA_BRANCH` | `medsl` |
-| `MEDSL_NETWORKENR_BRANCH` | `main` |
+| Variable | Default (laptop) | On the server |
+|---|---|---|
+| `MEDSL_DROPBOX` | `~/MIT Dropbox/Joseph Loffredo/medsl-enr` | `/d/research/medsl-enr` |
+| `MEDSL_ENIGHTDATA` | `~/Desktop/GitHub/enightdata` | `~/.cache/medsl-enr-enightdata` |
+| `MEDSL_PYTHON` | the renv 3.9 venv; empty skips it | `~/medsl-venv/bin/python3` |
+| `MEDSL_CONFIG` | `~/.cache/medsl-enr-config` | same |
+| `MEDSL_LOGDIR` | `logs` | `/d/research/medsl-enr/26_general/logs` |
+| `MEDSL_WORKERS` | `max(12, cores - 2)` | unset; 12 cores → 12 |
+| `MEDSL_ENIGHTDATA_BRANCH` | `medsl` | same |
+| `MEDSL_NETWORKENR_BRANCH` | `main` | same |
 
-`MEDSL_WORKERS` is unset by default and scales to the host, so the server needs it only to
-override. The work is network-bound, so it can run well past the core count.
+Live at `/home/agent/medsl-env.sh`, which also puts `/opt/R/4.6.1/bin` first on `PATH`. Run as
+**`agent`**, which owns the other `/d/research/2026-*-scraper` dirs. `agent` cannot `sudo`, so
+creating directories under `/d/research` and installing system packages needs someone else.
+
+`MEDSL_LOGDIR` points inside `26_general` on purpose: the per-cycle logs then travel with the
+data, so anyone who downloads the election folder can see what failed without asking.
+
+### Server build notes
+
+`renv.lock` pins R 4.6.1 and **Posit Package Manager has no binaries for R 4.6 on focal**, so
+everything compiles from source. Install the subset this pipeline needs, never a bare
+`renv::restore()` — the full lockfile is 328 packages including arrow, sf, terra and V8, none of
+which this pipeline touches. The 35-package seed in `/home/agent/restore.R` resolves to 114.
+
+Two system-level gotchas, both solved without root:
+
+- **`fs` 2.1.0 needs libuv** and no longer bundles it. Build with `USE_BUNDLED_LIBUV=1` for a
+  static copy. Without it `fs` fails and takes gargle, googledrive, googlesheets4, pkgload,
+  roxygen2 and tarchetypes with it.
+- **`elections.alaska.gov` serves an incomplete certificate chain**, omitting its
+  "GlobalSign GCC R46 OV TLS CA 2025" intermediate. macOS fetches it via the cert's AIA
+  extension; OpenSSL does not, so AK fails on Linux with "unable to get local issuer
+  certificate". `CURL_CA_BUNDLE` (set in `~/.Renviron`) points at system roots plus that
+  intermediate; verification stays on. Rebuild after a `ca-certificates` update with
+  `/home/agent/ca/rebuild.sh`.
+
+`libcurl4-openssl-dev` and `libpoppler-cpp-dev` do need root — the first for curl/httr2, the
+second because enightdata *Imports* `pdftools` even though no PDF rows are in scope. The
+`V8`/`libnode-dev` warning renv prints is noise: it lists requirements for the whole lockfile,
+and `V8` is reachable only through `gt` and `rmapshaper`.
+
+Selenium needs no `chromedriver` package — Selenium Manager fetches a matching driver at
+runtime, verified against the installed `google-chrome`.
 
 ## Three things that will bite
 
