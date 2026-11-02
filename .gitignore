@@ -83,3 +83,7 @@ scripts/model/modeling-cory/nyc/
 data/dashboard/live/
 
 **/*.quarto_ipynb
+
+# MEDSL pipeline (scripts/automation_medsl.R)
+_targets_medsl/
+logs/medsl_*.log

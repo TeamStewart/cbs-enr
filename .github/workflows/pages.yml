@@ -41,6 +41,9 @@ concurrency:
 
 jobs:
   build:
+    # main only. The push trigger above already says so; this also makes a dispatch from
+    # another ref a no-op, so the medsl pipeline can never render.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7

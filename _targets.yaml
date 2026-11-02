@@ -1,0 +1,6 @@
+main:
+  script: _targets.R
+  store: _targets
+medsl:
+  script: _targets_medsl.R
+  store: _targets_medsl
