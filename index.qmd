@@ -37,6 +37,8 @@ ojs_define(
   mres = if (is.null(dd$mres)) data.frame(key = character(), unit_id = character()) else dd$mres,
   mprec = if (is.null(dd$mprec)) data.frame(key = character(), model = character(), unit_id = character()) else dd$mprec,
   mprec_runs = if (is.null(dd$mprec_runs)) data.frame(key = character(), model = character(), time = numeric()) else transform(dd$mprec_runs, time = to_ms(time)),
+  # Models page Shift Map basemap: L2 shares per VoteHub unit, by state (build_dashboard_data() in functions.R)
+  mdemo = if (is.null(dd$mdemo) || !nrow(dd$mdemo)) data.frame(state = character(), unit_id = character()) else dd$mdemo,
   mcty = if (is.null(dd$mcty)) data.frame(key = character(), county_fips = character()) else dd$mcty,
   # CBS expected vote over time, total and by method (read_cbs_expected() in functions.R)
   cbs_exp = if (is.null(dd$cbs_exp) || !nrow(dd$cbs_exp)) data.frame(key = character(), geo = character(), method = character(), time = numeric(), expected = numeric()) else transform(dd$cbs_exp, time = to_ms(time)),
@@ -86,6 +88,7 @@ MT = new Map(transpose(model_turnout).map(d => [`${d.key}|${d.model}|${d.geo}|${
 // Models page maps: counted votes and each model's projected remaining vote per VoteHub unit
 MRES = transpose(mres)
 MPREC = transpose(mprec)
+MDEMO = transpose(mdemo)
 MPRECRUN = transpose(mprec_runs).map(d => ({ ...d, time: new Date(d.time) }))
 // CBS county results for the counties we don't scrape (read_cbs_counties() in functions.R)
 MCTY = transpose(mcty)
@@ -1196,6 +1199,32 @@ mresc = MRES.filter(d => d.key === sel)
 mprecc = MPREC.filter(d => d.key === sel && d.model === model_pick)
 mprecRun = MPRECRUN.find(d => d.key === sel && d.model === model_pick)
 mctyc = MCTY.filter(d => d.key === sel)
+// Shift Map basemap (shift_base): L2 share per VoteHub unit, in fixed bins
+mdemoc = new Map(MDEMO.filter(d => d.state === cur.state).map(d => [d.unit_id, d]))
+DEMO_RACE_BINS = [0.05, 0.15, 0.3, 0.5, 0.7]
+DEMO_VARS = { return {
+  l2_white: { label: "% white", bins: DEMO_RACE_BINS },
+  l2_black: { label: "% Black", bins: DEMO_RACE_BINS },
+  l2_hispanic: { label: "% Hispanic", bins: DEMO_RACE_BINS },
+  l2_asian: { label: "% Asian", bins: DEMO_RACE_BINS },
+  l2_male: { label: "% male", bins: [0.44, 0.46, 0.48, 0.5, 0.52] }
+} }
+// Shift Map basemap picker: none (default) or an L2 share per precinct. Built here and moved into the
+// Shift Map tab's card body (top right, beside Reset), so the map cell keeps its literal Plot.plot({...})
+viewof shift_base = {
+  const s = Inputs.select(new Map([["None", ""], ...Object.entries(DEMO_VARS).map(([k, v]) => [v.label, k])]),
+    { value: "", label: "Basemap" });
+  s.classList.add("shift-base");
+  s.querySelector("select").classList.add("form-select", "form-select-sm");
+  const place = () => { const body = document.querySelector('[data-title="Shift Map"]'); if (body && s.parentElement !== body) body.append(s); return !!body; };
+  if (!place()) { const obs = new MutationObserver(() => place() && obs.disconnect()); obs.observe(document.body, { childList: true, subtree: true }); invalidation.then(() => obs.disconnect()); }
+  return s;
+}
+// light-to-dark purple, away from the arrows' party colors and the grey of units with no L2 match
+demoColor = k => ({
+  type: "threshold", domain: DEMO_VARS[k].bins, legend: true, label: DEMO_VARS[k].label,
+  tickFormat: d3.format(".0%"), range: d3.quantize(d3.interpolateRgb("#f2f0f7", "#54278f"), DEMO_VARS[k].bins.length + 1)
+})
 
 // two-party Dem margin bins: R+60, R+30, R+10, even, D+10, D+30, D+60
 MARGIN_BINS = [-0.6, -0.3, -0.1, 0, 0.1, 0.3, 0.6]
@@ -1472,21 +1501,29 @@ html`<div class="asof-slot"></div>`
   const mfmt = x => marginColor.tickFormat(Math.round(x * 100) / 100);
   const sfmt = x => `${x >= 0 ? "D" : "R"}+${Math.abs(x * 100).toFixed(1)}`;
   const CAP = 0.3;
+  // optional basemap: an L2 share per unit (shift_base); units with no L2 match stay grey
+  const base = shift_base ? g.features.filter(f => mdemoc.get(f.id)?.[shift_base] != null) : [];
+  const baseVal = base.map(f => mdemoc.get(f.id)[shift_base]);
   const s = exportable("Shift Map", {
     projection: g.projection,
+    color: shift_base ? demoColor(shift_base) : undefined,
     length: { domain: [0, CAP], range: [0, 28], clamp: true },
-    caption: `Counted votes as of ${fmtTime(cur.time)} ET vs. 2024 president (VoteHub, on 2026 precincts) · ${fmt(res.length)} reporting precincts` +
+    caption: `Counted votes as of ${fmtTime(cur.time)} ET vs. 2024 president · ${fmt(res.length)} reporting precincts` +
       ` · shift in two-party margin ${sfmt(all26 - all24)} (${mfmt(all24)} to ${mfmt(all26)})` +
       ` · arrows: ↖ toward ${partyName("dem")}, ↗ toward ${partyName("rep")}, length = shift, capped at ${CAP * 100} pts` +
-      " · partly counted precincts compare against their full 2024 vote",
-    exportCaption: `${fmt(res.length)} reporting precincts`,
+      (shift_base ? ` · basemap: ${DEMO_VARS[shift_base].label} (${fmt(base.length)} of ${fmt(g.features.length)} precincts matched; grey: no match)` : ""),
+    exportCaption: `${fmt(res.length)} reporting precincts` +
+      (shift_base ? ` · basemap: ${DEMO_VARS[shift_base].label}, grey: no match` : ""),
     marks: [
       Plot.geo(g.counties, { fill: MAP_BLANK }),
       Plot.geo(g.features, { fill: MAP_BLANK, stroke: "white", strokeWidth: 0.3 }),
+      ...(shift_base ? [Plot.geo(base, { fill: baseVal, stroke: "white", strokeWidth: 0.3,
+        title: base.map((f, i) => `${f.id}\n${DEMO_VARS[shift_base].label}: ${pct(baseVal[i])} of ${fmt(mdemoc.get(f.id).l2_n)} registrants`) })] : []),
       ...outlineMarks(g),
       // tilted 35° up from horizontal; ARROW keeps the head one size whatever the length
+      // stroke scale: null keeps the party colors literal when the basemap brings in a color scale
       Plot.vector(res, { x: "cx", y: "cy", length: d => Math.abs(d.shift), rotate: d => d.shift > 0 ? -55 : 55, anchor: "start", shape: ARROW,
-        stroke: d => d.shift > 0 ? DEM : REP, strokeWidth: 1.5, strokeOpacity: 0.85,
+        stroke: { value: d => d.shift > 0 ? DEM : REP, scale: null }, strokeWidth: 1.5, strokeOpacity: 0.85,
         title: d => `${d.unit_id}\n2024 president ${mfmt(d.m24)} · 2026 counted ${mfmt(d.m26)}\nShift ${sfmt(d.shift)}\n` +
           `${fmt(d.total)} votes counted · 2024 two-party ${fmt(d.dem24 + d.rep24)}` }),
       ...cityMarks(cur.state)
@@ -1495,7 +1532,7 @@ html`<div class="asof-slot"></div>`
     { mark: "arrow", label: `Toward ${partyName("dem")}`, color: DEM, dir: -1 },
     { mark: "arrow", label: `Toward ${partyName("rep")}`, color: REP, dir: 1 }
   ] });
-  return Plot.plot({ className: "dash-map", projection: s.projection, length: s.length, caption: s.caption, marks: s.marks });
+  return Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, length: s.length, caption: s.caption, marks: s.marks });
 }
 ```
 
