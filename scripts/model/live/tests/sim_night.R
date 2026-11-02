@@ -13,6 +13,12 @@
 ##
 ## Writes <dir>/live_sim_<scenario>.csv (default dir 26_general/model_tests): one row per race x model x
 ## checkpoint, with the truth alongside (truth_twop, truth_turnout, pct_votes).
+##
+## BY VOTE METHOD (CONTRACT.md section 15.4): each fit's per-method turnout is carried as
+## est_turnout_<method>, the sim's own per-method truth as truth_turnout_<method> (its truth is
+## geo x method, so this is measured, not assumed), and their ratio as ratio_turnout_<method>.
+## A state modelled without vote method (MN, MI) has no such columns, which is the correct
+## output rather than a missing one.
 # ========================================
 source("scripts/model/live/load.R")
 args = commandArgs(trailingOnly = TRUE)
@@ -56,6 +62,17 @@ truth = sim$truth |>
   ) |>
   rename(race_id = contest)
 
+# TRUTH BY VOTE METHOD, for the by-method turnout rows (CONTRACT.md section 15.4). The sim's
+# truth is geo x method, so this is real per-method truth, not a share assumption. Methods are
+# folded as the models fold them (METHOD_MAP: abs -> mail, prov -> eday) so the columns line up
+# with what a fit reports.
+truth_m = sim$truth |>
+  mutate(m = coalesce(unname(METHOD_MAP[as.character(method)]), as.character(method))) |>
+  summarize(votes = sum(votes), .by = c(contest, m)) |>
+  transmute(race_id = contest, name = paste0("truth_turnout_", m), votes) |>
+  tidyr::pivot_wider(names_from = name, values_from = votes)
+TRUTH_M_COLS = setdiff(names(truth_m), "race_id")
+
 # the returns at every checkpoint with votes, one job per checkpoint x race x model
 rets = lapply(sim_checkpoints(), function(tm) {
   bind_rows(lapply(sort(unique(sim$truth$contest)), \(r) returns_from_sim(sim, r, tm)))
@@ -94,16 +111,37 @@ one = function(k) {
   s0 = proc.time()[["elapsed"]]
   # a skipped fit (e.g. medsl_sur on a race without a vote-method split) has no race row:
   # keep its status, which says why
-  fit = tryCatch(
+  got = tryCatch(
     {
       f = suppressMessages(fit_model(j$model, cells, ret))
-      if (is.null(f$race) || !nrow(f$race)) tibble(status = f$status) else f$race
+      list(
+        race = if (is.null(f$race) || !nrow(f$race)) tibble(status = f$status) else f$race,
+        method = f$method
+      )
     },
-    error = function(e) tibble(status = paste("error:", conditionMessage(e)))
+    error = function(e) {
+      list(race = tibble(status = paste("error:", conditionMessage(e))), method = NULL)
+    }
   )
+  # the SAME fit's per-method turnout (no refit), one column per method -- est_turnout_early,
+  # est_turnout_eday, ... -- so the by-method estimates can be scored against `truth_m`. A fit
+  # without a method split (MN, MI, any feed giving precinct totals) contributes no columns.
+  # the pseudo-mode "all" is dropped, as output.R drops it: in a mode-free state it IS the
+  # race total, so a column for it would just duplicate est_turnout under another name
+  fm = got$method
+  if (!is.null(fm) && nrow(fm)) fm = fm[fm$method != "all", ]
+  # tibble(.rows = 1), NOT tibble(): bind_cols() takes the common size, and a 0x0 tibble has
+  # size 0, which silently collapses the whole row to nothing (every mode-free scenario then
+  # writes an empty file).
+  wide = if (is.null(fm) || !nrow(fm)) {
+    tibble(.rows = 1)
+  } else {
+    as_tibble(setNames(as.list(fm$pred), paste0("est_turnout_", fm$method)))
+  }
   bind_cols(
     tibble(race_id = j$race_id, model = j$model, time = format(max(ret$time), "%Y-%m-%d %H:%M")),
-    fit,
+    got$race,
+    wide,
     tibble(seconds = round(proc.time()[["elapsed"]] - s0, 1))
   )
 }
@@ -129,11 +167,21 @@ res = bind_rows(
   )
 ) |> # columns even if every fit failed
   left_join(truth, by = "race_id") |>
+  left_join(truth_m, by = "race_id") |>
   mutate(
     pct_votes = counted_votes / truth_turnout,
     covers = truth_twop >= lo_twop & truth_twop <= hi_twop,
     scenario = basename(dir_sc)
   )
+# by-method error, one column per method: est / truth. Written alongside the estimates rather
+# than left to the reader, because the whole point of the by-method rows is whether each
+# method's number is right, not just whether they add up to a total that is.
+for (m in sub("^truth_turnout_", "", TRUTH_M_COLS)) {
+  est = paste0("est_turnout_", m)
+  if (est %in% names(res)) {
+    res[[paste0("ratio_turnout_", m)]] = res[[est]] / res[[paste0("truth_turnout_", m)]]
+  }
+}
 
 dir_out = sub(
   "^--out=",

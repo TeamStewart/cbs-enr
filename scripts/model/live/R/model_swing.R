@@ -218,6 +218,10 @@ fit_swing = function(
   ctys = unique(d$county)
   pt = swing_once(d, setNames(rep(1, length(ctys)), ctys), x)
   point = c(dem = sum(pt$dem), rep = sum(pt$rep), tot = sum(pt$tot))
+  # per-method race totals (CONTRACT.md section 15.4): the point fit's cells by method, and
+  # (bootstrap) the same sums in every replicate
+  ms = sort(unique(as.character(pt$method)))
+  pt_m = vapply(ms, \(m) sum(pt$tot[pt$method == m]), 0)
   if (interval == "conformal") {
     fc = mutate(
       d,
@@ -239,6 +243,7 @@ fit_swing = function(
       pred = pred,
       cells = votes_precincts(pt),
       point = point,
+      method = method_totals_point(pt$tot, pt$method),
       interval = interval,
       level = level
     ))
@@ -252,12 +257,21 @@ fit_swing = function(
       cw[rep_ctys] = as.numeric(k)
     }
     o = swing_once(d, cw, x)
-    c(s2 = sum(o$dem) / sum(o$dem + o$rep), turn = sum(o$tot), dem = sum(o$dem), rep = sum(o$rep))
+    c(
+      s2 = sum(o$dem) / sum(o$dem + o$rep),
+      turn = sum(o$tot),
+      dem = sum(o$dem),
+      rep = sum(o$rep),
+      setNames(vapply(ms, \(m) sum(o$tot[o$method == m]), 0), paste0("m_", ms))
+    )
   })
   S2 = vapply(draws, `[[`, 0, "s2")
   TT = vapply(draws, `[[`, 0, "turn")
   DV = vapply(draws, `[[`, 0, "dem")
   RV = vapply(draws, `[[`, 0, "rep")
+  # replicates x methods; rbind (not vapply + t) so a single method still gives a matrix
+  TM = do.call(rbind, lapply(draws, \(z) z[paste0("m_", ms)]))
+  colnames(TM) = ms
   # centre the bootstrap draws on the point fit
   S2 = S2 - mean(S2) + sum(pt$dem) / sum(pt$dem + pt$rep)
   TT = TT - mean(TT) + sum(pt$tot)
@@ -283,6 +297,10 @@ fit_swing = function(
     cells = votes_precincts(pt),
     point = point,
     draws = tibble(twop = S2, turnout = TT, dem = DV, rep = RV),
+    # re-centred on the point fit, as the race-level draws above are, so the per-method
+    # points still sum to the race total the prediction rows carry
+    method = method_totals_draws(TM, ms, level, point = pt_m),
+    method_draws = sweep(TM, 2, colMeans(TM) - pt_m),
     interval = interval,
     level = level
   )

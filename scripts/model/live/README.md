@@ -31,7 +31,11 @@ reads the scrapers' clean files, `26_general/{ST}/clean/*_latest.parquet` (`retu
 Every 5 minutes: pulls fresh CBS county results for each race in `priors.csv`, runs every
 model switched on in `26_general/model_config.csv` on every race, and writes `26_general/model_results/predictions_latest.csv` (scraped
 counties, `geo = "scraped"`, and statewide, `geo = "all"`), `turnout_latest.csv` and `status_latest.csv`. Drop
-`--every` for a single refresh. To try the whole path on a simulated night with a simulated
+`--every` for a single refresh. `turnout_latest.csv` carries the race total **and its vote-method breakdown**: one
+row per race x model x geo x `method`, where `method = "total"` is the whole race and the others are the methods
+that state actually supplies (`early` / `eday` / `mail`, folded from the feed's labels). A state modelled without
+vote method (MN, MI) gets the `total` row alone, and statewide rows are `total` only. See CONTRACT.md §15.4.
+To try the whole path on a simulated night with a simulated
 CBS feed (writes to `model_tests/run_night_sim/`, never to `model_results/`):
 ```
 Rscript scripts/model/live/run_night.R --sim=tx_base --at="2026-11-03 22:00"
@@ -88,8 +92,9 @@ turns it off).
 `predict_all(cells, returns)` runs every race x model and returns `$pred`, in enightmodels'
 tidy prediction format (the columns in `enightmodels::COLS_PRED`: one row per race x model
 x candidate x `pred_type`, with `pred_type` "vote" and "share", `rep`, `pred`, `pred_min`,
-`pred_max`, `pct_rep`, plus `p_win`), `$turnout`, the race total with its interval (one row
-per race x model x geo; CONTRACT.md section 15.4), and `$status`, one row per race x model saying "ok",
+`pred_max`, `pct_rep`, plus `p_win`), `$turnout`, the race total with its interval **and its
+vote-method breakdown** (one row per race x model x geo x `method`, `method = "total"` being the
+whole race; CONTRACT.md section 15.4), and `$status`, one row per race x model saying "ok",
 "no_votes" or "error: ...". `write_predictions(res)` writes all three to `26_general/model_results/` in the shared
 Dropbox, as timestamped CSVs plus `predictions_latest.csv` / `turnout_latest.csv` / `status_latest.csv`. Test
 runs should pass another `dir` so they never mix with the night's results. Details at the top of `R/output.R`.

@@ -185,6 +185,10 @@ fit_ratio_strata = function(
     pred = pred,
     cells = prec,
     coef = coef,
+    # per-method race totals (CONTRACT.md section 15.4): the same per-candidate predictions
+    # the prediction rows are summed from, grouped by the cell's method instead of by
+    # candidate, so the two agree exactly. No interval, as at race level.
+    method = method_totals_point(d_cand$pred, d_cand$method),
     interval = interval,
     level = level
   )

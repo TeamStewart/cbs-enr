@@ -202,15 +202,21 @@ read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "mo
   }
 
   # race totals with their interval (CONTRACT.md section 15.4); runs from before the table
-  # existed have none, and the dashboard falls back to summing the vote rows
+  # existed have none, and the dashboard falls back to summing the vote rows.
+  # The table is one row per race x model x geo x METHOD. Keep the whole-race rows only: the
+  # page keys turnout on race_id|model|geo|time, so without this the dedup below would keep an
+  # arbitrary method's interval and label it the race total. A file written before the method
+  # column existed has no such column, and its rows ARE the whole-race rows.
   turnout = read_runs("turnout")
   if (!is.null(turnout)) {
+    if (!"method" %in% names(turnout)) turnout$method = "total"
     turnout = turnout |>
       mutate(
         time = lubridate::ymd_hms(time, quiet = TRUE),
-        across(c(pct_rep, rep, pred, pred_min, pred_max), as.numeric)
+        across(c(pct_rep, rep, pred, pred_min, pred_max), as.numeric),
+        method = coalesce(method, "total")
       ) |>
-      filter(!is.na(time)) |>
+      filter(!is.na(time), method == "total") |>
       arrange(desc(file)) |>
       distinct(race_id, model, geo, time, .keep_all = TRUE) |>
       select(race_id, model, geo, time, pred, pred_min, pred_max) |>

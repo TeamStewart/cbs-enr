@@ -328,6 +328,16 @@ fit_pois_bayes = function(
     fit_oth = fit$oth
   )
 
+  # per-method race totals (CONTRACT.md section 15.4), from the same cell draws the race
+  # total is summed from; conf_seq takes its bound from the prior predictive draws so it
+  # matches its model_conf label (results.R)
+  meth = if (interval == "conf_seq") {
+    method_totals_conf_seq(P$dem + P$rep + P$oth, tot, d$method, level)
+  } else {
+    method_totals_draws(tot, d$method, level)
+  }
+  meth_dr = method_draws_matrix(tot, d$method)
+
   draws_result(
     "pois_bayes",
     interval,
@@ -338,6 +348,8 @@ fit_pois_bayes = function(
     returns,
     prior = if (interval == "conf_seq") race_draws(P),
     fc = fc,
-    cells = if (precincts) draws_precincts(tot, V$dem, V$rep, d, level)
+    cells = if (precincts) draws_precincts(tot, V$dem, V$rep, d, level),
+    method = meth,
+    method_draws = meth_dr
   )
 }

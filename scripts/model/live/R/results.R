@@ -88,10 +88,21 @@ race_counted = function(cells, counts) {
 #' @param draws Race-level draws (twop, turnout, dem, rep).
 #' @param point Point predictions `c(dem, rep, tot)`.
 #' @param coef Model coefficients, where the model has them.
+#' @param method Per-method final-vote totals (`method_totals_draws()` /
+#'   `method_totals_point()`): method, pred, pred_min, pred_max. NULL from a fit that has no
+#'   method split to report; `output.R` then publishes the race total alone (CONTRACT.md
+#'   section 15.4).
+#' @param method_draws Draws x methods matrix of total votes (`method_draws_matrix()`), for
+#'   fits with draws. `add_virtual()` adds the virtual units to it per method and re-summarizes
+#'   `method`; without it a virtual unit can only move the point, not the interval.
+#'   NOT a decomposition of `draws$turnout` once virtual units are in: each method's units draw
+#'   their own noise, so the across-unit common terms are not shared and `rowSums()` of this
+#'   does not reproduce `draws$turnout`. Only the per-method marginals are published.
 #' @param interval One of `INTERVALS`; sets the `conf` label.
 #' @param level Interval level.
 #' @return List: model, status, settings, conf (e.g. "posterior_95"; NA for "none"), race
-#'   (one row: status, the `est` columns and `counted`), pred, cells, draws, point, coef.
+#'   (one row: status, the `est` columns and `counted`), pred, cells, draws, point, coef,
+#'   method.
 model_result = function(
   model,
   status,
@@ -103,6 +114,8 @@ model_result = function(
   draws = NULL,
   point = NULL,
   coef = NULL,
+  method = NULL,
+  method_draws = NULL,
   interval = "none",
   level = 0.95
 ) {
@@ -111,6 +124,13 @@ model_result = function(
     list(status = status),
     lapply(setNames(cols, cols), \(c) est[[c]] %||% NA_real_)
   ))
+  # A per-method interval exists only where the RACE TOTAL has one. Enforced here, in the one
+  # constructor every model goes through, rather than trusted to each adapter: conformal shifts
+  # shares only (turnout is a point), so a per-method bound from posterior draws would be
+  # labelled with a `model_conf` whose machinery did not produce it.
+  if (!is.null(method) && (is.na(race$lo_turnout) || is.na(race$hi_turnout))) {
+    method = mutate(method, pred_min = NA_real_, pred_max = NA_real_)
+  }
   list(
     model = model,
     status = status,
@@ -121,7 +141,12 @@ model_result = function(
     cells = cells,
     draws = draws,
     point = point,
-    coef = coef
+    coef = coef,
+    method = method,
+    method_draws = method_draws,
+    # carried so add_virtual() can re-summarize the per-method interval at the fit's own
+    # level instead of assuming 0.95
+    level = level
   )
 }
 
@@ -318,6 +343,8 @@ conf_seq_bounds = function(prior, post, level = 0.95) {
 #' @param fc Cell frame for `conformal_party()` (conformal).
 #' @param cells Per-precinct rows (`prec_rows()`).
 #' @param coef Model coefficients.
+#' @param method Per-method totals (`method_totals_draws()`); `model_result()` blanks their
+#'   bounds when the race total has none.
 #' @return `model_result()` list.
 draws_result = function(
   model,
@@ -330,7 +357,9 @@ draws_result = function(
   prior = NULL,
   fc = NULL,
   cells = NULL,
-  coef = NULL
+  coef = NULL,
+  method = NULL,
+  method_draws = NULL
 ) {
   point = c(dem = mean(dr$dem), rep = mean(dr$rep), tot = mean(dr$turnout))
   res = function(...) {
@@ -341,6 +370,8 @@ draws_result = function(
       counted,
       cells = cells,
       coef = coef,
+      method = method,
+      method_draws = method_draws,
       interval = interval,
       level = level,
       ...
@@ -363,6 +394,141 @@ draws_result = function(
   }
   pred = cand_bounds(cand, conformal_party(fc, level))
   res(est = pred_race_est(pred), pred = pred, point = point)
+}
+
+# ---- per-method race totals (CONTRACT.md section 15.4) -------------------------------
+# The models' unit of analysis IS precinct x vote method (cells.R), and every model computes
+# final votes per cell -- then sums the method dimension away. These two keep it: one row per
+# method, in the turnout table's terms, which output.R publishes beside the race total.
+#
+# `pred` is additive and the interval is NOT. Per-method `pred` sums EXACTLY to the total's
+# (a mean of sums is the sum of means), which the acceptance test asserts; per-method bounds
+# do not sum to the total's bounds, because a sum of quantiles is not the quantile of a sum.
+# That is the same reason section 15.4 exists as its own table rather than living in 15.1.
+
+#' Per-method final-vote totals from draws
+#'
+#' Sums each method's columns within a draw, then takes the mean and `cred()` bounds of those
+#' per-method draws.
+#'
+#' `point` exists for swing, whose bootstrap draws are re-centred on the point fit: without it
+#' the per-method means would be the bootstrap means and would no longer sum to the race total
+#' the prediction rows carry. With it, `pred` IS the point total and the bounds come from the
+#' draws shifted onto it.
+#'
+#' @param M Draws x columns matrix of total votes. Columns are cells (pois_bayes, lm_bayes,
+#'   medsl_sur) or already one column per method (swing); `method` says which is which.
+#' @param method Method of each column of `M`.
+#' @param level Interval level.
+#' @param point Optional named numeric, method -> point total, to re-centre on.
+#' @return Tibble, one row per method in `sort(unique(method))`: method, pred, pred_min,
+#'   pred_max. NULL if `M` has no columns.
+method_totals_draws = function(M, method, level = 0.95, point = NULL) {
+  stopifnot("M must be a draws x columns matrix" = is.matrix(M))
+  method = as.character(method)
+  if (!length(method) || !ncol(M)) {
+    return(NULL)
+  }
+  stopifnot("method must have one entry per column of M" = length(method) == ncol(M))
+  ms = sort(unique(method))
+  bind_rows(lapply(ms, function(m) {
+    x = rowSums(M[, method == m, drop = FALSE])
+    # match(), not [[: a name mismatch gives NA (one bad row) rather than "subscript out of
+    # bounds", which inside fit_model() would cost the race its predictions
+    pt = if (is.null(point)) mean(x) else unname(point[match(m, names(point))])
+    # re-centre on the point fit, as swing does at race level, so the means still add up
+    if (!is.null(point)) x = x - mean(x) + pt
+    ci = cred(x, level)
+    tibble(method = m, pred = pt, pred_min = pmax(ci[["lower"]], 0), pred_max = ci[["upper"]])
+  }))
+}
+
+#' Collapse cell draws to one column per method
+#'
+#' The draws x methods matrix `add_virtual()` (virtual.R) needs: votes a county reports in
+#' virtual precincts are added to the race AFTER the fit, per method, and a draws x cells
+#' matrix is both too big to carry around and the wrong grain to add them to.
+#'
+#' @param M Draws x cells matrix of total votes.
+#' @param method Method of each cell.
+#' @return Draws x methods matrix, columns `sort(unique(method))`; NULL if `M` has no columns.
+method_draws_matrix = function(M, method) {
+  stopifnot("M must be a draws x cells matrix" = is.matrix(M))
+  method = as.character(method)
+  if (!length(method) || !ncol(M)) {
+    return(NULL)
+  }
+  stopifnot("method must have one entry per column of M" = length(method) == ncol(M))
+  ms = sort(unique(method))
+  out = vapply(ms, \(m) rowSums(M[, method == m, drop = FALSE]), numeric(nrow(M)))
+  # vapply drops to a vector when there is one draw; keep it a matrix either way
+  matrix(out, nrow = nrow(M), dimnames = list(NULL, ms))
+}
+
+#' Per-method final-vote totals from prior and posterior draws (conf_seq)
+#'
+#' `enightmodels::conf_seq()` on each method's total, on the log scale, exactly as
+#' `conf_seq_bounds()` treats the race total. Separate from `method_totals_draws()` so a
+#' `conf_seq_95` row's per-method bound is made by the machinery its `model_conf` claims:
+#' posterior quantiles under a conf_seq label would be a different object with the same name.
+#'
+#' Only `pois_bayes` reaches this today: it already draws prior predictive counts per cell.
+#' `medsl_sur/conf_seq` has no per-mode prior draws (`prior_totals()` accumulates across modes),
+#' so its per-method bounds are NA -- see CONTRACT.md section 15.4. Extending it is one
+#' accumulator in `prior_totals()`, the same shape as the posterior side.
+#'
+#' @param prior,post Draws x columns matrices of total votes, prior predictive and posterior.
+#' @param method Method of each column.
+#' @param level Interval level.
+#' @return Tibble: method, pred (posterior mean), pred_min, pred_max; a bound `conf_seq()`
+#'   cannot find is NA.
+method_totals_conf_seq = function(prior, post, method, level = 0.95) {
+  stopifnot("prior and post must be matrices" = is.matrix(prior) && is.matrix(post))
+  method = as.character(method)
+  if (!length(method) || !ncol(post)) {
+    return(NULL)
+  }
+  stopifnot(
+    "method must have one entry per column" = length(method) == ncol(post),
+    "prior and post must have the same columns" = ncol(prior) == ncol(post)
+  )
+  lcs = function(a, b) {
+    x = enightmodels::conf_seq(log(pmax(a, 1)), log(pmax(b, 1)), level = level)
+    x[!is.finite(x)] = NA
+    exp(x)
+  }
+  bind_rows(lapply(sort(unique(method)), function(m) {
+    i = method == m
+    b = rowSums(post[, i, drop = FALSE])
+    x = lcs(rowSums(prior[, i, drop = FALSE]), b)
+    tibble(
+      method = m,
+      pred = mean(b),
+      pred_min = pmax(x[["lower"]], 0),
+      pred_max = x[["upper"]]
+    )
+  }))
+}
+
+#' Per-method final-vote totals from point predictions
+#'
+#' For fits with no draws of the total (ratio_strata, and every conformal arm: conformal
+#' shifts shares only, so turnout is a point and its interval is NA at race level too).
+#'
+#' @param tot Final votes per cell.
+#' @param method Method of each cell.
+#' @return Tibble, one row per method: method, pred, pred_min = NA, pred_max = NA; NULL if
+#'   there are no cells.
+method_totals_point = function(tot, method) {
+  method = as.character(method)
+  if (!length(method)) {
+    return(NULL)
+  }
+  stopifnot("method must have one entry per cell" = length(method) == length(tot))
+  tibble(method = method, tot = tot) |>
+    summarize(pred = sum(tot), .by = method) |>
+    arrange(match(method, sort(unique(method)))) |> # same idiom as method_totals_draws()
+    mutate(pred_min = NA_real_, pred_max = NA_real_)
 }
 
 # The precinct file's columns (CONTRACT.md section 15.3). Every model's `cells` slot has them

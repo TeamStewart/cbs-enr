@@ -1077,16 +1077,198 @@ total's interval (a sum of quantiles is not the quantile of the sum). So the tot
 its own table, `turnout_<stamp>.csv` + `turnout_latest.csv`, written by
 `write_predictions()` beside the other two.
 
-Grain: one row per `race_id` x `model` x `geo` x `time`, for exactly the race x model x geo
-combinations that have §15.1 rows. The columns are named as in §15.1 so a consumer can treat
-a turnout row as a prediction row.
+**Extended 2026-11-02 with the vote-method breakdown.** The models' unit of analysis already
+*is* precinct x vote method (`cells.R`), and every model computes final votes per cell, so the
+breakdown was being summed away rather than being unavailable.
+
+Grain: one row per `race_id` x `model` x `geo` x `time` x `method`, for exactly the
+race x model x geo combinations that have §15.1 rows. The columns are named as in §15.1 so a
+consumer can treat a turnout row as a prediction row.
 
 | column | meaning |
 |---|---|
 | `race_id`, `model`, `time`, `geo`, `model_conf`, `pct_rep` | as §15.1 |
+| `method` | `total` = the whole race; otherwise one vote method (see below) |
 | `rep` | votes counted so far, all candidates |
-| `pred` | predicted final votes: the race's §15.1 `"vote"` rows summed, so it matches them exactly |
-| `pred_min`, `pred_max` | the total's interval ends, at §15.1's level; NA when the model gives none |
+| `pred` | predicted final votes. On the `total` row, the race's §15.1 `"vote"` rows summed, so it matches them exactly |
+| `pred_min`, `pred_max` | the interval ends, at §15.1's level; NA when the model gives none |
+
+#### `method`: the vocabulary, and why the aggregate is `total`
+
+Values are `total`, `early`, `eday`, `mail` — **never `all`**, `adv`, `abs` or `prov`.
+
+* **`total`, not `all`.** `geo = "all"` already means a *superset* (scraped counties plus the
+  rest of the state), not a complement, so a row reading `geo = "all", method = "all"` would
+  carry one word on two unrelated axes. `lookups/README.md`'s `all` is the **input**
+  vocabulary, for what a feed sends; `total` is also what the CBS county feed and the
+  dashboard already call an aggregate. `output.R`'s `AGG_METHOD` is the single definition.
+* **The feed's labels are folded** by `METHOD_MAP` (`run.R`) exactly as `shape_for_method()`
+  folds them for fitting: `abs -> mail`, `prov -> eday`. One `adv` row (early and mail lumped
+  together), one `all`, or one missing method anywhere makes the whole race mode-free, so an
+  unfoldable label can never reach this table.
+* **Dynamic in what the state supplies, with no new machinery.** The rows follow the fit's
+  cells. A state modelled without vote method — MN (its feed reports every precinct as `all`),
+  MI (no in-person early in any L2 year) — has the single pseudo-mode `all` in its cells and
+  gets the `total` row **alone**. It never gets a second row repeating the same number under
+  another label, which is why the acceptance test below requires at least two methods wherever
+  a breakdown exists.
+* **`geo = "all"` rows are `total` only.** The rest of the state comes from CBS county results,
+  whose baseline (`county_baseline()`) has no method dimension, so splitting it would need a
+  mode-composition assumption. Not made here.
+
+#### The breakdown includes the virtual units, and must
+
+`fit_model()` adds votes a county reports in virtual precincts *after* the fit
+(`add_virtual()`, §virtual.R), so the published total is precinct cells **plus** virtual units.
+The by-method rows go through the same adjustment (`add_virtual_method()`), using the same
+swing and turnout ratio, and `project_rest()` is deterministic and additive over units when
+`noise = FALSE` — so the per-method points still sum to the total exactly.
+
+Without that, the breakdown would be the precinct cells alone while the total was right, and
+the gap is not academic: in NC, 33 of 100 counties report **all** their early votes in virtual
+precincts and 36 most of their mail, so `early` would have read about 38% low.
+
+#### Where the interval comes from
+
+`pred` is additive and the interval is not: per-method `pred` sums exactly to the `total`
+row's, while per-method bounds do **not** sum to the total's — an interval of a sum is not the
+sum of the parts' intervals. That is the same reason this table exists apart from §15.1.
+
+A row whose `pred` and bounds would not add up is **not published**: `to_turnout_data()` checks
+the per-method `pred` and `rep` against the `total` row and falls back to the total alone. The
+live case it catches is a race whose feed lists no third-party or write-in candidate, where
+§15.1's vote rows carry no `oth` slice to allocate while the cells do (measured: +0.45% on
+tx_base with the non-major candidates removed).
+
+A per-method interval is published only where the race total has one, and only where it was
+made by the machinery its `model_conf` claims (`model_result()` enforces the first; the
+adapters the second). So per method:
+
+| model / interval | per-method bounds |
+|---|---|
+| bootstrap, credible (`swing`, `pois_bayes`, `lm_bayes`, `medsl_sur`) | that method's draws through `cred()` (mean +/- z x sd, the same normal approximation the race level uses -- NOT an empirical quantile, so it does not follow skew), with the virtual units added per draw |
+| `conformal` | NA, as at race level: conformal shifts shares only, so turnout is a point |
+| `ratio_strata` (`none`) | NA, as at race level |
+| `conf_seq` | `pois_bayes` / `lm_bayes`: `conf_seq()` on that method's prior and posterior draws. `medsl_sur`: **NA** — `prior_totals()` accumulates its prior draws across modes, so there is no per-mode reference measure, and a posterior quantile under a `conf_seq_95` label would be a different object wearing that name. Extending it is one accumulator in `prior_totals()`, the same shape as the posterior side. |
+| any fit whose virtual units moved a method, without draws | NA: only the point could move, and bounds describing the precinct cells while `pred` describes cells plus virtual units would be worse than none |
+
+#### `rep` per method
+
+From the race's returns folded by `METHOD_MAP`, so it sums exactly to the `total` row's. Note
+that in AK and NC `rep` includes bucket geos while `pred` covers the precinct frame — that
+mismatch already exists on today's total row, and this reproduces the existing convention per
+method rather than inventing a second one.
+
+#### MEASURED: a method's number is far less accurate than the total, and the total hides it
+
+**Read this before putting a by-method number on air.** The breakdown does not create this
+error — it reveals one the total was already carrying, because the race total is the sum of the
+modes and their errors offset.
+
+TX 2024, real release cadence, real per-mode truth (`tx24_truth.parquet` is `geo x method`),
+`medsl_sur`, `mode_year = 2020`, `COMPLETE_FRAC = 0.6`
+(`quality_reports/bt_method.R`), as est/truth:
+
+Times are the state's own clock (America/Chicago; most TX polls close 19:00 CT, so the first
+row is early-vote-only reporting):
+
+| time (CT) | counted | mail | early | eday | **total** |
+|---|---|---|---|---|---|
+| Nov 5, 18:47 | 16.2% | 1.673 | 0.891 | 0.448 | **0.835** |
+| Nov 5, 19:05 | 47.4% | 0.865 | 0.990 | 0.448 | **0.882** |
+| Nov 5, 19:30 | 70.7% | 0.885 | 1.076 | 0.426 | **0.945** |
+| Nov 5, 20:30 | 74.1% | 0.928 | 1.106 | 0.290 | **0.944** |
+| Nov 5, 21:30 | 81.0% | 1.115 | 1.314 | 0.560 | **1.163** |
+| Nov 5, 22:00 | 84.0% | 1.046 | 1.214 | 0.689 | **1.108** |
+| Nov 6, 00:00 | 94.6% | 0.964 | 1.109 | 0.928 | **1.069** |
+| Nov 6, 05:00 | 99.3% | 0.947 | 1.081 | 1.076 | **1.075** |
+
+`eday` sits at **0.29–0.69 of truth through the whole broadcast window** -- worst at 20:30 CT,
+ninety minutes after poll close -- and does not reach 0.9 until after midnight, while the total
+never leaves 0.84–1.16. Compensating errors (`early` high, `eday` low) cancel in the total.
+
+**The cause is measured, not inferred: until a mode reports, its projection is the composition
+prior.** TX is 77.2% early vote and election day reports last, so nothing in tonight's returns
+identifies how big `eday` will be. Each mode's prior share against truth, beside its measured
+error:
+
+| mode | prior/true (`mode_year=2020`) | measured, mid-window | prior/true (`mode_year=2022`) | measured, mid-window |
+|---|---|---|---|---|
+| early | 1.061 | 0.89–1.31 | 0.840 | 0.76–1.39 |
+| `eday` | **0.571** | **0.29–0.69** | **1.630** | **1.22–1.67** |
+
+Swapping only the prior cycle flips `eday` from badly under to badly over, and the mid-window
+value lands on its prior ratio. This is the per-mode face of the composition defect recorded in
+`quality_reports/session_logs/2026-10-30_hybrid-model-spec.md` Part 12, which measured the same
+prior error (early -12.4pp, eday +12.0pp on the 2022 prior) at the level of the total.
+
+**No composition fix can repair it, and the reason is a sample size.** Both composition arms
+are identified from *counted-out cells*, and `eday` has almost none during the window --
+measured on the same cadence, cells counted out (and the share of that mode's eventual votes
+they carry):
+
+| time (CT) | early | mail | `eday` |
+|---|---|---|---|
+| 19:30 | 87.7% (88.6%) | 18.2% (23.8%) | **0.3% (0.2%)** |
+| 20:30 | 92.9% (92.7%) | 19.2% (25.5%) | **1.5% (0.8%)** |
+| 21:30 | 98.0% (98.3%) | 22.6% (29.8%) | 15.3% (12.9%) |
+| 00:00 | 99.0% (99.7%) | 29.8% (40.6%) | 84.7% (85.2%) |
+
+At 20:30, where `eday` reads 0.291, the arms have **37 cells carrying 0.8% of eday's votes** to
+estimate its share from. `eday` recovers to 0.895 at 00:00, exactly when 84.7% of its cells are
+counted out. So this is not a switch that is off; it is an absence of data about a mode that has
+not voted yet as far as the feed is concerned.
+
+**None of the known fixes repairs it**, measured on the same checkpoints. `USE_CENSOR=1
+USE_ATOM=1` (Part 13's recommendation) takes the **total** from 94.5 / **116.3** / 110.8 to
+100.2 / 101.1 / 101.5 and leaves `eday` at 0.43 / 0.42 / 0.57. `HY_COMP=0 HY_COUNTY=0
+COMPOSITION_UPDATE=1 MIN_MODE_SHARE=0.85` (Part 12's recommendation 2) leaves it at
+0.47 / 0.50 / 0.62. The level defect and the split defect are **separate**, and only the level
+one has a known fix.
+
+*Caveat on magnitude, as Part 12 makes for itself:* how far off a mode is depends on the
+composition prior, and this backtest's 2020 and 2022 priors are both wrong for a 2024 target, in
+opposite directions. The 2026 production prior is `k_c`-calibrated and may be better, so the
+**size** of this error must be re-measured there.
+
+**How much is the prior, measured.** An oracle counterfactual replaces only the composition
+prior with one built from the 2024 result (`quality_reports/bt_oracle.R`; *leaky by
+construction -- a ceiling, never a validation*). At 20:30 `eday` goes **0.289 -> 0.840**, about
+three quarters of the shortfall, and the total goes 0.944 -> 1.012. So most of the by-method
+error here is a bad composition prior, and a better 2026 prior should shrink it.
+
+Two things survive a perfect prior, and they bound how good the breakdown can get:
+* the remainder allocation still over-feeds the finished dominant mode -- in the oracle arm
+  `early` takes 39-66% of the predicted remainder while holding 7-22% of the outstanding votes,
+  so `eday` plateaus at 0.73-0.86 rather than reaching 1.0. The rule is
+  `short = pmax(T_draw * share - counted, 0)` (`model_turnout.R:2171`), distance below a mode's
+  composition-implied share rather than votes outstanding; the leak onto counted-out modes is
+  deliberate and documented at `:193-201` (zeroing it is 2.5x worse while the feed's
+  completeness flag lies, which is the production regime).
+* the 21:30 total spike is untouched (1.163 -> 1.201, `early` 1.319 in both arms): that is the
+  precinct-total equation's empty fit sample, Part 12 defect 1, and the only one of the three
+  with a known fix (`USE_CENSOR=1 USE_ATOM=1`).
+
+What generalises regardless of prior is the structure: a mode that has not reported carries no
+information from tonight, in any state.
+
+The same shape shows in the sims, and it is not TX-specific. Median `ratio_turnout_<method>`
+over 30–90% counted, `swing` (`sim_night.R`):
+
+| scenario | early | eday | mail |
+|---|---|---|---|
+| tx_base | 1.049 | 1.044 | **0.855** |
+| fl_base | 1.030 | 1.024 | **0.878** |
+| ga_base | 1.032 | 1.028 | **0.891** |
+
+`mail` is 11–15% low mid-night in **every** state that reports it, converging only once it is
+counted out (FL late: 1.032). Which mode is worst depends on which reports last — mail in the
+sims' cadence, election day in the TX 2024 real cadence above.
+
+So: the breakdown is sound arithmetic on each model's own cells, and it is the right object to
+publish, but **a single method's number early in the night is a prior, not a measurement.** The
+honest consumer-facing framing is the share of each method already counted (`rep`) next to its
+projection, not the projection alone.
 
 Where the interval comes from:
 
@@ -1096,8 +1278,18 @@ Where the interval comes from:
 | `conf_seq` | `conf_seq()` on the log total | scraped bounds + the rest projected at the turnout-ratio ends, plus the rest's noise quantiles (`rest_turnout_bounds()`, `counties.R`) |
 | `conformal`, `none` | NA: conformal shifts shares only, so turnout is a point | NA |
 
-*Acceptance:* every race x model x geo in `predictions_latest.csv` has exactly one row here;
-`pred` equals the sum of its `"vote"` rows; `pred_min <= pred_max` where both are non-NA.
+*Acceptance:* every race x model x geo in `predictions_latest.csv` has exactly one
+`method = "total"` row here and no others; that row's `pred` equals the sum of its `"vote"`
+rows; `pred_min <= pred_max` where both are non-NA; exactly one row per
+race x model x geo x method; `unique(method)` is a subset of `{total, early, eday, mail}`;
+every row with `method != "total"` has `geo == "scraped"`; the by-method `pred` and `rep` each
+sum to the `total` row's within 1e-6 for every race x model x geo group; and any group with a
+breakdown has at least two methods (one would duplicate the total). Checked by
+`live/tests/check_outputs.R`.
+
+By-method accuracy is scored by `live/tests/sim_night.R`, which carries each fit's
+`est_turnout_<method>` against the sims' own `truth_turnout_<method>` (their truth is
+geo x method, so it is measured, not assumed) and their `ratio_turnout_<method>`.
 
 ### 15.5 Delivery order
 

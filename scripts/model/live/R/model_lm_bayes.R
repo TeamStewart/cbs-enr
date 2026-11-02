@@ -169,6 +169,26 @@ fit_lm_bayes = function(
     fit_oth = fit[, 3]
   )
 
+  # per-method race totals (CONTRACT.md section 15.4). `T` is draws x cells and
+  # forecast_summarize() makes the race total rvar_sum(post_turn) over those same cells, so the
+  # per-method means add up to the published total exactly.
+  # guarded: every other use in this repo goes through forecast_summarize()'s `s$prior_turn`
+  # (race level). The per-CELL `f$prior_turn` is what a per-method conf_seq bound needs, but it
+  # is not otherwise exercised and enightmodels ships no sources to check against -- so if it
+  # is absent the per-method bound is dropped rather than taking the whole fit down with a
+  # draws_of(NULL) error.
+  Tp = tryCatch(posterior::draws_of(f$prior_turn), error = function(e) NULL)
+  meth = if (interval != "conf_seq") {
+    method_totals_draws(T, d$method, level)
+  } else if (!is.null(Tp)) {
+    method_totals_conf_seq(Tp, T, d$method, level)
+  } else {
+    # points only, as medsl_sur/conf_seq does: a posterior quantile under a conf_seq_95 label
+    # would be a different object wearing that name (CONTRACT.md section 15.4)
+    method_totals_point(colMeans(T), d$method)
+  }
+  meth_dr = method_draws_matrix(T, d$method)
+
   draws_result(
     "lm_bayes",
     interval,
@@ -180,6 +200,8 @@ fit_lm_bayes = function(
     prior = race_draws(s$prior_turn, s$prior_vote),
     fc = fc,
     cells = if (precincts) draws_precincts(T, V[,, 1] * T, V[,, 2] * T, d, level),
-    coef = enightmodels::forecast_coefs(f)
+    coef = enightmodels::forecast_coefs(f),
+    method = meth,
+    method_draws = meth_dr
   )
 }

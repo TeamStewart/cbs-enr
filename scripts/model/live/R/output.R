@@ -32,11 +32,21 @@
 ## seconds (how long that model took on that race), settings. So a broken model shows up there instead of
 ## silently vanishing.
 ##
-## The TURNOUT table has the race total, one row per race x model x geo per run, in the
-## prediction rows' terms: race_id, model, time, geo, model_conf, pct_rep, rep (votes
-## counted), pred (the candidates' predicted votes summed), pred_min, pred_max (the total's
-## interval; NA without one). The prediction table can't carry it: the candidates' bounds
-## don't add up to the total's (CONTRACT.md section 15.4).
+## The TURNOUT table has the race total AND its vote-method breakdown, one row per
+## race x model x geo x method per run, in the prediction rows' terms: race_id, model, time,
+## geo, method, model_conf, pct_rep, rep (votes counted), pred (predicted final votes),
+## pred_min, pred_max (the interval; NA without one). The prediction table can't carry any of
+## it: the candidates' bounds don't add up to the total's (CONTRACT.md section 15.4).
+##
+##   method   "total" = the whole race, exactly what this table held before the breakdown was
+##            added; otherwise one row per vote method the fit actually used (early / eday /
+##            mail, folded by METHOD_MAP). "total" NOT "all", because `geo = "all"` already
+##            means a superset (scraped counties plus the rest) and one word on two unrelated
+##            axes in one row is a trap. A state modelled WITHOUT vote method (MN by its feed,
+##            MI by its history) has the single pseudo-mode "all" in its cells and gets the
+##            "total" row ALONE -- never the same number twice under two names.
+##            Statewide rows (geo = "all") are "total" only: the rest of the state comes from
+##            CBS county results, whose baseline carries no method dimension.
 ##
 ## Margins ("margin_share", "margin_vote") are left to the dashboard: enightmodels' schema
 ## requires pred >= 0, so a negative margin row would fail check_pred_data().
@@ -231,29 +241,110 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
     arrange(pred_type, desc(pred))
 }
 
+# The label for the whole-race row of the turnout table's `method` column. NOT "all": see the
+# file header. Nothing else in the codebase may use "all" to mean a method aggregate in an
+# OUTPUT file -- lookups/README.md's "all" is the INPUT vocabulary, for what a feed sends.
+AGG_METHOD = "total"
+
+#' Per-method turnout rows for one race x model
+#'
+#' The fit's per-method totals (`method_totals_*()`, results.R) joined to what each method has
+#' counted so far, in the turnout table's columns. Scraped geo only.
+#'
+#' Two guards, both of which fall back to publishing the race total alone rather than rows
+#' that don't add up:
+#' * a fit whose only method is the mode-free pseudo-mode "all" has no breakdown to give --
+#'   its total IS the single method, and a second row would be the same number twice;
+#' * `rep` per method comes from the returns folded by `METHOD_MAP` (`abs -> mail`,
+#'   `prov -> eday`), the same fold `shape_for_method()` applies. If any row's method does not
+#'   fold, the per-method `rep` would not sum to the total's, so no rows are emitted. In
+#'   practice this cannot fire -- a race with an unfoldable method is modelled without method
+#'   and so is caught by the first guard -- but it is asserted rather than assumed.
+#'
+#' @param tot The `AGG_METHOD` row(s) of `to_turnout_data()`, for the columns to carry.
+#' @param method The fit's `method` slot: method, pred, pred_min, pred_max.
+#' @param ret The race's returns (as `predict_one()` holds them, after any by-method county
+#'   filter), for `rep`.
+#' @return Tibble with `tot`'s columns, one row per method; NULL if there is no breakdown.
+method_turnout_rows = function(tot, method, ret) {
+  if (is.null(method) || !nrow(method) || is.null(ret) || !nrow(ret)) {
+    return(NULL)
+  }
+  m = filter(method, .data$method != "all")
+  sc = filter(tot, geo == "scraped")
+  if (!nrow(m) || !nrow(sc)) {
+    return(NULL)
+  }
+  fold = unname(METHOD_MAP[as.character(ret$method)])
+  if (anyNA(fold)) {
+    return(NULL)
+  }
+  counted = tibble(method = fold, votes = ret$votes) |>
+    summarize(rep = sum(votes), .by = method)
+  # The join below is directional, so a method that HAS counted votes but no prediction row
+  # would be dropped silently and `rep` would not add up. Checked in the other direction too.
+  if (length(setdiff(counted$method, m$method))) {
+    return(NULL)
+  }
+  sc |>
+    select(-any_of(c("method", "rep", "pred", "pred_min", "pred_max"))) |>
+    cross_join(m) |>
+    left_join(counted, by = "method") |>
+    mutate(rep = coalesce(rep, 0))
+}
+
 #' Race turnout rows for one race x model
 #'
 #' The prediction table has no row for the race total, and the candidates' bounds don't add
 #' up to one (the sum of quantiles is not the quantile of the sum), so the total's interval
-#' comes from the fit (scraped) or `state_pred_data()` (statewide).
+#' comes from the fit (scraped) or `state_pred_data()` (statewide). The by-method rows come
+#' from the fit's own cells (`method_turnout_rows()`).
 #'
 #' @param pred `to_pred_data()` rows, plus `state_pred_data()`'s when there are any.
 #' @param bounds Named list, geo -> `c(lower, upper)` of total votes (NA: no interval).
-#' @return Tibble, one row per geo: race_id, model, time, geo, model_conf, pct_rep, rep
-#'   (votes counted), pred (the candidates' predicted votes summed), pred_min, pred_max;
-#'   NULL without prediction rows.
-to_turnout_data = function(pred, bounds) {
+#' @param method The fit's `method` slot (results.R); NULL for no breakdown.
+#' @param ret The race's returns, for each method's counted votes.
+#' @return Tibble, one row per geo x method: race_id, model, time, geo, method, model_conf,
+#'   pct_rep, rep (votes counted), pred (predicted final votes), pred_min, pred_max; NULL
+#'   without prediction rows.
+to_turnout_data = function(pred, bounds, method = NULL, ret = NULL) {
   if (is.null(pred) || !nrow(pred)) {
     return(NULL)
   }
   b = function(g, k) vapply(g, \(x) unname(bounds[[x]][k] %||% NA_real_), 0)
-  pred |>
+  tot = pred |>
     filter(pred_type == "vote") |>
     summarize(
       across(c(rep, pred), sum),
       .by = c(race_id, model, time, geo, model_conf, pct_rep)
     ) |>
-    mutate(pred_min = pmax(b(geo, 1), 0), pred_max = b(geo, 2))
+    mutate(pred_min = pmax(b(geo, 1), 0), pred_max = b(geo, 2), method = AGG_METHOD)
+  # THE TOTAL ROW IS UNCONDITIONAL. Only the breakdown may fail: `predict_one()` wraps this
+  # whole call in a tryCatch returning NULL, and before the breakdown existed this function was
+  # a summarize() that could not throw. Now it joins and cross-joins, so an error in a NEW
+  # feature could take out the EXISTING total row -- the row the dashboard's interval comes
+  # from -- leaving nothing but a quietly missing line in turnout_latest.csv.
+  per = tryCatch(method_turnout_rows(tot, method, ret), error = function(e) NULL)
+  # `pred` and `rep` are additive by construction, so a mismatch means a method was dropped or
+  # double-counted, or the total row is a different object than the cells. The live case:
+  # a race whose feed lists NO third-party or write-in candidate. `to_pred_data()` splits the
+  # fit's c(dem, rep, oth) across the candidates in the returns, and with no third-party
+  # candidate the `oth` slice is never allocated -- so the total row is dem + rep while the
+  # cells' `tot` still carries the third-party component. Measured on tx_base with the
+  # non-major candidates removed: the breakdown over-sums by 12,347 votes (0.45%).
+  # Publishing the total alone beats publishing rows that do not add up.
+  if (!is.null(per) && nrow(per)) {
+    sc = filter(tot, geo == "scraped")
+    ok = nrow(sc) > 0 &&
+      isTRUE(all.equal(sum(per$pred), sum(sc$pred), tolerance = 1e-6)) &&
+      isTRUE(all.equal(sum(per$rep), sum(sc$rep), tolerance = 1e-6))
+    if (!ok) {
+      per = NULL
+    }
+  }
+  bind_rows(tot, per) |>
+    relocate(method, .after = geo) |>
+    arrange(geo, method != AGG_METHOD, method)
 }
 
 # ---- the per-precinct dump -----------------------------------------------------------
@@ -372,7 +463,7 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
     }
   }
   prec = tryCatch(to_prec_data(fit, m, race, time), error = function(e) NULL)
-  turnout = tryCatch(to_turnout_data(pred, bounds), error = function(e) NULL)
+  turnout = tryCatch(to_turnout_data(pred, bounds, fit$method, ret), error = function(e) NULL)
   list(
     pred = pred,
     turnout = turnout,
