@@ -107,32 +107,32 @@ Rscript scripts/watch/test_watch.R                     # unit tests
 CBS_WATCH_HOME=/tmp/wt Rscript scripts/watch/tick.R    # one dry-run tick against the real pipeline-state
 ```
 
-## Rehearsal checklist (11/2)
+## Election Day (11/3)
 
-Run the scraper laptop on a sim, with `CBS_AUTOMATION_TEST=1` and `CBS_MODEL_SIM=...`.
-Run the watcher with Slack live. For each fault, note how long it takes to show up in Slack.
+The rehearsal ran on 11/2. Start the scraper first: the watcher posts a P0 when no new
+cycle has arrived for 10 min.
 
-Before starting, set up the two machines:
-- Scraper (the Mac mini, user `stewart`). Pull `main`, then run:
-  `CBS_AUTOMATION_TEST=1 CBS_MODEL_SIM=nc_base caffeinate -i Rscript scripts/automation.R >> logs/console.log 2>&1`
-  Any scenario folder in `26_sim` works for `CBS_MODEL_SIM`. Only the model targets read the
-  sim; the scrapers still read the real feeds. Before the `dashboard_mode.txt` cutover, nothing
-  is published to Pages or CloudFront.
-- Watcher (Mason's laptop):
-  - Do steps 1-5 of "Set up the watcher laptop" above. `PATH_DROPBOX` must point at the same
-    `CBS-MIT Election Data` folder the scraper writes to.
-  - Run `Rscript scripts/watch/test_watch.R` and one dry-run tick (see Test).
-  - Then run `bash scripts/watch/install.sh`.
-  - Polls are still open on 11/2, so every finding would be P2. For the rehearsal only, add
-    `CBS_ELECTION_DATE=2026-11-01` to `~/.config/cbs-enr-watch/env` so that every state counts
-    as closed. Take it out afterwards.
+Scraper laptop (the Mac mini, user `stewart`):
+1. `git pull` on `main`.
+2. Open a new terminal, so no rehearsal settings are left over. `CBS_MODEL_SIM`,
+   `CBS_AUTOMATION_TEST`, `CBS_ELECTION_FOLDER` and `CBS_MODEL_CBS_ENV` must be unset;
+   `automation.R` refuses to start otherwise.
+3. Start it before the 18:00 ET cutover in `dashboard_mode.txt`. Publishing to Pages and
+   CloudFront starts on its own at the cutover:
+   `caffeinate -i Rscript scripts/automation.R >> logs/console.log 2>&1`
+4. Keep `~/.cache/cbs-enr-commands.done`, so commands already run never run again.
 
-- [ ] Normal cycles: the status message updates every cycle, and there are no P1s.
-- [ ] Break a scraper: push a commit to enightdata that errors for one county. Expect an incident, an L2 diagnosis and a proposal; `approve` pushes the fix and the invalidate runs next cycle.
-- [ ] A new vote-method label in one county's clean file: a methods-check incident, with proposal `human`.
-- [ ] Freeze a timestamp: a P1 after 30 min, after poll close.
-- [ ] Kill `automation.R`: a P0 within about 11 min.
-- [ ] `!stop`: no L2 runs, and L2 tool calls are blocked. `!start` resumes.
-- [ ] `!mode llm`, then `!mode deterministic`: L2 every cycle, then only on events.
-- [ ] Two hours unattended: no runaway L2 runs, and usage stays within the subscription limits.
-- [ ] Afterwards: unset `CBS_MODEL_SIM` and `CBS_AUTOMATION_TEST` on the scraper laptop. On the watcher, remove `CBS_ELECTION_DATE` from the env file and clear `~/.cache/cbs-enr-watch/state`. Keep `~/.cache/cbs-enr-commands.done`, so commands already run never run again.
+Watcher laptop (Mason's):
+1. `git pull` on `main`.
+2. In `~/.config/cbs-enr-watch/env`, take out `CBS_ELECTION_DATE` if it is still there. Add
+   `CBS_WATCH_DASH_AUTH=user:pass` if you have the CloudFront login; without it the dashboard
+   check posts a P2 every cycle.
+3. Clear the rehearsal's incidents: `rm -rf ~/.cache/cbs-enr-watch/state`.
+4. Once the first scraper cycle has pushed, run `bash scripts/watch/install.sh`. Check
+   `~/.cache/cbs-enr-watch/tick.log` and the pinned status message in Slack (`!status`).
+5. Keep the laptop awake and plugged in (`caffeinate -dims &`). launchd doesn't tick while
+   the laptop sleeps.
+
+After the night: `bash scripts/watch/install.sh remove` on the watcher, and stop
+`automation.R` on the scraper.
+
