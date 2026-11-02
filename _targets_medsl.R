@@ -30,7 +30,7 @@ if (Sys.getenv("CBS_AUTOMATION") != "1") local({
   git = \(...) suppressWarnings(system2("git", c("-C", shQuote(path.expand(PATH_ENIGHTDATA)), ...), stdout = TRUE, stderr = TRUE))
   state = rlang::hash(c(git("rev-parse", "HEAD"), git("status", "--porcelain"), git("diff", "HEAD")))
   if (!requireNamespace("enightdata", quietly = TRUE) || !file.exists(stamp) || readLines(stamp, warn = FALSE)[1] != state) {
-    devtools::document(PATH_ENIGHTDATA)
+    roxygen2::roxygenise(PATH_ENIGHTDATA)
     renv::install(PATH_ENIGHTDATA, prompt = FALSE)
     dir.create(dirname(stamp), recursive = TRUE, showWarnings = FALSE)
     writeLines(state, stamp)
@@ -46,7 +46,15 @@ options(
 tar_option_set(
   packages = c(
     "data.table",
-    "tidyverse",
+    # the verbs, not the metapackage: nothing here plots, and ggplot2 and its font stack
+    # would be built from source on the server
+    "dplyr",
+    "tidyr",
+    "stringr",
+    "readr",
+    "purrr",
+    "tibble",
+    "lubridate",
     "glue",
     "fs",
     "reticulate",

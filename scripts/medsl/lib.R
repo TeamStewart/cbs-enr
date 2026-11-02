@@ -159,7 +159,9 @@ update_pkg_from_git <- function(pkg, repo, branch, dir) {
   git("fetch", "--quiet", "origin", branch)
   git("reset", "--hard", "--quiet", sha)
   git("clean", "-fdxq")
-  devtools::document(dir)
+  # roxygen2 rather than devtools: devtools pulls 43 more packages, 15 of them compiled
+  # (shiny, pak, ragg, systemfonts), and the medsl server builds everything from source.
+  roxygen2::roxygenise(dir)
   renv::install(dir, prompt = FALSE)
   writeLines(sha, stamp)
   message("Installed ", pkg, " ", substr(sha, 1, 7), " from GitHub ", branch)

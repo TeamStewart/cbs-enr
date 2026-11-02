@@ -16,7 +16,8 @@ INTERVAL = 15 # minutes
 # the laptop's layout.
 MEDSL_DROPBOX = Sys.getenv("MEDSL_DROPBOX", "~/MIT Dropbox/Joseph Loffredo/medsl-enr")
 MEDSL_ENIGHTDATA = Sys.getenv("MEDSL_ENIGHTDATA", "~/Desktop/GitHub/enightdata")
-# Clarity needs Python and is 54 of the 214 rows. Unset, reticulate's discovery dies on
+MEDSL_LOGDIR = Sys.getenv("MEDSL_LOGDIR", "logs")
+# Clarity needs Python and is 57 of the 218 rows. Unset, reticulate's discovery dies on
 # whatever stale python is first on PATH. Empty skips it, for a host whose default works.
 MEDSL_PYTHON = Sys.getenv(
   "MEDSL_PYTHON",
@@ -72,14 +73,14 @@ while (TRUE) {
   run_time <- format(Sys.time(), format = "%Y-%m-%d %H:%M:%S") |>
     stringr::str_replace_all("-|:| ", "_")
 
-  fs::dir_create("logs/")
+  fs::dir_create(MEDSL_LOGDIR)
 
   # each step: TRUE, or FALSE after logging why; nothing here may stop the loop
   step <- function(what, expr) {
     tryCatch({ force(expr); TRUE }, error = function(e) { message(what, " failed: ", conditionMessage(e)); FALSE })
   }
 
-  con <- file(glue::glue("logs/medsl_{run_time}.log"))
+  con <- file(fs::path(MEDSL_LOGDIR, glue::glue("medsl_{run_time}.log")))
   sink(con, append = TRUE)
   sink(con, append = TRUE, type = "message")
 
