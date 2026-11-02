@@ -290,7 +290,21 @@ CTY_SUB_MIN_RPRIOR = as.numeric(Sys.getenv("CTY_SUB_MIN_RPRIOR", unset = "0.5"))
 # composition prior's reliability, but fails SAFE in a way the gross-up did not --
 # substituting cnt_prec can only move the estimate DOWN toward the observed count, never
 # fabricate votes above it.
-# STATEWIDE TURNOUT CONSTRAINT (STATE_TURNOUT unset = off).
+# TURNOUT CONSTRAINT OVER THE FITTED FRAME (SCRAPED_TURNOUT unset = off).
+#
+# NAMED `SCRAPED`, NOT `STATE`, BECAUSE THE SCOPE IS NOT THE STATE. The constraint acts on
+# sum_i T_i over the precincts THIS FIT IS USING, which is narrower than the state twice over:
+#   1. {ST}_precinct.parquet covers a subset of counties -- measured 2026-11-02: TX 72 of 254
+#      (28%), OH 15 of 88 (17%), AK 30 of 40, MI 73 of 83, FL 65 of 67; NC / GA / MN are whole.
+#   2. feed_cells() (output.R) then keeps only the counties with a precinct in TONIGHT'S
+#      returns, which is narrower again and varies through the night.
+# So the target must be computed PER FIT from `cells`, not once per state. Handing this a
+# STATEWIDE total on a 28%-coverage frame would force 72 counties to sum to all 254 and inflate
+# every TX precinct by ~3.5x -- silently, because every per-precinct bound would still hold.
+# CBS's county-level `totalExpVote` rows are the right source: sum them over
+# unique(geo_county(cells$geo)), joined through {ST}_counties.csv (county_fips -> county_cbs).
+# The old name was STATE_TURNOUT; it is refused below rather than ignored.
+#
 # Every bound in this model is PER PRECINCT -- 0 < T_i < kappa*n_i, and T_i >= C_i --
 # and kappa = 1.25 binds on about 1% of them. NOTHING constrains sum_i T_i, which is the
 # only quantity anyone reports.
@@ -299,11 +313,12 @@ CTY_SUB_MIN_RPRIOR = as.numeric(Sys.getenv("CTY_SUB_MIN_RPRIOR", unset = "0.5"))
 # precincts high together, and the sum preserves it perfectly. It is also why every
 # precinct-level fix failed: when theta's equation is empty, sum_i T_i = sum_i est_tot_i
 # EXACTLY, and no per-precinct machinery can see that.
-# A statewide turnout prior is also far easier to come by than a precinct one: historical
-# midterm turnout, registration growth, early-vote totals as a share of final.
+# A frame-level turnout prior is also far easier to come by than a precinct one: historical
+# midterm turnout, registration growth, early-vote totals as a share of final -- or, as of
+# 2026, CBS's own county expected vote summed over the fitted counties.
 #
-# HOW. Per draw, sample a statewide total from the prior, floor it at what has actually
-# been counted statewide, then solve for the single logit-scale shift delta that makes
+# HOW. Per draw, sample a frame total from the prior, floor it at what has actually been
+# counted over the frame, then solve for the single logit-scale shift delta that makes
 # the precinct totals sum to it:
 #     sum_i kappa*n_i*invlogit(theta_id + delta_d) = S_d
 # A COMMON shift, so relative precinct structure is untouched; on the logit scale, so
@@ -312,8 +327,16 @@ CTY_SUB_MIN_RPRIOR = as.numeric(Sys.getenv("CTY_SUB_MIN_RPRIOR", unset = "0.5"))
 # constraint and the floor fight and the floor wins silently.
 # As counting proceeds the floor increasingly binds and the constraint does less, which
 # is the correct behaviour: the data should take over from the prior.
-STATE_TURNOUT = suppressWarnings(as.numeric(Sys.getenv("STATE_TURNOUT", unset = NA)))
-STATE_TURNOUT_SD = as.numeric(Sys.getenv("STATE_TURNOUT_SD", unset = "0.05")) # log scale
+# the old name silently did nothing after the rename, so it is an error rather than a no-op
+if (nzchar(Sys.getenv("STATE_TURNOUT", unset = ""))) {
+  cli_abort(c(
+    "STATE_TURNOUT is set, but this constant is now SCRAPED_TURNOUT.",
+    "i" = "It constrains the FITTED frame, not the state -- see the comment above. Pass the CBS \
+           county expected vote summed over the counties this fit uses, not a statewide total."
+  ))
+}
+SCRAPED_TURNOUT = suppressWarnings(as.numeric(Sys.getenv("SCRAPED_TURNOUT", unset = NA)))
+SCRAPED_TURNOUT_SD = as.numeric(Sys.getenv("SCRAPED_TURNOUT_SD", unset = "0.05")) # log scale
 PIN_DONE = Sys.getenv("PIN_DONE", unset = "1") == "1"
 PIN_MIN_SHARE = as.numeric(Sys.getenv("PIN_MIN_SHARE", unset = "0.95"))
 # CORROBORATION. q_share rests on the completeness flag, which in production is a plateau
@@ -1806,15 +1829,15 @@ fit_stage = function(
         T_draw[, done_prec] <- cnt_tot[, done_prec, drop = FALSE]
       }
     }
-    # ---- STATEWIDE TURNOUT CONSTRAINT (see STATE_TURNOUT) --------------------------
-    if (!is.na(STATE_TURNOUT) && STATE_TURNOUT > 0) {
+    # ---- TURNOUT CONSTRAINT OVER THE FITTED FRAME (see SCRAPED_TURNOUT) -------------
+    if (!is.na(SCRAPED_TURNOUT) && SCRAPED_TURNOUT > 0) {
       capv = capm[1, ] # kappa*n_i, same every draw
       n_hit <- 0L
       for (dd in seq_len(draws)) {
         cnt_d <- cnt_tot[dd, ]
         # the target: a draw from the statewide prior, floored at what is already
         # counted (an unreachable target would just be eaten by the floor below)
-        S_d <- max(STATE_TURNOUT * exp(stats::rnorm(1, 0, STATE_TURNOUT_SD)), sum(cnt_d))
+        S_d <- max(SCRAPED_TURNOUT * exp(stats::rnorm(1, 0, SCRAPED_TURNOUT_SD)), sum(cnt_d))
         th_d <- qlogis(pmin(pmax(T_draw[dd, ] / capv, 1e-9), 1 - 1e-9))
         f <- function(del) sum(capv * plogis(th_d + del)) - S_d
         # bracket: +/-10 on the logit scale spans essentially (0, kappa*n) statewide
@@ -1835,8 +1858,8 @@ fit_stage = function(
       }
       cnt_tot_chk <- rowSums(cnt_tau)
       cli_inform(
-        "statewide constraint: target {format(round(STATE_TURNOUT), big.mark = ',')} \
-                  (sd {STATE_TURNOUT_SD} log), counted \
+        "scraped-frame constraint: target {format(round(SCRAPED_TURNOUT), big.mark = ',')} \
+                  (sd {SCRAPED_TURNOUT_SD} log), counted \
                   {format(round(cnt_tot_chk[1] * 0 + sum(cnt_tau)), big.mark = ',')}, \
                   mean drawn total {format(round(mean(rowSums(T_draw))), big.mark = ',')}"
       )
@@ -1849,7 +1872,7 @@ fit_stage = function(
     # Running last means a county's observed total can push that draw's statewide total
     # above its own S_d. That is correct, not a violation: S_d is a draw from a PRIOR and a
     # county's counted votes are an OBSERVATION, and a prior must not override an
-    # observation. (It also means the statewide block's floor, max(STATE_TURNOUT * ...,
+    # observation. (It also means the constraint block's floor, max(SCRAPED_TURNOUT * ...,
     # sum(cnt_d)), understates what has actually been counted by up to 31% in AK and NC,
     # since cnt_d excludes bucket votes. Both want the fuller count -- raise it with
     # whoever owns that block rather than changing it here.)
@@ -1983,7 +2006,7 @@ fit_stage = function(
         # meaningful with that block off.
         if (
           any(pin_v) &&
-            !(!is.na(STATE_TURNOUT) && STATE_TURNOUT > 0) &&
+            !(!is.na(SCRAPED_TURNOUT) && SCRAPED_TURNOUT > 0) &&
             max(abs(T_draw[, pin_v, drop = FALSE] - cnt_tot[, pin_v, drop = FALSE])) > 1e-6
         ) {
           cli_warn(
