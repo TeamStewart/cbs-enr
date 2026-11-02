@@ -15,31 +15,8 @@ No upload, no modeling, no Quarto render.
 ## Running it
 
 ```bash
-cd /d/research/cbs-enr && source /home/agent/medsl-env.sh
-nohup scripts/medsl/run_medsl.sh > /dev/null 2>&1 &
-echo $! > /home/agent/medsl.pid
+Rscript scripts/automation_medsl.R >> logs/medsl_console.log 2>&1
 ```
-
-Stop it with `touch "$MEDSL_LOGDIR/STOP"` (finishes the cycle in flight) or
-`kill $(cat /home/agent/medsl.pid)`, which also kills the driver via the supervisor's trap.
-
-### Picking up code changes
-
-`automation_medsl.R` runs `git pull --ff-only` as the first step of every cycle, so all three
-files self-update, but they land differently:
-
-| changed file | takes effect |
-|---|---|
-| `_targets_medsl.R`, `scripts/medsl/lib.R` | that same cycle — `tar_make()` re-reads them |
-| `scripts/automation_medsl.R` | the driver exits 7 and `run_medsl.sh` starts the new one, before sleeping |
-| `enightdata`, `networkenr` | their own GitHub step, within one cycle |
-
-So a pushed fix is live within one cycle with nobody touching the server. `--ff-only` means a
-checkout carrying local commits stops rather than merging blind; the step is wrapped, so a
-failed pull leaves the cycle running on the current checkout.
-
-`run_medsl.sh` restarts on exit 7 immediately and on any other exit after 60 seconds, so a
-driver that fails at startup backs off instead of spinning.
 
 Google auth must be cached once first, since a non-interactive `Rscript` cannot open a browser:
 
