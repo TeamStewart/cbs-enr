@@ -274,8 +274,10 @@ build_redist_data <- function(files, cbs = NULL, models = NULL, enr = NULL, cont
     ws = if (length(fw)) readr::read_csv(fw, col_types = readr::cols(county_fips = "c", cd_new = "c", cd_old = "c", .default = "d"), progress = FALSE) |>
       mutate(f = votes / sum(votes), .by = c(county_fips, cd_new)) |> select(county_fips, cd_new, cd_old, f) else
       tibble(county_fips = character(), cd_new = character(), cd_old = character(), f = numeric())
-    e_st = if (is.null(enr)) tibble() else filter(enr, state == st) |> mutate(g = norm_geo(geo), county_cbs = cty_of(geo))
-    c_st = if (is.null(cbs)) tibble() else filter(cbs, state == st) |> inner_join(cmap, by = "county_fips")
+    # empty inputs (e.g. bind_rows() of all-NULL redist_cbs before CBS has results) have no
+    # `state` column, so treat them like NULL
+    e_st = if (is.null(enr) || !nrow(enr)) tibble() else filter(enr, state == st) |> mutate(g = norm_geo(geo), county_cbs = cty_of(geo))
+    c_st = if (is.null(cbs) || !nrow(cbs)) tibble() else filter(cbs, state == st) |> inner_join(cmap, by = "county_fips")
     # the top-of-ticket race's Dem two-party share by precinct and by county: splits the votes
     # of House races without both a Democrat and a Republican
     s_g = if (nrow(e_st)) e_st |> filter(contest == .env$contest) |> summarise(s = sum(dem) / sum(dem + rep), .by = g) |> filter(is.finite(s)) else tibble(g = character(), s = numeric())

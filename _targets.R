@@ -85,7 +85,8 @@ upload_default = c("s3_parquet", "drive_csv")
 #   "s3_parquet", "s3_csv", "drive_parquet", "drive_csv"; blank or FALSE uploads
 #   nothing, TRUE uses `upload_default` below
 # - trust_stage: (boolean) whether we trust this county's stage variable
-metadata = enightdata::read_local("metadata.csv", colClasses=list(character=c(1:4, 6), logical=c(5, 7, 8))) |> 
+# - for_cbs: (boolean) whether CBS gets this jurisdiction; only TRUE rows are built
+metadata = enightdata::read_local("metadata.csv", colClasses=list(character=c(1:4, 6), logical=c(5, 7, 8, 9))) |>
   dplyr::mutate(
     path_timestamp = dplyr::na_if(path_timestamp, ""),
     path_timestamp = dplyr::coalesce(path_timestamp, path),
@@ -97,7 +98,8 @@ metadata = enightdata::read_local("metadata.csv", colClasses=list(character=c(1:
       .default = upload
     )
   ) |> 
-  dplyr::filter(build, updated)
+  # only the jurisdictions CBS gets (for_cbs = TRUE in the metadata)
+  dplyr::filter(build, updated, for_cbs %in% TRUE)
 
 # Send every jurisdiction to S3 (adds "s3_parquet" to each row's `upload`), whatever the
 # metadata's `upload` column says; Drive still follows the column. FALSE: S3 follows the column.
@@ -107,6 +109,11 @@ if (s3_all) {
   metadata = dplyr::mutate(metadata, upload = dplyr::if_else(
     grepl("s3_", upload), upload, sub("^,", "", paste(upload, "s3_parquet", sep = ","))
   ))
+}
+
+# CBS_NO_UPLOAD=1: a test run that sends nothing to S3 or Drive (local files are still written)
+if (Sys.getenv("CBS_NO_UPLOAD") == "1") {
+  metadata = dplyr::mutate(metadata, upload = "")
 }
 
 create_dirs(metadata)
