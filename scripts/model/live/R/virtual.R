@@ -193,6 +193,24 @@ add_virtual = function(fit, model, vs) {
         turnout = turnout + rowSums(vd),
         twop = dem / (dem + rep)
       )
+    # the by-method rows, from the SAME swing and turnout ratio this branch just used: `pt`
+    # and `dr` are the pre-virtual point and draws, and project_rest() is additive over units,
+    # so the per-method points sum to `vp` exactly (add_virtual_method())
+    # fallible: a by-method failure must cost the breakdown, never the fit's predictions
+    fit = tryCatch(
+      add_virtual_method(
+        fit,
+        vs,
+        swing_pt = lg(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]])) - lg(base_s),
+        ratio_pt = pt[["tot"]] / E,
+        swing_dr = lg(dr$dem / (dr$dem + dr$rep)) - lg(base_s),
+        ratio_dr = dr$turnout / E
+      ),
+      error = function(e) {
+        fit$method <- NULL
+        fit
+      }
+    )
     ci = cred(fit$draws$twop)
     ct = cred(fit$draws$turnout)
     fit$race = mutate(
@@ -216,6 +234,15 @@ add_virtual = function(fit, model, vs) {
     )
     sb = fit_swing_bounds(fit, pt, base_s, E)
     vb = project_rest_bounds(vs$units, sb$swing, sb$turn_ratio)
+    # project_rest_bounds()'s `pred` is project_rest() at the point swing and ratio with no
+    # noise, so the same call per method sums to it exactly
+    fit = tryCatch(
+      add_virtual_method(fit, vs, swing_pt = sb$swing[1], ratio_pt = sb$turn_ratio[1]),
+      error = function(e) {
+        fit$method <- NULL
+        fit
+      }
+    )
     fit$pred = add_party_votes(pr, vb)
     est = pred_race_est(fit$pred)
     fit$race = mutate(
@@ -238,6 +265,112 @@ add_virtual = function(fit, model, vs) {
       sum(u$d + u$r + u$o == 0 & u$exp_base > 0)
     )
   )
+  fit
+}
+
+#' Add the virtual units to a fit's per-method totals
+#'
+#' WITHOUT this the by-method rows would be the precinct cells only while the race total
+#' includes the virtual units, so they would not add up -- and the gap is not small. In NC, 33
+#' of 100 counties report ALL their early votes in virtual precincts and 36 most of their mail
+#' (38.1% of 2024 early votes, 31.2% of all votes), so `early` would read ~38% low against a
+#' total that is right. `vs$units` is keyed county x method, which is what makes this possible.
+#'
+#' The point uses `noise = FALSE`, as the race-level point does, and `project_rest()` sums over
+#' units, so the per-method points still add up EXACTLY to the race total's: with no noise the
+#' function is deterministic and additive over its rows.
+#'
+#' The interval needs the fit's per-method draws (`method_draws`, results.R). With them, each
+#' method's virtual draws are added before the quantiles are taken. Without them -- a fit whose
+#' interval is bounds rather than draws (conf_seq) or a point (conformal, ratio_strata) -- only
+#' the point can move, so the per-method bounds are set to NA rather than left describing the
+#' precinct cells alone while `pred` describes cells plus virtual units.
+#'
+#' @param fit The fit, mid-way through its race-level virtual adjustment.
+#' @param vs `virtual_split()` output.
+#' @param swing_pt,ratio_pt The point logit swing and turnout ratio the race-level point
+#'   projection used. Scalars.
+#' @param swing_dr,ratio_dr The same per draw, for the interval; NULL for a fit without draws,
+#'   which leaves the per-method bounds NA.
+#' @return `fit` with `method` (and `method_draws`) updated.
+add_virtual_method = function(fit, vs, swing_pt, ratio_pt, swing_dr = NULL, ratio_dr = NULL) {
+  if (is.null(fit$method) || !nrow(fit$method) || is.null(vs$units) || !nrow(vs$units)) {
+    return(fit)
+  }
+  # THE UNION, not the fit's methods: a method can exist ONLY as virtual units. In AK every
+  # early and mail cell is reported at house-district level, so `virtual_split()` takes all of
+  # them out and the fit is left with eday alone -- 88,565 expected votes, about 31% of the
+  # state, which the race total already includes. Keyed on the fit's methods only, early and
+  # mail got no row at all and the breakdown summed to 68% of the total.
+  # ADDITIVITY PRECONDITION. The per-method points sum to the race-level projection only
+  # because `project_rest(noise = FALSE)` is row-wise additive over units, and that holds only
+  # while the units carry neither `rest_share` nor `turn_offset`: with a `rest_share`,
+  # rest_turn_common() stops early-returning 0 and computes an offset from
+  # mean(log(turn_ratio)) over the WHOLE vector, which differs between a per-method call and
+  # the race-level one. One added column away from breaking the sum silently, so it is asserted.
+  stopifnot(
+    "virtual units must carry no rest_share / turn_offset (project_rest additivity)" =
+      is.null(vs$units$rest_share) && is.null(vs$units$turn_offset)
+  )
+  unit_m = function(m) filter(vs$units, method == m)
+  ms = sort(union(as.character(fit$method$method), unique(as.character(vs$units$method))))
+  # one project_rest() call per method, on that method's units. project_rest() always returns
+  # a B x 3 matrix, so [1, ] is the single no-noise row.
+  add_pt = vapply(ms, function(m) {
+    u = unit_m(m)
+    if (!nrow(u)) 0 else sum(project_rest(u, swing_pt, ratio_pt, noise = FALSE)[1, ])
+  }, 0)
+  # nothing to add: leave the fit exactly as it was, bounds included
+  if (all(add_pt == 0)) {
+    return(fit)
+  }
+  cur = setNames(fit$method$pred, as.character(fit$method$method))
+  pred_m = coalesce(unname(cur[ms]), 0) + unname(add_pt[ms])
+  M = fit$method_draws
+  if (is.null(M) || is.null(swing_dr)) {
+    # Only the point could move. Leaving the bounds as they are would describe the precinct
+    # cells while `pred` describes cells plus virtual units, so they are dropped instead.
+    fit$method = tibble(method = ms, pred = pred_m, pred_min = NA_real_, pred_max = NA_real_)
+    return(fit)
+  }
+  stopifnot(
+    "method_draws rows must match the draws, or R recycles silently" =
+      nrow(M) == length(swing_dr)
+  )
+  # a method with no cells has no column yet: give it zeros, then add its virtual draws
+  M2 = matrix(0, nrow(M), length(ms), dimnames = list(NULL, ms))
+  keep = intersect(colnames(M), ms)
+  M2[, keep] = M[, keep, drop = FALSE]
+  # LEAVE THE RNG STREAM WHERE WE FOUND IT. These noise draws are new consumption, and
+  # state_pred_data()'s rest-of-state draws (counties.R: `rest_dr`) run afterwards WITHOUT a
+  # set.seed() of their own -- unlike project_rest_bounds() and rest_turnout_bounds(), which
+  # both seed. So consuming here would silently change every statewide (geo = "all") interval
+  # and p_win in any state with virtual units, for a by-method feature that must not touch
+  # existing numbers.
+  old_seed = if (exists(".Random.seed", .GlobalEnv)) get(".Random.seed", .GlobalEnv) else NULL
+  for (m in ms) {
+    u = unit_m(m)
+    if (!nrow(u)) next
+    M2[, m] = M2[, m] + rowSums(project_rest(u, swing_dr, ratio_dr, noise = TRUE))
+  }
+  if (!is.null(old_seed)) assign(".Random.seed", old_seed, envir = .GlobalEnv)
+  M = M2
+  fit$method_draws = M
+  # the point is the no-noise projection added above; the bounds come from the draws, as at
+  # race level, where the point and the draws' mean also differ slightly
+  fit$method = method_totals_draws(
+    M,
+    colnames(M),
+    fit$level %||% 0.95,
+    point = setNames(pred_m, ms)
+  )
+  # re-apply model_result()'s rule: no per-method bound where the race total has none.
+  # Unreachable today (only bootstrap/credible get here, and both have race bounds), but this
+  # function re-derives `method` from the draws, which would otherwise reintroduce bounds under
+  # a label whose machinery did not make them -- exactly what CONTRACT.md section 15.4 forbids.
+  if (is.na(fit$race$lo_turnout) || is.na(fit$race$hi_turnout)) {
+    fit$method = mutate(fit$method, pred_min = NA_real_, pred_max = NA_real_)
+  }
   fit
 }
 

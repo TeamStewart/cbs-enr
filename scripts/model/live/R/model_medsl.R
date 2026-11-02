@@ -458,6 +458,18 @@ fit_medsl_sur <- function(
   }
 
   dr <- tibble(twop = f$S_2p, turnout = f$turn, dem = f$S_dem * f$turn, rep = f$S_rep * f$turn)
+  # per-mode race totals (CONTRACT.md section 15.4), from fit_stage()'s own per-mode turnout
+  # draws -- the same pieces `f$turn` is summed from, so the points add up exactly.
+  # conf_seq gets POINTS ONLY: prior_totals() accumulates its prior draws across modes, so
+  # there is no per-mode reference measure to run conf_seq against, and a posterior quantile
+  # under a `conf_seq_95` label would be a different object wearing that name.
+  meth <- if (is.null(f$turn_by_mode)) {
+    NULL
+  } else if (interval == "conf_seq") {
+    method_totals_point(colMeans(f$turn_by_mode), colnames(f$turn_by_mode))
+  } else {
+    method_totals_draws(f$turn_by_mode, colnames(f$turn_by_mode), level)
+  }
   # ---- THE SILENT-PRIOR ALARM ------------------------------------------------------
   # A fit that is entirely its own prior returns the same columns and the same intervals as
   # a real one. Nothing in the output distinguishes them, so on the night a state whose feed
@@ -547,7 +559,12 @@ fit_medsl_sur <- function(
     returns,
     prior = prior,
     fc = fc,
-    cells = prec_rows(f$prec)
+    cells = prec_rows(f$prec),
+    method = meth,
+    # medsl_sur is not in VIRTUAL_MODELS -- it takes the same votes as county x mode
+    # observations inside its own fit (bucket_counts()) -- so nothing adds to these later.
+    # Carried anyway so every fit with draws exposes the same slot.
+    method_draws = f$turn_by_mode
   )
   res$status <- res$race$status <- st
   # the structured ledger as well as the status string, so a consumer can test

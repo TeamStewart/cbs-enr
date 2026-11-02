@@ -237,14 +237,17 @@ if (!file.exists(f_turn)) {
   cli::cli_alert_warning("no turnout_latest.csv -- 15.4 skipped")
 } else {
   tu = readr::read_csv(f_turn, show_col_types = FALSE, progress = FALSE)
-  cli::cli_h2("15.4 turnout ({nrow(tu)} rows)")
+  if (!"method" %in% names(tu)) tu$method = "total" # written before the breakdown existed
+  agg = filter(tu, method == "total")
+  per = filter(tu, method != "total")
+  cli::cli_h2("15.4 turnout ({nrow(tu)} rows: {nrow(agg)} total, {nrow(per)} by method)")
   pv = pred |>
     filter(pred_type == "vote") |>
     summarize(tot = sum(pred), .by = c(race_id, model, geo))
-  j = full_join(pv, tu, by = c("race_id", "model", "geo"))
+  j = full_join(pv, agg, by = c("race_id", "model", "geo"))
   ck(
     !anyNA(j$tot) && !anyNA(j$pred),
-    "one turnout row for every race x model x geo with predictions, and no others"
+    "one method='total' row for every race x model x geo with predictions, and no others"
   )
   ck(
     isTRUE(all.equal(j$tot, j$pred, tolerance = 1e-6)),
@@ -253,9 +256,81 @@ if (!file.exists(f_turn)) {
   iv = filter(tu, !is.na(pred_min), !is.na(pred_max))
   ck(all(iv$pred_min <= iv$pred_max), paste0("pred_min <= pred_max on the ", nrow(iv), " rows with intervals"))
   ck(
-    !anyDuplicated(select(tu, race_id, model, geo)),
-    "exactly one row per race x model x geo"
+    !anyDuplicated(select(tu, race_id, model, geo, method)),
+    "exactly one row per race x model x geo x method"
   )
+  # ---- the by-method breakdown ----------------------------------------------------
+  # `all` is the INPUT vocabulary's aggregate (lookups/README.md) and would collide with
+  # geo = "all"; the published aggregate is `total` (output.R AGG_METHOD).
+  ck(
+    all(per$method %in% c("early", "eday", "mail")),
+    paste0(
+      "by-method rows use early / eday / mail only (never 'all'); got: ",
+      paste(sort(unique(per$method)), collapse = ", ")
+    )
+  )
+  ck(
+    all(per$geo == "scraped"),
+    "by-method rows only on geo = 'scraped' (the rest of the state has no method dimension)"
+  )
+  if (nrow(per)) {
+    # pred is additive, so this is an EQUALITY, not a tolerance band: a method missing from
+    # the breakdown, or counted twice, shows up here and nowhere else.
+    s = per |>
+      summarize(across(c(pred, rep), sum), .by = c(race_id, model, geo)) |>
+      inner_join(select(agg, race_id, model, geo, a_pred = pred, a_rep = rep),
+                 by = c("race_id", "model", "geo"))
+    ck(
+      nrow(s) > 0 && isTRUE(all.equal(s$pred, s$a_pred, tolerance = 1e-6)),
+      paste0("by-method pred sums to the total on all ", nrow(s), " race x model x geo group(s)")
+    )
+    ck(
+      isTRUE(all.equal(s$rep, s$a_rep, tolerance = 1e-6)),
+      "by-method rep (votes counted) sums to the total's"
+    )
+    # A fit with no method split must publish the total ALONE -- never the same number again
+    # under another label. So a group with by-method rows has at least two of them.
+    n_m = per |> summarize(n = n_distinct(method), .by = c(race_id, model, geo))
+    ck(
+      all(n_m$n >= 2),
+      "a group with by-method rows has >= 2 methods (a lone method would duplicate the total)"
+    )
+  }
+  # ---- the test must be TWO-sided ------------------------------------------------
+  # Every assertion above is conditional on there BEING by-method rows, so a breakdown that was
+  # silently dropped (to_turnout_data()'s sum guard, a method with no row, an error in the
+  # by-method path) would read as a pass. `run_race()` appends this exact phrase to `settings`
+  # for a fit WITHOUT vote method, so a fit that does not carry it was fit BY method and owes a
+  # breakdown. If the wording ever changes, this fails loudly rather than going quiet.
+  st = file.path(DIR, "status_latest.csv")
+  if (file.exists(st) && nrow(agg)) {
+    stt = readr::read_csv(st, show_col_types = FALSE, progress = FALSE)
+    free = grepl("WITHOUT vote method", coalesce(stt$settings, ""), fixed = TRUE)
+    by_m = stt |>
+      filter(grepl("^ok", status), !free) |>
+      distinct(race_id, model) |>
+      semi_join(filter(agg, geo == "scraped"), by = c("race_id", "model"))
+    miss = anti_join(by_m, distinct(per, race_id, model), by = c("race_id", "model"))
+    ck(
+      nrow(miss) == 0,
+      paste0(
+        "every race x model fit BY vote method publishes a breakdown",
+        if (nrow(miss)) {
+          paste0(
+            " -- missing for: ",
+            paste(utils::head(paste(miss$race_id, miss$model), 5), collapse = "; ")
+          )
+        } else {
+          ""
+        }
+      )
+    )
+  }
+  if (!nrow(per)) {
+    cli::cli_alert_info(
+      "no by-method rows at all: every race here is modelled without vote method"
+    )
+  }
 }
 
 # ---- verdict ----------------------------------------------------------------------
