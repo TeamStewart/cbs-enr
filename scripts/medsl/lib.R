@@ -46,26 +46,79 @@ medsl_write <- function(d, path_local, latest = NULL) {
   TRUE
 }
 
+# Name a response by what it actually contains. Content type lies: AP serves .json.gz and
+# reports application/x-gzip, and a cbsapi body arrives already parsed.
+medsl_raw_ext <- function(body) {
+  if (startsWith(body, "{") || startsWith(body, "[")) return("json")
+  if (startsWith(body, "<?xml")) return("xml")
+  if (startsWith(body, "<")) return("html")
+  "txt"
+}
+
+# One archive per network per cycle, holding each response's bytes exactly as fetched plus a
+# manifest of the request metadata. A body escaped into a table cell was unusable and huge:
+# NBC was 146 MB as CSV against ~10 MB here.
+medsl_write_raw <- function(raw, root, rel) {
+  if (nrow(raw) == 0) return(FALSE)
+  dir <- fs::path(tempfile("medsl_raw_"))
+  fs::dir_create(dir)
+  on.exit(fs::dir_delete(dir), add = TRUE)
+
+  files <- rep(NA_character_, nrow(raw))
+  for (i in seq_len(nrow(raw))) {
+    body <- raw$body[[i]]
+    if (is.na(body) || !nzchar(body)) next
+    name <- raw$name[[i]]
+    if (is.na(name) || !nzchar(name)) name <- paste0("entry_", i)
+    stem <- str_replace_all(name, "[^A-Za-z0-9._-]+", "_")
+    files[[i]] <- paste0(stem, ".", medsl_raw_ext(body))
+    con <- file(fs::path(dir, files[[i]]), "wb")
+    writeBin(charToRaw(body), con)
+    close(con)
+  }
+
+  # Row-wise rather than apply(), which coerces the frame to a character matrix and would
+  # quote status and reformat fetched_at.
+  manifest <- raw |>
+    dplyr::select(-"body") |>
+    dplyr::mutate(file = files)
+  lines <- purrr::map_chr(seq_len(nrow(manifest)), \(i) {
+    as.character(jsonlite::toJSON(as.list(manifest[i, ]), auto_unbox = TRUE, na = "null"))
+  })
+  writeLines(lines, fs::path(dir, "manifest.jsonl"))
+
+  archive <- fs::path(root, rel)
+  fs::dir_create(fs::path_dir(archive))
+  system2("tar", c("-czf", shQuote(archive), "-C", shQuote(dir), "."))
+  TRUE
+}
+
 # networkenr does no I/O, so the pipeline writes its objects. Returns counts, not the tables,
 # to keep the targets store small.
-save_network <- function(net, timestamp) {
+save_network <- function(net, timestamp, root) {
   res <- networkenr::get_results(net, timestamp = timestamp)
-  raw <- tibble::as_tibble(res$raw)
   ts <- attr(res$results, "timestamp")
   if (is.null(ts) || is.na(ts)) ts <- timestamp
 
-  # Aborts on a schema or duplicate-key problem. "No contests returned" only warns, which is
-  # the correct state for every network before results publish.
-  networkenr::verify_enr(res$results)
-
-  medsl_write(raw, glue("networks/{net}/raw/{net}_{ts}.csv"),
-              glue("networks/{net}/raw/{net}_latest.csv"))
+  raw <- tibble::as_tibble(res$raw)
+  medsl_write_raw(raw, root, glue("networks/{net}/raw/{net}_{ts}.tar.gz"))
   medsl_write(res$results$contests,
               glue("networks/{net}/clean/{net}_contests_{ts}.csv"),
               glue("networks/{net}/clean/{net}_contests_latest.csv"))
   medsl_write(res$results$candidates,
               glue("networks/{net}/clean/{net}_candidates_{ts}.csv"),
               glue("networks/{net}/clean/{net}_candidates_latest.csv"))
+
+  # Checked after writing: Fox once served a duplicate candidate mid-update, and aborting
+  # here cost the whole cycle's Fox data. "No contests returned" only warns, which is the
+  # correct state for every network before results publish.
+  problem <- tryCatch(
+    {
+      networkenr::verify_enr(res$results)
+      NA_character_
+    },
+    error = function(e) conditionMessage(e)
+  )
 
   tibble::tibble(
     network = net,
@@ -74,6 +127,7 @@ save_network <- function(net, timestamp) {
     errors = if (nrow(raw)) sum(!is.na(raw$error)) else 0L,
     contests = nrow(res$results$contests),
     candidates = nrow(res$results$candidates),
+    problem = problem,
     fetched_at = attr(res$results, "fetched_at")
   )
 }

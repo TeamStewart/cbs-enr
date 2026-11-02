@@ -97,11 +97,14 @@ map_single = tar_map(
 map_networks = tar_map(
   tibble::tibble(net = MEDSL_NETWORKS),
   tar_target(net_timestamp, networkenr::get_timestamp(net), cue = tar_cue(mode = "always")),
-  tar_target(net_data, save_network(net, net_timestamp)),
+  tar_target(net_data, save_network(net, net_timestamp, medsl_root)),
   names = net
 )
 
 list(
+  # An explicit target so the crew workers get it; enightdata's own copy of the path lives in
+  # its config file and is not reachable from here.
+  tar_target(medsl_root, fs::path(path.expand(PATH_DROPBOX), ELECTION_FOLDER)),
   map_single,
   map_networks,
   tar_combine(net_report, map_networks[["net_data"]], command = dplyr::bind_rows(!!!.x))

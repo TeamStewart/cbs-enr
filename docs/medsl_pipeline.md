@@ -7,10 +7,10 @@ No upload, no modeling, no Quarto render.
 |---|---|---|
 | script / store | `_targets.R` / `_targets/` | `_targets_medsl.R` / `_targets_medsl/` |
 | driver | `scripts/automation.R`, 5 min | `scripts/automation_medsl.R`, 15 min |
-| scope | `build & updated & for_cbs` — 84 jurisdictions, 13 states | `build & updated` — 214, 32 states |
+| scope | `build & updated & for_cbs` — 84 jurisdictions, 13 states | `build & updated` — 218, 32 states |
 | output | `.../CBS-MIT Election Data/26_general/` | `.../medsl-enr/26_general/` |
 | extra data | — | `networkenr`: 10 news networks, contest level |
-| targets | ~336 | 663 |
+| targets | ~336 | 676 |
 
 ## Running it
 
@@ -58,19 +58,40 @@ override. The work is network-bound, so it can run well past the core count.
 skips its username map when both are set; with one alone the map silently reassigns
 `PATH_DROPBOX` to the CBS folder. `_targets_medsl.R` aborts rather than let that run.
 
-**Python is load-bearing.** Clarity is the only platform needing reticulate and it is 54 of the
-214 rows. With `RETICULATE_PYTHON` unset, discovery dies on whatever stale python is first on
+**Python is load-bearing.** Clarity is the only platform needing reticulate and it is 57 of the
+218 rows. With `RETICULATE_PYTHON` unset, discovery dies on whatever stale python is first on
 `PATH` and never reaches `py_require()`.
 
 **`write_local()` writes parquet only when the path ends in `.csv`.** A `.parquet` path with
 `csv = FALSE` writes nothing and returns normally. `medsl_write()` in `scripts/medsl/lib.R`
 handles this; follow it for any new write.
 
+## Network file formats
+
+Raw responses are archived verbatim, one `networks/{net}/raw/{net}_{ts}.tar.gz` per network per
+cycle holding each response's bytes exactly as fetched plus a `manifest.jsonl` of url, status,
+content type, `last_modified`, etag and the filename. Nothing is re-encoded, so the archive is
+what the server sent. A body escaped into a table cell was unusable and huge: NBC alone was
+146 MB as CSV and 25 MB as parquet against ~10 MB here, and a cycle's raw is 12 MB in ~10
+files rather than 41 MB.
+
+**Filenames come from sniffing the body, not the content type**, which lies: AP serves
+`.json.gz` and reports `application/x-gzip`, and a `cbsapi` body arrives already parsed. A
+first byte of `{`/`[` gives `.json`, `<?xml` gives `.xml`, `<` gives `.html`, else `.txt`.
+
+Parsed results stay tabular — `{net}_contests_*` and `{net}_candidates_*` as parquet, plus a
+`_latest.csv` to eyeball. A network returning 0 contests writes raw but no clean file, so
+`abc`, `hill` and `nbc` have an empty `clean/` until their feeds publish.
+
+`net_report` carries a `problem` column holding `verify_enr()`'s message, because verification
+runs *after* the files are written: Fox once served a duplicate candidate mid-update, and
+aborting first cost the whole cycle's Fox data.
+
 ## Checks
 
 ```r
 enightdata::get_all()   # path_dropbox must be the MEDSL folder, election_folder 26_general
-targets::tar_read(net_report)        # one row per network: entries, errors, contests, candidates
+targets::tar_read(net_report)   # per network: entries, errors, contests, candidates, problem
 targets::tar_meta(fields = "error") |> dplyr::filter(!is.na(error))
 ```
 
@@ -90,7 +111,7 @@ find "$HOME/MIT Dropbox/Joseph Loffredo/CBS-MIT Election Data/26_general" \
 - `ENIGHTDATA_CONFIG` (added on enightdata's `medsl` branch) gives this pipeline its own config
   file. Without it, `set_all()` would write the MEDSL path into the single per-user config that
   the CBS pipeline's crew workers read.
-- ABC and NBC return the current time as their timestamp, so those two network targets never
-  cache and refetch every cycle. Expected, not a bug.
+- ABC and NBC return the current time as their timestamp, and Hill falls back to it while its
+  pages 404, so those targets never cache and write an archive every cycle. Expected, not a bug.
 - The Hill's 2026 URLs are unconfirmed, so `net_data_hill` may return 0 contests until its pages
   publish. `error = "null"` keeps that from failing the run.
