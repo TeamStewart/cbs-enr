@@ -66,7 +66,47 @@ build_cells = function(
     )
     methods = "all"
   }
-  cells_from_inputs(inp, mh, methods = methods, k = k, oth_cap = oth_cap)
+  fold_cells(cells_from_inputs(inp, mh, methods = methods, k = k, oth_cap = oth_cap), state)
+}
+
+#' Drop cells for methods a county's feed never reports, keeping its expected vote
+#'
+#' `fold_mode_history()` folds the history, but that is not enough on its own:
+#' `cells_from_inputs()` builds a cell for every method in `methods` and fills a
+#' (county, method) with no history from the STATE split, which puts back the exact mode the
+#' fold just removed. Hamilton came out of the history with no `mail` and went back into the
+#' cells with a state-share `mail` cell.
+#'
+#' So the same hard-coded table masks the cell frame. Each dropped cell's expected votes are
+#' NOT discarded: the precinct's remaining cells are rescaled to its original total, so
+#' turnout is unchanged and only the attribution moves. Deleting absent-mode cells outright
+#' is the mistake that cost 31% of NC's turnout -- those cells are the gross-up mechanism.
+#'
+#' This is sound only where the folded mode's votes really do arrive under the method they
+#' fold onto (Hamilton files its absentee votes in its `early` rows). It is NOT a way to
+#' drop a mode that reports at county/site level instead of precinct level -- that is
+#' `reporting_levels.csv` and `virtual.R`'s job, and NC is the cautionary case.
+#'
+#' @param cells Cells from `cells_from_inputs()`.
+#' @param state Two-letter state code.
+#' @param fold The fold table.
+#' @return `cells` without the folded-away county x method rows.
+fold_cells = function(cells, state, fold = read_mode_fold()) {
+  f = dplyr::filter(fold, state == !!state)
+  if (!nrow(f)) {
+    return(cells)
+  }
+  drop = dplyr::distinct(dplyr::transmute(f, county_cbs, method = cbs_method))
+  cols = names(cells)
+  cells |>
+    dplyr::mutate(county_cbs = geo_county(geo)) |>
+    dplyr::mutate(.tot = sum(exp_votes), .by = geo) |>
+    dplyr::anti_join(drop, by = c("county_cbs", "method")) |>
+    dplyr::mutate(
+      exp_votes = if (sum(exp_votes) > 0) exp_votes * .tot / sum(exp_votes) else exp_votes,
+      .by = geo
+    ) |>
+    dplyr::select(dplyr::all_of(cols))
 }
 
 #' One past election's votes by precinct x method
@@ -76,6 +116,9 @@ build_cells = function(
 #' (prep/make_mode_results.R), for states whose L2 history mislabels methods (NC). Otherwise
 #' `{ST}_precinct_mode_history.parquet` (prep/prep_model_inputs.R, from L2).
 #'
+#' Either source is then folded onto the methods each county's feed actually reports
+#' (`fold_mode_history()`), so the prior never puts weight on a mode a county never files.
+#'
 #' @param state Two-letter state code.
 #' @param dir_26 Path to 26_general.
 #' @param mode_election Election to keep from the L2 history; NULL = "2022_general".
@@ -83,11 +126,43 @@ build_cells = function(
 mode_history = function(state, dir_26 = find_26_general(), mode_election = NULL) {
   dir_in = file.path(dir_26, "input_data", "model_inputs")
   f_res = file.path(dir_in, paste0(state, "_precinct_mode_results.parquet"))
-  if (file.exists(f_res) && is.null(mode_election)) {
-    return(read_pq(f_res))
+  mh = if (file.exists(f_res) && is.null(mode_election)) {
+    read_pq(f_res)
+  } else {
+    read_pq(file.path(dir_in, paste0(state, "_precinct_mode_history.parquet"))) |>
+      dplyr::filter(election == if (is.null(mode_election)) "2022_general" else mode_election)
   }
-  read_pq(file.path(dir_in, paste0(state, "_precinct_mode_history.parquet"))) |>
-    dplyr::filter(election == if (is.null(mode_election)) "2022_general" else mode_election)
+  fold_mode_history(mh, state)
+}
+
+#' Fold a mode history onto the methods each county's feed reports
+#'
+#' Applied to EVERY source `mode_history()` can return, which is why it lives here rather
+#' than in the scripts that build those files: `{ST}_precinct_mode_results.parquet` and the
+#' L2 history both pass through, so all three models see one split (the property
+#' make_mode_results.R's header claims) and a new source cannot skip the fold by being
+#' added later.
+#'
+#' The remap is per precinct, so each precinct's own pattern is kept and the folded method
+#' collapses onto the one it lands on: OH Hamilton's `mail` votes become its `early` votes,
+#' precinct by precinct, leaving the county's total untouched.
+#'
+#' A state with no rows in `lookups/mode_fold.csv` returns **unchanged** -- not recomputed,
+#' returned as it came in -- so TX, GA, FL and NC are bit-identical and only OH moves.
+#'
+#' @param mh A mode history: geo, method, voters (and election).
+#' @param state Two-letter state code.
+#' @param fold The fold table (`read_mode_fold()`).
+#' @return `mh` with its methods folded, same columns.
+fold_mode_history = function(mh, state, fold = read_mode_fold()) {
+  if (!nrow(dplyr::filter(fold, state == !!state))) {
+    return(mh)
+  }
+  cols = names(mh)
+  mh |>
+    dplyr::mutate(county_cbs = geo_county(geo), voters = as.numeric(voters)) |>
+    fold_cbs_methods(state, values = "voters", fold = fold) |>
+    dplyr::select(dplyr::all_of(cols))
 }
 
 #' Cells from precinct inputs and a mode history
