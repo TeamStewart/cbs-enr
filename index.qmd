@@ -1554,9 +1554,11 @@ swingRows = !cur.has_hist ? [] : reported
     return { ...d, d2, h2, shift: d2 - h2, rurality: RURALITY.get(`${cur.state}|${cty}`) ?? null };
   })
 // vote-weighted least squares of shift on h2, drawn across the block's h2 range; null when it can't be fit
+// (fewer than SWING_FIT_MIN precincts: a slope through a handful of points is noise)
+SWING_FIT_MIN = 20
 swingFit = rows => {
   const W = d3.sum(rows, d => d.total);
-  if (rows.length < 2 || !(W > 0)) return null;
+  if (rows.length < SWING_FIT_MIN || !(W > 0)) return null;
   const mx = d3.sum(rows, d => d.total * d.h2) / W, my = d3.sum(rows, d => d.total * d.shift) / W;
   const sxx = d3.sum(rows, d => d.total * (d.h2 - mx) ** 2);
   if (!(sxx > 0)) return null;
@@ -1574,11 +1576,11 @@ swingSpec = (groups, caption) => {
     marginLeft: 56,
     fx: { domain: groups.map(g => g.label), label: null, padding: 0.12 },
     x: { domain: [0, 1], label: `Dem two-party share ${histYY} →`, tickFormat: ".0%", ticks: [0.25, 0.5, 0.75], grid: true },
-    y: { domain: [-m, m], label: `Shift in Dem two-party share vs ${histYY}`, labelAnchor: "center", tickFormat: "+.0%", grid: true },
+    y: { domain: [-m, m], label: `↑ Shift vs. ${histYY}`, tickFormat: "+.0%", grid: true },
     r: { type: "sqrt", domain: [0, d3.max(rows, d => d.total)], range: [0.5, 5] },
     caption,
     marks: [
-      Plot.ruleY([0], { stroke: "#d9d9d9", strokeWidth: 0.75 }),
+      Plot.ruleY([0], { stroke: "#999", strokeWidth: 1 }),
       Plot.dot(rows, { fx: "group", x: "h2", y: "shift", r: "total", fill: INK, fillOpacity: 0.3, clip: true,
         channels: { geo: "geo", county: "county", votes: "total" }, tip: true }),
       Plot.ruleY(stats.filter(s => s.avg != null), { fx: "group", y: "avg", stroke: INK, strokeWidth: 1.5, strokeDasharray: "4,4" }),
@@ -1592,10 +1594,10 @@ swingKeys = [
   { mark: "dot", label: "Precinct (area: votes counted)", opacity: 0.3, r: 4 },
   { mark: "line", label: "Linear fit (vote-weighted)", color: DEM },
   { mark: "line", label: "Precinct average shift", color: INK, width: 1.5, dash: "4,4" },
-  { mark: "line", label: "No shift", color: "#d9d9d9", width: 1 }
+  { mark: "line", label: "No shift", color: "#999", width: 1 }
 ]
-swingCaption = what => `Counted votes as of ${fmtTime(cur.time)} ET vs ${cur.hist_year} · ${what} · ` +
-  "groups of precincts, not of voters"
+swingCaption = what => `Counted votes as of ${fmtTime(cur.time)} ET vs. ${cur.hist_year} · ${what} · ` +
+  `shift: Dem two-party share now minus ${histYY} · groups of precincts, not of voters · fit drawn for blocks of ${SWING_FIT_MIN}+ precincts`
 
 // ---- race EI: each L2 race group's Dem two-party share, counted votes vs the history year, same precincts ----
 EI_GROUPS = { return { white: "White", black: "Black", hispanic: "Hispanic", asian: "Asian" } }
@@ -1618,6 +1620,11 @@ viewof group_cut = {
   s.querySelector("select").classList.add("form-select", "form-select-sm");
   return s;
 }
+```
+
+```{ojs demo-asof}
+// global "As of" (asofCtl); this page is the latest scrape only
+html`<div class="asof-slot" data-note="This page shows the latest scrape"></div>`
 ```
 
 ## Row
@@ -1697,13 +1704,13 @@ viewof group_cut = {
   const outside = rows.filter(d => d.estimate < 0 || d.estimate > 1).length;
   const reg = new Map(rows.map(d => [d.group, d.reg_share]));
   const s = exportable("Race EI", {
-    marginLeft: 120,
+    marginLeft: 170,   // room for "Hispanic (6% of reg.)" at the export font size
     marginRight: 64,
     x: { domain: [0, 1], clamp: true, label: "Dem two-party share →", tickFormat: ".0%", ticks: [0, 0.25, 0.5, 0.75, 1], grid: true },
     y: { domain: [eiYears.hist, eiYears.now], axis: null },
     fy: { domain: Object.keys(EI_GROUPS), label: null, tickFormat: g => `${EI_GROUPS[g]} (${pp(reg.get(g))} of reg.)`, padding: 0.25 },
     color: eiColor,
-    caption: `Counted votes as of ${fmtTime(cur.time)} ET vs ${cur.hist_year} · ${eiNote(rows[0])}` +
+    caption: `Counted votes as of ${fmtTime(cur.time)} ET vs. ${cur.hist_year} · ${eiNote(rows[0])}` +
       (outside ? ` · ${outside} estimate${outside > 1 ? "s" : ""} outside 0–100% pinned to the edge (see EI Diagnostics)` : ""),
     marks: [
       Plot.frame({ stroke: "#ddd" }),

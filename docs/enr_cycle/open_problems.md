@@ -94,4 +94,31 @@ while production falls back to a normalized match, so it understates (NE 46.7%
 exact vs 99.9% production; MI 0.5% vs 94.2%). CA has no races in
 `input_data/priors.csv` yet.
 
+## Model reference tables
+
+### 6. `model_precincts.csv` / `model_counties.csv` are stale against the model inputs (11-01)
+
+On 11-01 GA, MN and OH were added to `STATE_FIPS` in
+`scripts/model/prep/make_model_reference.R` (the Demographics page's Urbanicity
+blocks read RUCC from `model_counties.csv`). The committed CSVs keep the old rows for
+the other states and append only the GA/MN/OH rows, because a full rerun of the
+script changes the existing states: the `model_inputs/{ST}_precinct.parquet` files
+have been re-prepped since the CSVs were last built (30e1ccbd).
+
+| state | `model_precincts.csv` rows now | full rerun | rows that differ (now / rerun) |
+|---|---|---|---|
+| CA | 23,685 | 20,062 | 11,028 / 7,405 |
+| TX | 8,771 | 7,542 | 3,319 / 2,090 |
+| FL | 5,459 | 5,455 | 604 / 600 |
+| MI | 3,712 | 3,712 | 699 / 699 |
+| NC | 2,633 | 2,626 | 24 / 17 |
+| AK | 402 | 402 | 2 / 2 |
+
+`model_counties.csv` differs in 58 rows (TX 43, CA 8, NC 5, FL 2). `model_precincts.csv`
+feeds the Models page maps (`read_geo_units()` in `scripts/functions.R`) and
+`scripts/util/make_dashboard_geo.R`, so before rerunning the script in full, check
+that the changed rows are the re-prep's and not a regression, then rebuild the
+dashboard geo files. GA/MN/OH have no `precinct_geo_crosswalk.csv` rows, so their
+`unit_id` is NA and they add nothing to the maps.
+
 ## Not for agents (Mason)
