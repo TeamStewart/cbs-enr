@@ -1,0 +1,168 @@
+- One or more packages recorded in the lockfile are not installed.
+- Use `renv::status()` for more details.
+AK: ak_base, 482 geos, 37 checkpoints
+FL: fl_base, 2767 geos, 37 checkpoints
+GA: ga_base, 2581 geos, 37 checkpoints
+MI: mi_base, 2568 geos, 37 checkpoints
+MN: mn_base, 4080 geos, 37 checkpoints
+NC: nc_base, 2750 geos, 37 checkpoints
+OH: oh_base, 3805 geos, 37 checkpoints
+TX: tx_base, 2943 geos, 37 checkpoints
+model results: 37 runs, 10 races in
+'~/Dropbox (MIT)/Research/CBS-MIT Election Data/26_dashtest/model_results'
+precinct projections: 220000 rows, 8 models
+Warning message:
+In inner_join(mutate(filter(readr::read_csv(xw_path, col_types = readr::cols(.default = "c"),  :
+  Detected an unexpected many-to-many relationship between `x` and `y`.
+ℹ Row 91 of `x` matches multiple rows in `y`.
+ℹ Row 1 of `y` matches multiple rows in `x`.
+ℹ If a many-to-many relationship is expected, set `relationship =
+  "many-to-many"` to silence this warning.
+# A tibble: 10 × 29
+   key    label       state contest district time                n_juris juris
+   <chr>  <chr>       <chr> <chr>      <int> <dttm>                <int> <chr>
+ 1 AK-sen AK Senate   AK    sen           NA 2026-11-10 04:30:00       1 AK   
+ 2 FL-sen FL Senate   FL    sen           NA 2026-11-10 00:00:00       1 FL   
+ 3 GA-sen GA Senate   GA    sen           NA 2026-11-09 23:30:00       1 GA   
+ 4 GA-gov GA Governor GA    gov           NA 2026-11-09 23:30:00       1 GA   
+ 5 MI-sen MI Senate   MI    sen           NA 2026-11-09 21:15:00       1 MI   
+ 6 MN-sen MN Senate   MN    sen           NA 2026-11-04 22:30:00       1 MN   
+ 7 NC-sen NC Senate   NC    sen           NA 2026-11-09 21:30:00       1 NC   
+ 8 OH-sen OH Senate   OH    sen           NA 2026-11-08 23:30:00       1 OH   
+ 9 TX-sen TX Senate   TX    sen           NA 2026-11-09 20:00:00       1 TX   
+10 TX-gov TX Governor TX    gov           NA 2026-11-09 20:00:00       1 TX   
+   n_geo n_complete n_partial   total    eday dem_name       dem_votes
+   <int>      <int>     <int>   <dbl>   <dbl> <chr>              <dbl>
+ 1   482        473         0  252910  167031 Mary Peltola      123555
+ 2  2767       2759         0 3559604 1278552 Angela Nixon     1479985
+ 3  2581       2577         0 4039876 1432352 Jon Ossoff       2069259
+ 4  2581       2577         0 4080673 1446828 Keisha Bottoms   2145902
+ 5  2568       1849         0 2383173 1305345 Abdul El-Sayed   1169162
+ 6  4080       4059         0 2601569      NA Peggy Flanagan   1326881
+ 7  2750       2740         0 3765692 1562426 Roy Cooper       1917292
+ 8  3805       3424         0 1683658 1167717 Sherrod Brown    1016089
+ 9  2943       2917         0 2637667  864338 James Talarico   1456983
+10  2943       2917         0 2664231  873048 Gina Hinojosa    1314222
+   rep_name        rep_votes has_hist hist_by_method hist_year hist_total
+   <chr>               <dbl> <lgl>    <lgl>              <int>      <dbl>
+ 1 Dan Sullivan       119096 TRUE     TRUE                2022     242495
+ 2 Ashley Moody      2032583 TRUE     TRUE                2022    3564749
+ 3 Mike Collins      1939905 TRUE     FALSE               2022    3969591
+ 4 Rick Jackson      1903615 TRUE     FALSE               2022    4024465
+ 5 Mike Rogers       1167693 TRUE     TRUE                2022    2340486
+ 6 Michele Tafoya    1211275 TRUE     TRUE                2022    2521991
+ 7 Michael Whatley   1790725 TRUE     TRUE                2022    3711225
+ 8 Jon Husted         646520 TRUE     TRUE                2022    1623958
+ 9 Ken Paxton        1142506 TRUE     TRUE                2022    2567986
+10 Greg Abbott       1311889 TRUE     TRUE                2022    2628740
+   hist_eday has_pres l2_match hist_match match_n match_of n_frame
+       <dbl> <lgl>       <dbl>      <dbl>   <int>    <int>   <int>
+ 1    160297 TRUE        0          0.660     395      473     402
+ 2   1294664 TRUE        0.717      0.993    2718     2753    5455
+ 3        NA TRUE        0.986      0.996    2563     2572    2580
+ 4        NA TRUE        0.986      0.996    2563     2572    2580
+ 5   1300029 TRUE        0.960      0.972    1779     1848    3712
+ 6        NA TRUE        0.999      1        4054     4054    4080
+ 7   1540464 TRUE        0.954      0.769    2616     2740    2626
+ 8   1136966 TRUE        0.557      0.620    2120     3424    4596
+ 9    840791 TRUE        0.940      0.985    2831     2872    7542
+10    859702 TRUE        0.940      0.985    2835     2876    7542
+   cbs_time           
+   <dttm>             
+ 1 NA                 
+ 2 2026-11-01 03:08:23
+ 3 2026-11-01 03:08:16
+ 4 2026-11-01 03:08:24
+ 5 2026-11-01 03:08:18
+ 6 2026-11-01 03:08:19
+ 7 2026-11-01 03:08:20
+ 8 2026-11-01 03:08:21
+ 9 2026-11-01 03:08:23
+10 2026-11-01 03:08:21
+ts rows: 979; prec rows: 73932; model rows: 16488
+- One or more packages recorded in the lockfile are not installed.
+- Use `renv::status()` for more details.
+   state contest   n
+1     CA     gov  58
+2     CA   house 144
+3     FL     gov  67
+4     FL   house 101
+5     FL     sen  67
+6     NC   house 115
+7     NC     sen 100
+8     OH     gov  88
+9     OH   house 103
+10    OH     sen  88
+11    TX     gov 254
+12    TX   house 310
+13    TX     sen 254
+Warning messages:
+1: One or more parsing issues, call `problems()` on your data frame for details,
+e.g.:
+  dat <- vroom(...)
+  problems(dat) 
+2: Unknown or uninitialised column: `county_cbs`. 
+3: Unknown or uninitialised column: `county_cbs`. 
+# A tibble: 46 × 4
+   state src                                          p_prec note               
+   <chr> <chr>                                         <dbl> <chr>              
+ 1 FL    pres24                                        1     "2024 presidential…
+ 2 OH    pres24                                        1     "2024 presidential…
+ 3 NC    count:sen                                     0.769 "Counted Senate vo…
+ 4 NC    count:house                                   0     "Counted House vot…
+ 5 NC    model:NC_sen:swing                            0.770 "Projected NC Sena…
+ 6 NC    model:NC_sen:swing/conformal                  0.770 "Projected NC Sena…
+ 7 NC    model:NC_sen:ratio_strata/strat_dg/conformal  0.770 "Projected NC Sena…
+ 8 NC    model:NC_sen:pois_bayes                       0.770 "Projected NC Sena…
+ 9 NC    model:NC_sen:pois_bayes/conf_seq              0.770 "Projected NC Sena…
+10 NC    model:NC_sen:medsl_sur/tpsob_g/conf_seq       0.770 "Projected NC Sena…
+11 NC    model:NC_sen:medsl_sur/tpsob_g/conformal      0.770 "Projected NC Sena…
+12 NC    model:NC_sen:medsl_sur/conformal              0.770 "Projected NC Sena…
+13 FL    count:sen                                     0.464 "Counted Senate vo…
+14 FL    count:gov                                     0     "Counted Governor …
+15 FL    count:house                                   0     "Counted House vot…
+16 FL    model:FL_sen:swing                            0.999 "Projected FL Sena…
+17 FL    model:FL_sen:swing/conformal                  0.999 "Projected FL Sena…
+18 FL    model:FL_sen:ratio_strata/strat_dg/conformal  0.999 "Projected FL Sena…
+19 FL    model:FL_sen:pois_bayes                       0.999 "Projected FL Sena…
+20 FL    model:FL_sen:pois_bayes/conf_seq              0.999 "Projected FL Sena…
+21 FL    model:FL_sen:medsl_sur/tpsob_g/conf_seq       0.999 "Projected FL Sena…
+22 FL    model:FL_sen:medsl_sur/tpsob_g/conformal      0.999 "Projected FL Sena…
+23 FL    model:FL_sen:medsl_sur/conformal              0.999 "Projected FL Sena…
+24 TX    count:sen                                     0.386 "Counted Senate vo…
+25 TX    count:gov                                     0.388 "Counted Governor …
+26 TX    count:house                                   0     "Counted House vot…
+27 TX    model:TX_sen:swing                            0.999 "Projected TX Sena…
+28 TX    model:TX_sen:swing/conformal                  0.999 "Projected TX Sena…
+29 TX    model:TX_sen:ratio_strata/strat_dg/conformal  0.999 "Projected TX Sena…
+30 TX    model:TX_sen:pois_bayes                       0.999 "Projected TX Sena…
+31 TX    model:TX_sen:pois_bayes/conf_seq              0.999 "Projected TX Sena…
+32 TX    model:TX_sen:medsl_sur/tpsob_g/conf_seq       0.999 "Projected TX Sena…
+33 TX    model:TX_sen:medsl_sur/tpsob_g/conformal      1.000 "Projected TX Sena…
+34 TX    model:TX_sen:medsl_sur/conformal              1.000 "Projected TX Sena…
+35 OH    count:sen                                     0.313 "Counted Senate vo…
+36 OH    count:gov                                     0     "Counted Governor …
+37 OH    count:house                                   0     "Counted House vot…
+38 OH    model:OH_sen:swing                            0.519 "Projected OH Sena…
+39 OH    model:OH_sen:swing/conformal                  0.529 "Projected OH Sena…
+40 OH    model:OH_sen:ratio_strata/strat_dg/conformal  0.527 "Projected OH Sena…
+41 OH    model:OH_sen:pois_bayes                       0.522 "Projected OH Sena…
+42 OH    model:OH_sen:pois_bayes/conf_seq              0.525 "Projected OH Sena…
+43 OH    model:OH_sen:medsl_sur/tpsob_g/conf_seq       0.525 "Projected OH Sena…
+44 OH    model:OH_sen:medsl_sur/tpsob_g/conformal      0.528 "Projected OH Sena…
+45 OH    model:OH_sen:medsl_sur/conformal              0.530 "Projected OH Sena…
+46 CA    count:house                                   0     "Counted House vot…
+# A tibble: 11 × 3
+   state kind       n
+   <chr> <chr>  <int>
+ 1 CA    count      1
+ 2 FL    count      3
+ 3 FL    model      8
+ 4 FL    pres24     1
+ 5 NC    count      2
+ 6 NC    model      8
+ 7 OH    count      3
+ 8 OH    model      8
+ 9 OH    pres24     1
+10 TX    count      3
+11 TX    model      8

@@ -1209,22 +1209,61 @@ DEMO_VARS = { return {
   l2_asian: { label: "% Asian", bins: DEMO_RACE_BINS },
   l2_male: { label: "% male", bins: [0.44, 0.46, 0.48, 0.5, 0.52] }
 } }
-// Shift Map basemap picker: none (default) or an L2 share per precinct. Built here and moved into the
-// Shift Map tab's card body (top right, beside Reset), so the map cell keeps its literal Plot.plot({...})
-viewof shift_base = {
+// light-to-dark olive around #C0BA79, away from the party colors and the grey of units with no L2 match.
+// Literal fill colors, not a Plot color scale: the Remaining Vote Map's circles already use one
+demoRange = k => d3.quantize(d3.interpolateRgbBasis(["#f6f5ea", "#C0BA79", "#5f5a2c"]), DEMO_VARS[k].bins.length + 1)
+demoFill = k => d3.scaleThreshold(DEMO_VARS[k].bins, demoRange(k))
+// the basemap layer for a map: units with an L2 match filled by their share (grey otherwise), a caption
+// note and export legend keys (one rect per bin)
+baseLayer = (g, k) => {
+  if (!k) return { marks: [], note: "", exportNote: "", keys: [] };
+  const v = DEMO_VARS[k], fill = demoFill(k), p = d3.format(".0%");
+  const base = g.features.filter(f => mdemoc.get(f.id)?.[k] != null);
+  const val = base.map(f => mdemoc.get(f.id)[k]);
+  const bins = v.bins, lab = i => i === 0 ? `< ${p(bins[0])}` : i === bins.length ? `≥ ${p(bins[i - 1])}` : `${p(bins[i - 1])}–${p(bins[i])}`;
+  return {
+    marks: [Plot.geo(base, { fill: val.map(fill), stroke: "white", strokeWidth: 0.3,
+      title: base.map((f, i) => `${f.id}\n${v.label}: ${pct(val[i])} of ${fmt(mdemoc.get(f.id).l2_n)} registrants`) })],
+    note: ` · basemap: ${v.label} (${fmt(base.length)} of ${fmt(g.features.length)} precincts matched; grey: no match)`,
+    exportNote: ` · basemap: ${v.label}, grey: no match`,
+    keys: demoRange(k).map((color, i) => ({ mark: "rect", label: `${v.label} ${lab(i)}`, color }))
+  };
+}
+// Basemap picker for a map tab (title = its card's data-title): none (default) or an L2 share per unit.
+// Moved into that tab's card body, left-aligned under the map's own legend, with the basemap's key
+// below the select, so the map cell keeps its literal Plot.plot({...})
+basePicker = (title, invalidation) => {
   const s = Inputs.select(new Map([["None", ""], ...Object.entries(DEMO_VARS).map(([k, v]) => [v.label, k])]),
     { value: "", label: "Basemap" });
-  s.classList.add("shift-base");
+  s.classList.add("map-base");
   s.querySelector("select").classList.add("form-select", "form-select-sm");
-  const place = () => { const body = document.querySelector('[data-title="Shift Map"]'); if (body && s.parentElement !== body) body.append(s); return !!body; };
-  if (!place()) { const obs = new MutationObserver(() => place() && obs.disconnect()); obs.observe(document.body, { childList: true, subtree: true }); invalidation.then(() => obs.disconnect()); }
+  const key = document.createElement("div");
+  key.className = "map-base-key";
+  s.append(key);
+  const drawKey = () => key.replaceChildren(...(s.value ? [Plot.legend({ color: { type: "threshold", domain: DEMO_VARS[s.value].bins,
+    range: demoRange(s.value), tickFormat: d3.format(".0%") }, width: 200, marginLeft: 0 })] : []));
+  s.addEventListener("input", drawKey);
+  // follow the map's re-renders: stay in the card, just below the figure's legend (or at its top)
+  const place = () => {
+    const body = document.querySelector(`.card-body[data-title="${title}"]`);
+    if (!body) return;
+    if (s.parentElement !== body) body.append(s);
+    const fig = body.querySelector("figure"), lg = fig?.querySelector(':scope > [class$="-ramp"], :scope > [class$="-swatches"]');
+    const b = body.getBoundingClientRect(), r = (lg ?? fig)?.getBoundingClientRect();
+    if (!r || !r.width) return;
+    const top = `${Math.round((lg ? r.bottom : r.top) - b.top + 2)}px`, left = `${Math.round(r.left - b.left)}px`;
+    if (s.style.top !== top) s.style.top = top;
+    if (s.style.left !== left) s.style.left = left;
+  };
+  const obs = new MutationObserver(place);
+  obs.observe(document.body, { childList: true, subtree: true });
+  window.addEventListener("resize", place);
+  invalidation.then(() => (obs.disconnect(), window.removeEventListener("resize", place)));
+  place();
   return s;
 }
-// light-to-dark purple, away from the arrows' party colors and the grey of units with no L2 match
-demoColor = k => ({
-  type: "threshold", domain: DEMO_VARS[k].bins, legend: true, label: DEMO_VARS[k].label,
-  tickFormat: d3.format(".0%"), range: d3.quantize(d3.interpolateRgb("#f2f0f7", "#54278f"), DEMO_VARS[k].bins.length + 1)
-})
+viewof shift_base = basePicker("Shift Map", invalidation)
+viewof rem_base = basePicker("Remaining Vote Map", invalidation)
 
 // two-party Dem margin bins: R+60, R+30, R+10, even, D+10, D+30, D+60
 MARGIN_BINS = [-0.6, -0.3, -0.1, 0, 0.1, 0.3, 0.6]
@@ -1502,23 +1541,19 @@ html`<div class="asof-slot"></div>`
   const sfmt = x => `${x >= 0 ? "D" : "R"}+${Math.abs(x * 100).toFixed(1)}`;
   const CAP = 0.3;
   // optional basemap: an L2 share per unit (shift_base); units with no L2 match stay grey
-  const base = shift_base ? g.features.filter(f => mdemoc.get(f.id)?.[shift_base] != null) : [];
-  const baseVal = base.map(f => mdemoc.get(f.id)[shift_base]);
+  const bl = baseLayer(g, shift_base);
   const s = exportable("Shift Map", {
     projection: g.projection,
-    color: shift_base ? demoColor(shift_base) : undefined,
     length: { domain: [0, CAP], range: [0, 28], clamp: true },
     caption: `Counted votes as of ${fmtTime(cur.time)} ET vs. 2024 president · ${fmt(res.length)} reporting precincts` +
       ` · shift in two-party margin ${sfmt(all26 - all24)} (${mfmt(all24)} to ${mfmt(all26)})` +
       ` · arrows: ↖ toward ${partyName("dem")}, ↗ toward ${partyName("rep")}, length = shift, capped at ${CAP * 100} pts` +
-      (shift_base ? ` · basemap: ${DEMO_VARS[shift_base].label} (${fmt(base.length)} of ${fmt(g.features.length)} precincts matched; grey: no match)` : ""),
-    exportCaption: `${fmt(res.length)} reporting precincts` +
-      (shift_base ? ` · basemap: ${DEMO_VARS[shift_base].label}, grey: no match` : ""),
+      bl.note,
+    exportCaption: `${fmt(res.length)} reporting precincts${bl.exportNote}`,
     marks: [
       Plot.geo(g.counties, { fill: MAP_BLANK }),
       Plot.geo(g.features, { fill: MAP_BLANK, stroke: "white", strokeWidth: 0.3 }),
-      ...(shift_base ? [Plot.geo(base, { fill: baseVal, stroke: "white", strokeWidth: 0.3,
-        title: base.map((f, i) => `${f.id}\n${DEMO_VARS[shift_base].label}: ${pct(baseVal[i])} of ${fmt(mdemoc.get(f.id).l2_n)} registrants`) })] : []),
+      ...bl.marks,
       ...outlineMarks(g),
       // tilted 35° up from horizontal; ARROW keeps the head one size whatever the length
       // stroke scale: null keeps the party colors literal when the basemap brings in a color scale
@@ -1530,9 +1565,10 @@ html`<div class="asof-slot"></div>`
     ]
   }, "Shift Since 2024", { keys: [
     { mark: "arrow", label: `Toward ${partyName("dem")}`, color: DEM, dir: -1 },
-    { mark: "arrow", label: `Toward ${partyName("rep")}`, color: REP, dir: 1 }
+    { mark: "arrow", label: `Toward ${partyName("rep")}`, color: REP, dir: 1 },
+    ...bl.keys
   ] });
-  return Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, length: s.length, caption: s.caption, marks: s.marks });
+  return Plot.plot({ className: "dash-map", projection: s.projection, length: s.length, caption: s.caption, marks: s.marks });
 }
 ```
 
@@ -1548,22 +1584,28 @@ html`<div class="asof-slot"></div>`
     .sort((a, b) => b.rem - a.rem);
   const tot = d3.sum(rows, d => d.rem);
   const d2 = tot > 0 ? d3.sum(rows, d => d.rem * d.d2) / tot : null;
+  // optional basemap: an L2 share per unit (rem_base); units with no L2 match stay grey
+  const bl = baseLayer(g, rem_base);
   const s = exportable("Remaining Vote Map", {
     projection: g.projection,
     color: marginColor,
     r: { type: "sqrt", domain: [0, d3.max(rows, d => d.rem)], range: [0, 14] },
     caption: `${mprecRun ? `Model run ${fmtTime(mprecRun.time)} ET · ` : ""}${fmt(Math.round(tot))} votes expected outstanding` +
-      `${d2 == null ? "" : ` (${pct(d2)} D two-party)`} · circle area: expected remaining votes, color: their projected margin`,
+      `${d2 == null ? "" : ` (${pct(d2)} D two-party)`} · circle area: expected remaining votes, color: their projected margin` + bl.note,
+    exportCaption: `${mprecRun ? `Model run ${fmtTime(mprecRun.time)} ET · ` : ""}${fmt(Math.round(tot))} votes expected outstanding` +
+      `${d2 == null ? "" : ` (${pct(d2)} D two-party)`} · circle area: expected remaining votes, color: their projected margin` + bl.exportNote,
     marks: [
       Plot.geo(g.counties, { fill: MAP_BLANK }),
       Plot.geo(g.features, { fill: MAP_BLANK, stroke: "white", strokeWidth: 0.3 }),
+      ...bl.marks,
       ...outlineMarks(g),
       Plot.dot(rows, { x: "cx", y: "cy", r: "rem", fill: "margin", fillOpacity: 0.85, stroke: "white", strokeWidth: 0.5,
         title: d => `${d.unit_id}\n${fmt(d.rem)} votes expected outstanding\n${pct(d.d2)} D two-party (${marginColor.tickFormat(Math.round(d.margin * 100) / 100)})` }),
       ...cityMarks(cur.state)
     ]
   }, "Expected Remaining Vote", { keys: [
-    { mark: "dot", label: "Expected remaining votes (area)", r: 6, opacity: 0.6 }
+    { mark: "dot", label: "Expected remaining votes (area)", r: 6, opacity: 0.6 },
+    ...bl.keys
   ] });
   return Plot.plot({ className: "dash-map", projection: s.projection, color: s.color, r: s.r, caption: s.caption, marks: s.marks });
 }
