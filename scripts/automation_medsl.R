@@ -10,7 +10,7 @@
 ## that triggers a render.
 ##################################################
 
-INTERVAL = 15 # minutes
+INTERVAL = 10 # minutes
 
 # Host-specific values are env vars, so medsl.mit.edu only has to set them; the defaults are
 # the laptop's layout.

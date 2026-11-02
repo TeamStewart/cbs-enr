@@ -6,7 +6,7 @@ No upload, no modeling, no Quarto render.
 | | CBS | MEDSL |
 |---|---|---|
 | script / store | `_targets.R` / `_targets/` | `_targets_medsl.R` / `_targets_medsl/` |
-| driver | `scripts/automation.R`, 5 min | `scripts/automation_medsl.R`, 15 min |
+| driver | `scripts/automation.R`, 5 min | `scripts/automation_medsl.R`, 10 min |
 | scope | `build & updated & for_cbs` — 84 jurisdictions, 13 states | `build & updated` — 218, 32 states |
 | output | `.../CBS-MIT Election Data/26_general/` | `.../medsl-enr/26_general/` |
 | extra data | — | `networkenr`: 10 news networks, contest level |
