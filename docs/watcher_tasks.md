@@ -48,7 +48,8 @@ A fresh session should start by reading this file, then the design.
 - [x] F2 unit tests: verb parsing, reconcile, mode parsing, ruling expiry (scripts/watch/test_watch.R: 24 checks pass; scripts/watch/test_regress.R: 16 fault-injection checks for the history, B4, B6, warning groups and B7b pass, 2026-10-31)
 - [x] F3 dry-run on real pipeline-state data (no Slack token) (several dry-run ticks; 2 real L2 runs (Sonnet, $0.13 and $0.19 notional); the second found the TX Ellis bug)
 - [x] F4 README for the watcher laptop: setup, Slack app, env file, start and stop (scripts/watch/README.md)
-- [x] F5 rehearsal checklist for 11/2 (fault injection), for Mason (in scripts/watch/README.md)
+- [x] F5 rehearsal checklist for 11/2 (fault injection), for Mason (replaced in scripts/watch/README.md by the Election Day steps once the rehearsal was done)
+- [x] F6 rehearsal, 2026-11-02. Scraper laptop (Mac mini): sim run with `CBS_AUTOMATION_TEST=1` and `CBS_MODEL_SIM`. The 16:43 cycle completed with every step passing (the 16:48 cycle was stopped before it pushed), including `commands` once PR #81 created the push clone first (the 10:12 cycle had failed it). Sim model files went to `model_tests/run_night_sim/`, not `model_results/`, and nothing was published before the cutover. Rehearsal settings were not saved anywhere, so a new terminal is clean.
 
 ## Added along the way
 - [x] `inspect.R`, L2's read-only data tool (parquet, target errors, dropped geos). The first real L2 run had nothing it could use to read parquet.
