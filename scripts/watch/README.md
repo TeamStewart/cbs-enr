@@ -112,6 +112,21 @@ CBS_WATCH_HOME=/tmp/wt Rscript scripts/watch/tick.R    # one dry-run tick agains
 Run the scraper laptop on a sim, with `CBS_AUTOMATION_TEST=1` and `CBS_MODEL_SIM=...`.
 Run the watcher with Slack live. For each fault, note how long it takes to show up in Slack.
 
+Before starting, set up the two machines:
+- Scraper (the Mac mini, user `stewart`). Pull `main`, then run:
+  `CBS_AUTOMATION_TEST=1 CBS_MODEL_SIM=nc_base caffeinate -i Rscript scripts/automation.R >> logs/console.log 2>&1`
+  Any scenario folder in `26_sim` works for `CBS_MODEL_SIM`. Only the model targets read the
+  sim; the scrapers still read the real feeds. Before the `dashboard_mode.txt` cutover, nothing
+  is published to Pages or CloudFront.
+- Watcher (Mason's laptop):
+  - Do steps 1-5 of "Set up the watcher laptop" above. `PATH_DROPBOX` must point at the same
+    `CBS-MIT Election Data` folder the scraper writes to.
+  - Run `Rscript scripts/watch/test_watch.R` and one dry-run tick (see Test).
+  - Then run `bash scripts/watch/install.sh`.
+  - Polls are still open on 11/2, so every finding would be P2. For the rehearsal only, add
+    `CBS_ELECTION_DATE=2026-11-01` to `~/.config/cbs-enr-watch/env` so that every state counts
+    as closed. Take it out afterwards.
+
 - [ ] Normal cycles: the status message updates every cycle, and there are no P1s.
 - [ ] Break a scraper: push a commit to enightdata that errors for one county. Expect an incident, an L2 diagnosis and a proposal; `approve` pushes the fix and the invalidate runs next cycle.
 - [ ] A new vote-method label in one county's clean file: a methods-check incident, with proposal `human`.
@@ -120,4 +135,4 @@ Run the watcher with Slack live. For each fault, note how long it takes to show 
 - [ ] `!stop`: no L2 runs, and L2 tool calls are blocked. `!start` resumes.
 - [ ] `!mode llm`, then `!mode deterministic`: L2 every cycle, then only on events.
 - [ ] Two hours unattended: no runaway L2 runs, and usage stays within the subscription limits.
-- [ ] Afterwards: unset `CBS_MODEL_SIM` and `CBS_AUTOMATION_TEST` on the scraper laptop, and clear `~/.cache/cbs-enr-watch/state` on the watcher. Keep `~/.cache/cbs-enr-commands.done`, so commands already run never run again.
+- [ ] Afterwards: unset `CBS_MODEL_SIM` and `CBS_AUTOMATION_TEST` on the scraper laptop. On the watcher, remove `CBS_ELECTION_DATE` from the env file and clear `~/.cache/cbs-enr-watch/state`. Keep `~/.cache/cbs-enr-commands.done`, so commands already run never run again.
