@@ -529,22 +529,21 @@ read_l2 <- function(state) {
 }
 
 # Demographics page: basic ecological inference (seine, McCartan & Kuriwaki) of each L2 race group's
-# Dem two-party share, from the counted votes and from the history year on the same precincts: those
-# with two-party votes in both years and an L2 match. Predictors are L2 race shares of registrants of
+# Dem two-party share, from the counted votes and from VoteHub's 2024 president on the same precincts:
+# those with two-party votes in both and an L2 match. Predictors are L2 race shares of registrants of
 # known race (L2 has no other group), so each estimate assumes a group's share of two-party voters is
 # its share of registrants. No covariates. Ridge regression + Riesz representer (DML), unbounded, so an
 # estimate can fall outside [0, 1]. r2 is the regression's R-squared and nu2 the representer's second
-# moment for the group (larger: harder to estimate).
-dashboard_ei <- function(prec, l2, hist_by_method) {
+# moment for the group (larger: harder to estimate). year "hist" is 2024 president.
+dashboard_ei <- function(prec, l2) {
   empty = tibble(year = character(), group = character(), estimate = numeric(), conf_low = numeric(),
                  conf_high = numeric(), r2 = numeric(), nu2 = numeric(), reg_share = numeric(), n = integer())
   race = c("white", "black", "hispanic", "asian")
-  if (!nrow(l2) || all(is.na(prec$hist_dem))) return(empty)
+  if (!nrow(l2) || all(is.na(prec$pres_dem))) return(empty)
   p = summarise(prec,
     dem = sum(dem), rep = sum(rep),
-    # history repeats on every method row when it isn't split by method
-    hist_dem = if (hist_by_method) sum(hist_dem) else first(hist_dem),
-    hist_rep = if (hist_by_method) sum(hist_rep) else first(hist_rep),
+    # 2024 president repeats on every method row
+    hist_dem = first(pres_dem), hist_rep = first(pres_rep),
     .by = geo
   )
   d = filter(l2, mode == "Total") |>
@@ -789,7 +788,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
       mprec_runs = distinct(mr, model, time)
     }
     meta = mutate(meta, hist_match = hist_match, match_n = match_n, match_of = match_of, n_frame = sum(gu$frame))
-    ei = dashboard_ei(prec, l2, meta$hist_by_method)
+    ei = dashboard_ei(prec, l2)
 
     # CBS county results for the counties with no ENR precincts (the geo prefix is county_cbs)
     mcty = tibble(county_fips = character(), county_name = character(), dem = numeric(), rep = numeric(),
