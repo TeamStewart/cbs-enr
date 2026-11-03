@@ -859,7 +859,6 @@ Four artifacts, written to `26_general/model_results/` in the shared Dropbox:
 | `status_{stamp}.csv` + `status_latest.csv` | §15.2 | `write_predictions()` |
 | `turnout_{stamp}.csv` + `turnout_latest.csv` | §15.4 — **new** | `write_predictions()` |
 | `precincts_{stamp}.parquet` + `precincts_latest.parquet` | §15.3 — **new** | `write_precincts()` |
-| `precincts_modes_{stamp}.parquet` + `precincts_modes_latest.parquet` | §15.3a — **new** | `write_precinct_modes()` |
 
 `{stamp}` is `max(status$time)` as `%Y%m%d_%H%M%S` in `America/New_York`. The stamped file
 is never overwritten, so the night's history is kept; the `_latest` copy is written to a
@@ -1068,54 +1067,6 @@ every model with draws; `est_dem2` in `[0, 1]`; the count of precincts with
 own prediction is a signal, not a rounding artifact; and `n_obs_modes <=` the number of modes in that state's returns — asserted
 explicitly, because the existing flag-gated dump gets this wrong, reading 10,956 on a
 227-registrant precinct.
-
-### 15.3a `precincts_modes` — the per-precinct x vote-method dump
-
-**A separate file from §15.3, on purpose.** §15.3 is collapsed to precinct grain, so its
-`method` column is NA on every row, and `read_model_precincts()` (`scripts/functions.R`)
-reads a fixed column set from it. Widening §15.3 would change what the Models page already
-consumes, so the method dimension gets its own artifact and §15.3 keeps its shape and its
-readers.
-
-**`medsl_sur` only.** It is the one model whose unit of analysis is the cell, and the only
-one that exposes per-cell predictions (`fit$cell_pred`). `swing`, `pois_bayes`,
-`ratio_strata` and `lm_bayes` each need the same treatment before they can contribute a row,
-so a consumer must not assume this file covers every model in §15.3. A race x model absent
-from it is not an error.
-
-**Grain:** one row per `race_id` x `model` x `geo` x `method`. Schema is
-`PREC_MODE_COLS` (`live/R/results.R`), 9 columns:
-
-| column | meaning |
-|---|---|
-| `race_id`, `model`, `time` | as §15.1 |
-| `geo`, `county` | the precinct and its county |
-| `method` | `early` / `eday` / `mail` — the fit's own modes, already folded by `METHOD_MAP` and by `lookups/mode_fold.csv`. A mode-free state contributes nothing |
-| `pred` | predicted final votes in this precinct x method |
-| `cnt` | votes counted in it so far. Identical across models for the same cell, since counting is not a model output |
-| `dem_est` | Dem share of **all** that cell's votes, as §15.3's `dem_est` |
-
-**It reconciles with §15.3 by construction.** Summing `pred` over a precinct's methods gives
-that precinct's §15.3 `turn_est` for the same race x model. Verified on `oh_base`: 6,360
-precinct x model rows, max absolute difference **2.96e-12**. A consumer may rely on this; a
-discrepancy beyond floating point is a defect.
-
-**Narrow deliberately.** The per-mode partisan split (`fin_dem`/`fin_rep`/`fin_oth`,
-`c_dem`/`c_rep`/`c_oth`) is not written: at full scale — 51,055 precincts over 9 states,
-3 medsl variants, 412,743 rows — these 9 columns write in 0.14 s at 9.1 MB against 26.2 MB
-with the split, and against §15.3's own 31.1 MB. `dem_est` keeps a partisan map possible for
-one column instead of six.
-
-**Additive and fail-soft.** `write_precinct_modes()` is called inside `tryCatch` in both
-`model_write()` and `run_night.R`: nothing depends on this file yet, so a failure in it must
-never take down the dump beside it.
-
-**Accuracy warning for anyone displaying it.** Per-precinct per-mode predictions are much
-weaker than the precinct total. Measured on `oh_base` at checkpoint 7, 36% counted, median
-|log(pred/truth)|: `eday` **0.081**, `mail` **0.234** (10th-percentile ratio 0.12), `early`
-**0.498** (90th-percentile ratio 6.4). The precinct total is 0.083. So `eday` is sound,
-`mail` has a bad low tail and `early` is unreliable at precinct level.
-`tests/check_precinct_sanity.R` is the check.
 
 ### 15.4 `turnout` — the race total and its interval
 

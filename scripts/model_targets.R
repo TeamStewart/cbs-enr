@@ -121,7 +121,6 @@ model_write <- function(fits, sim = MODEL_SIM) {
     pred = bind_rows(lapply(fits, `[[`, "pred")),
     turnout = bind_rows(lapply(fits, `[[`, "turnout")),
     prec = bind_rows(lapply(fits, `[[`, "prec")),
-    prec_modes = bind_rows(lapply(fits, `[[`, "prec_modes")),
     status = bind_rows(lapply(fits, `[[`, "status"))
   )
   dir = model_out_dir(sim)
@@ -131,11 +130,6 @@ model_write <- function(fits, sim = MODEL_SIM) {
   }
   write_predictions(res, dir)
   write_precincts(res, dir)
-  # additive, and fail-soft on purpose: precincts_modes is a second file nothing yet depends
-  # on, so it must never be able to take down the dump beside it
-  tryCatch(write_precinct_modes(res, dir), error = function(e) {
-    cli::cli_alert_warning("precincts_modes not written: {conditionMessage(e)}")
-  })
   bad = filter(res$status, status != "ok" | is.na(statewide) | statewide != "ok")
   if (nrow(bad)) print(as.data.frame(select(bad, race_id, model, status, statewide)), right = FALSE)
   dir
