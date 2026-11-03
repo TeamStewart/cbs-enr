@@ -40,17 +40,14 @@ model_units = readr::read_csv("scripts/model/lookups/model_precincts.csv", col_t
 # the source layer per state, shared with redistricting_compare.R so both use the same unit ids
 source("scripts/util/votehub_layer.R")
 read_layer = function(st) {
-  # SC: the crosswalk (crosswalks/votehub/sc.csv) is keyed on the state's own 2025 precinct
-  # file (votehub-shapefiles/SC/2025Precincts.shp) as 45{FIPS}-:-{PCode}, not VoteHub's
-  # name ids. FIPS comes unpadded for some counties; Beaufort's Bluffton 4A / 4F share
-  # PCode 310, and the crosswalk splits them by the name's last letter (310A, 310F).
-  sc = fs::path(VH_DIR, "SC", "2025Precincts.shp")
+  # SC: VoteHub's own SC26G layer, keyed on its UNIQUE_ID code ids (45001-:-001, Bluffton
+  # 4A / 4F as 45013-:-310A / 310F), as crosswalks/votehub/sc.csv is. votehub_layer() would
+  # take the newer gpkg, whose SC unit_ids are name ids (45001-:-Abbeville No. 1);
+  # estimated_past_results.csv's SC rows are recoded to the code ids through SC26G
+  # (votehub-shapefiles/unit_id_remap_sc_20261103.csv).
+  sc = fs::path(VH_DIR, "SC26G", "SC26G.shp")
   if (st == "SC" && fs::file_exists(sc)) {
-    x = sf::st_read(sc, quiet = TRUE)
-    id = paste0("45", stringr::str_pad(x$FIPS, 3, pad = "0"), "-:-", x$PCode)
-    dup = id %in% id[duplicated(id)]
-    id[dup] = paste0(id[dup], stringr::str_sub(x$PName[dup], -1))
-    return(transmute(x, unit_id = id))
+    return(sf::st_read(sc, query = "SELECT UNIQUE_ID AS unit_id FROM SC26G", quiet = TRUE))
   }
   votehub_layer(st, VH_DIR)
 }

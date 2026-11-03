@@ -39,7 +39,7 @@ suppressPackageStartupMessages({
 })
 source("scripts/model/live/R/paths.R")
 
-STATE_FIPS <- c(AK = "02", CA = "06", FL = "12", GA = "13", MI = "26", MN = "27", NC = "37", OH = "39", TX = "48")
+STATE_FIPS <- c(AK = "02", CA = "06", FL = "12", GA = "13", MI = "26", MN = "27", NC = "37", OH = "39", SC = "45", TX = "48")
 STATES <- {
   s <- Sys.getenv("STATES")
   if (nzchar(s)) trimws(strsplit(s, ",")[[1]]) else names(STATE_FIPS)
