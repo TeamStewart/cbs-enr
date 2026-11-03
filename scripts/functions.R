@@ -506,9 +506,13 @@ read_l2 <- function(state) {
     filter(n > 0) |>
     rename(precinct_l2 = precinct) |>
     mutate(cty = norm(county))
+  for (v in c("vote24_dem", "vote24_rep")) if (!v %in% names(l2)) l2[[v]] = NA_real_
   base = transmute(l2, cty, precinct_l2,
     l2_n = n,
     l2_male = male / n,
+    # 2024 voters by L2 party label (registration or L2's model where there is none), not vote choice
+    l2_dem24 = vote24_dem / n,
+    l2_rep24 = vote24_rep / n,
     l2_white = race1 / (n - race_unk),
     l2_black = race2 / (n - race_unk),
     l2_hispanic = race3 / (n - race_unk),
@@ -528,43 +532,95 @@ read_l2 <- function(state) {
     mutate(across(starts_with("l2_"), \(x) if_else(is.finite(x), x, NA_real_)))
 }
 
-# Demographics page: basic ecological inference (seine, McCartan & Kuriwaki) of each L2 race group's
-# Dem two-party share, from the counted votes and from VoteHub's 2024 president on the same precincts:
-# those with two-party votes in both and an L2 match. Predictors are L2 race shares of registrants of
-# known race (L2 has no other group), so each estimate assumes a group's share of two-party voters is
-# its share of registrants. No covariates. Ridge regression + Riesz representer (DML), unbounded, so an
-# estimate can fall outside [0, 1]. r2 is the regression's R-squared and nu2 the representer's second
-# moment for the group (larger: harder to estimate). year "hist" is 2024 president.
-dashboard_ei <- function(prec, l2) {
+# Which precincts the Demographics EI uses. `complete` gets one row per precinct (geo; counted dem,
+# rep, total; min_stage, the lowest stage over its vote-method rows; and the L2 columns, shares of
+# l2_n registrants) and returns the geos to use. The default keeps precincts that have counted at
+# least EI_MIN_FRAC of their 2022 votes, from L2 (today's registrants who voted in 2022).
+# ei_complete_stage is the alternative: every vote-method row at stage >= EI_MIN_STAGE.
+EI_MIN_FRAC = 0.5
+EI_MIN_STAGE = 5
+EI_MIN_N = 25
+ei_complete_votes <- function(d, min_frac = EI_MIN_FRAC) {
+  v22 = d$l2_turnout22 * d$l2_n
+  d$geo[!is.na(v22) & v22 > 0 & d$total >= min_frac * v22]
+}
+ei_complete_stage <- function(d, min_stage = EI_MIN_STAGE) {
+  d$geo[!is.na(d$min_stage) & d$min_stage >= min_stage]
+}
+
+# Demographics page: ecological inference (seine, McCartan & Kuriwaki) of each L2 race group's
+# turnout and Dem two-party share, from the counted votes and from 2024 on the same precincts:
+# those `complete` keeps with an L2 match, if there are at least min_n. As in the NYC model
+# (scripts/model/modeling-cory/nyc/R/nyc_enr_ei.R), everything is a share of L2 registrants:
+# predictors are race shares of registrants of known race (L2 has no other group), and the outcomes
+# are Dem, Rep, other and abstain per registrant (total = registrants), so groups may turn out at
+# different rates. A group's turnout is 1 - its abstain estimate and its Dem two-party share is
+# Dem / (Dem + Rep), with delta-method intervals from the joint covariance.
+# 2024 ("hist") is all L2: today's registrants who voted in 2024, by L2 party label (Dem, Rep, the
+# rest as other), treated as if it were vote choice, which it isn't (GA and other states without
+# party registration use L2's modeled party). Now: the counted votes for the leading Dem and Rep
+# candidates, other = the rest. Ballots above registrants are scaled down to them (precincts over
+# 105% are dropped). No covariates; ridge regression + Riesz representer (DML), unbounded. `flag`
+# marks estimates that can't be right (turnout outside [0, 1] or a negative Dem or Rep vote
+# estimate), typical of small groups. r2 / r2_turn are the Dem and abstain regressions' R-squared
+# and nu2 the representer's second moment for the group (larger: harder to estimate).
+dashboard_ei <- function(prec, l2, complete = ei_complete_votes, min_n = EI_MIN_N) {
   empty = tibble(year = character(), group = character(), estimate = numeric(), conf_low = numeric(),
-                 conf_high = numeric(), r2 = numeric(), nu2 = numeric(), reg_share = numeric(), n = integer())
+                 conf_high = numeric(), turnout = numeric(), turnout_low = numeric(), turnout_high = numeric(),
+                 flag = logical(), r2 = numeric(), r2_turn = numeric(), nu2 = numeric(),
+                 reg_share = numeric(), n = integer())
   race = c("white", "black", "hispanic", "asian")
-  if (!nrow(l2) || all(is.na(prec$pres_dem))) return(empty)
+  need = c("l2_dem24", "l2_rep24", "l2_turnout22", "l2_turnout24")
+  if (!nrow(l2) || !all(need %in% names(l2))) return(empty)
   p = summarise(prec,
-    dem = sum(dem), rep = sum(rep),
-    # 2024 president repeats on every method row
-    hist_dem = first(pres_dem), hist_rep = first(pres_rep),
+    dem = sum(dem), rep = sum(rep), total = sum(total),
+    min_stage = suppressWarnings(as.numeric(min(stage, na.rm = TRUE))),
     .by = geo
-  )
+  ) |>
+    mutate(min_stage = if_else(is.finite(min_stage), min_stage, NA_real_))
   d = filter(l2, mode == "Total") |>
     inner_join(p, by = "geo") |>
-    filter(dem + rep > 0, hist_dem + hist_rep > 0, l2_n > 0, if_all(paste0("l2_", race), \(x) !is.na(x)))
-  if (nrow(d) < 50) return(empty)
+    mutate(hist_dem = l2_dem24 * l2_n, hist_rep = l2_rep24 * l2_n, hist_total = l2_turnout24 * l2_n)
+  d = filter(d, geo %in% complete(d), dem + rep > 0, hist_dem + hist_rep > 0, l2_n > 0,
+             total <= 1.05 * l2_n, hist_total <= 1.05 * l2_n,
+             if_all(paste0("l2_", race), \(x) !is.na(x)))
+  if (nrow(d) < min_n) return(empty)
   s = rowSums(d[paste0("l2_", race)])
   for (g in race) d[[g]] = d[[paste0("l2_", g)]] / s
 
-  fit = \(dv, rv, year) {
-    x = mutate(d, dem2 = .data[[dv]] / (.data[[dv]] + .data[[rv]]), tot = .data[[dv]] + .data[[rv]])
-    spec = seine::ei_spec(x, all_of(race), dem2, total = tot)
+  z = qnorm(0.975)
+  fit = \(dv, rv, tv, year) {
+    x = mutate(d,
+      sc = pmin(1, l2_n / .data[[tv]]),
+      o_dem = sc * .data[[dv]] / l2_n,
+      o_rep = sc * .data[[rv]] / l2_n,
+      o_oth = sc * pmax(.data[[tv]] - .data[[dv]] - .data[[rv]], 0) / l2_n,
+      o_abs = 1 - o_dem - o_rep - o_oth
+    )
+    # no other votes at all (e.g. a two-candidate race): leave that outcome out
+    outcomes = if (any(x$o_oth > 0)) c("o_dem", "o_rep", "o_oth", "o_abs") else c("o_dem", "o_rep", "o_abs")
+    spec = seine::ei_spec(x, all_of(race), all_of(outcomes), total = l2_n)
     m = seine::ei_ridge(spec)
     rr = seine::ei_riesz(spec, penalty = m$penalty)
-    seine::ei_est(m, rr, spec, conf_level = 0.95) |>
-      as_tibble() |>
-      transmute(year = year, group = predictor, estimate, conf_low = conf.low, conf_high = conf.high,
-                r2 = unname(m$r2[1]), nu2 = unname(rr$nu2[group]))
+    e = seine::ei_est(m, rr, spec)
+    V = vcov(e)
+    est = setNames(e$estimate, paste0(e$predictor, ":", e$outcome))
+    map(race, \(g) {
+      k = paste0(g, ":", c("o_dem", "o_rep", "o_abs"))
+      D = est[[k[1]]]; R = est[[k[2]]]; A = est[[k[3]]]
+      share = D / (D + R)
+      grad = c(R, -D) / (D + R)^2
+      se_share = sqrt(drop(t(grad) %*% V[k[1:2], k[1:2]] %*% grad))
+      se_turn = sqrt(V[k[3], k[3]])
+      tibble(year = year, group = g,
+             estimate = share, conf_low = share - z * se_share, conf_high = share + z * se_share,
+             turnout = 1 - A, turnout_low = 1 - A - z * se_turn, turnout_high = 1 - A + z * se_turn,
+             flag = A < 0 || A > 1 || D < 0 || R < 0,
+             r2 = unname(m$r2[["o_dem"]]), r2_turn = unname(m$r2[["o_abs"]]), nu2 = unname(rr$nu2[[g]]))
+    }) |> bind_rows()
   }
   out = tryCatch(
-    bind_rows(fit("dem", "rep", "now"), fit("hist_dem", "hist_rep", "hist")),
+    bind_rows(fit("dem", "rep", "total", "now"), fit("hist_dem", "hist_rep", "hist_total", "hist")),
     error = \(e) { warning("dashboard_ei: ", conditionMessage(e)); NULL }
   )
   if (is.null(out)) return(empty)
@@ -599,6 +655,20 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
   histories = map(states, read_history) |> set_names(states)
   l2s = map(states, read_l2) |> set_names(states)
   geo_units = map(states, read_geo_units) |> set_names(states)
+  # Models page Shift Map basemap: L2 shares per VoteHub unit, registrant-weighted over its ENR precincts
+  mdemo = map(states, \(s) {
+    l = l2s[[s]]
+    gu = filter(geo_units[[s]], !is.na(unit_id))
+    if (is.null(l) || !nrow(gu) || !fs::file_exists(fs::path(DASHBOARD_GEO_DIR, glue("{tolower(s)}.json")))) return(NULL)
+    l |>
+      filter(mode == "Total", l2_n > 0) |>
+      mutate(g = norm_geo(geo)) |>
+      inner_join(select(gu, g, unit_id), by = "g") |>
+      summarise(across(c(l2_male, l2_white, l2_black, l2_hispanic, l2_asian),
+                       \(x) round(weighted.mean(x, if_else(is.na(x), 0, l2_n), na.rm = TRUE), 3)),
+                l2_n = sum(l2_n), .by = unit_id) |>
+      mutate(across(starts_with("l2_"), \(x) if_else(is.finite(x), x, NA_real_)), state = s, .before = 1)
+  }) |> bind_rows()
   pres24 = read_pres24()
   mprec_all = bind_rows(tibble(race_id = character(), model = character(), time = as.POSIXct(character()),
                                geo = character(), turn_est = numeric(), dem_est = numeric(), est_dem2 = numeric()),
@@ -839,6 +909,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     cbs_exp = map(out, "cbs_exp") |> bind_rows(),
     ts_all = map(out, "ts_all") |> bind_rows(),
     ei = map(out, "ei") |> bind_rows(),
+    mdemo = mdemo,
     geo_url = DASHBOARD_GEO_URL,
     title = DASHBOARD_TITLE,
     top_model = DASHBOARD_MODEL

@@ -96,14 +96,21 @@ update_enightdata <- function() {
   invisible(TRUE)
 }
 
-# Force-push `files` as the only contents of `branch`: one commit, replaced each run, so the
-# branch never grows. Names of `files` are their paths on the branch, values the local files.
-push_files <- function(files, branch, msg) {
+# The side repo (DASH_PUSH_DIR) that push_files() and run_watch_commands() run git in. Created on
+# first use, so the first cycle on a new laptop can read CMD_BRANCH before anything is pushed.
+ensure_push_repo <- function() {
   if (!dir.exists(file.path(DASH_PUSH_DIR, ".git"))) {
     fs::dir_create(DASH_PUSH_DIR)
     git("init", "--quiet")
     git("remote", "add", "origin", system2("git", c("remote", "get-url", "origin"), stdout = TRUE))
   }
+  invisible(DASH_PUSH_DIR)
+}
+
+# Force-push `files` as the only contents of `branch`: one commit, replaced each run, so the
+# branch never grows. Names of `files` are their paths on the branch, values the local files.
+push_files <- function(files, branch, msg) {
+  ensure_push_repo()
   # a throwaway index, so the branch can hold nested paths
   idx = paste0("GIT_INDEX_FILE=", shQuote(file.path(DASH_PUSH_DIR, ".git", paste0("index-", branch))))
   git("read-tree", "--empty", env = idx)
@@ -187,6 +194,7 @@ CMD_DONE = path.expand("~/.cache/cbs-enr-commands.done")
 CMD_TARGET_RX = "^(timestamp|data|tbl_cbs|summary)_[A-Z]{2}_"
 
 run_watch_commands <- function() {
+  ensure_push_repo()
   heads = git("ls-remote", "origin", paste0("refs/heads/", CMD_BRANCH))
   if (!length(heads) || !nzchar(heads[1])) return(character())
   git("fetch", "--quiet", "origin", CMD_BRANCH)

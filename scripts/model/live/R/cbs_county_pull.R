@@ -72,6 +72,55 @@ cbs_pull_unavailable = function() {
   ""
 }
 
+# ---- CBS county codes -> ours --------------------------------------------------------------
+# CBS codes Alaska's units (its State House districts, our "counties" ED01-ED40) as
+# 99 + state FIPS + district: 9902001 = House District 1 = our 02001 ... 9902040 = 02040,
+# plus 9902099 "Overseas Absentee", which is not a district (seen in the test feed,
+# 2026-11-01). cbs_fips5() turns them into our codes; the overseas unit becomes 02099 and is
+# kept as a unit of its own (CBS_EXTRA_UNITS), so CBS's county rows still add up to its race
+# total. It has no precincts and no county history, so the statewide step (counties.R)
+# treats it like any county we don't scrape: its counted votes as they come in, no expected
+# vote beyond them, and the state's average lean.
+
+#' CBS county code -> our 5-digit county code
+#'
+#' Pads ordinary FIPS to 5 digits; turns CBS's 7-digit "99" + state + unit codes (AK) into
+#' state + unit (9902001 -> 02001, 9902099 -> 02099).
+#'
+#' @param f CBS `fips` values.
+#' @return Character vector of 5-digit codes (NA stays NA).
+cbs_fips5 = function(f) {
+  f = as.character(f)
+  out = stringr::str_pad(f, 5, pad = "0")
+  ak = !is.na(f) & nchar(f) == 7 & startsWith(f, "99")
+  out[ak] = substr(f[ak], 3, 7)
+  out
+}
+
+#' Has CBS collapsed a statewide race to one unit?
+#'
+#' On 2026-11-02 the test feed (cbsapi 0.1.0.9000) returned AK's Senate and Governor races as
+#' ONE unit, geo 2001, carrying the whole statewide vote; cbs_fips5() reads that as 02001
+#' (ED01) and the snapshot would file the state's vote under District 1. A statewide race
+#' in a state with more than one county can only come back as one unit if the feed has no
+#' county breakdown. District races are exempt: a House district inside one county
+#' legitimately returns one county.
+#'
+#' @param fips5 Our 5-digit codes for the units returned (cbs_fips5()).
+#' @param state Two-letter state code.
+#' @param district The race's district (NA for statewide races).
+#' @return TRUE if the response is one unit standing in for the whole state.
+cbs_statewide_only = function(fips5, state, district = NA) {
+  n_known = sum(enightmodels::cbs_counties$state == state)
+  is.na(district) && n_known > 1 && dplyr::n_distinct(stats::na.omit(fips5)) == 1
+}
+
+# CBS units that are not in our {ST}_counties.csv lookups, appended by cbs_county_lookup()
+CBS_EXTRA_UNITS = tibble::tribble(
+  ~state, ~county_fips, ~county_cbs, ~county_name,
+  "AK",   "02099",      "099",       "Overseas Absentee"
+)
+
 #' FIPS -> CBS county number
 #'
 #' CBS numbers a state's counties alphabetically by its own names
@@ -79,7 +128,9 @@ cbs_pull_unavailable = function() {
 #' under D), and the precinct ids use that number (tx_015_* is Bexar). It is not the FIPS
 #' code, and FIPS order is not safe either. The lookup is model_inputs/{ST}_counties.csv
 #' from prep_model_inputs.R (AK: 40 election districts, FIPS 02001-02040). Without that
-#' file, FIPS order is used, and only if CBS returns exactly the cbs_counties count.
+#' file, FIPS order is used, and only if CBS returns exactly the cbs_counties count. CBS
+#' units that are not counties of ours (CBS_EXTRA_UNITS: AK's overseas absentee unit) are
+#' appended.
 #'
 #' @param state Two-letter state code.
 #' @param fips 5-digit county FIPS codes.
@@ -91,6 +142,8 @@ cbs_county_lookup = function(state, fips, dir_26) {
   if (file.exists(p_cty)) {
     m = readr::read_csv(p_cty, col_types = readr::cols(.default = "c")) |>
       select(county_fips, county_cbs)
+    extra = CBS_EXTRA_UNITS[CBS_EXTRA_UNITS$state == state & !CBS_EXTRA_UNITS$county_fips %in% m$county_fips, c("county_fips", "county_cbs")]
+    m = bind_rows(m, extra)
     miss = setdiff(fips, m$county_fips)
     if (length(miss)) {
       cli::cli_abort(c(
@@ -146,7 +199,8 @@ CBS_EXPECTED_FIELDS = tibble::tribble(
 #' @param race Race-level cbs_election_data(county = FALSE, addl = TRUE), or NULL.
 #' @param tag,env,observed_at,dir_26 As in pull_cbs_race().
 #' @return The rows (invisibly), or NULL if nothing was available.
-save_cbs_expected = function(api, race, tag, env, observed_at, dir_26, verbose = TRUE) {
+save_cbs_expected = function(api, race, tag, env, observed_at, dir_26, verbose = TRUE,
+                             statewide_only = FALSE) {
   rows = list()
   if (!is.null(race) && nrow(race) && "exp_votes" %in% names(race)) {
     rows$race = tibble(
@@ -159,8 +213,9 @@ save_cbs_expected = function(api, race, tag, env, observed_at, dir_26, verbose =
       reported = as.numeric(race$rep_votes[1])
     )
   }
-  if (!is.null(api) && nrow(api)) {
-    num = \(f) if (f %in% names(api)) as.numeric(api[[f]]) else rep(NA_real_, nrow(api))
+  # a single statewide unit is not a county: keep only the race-level row (cbs_statewide_only())
+  if (!is.null(api) && nrow(api) && !statewide_only) {
+    num =\(f) if (f %in% names(api)) as.numeric(api[[f]]) else rep(NA_real_, nrow(api))
     unit = paste(api$fips %||% NA, api$name %||% NA)
     rows$county = purrr::pmap(CBS_EXPECTED_FIELDS, function(method, cbs_field, rep_field) {
       exp_f = cbs_field
@@ -168,7 +223,7 @@ save_cbs_expected = function(api, race, tag, env, observed_at, dir_26, verbose =
       by_cand = !is.na(rep_f) && method != "total" # totalVote is a unit field
       tibble(
         unit = unit,
-        county_fips = stringr::str_pad(as.character(api$fips %||% NA), 5, pad = "0"),
+        county_fips = cbs_fips5(api$fips %||% NA),
         county_name = as.character(api$name %||% NA),
         method = method,
         cbs_field = exp_f,
@@ -281,8 +336,11 @@ pull_cbs_race = function(
       NULL
     }
   )
+  statewide_only = !is.null(api) && nrow(api) > 0 && "fips" %in% names(api) &&
+    cbs_statewide_only(cbs_fips5(api$fips), state, district)
   tryCatch(
-    save_cbs_expected(api, race, tag, env, observed_at, dir_26, verbose = verbose),
+    save_cbs_expected(api, race, tag, env, observed_at, dir_26, verbose = verbose,
+                      statewide_only = statewide_only),
     error = function(e) cli::cli_alert_warning("CBS expected vote not saved for {tag}: {conditionMessage(e)}")
   )
 
@@ -321,9 +379,11 @@ pull_cbs_race = function(
       "i" = "addl = TRUE is required for it. If cbsapi changed, re-read its county branch."
     ))
   }
-  raw = dplyr::mutate(raw, .fips5 = stringr::str_pad(as.character(fips), 5, pad = "0"))
-  # AK's county feed returns a single reporting unit with method `all` and fips NA (probed
-  # 2026-10-26), so there is nothing to place. Fail with that, not with a FIPS lookup error.
+  # cbs_fips5(): AK's units come as 9902001 ... (see CBS county codes above)
+  raw = dplyr::mutate(raw, .fips5 = cbs_fips5(fips))
+  # On 2026-10-26 AK's county feed returned a single reporting unit with method `all` and
+  # fips NA; by 2026-11-01 it returned its House districts (cbs_fips5()). If every row is
+  # without a fips again, fail with that, not with a FIPS lookup error.
   n_nofips = sum(is.na(raw$fips) | !nzchar(as.character(raw$fips)))
   if (n_nofips == nrow(raw)) {
     cli::cli_abort(c(
@@ -334,6 +394,15 @@ pull_cbs_race = function(
   if (n_nofips > 0) {
     cli::cli_alert_warning("{n_nofips} CBS row(s) have no fips and are dropped.")
     raw = dplyr::filter(raw, !is.na(fips), nzchar(as.character(fips)))
+  }
+  # One unit for a statewide race = no county breakdown (AK on 2026-11-02: geo 2001 with the
+  # whole state's vote, which would otherwise be saved as ED01). Nothing county-level to save.
+  if (cbs_statewide_only(raw$.fips5, state, district)) {
+    cli::cli_abort(c(
+      "CBS returned {tag} as ONE unit ({.val {unique(raw$fips)}}, geo {.val {unique(as.character(raw$geo))}}) \\
+       holding the statewide vote -- no county breakdown is published. Nothing saved.",
+      "i" = "Seen for AK on the test feed 2026-11-02. The race-level expected vote was still saved."
+    ))
   }
 
   # NEVER SUM AGGREGATES WITH PER-METHOD ROWS. `all` is every method; `adv` is early+mail
@@ -441,6 +510,9 @@ pull_cbs_race = function(
     mutate(party_cbs = party, party = cbs_party(party), .after = party) |>
     left_join(fips_map, by = "county_fips") |>
     left_join(known, by = "county_cbs") |>
+    # CBS-only units (AK overseas absentee) are not in cbs_counties: take their name from
+    # CBS_EXTRA_UNITS
+    mutate(county_name = coalesce(county_name, CBS_EXTRA_UNITS$county_name[match(county_fips, CBS_EXTRA_UNITS$county_fips)])) |>
     relocate(county_cbs, county_name, .after = county_fips)
 
   # method is now part of the key: one county x candidate has a row per method.
@@ -562,7 +634,7 @@ if (sys.nframe() == 0L) {
           counties = NA_integer_,
           pct_exp_vote = "",
           detail = str_trunc(
-            str_squish(str_replace_all(conditionMessage(e), "\\n|!|\u2139", " ")),
+            str_squish(str_replace_all(cli::ansi_strip(conditionMessage(e)), "\\n|!|\u2139", " ")),
             110
           )
         )
