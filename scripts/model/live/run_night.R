@@ -33,6 +33,8 @@
 ##   --candidates  CONTRACT.md section 5 (race_id, candidate_id, name, party)
 ##   --cbs=test    CBS's test feed instead of live (default live)
 ##   --no-redistricting   don't start the redistricting charts (step 5)
+##   --out=<dir>   write the results there instead of 26_general/model_results/ (a test on the
+##                 real feed that must not reach the dashboard; add --no-redistricting)
 ##   --config=<file>  the model config (default 26_general/model_config.csv, R/config.R): its
 ##                 run = TRUE rows are the models run. RUN in R/run.R if the file is missing
 ##   --models=swing,pois_bayes   (overrides the config; any of MODELS); a model may carry a
@@ -159,7 +161,8 @@ if (!is.na(SIM)) {
   f_ret = opt("returns")
   f_cand = opt("candidates")
   dir_cbs = d26
-  out_dir = file.path(d26, "model_results")
+  # --out=<dir>: write somewhere other than model_results/ (tests on the real feed)
+  out_dir = if (is.na(opt("out"))) file.path(d26, "model_results") else opt("out")
   read_any = function(p) {
     if (grepl("\\.parquet$", p)) read_pq(p) else readr::read_csv(p, show_col_types = FALSE)
   }

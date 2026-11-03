@@ -1,0 +1,68 @@
+state,county,precinct_enr,precinct_l2,rule
+AZ,La Paz,058 Quartzsite Two,058 QUARTZSITE 2,hand
+AZ,La Paz,064 Quartzsite Three,064 QUARTZSITE 3,hand
+AZ,Yavapai,AGUA (340.00),340-AGUA,hand
+AZ,Yavapai,ANTELOPE (354.00),354-ANTELOPE,hand
+AZ,Yavapai,AZURE (335.00),335-AZURE,hand
+AZ,Yavapai,BASIN (353.00),353-BASIN,hand
+AZ,Yavapai,BEARS (347.00),347-BEARS,hand
+AZ,Yavapai,BIGHORN (345.00),345-BIGHORN,hand
+AZ,Yavapai,BISON (346.00),346-BISON,hand
+AZ,Yavapai,BRIDGE (332.00),332-BRIDGE,hand
+AZ,Yavapai,BUCK (344.00),344-BUCK,hand
+AZ,Yavapai,BUG (324.00),324-BUG,hand
+AZ,Yavapai,BURRO (348.00),348-BURRO,hand
+AZ,Yavapai,CAMP (355.00),355-CAMP,hand
+AZ,Yavapai,CARS (357.00),357-CARS,hand
+AZ,Yavapai,CHAPS (316.00),316-CHAPS,hand
+AZ,Yavapai,COUGARS (352.00),352-COUGARS,hand
+AZ,Yavapai,COURT (303.00),303-COURT,hand
+AZ,Yavapai,COWBOYS (327.00),327-COWBOYS,hand
+AZ,Yavapai,COYOTE (350.00),350-COYOTE,hand
+AZ,Yavapai,CREEK (334.00),334-CREEK,hand
+AZ,Yavapai,EAGLE (302.00),302-EAGLE,hand
+AZ,Yavapai,FAIR (305.00),305-FAIR,hand
+AZ,Yavapai,FORT (328.00),328-FORT,hand
+AZ,Yavapai,GHOST (338.00),338-GHOST,hand
+AZ,Yavapai,GOLF (304.00),304-GOLF,hand
+AZ,Yavapai,GRANITE (301.00),301-GRANITE,hand
+AZ,Yavapai,GRAZE (351.00),351-GRAZE,hand
+AZ,Yavapai,HILL (311.00),311-HILL,hand
+AZ,Yavapai,IRON (341.00),341-IRON,hand
+AZ,Yavapai,KIRK (310.00),310-KIRK,hand
+AZ,Yavapai,LASSO (318.00),318-LASSO,hand
+AZ,Yavapai,LYNX (342.00),342-LYNX,hand
+AZ,Yavapai,MESQUITE (313.00),313-MESQUITE,hand
+AZ,Yavapai,MINE (312.00),312-MINE,hand
+AZ,Yavapai,ONYX (337.00),337-ONYX,hand
+AZ,Yavapai,PRONGHORN (349.00),349-PRONGHORN,hand
+AZ,Yavapai,QUAIL (336.00),336-QUAIL,hand
+AZ,Yavapai,RANCH (308.00),308-RANCH,hand
+AZ,Yavapai,RIM (326.00),326-RIM,hand
+AZ,Yavapai,RUBY (331.00),331-RUBY,hand
+AZ,Yavapai,SALT (325.00),325-SALT,hand
+AZ,Yavapai,SCARLET (330.00),330-SCARLET,hand
+AZ,Yavapai,SKULL (309.00),309-SKULL,hand
+AZ,Yavapai,SPIRIT (339.00),339-SPIRIT,hand
+AZ,Yavapai,SPRINGS (321.00),321-SPRINGS,hand
+AZ,Yavapai,STONE (356.00),356-STONE,hand
+AZ,Yavapai,SUNSET (323.00),323-SUNSET,hand
+AZ,Yavapai,TOWERS (320.00),320-TOWERS,hand
+AZ,Yavapai,WALNUT (319.00),319-WALNUT,hand
+AZ,Yavapai,WATER (343.00),343-WATER,hand
+AZ,Yavapai,WATSON (307.00),307-WATSON,hand
+AZ,Yavapai,WELL (329.00),329-WELL,hand
+AZ,Yavapai,WICK (315.00),315-WICK,hand
+AZ,Yavapai,WILLOW (306.00),306-WILLOW,hand
+AZ,Yavapai,WIND (333.00),333-WIND,hand
+AZ,Yavapai,YARN (314.00),314-YARN,hand
+NE,Cuming,BGW,BGW,hand_checked_prefill
+NJ,Salem,Penns Grove District 1,PENNS GROVE BORO 1,hand
+NJ,Salem,Penns Grove District 2,PENNS GROVE BORO 2,hand
+NJ,Salem,Penns Grove District 3,PENNS GROVE BORO 3,hand
+NJ,Salem,Pennsville District 1,PENNSVILLE TWP 1,hand
+NJ,Salem,Pennsville District 2,PENNSVILLE TWP 2,hand
+NJ,Salem,Pennsville District 3,PENNSVILLE TWP 3,hand
+NJ,Salem,Salem City East District 1,SALEM CITY EAST,hand
+NJ,Salem,Salem City West District 1,SALEM CITY WEST,hand
+OH,Pickaway,21 south bloomfield-north,SOUTH BLOOMFIELD-NORTHEAST,hand

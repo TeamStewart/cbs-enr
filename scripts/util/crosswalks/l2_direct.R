@@ -48,6 +48,20 @@ l2_skip_precinct = tribble(
 # L2 4,983 vs frame 2,234).
 RATIO_OK = c(0.5, 2)
 
+# Hand-built ENR -> L2 pairs, for counties whose ENR labels no tier can read (NY "Town of
+# Kingston D1" = L2 "KINGSTON TOWN"). One csv per batch, scripts/util/crosswalks/
+# l2_manual_*.csv: state, county, precinct_enr (the ENR id as in the feed), precinct_l2,
+# rule (how the pair was made). Tried before the tiers; a pair whose ENR id or L2 precinct
+# is gone (relabelled feed, new L2 file) or already taken by the frame crosswalk is
+# skipped with a warning.
+l2_manual = fs::dir_ls("scripts/util/crosswalks", regexp = "l2_manual_[^/]*\\.csv$") |>
+  map(\(f) read_csv(f, col_types = cols(.default = "c"))) |>
+  list_rbind()
+if (!nrow(l2_manual)) {
+  l2_manual = tibble(state = character(), county = character(), precinct_enr = character(),
+                     precinct_l2 = character(), rule = character())
+}
+
 l2_path = function(st) {
   f = Sys.glob(election_path("input_data/l2", paste0(str_to_lower(st), "_*_precincts.parquet")))
   if (length(f)) max(f) else character(0)
@@ -94,7 +108,23 @@ build_l2_direct = function(st) {
     base_keys(l2$precinct) |> rename_with(\(x) paste0("c_", x)),
     base_keys(l2$precinct) |> rename_with(\(x) paste0("n_", x))
   )
-  matched = match_tiers(enr_keys, l2_keys, l2_tiers)
+  # hand-built pairs first (l2_manual), on ENR ids and L2 precincts still open
+  man = filter(l2_manual, state == st) |>
+    # precinct_yougov first: transmute() sees each new column, so the other order would copy
+    # the ENR id into it
+    transmute(county = ckey(st, county), precinct_yougov = precinct_l2, precinct_l2 = precinct_enr,
+              l2_rule = paste0("manual_", rule))
+  man_ok = man |>
+    semi_join(enr_keys, join_by(county, precinct_l2)) |>
+    semi_join(l2_keys, join_by(county, precinct_yougov))
+  if (nrow(man) > nrow(man_ok)) {
+    stale = anti_join(man, man_ok, join_by(county, precinct_l2))
+    cli::cli_alert_warning("{st}: {nrow(stale)} l2_manual pair{?s} skipped (ENR id or L2 precinct gone or taken): {paste(head(paste(stale$county, stale$precinct_l2), 10), collapse = '; ')}")
+  }
+  stopifnot(!anyDuplicated(man_ok[c("county", "precinct_l2")]), !anyDuplicated(man_ok[c("county", "precinct_yougov")]))
+  enr_keys = anti_join(enr_keys, man_ok, join_by(county, precinct_l2))
+  l2_keys = anti_join(l2_keys, man_ok, join_by(county, precinct_yougov))
+  matched = bind_rows(man_ok, match_tiers(enr_keys, l2_keys, l2_tiers))
   # one-precinct counties need the whole county unmatched on both sides
   single = if (nrow(fx)) match_single(filter(enr_keys, !county %in% fx$county), filter(l2_keys, !county %in% fx$county), matched)
            else match_single(enr_keys, l2_keys, matched)

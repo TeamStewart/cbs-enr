@@ -1,0 +1,111 @@
+state,county,precinct_enr,precinct_l2,rule
+MI,Eaton,"Bellevue Township, Precinct 1",BELLEVUE TWP,mi_single
+MI,Eaton,"Benton Charter Township, Precinct 1",BENTON TWP,mi_single
+MI,Eaton,"Brookfield Township, Precinct 1",BROOKFIELD TWP,mi_single
+MI,Eaton,"Carmel Township, Precinct 1",CARMEL TWP,mi_single
+MI,Eaton,"Chester Township, Precinct 1",CHESTER TWP,mi_single
+MI,Eaton,"City of Charlotte, District 1, Prec. 1",CHARLOTTE CITY 1-1,mi_full_typed
+MI,Eaton,"City of Charlotte, District 2, Prec. 1",CHARLOTTE CITY 2-1,mi_full_typed
+MI,Eaton,"City of Eaton Rapids, Precinct 1",EATON RAPIDS CITY 1,mi_full_typed
+MI,Eaton,"City of Eaton Rapids, Precinct 2",EATON RAPIDS CITY 2,mi_full_typed
+MI,Eaton,"City of Eaton Rapids, Precinct 3",EATON RAPIDS CITY 3,mi_full_typed
+MI,Eaton,"City of Grand Ledge, Precinct 1",GRAND LEDGE CITY 1,mi_full_typed
+MI,Eaton,"City of Grand Ledge, Precinct 2",GRAND LEDGE CITY 2,mi_full_typed
+MI,Eaton,"City of Grand Ledge, Precinct 3",GRAND LEDGE CITY 3,mi_full_typed
+MI,Eaton,"City of Grand Ledge, Precinct 4",GRAND LEDGE CITY 4,mi_full_typed
+MI,Eaton,"City of Lansing, 3-22",LANSING CITY 3-22,mi_full_typed
+MI,Eaton,"City of Olivet, Precinct 1",OLIVET CITY,mi_single
+MI,Eaton,"City of Potterville, Precinct 1",POTTERVILLE CITY,mi_single
+MI,Eaton,"Delta Charter Township, Precinct 1",DELTA TWP 01,mi_full_typed
+MI,Eaton,"Delta Charter Township, Precinct 14",DELTA TWP 14,mi_full_typed
+MI,Eaton,"Delta Charter Township, Precinct 15",DELTA TWP 15,mi_full_typed
+MI,Eaton,"Delta Charter Township, Precinct 16",DELTA TWP 16,mi_full_typed
+MI,Eaton,"Delta Charter Township, Precinct 2",DELTA TWP 02,mi_full_typed
+MI,Eaton,"Delta Charter Township, Precinct 4",DELTA TWP 04,mi_full_typed
+MI,Eaton,"Delta Charter Township, Precinct 5",DELTA TWP 05,mi_full_typed
+MI,Eaton,"Delta Charter Township, Precinct 6",DELTA TWP 06,mi_full_typed
+MI,Eaton,"Delta Charter Township, Precinct 7",DELTA TWP 07,mi_full_typed
+MI,Eaton,"Delta Charter Township, Precinct 8",DELTA TWP 08,mi_full_typed
+MI,Eaton,"Eaton Rapids Township, Precinct 1",EATON RAPIDS TWP,mi_single
+MI,Eaton,"Eaton Township, Precinct 1",EATON TWP,mi_single
+MI,Eaton,"Hamlin Township, Precinct 1",HAMLIN TWP,mi_single
+MI,Eaton,"Kalamo Township, Precinct 1",KALAMO TWP 1,mi_full_typed
+MI,Eaton,"Kalamo Township, Precinct 2",KALAMO TWP 2,mi_full_typed
+MI,Eaton,"Oneida Charter Township, Precinct 1",ONEIDA TWP,mi_single
+MI,Eaton,"Roxand Township, Precinct 1",ROXAND TWP,mi_single
+MI,Eaton,"Sunfield Township, Precinct 1",SUNFIELD TWP,mi_single
+MI,Eaton,"Vermontville Township, Precinct 1",VERMONTVILLE TWP,mi_single
+MI,Eaton,"Walton Township, Precinct 1",WALTON TWP,mi_single
+MI,Eaton,"Windsor Charter Township, Precinct 1",WINDSOR TWP 1,mi_full_typed
+MI,Eaton,"Windsor Charter Township, Precinct 2",WINDSOR TWP 2,mi_full_typed
+MI,Tuscola,"Akron Township, Precinct 1",AKRON TWP,mi_single
+MI,Tuscola,"Almer Charter Township, Precinct 1",ALMER TWP,mi_single
+MI,Tuscola,"Arbela Township, Precinct 1",ARBELA TWP 1,mi_full_typed
+MI,Tuscola,"Arbela Township, Precinct 2",ARBELA TWP 2,mi_full_typed
+MI,Tuscola,"Caro City, Precinct 1",CARO CITY,mi_single
+MI,Tuscola,"Columbia Township, Precinct 1",COLUMBIA TWP,mi_single
+MI,Tuscola,"Dayton Township, Precinct 1",DAYTON TWP,mi_single
+MI,Tuscola,"Denmark Township, Precinct 1",DENMARK TWP,mi_single
+MI,Tuscola,"Elkland Township, Precinct 1",ELKLAND TWP,mi_single
+MI,Tuscola,"Ellington Township, Precinct 1",ELLINGTON TWP,mi_single
+MI,Tuscola,"Elmwood Township, Precinct 1",ELMWOOD TWP,mi_single
+MI,Tuscola,"Fairgrove Township, Precinct 1",FAIRGROVE TWP,mi_single
+MI,Tuscola,"Fremont Township, Precinct 1",FREMONT TWP,mi_single
+MI,Tuscola,"Gilford Township, Precinct 1",GILFORD TWP,mi_single
+MI,Tuscola,"Indianfields Township, Precinct 1",INDIANFIELDS TWP,mi_single
+MI,Tuscola,"Juniata Township, Precinct 1",JUNIATA TWP,mi_single
+MI,Tuscola,"Kingston Township, Precinct 1",KINGSTON TWP,mi_single
+MI,Tuscola,"Koylton Township, Precinct 1",KOYLTON TWP,mi_single
+MI,Tuscola,"Millington Township, Precinct 1",MILLINGTON TWP,mi_single
+MI,Tuscola,"Novesta Township, Precinct 1",NOVESTA TWP,mi_single
+MI,Tuscola,"Tuscola Township, Precinct 1",TUSCOLA TWP,mi_single
+MI,Tuscola,"Vassar City, Precinct 1",VASSAR CITY,mi_single
+MI,Tuscola,"Vassar Township, Precinct 1",VASSAR TWP,mi_single
+MI,Tuscola,"Watertown Township, Precinct 1",WATERTOWN TWP,mi_single
+MI,Tuscola,"Wells Township, Precinct 1",WELLS TWP,mi_single
+MI,Tuscola,"Wisner Township, Precinct 1",WISNER TWP,mi_single
+OH,Pickaway,1 circleville 1-a,CIRCLEVILLE 1-A,oh_full_typed
+OH,Pickaway,10 circleville-north,CIRCLEVILLE-NORTH,oh_full_typed
+OH,Pickaway,11 circleville-northwest,CIRCLEVILLE-NORTHWEST,oh_full_typed
+OH,Pickaway,12 circleville-south,CIRCLEVILLE-SOUTH,oh_full_typed
+OH,Pickaway,13 darby clarks lake,DARBY CLARKS LAKE,oh_full_typed
+OH,Pickaway,14 darby-north,DARBY-NORTH,oh_full_typed
+OH,Pickaway,15 darby-south,DARBY-SOUTH,oh_full_typed
+OH,Pickaway,16 deercreek/williamsport,DEERCREEK/WILLIAMSPORT,oh_full_typed
+OH,Pickaway,17 ashville-east,ASHVILLE-EAST,oh_full_typed
+OH,Pickaway,18 ashville-northeast,ASHVILLE-NORTHEAST,oh_full_typed
+OH,Pickaway,19 ashville-northwest,ASHVILLE-NORTHWEST,oh_full_typed
+OH,Pickaway,2 circleville 1-b,CIRCLEVILLE 1-B,oh_full_typed
+OH,Pickaway,20 ashville-west,ASHVILLE-WEST,oh_full_typed
+OH,Pickaway,22 south bloomfield-south,SOUTH BLOOMFIELD-SOUTH,oh_full_typed
+OH,Pickaway,23 south bloomfield-west,SOUTH BLOOMFIELD-WEST,oh_full_typed
+OH,Pickaway,24 harrison township,HARRISON TWP,oh_full_typed
+OH,Pickaway,25 jackson township,JACKSON TWP,oh_full_typed
+OH,Pickaway,26 madison township,MADISON TWP,oh_full_typed
+OH,Pickaway,27 monroe township,MONROE TWP,oh_full_typed
+OH,Pickaway,28 darbyville/muhlenberg,DARBYVILLE/MUHLENBERG,oh_full_typed
+OH,Pickaway,29 perry/new holland,PERRY/NEW HOLLAND,oh_full_typed
+OH,Pickaway,3 circleville 1-c,CIRCLEVILLE 1-C,oh_full_typed
+OH,Pickaway,30 pickaway-east,PICKAWAY-EAST,oh_full_typed
+OH,Pickaway,31 pickaway-west,PICKAWAY-WEST,oh_full_typed
+OH,Pickaway,32 saltcreek-north/tarlton,SALTCREEK-NORTH/TARLTON,oh_full_typed
+OH,Pickaway,33 saltcreek-south,SALTCREEK-SOUTH,oh_full_typed
+OH,Pickaway,34 commercial point-east,COMMERCIAL POINT-EAST,oh_full_typed
+OH,Pickaway,35 commercial point central,COMMERCIAL POINT-CENTRAL,oh_full_typed
+OH,Pickaway,36 commercial point-west,COMMECRIAL POINT-WEST,oh_typo
+OH,Pickaway,37 scioto-northeast,SCIOTO-NORTHEAST,oh_full_typed
+OH,Pickaway,38 southern point,SOUTHERN POINT,oh_full_typed
+OH,Pickaway,39 scioto-north,SCIOTO-NORTH,oh_full_typed
+OH,Pickaway,4 circleville 2-a,CIRCLEVILLE 2-A,oh_full_typed
+OH,Pickaway,40 scioto-south,SCIOTO-SOUTH,oh_full_typed
+OH,Pickaway,41 walnut-east,WALNUT-EAST,oh_full_typed
+OH,Pickaway,42 walnut-west,WALNUT-WEST,oh_full_typed
+OH,Pickaway,43 washington-central,WASHINGTON-CENTRAL,oh_full_typed
+OH,Pickaway,44 washington-north,WASHINGTON-NORTH,oh_full_typed
+OH,Pickaway,45 washington-south,WASHINGTON-SOUTH,oh_full_typed
+OH,Pickaway,46 wayne township,WAYNE TWP,oh_full_typed
+OH,Pickaway,5 circleville 2-b,CIRCLEVILLE 2-B,oh_full_typed
+OH,Pickaway,6 circleville 3-a,CIRCLEVILLE 3-A,oh_full_typed
+OH,Pickaway,7 circleville 3-b,CIRCLEVILLE 3-B,oh_full_typed
+OH,Pickaway,8 circleville 4-a,CIRCLEVILLE 4-A,oh_full_typed
+OH,Pickaway,9 circleville 4-b,CIRCLEVILLE 4-B,oh_full_typed

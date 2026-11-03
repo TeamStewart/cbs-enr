@@ -186,6 +186,7 @@ fit_ratio_strata = function(
     cells = prec,
     coef = coef,
     interval = interval,
-    level = level
+    level = level,
+    modes = mode_rows(mode_point(d_cand$method, d_cand$pred))
   )
 }
