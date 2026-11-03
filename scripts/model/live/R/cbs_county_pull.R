@@ -723,3 +723,73 @@ cbs_mode_target = function(state, env = "live", dir_26 = find_26_general()) {
     src = paste(sort(basename(unname(snaps))), collapse = "+")
   )
 }
+
+#' CBS's expected total vote per county
+#'
+#' The sibling of `cbs_mode_target()`: that one returns per-mode SHARES and deliberately
+#' ignores `totalExpVote`, because composition and level are separate jobs. This returns the
+#' level.
+#'
+#' What it is for: `est_turnout` in `{ST}_precinct.parquet` is each county's **2022** turnout
+#' (`prep_model_inputs.R`: `est_turnout = min(reg22 * k_c, n)`, with `k_c` calibrated to the
+#' county's 2022 Governor total), so the model starts from 2022 and has to discover any 2026
+#' growth from the returns. CBS's expectation over the same counties is 5-35% higher
+#' (measured 2026-11-02: FL 1.055, MI 1.071, GA 1.100, NC 1.120, OH 1.124, AK 1.144,
+#' MN 1.163, TX 1.346). That is not an error in either number -- it is CBS's forecast of
+#' 2026 turnout growth over 2022, and TX's is corroborated by 6.28M advance votes already
+#' banked against roughly 5.1M early votes in all of TX 2022.
+#'
+#' Worth knowing how far outside tested ground that is: the `_base` sims sit at 0.97-1.06 of
+#' `est_turnout`, and the most extreme arm ever run, `tx_turnout_high`, reaches 1.207.
+#'
+#' @param state Two-letter state code.
+#' @param env CBS feed environment.
+#' @param dir_26 Path to 26_general.
+#' @return Tibble: county_cbs, expected; or NULL when CBS has published no county totals.
+cbs_county_total = function(state, env = "live", dir_26 = find_26_general()) {
+  dirs = list.dirs(file.path(dir_26, "cbs_api", env), recursive = FALSE)
+  tags = basename(dirs)
+  tags = tags[grepl(paste0("^", state, "_[a-z]+$"), tags)] # statewide races only
+  if (!length(tags)) {
+    return(NULL)
+  }
+  snaps = vapply(
+    tags,
+    function(tg) {
+      f = sort(Sys.glob(file.path(dir_26, "cbs_api", env, tg, "expected", "*.parquet")))
+      if (length(f)) f[length(f)] else NA_character_
+    },
+    character(1)
+  )
+  snaps = snaps[!is.na(snaps)]
+  if (!length(snaps)) {
+    return(NULL)
+  }
+  raw = dplyr::bind_rows(lapply(names(snaps), function(tg) {
+    x = tryCatch(
+      tibble::as_tibble(nanoparquet::read_parquet(snaps[[tg]])),
+      error = function(e) NULL
+    )
+    if (is.null(x) || !nrow(x)) {
+      return(NULL)
+    }
+    dplyr::mutate(dplyr::filter(x, level == "county", method == "total"), tag = tg)
+  }))
+  if (!nrow(raw) || all(!is.finite(raw$expected) | raw$expected <= 0)) {
+    return(NULL)
+  }
+  p_cty = file.path(dir_26, "input_data", "model_inputs", paste0(state, "_counties.csv"))
+  if (!file.exists(p_cty)) {
+    return(NULL)
+  }
+  lk = readr::read_csv(p_cty, col_types = readr::cols(.default = "c")) |>
+    dplyr::select(county_fips, county_cbs)
+  raw |>
+    dplyr::filter(is.finite(expected), expected > 0) |>
+    # a county split across reporting units sums; the state's races then average
+    dplyr::summarize(expected = sum(expected), .by = c(tag, county_fips)) |>
+    dplyr::summarize(expected = mean(expected), .by = county_fips) |>
+    dplyr::inner_join(lk, by = "county_fips") |>
+    dplyr::mutate(county_cbs = stringr::str_pad(county_cbs, 3, pad = "0")) |>
+    dplyr::select(county_cbs, expected)
+}

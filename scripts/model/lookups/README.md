@@ -785,3 +785,79 @@ CA has no CBS race, so it is unchanged; MI and MN are not modelled by vote metho
 totals are preserved; the small statewide drifts (OH −310 of 2.26M, TX +14) come from
 `exp_votes`'s documented 0.5 floor landing on a different set of cells, the same mechanism as
 the fold.
+
+# The turnout LEVEL: `SCRAPED_TURNOUT` from CBS `totalExpVote`
+
+The composition work above is deliberately **level-neutral** — it normalises CBS's per-mode
+fields to shares and never touches `totalExpVote`, so every county's total is preserved. This
+is the separate piece that sets the level.
+
+## Why `est_turnout` needs replacing, not adjusting
+
+`prep_model_inputs.R` is explicit: `est_turnout = min(reg22 * k_c, n)`, with `k_c` calibrated
+to each county's 2022 Governor total — *"the expectation is each county's 2022 turnout, spread
+over its precincts by where its 2022 voters live now."* It is a 2022 quantity by design, and
+the model is meant to move off it using the returns.
+
+CBS's expectation over the **same counties** is 5–35% higher:
+
+| FL | MI | GA | NC | OH | AK | MN | TX |
+|---|---|---|---|---|---|---|---|
+| 1.055 | 1.071 | 1.100 | 1.120 | 1.124 | 1.144 | 1.163 | **1.346** |
+
+Neither number is wrong. The ratio is CBS's forecast of 2026 turnout growth over 2022, and
+TX's is corroborated: CBS reports **6.28M advance votes already banked**, against roughly
+5.1M early votes in all of TX 2022.
+
+## How far outside tested ground this is
+
+| | truth / `est_turnout` |
+|---|---|
+| `_base` sims (TX, OH, GA, FL, MI, MN) | 0.97 – 1.06 — **2022-anchored** |
+| `tx_turnout_high`, the most extreme arm ever run | 1.207 |
+| CBS's TX expectation | **1.346** |
+
+So the model was mostly tested with a *correct* 2022-level prior, and the real 2026
+expectation for TX sits beyond every arm that has been exercised.
+
+## How
+
+`cbs_county_total()` (`live/R/cbs_county_pull.R`) reads county `totalExpVote`;
+`scraped_turnout_var()` (`live/R/model_medsl.R`) sums it over **the fit's own precincts** and
+sets `SCRAPED_TURNOUT` before `model_turnout.R` is sourced. Scoped to the fit, not the state,
+because that is what the constraint acts on — `{ST}_precinct.parquet` covers a subset of
+counties and `feed_cells()` narrows it again through the night.
+
+Frozen for the night like the composition target, and for the same reason.
+
+It is **not a cap**. `S_d <- max(SCRAPED_TURNOUT * exp(rnorm(1, 0, SD)), sum(cnt_d))` draws a
+target per draw, floors it at votes already counted, then solves a logit shift so the draw's
+turnout sums to it. `SCRAPED_TURNOUT_SD` (0.05) is the **width**, not the strength: the
+constraint always moves turnout to CBS's level, and the sd only says how wide the interval
+around it is.
+
+`CBS_SCRAPED_TURNOUT=0` disables it; an explicit `SCRAPED_TURNOUT` always wins, so backtests
+and sweeps are unaffected.
+
+## What this will look like, and the honest risk
+
+**medsl_sur only.** `SCRAPED_TURNOUT` is one of its constants; `swing`, `pois_bayes`,
+`ratio_strata` and `lm_bayes` still take their turnout baseline from `exp_votes`, i.e. from
+2022. That asymmetry is real and unresolved.
+
+**Every existing sim will show turnout get worse.** Measured on `oh_base` at 81% counted,
+against an in-frame truth of 1,044,613:
+
+| | turnout | ratio to truth |
+|---|---|---|
+| constraint off | 1,063,838 | **1.018** |
+| constraint on | 1,225,108 | **1.173** |
+
+That is the sims being 2022-anchored, not the constraint misbehaving — a 2026 anchor must
+look wrong against 2022 truth. It does mean no existing sim can validate this, and anyone
+reading `sim_night.R` output after this change needs to know why turnout degraded.
+
+**The bet.** At sd 0.05 our turnout is CBS's turnout. If CBS's 2026 forecast is right this is
+the largest available correction, because the model otherwise starts 5–35% low and has to
+find the rest in the returns. If CBS is wrong, ±5% is not wide enough to recover. The live
+feed publishes nothing until polls close, so the constraint is inert until it does.

@@ -205,8 +205,66 @@ medsl_key = function(state, counties, demo = "medsl_cov", by_method = TRUE) {
     # vote, so neither an edit to the table nor a different frozen target may be served a
     # fit cached under the old one
     mode_fold_tag(state),
-    mode_target_tag(state)
+    mode_target_tag(state),
+    # the turnout constraint is baked into the env at source time, so a cached fit must not
+    # outlive the switch. `counties` is already in the key and the CBS totals are frozen for
+    # the session, so the target itself cannot change underneath a key -- only this can.
+    if (Sys.getenv("CBS_SCRAPED_TURNOUT", unset = "1") == "0") "|notot"
   )
+}
+
+#' CBS's expected vote over a fit's own precincts, as a SCRAPED_TURNOUT setting
+#'
+#' Returns a named character vector for `Sys.setenv()`, or `character()` when there is
+#' nothing to set -- CBS has published no county totals, or `CBS_SCRAPED_TURNOUT=0`.
+#'
+#' Frozen for the night like the composition target, and for the same reason: a target that
+#' moved between refreshes would move turnout with no new votes behind it. Only a non-empty
+#' read is cached.
+#'
+#' @param state Two-letter state code.
+#' @param geos The fit's precinct ids (`covs_long$geo`), already filtered to its counties.
+#' @param dir_26 Path to 26_general.
+#' @return Named character vector, possibly empty.
+scraped_turnout_var = function(state, geos, dir_26 = find_26_general()) {
+  if (Sys.getenv("CBS_SCRAPED_TURNOUT", unset = "1") == "0") {
+    return(character())
+  }
+  if (nzchar(Sys.getenv("SCRAPED_TURNOUT"))) {
+    return(character()) # an explicit setting wins, so backtests and sweeps are unaffected
+  }
+  key = paste("tot", state, if (exists("MODEL_CBS_ENV")) MODEL_CBS_ENV else "live", sep = "|")
+  tot = .mode_target_env[[key]]
+  if (is.null(tot)) {
+    tot = tryCatch(
+      cbs_county_total(
+        state,
+        env = if (exists("MODEL_CBS_ENV")) MODEL_CBS_ENV else "live",
+        dir_26 = dir_26
+      ),
+      error = function(e) NULL
+    )
+    if (is.null(tot) || !nrow(tot)) {
+      return(character())
+    }
+    .mode_target_env[[key]] = tot
+  }
+  cc = unique(geo_county(geos))
+  hit = filter(tot, county_cbs %in% cc)
+  if (!nrow(hit)) {
+    return(character())
+  }
+  target = sum(hit$expected)
+  if (!is.finite(target) || target <= 0) {
+    return(character())
+  }
+  cli::cli_inform(c(
+    "i" = "{state}: turnout constraint target {format(round(target), big.mark = ',')} from CBS
+           expected vote over {nrow(hit)} of {length(cc)} fitted counties",
+    " " = "(sd {Sys.getenv('SCRAPED_TURNOUT_SD', unset = '0.05')} log;
+           CBS_SCRAPED_TURNOUT=0 to disable)"
+  ))
+  c(SCRAPED_TURNOUT = format(target, scientific = FALSE))
 }
 
 #' Build (or fetch) the model environment for a state
@@ -259,7 +317,14 @@ medsl_setup = function(
     if (!is.null(spec)) {
       c(COVS_TURN = paste(spec$covs, collapse = ","), COVS_SHARE = paste(spec$covs, collapse = ","))
     },
-    if (!is.null(spec$re)) c(RE_GROUPING = spec$re)
+    if (!is.null(spec$re)) c(RE_GROUPING = spec$re),
+    # CBS's expected vote over THIS FIT'S counties, as the turnout constraint's target.
+    # est_turnout is each county's 2022 turnout by construction, so without this the model
+    # starts from 2022 and must discover 2026's level from the returns; CBS's expectation
+    # over the same counties runs 5-35% higher. The constraint is scoped to exactly this
+    # frame (see SCRAPED_TURNOUT in model_turnout.R), which is why it is computed here,
+    # after the `counties` filter, rather than once per state.
+    scraped_turnout_var(state, inp$covs_long$geo, dir_26)
   )
   old = Sys.getenv(names(vars), unset = NA, names = TRUE)
   on.exit(
