@@ -71,7 +71,7 @@ DASHBOARD_CONTESTS = tibble::tribble(
   "FL", "sen", NA_integer_, "FL Senate", NA_character_,
   "GA", "sen", NA_integer_, "GA Senate", NA_character_,
   "GA", "gov", NA_integer_, "GA Governor", NA_character_,
-  "IN", "house", 5L, "IN House-5", NA_character_,
+  "IN", "house", 5L, "IN House-5", "pres",
   "MI", "sen", NA_integer_, "MI Senate", NA_character_,
   "MN", "sen", NA_integer_, "MN Senate", NA_character_,
   "NC", "sen", NA_integer_, "NC Senate", NA_character_,

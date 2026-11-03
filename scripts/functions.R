@@ -724,6 +724,9 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     h = histories[[state]]
     if (!is.null(h)) {
       h = filter(h, contest == hist_contest, district %in% c(district, dist))
+      # district race against a statewide history contest (IN House-5 vs 2024 pres): keep only
+      # the district's precincts so the meta totals are the district's
+      if (!is.na(district) && all(is.na(h$district))) h = filter(h, geo %in% p$geo)
       if (nrow(h) == 0) h = NULL else h = filter(h, year == max(year))
     }
 
