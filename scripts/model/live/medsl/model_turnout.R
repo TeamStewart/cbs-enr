@@ -458,6 +458,18 @@ ATOM_CEIL = as.numeric(Sys.getenv("ATOM_CEIL", unset = "0.98"))
 # USE_COMPOSE=0 restores the old independent-log-normal turnout equations.
 USE_COMPOSE = Sys.getenv("USE_COMPOSE", unset = "1") == "1"
 KAPPA = as.numeric(Sys.getenv("KAPPA", unset = "1.25"))
+# Prior log-ratio for a cell whose county's feed CANNOT report that mode (mode_forbid,
+# from lookups/mode_fold.csv). exp(-8) = 3.4e-4, i.e. 0.03% of the reference mode's share:
+# effectively zero, but nothing like the ~-13.6 that falling through to the 1e-6 floor in
+# y_tau_prior would give. Set explicitly rather than by retuning that floor, which also
+# guards legitimately tiny shares -- NC's early = 0 is the case the REF_MODE note below is
+# about, and ~13 there was diagnosed as a pathology, not tolerated.
+#
+# An UNINFORMATIVE prior would be wrong here, not merely wide. Under USE_COMPOSE the modes
+# are a composition (sum_m tau_im = T_i), so eta allocates shares; a forbidden cell never
+# gets an observation, so its posterior stays at its prior, and any mass a vague prior puts
+# there is subtracted from the modes that DO report, with nothing able to correct it.
+FORBID_ETA = as.numeric(Sys.getenv("FORBID_ETA", unset = "-8"))
 # ---- PER-STATE MODE SCOPE -------------------------------------------------------
 # REF_MODE carries theta (the precinct TOTAL); every other mode is a log-ratio to it. So
 # the reference must be a mode that is OBSERVED, early and everywhere, in this state. The
@@ -1032,6 +1044,19 @@ warn_uncalibrated_modes = function(mode_priors) {
 }
 
 # ---- 2. expand to precinct x mode cells, build mode-specific priors -------------
+# Harnesses that source this file directly (quality_reports/bt_env.R) do not supply
+# mode_forbid; an empty frame makes every join below a no-op.
+if (!exists("mode_forbid", inherits = FALSE)) {
+  mode_forbid = tibble::tibble(geo = character(), method = character())
+}
+if (nrow(mode_forbid) && REF_MODE %in% mode_forbid$method) {
+  cli_abort(c(
+    "mode_fold.csv folds away {REF_MODE}, which is this state's REF_MODE.",
+    "i" = "REF_MODE carries the precinct TOTAL, so ref_share would be 0 and every \
+           non-reference log-ratio would explode. Pick a different ref_mode in \
+           lookups/mode_scope.csv, or do not fold the reference mode."
+  ))
+}
 mode_priors = derive_mode_priors(mode_hist, prec)
 warn_uncalibrated_modes(mode_priors)
 
@@ -1057,6 +1082,23 @@ cells = tidyr::expand_grid(prec, mode = MODES) |>
       }
     }
   }() |>
+  # Cells this county's feed cannot report get share EXACTLY 0, before renormalisation, so
+  # the modes that DO report absorb their mass.
+  #
+  # It has to happen here rather than upstream. The share comes from the mode history, and a
+  # folded county simply has no history row for the mode -- which lands on the
+  # `coalesce(mode_turn_share, MODE_TURN_SHARE[mode])` fallback above and refills the cell
+  # with a statewide CONSTANT (OH: early 0.638), the worst available value for it.
+  #
+  # Exactly 0 is not cosmetic, it is the whole point. q_share sums p_tilt over the modes
+  # flagged counted-out, and a cell the county never reports can never be flagged -- so any
+  # share above 0 is a PERMANENT deduction from q_share, and the precinct never reaches
+  # all_done or MIN_MODE_SHARE and sits at its prior all night. Measured on OH oh_base at
+  # the final checkpoint: Franklin's 889 precincts capped at q_share 0.61 and 0 of them
+  # reached 1. At exactly 0, q_share reaches 1 once the reportable modes are done.
+  left_join(dplyr::mutate(mode_forbid, .forbid = TRUE), by = c("geo", mode = "method")) |>
+  mutate(.forbid = coalesce(.forbid, FALSE)) |>
+  mutate(mode_turn_share = if_else(.forbid, 0, mode_turn_share)) |>
   mutate(
     mode_turn_share = mode_turn_share / sum(mode_turn_share),
     .by = geo
@@ -1089,6 +1131,14 @@ cells = tidyr::expand_grid(prec, mode = MODES) |>
         log(pmax(mode_turn_share, 1e-6) / pmax(ref_share, 1e-6))
       )
     }
+  ) |>
+  # A forbidden cell's share is exactly 0, so the expression above would floor it at 1e-6
+  # and hand the equation a prior log-ratio of about -13.6. FORBID_ETA states the intended
+  # value instead; q_share and prior_tau keep the exact 0 either way, because the floor only
+  # ever entered y_tau_prior.
+  mutate(
+    y_tau_prior = if_else(.forbid & USE_COMPOSE & mode != REF_MODE, FORBID_ETA, y_tau_prior),
+    .forbid = NULL
   )
 N_PREC = nrow(prec)
 M = length(MODES)

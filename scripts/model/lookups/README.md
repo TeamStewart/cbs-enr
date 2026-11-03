@@ -567,7 +567,7 @@ inference, and no renormalizing over whichever methods happen to appear in this 
 `mode_fold_tag()` (spelled into `medsl_key()` so a fit cached under an older table is never
 served).
 
-It is applied in **two** places, and both are needed:
+It is applied in **three** places, and all three are needed:
 
 1. `mode_history()` → `fold_mode_history()` (`live/R/cells.R`), per precinct, so every source
    — the L2 history and `{ST}_precinct_mode_results.parquet` alike — is folded once and all
@@ -578,8 +578,44 @@ It is applied in **two** places, and both are needed:
    fold just removed. The mask drops those cells and **rescales the precinct's remaining
    cells to its original total**, so turnout is unchanged and only the attribution moves.
 
+3. `medsl_sur`, via `mode_forbid` (`medsl_inputs()` → the model env → `model_turnout.R`).
+   This one is separate because `medsl_sur` does **not** use the cells frame at all: it
+   expands its own `prec × MODES` grid and takes `est_tot` from the precinct covariates. Its
+   composition prior comes from the mode history, and a folded county simply has no history
+   row for the mode — which lands on `coalesce(mode_turn_share, MODE_TURN_SHARE[mode])` and
+   refills the cell with a statewide **constant** (OH: `early` 0.638), the worst available
+   value. So forbidden cells are set to share **exactly 0** before renormalisation.
+
 Dropping absent-mode cells without that rescale is the mistake that cost 31% of NC's
-turnout — those cells are the gross-up mechanism. This table is therefore only valid where
+turnout — those cells are the gross-up mechanism.
+
+## Why `medsl_sur` needs exactly 0, not merely a small share
+
+`q_share` sums `p_tilt` over the modes flagged counted-out, and a cell the county never
+reports can never be flagged. So **any** share above 0 is a permanent deduction from
+`q_share`, and the precinct never reaches `all_done` or `MIN_MODE_SHARE` — it sits at its
+prior all night. Measured on `oh_base` at the final checkpoint, precincts reaching
+`q_share = 1`:
+
+| county | fold in history only | share exactly 0 |
+|---|---|---|
+| 025 Franklin | **0** of 889 (capped at 0.61) | **754** of 889 |
+| 031 Hamilton | **0** of 563 (capped at 0.87) | **493** of 563 |
+
+`MODES` is per **state** (`mode_scope.csv`), and `M = length(MODES)` flows into Sigma, eps,
+the conditional-MVN grouping and the softmax — so a per-county mode set is not expressible,
+and zeroing the share is how a county opts out of a mode.
+
+`FORBID_ETA` (default −8) is the prior log-ratio for those cells, set explicitly rather than
+by letting them fall through the `1e-6` floor in `y_tau_prior`, which would give about −13.6.
+That floor also guards legitimately tiny shares — NC's `early = 0` is the case the `REF_MODE`
+note in `model_turnout.R` is about, and ~13 there was diagnosed as a pathology, not tolerated.
+`exp(-8) = 3.4e-4` is 0.03% of the reference mode's share, and sits inside OH's natural `eta`
+range of `[-9.09, 1.39]`. An **uninformative** prior would be wrong rather than merely wide:
+under `USE_COMPOSE` the modes are a composition (`sum_m tau_im = T_i`), a forbidden cell never
+receives an observation, so its posterior stays at its prior, and any mass a vague prior puts
+there is subtracted from the modes that do report. `model_turnout.R` aborts if the fold would
+zero `REF_MODE`, whose share carries the precinct total. This table is therefore only valid where
 the folded mode's votes genuinely arrive under the method they fold onto (Hamilton files its
 absentee votes in its `early` rows). It is **not** a way to handle a mode that reports at
 county or site level rather than precinct level: that is `reporting_levels.csv` and
