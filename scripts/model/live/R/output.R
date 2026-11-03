@@ -299,6 +299,33 @@ write_precincts = function(res, dir = file.path(find_26_general(), "model_result
   invisible(f)
 }
 
+#' Write the per-precinct x vote-method dump
+#'
+#' `precincts_modes_latest.parquet`, plus a stamped copy, ALONGSIDE the `write_precincts()`
+#' dump. Deliberately a second file: `precincts_latest.parquet` is collapsed to precinct
+#' grain and `read_model_precincts()` (scripts/functions.R) reads a fixed column set from it,
+#' so widening it would change what the Models page already consumes.
+#'
+#' medsl_sur only -- see `PREC_MODE_COLS`.
+#'
+#' @param res `model_write()`'s list, with a `prec_modes` element.
+#' @param dir Output directory.
+#' @return The stamped file's path, invisibly, or NULL when there is nothing to write.
+write_precinct_modes = function(res, dir = file.path(find_26_general(), "model_results")) {
+  if (is.null(res$prec_modes) || !nrow(res$prec_modes)) {
+    return(invisible(NULL))
+  }
+  dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+  d = select(res$prec_modes, any_of(PREC_MODE_COLS))
+  stamp = format(max(res$status$time), "%Y%m%d_%H%M%S", tz = "America/New_York")
+  f = file.path(dir, sprintf("precincts_modes_%s.parquet", stamp))
+  write_pq(d, f)
+  tmp = file.path(dir, ".precincts_modes_latest.parquet.tmp")
+  write_pq(d, tmp)
+  file.rename(tmp, file.path(dir, "precincts_modes_latest.parquet"))
+  invisible(f)
+}
+
 #' One race x one model
 #'
 #' Never stops: a model that errors is recorded in status and returns no rows.
@@ -373,10 +400,20 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
   }
   prec = tryCatch(to_prec_data(fit, m, race, time), error = function(e) NULL)
   turnout = tryCatch(to_turnout_data(pred, bounds), error = function(e) NULL)
+  # per-precinct x method rows, medsl_sur only. tryCatch because this file is additive:
+  # a failure here must cost only the modes dump, never the predictions beside it.
+  prec_modes = tryCatch(
+    {
+      rows = prec_mode_rows(fit$cell_pred, county = distinct(cells, geo, county))
+      if (is.null(rows)) NULL else mutate(rows, race_id = r, model = model_label(m), time = time)
+    },
+    error = function(e) NULL
+  )
   list(
     pred = pred,
     turnout = turnout,
     prec = prec,
+    prec_modes = prec_modes,
     status = tibble(
       race_id = r,
       model = model_label(m),
@@ -462,6 +499,7 @@ run_jobs = function(jobs, cores = 1) {
     pred = bind_rows(lapply(res, `[[`, "pred")),
     turnout = bind_rows(lapply(res, `[[`, "turnout")),
     prec = bind_rows(lapply(res, `[[`, "prec")),
+    prec_modes = bind_rows(lapply(res, `[[`, "prec_modes")),
     status = bind_rows(lapply(res, `[[`, "status"))
   )
 }

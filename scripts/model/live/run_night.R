@@ -301,6 +301,10 @@ refresh = function(at = NULL) {
   }
   write_predictions(res, out_dir)
   write_precincts(res, out_dir)
+  # additive and fail-soft, as in model_write()
+  tryCatch(write_precinct_modes(res, out_dir), error = function(e) {
+    cli::cli_alert_warning("precincts_modes not written: {conditionMessage(e)}")
+  })
   if (REDIST && is.na(SIM)) start_redistricting()
   sec = function(a, b) as.numeric(difftime(b, a, units = "secs"))
   cat(sprintf(
