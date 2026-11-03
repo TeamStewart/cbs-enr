@@ -180,6 +180,7 @@ fit_lm_bayes = function(
     prior = race_draws(s$prior_turn, s$prior_vote),
     fc = fc,
     cells = if (precincts) draws_precincts(T, V[,, 1] * T, V[,, 2] * T, d, level),
-    coef = enightmodels::forecast_coefs(f)
+    coef = enightmodels::forecast_coefs(f),
+    mode_dr = mode_draws(T, d$method)
   )
 }

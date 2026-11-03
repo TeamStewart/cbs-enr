@@ -12,7 +12,8 @@
 ## Memory is about 1-4 GB per worker on TX.
 ##
 ## Writes <dir>/live_sim_<scenario>.csv (default dir 26_general/model_tests): one row per race x model x
-## checkpoint, with the truth alongside (truth_twop, truth_turnout, pct_votes).
+## checkpoint, with the truth alongside (truth_twop, truth_turnout, pct_votes), and turnout by vote
+## method where the fit has it (est_turnout_<m>, lo_turnout_<m>, hi_turnout_<m>, counted_<m>).
 # ========================================
 source("scripts/model/live/load.R")
 args = commandArgs(trailingOnly = TRUE)
@@ -97,7 +98,20 @@ one = function(k) {
   fit = tryCatch(
     {
       f = suppressMessages(fit_model(j$model, cells, ret))
-      if (is.null(f$race) || !nrow(f$race)) tibble(status = f$status) else f$race
+      out = if (is.null(f$race) || !nrow(f$race)) tibble(status = f$status) else f$race
+      # turnout by vote method (mode_rows(), R/results.R), wide: est_turnout_<m>,
+      # lo_turnout_<m>, hi_turnout_<m>, counted_<m>
+      if (!is.null(f$modes) && nrow(f$modes)) {
+        md = f$modes
+        for (i in seq_len(nrow(md))) {
+          m = md$method[i]
+          out[[paste0("est_turnout_", m)]] = md$pred[i]
+          out[[paste0("lo_turnout_", m)]] = md$pred_min[i]
+          out[[paste0("hi_turnout_", m)]] = md$pred_max[i]
+          out[[paste0("counted_", m)]] = mode_counted(ret, m)
+        }
+      }
+      out
     },
     error = function(e) tibble(status = paste("error:", conditionMessage(e)))
   )

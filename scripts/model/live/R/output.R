@@ -237,23 +237,40 @@ to_pred_data = function(fit, model, cells, returns, race, time, level = 0.95) {
 #' up to one (the sum of quantiles is not the quantile of the sum), so the total's interval
 #' comes from the fit (scraped) or `state_pred_data()` (statewide).
 #'
+#' Turnout by vote method (results.R, counties.R) adds one row per geo x method, method
+#' "total" being the race total; a fit without a method split has only "total".
+#'
 #' @param pred `to_pred_data()` rows, plus `state_pred_data()`'s when there are any.
 #' @param bounds Named list, geo -> `c(lower, upper)` of total votes (NA: no interval).
-#' @return Tibble, one row per geo: race_id, model, time, geo, model_conf, pct_rep, rep
-#'   (votes counted), pred (the candidates' predicted votes summed), pred_min, pred_max;
-#'   NULL without prediction rows.
-to_turnout_data = function(pred, bounds) {
+#' @param modes Named list, geo -> tibble of method, rep, pred, pred_min, pred_max (NULL:
+#'   none for that geo).
+#' @return Tibble, one row per geo x method: race_id, model, time, geo, model_conf, pct_rep,
+#'   method, rep (votes counted), pred (the candidates' predicted votes summed, or the
+#'   method's), pred_min, pred_max; NULL without prediction rows.
+to_turnout_data = function(pred, bounds, modes = list()) {
   if (is.null(pred) || !nrow(pred)) {
     return(NULL)
   }
   b = function(g, k) vapply(g, \(x) unname(bounds[[x]][k] %||% NA_real_), 0)
-  pred |>
+  tot = pred |>
     filter(pred_type == "vote") |>
     summarize(
       across(c(rep, pred), sum),
       .by = c(race_id, model, time, geo, model_conf, pct_rep)
     ) |>
+    mutate(method = "total", .after = pct_rep) |>
     mutate(pred_min = pmax(b(geo, 1), 0), pred_max = b(geo, 2))
+  by_m = lapply(seq_len(nrow(tot)), function(i) {
+    m = modes[[tot$geo[i]]]
+    if (is.null(m) || !nrow(m)) {
+      return(NULL)
+    }
+    bind_cols(
+      select(tot[rep(i, nrow(m)), ], race_id, model, time, geo, model_conf, pct_rep),
+      select(m, method, rep, pred, pred_min, pred_max)
+    )
+  })
+  bind_rows(tot, by_m)
 }
 
 # ---- the per-precinct dump -----------------------------------------------------------
@@ -353,6 +370,11 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
   })
   st_status = NA_character_
   bounds = list(scraped = c(fit$race$lo_turnout %||% NA_real_, fit$race$hi_turnout %||% NA_real_))
+  # turnout by method: the fit's methods with the counted votes for each
+  modes = list()
+  if (fit_ok(fit) && !is.null(fit$modes) && nrow(fit$modes)) {
+    modes$scraped = mutate(fit$modes, rep = mode_counted(ret, method))
+  }
   if (!is.null(pred) && !is.null(base)) {
     if (is.null(cbs)) {
       st_status = "no CBS county snapshot yet"
@@ -366,13 +388,17 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
       )
       if (!is.null(st)) {
         bounds$all = attr(st, "turnout")
+        modes$all = attr(st, "turnout_modes")
         pred = bind_rows(pred, st)
         st_status = "ok"
       }
     }
   }
   prec = tryCatch(to_prec_data(fit, m, race, time), error = function(e) NULL)
-  turnout = tryCatch(to_turnout_data(pred, bounds), error = function(e) NULL)
+  turnout = tryCatch(to_turnout_data(pred, bounds, modes), error = function(e) {
+    # never lose the total over the methods
+    tryCatch(to_turnout_data(pred, bounds), error = function(e) NULL)
+  })
   list(
     pred = pred,
     turnout = turnout,

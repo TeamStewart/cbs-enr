@@ -9,7 +9,8 @@
 ## (scripts/model/live/tests/sim_night.R; model names as in model_config.csv, which is
 ## copied alongside) is converted to enightmodels predictions/status csvs in
 ## {TEST_FOLDER}/model_results.
-## live_sim has only the two-party share and turnout, so per-party shares split the
+## live_sim has only the two-party share and turnout (plus turnout by vote method, the turnout
+## table's method rows), so per-party shares split the
 ## counted two-party share of the vote at that checkpoint, and votes = share x est_turnout.
 ## Live results count censored precincts too (the live feed has them, unmatched).
 ## dd$truth holds each contest's final truth (dem, rep, total), drawn on the Models plots.
@@ -204,7 +205,22 @@ live_sim_models <- function(scenario, state) {
     left_join(
       runs |> transmute(race_id = paste(state, contest, sep = "_"), model, time, pred_min = lo_turnout, pred_max = hi_turnout),
       by = c("race_id", "model", "time")
-    )
+    ) |>
+    mutate(method = "total", .after = pct_rep)
+  # turnout by vote method, where sim_night.R wrote it (est_turnout_<m>, lo_ / hi_turnout_<m>,
+  # counted_<m>): the turnout table's method rows, on the same runs as the total
+  modes = sub("^est_turnout_", "", grep("^est_turnout_", names(runs), value = TRUE))
+  mcols = intersect(c(outer(c("est_turnout_", "lo_turnout_", "hi_turnout_", "counted_"), modes, paste0)), names(runs))
+  if (length(mcols)) {
+    by_m = runs |>
+      transmute(race_id = paste(state, contest, sep = "_"), model, time, across(all_of(mcols), as.numeric)) |>
+      pivot_longer(all_of(mcols), names_to = c(".value", "method"), names_pattern = "^(est_turnout|lo_turnout|hi_turnout|counted)_(.+)$") |>
+      filter(!is.na(est_turnout)) |>
+      inner_join(distinct(turnout, race_id, model, time, geo, model_conf, pct_rep), by = c("race_id", "model", "time")) |>
+      transmute(race_id, model, time, geo, model_conf, pct_rep, method, rep = counted, pred = est_turnout,
+                pred_min = lo_turnout, pred_max = hi_turnout)
+    turnout = bind_rows(turnout, by_m)
+  }
   list(pred = pred, turnout = turnout, status = status)
 }
 

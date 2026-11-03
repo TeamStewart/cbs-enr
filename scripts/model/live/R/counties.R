@@ -388,12 +388,17 @@ rest_turn_common = function(rest, turn_ratio) {
 #' @param swing Length-B vector of logit swings (one per draw; length 1 for a point).
 #' @param turn_ratio Length-B vector of turnout ratios.
 #' @param noise Add the REST_* terms.
+#' @param units Also return each county's (unit's) final total votes, as attribute
+#'   "unit_tot" (B x n matrix, in `rest`'s row order), for turnout by vote method. Changes
+#'   nothing else (no extra random draws).
 #' @return B x 3 matrix of rest-of-state Dem / Rep / Oth final votes.
-project_rest = function(rest, swing, turn_ratio, noise = TRUE) {
+project_rest = function(rest, swing, turn_ratio, noise = TRUE, units = FALSE) {
   B = length(swing)
   n = nrow(rest)
   if (n == 0) {
-    return(matrix(0, B, 3, dimnames = list(NULL, c("dem", "rep", "oth"))))
+    out = matrix(0, B, 3, dimnames = list(NULL, c("dem", "rep", "oth")))
+    if (units) attr(out, "unit_tot") = matrix(0, B, 0)
+    return(out)
   }
   lg = function(x) qlogis(pmin(pmax(x, 1e-4), 1 - 1e-4))
   M = function(v) matrix(v, B, n, byrow = TRUE)
@@ -417,11 +422,15 @@ project_rest = function(rest, swing, turn_ratio, noise = TRUE) {
   s_pri = M(lg(rest$h24)) + swing + common + e_cty
   w = p * M(as.numeric(rest$d + rest$r > 0))
   s_rem = plogis(w * lg(s_obs) + (1 - w) * s_pri)
-  cbind(
+  out = cbind(
     dem = rowSums(M(rest$d) + V * (1 - o_rem) * s_rem),
     rep = rowSums(M(rest$r) + V * (1 - o_rem) * (1 - s_rem)),
     oth = rowSums(M(rest$o) + V * o_rem)
   )
+  if (units) {
+    attr(out, "unit_tot") = Tt + V
+  }
+  out
 }
 
 #' Rest-of-state party totals for a fit with bounds
@@ -484,6 +493,181 @@ fit_swing_bounds = function(fit, pt, base_s, E) {
   tw = c(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]]), r$lo_twop, r$hi_twop)
   tt = c(pt[["tot"]], coalesce(r$lo_turnout, pt[["tot"]]), coalesce(r$hi_turnout, pt[["tot"]]))
   list(swing = lg(tw) - lg(base_s), turn_ratio = tt / max(E, 1))
+}
+
+# ---- turnout by vote method, statewide ------------------------------------------------
+# Statewide turnout for method m = the fit's turnout for m in the scraped counties (`modes`,
+# results.R) + each other county's projected final total (project_rest()) x its share for m:
+#   1. CBS's expected vote by method for the county (`exp_method`, which cbs_county_pull.R
+#      floors at the method's counted vote, so a method with no expectation counts as its
+#      counted vote). A county's results come as adv + eday, early + eday + mail, or all.
+#      `adv` (early + mail together) is split between early and mail, and `all` across
+#      every method, at the county's history split (2). CBS never has an expectation for
+#      early in-person, so early gets the county's projected total less CBS's eday and mail
+#      expectations (at least its counted vote).
+#   2. no CBS method rows: the county's past split (county_mode_history()).
+#   3. neither: the fitted cells' expected-vote split.
+# A CBS method the fit has no cells for (CA's early) is dropped and the others renormalized.
+# The counted votes by method are CBS's per-method counts (`rep_method`) scaled to the
+# county's counted total (CBS's method rows can sum short of it: `method_shortfall`), split
+# the same way. Fits with draws get an interval: every draw's scraped methods plus the
+# other counties' totals in that draw x the same shares; fits with bounds get points.
+MODE_COMP_FILE = "scripts/model/lookups/mode_composition.csv"
+
+#' A state's past turnout by county x method
+#'
+#' The official county split in `MODE_COMP_FILE` (latest year) where the state has it, else
+#' the L2 precinct history (`mode_history()`, cells.R) summed to the county. Read once per
+#' state per session.
+#'
+#' @param state Two-letter state code.
+#' @param fips_map County lookup: county_fips (5 digits), county_cbs.
+#' @return Tibble: county_cbs, method, voters (0 rows when there is no history).
+county_mode_history = local({
+  cache = list()
+  function(state, fips_map) {
+    if (is.null(cache[[state]])) {
+      comp = if (file.exists(MODE_COMP_FILE)) {
+        readr::read_csv(
+          MODE_COMP_FILE,
+          col_types = readr::cols(county_fips = "c", .default = "?"),
+          show_col_types = FALSE,
+          progress = FALSE
+        ) |>
+          filter(.data$state == .env$state, !is.na(county_fips)) |>
+          filter(year == max(year)) |>
+          transmute(county_fips = stringr::str_pad(county_fips, 5, pad = "0"), method, voters = as.numeric(voters))
+      } else {
+        tibble(county_fips = character(), method = character(), voters = numeric())
+      }
+      mh = tryCatch(
+        mode_history(state) |>
+          mutate(county_cbs = geo_county(geo), method = unname(METHOD_MAP[as.character(method)])) |>
+          filter(!is.na(method), !is.na(county_cbs)) |>
+          summarize(voters = sum(as.numeric(voters)), .by = c(county_cbs, method)),
+        error = function(e) tibble(county_cbs = character(), method = character(), voters = numeric())
+      )
+      cache[[state]] <<- list(comp = comp, mh = mh)
+    }
+    h = cache[[state]]
+    comp = inner_join(h$comp, distinct(fips_map, county_fips, county_cbs), by = "county_fips") |>
+      select(county_cbs, method, voters)
+    bind_rows(comp, filter(h$mh, !county_cbs %in% comp$county_cbs))
+  }
+})
+
+#' Each other county's split by method
+#'
+#' File-header rules for the expected (`S`) and counted (`R`) splits.
+#'
+#' @param rest `rest_of_state()`.
+#' @param cbs CBS snapshot (method, rep_method, exp_method per county x candidate).
+#' @param methods The fit's methods.
+#' @param hist `county_mode_history()`.
+#' @param fallback Named numeric: method -> share, the fitted cells' split.
+#' @param tot Each county's projected final total (`rest` order), for early's expectation;
+#'   NULL leaves early at its counted vote.
+#' @return List: S and R, each `nrow(rest)` x `length(methods)`, rows summing to 1.
+rest_mode_split = function(rest, cbs, methods, hist, fallback, tot = NULL) {
+  n = nrow(rest)
+  M = length(methods)
+  fb = fallback[methods]
+  fb[is.na(fb)] = 0
+  fb = if (sum(fb) > 0) fb / sum(fb) else rep(1 / M, M)
+  norm = function(v) if (sum(v) > 0) v / sum(v) else NULL
+  # the county's past split over the fit's methods, else the fallback
+  h_of = function(c) {
+    h = filter(hist, county_cbs == c)
+    v = vapply(methods, \(m) sum(h$voters[h$method == m]), 0)
+    norm(v) %||% fb
+  }
+  by_m = if (all(c("method", "exp_method", "rep_method") %in% names(cbs))) {
+    cbs |>
+      filter(!is.na(method)) |>
+      summarize(
+        exp = max(first(exp_method), first(rep_method), 0, na.rm = TRUE),
+        rep = max(first(rep_method), 0, na.rm = TRUE),
+        .by = c(county_cbs, method)
+      )
+  } else {
+    tibble(county_cbs = character(), method = character(), exp = numeric(), rep = numeric())
+  }
+  # a CBS method's votes spread over the fit's methods
+  spread = function(meth, v, h) {
+    out = setNames(numeric(M), methods)
+    for (i in seq_along(meth)) {
+      g = switch(meth[i], eday = "eday", early = "early", mail = "mail", abs = "mail", prov = "eday",
+                 adv = c("early", "mail"), methods)
+      g = intersect(g, methods)
+      if (!length(g) || !(v[i] > 0)) next
+      w = h[g]
+      w = if (sum(w) > 0) w / sum(w) else rep(1 / length(g), length(g))
+      out[g] = out[g] + v[i] * w
+    }
+    out
+  }
+  S = R = matrix(0, n, M, dimnames = list(NULL, methods))
+  for (i in seq_len(n)) {
+    c = rest$county_cbs[i]
+    h = h_of(c)
+    b = filter(by_m, county_cbs == c)
+    # CBS has no expectation for early in-person (its exp_method is always the counted
+    # vote): early expects what the county's projected total leaves after CBS's Election Day
+    # and mail expectations
+    e = b$method == "early"
+    if (any(e) && !is.null(tot)) {
+      b$exp[e] = max(tot[i] - sum(b$exp[b$method %in% c("eday", "mail")]), b$rep[e])
+    }
+    S[i, ] = norm(spread(b$method, b$exp, h)) %||% h
+    R[i, ] = norm(spread(b$method, b$rep, h)) %||% S[i, ]
+  }
+  list(S = S, R = R)
+}
+
+#' Statewide turnout by method for one fit
+#'
+#' File-header method.
+#'
+#' @param fit Fit with `modes`.
+#' @param cells Cells the model fit.
+#' @param returns The race's returns (scraped counted votes by method).
+#' @param rest `rest_of_state()`.
+#' @param cbs CBS snapshot.
+#' @param ut_pt The other counties' point totals (`project_rest(units = TRUE)`).
+#' @param ut_d Their totals per draw (draws x counties), or NULL.
+#' @param level Interval level.
+#' @return Tibble: method, rep, pred, pred_min, pred_max; NULL without `modes`.
+state_mode_turnout = function(fit, cells, returns, rest, cbs, ut_pt, ut_d = NULL, level = 0.95) {
+  md = fit$modes
+  if (is.null(md) || !nrow(md)) {
+    return(NULL)
+  }
+  methods = md$method
+  st = toupper(cbs$state[1] %||% returns$state[1])
+  hist = county_mode_history(st, distinct(cbs, county_fips, county_cbs))
+  fb = tapply(cells$exp_votes, as.character(cells$method), sum)
+  sp = rest_mode_split(rest, cbs, methods, hist, setNames(as.numeric(fb), names(fb)), tot = ut_pt)
+  t_rest = rest$d + rest$r + rest$o
+  pred = md$pred + colSums(ut_pt * sp$S)
+  rep = mode_counted(returns, methods) + colSums(t_rest * sp$R)
+  out = tibble(method = methods, rep = unname(rep), pred = unname(pred), pred_min = NA_real_, pred_max = NA_real_)
+  if (!is.null(ut_d) && !is.null(fit$mode_draws) && all(methods %in% colnames(fit$mode_draws))) {
+    D = fit$mode_draws[, methods, drop = FALSE] + ut_d %*% sp$S
+    q = apply(D, 2, cred, level = level)
+    out$pred_min = pmax(q[1, ], 0)
+    out$pred_max = q[2, ]
+  }
+  out
+}
+
+#' Counted votes by method in a race's returns
+#'
+#' @param returns The race's returns (raw methods; mapped with `METHOD_MAP`, run.R).
+#' @param methods Methods to return.
+#' @return Numeric, one per method.
+mode_counted = function(returns, methods) {
+  m = unname(METHOD_MAP[as.character(returns$method)])
+  vapply(methods, \(x) sum(returns$votes[m %in% x]), 0)
 }
 
 #' Statewide prediction rows for one race x model
@@ -565,13 +749,31 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
     rest,
     lg(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]])) - lg(h32),
     pt[["tot"]] / max(e32, 1),
-    noise = FALSE
+    noise = FALSE,
+    units = TRUE
   )
   rest_dr = if (has_draws) {
-    project_rest(rest, lg(D32 / (D32 + R32)) - lg(h32), T32 / max(e32, 1))
+    project_rest(rest, lg(D32 / (D32 + R32)) - lg(h32), T32 / max(e32, 1), units = TRUE)
   } else {
     NULL
   }
+  # turnout by method (file section above state_mode_turnout()); never stops the total
+  turn_modes = tryCatch(
+    state_mode_turnout(
+      fit,
+      cells,
+      returns,
+      rest,
+      cbs,
+      attr(rest_pt, "unit_tot")[1, ],
+      if (has_draws) attr(rest_dr, "unit_tot"),
+      level
+    ),
+    error = function(e) {
+      cli::cli_alert_warning("statewide turnout by method failed: {conditionMessage(e)}")
+      NULL
+    }
+  )
 
   # by party: point, and draws if any
   P = c(
@@ -681,5 +883,6 @@ state_pred_data = function(fit, model, cells, returns, race, time, cbs, base, le
     ) |>
     arrange(pred_type, desc(pred))
   attr(out, "turnout") = turn
+  attr(out, "turnout_modes") = turn_modes
   out
 }

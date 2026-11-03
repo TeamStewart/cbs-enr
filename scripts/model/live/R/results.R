@@ -90,8 +90,13 @@ race_counted = function(cells, counts) {
 #' @param coef Model coefficients, where the model has them.
 #' @param interval One of `INTERVALS`; sets the `conf` label.
 #' @param level Interval level.
+#' @param modes Turnout by vote method over the fitted cells (`mode_rows()`), NULL for a
+#'   fit without a method split.
+#' @param mode_draws Draws x methods matrix of turnout, row for row with `draws`, when the
+#'   method intervals come from draws (used for the virtual units and the statewide rows).
 #' @return List: model, status, settings, conf (e.g. "posterior_95"; NA for "none"), race
-#'   (one row: status, the `est` columns and `counted`), pred, cells, draws, point, coef.
+#'   (one row: status, the `est` columns and `counted`), pred, cells, draws, point, coef,
+#'   modes, mode_draws.
 model_result = function(
   model,
   status,
@@ -104,7 +109,9 @@ model_result = function(
   point = NULL,
   coef = NULL,
   interval = "none",
-  level = 0.95
+  level = 0.95,
+  modes = NULL,
+  mode_draws = NULL
 ) {
   cols = c("est_twop", "lo_twop", "hi_twop", "p_dem_win", "est_turnout", "lo_turnout", "hi_turnout")
   race = as_tibble(c(
@@ -121,8 +128,64 @@ model_result = function(
     cells = cells,
     draws = draws,
     point = point,
-    coef = coef
+    coef = coef,
+    modes = modes,
+    mode_draws = mode_draws
   )
+}
+
+# ---- turnout by vote method ----------------------------------------------------------
+# Each model predicts every precinct x method cell, so a method's turnout is its cells'
+# predicted final votes summed. Methods are the models' own (METHOD_MAP, run.R: early, eday,
+# mail; abs read as mail, prov as eday). A fit without a method split (one "all" cell per
+# precinct) has none. Intervals only where they come straight from draws (bootstrap,
+# credible) or from per-method prior draws (conf_seq, pois_bayes only); the rest are points
+# (conformal turnout is a point anyway).
+
+#' Draws x methods matrix from draws x cells
+#'
+#' @param M Draws x cells matrix of total votes.
+#' @param method Each cell's method, in `M`'s column order.
+#' @return Draws x methods matrix, columns named by method.
+mode_draws = function(M, method) {
+  t(rowsum(t(M), as.character(method), reorder = TRUE))
+}
+
+#' Point turnout by method from cell-level final votes
+#'
+#' @param method Each cell's method.
+#' @param tot Each cell's predicted final votes.
+#' @return Named numeric: method -> votes.
+mode_point = function(method, tot) {
+  v = tapply(tot, as.character(method), sum)
+  setNames(as.numeric(v), names(v))
+}
+
+#' Turnout rows by method
+#'
+#' @param point Named numeric: method -> predicted final votes.
+#' @param D Draws x methods matrix (columns named by method) for the interval (`cred()`),
+#'   or NULL.
+#' @param bounds Named list: method -> `c(lower, upper)` from elsewhere (conf_seq), used
+#'   when `D` is NULL.
+#' @param level Interval level.
+#' @return Tibble: method, pred, pred_min, pred_max (NA without an interval); NULL when the
+#'   only method is "all".
+mode_rows = function(point, D = NULL, bounds = NULL, level = 0.95) {
+  point = point[!is.na(names(point))]
+  if (!length(point) || all(names(point) == "all")) {
+    return(NULL)
+  }
+  out = tibble(method = names(point), pred = unname(point), pred_min = NA_real_, pred_max = NA_real_)
+  for (i in seq_len(nrow(out))) {
+    m = out$method[i]
+    b = if (!is.null(D) && m %in% colnames(D)) cred(D[, m], level) else bounds[[m]]
+    if (length(b) == 2 && all(is.finite(b))) {
+      out$pred_min[i] = max(unname(b[1]), 0)
+      out$pred_max[i] = unname(b[2])
+    }
+  }
+  out
 }
 
 #' Sum predictions to one row per candidate
@@ -318,6 +381,10 @@ conf_seq_bounds = function(prior, post, level = 0.95) {
 #' @param fc Cell frame for `conformal_party()` (conformal).
 #' @param cells Per-precinct rows (`prec_rows()`).
 #' @param coef Model coefficients.
+#' @param mode_dr Draws x methods matrix of turnout (`mode_draws()`), row for row with
+#'   `dr`, or NULL (no method split).
+#' @param mode_prior Prior draws x methods, the same columns, for a conf_seq interval by
+#'   method; NULL leaves a conf_seq fit's methods as points.
 #' @return `model_result()` list.
 draws_result = function(
   model,
@@ -330,9 +397,25 @@ draws_result = function(
   prior = NULL,
   fc = NULL,
   cells = NULL,
-  coef = NULL
+  coef = NULL,
+  mode_dr = NULL,
+  mode_prior = NULL
 ) {
   point = c(dem = mean(dr$dem), rep = mean(dr$rep), tot = mean(dr$turnout))
+  with_draws = interval %in% c("bootstrap", "credible")
+  modes = NULL
+  if (!is.null(mode_dr)) {
+    mode_b = NULL
+    if (interval == "conf_seq" && !is.null(mode_prior)) {
+      # as conf_seq_bounds() treats turnout: log scale
+      mode_b = lapply(setNames(nm = colnames(mode_dr)), function(m) {
+        x = enightmodels::conf_seq(log(pmax(mode_prior[, m], 1)), log(pmax(mode_dr[, m], 1)), level = level)
+        x[!is.finite(x)] = NA
+        exp(x)
+      })
+    }
+    modes = mode_rows(colMeans(mode_dr), if (with_draws) mode_dr, mode_b, level)
+  }
   res = function(...) {
     model_result(
       model,
@@ -343,11 +426,17 @@ draws_result = function(
       coef = coef,
       interval = interval,
       level = level,
+      modes = modes,
       ...
     )
   }
-  if (interval %in% c("bootstrap", "credible")) {
-    return(res(est = draws_race_est(dr, level), draws = dr, point = point))
+  if (with_draws) {
+    return(res(
+      est = draws_race_est(dr, level),
+      draws = dr,
+      point = point,
+      mode_draws = if (!is.null(modes)) mode_dr
+    ))
   }
   cand = cand_from_party(
     c(
