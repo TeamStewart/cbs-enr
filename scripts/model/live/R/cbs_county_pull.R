@@ -649,3 +649,219 @@ if (sys.nframe() == 0L) {
   }
   if (any(out$result != "ok")) quit(status = 1)
 }
+
+# ---- CBS county expected vote as a composition TARGET -----------------------------------
+# `read_cbs_expected()` in scripts/functions.R reads the same snapshots for the dashboard's
+# Predicted Turnout chart. This is the model-side reader, and it answers a different
+# question: not "what does CBS expect" but "what county x method SHARES should the
+# composition prior carry". The two differ in what they must guarantee -- this one has to
+# come back in OUR vocabulary, per county, normalised, or not at all.
+#
+# WHY the model wants it. The composition prior's level otherwise comes from a 2022 L2
+# registration split, and CBS's expectation is a current-cycle forecast anchored on votes
+# already banked (TX: expectedAdvanceTotal 8,219,696 against 6,275,996 already reported as
+# advance). Measured gap in eday share, CBS vs the L2 prior: median 4.0pp in OH, 8.1pp in
+# TX, 5.0pp in NC, up to 27pp in the worst county -- and not a constant offset, since GA
+# runs the other way.
+
+#' CBS's county composition target for a state
+#'
+#' One row per county x method in the model's vocabulary, as shares within county.
+#'
+#' CBS populates `adv` (early + mail together) and `mail`, and leaves `early` at zero, so
+#' `early` is implied as `adv - mail`. Per `save_cbs_expected()`, a zero means "no
+#' expectation", not "none expected", which is why a county with nothing populated is
+#' dropped rather than given zeros. `(eday + non-eday) / total` runs 0.985-0.999 rather
+#' than exactly 1, so the shares are normalised per county instead of trusted.
+#'
+#' A state with several statewide races (TX_gov and TX_sen, GA, AK) has its races averaged:
+#' the measured difference is under 0.03% (TX_gov 10,707,546 vs TX_sen 10,710,541) and
+#' `mode_history()`, the consumer, is per state rather than per race. District races are
+#' excluded -- their county coverage is partial, so averaging them in would bias the state.
+#'
+#' @param state Two-letter state code.
+#' @param env CBS feed environment ("live" / "test").
+#' @param dir_26 Path to 26_general.
+#' @return Tibble: county_cbs, method, share, plus `observed_at` and `src` (the snapshot it
+#'   came from, for logging and for the cache fingerprint). NULL when CBS has published no
+#'   county expectation yet -- which is the state of the live feed as of 2026-11-02.
+cbs_mode_target = function(state, env = "live", dir_26 = find_26_general()) {
+  dirs = list.dirs(file.path(dir_26, "cbs_api", env), recursive = FALSE)
+  tags = basename(dirs)
+  # statewide races only: {ST}_{contest}, never {ST}_{contest}_{district}
+  tags = tags[grepl(paste0("^", state, "_[a-z]+$"), tags)]
+  if (!length(tags)) {
+    return(NULL)
+  }
+  snaps = vapply(
+    tags,
+    function(tg) {
+      f = sort(Sys.glob(file.path(dir_26, "cbs_api", env, tg, "expected", "*.parquet")))
+      if (length(f)) f[length(f)] else NA_character_
+    },
+    character(1)
+  )
+  snaps = snaps[!is.na(snaps)]
+  if (!length(snaps)) {
+    return(NULL)
+  }
+
+  raw = lapply(names(snaps), function(tg) {
+    x = tryCatch(
+      tibble::as_tibble(nanoparquet::read_parquet(snaps[[tg]])),
+      error = function(e) NULL
+    )
+    if (is.null(x) || !nrow(x)) {
+      return(NULL)
+    }
+    x = dplyr::filter(x, level == "county", !is.na(county_fips))
+    if (!nrow(x)) {
+      return(NULL)
+    }
+    dplyr::mutate(x, tag = tg)
+  })
+  raw = dplyr::bind_rows(raw)
+  if (!nrow(raw)) {
+    return(NULL) # the live feed before CBS publishes: race row only, no counties
+  }
+
+  w = raw |>
+    dplyr::filter(method %in% c("total", "eday", "adv", "mail", "early")) |>
+    dplyr::select(tag, county_fips, method, expected) |>
+    dplyr::summarize(expected = sum(expected, na.rm = TRUE), .by = c(tag, county_fips, method)) |>
+    tidyr::pivot_wider(names_from = method, values_from = expected, values_fill = 0)
+  for (nm in c("total", "eday", "adv", "mail", "early")) {
+    if (!nm %in% names(w)) {
+      w[[nm]] = 0
+    }
+  }
+  counts = w |>
+    dplyr::mutate(
+      # CBS gives EITHER adv OR mail + early; `early` is implied by subtraction
+      noneday = dplyr::if_else(adv > 0, adv, mail + early),
+      v_eday = pmax(eday, 0),
+      v_mail = pmax(pmin(mail, noneday), 0),
+      v_early = pmax(noneday - pmax(pmin(mail, noneday), 0), 0)
+    ) |>
+    dplyr::filter(v_eday + v_mail + v_early > 0) |>
+    # average the state's races, on counts rather than shares
+    dplyr::summarize(
+      dplyr::across(c(v_eday, v_mail, v_early), mean),
+      .by = county_fips
+    )
+  if (!nrow(counts)) {
+    return(NULL)
+  }
+
+  p_cty = file.path(dir_26, "input_data", "model_inputs", paste0(state, "_counties.csv"))
+  if (!file.exists(p_cty)) {
+    cli::cli_alert_warning(
+      "No {basename(p_cty)}: cannot map CBS counties to county_cbs for {state}."
+    )
+    return(NULL)
+  }
+  lk = readr::read_csv(p_cty, col_types = readr::cols(.default = "c")) |>
+    dplyr::select(county_fips, county_cbs)
+  joined = dplyr::inner_join(counts, lk, by = "county_fips")
+  lost = dplyr::anti_join(counts, lk, by = "county_fips")
+  if (nrow(lost)) {
+    cli::cli_alert_warning(
+      "{state}: {nrow(lost)} CBS county(ies) not in {basename(p_cty)}; \
+       dropped from the composition target."
+    )
+  }
+  if (!nrow(joined)) {
+    return(NULL)
+  }
+
+  out = joined |>
+    tidyr::pivot_longer(
+      c(v_eday, v_mail, v_early),
+      names_to = "method",
+      values_to = "v",
+      names_prefix = "v_"
+    ) |>
+    dplyr::mutate(county_cbs = stringr::str_pad(county_cbs, 3, pad = "0")) |>
+    dplyr::mutate(share = v / sum(v), .by = county_cbs) |>
+    dplyr::filter(is.finite(share)) |>
+    dplyr::select(county_cbs, method, share)
+  if (!nrow(out)) {
+    return(NULL)
+  }
+  obs = suppressWarnings(max(raw$observed_at, na.rm = TRUE))
+  dplyr::mutate(
+    out,
+    observed_at = obs,
+    src = paste(sort(basename(unname(snaps))), collapse = "+")
+  )
+}
+
+#' CBS's expected total vote per county
+#'
+#' The sibling of `cbs_mode_target()`: that one returns per-mode SHARES and deliberately
+#' ignores `totalExpVote`, because composition and level are separate jobs. This returns the
+#' level.
+#'
+#' What it is for: `est_turnout` in `{ST}_precinct.parquet` is each county's **2022** turnout
+#' (`prep_model_inputs.R`: `est_turnout = min(reg22 * k_c, n)`, with `k_c` calibrated to the
+#' county's 2022 Governor total), so the model starts from 2022 and has to discover any 2026
+#' growth from the returns. CBS's expectation over the same counties is 5-35% higher
+#' (measured 2026-11-02: FL 1.055, MI 1.071, GA 1.100, NC 1.120, OH 1.124, AK 1.144,
+#' MN 1.163, TX 1.346). That is not an error in either number -- it is CBS's forecast of
+#' 2026 turnout growth over 2022, and TX's is corroborated by 6.28M advance votes already
+#' banked against roughly 5.1M early votes in all of TX 2022.
+#'
+#' Worth knowing how far outside tested ground that is: the `_base` sims sit at 0.97-1.06 of
+#' `est_turnout`, and the most extreme arm ever run, `tx_turnout_high`, reaches 1.207.
+#'
+#' @param state Two-letter state code.
+#' @param env CBS feed environment.
+#' @param dir_26 Path to 26_general.
+#' @return Tibble: county_cbs, expected; or NULL when CBS has published no county totals.
+cbs_county_total = function(state, env = "live", dir_26 = find_26_general()) {
+  dirs = list.dirs(file.path(dir_26, "cbs_api", env), recursive = FALSE)
+  tags = basename(dirs)
+  tags = tags[grepl(paste0("^", state, "_[a-z]+$"), tags)] # statewide races only
+  if (!length(tags)) {
+    return(NULL)
+  }
+  snaps = vapply(
+    tags,
+    function(tg) {
+      f = sort(Sys.glob(file.path(dir_26, "cbs_api", env, tg, "expected", "*.parquet")))
+      if (length(f)) f[length(f)] else NA_character_
+    },
+    character(1)
+  )
+  snaps = snaps[!is.na(snaps)]
+  if (!length(snaps)) {
+    return(NULL)
+  }
+  raw = dplyr::bind_rows(lapply(names(snaps), function(tg) {
+    x = tryCatch(
+      tibble::as_tibble(nanoparquet::read_parquet(snaps[[tg]])),
+      error = function(e) NULL
+    )
+    if (is.null(x) || !nrow(x)) {
+      return(NULL)
+    }
+    dplyr::mutate(dplyr::filter(x, level == "county", method == "total"), tag = tg)
+  }))
+  if (!nrow(raw) || all(!is.finite(raw$expected) | raw$expected <= 0)) {
+    return(NULL)
+  }
+  p_cty = file.path(dir_26, "input_data", "model_inputs", paste0(state, "_counties.csv"))
+  if (!file.exists(p_cty)) {
+    return(NULL)
+  }
+  lk = readr::read_csv(p_cty, col_types = readr::cols(.default = "c")) |>
+    dplyr::select(county_fips, county_cbs)
+  raw |>
+    dplyr::filter(is.finite(expected), expected > 0) |>
+    # a county split across reporting units sums; the state's races then average
+    dplyr::summarize(expected = sum(expected), .by = c(tag, county_fips)) |>
+    dplyr::summarize(expected = mean(expected), .by = county_fips) |>
+    dplyr::inner_join(lk, by = "county_fips") |>
+    dplyr::mutate(county_cbs = stringr::str_pad(county_cbs, 3, pad = "0")) |>
+    dplyr::select(county_cbs, expected)
+}

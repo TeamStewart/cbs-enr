@@ -1,0 +1,4 @@
+state,county_cbs,county_name,from_method,to_method,why
+OH,025,FRANKLIN,early,mail,"zero file reports eday+mail only -- no early-in-person geo exists, so CBS's early expectation has nowhere else to land"
+OH,026,FULTON,early,mail,"zero file reports eday+mail only -- no early-in-person geo exists, so CBS's early expectation has nowhere else to land"
+OH,031,HAMILTON,mail,early,"zero file reports early+eday only -- no mail geo exists; 30.3% of the county's prior (92,149 votes) sat in a mode the feed never reports"

@@ -508,3 +508,356 @@ change in MEDSL's official returns for 34 states, the largest counties standing 
 scraped ones (`prep/make_rest_turnout_common.R`, which has the method and sources). `mean_c`
 is the average gap (the rest's turnout grew 2–5% more than the big counties'); the term is
 centred on 0, so that gap counts toward the width.
+
+# `mode_fold.csv`
+
+Which vote method a county's **composition prior** should use when the county's feed has no
+geo for the method the prior names. One row per non-identity mapping; anything absent is the
+identity (`eday` → `eday`, and so on), which is every county in AK, CA, FL, GA, MI, MN, NC
+and TX. Today the table is three rows, all Ohio.
+
+| column | meaning |
+|---|---|
+| `state`, `county_cbs`, `county_name` | `county_cbs` zero-padded to 3, the `geo` prefix |
+| `from_method` | the method the prior names and the county does **not** report |
+| `to_method` | the method it folds onto — one the county **does** report |
+
+The columns are named for their direction, not for a source, on purpose. The fold is a
+property of the **county's feed**, not of whoever supplied the prior: it is applied to the
+L2 mode history today and will be applied to CBS's county expected vote when that lands,
+with the same rows. An earlier `cbs_method` read as though the table compared L2 against
+CBS, which it never did.
+| `why` | the zero-file evidence, so the row can be judged without re-deriving it |
+
+## Why it exists
+
+A prior that puts weight on a mode a county never files is two defects at once, pulling in
+opposite directions:
+
+- the cell can never be counted out, so it stands as pure gross-up for the whole night;
+- the mode the county *does* report is left with a near-zero prior, and the completeness
+  gate fires at `COMPLETE_FRAC * prior/true`, so that cell pins almost immediately.
+
+Ohio's 2026 zero files, measured over all 14 files:
+
+| feed vocabulary | counties |
+|---|---|
+| `all` only (precinct totals) | 009 Butler, 010 Carroll, 012 Clark, 048 Lucas, 076 Stark |
+| `early+eday+mail` | 018 Cuyahoga, 029 Greene, 037 Hocking, 057 Montgomery, 065 Pickaway, 077 Summit |
+| `eday+mail`, no early geo | 025 Franklin, 026 Fulton |
+| `early+eday`, no mail geo | 031 Hamilton |
+
+The `all`-only counties need no row: `method_counties()` (`live/R/run.R`) already keeps them
+out of the by-method fit. That leaves the three exceptions. Before the fold, Hamilton carried
+**30.3% of its prior — 92,149 votes — in `mail`**, a mode with no geo anywhere in its feed,
+while its `early` prior sat at 0.26%.
+
+## Hard-coded on purpose
+
+This is a table, not an `eday`-vs-non-`eday` aggregation computed at run time. Which method
+lands where is a per-county determination, so it belongs somewhere a person reads and git
+diffs — the same reasoning as `reporting_levels.csv`. At run time it is a plain join: no
+inference, and no renormalizing over whichever methods happen to appear in this cycle's feed.
+
+## What consumes it
+
+`live/R/vote_modes.R` holds `read_mode_fold()` (which rejects duplicate rows and rows whose
+`from_method` equals `to_method`, since a fold that does nothing means someone mistyped it),
+`fold_methods()` (remap, then sum, so the folded method collapses onto its target), and
+`mode_fold_tag()` (spelled into `medsl_key()` so a fit cached under an older table is never
+served).
+
+It is applied in **three** places, and all three are needed:
+
+1. `mode_history()` → `fold_mode_history()` (`live/R/cells.R`), per precinct, so every source
+   — the L2 history and `{ST}_precinct_mode_results.parquet` alike — is folded once and all
+   three models see the same split.
+2. `build_cells()` → `fold_cells()`. On its own, step 1 is **not enough**:
+   `cells_from_inputs()` builds a cell for every method in `methods` and fills a
+   (county, method) with no history from the **state** split, which puts back the mode the
+   fold just removed. The mask drops those cells and **rescales the precinct's remaining
+   cells to its original total**, so turnout is unchanged and only the attribution moves.
+
+3. `medsl_sur`, via `mode_forbid` (`medsl_inputs()` → the model env → `model_turnout.R`).
+   This one is separate because `medsl_sur` does **not** use the cells frame at all: it
+   expands its own `prec × MODES` grid and takes `est_tot` from the precinct covariates. Its
+   composition prior comes from the mode history, and a folded county simply has no history
+   row for the mode — which lands on `coalesce(mode_turn_share, MODE_TURN_SHARE[mode])` and
+   refills the cell with a statewide **constant** (OH: `early` 0.638), the worst available
+   value. So forbidden cells are set to share **exactly 0** before renormalisation.
+
+Dropping absent-mode cells without that rescale is the mistake that cost 31% of NC's
+turnout — those cells are the gross-up mechanism.
+
+## Why `medsl_sur` needs exactly 0, not merely a small share
+
+`q_share` sums `p_tilt` over the modes flagged counted-out, and a cell the county never
+reports can never be flagged. So **any** share above 0 is a permanent deduction from
+`q_share`, and the precinct never reaches `all_done` or `MIN_MODE_SHARE` — it sits at its
+prior all night. Measured on `oh_base` at the final checkpoint, precincts reaching
+`q_share = 1`:
+
+| county | fold in history only | share exactly 0 |
+|---|---|---|
+| 025 Franklin | **0** of 889 (capped at 0.61) | **754** of 889 |
+| 031 Hamilton | **0** of 563 (capped at 0.87) | **493** of 563 |
+
+`MODES` is per **state** (`mode_scope.csv`), and `M = length(MODES)` flows into Sigma, eps,
+the conditional-MVN grouping and the softmax — so a per-county mode set is not expressible,
+and zeroing the share is how a county opts out of a mode.
+
+`FORBID_ETA` (default −8) is the prior log-ratio for those cells, set explicitly rather than
+by letting them fall through the `1e-6` floor in `y_tau_prior`, which would give about −13.6.
+That floor also guards legitimately tiny shares — NC's `early = 0` is the case the `REF_MODE`
+note in `model_turnout.R` is about, and ~13 there was diagnosed as a pathology, not tolerated.
+`exp(-8) = 3.4e-4` is 0.03% of the reference mode's share, and sits inside OH's natural `eta`
+range of `[-9.09, 1.39]`. An **uninformative** prior would be wrong rather than merely wide:
+under `USE_COMPOSE` the modes are a composition (`sum_m tau_im = T_i`), a forbidden cell never
+receives an observation, so its posterior stays at its prior, and any mass a vague prior puts
+there is subtracted from the modes that do report. `model_turnout.R` aborts if the fold would
+zero `REF_MODE`, whose share carries the precinct total. This table is therefore only valid where
+the folded mode's votes genuinely arrive under the method they fold onto (Hamilton files its
+absentee votes in its `early` rows). It is **not** a way to handle a mode that reports at
+county or site level rather than precinct level: that is `reporting_levels.csv` and
+`live/R/virtual.R`'s job, and NC is the cautionary case.
+
+## It cannot drift silently
+
+Hard-coding is only safe if something notices the world moving, so `check_mode_fold()`
+re-derives each county's vocabulary from the zero files (`feed_methods()` — the zero file,
+not live returns, which early in the night have simply not shown every mode yet) and fails
+when a county needs a fold the table lacks, when a row points at a method the county also
+does not report, or when a row has gone **stale** because the county now reports that method
+itself.
+
+## Measured effect (2026-11-02)
+
+| | flag A: prior on a never-reported mode | flag B: feed mode with ~0 prior |
+|---|---|---|
+| before | 2 — Hamilton `mail` 30.3% / 92,149 votes; Fulton `early` 10.9% | 2 — Hamilton `early` 0.26%; Cuyahoga `early` 0.33% |
+| after | **0** | **1** — Cuyahoga only |
+
+OH drops 1,481 cells with **every precinct's expected vote preserved to 1e-9** and the state
+total unchanged. AK, CA, FL, GA, MI, MN, NC and TX are **bit-identical** (`fold_mode_history()`
+and `fold_cells()` both return their input unchanged when a state has no rows), and
+`bt_run.R ARMS=0.6` on TX reproduces its known answer — turnout 131.3 at 21:30 and 104.6 at
+05:00 — with a byte-identical output CSV.
+
+The one flag left standing is the useful part: Cuyahoga reports all three methods, so the
+fold correctly leaves it alone. Its near-zero `early` prior is a **level** problem, not a
+vocabulary one, and needs a better prior source (CBS county expected vote) rather than a
+re-labelling.
+
+# The composition prior's LEVEL: CBS county expected vote
+
+`mode_fold.csv` above fixes which *methods* a county's prior may name. This fixes *how
+much* of the county each one gets. The two are independent: the fold is a relabelling, the
+level is a quantity, and a county can have the first right and the second wrong.
+
+## Why
+
+The precinct **pattern** — which precincts vote which way — comes from the mode history and
+is the right thing to keep. The **level** came from the same place, a 2022 L2 registration
+split, and that is a poor guide to 2026. CBS's county expected vote is a current-cycle
+forecast anchored on votes already banked: for TX, `expectedAdvanceTotal` 8,219,696 against
+**6,275,996 already reported** as advance votes.
+
+Measured gap in eday share, CBS vs the L2 prior, over counties in our frame:
+
+| state | median \|gap\| | mean | max |
+|---|---|---|---|
+| OH | 4.0 pp | 6.3 pp | 20.4 pp |
+| TX | 8.1 pp | 8.4 pp | 26.9 pp |
+| NC | 5.0 pp | 5.6 pp | 15.7 pp |
+
+Not a constant offset — **GA runs the other way** (CBS eday 39.8% vs ours 36.0%), so this
+is a reallocation and not a bias correction that could be done with a scalar.
+
+The case it was built for: OH Cuyahoga reports all four of its modes at **precinct** level
+and carries ~18% of Ohio's scraped vote, yet its L2 `early` prior was **0.33%**. The
+completeness gate fires at `COMPLETE_FRAC * prior/true`, so that cell pinned almost
+immediately. CBS puts it at 10.11%, and the prior lands at 9.17% — see **How much of the
+target actually arrives** below for why those two numbers differ.
+
+## How
+
+| piece | where |
+|---|---|
+| `cbs_mode_target()` | `live/R/cbs_county_pull.R` — county x method shares in our vocabulary |
+| `rescale_modes()` | `live/R/vote_modes.R` — imposes a county target on a precinct pattern |
+| `apply_mode_target()`, `mode_target_for()` | `live/R/cells.R` — the freeze, and the wiring |
+
+CBS populates `adv` (early + mail together) and `mail`, never `early`, so `early` is implied
+as `adv - mail`. `(eday + non-eday) / total` runs 0.985–0.999, so shares are **normalised per
+county** rather than trusted. A state's statewide races are averaged (TX_gov vs TX_sen differ
+by under 0.03%); district races are excluded because their county coverage is partial.
+
+Applied in `mode_history()`, after the fold — one injection point, every model. Rescaling the
+history at county level makes both consumers CBS-consistent: `cells_from_inputs()` (its `v`
+*and* its `cty_sh`) and `derive_mode_priors()`. `model_swing.R`, `model_pois_bayes.R`,
+`model_ratio_strata.R` and `model_lm_bayes.R` need no changes — they have no reference to the
+mode history.
+
+**Imposed, not blended.** `cells_from_inputs()` already shrinks a precinct toward its county
+share with `share = (v + k * cs) / (n_p + k)`, `k = 40`. Swapping `cs` for CBS's share gives
+it about 7% weight on a precinct with a few hundred history votes — roughly 0.35pp against a
+4–8pp gap. Nearly a no-op, which is why the target is rescaled in rather than averaged.
+
+## Three guardrails, each for a failure that happened in testing
+
+1. **Frozen at the first NON-EMPTY read.** A target that moved between refreshes would move
+   every precinct's prior with no new votes behind it, so turnout would jump for a reason
+   invisible in the returns. Freezing an *empty* target is the opposite mistake: CBS's live
+   feed publishes nothing until polls close, so caching that absence would mean the target
+   never arrives. Only a non-empty read is cached.
+2. **A mode the state's history has no votes for anywhere is dropped from the target.**
+   There is no precinct pattern to place at any level, and inventing one by precinct size is
+   the guess `build_cells()` refuses to make. It is also the signal `build_cells()` reads to
+   model a state without vote method at all: letting CBS's `early` expectation manufacture a
+   pattern flipped **MI from mode-free to by-method**, which is a far larger change than
+   setting a level.
+3. **An explicit `mode_election` bypasses the target entirely.** That argument is a request
+   for a specific past election's composition (a sim's `mode_shift` arm, a backtest year),
+   and a current-cycle forecast must not overwrite it.
+
+## Observability, because it is on by default
+
+One line per state per night naming the snapshot and the shift it caused
+(`eday share 70.7% -> 65.3%`); the snapshot in every fit's `settings`, so §15.2 records which
+composition produced each estimate; the target's `observed_at` in `medsl_key()` so a fit built
+under one composition is never served from cache under another; and `CBS_MODE_TARGET=0` to
+restore the mode-history level exactly.
+
+## How much of the target actually arrives
+
+The rescale is exact, but the number you can read off the prior is not the target, and the
+difference is a change of **weighting** rather than a loss of precision. Cuyahoga's `early`,
+step by step:
+
+| step | share |
+|---|---|
+| CBS target | 10.1101% |
+| after the fold (018 has no row, so identity) | 10.1101% |
+| mode history, rescaled | **10.1101%** — exact |
+| cells, `exp_votes` | **9.1727%** |
+
+The target is imposed in *history-voters* space; the prior is then read in
+*expected-2026-votes* space, and `est_turnout` is not proportional to 2022 voters precinct by
+precinct (the ratio spans 0.85–1.23 across Cuyahoga). The same precinct pattern weighted by
+history voters gives 10.1101% and weighted by `est_turnout` gives 8.9705%; shrinkage toward
+the county share (`k = 40`, about 8.5% weight) then pulls it back up to 9.1727%.
+
+Worth knowing because CBS's target is a statement about 2026 expected votes, so in principle
+it should be imposed in that space. Measured, the loss is small — the share of an intended
+correction (> 1pp) that reaches the prior:
+
+| | OH | TX | NC | GA | FL | AK |
+|---|---|---|---|---|---|---|
+| median delivered | 96% | 99% | 100% | 98% | 99% | 99% |
+| 10th percentile | 84% | 96% | 96% | 89% | 97% | 86% |
+
+**A county absent from the mode history cannot get its own target at all.** There is no
+precinct pattern to rescale, so `cells_from_inputs()`'s documented fallback applies and the
+county takes the *state* split — which is now CBS-consistent at state level, but not
+county-specific. This is TX Gregg (092) and nothing else: 1 of 72 frame counties, 0.47% of
+the state's expected vote. CA has four such counties but no CBS race, so no target either.
+
+## What is NOT established
+
+**There is no outcome test for whether CBS's composition beats L2's.** 2026 truth does not
+exist; all 25 sims have `mode_shift = 0` and `mode_election = "2022_general"`, so composition
+error is zero in them by construction; and `bt_env.R` reads its own history parquet, so the
+2024 backtest cannot exercise this path at all. The oracle counterfactual (2024 truth
+composition as the target, moving eday from 0.289 to 0.840 of truth) bounds what a *correct*
+target is worth, not what *this* target is worth. What is established is mechanism, safety and
+direction.
+
+## Measured effect (2026-11-02, `test` feed)
+
+eday share of the scraped frame, target off → on:
+
+| | AK | FL | GA | NC | OH | TX | CA | MI / MN |
+|---|---|---|---|---|---|---|---|---|
+| off | 66.5 | 35.4 | 36.0 | 41.5 | 70.7 | 30.9 | 9.1 | — |
+| on | 60.7 | 31.8 | **39.6** | 34.2 | 66.2 | 22.2 | 9.1 | — |
+
+CA has no CBS race, so it is unchanged; MI and MN are not modelled by vote method. County
+totals are preserved; the small statewide drifts (OH −310 of 2.26M, TX +14) come from
+`exp_votes`'s documented 0.5 floor landing on a different set of cells, the same mechanism as
+the fold.
+
+# The turnout LEVEL: `SCRAPED_TURNOUT` from CBS `totalExpVote`
+
+The composition work above is deliberately **level-neutral** — it normalises CBS's per-mode
+fields to shares and never touches `totalExpVote`, so every county's total is preserved. This
+is the separate piece that sets the level.
+
+## Why `est_turnout` needs replacing, not adjusting
+
+`prep_model_inputs.R` is explicit: `est_turnout = min(reg22 * k_c, n)`, with `k_c` calibrated
+to each county's 2022 Governor total — *"the expectation is each county's 2022 turnout, spread
+over its precincts by where its 2022 voters live now."* It is a 2022 quantity by design, and
+the model is meant to move off it using the returns.
+
+CBS's expectation over the **same counties** is 5–35% higher:
+
+| FL | MI | GA | NC | OH | AK | MN | TX |
+|---|---|---|---|---|---|---|---|
+| 1.055 | 1.071 | 1.100 | 1.120 | 1.124 | 1.144 | 1.163 | **1.346** |
+
+Neither number is wrong. The ratio is CBS's forecast of 2026 turnout growth over 2022, and
+TX's is corroborated: CBS reports **6.28M advance votes already banked**, against roughly
+5.1M early votes in all of TX 2022.
+
+## How far outside tested ground this is
+
+| | truth / `est_turnout` |
+|---|---|
+| `_base` sims (TX, OH, GA, FL, MI, MN) | 0.97 – 1.06 — **2022-anchored** |
+| `tx_turnout_high`, the most extreme arm ever run | 1.207 |
+| CBS's TX expectation | **1.346** |
+
+So the model was mostly tested with a *correct* 2022-level prior, and the real 2026
+expectation for TX sits beyond every arm that has been exercised.
+
+## How
+
+`cbs_county_total()` (`live/R/cbs_county_pull.R`) reads county `totalExpVote`;
+`scraped_turnout_var()` (`live/R/model_medsl.R`) sums it over **the fit's own precincts** and
+sets `SCRAPED_TURNOUT` before `model_turnout.R` is sourced. Scoped to the fit, not the state,
+because that is what the constraint acts on — `{ST}_precinct.parquet` covers a subset of
+counties and `feed_cells()` narrows it again through the night.
+
+Frozen for the night like the composition target, and for the same reason.
+
+It is **not a cap**. `S_d <- max(SCRAPED_TURNOUT * exp(rnorm(1, 0, SD)), sum(cnt_d))` draws a
+target per draw, floors it at votes already counted, then solves a logit shift so the draw's
+turnout sums to it. `SCRAPED_TURNOUT_SD` (0.05) is the **width**, not the strength: the
+constraint always moves turnout to CBS's level, and the sd only says how wide the interval
+around it is.
+
+`CBS_SCRAPED_TURNOUT=0` disables it; an explicit `SCRAPED_TURNOUT` always wins, so backtests
+and sweeps are unaffected.
+
+## What this will look like, and the honest risk
+
+**medsl_sur only.** `SCRAPED_TURNOUT` is one of its constants; `swing`, `pois_bayes`,
+`ratio_strata` and `lm_bayes` still take their turnout baseline from `exp_votes`, i.e. from
+2022. That asymmetry is real and unresolved.
+
+**Every existing sim will show turnout get worse.** Measured on `oh_base` at 81% counted,
+against an in-frame truth of 1,044,613:
+
+| | turnout | ratio to truth |
+|---|---|---|
+| constraint off | 1,063,838 | **1.018** |
+| constraint on | 1,225,108 | **1.173** |
+
+That is the sims being 2022-anchored, not the constraint misbehaving — a 2026 anchor must
+look wrong against 2022 truth. It does mean no existing sim can validate this, and anyone
+reading `sim_night.R` output after this change needs to know why turnout degraded.
+
+**The bet.** At sd 0.05 our turnout is CBS's turnout. If CBS's 2026 forecast is right this is
+the largest available correction, because the model otherwise starts 5–35% low and has to
+find the rest in the returns. If CBS is wrong, ±5% is not wide enough to recover. The live
+feed publishes nothing until polls close, so the constraint is inert until it does.

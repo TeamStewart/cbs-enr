@@ -387,6 +387,58 @@ PREC_COLS = c(
   "p_win"
 )
 
+# Per-precinct x VOTE METHOD columns, for precincts_modes_latest.parquet. A SEPARATE file
+# from the `PREC_COLS` dump, which 4032bc19 deliberately collapsed to precinct grain -- that
+# one keeps its shape and its readers, and this one carries the dimension it dropped.
+#
+# medsl_sur only. It is the one model whose unit of analysis is the cell, and the only one
+# that exposes per-cell predictions (`fit$cell_pred`); the others would each need the same
+# treatment before they could contribute a row.
+#
+# Narrow on purpose. Measured at full scale (51,055 precincts over 9 states, 3 medsl
+# variants, 412,743 rows): these columns write in 0.14s at 9.1MB, against 26.2MB if the
+# per-mode partisan split (fin_dem/fin_rep/fin_oth, c_dem/c_rep/c_oth) came too, and against
+# the existing dump's own 31.1MB. `dem_est` keeps a partisan map possible for one column
+# rather than six.
+PREC_MODE_COLS = c(
+  "race_id",
+  "model",
+  "time",
+  "geo",
+  "county",
+  "method",
+  "pred", # predicted final votes in this precinct x method
+  "cnt", # votes counted in it so far
+  "dem_est" # Dem share of ALL its votes, as PREC_COLS' dem_est
+)
+
+#' Per-precinct x method rows in the modes file's shape
+#'
+#' @param cp A fit's `cell_pred` (geo, method, fin_*, c_*, pred), or NULL.
+#' @param county Optional geo -> county lookup, since `cell_pred` carries no county.
+#' @return Tibble with every `PREC_MODE_COLS` column except race_id, model and time
+#'   (output.R adds those), or NULL when the fit exposes no cells.
+prec_mode_rows = function(cp, county = NULL) {
+  if (is.null(cp) || !nrow(cp)) {
+    return(NULL)
+  }
+  cols = setdiff(PREC_MODE_COLS, c("race_id", "model", "time"))
+  out = cp |>
+    mutate(
+      geo = as.character(geo),
+      method = as.character(method),
+      pred = if ("pred" %in% names(cp)) pred else fin_dem + fin_rep + fin_oth,
+      cnt = if ("c_tot" %in% names(cp)) c_tot else NA_real_,
+      dem_est = fin_dem / pmax(fin_dem + fin_rep + fin_oth, 1e-9)
+    )
+  out$county = if (is.null(county)) {
+    NA_character_
+  } else {
+    as.character(county$county[match(out$geo, as.character(county$geo))])
+  }
+  select(out, all_of(cols))
+}
+
 #' Per-precinct rows in the precinct file's shape
 #'
 #' @param p Data frame with geo and any of the `PREC_COLS` columns.

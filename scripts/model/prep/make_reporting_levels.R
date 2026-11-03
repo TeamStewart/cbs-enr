@@ -16,7 +16,7 @@
 ## discovery.
 ##
 ## Usage, from the cbs-enr folder:
-##   Rscript scripts/model/prep/make_reporting_levels.R            # all six states
+##   Rscript scripts/model/prep/make_reporting_levels.R            # all nine states
 ##   Rscript scripts/model/prep/make_reporting_levels.R NC AK      # just these
 ##
 ## Writes scripts/model/lookups/reporting_levels.csv and prints a per-state summary.
@@ -31,7 +31,10 @@ suppressPackageStartupMessages({
 })
 source("scripts/model/live/R/paths.R")
 
-STATES = c("AK", "CA", "FL", "MI", "NC", "TX")
+# every state with a 2026 zero file we model by vote method. GA was blocked by the
+# virtual_precinct type above; OH and MN have no 2024 clean files, so they get zero_2026
+# provenance only, which is what the table is for.
+STATES = c("AK", "CA", "FL", "GA", "MI", "MN", "NC", "OH", "TX")
 YEAR = 2026
 OUT = "scripts/model/lookups/reporting_levels.csv"
 
@@ -173,6 +176,36 @@ read_zero_2026 = function(state) {
 #' @param cty `county_frame()` for the state.
 #' @return Tibble, one row per county x method: county_name, method, votes_precinct,
 #'   votes_bucket, share_bucket_2024, level_actual_2024, labels_24.
+#' `virtual_precinct` as a logical, whatever the scrape stored it as
+#'
+#' The 2024 clean files are not consistent: NC stores a real logical, GA stores the CHARACTER
+#' "0". `precinct_total[!virtual_precinct]` then dies with "invalid argument type", which is
+#' why GA was never in `STATES`. Coerce rather than trust, and fail loudly on a value that is
+#' neither true nor false -- silently treating an unknown string as FALSE would move votes out
+#' of the bucket column and flip a county's reporting level.
+#'
+#' @param x The column as read.
+#' @return Logical vector of the same length.
+as_virtual = function(x) {
+  if (is.logical(x)) {
+    return(x)
+  }
+  if (is.numeric(x)) {
+    return(x != 0)
+  }
+  z = trimws(tolower(as.character(x)))
+  out = rep(NA, length(z))
+  out[z %in% c("true", "t", "1", "yes", "y")] = TRUE
+  out[z %in% c("false", "f", "0", "no", "n")] = FALSE
+  if (anyNA(out)) {
+    stop(
+      "virtual_precinct has values that are neither true nor false: ",
+      paste(unique(z[is.na(out)])[1:min(5, sum(is.na(out)))], collapse = ", ")
+    )
+  }
+  out
+}
+
 read_actual_2024 = function(state, cty) {
   fs = Sys.glob(file.path(dir_24, state, "clean", paste0(state, "*_latest.parquet")))
   if (length(fs) == 0) {
@@ -180,7 +213,8 @@ read_actual_2024 = function(state, cty) {
   }
   d = map_dfr(fs, \(f) {
     read_pq(f) |>
-      select(jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total)
+      select(jurisdiction, precinct_id, virtual_precinct, vote_mode, precinct_total) |>
+      mutate(virtual_precinct = as_virtual(virtual_precinct))
   })
   unk = setdiff(unique(d$vote_mode), names(MODE_2024))
   if (length(unk)) {

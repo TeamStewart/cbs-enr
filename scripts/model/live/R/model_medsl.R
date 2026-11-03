@@ -45,7 +45,8 @@ HYBRID_SRC = "scripts/model/live/medsl/model_hybrid.R"
 #' @param cols Extra precinct columns a demographic spec needs (`demo_covs()`; "dem2_sq" is
 #'   dem2 squared), joined on under their own names.
 #' @return List: covs_long, mode_hist (geo, method, party, votes: the turnout split is real,
-#'   the party split just follows dem2), note (what was filled, or "").
+#'   the party split just follows dem2), mode_forbid (geo x method cells the county's feed
+#'   cannot report), note (what was filled, or "").
 medsl_inputs = function(
   state,
   dir_26 = find_26_general(),
@@ -118,9 +119,22 @@ medsl_inputs = function(
     mutate(geo = as.character(geo)) |>
     inner_join(select(covs_wide, geo, dem2), by = "geo") |>
     reframe(party = c("dem", "rep"), votes = voters * c(dem2, 1 - dem2), .by = c(geo, method))
+  # Cells a county's feed cannot report (lookups/mode_fold.csv), resolved to this state's
+  # precincts. model_turnout.R gives these a prior share of EXACTLY 0 rather than letting
+  # them fall through to the MODE_TURN_SHARE fallback; the reason it matters is q_share, and
+  # it is spelled out at the use site.
+  fold = read_mode_fold() |> filter(state == !!state)
+  mode_forbid = if (!nrow(fold)) {
+    tibble(geo = character(), method = character())
+  } else {
+    tibble(geo = covs_wide$geo, county_cbs = geo_county(covs_wide$geo)) |>
+      inner_join(select(fold, county_cbs, method = from_method), by = "county_cbs") |>
+      select(geo, method)
+  }
   list(
     covs_long = covs_long,
     mode_hist = mode_hist,
+    mode_forbid = mode_forbid,
     note = if (length(filled)) {
       paste0("filled with county means: ", paste(filled, collapse = "; "))
     } else {
@@ -186,8 +200,105 @@ medsl_key = function(state, counties, demo = "medsl_cov", by_method = TRUE) {
   paste0(
     if (is.null(counties)) state else paste(state, paste(sort(unique(counties)), collapse = "|")),
     if (demo != "medsl_cov") paste0("|", demo),
-    if (!by_method) "|nomode"
+    if (!by_method) "|nomode",
+    # the composition prior depends on lookups/mode_fold.csv and on CBS's county expected
+    # vote, so neither an edit to the table nor a different frozen target may be served a
+    # fit cached under the old one
+    mode_fold_tag(state),
+    mode_target_tag(state),
+    # the turnout constraint is baked into the env at source time, so a cached fit must not
+    # outlive the switch. `counties` is already in the key and the CBS totals are frozen for
+    # the session, so the target itself cannot change underneath a key -- only this can.
+    if (Sys.getenv("CBS_SCRAPED_TURNOUT", unset = "1") == "0") "|notot"
   )
+}
+
+#' CBS's expected vote over a fit's own precincts, as a SCRAPED_TURNOUT setting
+#'
+#' Returns a named character vector for `Sys.setenv()`, or `character()` when there is
+#' nothing to set -- CBS has published no county totals, or `CBS_SCRAPED_TURNOUT=0`.
+#'
+#' Frozen for the night like the composition target, and for the same reason: a target that
+#' moved between refreshes would move turnout with no new votes behind it. Only a non-empty
+#' read is cached.
+#'
+#' @param state Two-letter state code.
+#' @param geos The fit's precinct ids (`covs_long$geo`), already filtered to its counties.
+#' @param dir_26 Path to 26_general.
+#' @return Named character vector, possibly empty.
+scraped_turnout_var = function(state, geos, dir_26 = find_26_general()) {
+  if (Sys.getenv("CBS_SCRAPED_TURNOUT", unset = "1") == "0") {
+    return(character())
+  }
+  if (nzchar(Sys.getenv("SCRAPED_TURNOUT"))) {
+    return(character()) # an explicit setting wins, so backtests and sweeps are unaffected
+  }
+  key = paste("tot", state, if (exists("MODEL_CBS_ENV")) MODEL_CBS_ENV else "live", sep = "|")
+  tot = .mode_target_env[[key]]
+  if (is.null(tot)) {
+    tot = tryCatch(
+      cbs_county_total(
+        state,
+        env = if (exists("MODEL_CBS_ENV")) MODEL_CBS_ENV else "live",
+        dir_26 = dir_26
+      ),
+      error = function(e) NULL
+    )
+    if (is.null(tot) || !nrow(tot)) {
+      return(character())
+    }
+    .mode_target_env[[key]] = tot
+  }
+  cc = unique(geo_county(geos))
+  hit = filter(tot, county_cbs %in% cc)
+  if (!nrow(hit)) {
+    return(character())
+  }
+  target = sum(hit$expected)
+  if (!is.finite(target) || target <= 0) {
+    return(character())
+  }
+  cli::cli_inform(c(
+    "i" = "{state}: turnout constraint target {format(round(target), big.mark = ',')} from CBS
+           expected vote over {nrow(hit)} of {length(cc)} fitted counties",
+    " " = "(sd {Sys.getenv('SCRAPED_TURNOUT_SD', unset = '0.05')} log;
+           CBS_SCRAPED_TURNOUT=0 to disable)"
+  ))
+  c(SCRAPED_TURNOUT = format(target, scientific = FALSE))
+}
+
+#' CBS's expected vote PER COUNTY, for the level prior (`CBS_LEVEL_PRIOR=1`)
+#'
+#' Sibling of `scraped_turnout_var()`: that one collapses CBS to ONE statewide number and
+#' applies it as a post-hoc constraint on the fitted total; this passes the counties through
+#' individually so the level can enter each precinct's PRIOR instead -- including the
+#' completeness gate, which grades counted votes against `prior_tau`.
+#' Per-county because the growth is not uniform: TX asks 1.3644 over its 25 zero-file
+#' counties but 1.079-1.662 BY COUNTY (measured 2026-11-03).
+#' Returns county TOTALS, not ratios: the denominator is est_tot over the fit's own
+#' precincts, which only the medsl env knows after its `counties` filter.
+cbs_level_prior_var = function(state, geos, dir_26 = find_26_general()) {
+  if (Sys.getenv("CBS_LEVEL_PRIOR", unset = "0") != "1") return(character())
+  if (nzchar(Sys.getenv("CBS_COUNTY_EXPECTED"))) return(character())
+  env = if (exists("MODEL_CBS_ENV")) MODEL_CBS_ENV else "live"
+  key = paste("tot", state, env, sep = "|")
+  tot = .mode_target_env[[key]]
+  if (is.null(tot)) {
+    tot = tryCatch(cbs_county_total(state, env = env, dir_26 = dir_26), error = function(e) NULL)
+    if (is.null(tot) || !nrow(tot)) {
+      cli::cli_warn("{state}: CBS_LEVEL_PRIOR=1 but no CBS county totals in the {.val {env}} feed -- level prior stays on 2022.")
+      return(character())
+    }
+    .mode_target_env[[key]] = tot
+  }
+  cc = unique(geo_county(geos))
+  hit = filter(tot, county_cbs %in% cc)
+  if (!nrow(hit) || length(miss <- setdiff(cc, hit$county_cbs))) {
+    cli::cli_warn("{state}: CBS_LEVEL_PRIOR=1 but {length(miss)} of {length(cc)} fitted counties have no CBS total -- level prior stays on 2022.")
+    return(character())
+  }
+  cli::cli_inform("{state}: level prior from CBS expected vote over {nrow(hit)} fitted counties, {format(round(sum(hit$expected)), big.mark = ',')} total")
+  c(CBS_COUNTY_EXPECTED = paste0(hit$county_cbs, "=", format(hit$expected, scientific = FALSE), collapse = ","))
 }
 
 #' Build (or fetch) the model environment for a state
@@ -225,6 +336,7 @@ medsl_setup = function(
   if (!is.null(counties)) {
     inp$covs_long = filter(inp$covs_long, county %in% counties)
     inp$mode_hist = filter(inp$mode_hist, geo %in% inp$covs_long$geo)
+    inp$mode_forbid = filter(inp$mode_forbid, geo %in% inp$covs_long$geo)
     if (!nrow(inp$covs_long)) stop("none of the counties given are in ", state, "_precinct.parquet")
   }
 
@@ -239,7 +351,15 @@ medsl_setup = function(
     if (!is.null(spec)) {
       c(COVS_TURN = paste(spec$covs, collapse = ","), COVS_SHARE = paste(spec$covs, collapse = ","))
     },
-    if (!is.null(spec$re)) c(RE_GROUPING = spec$re)
+    if (!is.null(spec$re)) c(RE_GROUPING = spec$re),
+    # CBS's expected vote over THIS FIT'S counties, as the turnout constraint's target.
+    # est_turnout is each county's 2022 turnout by construction, so without this the model
+    # starts from 2022 and must discover 2026's level from the returns; CBS's expectation
+    # over the same counties runs 5-35% higher. The constraint is scoped to exactly this
+    # frame (see SCRAPED_TURNOUT in model_turnout.R), which is why it is computed here,
+    # after the `counties` filter, rather than once per state.
+    scraped_turnout_var(state, inp$covs_long$geo, dir_26),
+    cbs_level_prior_var(state, inp$covs_long$geo, dir_26)
   )
   old = Sys.getenv(names(vars), unset = NA, names = TRUE)
   on.exit(
@@ -256,6 +376,7 @@ medsl_setup = function(
   env$STATE = state
   env$covs_long = inp$covs_long
   env$mode_hist = inp$mode_hist
+  env$mode_forbid = inp$mode_forbid
   suppressMessages(sys.source(MEDSL_SRC, envir = env))
   suppressMessages(sys.source(HYBRID_SRC, envir = env))
 
@@ -296,6 +417,21 @@ medsl_setup = function(
   if (nzchar(inp$note)) {
     env$.settings = paste0(env$.settings, "; ", inp$note)
   }
+  # which composition the estimate used, recorded on every fit: the CBS target is on by
+  # default, so section 15.2's `settings` has to say whether a number came from CBS's county
+  # expected vote or from the L2 mode history, without anyone having to reconstruct it
+  env$.settings = paste0(
+    env$.settings,
+    "; composition ",
+    local({
+      tg = tryCatch(mode_target_for(state, dir_26), error = function(e) NULL)
+      if (is.null(tg) || !nrow(tg)) {
+        "mode history (no CBS county expected vote)"
+      } else {
+        sprintf("CBS county expected vote (%s)", tg$src[1])
+      }
+    })
+  )
   .medsl_env[[key]] = env
   env
 }
@@ -509,9 +645,17 @@ fit_medsl_sur <- function(
       ))
     }
   }
-  # conformal: one row per precinct x mode of the model's frame, with what is counted
-  fc <- if (interval == "conformal") {
+  # One row per precinct x mode of the model's frame, with what is counted. Built for every
+  # arm, not just conformal: fit_stage() already computes it (`cell_votes`, filled in the
+  # prediction loop), and it is the ONLY per-precinct x mode prediction the model exposes --
+  # `cells` is collapsed to precinct grain (4032bc19) so its `turn_est` is the precinct
+  # total repeated and its `method` is NA. Needed to judge whether a precinct's mode
+  # composition is reasonable, which is the standard the composition prior has to meet.
+  cell_pred <- local({
     cv <- f$cell_votes
+    if (is.null(cv) || is.null(cv$fin_dem)) {
+      return(NULL)
+    }
     tibble(
       geo = rep(as.character(env$prec$geo), ncol(cv$fin_dem)),
       method = rep(colnames(cv$fin_dem), each = nrow(cv$fin_dem)),
@@ -532,8 +676,10 @@ fit_medsl_sur <- function(
       mutate(
         across(c(c_dem, c_rep, c_oth, c_tot), \(x) coalesce(x, 0)),
         across(starts_with("fin_") | starts_with("fit_"), \(x) coalesce(x, 0))
-      )
-  }
+      ) |>
+      mutate(pred = fin_dem + fin_rep + fin_oth)
+  })
+  fc <- if (interval == "conformal") cell_pred
   # conf_seq: prior predictive draws of the race totals, nothing counted (env$cells holds
   # the model's own priors; fit_stage_hybrid() re-centres a copy)
   prior <- if (interval == "conf_seq") env$prior_totals(env$cells, draws = draws)
@@ -553,5 +699,9 @@ fit_medsl_sur <- function(
   # the structured ledger as well as the status string, so a consumer can test
   # `fit$prior_only$all_prior` rather than parse prose
   res$prior_only <- po
+  # per-precinct x mode predictions, for the precinct-level sanity check
+  # (tests/check_precinct_sanity.R). Attached here rather than threaded through
+  # draws_result() so no other model's result shape changes.
+  res$cell_pred <- cell_pred
   res
 }

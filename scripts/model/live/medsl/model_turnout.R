@@ -290,7 +290,21 @@ CTY_SUB_MIN_RPRIOR = as.numeric(Sys.getenv("CTY_SUB_MIN_RPRIOR", unset = "0.5"))
 # composition prior's reliability, but fails SAFE in a way the gross-up did not --
 # substituting cnt_prec can only move the estimate DOWN toward the observed count, never
 # fabricate votes above it.
-# STATEWIDE TURNOUT CONSTRAINT (STATE_TURNOUT unset = off).
+# TURNOUT CONSTRAINT OVER THE FITTED FRAME (SCRAPED_TURNOUT unset = off).
+#
+# NAMED `SCRAPED`, NOT `STATE`, BECAUSE THE SCOPE IS NOT THE STATE. The constraint acts on
+# sum_i T_i over the precincts THIS FIT IS USING, which is narrower than the state twice over:
+#   1. {ST}_precinct.parquet covers a subset of counties -- measured 2026-11-02: TX 72 of 254
+#      (28%), OH 15 of 88 (17%), AK 30 of 40, MI 73 of 83, FL 65 of 67; NC / GA / MN are whole.
+#   2. feed_cells() (output.R) then keeps only the counties with a precinct in TONIGHT'S
+#      returns, which is narrower again and varies through the night.
+# So the target must be computed PER FIT from `cells`, not once per state. Handing this a
+# STATEWIDE total on a 28%-coverage frame would force 72 counties to sum to all 254 and inflate
+# every TX precinct by ~3.5x -- silently, because every per-precinct bound would still hold.
+# CBS's county-level `totalExpVote` rows are the right source: sum them over
+# unique(geo_county(cells$geo)), joined through {ST}_counties.csv (county_fips -> county_cbs).
+# The old name was STATE_TURNOUT; it is refused below rather than ignored.
+#
 # Every bound in this model is PER PRECINCT -- 0 < T_i < kappa*n_i, and T_i >= C_i --
 # and kappa = 1.25 binds on about 1% of them. NOTHING constrains sum_i T_i, which is the
 # only quantity anyone reports.
@@ -299,11 +313,12 @@ CTY_SUB_MIN_RPRIOR = as.numeric(Sys.getenv("CTY_SUB_MIN_RPRIOR", unset = "0.5"))
 # precincts high together, and the sum preserves it perfectly. It is also why every
 # precinct-level fix failed: when theta's equation is empty, sum_i T_i = sum_i est_tot_i
 # EXACTLY, and no per-precinct machinery can see that.
-# A statewide turnout prior is also far easier to come by than a precinct one: historical
-# midterm turnout, registration growth, early-vote totals as a share of final.
+# A frame-level turnout prior is also far easier to come by than a precinct one: historical
+# midterm turnout, registration growth, early-vote totals as a share of final -- or, as of
+# 2026, CBS's own county expected vote summed over the fitted counties.
 #
-# HOW. Per draw, sample a statewide total from the prior, floor it at what has actually
-# been counted statewide, then solve for the single logit-scale shift delta that makes
+# HOW. Per draw, sample a frame total from the prior, floor it at what has actually been
+# counted over the frame, then solve for the single logit-scale shift delta that makes
 # the precinct totals sum to it:
 #     sum_i kappa*n_i*invlogit(theta_id + delta_d) = S_d
 # A COMMON shift, so relative precinct structure is untouched; on the logit scale, so
@@ -312,8 +327,16 @@ CTY_SUB_MIN_RPRIOR = as.numeric(Sys.getenv("CTY_SUB_MIN_RPRIOR", unset = "0.5"))
 # constraint and the floor fight and the floor wins silently.
 # As counting proceeds the floor increasingly binds and the constraint does less, which
 # is the correct behaviour: the data should take over from the prior.
-STATE_TURNOUT = suppressWarnings(as.numeric(Sys.getenv("STATE_TURNOUT", unset = NA)))
-STATE_TURNOUT_SD = as.numeric(Sys.getenv("STATE_TURNOUT_SD", unset = "0.05")) # log scale
+# the old name silently did nothing after the rename, so it is an error rather than a no-op
+if (nzchar(Sys.getenv("STATE_TURNOUT", unset = ""))) {
+  cli_abort(c(
+    "STATE_TURNOUT is set, but this constant is now SCRAPED_TURNOUT.",
+    "i" = "It constrains the FITTED frame, not the state -- see the comment above. Pass the CBS \
+           county expected vote summed over the counties this fit uses, not a statewide total."
+  ))
+}
+SCRAPED_TURNOUT = suppressWarnings(as.numeric(Sys.getenv("SCRAPED_TURNOUT", unset = NA)))
+SCRAPED_TURNOUT_SD = as.numeric(Sys.getenv("SCRAPED_TURNOUT_SD", unset = "0.05")) # log scale
 PIN_DONE = Sys.getenv("PIN_DONE", unset = "1") == "1"
 PIN_MIN_SHARE = as.numeric(Sys.getenv("PIN_MIN_SHARE", unset = "0.95"))
 # CORROBORATION. q_share rests on the completeness flag, which in production is a plateau
@@ -412,7 +435,126 @@ COMPOSITION_UPDATE = Sys.getenv("COMPOSITION_UPDATE", unset = "0") == "1"
 # statewide level correction. Non-circular: it needs no fit, only counted-out cells.
 LEVEL_UPDATE = Sys.getenv("LEVEL_UPDATE", unset = "0") == "1"
 LEVEL_MIN_CELL = as.integer(Sys.getenv("LEVEL_MIN_CELL", unset = "100"))
+
+# ========================================
+## STATUS OF THE DEFAULT-OFF SWITCHES (reviewed 2026-11-03)
+# ========================================
+# Every switch below is `Sys.getenv(..., unset = <default>)`: default-INERT but fully
+# overridable. None is dead code, and none was deleted -- deleting one would remove working
+# capability, and in two cases the capability is the best portable fix we have. This block
+# exists so the off state is a DOCUMENTED decision with evidence, not an undocumented third
+# state. The coupling tables in quality_reports/switch_taxonomy.md are the safety net: a
+# switch cannot be judged, or removed, without checking what goes silently inert with it.
+#
+# THE STANDING RULE, because it has already reversed three verdicts: a switch tested while
+# its documented partner is off gives the wrong answer. Check the SOFT table before reading
+# any ablation as a finding, and confirm the arm actually varied -- .medsl_env caches the
+# model environment per state, so env-var arms after the first are silently inert unless each
+# runs in its own process.
+#
+#   COMPLETE_TRUST (0) -- NOT dead, it IS the override. `complete` is never TRUE in
+#     production (stage never reaches 6), so complete_usable() is always FALSE and
+#     COMPLETE_FRAC does the completeness work instead. COMPLETE_TRUST=1 is the only way to
+#     use a `complete` column at all. Verdict changes when a feed ships one we trust.
+#
+#   USE_CENSOR (0) + USE_ATOM (0) -- SOFT-coupled: USE_ATOM does nothing without
+#     USE_CENSOR=1. This is route C in the taxonomy's overlap table and the ONLY route marked
+#     portable across all states. Its "net negative" verdict was measured with USE_ATOM=0,
+#     i.e. with its own documented fix disabled; the atom turns 123.2% -> 101.0% at the very
+#     checkpoint where censoring was condemned. Verdict changes only on a PAIRED evaluation.
+#     Do not delete this pair on the strength of the single-switch result.
+#
+#   COMPOSITION_UPDATE (0) + LEVEL_UPDATE (0) -- HARD-coupled: each ABORTS unless its hybrid
+#     partner is off (COMPOSITION_UPDATE needs HY_COMP=0 and HY_COUNTY=0; LEVEL_UPDATE needs
+#     HY_LEVEL=0 and HY_COUNTY=0), because otherwise the tilt or the level correction is
+#     applied twice. Both also need MIN_MODE_SHARE < 1 to matter, and COMPOSITION_UPDATE's
+#     eday tilt needs >= COMP_MIN_PREC precincts with eday and ref done, which on TX 2024 is
+#     not reached before ~21:00. Route D. Verdict changes with the hybrid partners off.
+#
+#   Q_SHARE_WT_EXP (2) -- inert as a CONSEQUENCE of another switch, not on its own merits:
+#     with MIN_MODE_SHARE = 1 every admitted precinct has q ~= 1, so the weight has nothing
+#     to grade. It becomes live the moment MIN_MODE_SHARE < 1. Judge the two together.
+#
+#   SD_SYS_LEVEL (0) -- off in BOTH directions now, on evidence. The block below its
+#     definition covers LOOSENING (0.22: coverage unchanged, point error worse). TIGHTENING
+#     was untested until 2026-11-03 and is also inert: at 0.02, five times tighter than the
+#     g-prior's implied ~0.098, the statewide turnout estimate at the first post-close
+#     checkpoint moved 0.03% (4,813,178 -> 4,815,279 on tx_cbs_noshift). Combined with the
+#     level-prior mean being a no-op (+36.4% prior -> -1.23% estimate), the finding is that
+#     the LEVEL PRIOR BARELY ENTERS THE EARLY AGGREGATE through this slot at all, at any
+#     precision. That is why SCRAPED_TURNOUT works where a prior does not: it is a per-draw
+#     shift applied AFTER the fit, so it never competes with the likelihood.
+#     -- the rest of the original verdict follows below --
+#   SD_SYS_LEVEL (0) -- off on EVIDENCE, not neglect, and the evidence is below (see the
+#     block above its definition): coverage unchanged 15/15 either way, point error WORSE
+#     (max |err| 1.40 -> 2.23pp on TX 2024), because the early-night data a looser prior
+#     admits is BIASED (+8.9pp Dem in the first batches), not merely noisy. Verdict changes
+#     if width and shrinkage are separated -- the 0.22 measurement sizes interval WIDTH, and
+#     this switch buys width and shrinkage together.
+#
+#   MODE_OFFSET_SOURCE ("history" here) -- medsl_setup() sets "zero" only when it is UNSET
+#     (model_medsl.R:454), so it is a default, NOT forced: "history" and "nc" (NC_DELTA) both
+#     still work when set explicitly. Earlier notes calling it forced were describing the
+#     production default.
+#
+#   REM_ALLOC and its variants -- not present on this branch at all (0 references); they live
+#     on `remainder-allocation`. Nothing to delete or revive here.
+# ========================================
+
 COMP_MIN_PREC = as.integer(Sys.getenv("COMP_MIN_PREC", unset = "50")) # min precincts to trust a tilt
+
+# CBS LEVEL PRIOR (CBS_LEVEL_PRIOR=1 upstream; off by default, see cbs_level_prior_var() in
+# model_medsl.R). est_tot is each county's 2022 turnout, so by default the prior IS 2022 and
+# the model must discover 2026's level from the returns. CBS_COUNTY_EXPECTED carries CBS's
+# expected total vote per fitted county ("001=123456,003=78910"), and the multiplier below is
+# formed against est_tot summed over THIS fit's precincts, so the ratio matches the frame
+# being fitted and not the whole state (TX: 1.3644 over the 25 zero-file counties vs 1.3457
+# over all 72, measured 2026-11-03).
+#
+# CBS_LEVEL_SCOPE decides how far the new level reaches:
+#   "total" -- only theta, the precinct TOTAL prior on the k_ref slot. The minimal change.
+#   "both"  -- theta AND prior_tau (the default when on). prior_tau is what COMPLETE_FRAC
+#              grades counted votes against, and in production it is the ONLY branch of that
+#              gate, so a CBS level that stops short of prior_tau leaves the completeness
+#              gate still judging 2026 returns against a 2022 expectation -- which is the
+#              failure the gate's per-state windows have been symptoms of. Separable because
+#              the two effects are worth measuring apart.
+# CBS_LEVEL_UNSEEN=1 (default when the level prior is on): put the CBS level ONLY behind
+# precincts with no reported mode. Measured 2026-11-03 on tx_cbs_noshift at 20:15: applying
+# it everywhere fixes the 3,932 unseen precincts (0.745 -> 1.011 of truth) but INFLATES the
+# 979 that had already reported and were accurate without it (0.997 -> 1.28), because the
+# g-prior pulls FITTED VALUES toward prior_loc for every row, observed or not. A precinct
+# with returns does not need a prior to tell it its level; one with none has nothing else.
+# Set 0 to apply CBS to every precinct (the behaviour measured above).
+CBS_LEVEL_UNSEEN = Sys.getenv("CBS_LEVEL_UNSEEN", unset = "1") == "1"
+# CBS_LEVEL_UNSEEN=1 (default): apply the CBS level ONLY to precincts whose TOTAL has no
+# information of its own. Measured 2026-11-03 on tx_cbs_noshift at 20:15, per precinct:
+# ungated, the 979 precincts that HAD reported went from 0.072 to 0.303 median abs rel error
+# and their interval coverage collapsed from 88.5% to 24.8%, because a 36%-higher level prior
+# overrides returns that are better evidence than any prior. Gated, they stay at 0.077/88.3%
+# while the 3,862 unseen precincts keep the whole gain (0.252/38.6% -> 0.082/92.5%).
+# Statewide the 20:15 estimate goes 0.7966 (2022) / 1.0659 (ungated) / 0.9957 (gated), and
+# per-precinct coverage 48.6% -> 91.7% against a nominal 95%. Set 0 for the ungated behaviour.
+CBS_LEVEL_UNSEEN = Sys.getenv("CBS_LEVEL_UNSEEN", unset = "1") == "1"
+CBS_LEVEL_SCOPE = Sys.getenv("CBS_LEVEL_SCOPE", unset = "both")
+stopifnot("CBS_LEVEL_SCOPE must be total or both" = CBS_LEVEL_SCOPE %in% c("total", "both"))
+# NOTE the read below is UNCONDITIONAL: setting CBS_COUNTY_EXPECTED activates the level prior
+# even with CBS_LEVEL_PRIOR=0, because CBS_LEVEL_PRIOR gates only whether model_medsl.R
+# INJECTS the variable. That is deliberate and matches SCRAPED_TURNOUT ("an explicit setting
+# wins, so backtests and sweeps are unaffected"), and it is what makes a mis-specified arm
+# free: level the sim's truth at 1.0x CBS and hand the model 0.95x here, with no code change.
+# Without such an arm the switch has only ever been tested where the prior is correct by
+# construction, which measures its upside and not its robustness.
+CBS_COUNTY_EXP = {
+  spec = Sys.getenv("CBS_COUNTY_EXPECTED", unset = "")
+  if (!nzchar(spec)) NULL else {
+    kv = strsplit(strsplit(spec, ",", fixed = TRUE)[[1]], "=", fixed = TRUE)
+    if (any(lengths(kv) != 2)) stop("bad CBS_COUNTY_EXPECTED: expected county=total pairs")
+    v = suppressWarnings(as.numeric(trimws(sapply(kv, `[`, 2))))
+    if (anyNA(v) || any(v <= 0)) stop("bad CBS_COUNTY_EXPECTED: non-positive or unparseable total")
+    setNames(v, trimws(sapply(kv, `[`, 1)))
+  }
+}
 MIN_MODE_SHARE = as.numeric(Sys.getenv("MIN_MODE_SHARE", unset = "1"))
 Q_SHARE_WT_EXP = as.numeric(Sys.getenv("Q_SHARE_WT_EXP", unset = "2"))
 stopifnot("MIN_MODE_SHARE must be in (0, 1]" = MIN_MODE_SHARE > 0 && MIN_MODE_SHARE <= 1)
@@ -435,6 +577,18 @@ ATOM_CEIL = as.numeric(Sys.getenv("ATOM_CEIL", unset = "0.98"))
 # USE_COMPOSE=0 restores the old independent-log-normal turnout equations.
 USE_COMPOSE = Sys.getenv("USE_COMPOSE", unset = "1") == "1"
 KAPPA = as.numeric(Sys.getenv("KAPPA", unset = "1.25"))
+# Prior log-ratio for a cell whose county's feed CANNOT report that mode (mode_forbid,
+# from lookups/mode_fold.csv). exp(-8) = 3.4e-4, i.e. 0.03% of the reference mode's share:
+# effectively zero, but nothing like the ~-13.6 that falling through to the 1e-6 floor in
+# y_tau_prior would give. Set explicitly rather than by retuning that floor, which also
+# guards legitimately tiny shares -- NC's early = 0 is the case the REF_MODE note below is
+# about, and ~13 there was diagnosed as a pathology, not tolerated.
+#
+# An UNINFORMATIVE prior would be wrong here, not merely wide. Under USE_COMPOSE the modes
+# are a composition (sum_m tau_im = T_i), so eta allocates shares; a forbidden cell never
+# gets an observation, so its posterior stays at its prior, and any mass a vague prior puts
+# there is subtracted from the modes that DO report, with nothing able to correct it.
+FORBID_ETA = as.numeric(Sys.getenv("FORBID_ETA", unset = "-8"))
 # ---- PER-STATE MODE SCOPE -------------------------------------------------------
 # REF_MODE carries theta (the precinct TOTAL); every other mode is a log-ratio to it. So
 # the reference must be a mode that is OBSERVED, early and everywhere, in this state. The
@@ -472,9 +626,14 @@ if (is.null(mode_scope)) {
 }
 REF_MODE = Sys.getenv("REF_MODE", unset = if (is.null(mode_scope)) "early" else mode_scope$ref_mode)
 # Prior sd on the STATEWIDE LEVEL, in logit units, decoupled from PRIOR_N_*.
-# MEASURED (calibrate_swing.R, 9 states x 37 contest pairs): the statewide two-party Dem
-# share moves 0.22-0.26 logit between a prior contest and its target, against the ~0.098
-# the g-prior implicitly assumed -- so the bundled prior was ~2.3x too tight.
+# MEASURED (calibrate_swing.R, 9 states x 37 contest pairs): the SD of the statewide
+# two-party Dem share's movement between a prior contest and its target is 0.22-0.26 logit,
+# against the ~0.098 the g-prior implicitly assumed -- so the bundled prior was ~2.3x too
+# tight. It is a DISPERSION, not a typical magnitude: mean movement is ~0, and the quantity
+# is the same size as its own uncertainty. Phrased as "the share moves 0.22-0.26" until
+# 2026-11-03, which reads as a magnitude and is the opposite claim; model_core.R:123 ("ACTUAL
+# statewide swing sd") is the authoritative wording and model_hybrid.R:206 said the same
+# thing. Corrected 2026-11-03 after the wrong reading was repeated between sessions.
 # 0.22 is sen20->pres24, the closest analogue to what the model actually does.
 # NOTE this cannot be validated by a single-election backtest: TX 2024's own swing was
 # 0.085, unusually small, so the tight prior did no harm there. This is insurance against
@@ -989,6 +1148,46 @@ cli_inform(c(
   "baseline Dem two-party share: {round(weighted.mean(prec$dem2, prec$est_tot), 4)}"
 ))
 
+# Per-precinct level multiplier from CBS_COUNTY_EXP (see the switch block above). Built here
+# because it needs est_tot summed over the FIT'S precincts as the denominator. The WITHIN-county
+# shape still comes from 2022 -- this moves the level only, which is the documented limit of
+# what county-level CBS data can supply.
+CBS_LVL_MULT = NULL
+if (!is.null(CBS_COUNTY_EXP)) {
+  .pc = geo_county(prec$geo)
+  .cty_est = tapply(prec$est_tot, .pc, sum)
+  if (length(.miss <- setdiff(names(.cty_est), names(CBS_COUNTY_EXP))))
+    stop("CBS_COUNTY_EXPECTED is missing ", length(.miss), " fitted counties: ",
+         paste(utils::head(.miss, 5), collapse = ", "),
+         " -- a partial level would mix 2026 and 2022 across the frame")
+  .r = CBS_COUNTY_EXP[names(.cty_est)] / .cty_est
+  if (!all(is.finite(.r))) stop("CBS level multiplier is not finite (est_tot 0 in a county)")
+  # Same tripwire as the sim generator's: any positive-but-wrong expected vote (a placeholder
+  # in one race's snapshot, or a county whose reporting units are only partly published) shows
+  # up here, and silently mis-levelling a whole county is the failure that would be hardest to
+  # see downstream. Measured range on TX 2026-11-03: 1.079-1.662.
+  .band = as.numeric(strsplit(Sys.getenv("CBS_LEVEL_BAND", unset = "0.6,2.5"), ",")[[1]])
+  if (any(.oob <- .r < .band[[1]] | .r > .band[[2]]))
+    stop(sum(.oob), " counties ask a CBS level ratio outside ", .band[[1]], "-", .band[[2]], ": ",
+         paste0(names(.r)[.oob], "=", round(.r[.oob], 2), collapse = ", "),
+         " -- widen with CBS_LEVEL_BAND only deliberately")
+  # as.numeric(), because tapply() above returns a 1D ARRAY and the array-ness propagates:
+  # tgt_tot becomes an array, and downstream `if_else(obs_turn, ...)` in model_hybrid.R then
+  # fails with "condition must be a logical vector, not a logical 1D array". It stayed hidden
+  # while the hybrid was discarding tgt_tot and only surfaced once it was wired through.
+  CBS_LVL_MULT = as.numeric(.r[.pc])
+  cli_inform(c(
+    "i" = "CBS level prior (scope {CBS_LEVEL_SCOPE}): ratio to est_tot
+           {round(min(.r), 3)}-{round(max(.r), 3)} over {length(.r)} counties,
+           frame {round(sum(prec$est_tot * CBS_LVL_MULT) / sum(prec$est_tot), 4)}x",
+    " " = "NOTE this is the PRIOR's asked level. T_draw = cap * invlogit(mu + eps) is
+           non-linear, so the realised aggregate is attenuated (Jensen); measure it rather
+           than assuming the prior's level is the fit's level."
+  ))
+}
+# the level the priors below are built on: CBS when supplied, else 2022 exactly as before
+prec$tgt_tot = if (is.null(CBS_LVL_MULT)) prec$est_tot else prec$est_tot * CBS_LVL_MULT
+
 #' Warn when the mode priors fall back to constants
 #'
 #' @param mode_priors `derive_mode_priors()` output.
@@ -1009,6 +1208,19 @@ warn_uncalibrated_modes = function(mode_priors) {
 }
 
 # ---- 2. expand to precinct x mode cells, build mode-specific priors -------------
+# Harnesses that source this file directly (quality_reports/bt_env.R) do not supply
+# mode_forbid; an empty frame makes every join below a no-op.
+if (!exists("mode_forbid", inherits = FALSE)) {
+  mode_forbid = tibble::tibble(geo = character(), method = character())
+}
+if (nrow(mode_forbid) && REF_MODE %in% mode_forbid$method) {
+  cli_abort(c(
+    "mode_fold.csv folds away {REF_MODE}, which is this state's REF_MODE.",
+    "i" = "REF_MODE carries the precinct TOTAL, so ref_share would be 0 and every \
+           non-reference log-ratio would explode. Pick a different ref_mode in \
+           lookups/mode_scope.csv, or do not fold the reference mode."
+  ))
+}
 mode_priors = derive_mode_priors(mode_hist, prec)
 warn_uncalibrated_modes(mode_priors)
 
@@ -1034,12 +1246,32 @@ cells = tidyr::expand_grid(prec, mode = MODES) |>
       }
     }
   }() |>
+  # Cells this county's feed cannot report get share EXACTLY 0, before renormalisation, so
+  # the modes that DO report absorb their mass.
+  #
+  # It has to happen here rather than upstream. The share comes from the mode history, and a
+  # folded county simply has no history row for the mode -- which lands on the
+  # `coalesce(mode_turn_share, MODE_TURN_SHARE[mode])` fallback above and refills the cell
+  # with a statewide CONSTANT (OH: early 0.638), the worst available value for it.
+  #
+  # Exactly 0 is not cosmetic, it is the whole point. q_share sums p_tilt over the modes
+  # flagged counted-out, and a cell the county never reports can never be flagged -- so any
+  # share above 0 is a PERMANENT deduction from q_share, and the precinct never reaches
+  # all_done or MIN_MODE_SHARE and sits at its prior all night. Measured on OH oh_base at
+  # the final checkpoint: Franklin's 889 precincts capped at q_share 0.61 and 0 of them
+  # reached 1. At exactly 0, q_share reaches 1 once the reportable modes are done.
+  left_join(dplyr::mutate(mode_forbid, .forbid = TRUE), by = c("geo", mode = "method")) |>
+  mutate(.forbid = coalesce(.forbid, FALSE)) |>
+  mutate(mode_turn_share = if_else(.forbid, 0, mode_turn_share)) |>
   mutate(
     mode_turn_share = mode_turn_share / sum(mode_turn_share),
     .by = geo
   ) |>
   mutate(
-    prior_tau = est_tot * mode_turn_share,
+    # tgt_tot is est_tot exactly unless CBS_LEVEL_PRIOR is on (see the switch block), so
+    # this line is unchanged by default. Under scope "both" the CBS level also reaches
+    # prior_tau, which is what COMPLETE_FRAC grades counted votes against.
+    prior_tau = (if (CBS_LEVEL_SCOPE == "both") tgt_tot else est_tot) * mode_turn_share,
     # delta_im = a_m + b_m * logit(dem2_i)  -- lean-dependent, per the NC measurement
     prior_s = invlogit(logit(dem2) + off_a + off_b * logit(dem2)),
     prior_tp = tp_prior, # no mode differential assumed for third party
@@ -1062,10 +1294,21 @@ cells = tidyr::expand_grid(prec, mode = MODES) |>
     } else {
       if_else(
         mode == REF_MODE,
-        logit(pmin(pmax(est_tot / cap, 1e-4), 1 - 1e-4)),
+        # theta, the precinct TOTAL on the capped logit scale. tgt_tot == est_tot unless
+        # CBS_LEVEL_PRIOR is on, in which case this is the whole point of the change: the
+        # level the fit starts from is CBS's 2026 expectation, not 2022's turnout.
+        logit(pmin(pmax(tgt_tot / cap, 1e-4), 1 - 1e-4)),
         log(pmax(mode_turn_share, 1e-6) / pmax(ref_share, 1e-6))
       )
     }
+  ) |>
+  # A forbidden cell's share is exactly 0, so the expression above would floor it at 1e-6
+  # and hand the equation a prior log-ratio of about -13.6. FORBID_ETA states the intended
+  # value instead; q_share and prior_tau keep the exact 0 either way, because the floor only
+  # ever entered y_tau_prior.
+  mutate(
+    y_tau_prior = if_else(.forbid & USE_COMPOSE & mode != REF_MODE, FORBID_ETA, y_tau_prior),
+    .forbid = NULL
   )
 N_PREC = nrow(prec)
 M = length(MODES)
@@ -1375,6 +1618,49 @@ fit_stage = function(
   covs_for = function(out) switch(out, tau = COVS_TURN, tp = COVS_TP, s = COVS_SHARE)
   prior_n_for = function(out) switch(out, tau = PRIOR_N_TURN, tp = PRIOR_N_TP, s = PRIOR_N_SHARE)
 
+  # CBS level behind the UNSEEN precincts only (see CBS_LEVEL_UNSEEN). prior_loc is already
+  # a per-row vector, so this needs no change to fit_conj_re -- it just stops handing the
+  # CBS level to rows whose own returns are better evidence than any prior.
+  # `d` carries tgt_tot and cap from the cells pipeline and `obs` from the stage test above,
+  # and model_hybrid.R has already re-centred y_tau_prior on tonight's returns by this point,
+  # so leaving a seen precinct alone keeps exactly that value.
+  if (!is.null(CBS_LVL_MULT) && CBS_LEVEL_UNSEEN && USE_COMPOSE) {
+    d = d |>
+      mutate(.seen = any(obs), .by = geo) |>
+      mutate(
+        y_tau_prior = if_else(
+          !.seen & mode == REF_MODE,
+          logit(pmin(pmax(tgt_tot / cap, 1e-4), 1 - 1e-4)),
+          y_tau_prior
+        )
+      ) |>
+      select(-.seen)
+  }
+
+  # CBS level ONLY where the precinct's total has no information of its own.
+  # The right mask is fit_tau, not obs: :1493 uses `ob = if (out == "tau") dm$fit_tau else
+  # dm$obs`, so obs measures SHARE-observability and says nothing about whether theta has
+  # data. And the gate has to push the SEEN precincts BACK to the 2022 level, because
+  # model_hybrid.R has already applied the CBS level to every precinct by this point --
+  # only adding it where missing is a no-op (measured: 48 of ~3,982 rows changed).
+  # est_tot_adj is not a column here, but it is recoverable: the hybrid set
+  # y_tau_prior = logit(tgt_tot_adj / cap), so tgt_tot_adj = cap * invlogit(y_tau_prior)
+  # and est_tot_adj = tgt_tot_adj * est_tot / tgt_tot (the hybrid's offset exp(m) cancels).
+  if (!is.null(CBS_LVL_MULT) && CBS_LEVEL_UNSEEN) {
+    d = d |>
+      mutate(.tot_seen = any(fit_tau), .by = geo) |>
+      mutate(
+        .tgt_adj = cap * invlogit(y_tau_prior),
+        .est_adj = .tgt_adj * est_tot / tgt_tot,
+        .newpri = if_else(
+          .tot_seen & mode == REF_MODE,
+          logit(pmin(pmax(.est_adj / cap, 1e-4), 1 - 1e-4)),
+          y_tau_prior
+        )
+      )
+    d = d |> mutate(y_tau_prior = .newpri) |> select(-.tot_seen, -.tgt_adj, -.est_adj, -.newpri)
+  }
+
   for (m in MODES) {
     dm = filter(d, mode == m)
     # --- MODE SUPPORT GATE ---------------------------------------------------------
@@ -1578,6 +1864,14 @@ fit_stage = function(
     # prior, not an unconstrained fit to nothing.
     if (n_fit[[k]] < MIN_FIT_OBS) {
       prior_eqs <<- c(prior_eqs, k) # <<- : mu is built inside lapply()
+      # MEASURED 2026-11-03, tx_cbs_noshift at 20:15: the equations held here were
+      # early_tau (n_fit 20), eday_tau, eday_tp, eday_s (22 each) -- and `early` is TX's
+      # REF_MODE, so the precinct TOTAL is this prior for 4,891 of 4,911 precincts. Letting
+      # the <= 29 precincts that DO have a counted-out cell use it instead of the prior was
+      # tried and is invisible in the aggregate (identical to 4 decimal places), because by
+      # definition a held equation has fewer than MIN_FIT_OBS of them. Not worth a switch.
+      # The precincts that look mis-served here are ones with returns in OTHER modes, whose
+      # total is still this prior; that is the mode gross-up, not this branch.
       return(matrix(prior_loc_mat[[k]], draws, N_PREC, byrow = TRUE))
     }
     if (USE_COUNTY_RE) {
@@ -1735,8 +2029,15 @@ fit_stage = function(
   # model's fitted share of all votes by party (fit_*, before any counted votes are mixed
   # in). Returned as `cell_votes` for the live wrapper's conformal interval; nothing here
   # reads them.
+  # tot_lo / tot_hi: a PER-MODE interval on the cell's final vote total. The draws for this
+  # already exist -- v_dem/v_rep/v_oth below are draws x N_PREC per mode -- and were being
+  # collapsed with colMeans and discarded, so cell_pred was the only per-precinct x mode
+  # output the model exposes and it carried no uncertainty at all. Quantiles of the SUM of
+  # the draws, not the sum of the quantiles, which is why it is computed in the loop rather
+  # than assembled from fin_dem/fin_rep/fin_oth afterwards.
   cell_votes = lapply(
-    setNames(nm = c("fin_dem", "fin_rep", "fin_oth", "fit_dem", "fit_rep", "fit_oth")),
+    setNames(nm = c("fin_dem", "fin_rep", "fin_oth", "fit_dem", "fit_rep", "fit_oth",
+                    "tot_lo", "tot_hi")),
     \(x) matrix(NA_real_, N_PREC, M, dimnames = list(NULL, MODES))
   )
   # PER-PRECINCT accumulators (draws x N_PREC), for precinct-level output.
@@ -1784,8 +2085,11 @@ fit_stage = function(
     # THE FLOOR MUST ACT ON THE PRECINCT TOTAL, NOT PER CELL.
     # Flooring each cell at its own counted value (`pmax(tau, ct)`) destroys the
     # adding-up property this parameterization exists for: sum_m tau_im could then exceed
-    # T_i again. Measured when I got this wrong: late turnout went 106.3% -> 114.4% at
-    # 99.2% counted, worse than the unconstrained model it replaced.
+    # T_i again. The reasoning is arithmetic and does not expire. The measurement does:
+    # late turnout went 106.3% -> 114.4% at 99.2% counted, worse than the unconstrained
+    # model it replaced -- measured at e30fa083 (2026-10-19), in tx_gov_trial.R, on a spec
+    # since superseded. Treat the magnitude as indicative, not current; what would change
+    # the verdict is adding-up breaking in the other direction, not a smaller number here.
     # Instead: floor the TOTAL at the precinct's counted total, then hand the remainder
     # only to the modes that are short of their composition-implied share, in proportion
     # to how short they are. Counted stays a hard floor per cell AND sum_m v_im = T_i.
@@ -1806,15 +2110,15 @@ fit_stage = function(
         T_draw[, done_prec] <- cnt_tot[, done_prec, drop = FALSE]
       }
     }
-    # ---- STATEWIDE TURNOUT CONSTRAINT (see STATE_TURNOUT) --------------------------
-    if (!is.na(STATE_TURNOUT) && STATE_TURNOUT > 0) {
+    # ---- TURNOUT CONSTRAINT OVER THE FITTED FRAME (see SCRAPED_TURNOUT) -------------
+    if (!is.na(SCRAPED_TURNOUT) && SCRAPED_TURNOUT > 0) {
       capv = capm[1, ] # kappa*n_i, same every draw
       n_hit <- 0L
       for (dd in seq_len(draws)) {
         cnt_d <- cnt_tot[dd, ]
         # the target: a draw from the statewide prior, floored at what is already
         # counted (an unreachable target would just be eaten by the floor below)
-        S_d <- max(STATE_TURNOUT * exp(stats::rnorm(1, 0, STATE_TURNOUT_SD)), sum(cnt_d))
+        S_d <- max(SCRAPED_TURNOUT * exp(stats::rnorm(1, 0, SCRAPED_TURNOUT_SD)), sum(cnt_d))
         th_d <- qlogis(pmin(pmax(T_draw[dd, ] / capv, 1e-9), 1 - 1e-9))
         f <- function(del) sum(capv * plogis(th_d + del)) - S_d
         # bracket: +/-10 on the logit scale spans essentially (0, kappa*n) statewide
@@ -1835,8 +2139,8 @@ fit_stage = function(
       }
       cnt_tot_chk <- rowSums(cnt_tau)
       cli_inform(
-        "statewide constraint: target {format(round(STATE_TURNOUT), big.mark = ',')} \
-                  (sd {STATE_TURNOUT_SD} log), counted \
+        "scraped-frame constraint: target {format(round(SCRAPED_TURNOUT), big.mark = ',')} \
+                  (sd {SCRAPED_TURNOUT_SD} log), counted \
                   {format(round(cnt_tot_chk[1] * 0 + sum(cnt_tau)), big.mark = ',')}, \
                   mean drawn total {format(round(mean(rowSums(T_draw))), big.mark = ',')}"
       )
@@ -1849,7 +2153,7 @@ fit_stage = function(
     # Running last means a county's observed total can push that draw's statewide total
     # above its own S_d. That is correct, not a violation: S_d is a draw from a PRIOR and a
     # county's counted votes are an OBSERVATION, and a prior must not override an
-    # observation. (It also means the statewide block's floor, max(STATE_TURNOUT * ...,
+    # observation. (It also means the constraint block's floor, max(SCRAPED_TURNOUT * ...,
     # sum(cnt_d)), understates what has actually been counted by up to 31% in AK and NC,
     # since cnt_d excludes bucket votes. Both want the fuller count -- raise it with
     # whoever owns that block rather than changing it here.)
@@ -1983,7 +2287,7 @@ fit_stage = function(
         # meaningful with that block off.
         if (
           any(pin_v) &&
-            !(!is.na(STATE_TURNOUT) && STATE_TURNOUT > 0) &&
+            !(!is.na(SCRAPED_TURNOUT) && SCRAPED_TURNOUT > 0) &&
             max(abs(T_draw[, pin_v, drop = FALSE] - cnt_tot[, pin_v, drop = FALSE])) > 1e-6
         ) {
           cli_warn(
@@ -2225,6 +2529,11 @@ fit_stage = function(
     v_rep = cr + rem_two * (1 - s)
     v_oth = co + rem * tp
     cell_s_hat[, mi] = colMeans(v_dem / pmax(v_dem + v_rep, 1e-9))
+    v_tot = v_dem + v_rep + v_oth
+    # `level` is the function's own argument; qlo/qhi are not defined until the precinct
+    # block further down, so derive them here rather than relying on evaluation order
+    cell_votes$tot_lo[, mi] = apply(v_tot, 2, quantile, 0.5 * (1 - level))
+    cell_votes$tot_hi[, mi] = apply(v_tot, 2, quantile, 0.5 * (1 + level))
     cell_votes$fin_dem[, mi] = colMeans(v_dem)
     cell_votes$fin_rep[, mi] = colMeans(v_rep)
     cell_votes$fin_oth[, mi] = colMeans(v_oth)
@@ -2268,10 +2577,15 @@ fit_stage = function(
     # EXPECTED, do not "fix": turn_est can sit slightly ABOVE turn_hi. The counted-votes
     # floor (T_draw = pmax(T_draw, cnt_tot)) puts an ATOM at cnt_prec holding more than
     # 97.5% of the draws, so both quantiles land exactly on the floor while the mean is
-    # pulled up by the thin tail above it. Measured on tx_base at 22:00: a handful of
-    # precincts, max gap 0.47 votes. turn_est stays the MEAN so it matches how the race
-    # level reports est_turnout; consistency beats a bracketing guarantee that the atom
-    # makes impossible.
+    # pulled up by the thin tail above it. Measured on tx_base at 22:00, b0a2533c
+    # (2026-10-26): 0-8 precincts, max gap 0.47 votes. turn_est stays the MEAN so it matches
+    # how the race level reports est_turnout; consistency beats a bracketing guarantee that
+    # the atom makes impossible. What would change the verdict: this affecting more than a
+    # handful of precincts, or gaps large enough to matter against turn_sd.
+    # SCOPE -- this note does NOT explain zero-width intervals at scale, and was once used
+    # that way (wrongly). Those are PIN_DONE SUBSTITUTIONS, not posteriors clamped by this
+    # pmax: measured 2026-11-03 on TX, 3,784 of 3,896 zero-width precincts were flagged
+    # done. Reach for PIN_DONE before this line when an interval collapses.
     turn_sd = apply(pden, 2, sd),
     turn_lo = apply(pden, 2, quantile, qlo),
     turn_hi = apply(pden, 2, quantile, qhi),
