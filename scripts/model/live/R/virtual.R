@@ -173,14 +173,17 @@ add_virtual = function(fit, model, vs) {
       vs$units,
       lg(pt[["dem"]] / (pt[["dem"]] + pt[["rep"]])) - lg(base_s),
       pt[["tot"]] / E,
-      noise = FALSE
+      noise = FALSE,
+      units = TRUE
     )
     vd = project_rest(
       vs$units,
       lg(dr$dem / (dr$dem + dr$rep)) - lg(base_s),
       dr$turnout / E,
-      noise = TRUE
+      noise = TRUE,
+      units = TRUE
     )
+    fit = add_virtual_modes(fit, vs$units, attr(vp, "unit_tot")[1, ], ut_d = attr(vd, "unit_tot"))
     fit$point = c(
       dem = unname(pt[["dem"]] + vp[1, "dem"]),
       rep = unname(pt[["rep"]] + vp[1, "rep"]),
@@ -216,6 +219,9 @@ add_virtual = function(fit, model, vs) {
     )
     sb = fit_swing_bounds(fit, pt, base_s, E)
     vb = project_rest_bounds(vs$units, sb$swing, sb$turn_ratio)
+    # by method: the units' totals at the point and at the turnout ratio's ends (no noise)
+    ut = attr(project_rest(vs$units, sb$swing[c(1, 1, 1)], sb$turn_ratio, noise = FALSE, units = TRUE), "unit_tot")
+    fit = add_virtual_modes(fit, vs$units, ut[1, ], ut_lo = ut[2, ], ut_hi = ut[3, ])
     fit$pred = add_party_votes(pr, vb)
     est = pred_race_est(fit$pred)
     fit$race = mutate(
@@ -238,6 +244,47 @@ add_virtual = function(fit, model, vs) {
       sum(u$d + u$r + u$o == 0 & u$exp_base > 0)
     )
   )
+  fit
+}
+
+#' Add the virtual units to a fit's turnout by method
+#'
+#' Each unit is one county x method, so its projected total goes to its method.
+#'
+#' @param fit Fit with `modes` (NULL: returned unchanged).
+#' @param units `virtual_split()$units`.
+#' @param ut_pt Each unit's point total.
+#' @param ut_d Draws x units totals (fits with draws), or NULL.
+#' @param ut_lo,ut_hi Each unit's total at the low and high turnout ends (fits with bounds),
+#'   or NULL.
+#' @return `fit` with `modes` (and `mode_draws`) updated.
+add_virtual_modes = function(fit, units, ut_pt, ut_d = NULL, ut_lo = NULL, ut_hi = NULL) {
+  if (is.null(fit$modes) || !nrow(units)) {
+    return(fit)
+  }
+  mu = as.character(units$method)
+  ms = union(fit$modes$method, unique(mu))
+  add = function(v) vapply(ms, \(m) sum(v[mu == m]), 0)
+  md = fit$modes[match(ms, fit$modes$method), ]
+  md$method = ms
+  md$pred = coalesce(md$pred, 0) + add(ut_pt)
+  if (!is.null(ut_d) && !is.null(fit$mode_draws)) {
+    MD = fit$mode_draws
+    D = vapply(
+      ms,
+      \(m) (if (m %in% colnames(MD)) MD[, m] else 0) + rowSums(ut_d[, mu == m, drop = FALSE]),
+      numeric(nrow(ut_d))
+    )
+    D = matrix(D, nrow(ut_d), length(ms), dimnames = list(NULL, ms))
+    fit$mode_draws = D
+    fit$modes = mode_rows(setNames(md$pred, ms), D)
+  } else {
+    if (!is.null(ut_lo)) {
+      md$pred_min = md$pred_min + add(ut_lo)
+      md$pred_max = md$pred_max + add(ut_hi)
+    }
+    fit$modes = md
+  }
   fit
 }
 

@@ -240,10 +240,12 @@ fit_swing = function(
       cells = votes_precincts(pt),
       point = point,
       interval = interval,
-      level = level
+      level = level,
+      modes = mode_rows(mode_point(pt$method, pt$tot))
     ))
   }
   rep_ctys = unique(d$county[d$c_tot > 0])
+  mpt = mode_point(pt$method, pt$tot)
   set.seed(SEED)
   draws = lapply(seq_len(boot), function(b) {
     cw = setNames(rep(1, length(ctys)), ctys)
@@ -252,19 +254,27 @@ fit_swing = function(
       cw[rep_ctys] = as.numeric(k)
     }
     o = swing_once(d, cw, x)
-    c(s2 = sum(o$dem) / sum(o$dem + o$rep), turn = sum(o$tot), dem = sum(o$dem), rep = sum(o$rep))
+    list(
+      tot = c(s2 = sum(o$dem) / sum(o$dem + o$rep), turn = sum(o$tot), dem = sum(o$dem), rep = sum(o$rep)),
+      mode = mode_point(o$method, o$tot)[names(mpt)]
+    )
   })
-  S2 = vapply(draws, `[[`, 0, "s2")
-  TT = vapply(draws, `[[`, 0, "turn")
-  DV = vapply(draws, `[[`, 0, "dem")
-  RV = vapply(draws, `[[`, 0, "rep")
+  S2 = vapply(draws, \(z) z$tot[["s2"]], 0)
+  TT = vapply(draws, \(z) z$tot[["turn"]], 0)
+  DV = vapply(draws, \(z) z$tot[["dem"]], 0)
+  RV = vapply(draws, \(z) z$tot[["rep"]], 0)
+  # by method: boot x methods
+  MD = do.call(rbind, lapply(draws, `[[`, "mode"))
+  colnames(MD) = names(mpt)
   # centre the bootstrap draws on the point fit
   S2 = S2 - mean(S2) + sum(pt$dem) / sum(pt$dem + pt$rep)
   TT = TT - mean(TT) + sum(pt$tot)
   DV = DV - mean(DV) + sum(pt$dem)
   RV = RV - mean(RV) + sum(pt$rep)
+  MD = sweep(MD, 2, colMeans(MD) - mpt)
   ci = cred(S2, level)
   ct = cred(TT, level)
+  modes = mode_rows(mpt, MD, level = level)
 
   model_result(
     "swing",
@@ -284,6 +294,8 @@ fit_swing = function(
     point = point,
     draws = tibble(twop = S2, turnout = TT, dem = DV, rep = RV),
     interval = interval,
-    level = level
+    level = level,
+    modes = modes,
+    mode_draws = if (!is.null(modes)) MD
   )
 }

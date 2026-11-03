@@ -338,6 +338,8 @@ fit_pois_bayes = function(
     returns,
     prior = if (interval == "conf_seq") race_draws(P),
     fc = fc,
-    cells = if (precincts) draws_precincts(tot, V$dem, V$rep, d, level)
+    cells = if (precincts) draws_precincts(tot, V$dem, V$rep, d, level),
+    mode_dr = mode_draws(tot, d$method),
+    mode_prior = if (interval == "conf_seq") mode_draws(P$dem + P$rep + P$oth, d$method)
   )
 }
