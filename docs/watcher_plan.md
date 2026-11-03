@@ -29,9 +29,10 @@ then revised with Mason's answers.
 | `office_filter = NULL` overrode the MI/OH Senate filter, and the filter applied to every destination | Filter restored in `_targets.R`. `create_table_cbs()` (enightdata PR #20) applies it to S3 only: the CBS JSON, S3 csv/parquet (local copies `data/cbs_format/*_s3_latest.*`) and the unused wide CSV. The Drive files (`*_latest.*`) hold every office. |
 | The watcher laptop can't see the scraper laptop's `_targets/` or `logs/` | Each cycle, `automation.R` force-pushes `_targets/meta/{meta,progress,process}` and the last 24 cycle logs to branch `pipeline-state`, plus `logs/console.log`, `enightdata_sha` and `cycle.json` (run_time, finish time, and TRUE/FALSE for each step: enightdata, tar_make, dashboard push, S3, Sheet). It is one commit, replaced each run, the same mechanism as `dashboard-live`. Targets objects are not pushed. |
 
-Also launch on the night with `Rscript scripts/automation.R >> logs/console.log 2>&1`, because the
-dashboard push, S3 and Sheet messages go to the console, not the per-cycle log. `console.log`
-is pushed with the cycle logs.
+Launch on the night with `Rscript scripts/automation.R`. The cycle logs go to
+`<election folder>/logs` in Dropbox and are pushed to `pipeline-state`. The dashboard push, S3
+and Sheet messages go to the console rather than the per-cycle log, so redirect into
+`<election folder>/logs/console.log` to have them pushed too.
 
 ## 1. Architecture
 

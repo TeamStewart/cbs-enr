@@ -1037,7 +1037,10 @@ fit_medsl_sur <- function(
     returns,
     prior = prior,
     fc = fc,
-    cells = prec_rows(f$prec)
+    cells = prec_rows(f$prec),
+    # by mode; conf_seq's prior draws are race totals only (prior_totals()), so its modes
+    # are points
+    mode_dr = f$turn_mode
   )
   res$status <- res$race$status <- st
   # the structured ledger as well as the status string, so a consumer can test

@@ -176,11 +176,13 @@ cbs_for_races = function(
     r = races[i, ]
     snap = NULL
     s = "not pulled"
+    one_unit = FALSE
     if (pull && !nzchar(why)) {
       snap = tryCatch(
         pull_cbs_race(r$state, r$contest, r$district, env = env, dir_26 = dir_26, verbose = FALSE),
         error = function(e) {
-          s <<- paste("pull failed:", conditionMessage(e))
+          one_unit <<- inherits(e, "cbs_statewide_only")
+          s <<- paste("pull failed:", cli::ansi_strip(conditionMessage(e)))
           NULL
         }
       )
@@ -199,6 +201,18 @@ cbs_for_races = function(
           )
         }
       )
+    }
+    # CBS sent the race as one statewide unit and there is no saved snapshot: for a state
+    # we scrape in full (CBS_DISTRICT_FALLBACK, cbs_county_pull.R), a stand-in with nothing
+    # counted, so the statewide rows are still made from our own returns
+    if (is.null(snap) && pull && one_unit && r$state %in% CBS_DISTRICT_FALLBACK) {
+      snap = tryCatch(cbs_district_frame(r$state, r$contest, r$district, env = env, dir_26 = dir_26), error = function(e) NULL)
+      if (!is.null(snap)) {
+        s = paste0(
+          "CBS sent one statewide unit; districts from our own returns, ",
+          "districts without returns from expectation (no CBS district counts)"
+        )
+      }
     }
     st[i] <<- s
     snap

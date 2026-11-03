@@ -1,0 +1,569 @@
+state,county,precinct_enr,vh_code
+FL,COLLIER,PCT101,101
+FL,COLLIER,PCT102,102
+FL,COLLIER,PCT103,103
+FL,COLLIER,PCT132,132
+FL,COLLIER,PCT141,141
+FL,COLLIER,PCT142,142
+FL,COLLIER,PCT144,144
+FL,COLLIER,PCT145,145
+FL,COLLIER,PCT150,150
+FL,COLLIER,PCT155,155
+FL,COLLIER,PCT156,156
+FL,COLLIER,PCT159,159
+FL,COLLIER,PCT189,189
+FL,COLLIER,PCT190,190
+FL,COLLIER,PCT193,193
+FL,COLLIER,PCT194,194
+FL,COLLIER,PCT202,202
+FL,COLLIER,PCT203,203
+FL,COLLIER,PCT204,204
+FL,COLLIER,PCT205,205
+FL,COLLIER,PCT221,221
+FL,COLLIER,PCT222,222
+FL,COLLIER,PCT223,223
+FL,COLLIER,PCT242,242
+FL,COLLIER,PCT251,251
+FL,COLLIER,PCT252,252
+FL,COLLIER,PCT255,255
+FL,COLLIER,PCT257,257
+FL,COLLIER,PCT258,258
+FL,COLLIER,PCT303,303
+FL,COLLIER,PCT304,304
+FL,COLLIER,PCT305,305
+FL,COLLIER,PCT310,310
+FL,COLLIER,PCT313,313
+FL,COLLIER,PCT315,315
+FL,COLLIER,PCT317,317
+FL,COLLIER,PCT322,322
+FL,COLLIER,PCT323,323
+FL,COLLIER,PCT324,324
+FL,COLLIER,PCT350,350
+FL,COLLIER,PCT351,351
+FL,COLLIER,PCT414,414
+FL,COLLIER,PCT418,418
+FL,COLLIER,PCT428,428
+FL,COLLIER,PCT430,430
+FL,COLLIER,PCT431,431
+FL,COLLIER,PCT434,434
+FL,COLLIER,PCT435,435
+FL,COLLIER,PCT438,438
+FL,COLLIER,PCT439,439
+FL,COLLIER,PCT440,440
+FL,COLLIER,PCT450,450
+FL,COLLIER,PCT462,462
+FL,COLLIER,PCT464,464
+FL,COLLIER,PCT472,472
+FL,COLLIER,PCT475,475
+FL,COLLIER,PCT477,477
+FL,COLLIER,PCT479,479
+FL,COLLIER,PCT502,502
+FL,COLLIER,PCT552,552
+FL,COLLIER,PCT554,554
+FL,COLLIER,PCT590,590
+FL,COLLIER,PCT591,591
+FL,COLLIER,PCT592,592
+FL,COLLIER,PCT593,593
+FL,COLLIER,PCT594,594
+FL,COLLIER,PCT595,595
+FL,DESOTO,11A Trinity United Methodist Church,00011
+FL,GADSDEN,Elizabeth A.M.E. Church,Elizabeth AME Church
+FL,GADSDEN,Green Shade A.M.E. Church,Green Shade AME Church
+FL,GADSDEN,Gretna City Hall,Gretna Town Hall
+FL,GADSDEN,New Bethel A.M.E. Church,New Bethel AME Church
+FL,GADSDEN,St. Joseph MBC,St. Joseph Missionary Baptist Church
+FL,GADSDEN,St. Matthew Church,St. Matthew Primitive Baptist Church
+FL,GADSDEN,Union Chapel A.M.E. Church,Union Chapel AME Church
+FL,GULF,Cape San Blas Fire Station,00007
+FL,GULF,Centennial Building,00005
+FL,GULF,Highland View Fire Station,00010
+FL,GULF,Honeyville Community Center,00001
+FL,GULF,Howard Creek Fire Station,00008
+FL,GULF,Overstreet Fire Station,00009
+FL,GULF,Port St Joe Fire Station,00004
+FL,GULF,St. Joe Beach Fire Station,00003
+FL,GULF,Wewahitchka Public Library,00002
+FL,GULF,White City Fire Station,00006
+FL,JACKSON,Alford Comm Ctr,004.0
+FL,JACKSON,Campbellton Comm Center,002.0
+FL,JACKSON,Citizens Lodge,003.0
+FL,JACKSON,Cottondale First Baptist Ch,012.0
+FL,JACKSON,Cypress Park,005.0
+FL,JACKSON,Eastside Baptist Church,007.0
+FL,JACKSON,Graceville Civic Ctr,014.0
+FL,JACKSON,Grand Ridge Comm Ctr,009.0
+FL,JACKSON,Greenwood Town Hall,013.0
+FL,JACKSON,Malone Joy Club,001.0
+FL,JACKSON,Penn Ave Ag Complex,006.0
+FL,JACKSON,Shady Grove Methodist Ch,008.0
+FL,JACKSON,Sneads City Hall,011.0
+FL,JACKSON,Welcome Assembly of God Ch,010.0
+FL,LEVY,Bronson First Baptist,003.0
+FL,LEVY,Cedar Key City Hall,004.0
+FL,LEVY,College of Central Florida,012.0
+FL,LEVY,Inglis Community Center,009.0
+FL,LEVY,Levy County Ag Extension Office,001.0
+FL,LEVY,Miracle Vision Tabernacle,011.0
+FL,LEVY,Morriston Baptist Church,008.0
+FL,LEVY,Otter Creek Baptist Church,006.0
+FL,LEVY,Pine Grove Baptist Church,010.0
+FL,LEVY,Tommy Usher Center,013.0
+FL,LEVY,Williston City Hall,007.0
+FL,LEVY,Williston Highlands,002.0
+FL,LEVY,Willow Sink,005.0
+FL,LIBERTY,Annex,002.0
+FL,LIBERTY,Bristol,003.0
+FL,LIBERTY,Hosford,005.0
+FL,LIBERTY,Lake Mystic,004.0
+FL,LIBERTY,Orange,008.0
+FL,LIBERTY,Rock Bluff,001.0
+FL,LIBERTY,Sumatra,007.0
+FL,LIBERTY,Telogia,006.0
+FL,UNION,Lake Butler Community Center 1,00001
+FL,UNION,Lake Butler Community Center 5,00005
+FL,UNION,Palestine Fire Station 5B,0005B
+FL,UNION,Raiford Community Center 2A &,0002A
+FL,UNION,SREC Building 3C,0003C
+FL,UNION,SREC Building 4A & 4C,4A & 4C
+FL,UNION,Worthington Springs Comm Ctnr,00003
+FL,WAKULLA,01 Wakulla Station,First Bapist Church of Wakulla Station
+FL,WAKULLA,02 Crawfordville,Wakulla County Livestock Pavilion
+FL,WAKULLA,03 Sopchoppy,Old Sopchoppy School
+FL,WAKULLA,06 Medart,Wakulla County Public Library
+FL,WAKULLA,07 Ivan,Grace Baptist Church
+FL,WAKULLA,08 Shell Point,Apalachee Bay Volunteer Fire Department
+FL,WAKULLA,11 Bethel,Mt. Olive Primitive Baptist Church No. 2
+FL,WAKULLA,12 Shadeville,Pioneer Baptist Church
+FL,WASHINGTON,0010 Ebro City Hall,00011
+FL,WASHINGTON,0011 Greenhead Fire Department,00012
+FL,WASHINGTON,0012 Sunny Hills Comm Ctr/Lib,00015
+NE,ANTELOPE,Brunswick*,Brunswick
+NE,ANTELOPE,Clearwater*,Clearwater
+NE,ANTELOPE,Elgin*,Elgin
+NE,ANTELOPE,Neligh*,Neligh
+NE,ANTELOPE,Oakdale*,Oakdale
+NE,ANTELOPE,Orchard*,Orchard
+NE,ANTELOPE,Royal*,Royal
+NE,ANTELOPE,Tilden*,Tilden
+NE,BROWN,Ainsworth,Ainsworth Precinct
+NE,BUFFALO,01 Grace Fellowship Church,Precinct 1
+NE,BUFFALO,02 1st Presbyterian Church,Precinct 2
+NE,BUFFALO,03 1st United Methodist Church,Precinct 3
+NE,BUFFALO,04 Good Shepherd Lutheran,Precinct 4
+NE,BUFFALO,05 Exhibit Bldg @ Fairgrounds,Precinct 5
+NE,BUFFALO,06 First Baptist Church,Precinct 6
+NE,BUFFALO,07 Activity Center/Harmon Park,Precinct 7
+NE,BUFFALO,08 St James Catholic Church,Precinct 8
+NE,BUFFALO,09 1st Lutheran Church,Precinct 9
+NE,BUFFALO,10 Exhibit Bldg @ Fairgrounds,Precinct 10
+NE,BUFFALO,11 Meadowlark Manor,Precinct 11
+NE,BUFFALO,12 Activity Center/Harmon Prk,Precinct 12
+NE,BUFFALO,13 Peterson Sr. Center,Precinct 13
+NE,BUFFALO,14 American Legion-Bingo Hall,Precinct 14
+NE,BUFFALO,15 Miller Comm. Hall,Precinct 15
+NE,BUFFALO,16 Pleasanton Comm. Center,Precinct 16
+NE,BUFFALO,17 Ravenna City Auditorium,Precinct 17
+NE,BUFFALO,19 Amherst Comm. Center,Precinct 19
+NE,BUFFALO,20 Prince of Peace,Precinct 20
+NE,BUFFALO,21 Colony Acres Comm. Rm,Precinct 21
+NE,BUFFALO,22 Faith United Church,Precinct 22
+NE,BUFFALO,23 American Legion-Bingo Hall,Precinct 23
+NE,BUFFALO,24 Shelton Municipal Bldg,Precinct 24
+NE,BUFFALO,25 Elm Creek Village Center,Precinct 25
+NE,BUFFALO,26 Spirit of Life Church,Precinct 26
+NE,BUFFALO,27 Cornerstone Berean Church,Precinct 27
+NE,BUFFALO,28 Riverdale Com. Center,Precinct 28
+NE,BUFFALO,29 Extension Bldg-Bison Mtg Rm,Precinct 29
+NE,BUTLER,01 Linwood-Skull Creek-Platte,Linwood-Skull Creek-Platte
+NE,BUTLER,02 Savannah,Savannah
+NE,BUTLER,03 Alexis,Alexis
+NE,BUTLER,04 Union-Olive,Union-Olive
+NE,BUTLER,05 Summit-Reading-Read,Summit-Reading-Read
+NE,BUTLER,06 Plum Creek-Richardson-Uly,Plum Creek-Richardson-Ulysses
+NE,BUTLER,07 Franklin-Bone Creek,Franklin-Bone Creek
+NE,BUTLER,08 Oak Creek-Center,Oak Creek-Center
+NE,BUTLER,09 First Ward,First Ward
+NE,BUTLER,10 Second Ward,Second Ward
+NE,BUTLER,11 Third Ward,Third Ward
+NE,CEDAR,PCT 06 8-9,Precinct 6
+NE,DAKOTA,Covington Island,06 - Covington Island
+NE,DAKOTA,Dakota City,07 - Dakota City
+NE,DAKOTA,Dakota Rural,08 - Dakota Rural
+NE,DAKOTA,Emerson,09 - Emerson
+NE,DAKOTA,Hubbard,10 - Hubbard
+NE,DAKOTA,Omadi,11 - Omadi
+NE,DAKOTA,St Johns,12 - St. Johns
+NE,DAKOTA,Ward 1 South Sioux City,01 - SSC Ward 1
+NE,DAKOTA,Ward 2 South Sioux City,02 - SSC Ward 2
+NE,DAKOTA,Ward 3 South Sioux City,03 - SSC Ward 3
+NE,DAKOTA,Ward 4 South Sioux City,04 - SSC Ward 4
+NE,DAKOTA,Ward 5 South Sioux City,05 - SSC Ward 5
+NE,DOUGLAS,08-20,08-20.01
+NE,DUNDY,Benkelman I & Ough,Benkelman I
+NE,FRONTIER,Stockville Orafino Moorefield,Stockville
+NE,FURNAS,Arapahoe & Rural,01 Arapahoe
+NE,FURNAS,Beaver City & Rural,02 Beaver City
+NE,FURNAS,Cambridge & Rural,03 Cambridge
+NE,FURNAS,Edison & Rural,04 Edison
+NE,FURNAS,Hendley & Rural,05 Hendley
+NE,FURNAS,Holbrook & Rural,06 Holbrook
+NE,FURNAS,Oxford & Rural,07 Oxford
+NE,FURNAS,Wilsonville & Rural,08 Wilsonville
+NE,GARFIELD,Rural Garfield Co.,Rural Garfield County
+NE,KNOX,01 BLF - Bloomfield Area,Bloomfield Area
+NE,KNOX,02 CFN - Crofton Area,Crofton Area
+NE,KNOX,03 CRG - Creighton Area,Creighton Area
+NE,KNOX,04 LSC - Lindy/Santee/Ctr Area,Lindy/Santee/Ctr Area
+NE,KNOX,05 WAU - Wausa Area,Wausa Area
+NE,KNOX,06 NIO - Niobrara Area,Niobrara Area
+NE,KNOX,07 VDG - Verdigre Area,Verdigre Area
+NE,LANCASTER,Nemaha #1,Nemaha1
+NE,LANCASTER,Nemaha #2,Nemaha2
+NE,LANCASTER,Saltillo #1,Saltillo1
+NE,LANCASTER,Saltillo #2,Saltillo2
+NE,LANCASTER,Waverly #2,Waverly2
+NE,MADISON,MG-J-T-G-H Pct,MG-J-G-H-Tilden City
+NE,OTOE,NC1,NC 1
+NE,OTOE,NC2,NC 2
+NE,OTOE,NC3,NC 3
+NE,OTOE,So Branch,South Branch
+NE,PERKINS,District 1,Precinct 1
+NE,PERKINS,District 2,Precinct 2
+NE,RICHARDSON,FC Rural/Ohio,FCRural/Ohio
+NE,RICHARDSON,Franklin/Hrr/Spi,Fran/Hrr/Spi
+NE,RICHARDSON,Humboldt I,Humb. I
+NE,RICHARDSON,Humboldt II,Humb. II
+NE,RICHARDSON,Jefferson/Rulo,Jeff/Rulo
+NE,RICHARDSON,West Muddy/Porter,WMuddy/Porter
+NE,SCOTTS BLUFF,Terrytown,Terrytown I & II
+NE,SHERIDAN,Mirage Flats,Mirage
+NE,SIOUX,Sheep C,Sheep Creek
+NE,VALLEY,Wp 04,Precinct 4
+NE,WASHINGTON,FORT CALHOUN EAST PRECINCT,Ft Calhoun East
+NE,WASHINGTON,FORT CALHOUN WEST PRECINCT,Ft Calhoun West
+OH,CUYAHOGA,beachwood -00-a,BCHWD00A
+OH,CUYAHOGA,beachwood -00-b,BCHWD00B
+OH,CUYAHOGA,beachwood -00-c,BCHWD00C
+OH,CUYAHOGA,beachwood -00-d,BCHWD00D
+OH,CUYAHOGA,beachwood -00-e,BCHWD00E
+OH,CUYAHOGA,beachwood -00-f,BCHWD00F
+OH,CUYAHOGA,beachwood -00-g,BCHWD00G
+OH,CUYAHOGA,beachwood -00-h,BCHWD00H
+OH,CUYAHOGA,beachwood -00-i,BCHWD00I
+OH,CUYAHOGA,beachwood -00-j,BCHWD00J
+OH,CUYAHOGA,bedford -01-a,BEDFD01A
+OH,CUYAHOGA,bedford -01-b,BEDFD01B
+OH,CUYAHOGA,bedford -02-a,BEDFD02A
+OH,CUYAHOGA,bedford -02-b,BEDFD02B
+OH,CUYAHOGA,bedford -03-a,BEDFD03A
+OH,CUYAHOGA,bedford -03-b,BEDFD03B
+OH,CUYAHOGA,bedford -04-a,BEDFD04A
+OH,CUYAHOGA,bedford -04-b,BEDFD04B
+OH,CUYAHOGA,bedford -05-a,BEDFD05A
+OH,CUYAHOGA,bedford -05-b,BEDFD05B
+OH,CUYAHOGA,bedford heights -01-a,BEHT01A
+OH,CUYAHOGA,bedford heights -01-b,BEHT01B
+OH,CUYAHOGA,bedford heights -02-a,BEHT02A
+OH,CUYAHOGA,bedford heights -02-b,BEHT02B
+OH,CUYAHOGA,bedford heights -03-a,BEHT03A
+OH,CUYAHOGA,bedford heights -03-b,BEHT03B
+OH,CUYAHOGA,bedford heights -04-a,BEHT04A
+OH,CUYAHOGA,bedford heights -04-b,BEHT04B
+OH,CUYAHOGA,bentleyville -00-a,BNTLY00A
+OH,CUYAHOGA,berea -01-a,BEREA01A
+OH,CUYAHOGA,berea -01-b,BEREA01B
+OH,CUYAHOGA,berea -02-a,BEREA02A
+OH,CUYAHOGA,berea -02-b,BEREA02B
+OH,CUYAHOGA,berea -03-a,BEREA03A
+OH,CUYAHOGA,berea -03-b,BEREA03B
+OH,CUYAHOGA,berea -04-a,BEREA04A
+OH,CUYAHOGA,berea -04-b,BEREA04B
+OH,CUYAHOGA,berea -05-a,BEREA05A
+OH,CUYAHOGA,berea -05-b,BEREA05B
+OH,CUYAHOGA,bratenahl -00-a,BRTNL00A
+OH,CUYAHOGA,brecksville -00-a,BRECK00A
+OH,CUYAHOGA,brecksville -00-b,BRECK00B
+OH,CUYAHOGA,brecksville -00-c,BRECK00C
+OH,CUYAHOGA,brecksville -00-d,BRECK00D
+OH,CUYAHOGA,brecksville -00-e,BRECK00E
+OH,CUYAHOGA,brecksville -00-f,BRECK00F
+OH,CUYAHOGA,brecksville -00-g,BRECK00G
+OH,CUYAHOGA,brecksville -00-h,BRECK00H
+OH,CUYAHOGA,broadview heights -01-a,BRHT01A
+OH,CUYAHOGA,broadview heights -01-b,BRHT01B
+OH,CUYAHOGA,broadview heights -01-c,BRHT01C
+OH,CUYAHOGA,broadview heights -02-a,BRHT02A
+OH,CUYAHOGA,broadview heights -02-b,BRHT02B
+OH,CUYAHOGA,broadview heights -02-c,BRHT02C
+OH,CUYAHOGA,broadview heights -03-a,BRHT03A
+OH,CUYAHOGA,broadview heights -03-b,BRHT03B
+OH,CUYAHOGA,broadview heights -03-c,BRHT03C
+OH,CUYAHOGA,broadview heights -04-a,BRHT04A
+OH,CUYAHOGA,broadview heights -04-b,BRHT04B
+OH,CUYAHOGA,broadview heights -04-c,BRHT04C
+OH,CUYAHOGA,brook park -01-a,BRPK01A
+OH,CUYAHOGA,brook park -01-b,BRPK01B
+OH,CUYAHOGA,brook park -01-c,BRPK01C
+OH,CUYAHOGA,brook park -02-a,BRPK02A
+OH,CUYAHOGA,brook park -02-b,BRPK02B
+OH,CUYAHOGA,brook park -02-c,BRPK02C
+OH,CUYAHOGA,brook park -03-a,BRPK03A
+OH,CUYAHOGA,brook park -03-b,BRPK03B
+OH,CUYAHOGA,brook park -03-c,BRPK03C
+OH,CUYAHOGA,brook park -04-a,BRPK04A
+OH,CUYAHOGA,brook park -04-b,BRPK04B
+OH,CUYAHOGA,brook park -04-c,BRPK04C
+OH,CUYAHOGA,brooklyn -00-a,BRKV00A
+OH,CUYAHOGA,brooklyn -00-b,BRKV00B
+OH,CUYAHOGA,brooklyn -00-c,BRKV00C
+OH,CUYAHOGA,brooklyn -00-d,BRKV00D
+OH,CUYAHOGA,brooklyn -00-e,BRKV00E
+OH,CUYAHOGA,brooklyn -00-f,BRKV00F
+OH,CUYAHOGA,brooklyn -00-g,BRKV00G
+OH,CUYAHOGA,brooklyn -00-h,BRKV00H
+OH,CUYAHOGA,brooklyn heights -00-a,BHV00A
+OH,CUYAHOGA,chagrin falls -00-a,CFV00A
+OH,CUYAHOGA,chagrin falls -00-b,CFV00B
+OH,CUYAHOGA,chagrin falls -00-c,CFV00C
+OH,CUYAHOGA,chagrin falls -00-d,CFV00D
+OH,CUYAHOGA,chagrin falls twp -00-a,CHFL00A
+OH,CUYAHOGA,cleveland -01-a,CLEVE01A
+OH,CUYAHOGA,cleveland -01-b,CLEVE01B
+OH,CUYAHOGA,cleveland -01-c,CLEVE01C
+OH,CUYAHOGA,cleveland -01-d,CLEVE01D
+OH,CUYAHOGA,cleveland -01-e,CLEVE01E
+OH,CUYAHOGA,cleveland -01-f,CLEVE01F
+OH,CUYAHOGA,cleveland -02-a,CLEVE02A
+OH,CUYAHOGA,cleveland -02-b,CLEVE02B
+OH,CUYAHOGA,cleveland -02-c,CLEVE02C
+OH,CUYAHOGA,cleveland -02-d,CLEVE02D
+OH,CUYAHOGA,cleveland -02-e,CLEVE02E
+OH,CUYAHOGA,cleveland -02-f,CLEVE02F
+OH,CUYAHOGA,cleveland -03-a,CLEVE03A
+OH,CUYAHOGA,cleveland -03-b,CLEVE03B
+OH,CUYAHOGA,cleveland -03-c,CLEVE03C
+OH,CUYAHOGA,cleveland -03-d,CLEVE03D
+OH,CUYAHOGA,cleveland -03-e,CLEVE03E
+OH,CUYAHOGA,cleveland -03-f,CLEVE03F
+OH,CUYAHOGA,cleveland -04-a,CLEVE04A
+OH,CUYAHOGA,cleveland -04-b,CLEVE04B
+OH,CUYAHOGA,cleveland -04-c,CLEVE04C
+OH,CUYAHOGA,cleveland -04-d,CLEVE04D
+OH,CUYAHOGA,cleveland -04-e,CLEVE04E
+OH,CUYAHOGA,cleveland -04-g,CLEVE04G
+OH,CUYAHOGA,cleveland -04-h,CLEVE04H
+OH,CUYAHOGA,cleveland -04-i,CLEVE04I
+OH,CUYAHOGA,cleveland -05-a,CLEVE05A
+OH,CUYAHOGA,cleveland -05-b,CLEVE05B
+OH,CUYAHOGA,cleveland -05-c,CLEVE05C
+OH,CUYAHOGA,cleveland -05-d,CLEVE05D
+OH,CUYAHOGA,cleveland -05-e,CLEVE05E
+OH,CUYAHOGA,cleveland -05-f,CLEVE05F
+OH,CUYAHOGA,cleveland heights -01-a,CLHT01A
+OH,CUYAHOGA,cleveland heights -01-b,CLHT01B
+OH,CUYAHOGA,cleveland heights -01-c,CLHT01C
+OH,CUYAHOGA,cleveland heights -01-d,CLHT01D
+OH,CUYAHOGA,cleveland heights -01-e,CLHT01E
+OH,CUYAHOGA,cleveland heights -01-f,CLHT01F
+OH,CUYAHOGA,cleveland heights -02-a,CLHT02A
+OH,CUYAHOGA,cleveland heights -02-b,CLHT02B
+OH,CUYAHOGA,cleveland heights -02-c,CLHT02C
+OH,CUYAHOGA,cleveland heights -02-d,CLHT02D
+OH,CUYAHOGA,cleveland heights -02-e,CLHT02E
+OH,CUYAHOGA,cleveland heights -02-f,CLHT02F
+OH,CUYAHOGA,cleveland heights -03-a,CLHT03A
+OH,CUYAHOGA,cleveland heights -03-b,CLHT03B
+OH,CUYAHOGA,cleveland heights -03-c,CLHT03C
+OH,CUYAHOGA,cleveland heights -03-d,CLHT03D
+OH,CUYAHOGA,cleveland heights -03-e,CLHT03E
+OH,CUYAHOGA,cleveland heights -03-f,CLHT03F
+OH,CUYAHOGA,cleveland heights -04-a,CLHT04A
+OH,CUYAHOGA,cleveland heights -04-b,CLHT04B
+OH,CUYAHOGA,cleveland heights -04-c,CLHT04C
+OH,CUYAHOGA,cleveland heights -04-d,CLHT04D
+OH,CUYAHOGA,cleveland heights -04-e,CLHT04E
+OH,CUYAHOGA,cleveland heights -04-f,CLHT04F
+OH,CUYAHOGA,cleveland heights -04-g,CLHT04G
+OH,CUYAHOGA,cleveland heights -04-h,CLHT04H
+OH,CUYAHOGA,cleveland heights -04-i,CLHT04I
+OH,CUYAHOGA,cleveland heights -05-a,CLHT05A
+OH,CUYAHOGA,cleveland heights -05-b,CLHT05B
+OH,CUYAHOGA,cleveland heights -05-c,CLHT05C
+OH,CUYAHOGA,cleveland heights -05-d,CLHT05D
+OH,CUYAHOGA,cleveland heights -05-e,CLHT05E
+OH,CUYAHOGA,cleveland heights -05-f,CLHT05F
+OH,CUYAHOGA,east cleveland -02-a,ECLE02A
+OH,CUYAHOGA,east cleveland -02-b,ECLE02B
+OH,CUYAHOGA,east cleveland -02-c,ECLE02C
+OH,CUYAHOGA,east cleveland -02-d,ECLE02D
+OH,CUYAHOGA,east cleveland -03-a,ECLE03A
+OH,CUYAHOGA,east cleveland -03-b,ECLE03B
+OH,CUYAHOGA,east cleveland -03-c,ECLE03C
+OH,CUYAHOGA,east cleveland -03-d,ECLE03D
+OH,CUYAHOGA,east cleveland -03-e,ECLE03E
+OH,CUYAHOGA,east cleveland -04-a,ECLE04A
+OH,CUYAHOGA,east cleveland -04-b,ECLE04B
+OH,CUYAHOGA,east cleveland -04-c,ECLE04C
+OH,CUYAHOGA,east cleveland -04-d,ECLE04D
+OH,CUYAHOGA,east cleveland -04-e,ECLE04E
+OH,CUYAHOGA,east cleveland -04-f,ECLE04F
+OH,CUYAHOGA,highland hills -00-a,HHV00A
+OH,CUYAHOGA,hunting valley -00-a,HVV00A
+OH,CUYAHOGA,maple heights -01-a,MPHT01A
+OH,CUYAHOGA,maple heights -01-b,MPHT01B
+OH,CUYAHOGA,maple heights -02-a,MPHT02A
+OH,CUYAHOGA,maple heights -02-b,MPHT02B
+OH,CUYAHOGA,maple heights -03-a,MPHT03A
+OH,CUYAHOGA,maple heights -03-b,MPHT03B
+OH,CUYAHOGA,maple heights -04-a,MPHT04A
+OH,CUYAHOGA,maple heights -04-b,MPHT04B
+OH,CUYAHOGA,maple heights -04-c,MPHT04C
+OH,CUYAHOGA,maple heights -05-a,MPHT05A
+OH,CUYAHOGA,maple heights -05-b,MPHT05B
+OH,CUYAHOGA,maple heights -06-a,MPHT06A
+OH,CUYAHOGA,maple heights -06-b,MPHT06B
+OH,CUYAHOGA,maple heights -07-a,MPHT07A
+OH,CUYAHOGA,maple heights -07-b,MPHT07B
+OH,CUYAHOGA,maple heights -07-c,MPHT07C
+OH,CUYAHOGA,mayfield village -01-a,MAYV01A
+OH,CUYAHOGA,mayfield village -02-a,MAYV02A
+OH,CUYAHOGA,mayfield village -03-a,MAYV03A
+OH,CUYAHOGA,mayfield village -04-a,MAYV04A
+OH,CUYAHOGA,north olmsted -01-a,NOLM01A
+OH,CUYAHOGA,north olmsted -01-b,NOLM01B
+OH,CUYAHOGA,north olmsted -01-c,NOLM01C
+OH,CUYAHOGA,north olmsted -02-a,NOLM02A
+OH,CUYAHOGA,north olmsted -02-b,NOLM02B
+OH,CUYAHOGA,north olmsted -02-c,NOLM02C
+OH,CUYAHOGA,north olmsted -02-d,NOLM02D
+OH,CUYAHOGA,north olmsted -03-a,NOLM03A
+OH,CUYAHOGA,north olmsted -03-b,NOLM03B
+OH,CUYAHOGA,north olmsted -03-c,NOLM03C
+OH,CUYAHOGA,north olmsted -03-d,NOLM03D
+OH,CUYAHOGA,north olmsted -04-a,NOLM04A
+OH,CUYAHOGA,north olmsted -04-b,NOLM04B
+OH,CUYAHOGA,north olmsted -04-c,NOLM04C
+OH,CUYAHOGA,north olmsted -04-d,NOLM04D
+OH,CUYAHOGA,north randall -00-a,NRAN00A
+OH,CUYAHOGA,north royalton -01-a,NROY01A
+OH,CUYAHOGA,north royalton -01-b,NROY01B
+OH,CUYAHOGA,north royalton -01-c,NROY01C
+OH,CUYAHOGA,north royalton -02-a,NROY02A
+OH,CUYAHOGA,north royalton -02-b,NROY02B
+OH,CUYAHOGA,north royalton -02-c,NROY02C
+OH,CUYAHOGA,north royalton -02-d,NROY02D
+OH,CUYAHOGA,north royalton -03-a,NROY03A
+OH,CUYAHOGA,north royalton -03-b,NROY03B
+OH,CUYAHOGA,north royalton -03-c,NROY03C
+OH,CUYAHOGA,north royalton -03-d,NROY03D
+OH,CUYAHOGA,north royalton -04-a,NROY04A
+OH,CUYAHOGA,north royalton -04-b,NROY04B
+OH,CUYAHOGA,north royalton -04-c,NROY04C
+OH,CUYAHOGA,north royalton -04-d,NROY04D
+OH,CUYAHOGA,north royalton -05-a,NROY05A
+OH,CUYAHOGA,north royalton -05-b,NROY05B
+OH,CUYAHOGA,north royalton -05-c,NROY05C
+OH,CUYAHOGA,north royalton -05-d,NROY05D
+OH,CUYAHOGA,north royalton -06-a,NROY06A
+OH,CUYAHOGA,north royalton -06-b,NROY06B
+OH,CUYAHOGA,north royalton -06-c,NROY06C
+OH,CUYAHOGA,north royalton -06-d,NROY06D
+OH,CUYAHOGA,olmsted falls -01-a,OFV01A
+OH,CUYAHOGA,olmsted falls -01-b,OFV01B
+OH,CUYAHOGA,olmsted falls -02-a,OFV02A
+OH,CUYAHOGA,olmsted falls -02-b,OFV02B
+OH,CUYAHOGA,olmsted falls -03-a,OFV03A
+OH,CUYAHOGA,olmsted falls -03-b,OFV03B
+OH,CUYAHOGA,olmsted falls -04-a,OFV04A
+OH,CUYAHOGA,olmsted falls -04-b,OFV04B
+OH,CUYAHOGA,parma -01-a,PARMA01A
+OH,CUYAHOGA,parma -01-b,PARMA01B
+OH,CUYAHOGA,parma -01-c,PARMA01C
+OH,CUYAHOGA,parma -02-a,PARMA02A
+OH,CUYAHOGA,parma -02-b,PARMA02B
+OH,CUYAHOGA,parma -02-c,PARMA02C
+OH,CUYAHOGA,parma -03-a,PARMA03A
+OH,CUYAHOGA,parma -03-b,PARMA03B
+OH,CUYAHOGA,parma -03-c,PARMA03C
+OH,CUYAHOGA,parma -04-a,PARMA04A
+OH,CUYAHOGA,parma -04-b,PARMA04B
+OH,CUYAHOGA,parma -04-c,PARMA04C
+OH,CUYAHOGA,parma heights -01-a,PAHT01A
+OH,CUYAHOGA,parma heights -01-b,PAHT01B
+OH,CUYAHOGA,parma heights -01-c,PAHT01C
+OH,CUYAHOGA,parma heights -02-a,PAHT02A
+OH,CUYAHOGA,parma heights -02-b,PAHT02B
+OH,CUYAHOGA,parma heights -02-c,PAHT02C
+OH,CUYAHOGA,parma heights -03-a,PAHT03A
+OH,CUYAHOGA,parma heights -03-b,PAHT03B
+OH,CUYAHOGA,parma heights -03-c,PAHT03C
+OH,CUYAHOGA,parma heights -04-a,PAHT04A
+OH,CUYAHOGA,parma heights -04-b,PAHT04B
+OH,CUYAHOGA,parma heights -04-c,PAHT04C
+OH,CUYAHOGA,pepper pike -00-a,PPV00A
+OH,CUYAHOGA,pepper pike -00-b,PPV00B
+OH,CUYAHOGA,pepper pike -00-c,PPV00C
+OH,CUYAHOGA,pepper pike -00-d,PPV00D
+OH,CUYAHOGA,pepper pike -00-e,PPV00E
+OH,CUYAHOGA,rocky river -01-a,RRIV01A
+OH,CUYAHOGA,rocky river -01-b,RRIV01B
+OH,CUYAHOGA,rocky river -01-c,RRIV01C
+OH,CUYAHOGA,rocky river -01-d,RRIV01D
+OH,CUYAHOGA,rocky river -02-a,RRIV02A
+OH,CUYAHOGA,rocky river -02-b,RRIV02B
+OH,CUYAHOGA,rocky river -02-c,RRIV02C
+OH,CUYAHOGA,rocky river -02-d,RRIV02D
+OH,CUYAHOGA,rocky river -03-a,RRIV03A
+OH,CUYAHOGA,rocky river -03-b,RRIV03B
+OH,CUYAHOGA,rocky river -03-c,RRIV03C
+OH,CUYAHOGA,rocky river -03-d,RRIV03D
+OH,CUYAHOGA,rocky river -04-a,RRIV04A
+OH,CUYAHOGA,rocky river -04-b,RRIV04B
+OH,CUYAHOGA,rocky river -04-c,RRIV04C
+OH,CUYAHOGA,rocky river -04-d,RRIV04D
+OH,CUYAHOGA,seven hills -01-a,SHV01A
+OH,CUYAHOGA,seven hills -01-b,SHV01B
+OH,CUYAHOGA,seven hills -02-a,SHV02A
+OH,CUYAHOGA,seven hills -02-b,SHV02B
+OH,CUYAHOGA,seven hills -03-a,SHV03A
+OH,CUYAHOGA,seven hills -03-b,SHV03B
+OH,CUYAHOGA,seven hills -04-a,SHV04A
+OH,CUYAHOGA,seven hills -04-b,SHV04B
+OH,CUYAHOGA,solon -01-a,SOLON01A
+OH,CUYAHOGA,solon -01-b,SOLON01B
+OH,CUYAHOGA,solon -01-c,SOLON01C
+OH,CUYAHOGA,solon -02-a,SOLON02A
+OH,CUYAHOGA,solon -02-b,SOLON02B
+OH,CUYAHOGA,solon -03-a,SOLON03A
+OH,CUYAHOGA,solon -03-b,SOLON03B
+OH,CUYAHOGA,solon -04-a,SOLON04A
+OH,CUYAHOGA,solon -04-b,SOLON04B
+OH,CUYAHOGA,solon -04-c,SOLON04C
+OH,CUYAHOGA,south euclid -01-a,SEUC01A
+OH,CUYAHOGA,south euclid -01-b,SEUC01B
+OH,CUYAHOGA,south euclid -01-c,SEUC01C
+OH,CUYAHOGA,south euclid -01-d,SEUC01D
+OH,CUYAHOGA,south euclid -02-a,SEUC02A
+OH,CUYAHOGA,south euclid -02-b,SEUC02B
+OH,CUYAHOGA,south euclid -02-c,SEUC02C
+OH,CUYAHOGA,south euclid -02-d,SEUC02D
+OH,CUYAHOGA,south euclid -03-a,SEUC03A
+OH,CUYAHOGA,south euclid -03-b,SEUC03B
+OH,CUYAHOGA,south euclid -03-c,SEUC03C
+OH,CUYAHOGA,south euclid -03-d,SEUC03D
+OH,CUYAHOGA,south euclid -04-a,SEUC04A
+OH,CUYAHOGA,south euclid -04-b,SEUC04B
+OH,CUYAHOGA,south euclid -04-c,SEUC04C
+OH,CUYAHOGA,south euclid -04-d,SEUC04D
+OH,CUYAHOGA,westlake -01-a,WLKV01A
+OH,CUYAHOGA,westlake -01-b,WLKV01B
+OH,CUYAHOGA,westlake -02-a,WLKV02A
+OH,CUYAHOGA,westlake -02-b,WLKV02B
+OH,CUYAHOGA,westlake -03-a,WLKV03A
+OH,CUYAHOGA,westlake -03-b,WLKV03B
+OH,CUYAHOGA,westlake -04-a,WLKV04A
+OH,CUYAHOGA,westlake -04-b,WLKV04B
+OH,CUYAHOGA,westlake -05-a,WLKV05A
+OH,CUYAHOGA,westlake -05-b,WLKV05B
+OH,CUYAHOGA,westlake -06-a,WLKV06A
+OH,CUYAHOGA,woodmere -00-a,WDMV00A

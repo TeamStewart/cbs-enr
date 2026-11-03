@@ -17,6 +17,7 @@ if (FALSE) {
   library(nanoparquet)
   library(pdftools)
   library(purrr)
+  library(R.utils) # not in its DESCRIPTION, but scrape-in.R's fread() of .csv.gz needs it
   library(readr)
   library(readxl)
   library(reticulate)

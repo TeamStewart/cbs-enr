@@ -89,7 +89,7 @@ turns it off).
 tidy prediction format (the columns in `enightmodels::COLS_PRED`: one row per race x model
 x candidate x `pred_type`, with `pred_type` "vote" and "share", `rep`, `pred`, `pred_min`,
 `pred_max`, `pct_rep`, plus `p_win`), `$turnout`, the race total with its interval (one row
-per race x model x geo; CONTRACT.md section 15.4), and `$status`, one row per race x model saying "ok",
+per race x model x geo, plus one per vote method when the fit is by method; CONTRACT.md section 15.4), and `$status`, one row per race x model saying "ok",
 "no_votes" or "error: ...". `write_predictions(res)` writes all three to `26_general/model_results/` in the shared
 Dropbox, as timestamped CSVs plus `predictions_latest.csv` / `turnout_latest.csv` / `status_latest.csv`. Test
 runs should pass another `dir` so they never mix with the night's results. Details at the top of `R/output.R`.
@@ -260,3 +260,12 @@ Speed, one race per refresh on a slow 2-core test server: swing 4-7 s, medsl_sur
   (`county_targets()` in `medsl/model_hybrid.R`) is untested on simulated nights.
 - **medsl_sur draws.** `MEDSL_DRAWS`, `MEDSL_MAX_PRECINCT_DRAWS` and its `seed` could move to
   `DRAWS`, `SEED` and `cap_draws()` (`R/results.R`); same values, so no estimate change.
+- **Turnout by vote method, still to do** (`mode_rows()`, `R/results.R`; CONTRACT.md section 15.4).
+  Points everywhere a fit is by method; intervals only from draws (bootstrap, credible) and
+  pois_bayes conf_seq. Left as points: conf_seq for lm_bayes and medsl_sur (their prior
+  draws are race totals; per-method prior draws would need `prior_totals()` /
+  `forecast_prec()` changes), and every method row with `geo = "all"` from a fit with bounds
+  (conf_seq, conformal). NC virtual units in fits with bounds add their method totals at the
+  turnout-ratio ends without the REST_* noise. A race only some of whose counties report by
+  method is fit without method by every model but medsl_sur, so only medsl_sur has method
+  rows there (on the counties that split); the others would need a second fit.

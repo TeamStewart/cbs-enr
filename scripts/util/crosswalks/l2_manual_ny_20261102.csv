@@ -1,0 +1,3260 @@
+state,county,precinct_enr,precinct_l2,rule
+NY,Cattaraugus,City of Olean Ward 1,OLEAN CITY 1-1,ny_ward_only
+NY,Cattaraugus,City of Olean Ward 2,OLEAN CITY 2-1,ny_ward_only
+NY,Cattaraugus,City of Olean Ward 3,OLEAN CITY 3-1,ny_ward_only
+NY,Cattaraugus,City of Olean Ward 4,OLEAN CITY 4-1,ny_ward_only
+NY,Cattaraugus,City of Olean Ward 5,OLEAN CITY 5-1,ny_ward_only
+NY,Cattaraugus,City of Olean Ward 6,OLEAN CITY 6-1,ny_ward_only
+NY,Cattaraugus,City of Olean Ward 7,OLEAN CITY 7-1,ny_ward_only
+NY,Cattaraugus,City of Salamanca Ward 1,SALAMANCA CITY 1-1,ny_ward_only
+NY,Cattaraugus,City of Salamanca Ward 2,SALAMANCA CITY 2-1,ny_ward_only
+NY,Cattaraugus,City of Salamanca Ward 3,SALAMANCA CITY 3-1,ny_ward_only
+NY,Cattaraugus,City of Salamanca Ward 4,SALAMANCA CITY 4-1,ny_ward_only
+NY,Cattaraugus,City of Salamanca Ward 5,SALAMANCA CITY 5-1,ny_ward_only
+NY,Cattaraugus,Town of Allegany Dist 1,ALLEGANY 1,ny_full
+NY,Cattaraugus,Town of Allegany Dist 2,ALLEGANY 2,ny_full
+NY,Cattaraugus,Town of Allegany Dist 3,ALLEGANY 3,ny_full
+NY,Cattaraugus,Town of Allegany Dist 4,ALLEGANY 4,ny_full
+NY,Cattaraugus,Town of Allegany Dist 5,ALLEGANY 5,ny_full
+NY,Cattaraugus,Town of Ashford Dist 1,ASHFORD 1,ny_full
+NY,Cattaraugus,Town of Ashford Dist 2,ASHFORD 2,ny_full
+NY,Cattaraugus,Town of Carrollton,CARROLLTON,ny_full
+NY,Cattaraugus,Town of Coldspring,COLDSPRING,ny_full
+NY,Cattaraugus,Town of Conewango,CONEWANGO,ny_full
+NY,Cattaraugus,Town of Dayton,DAYTON 1,ny_single
+NY,Cattaraugus,Town of East Otto,EAST OTTO,ny_full
+NY,Cattaraugus,Town of Ellicottville,ELLICOTTVILLE 1,ny_single
+NY,Cattaraugus,Town of Farmersville,FARMERSVILLE,ny_full
+NY,Cattaraugus,Town of Franklinville Dist 1,FRANKLINVILLE 1,ny_full
+NY,Cattaraugus,Town of Franklinville Dist 2,FRANKLINVILLE 2,ny_full
+NY,Cattaraugus,Town of Freedom,FREEDOM 1,ny_single
+NY,Cattaraugus,Town of Great Valley Dist 1,GREAT VALLEY 1,ny_full
+NY,Cattaraugus,Town of Great Valley Dist 2,GREAT VALLEY 2,ny_full
+NY,Cattaraugus,Town of Hinsdale,HINSDALE 1,ny_single
+NY,Cattaraugus,Town of Humphrey,HUMPHREY,ny_full
+NY,Cattaraugus,Town of Ischua,ISCHUA,ny_full
+NY,Cattaraugus,Town of Leon,LEON,ny_full
+NY,Cattaraugus,Town of Little Valley,LITTLE VALLEY,ny_full
+NY,Cattaraugus,Town of Lyndon,LYNDON,ny_full
+NY,Cattaraugus,Town of Machias,MACHIAS,ny_full
+NY,Cattaraugus,Town of Mansfield,MANSFIELD,ny_full
+NY,Cattaraugus,Town of Napoli,NAPOLI,ny_full
+NY,Cattaraugus,Town of New Albion,NEW ALBION 1,ny_single
+NY,Cattaraugus,Town of Olean Dist 1,OLEAN TOWN 1,ny_full_typed
+NY,Cattaraugus,Town of Olean Dist 2,OLEAN TOWN 2,ny_full_typed
+NY,Cattaraugus,Town of Otto,OTTO,ny_full
+NY,Cattaraugus,Town of Perrysburg,PERRYSBURG,ny_full
+NY,Cattaraugus,Town of Persia,PERSIA,ny_full
+NY,Cattaraugus,Town of Portville Dist 1,PORTVILLE 1,ny_full
+NY,Cattaraugus,Town of Portville Dist 2,PORTVILLE 2,ny_full
+NY,Cattaraugus,Town of Randolph Dist 1,RANDOLPH 1,ny_full
+NY,Cattaraugus,Town of Randolph Dist 2,RANDOLPH 2,ny_full
+NY,Cattaraugus,Town of Red House,RED HOUSE,ny_full
+NY,Cattaraugus,Town of Salamanca,SALAMANCA TOWN,ny_full_typed
+NY,Cattaraugus,Town of South Valley,SOUTH VALLEY,ny_full
+NY,Cattaraugus,Town of Yorkshire Dist 1,YORKSHIRE 1,ny_full
+NY,Cattaraugus,Town of Yorkshire Dist 2,YORKSHIRE 2,ny_full
+NY,Chemung,City of Elmira LD: 09 01,ELMIRA CITY 09-1,ny_full_typed
+NY,Chemung,City of Elmira LD: 09 02,ELMIRA CITY 09-2,ny_full_typed
+NY,Chemung,City of Elmira LD: 09 03,ELMIRA CITY 09-3,ny_full_typed
+NY,Chemung,City of Elmira LD: 09 05,ELMIRA CITY 09-5,ny_full_typed
+NY,Chemung,City of Elmira LD: 09 06,ELMIRA CITY 09-6,ny_full_typed
+NY,Chemung,City of Elmira LD: 09 07,ELMIRA CITY 09-7,ny_full_typed
+NY,Chemung,City of Elmira LD: 10 01,ELMIRA CITY 10-1,ny_full_typed
+NY,Chemung,City of Elmira LD: 10 02,ELMIRA CITY 10-2,ny_full_typed
+NY,Chemung,City of Elmira LD: 10 03,ELMIRA CITY 10-3,ny_full_typed
+NY,Chemung,City of Elmira LD: 10 04,ELMIRA CITY 10-4,ny_full_typed
+NY,Chemung,City of Elmira LD: 10 05,ELMIRA CITY 10-5,ny_full_typed
+NY,Chemung,City of Elmira LD: 10 06,ELMIRA CITY 10-6,ny_full_typed
+NY,Chemung,City of Elmira LD: 10 07,ELMIRA CITY 10-7,ny_full_typed
+NY,Chemung,City of Elmira LD: 11 01,ELMIRA CITY 11-1,ny_full_typed
+NY,Chemung,City of Elmira LD: 11 02,ELMIRA CITY 11-2,ny_full_typed
+NY,Chemung,City of Elmira LD: 11 03,ELMIRA CITY 11-3,ny_full_typed
+NY,Chemung,City of Elmira LD: 11 04,ELMIRA CITY 11-4,ny_full_typed
+NY,Chemung,City of Elmira LD: 11 05,ELMIRA CITY 11-5,ny_full_typed
+NY,Chemung,City of Elmira LD: 12 01,ELMIRA CITY 12-1,ny_full_typed
+NY,Chemung,City of Elmira LD: 12 02,ELMIRA CITY 12-2,ny_full_typed
+NY,Chemung,City of Elmira LD: 12 03,ELMIRA CITY 12-3,ny_full_typed
+NY,Chemung,City of Elmira LD: 12 04,ELMIRA CITY 12-4,ny_full_typed
+NY,Chemung,City of Elmira LD: 12 05,ELMIRA CITY 12-5,ny_full_typed
+NY,Chemung,City of Elmira LD: 12 06,ELMIRA CITY 12-6,ny_full_typed
+NY,Chemung,City of Elmira LD: 13 01,ELMIRA CITY 13-1,ny_full_typed
+NY,Chemung,City of Elmira LD: 13 02,ELMIRA CITY 13-2,ny_full_typed
+NY,Chemung,City of Elmira LD: 13 03,ELMIRA CITY 13-3,ny_full_typed
+NY,Chemung,City of Elmira LD: 13 04,ELMIRA CITY 13-4,ny_full_typed
+NY,Chemung,Town of Ashland LD: 15 01,ASHLAND 15-1,ny_full
+NY,Chemung,Town of Ashland LD: 15 02,ASHLAND 15-2,ny_full
+NY,Chemung,Town of Baldwin LD: 06 01,BALDWIN 6-1,ny_full
+NY,Chemung,Town of Big Flats LD: 02 01,BIG FLATS 2-1,ny_full
+NY,Chemung,Town of Big Flats LD: 02 02,BIG FLATS 2-2,ny_full
+NY,Chemung,Town of Big Flats LD: 02 03,BIG FLATS 2-3,ny_full
+NY,Chemung,Town of Big Flats LD: 02 04,BIG FLATS 2-4,ny_full
+NY,Chemung,Town of Big Flats LD: 02 05,BIG FLATS 2-5,ny_full
+NY,Chemung,Town of Big Flats LD: 02 06,BIG FLATS 2-6,ny_full
+NY,Chemung,Town of Big Flats LD: 04 04,BIG FLATS 4-4,ny_full
+NY,Chemung,Town of Big Flats LD: 04 05,BIG FLATS 4-5,ny_full
+NY,Chemung,Town of Big Flats LD: 14 06,BIG FLATS 4-6,ny_last
+NY,Chemung,Town of Catlin LD: 01 01,CATLIN 1-1,ny_full
+NY,Chemung,Town of Catlin LD: 01 05,CATLIN 1-5,ny_full
+NY,Chemung,Town of Chemung LD: 06 02,CHEMUNG 06-2,ny_full
+NY,Chemung,Town of Chemung LD: 15 07,CHEMUNG 15-7,ny_full
+NY,Chemung,Town of Elmira LD: 07 01,ELMIRA TOWN 07-1,ny_full_typed
+NY,Chemung,Town of Elmira LD: 07 02,ELMIRA TOWN 07-2,ny_full_typed
+NY,Chemung,Town of Elmira LD: 07 03,ELMIRA TOWN 07-3,ny_full_typed
+NY,Chemung,Town of Elmira LD: 07 04,ELMIRA TOWN 07-4,ny_full_typed
+NY,Chemung,Town of Elmira LD: 07 05,ELMIRA TOWN 07-5,ny_full_typed
+NY,Chemung,Town of Elmira LD: 08 03,ELMIRA TOWN 08-3,ny_full_typed
+NY,Chemung,Town of Elmira LD: 08 06,ELMIRA TOWN 08-6,ny_full_typed
+NY,Chemung,Town of Elmira LD: 09 04,ELMIRA TOWN 09-4,ny_full_typed
+NY,Chemung,Town of Elmira LD: 10 08,ELMIRA TOWN 10-8,ny_full_typed
+NY,Chemung,Town of Elmira LD: 15 06,ELMIRA TOWN 15-6,ny_full_typed
+NY,Chemung,Town of Erin LD: 06 03,ERIN 6-3,ny_full
+NY,Chemung,Town of Erin LD: 06 04,ERIN 6-4,ny_full
+NY,Chemung,Town of Horseheads LD: 03 01,HORSEHEADS 3-1,ny_full
+NY,Chemung,Town of Horseheads LD: 03 02,HORSEHEADS 3-2,ny_full
+NY,Chemung,Town of Horseheads LD: 03 03,HORSEHEADS 3-3,ny_full
+NY,Chemung,Town of Horseheads LD: 03 04,HORSEHEADS 3-4,ny_full
+NY,Chemung,Town of Horseheads LD: 04 02,HORSEHEADS 4-2,ny_full
+NY,Chemung,Town of Horseheads LD: 04 03,HORSEHEADS 4-3,ny_full
+NY,Chemung,Town of Horseheads LD: 04 06,HORSEHEADS 4-6,ny_full
+NY,Chemung,Town of Horseheads LD: 05 01,HORSEHEADS 5-1,ny_full
+NY,Chemung,Town of Horseheads LD: 05 02,HORSEHEADS 5-2,ny_full
+NY,Chemung,Town of Horseheads LD: 05 04,HORSEHEADS 5-4,ny_full
+NY,Chemung,Town of Horseheads LD: 05 05,HORSEHEADS 5-5,ny_full
+NY,Chemung,Town of Horseheads LD: 07 06,HORSEHEADS 7-6,ny_full
+NY,Chemung,Town of Horseheads LD: 08 01,HORSEHEADS 8-1,ny_full
+NY,Chemung,Town of Horseheads LD: 08 02,HORSEHEADS 8-2,ny_full
+NY,Chemung,Town of Horseheads LD: 08 04,HORSEHEADS 8-4,ny_full
+NY,Chemung,Town of Horseheads LD: 08 05,HORSEHEADS 8-5,ny_full
+NY,Chemung,Town of Southport LD: 12 07,SOUTHPORT 12-7,ny_full
+NY,Chemung,Town of Southport LD: 12 08,SOUTHPORT 12-8,ny_full
+NY,Chemung,Town of Southport LD: 13 05,SOUTHPORT 13-5,ny_full
+NY,Chemung,Town of Southport LD: 13 06,SOUTHPORT 13-6,ny_full
+NY,Chemung,Town of Southport LD: 14 01,SOUTHPORT 14-1,ny_full
+NY,Chemung,Town of Southport LD: 14 02,SOUTHPORT 14-2,ny_full
+NY,Chemung,Town of Southport LD: 14 03,SOUTHPORT 14-3,ny_full
+NY,Chemung,Town of Southport LD: 14 04,SOUTHPORT 14-4,ny_full
+NY,Chemung,Town of Southport LD: 14 05,SOUTHPORT 14-5,ny_full
+NY,Chemung,Town of Southport LD: 15 03,SOUTHPORT 15-3,ny_full
+NY,Chemung,Town of Southport LD: 15 04,SOUTHPORT 15-4,ny_full
+NY,Chemung,Town of Southport LD: 15 05,SOUTHPORT 15-5,ny_full
+NY,Chemung,Town of Van Etten LD: 06 05,VAN ETTEN 6-5,ny_full
+NY,Chemung,Town of Veteran LD: 01 02,VETERAN 1-2,ny_full
+NY,Chemung,Town of Veteran LD: 01 03,VETERAN 1-3,ny_full
+NY,Chemung,Town of Veteran LD: 01 04,VETERAN 1-4,ny_full
+NY,Chemung,Town of Veteran LD: 05 03,VETERAN 5-3,ny_full
+NY,Clinton,City of Plattsburgh Ward 1 District 1 LD 8,PLATTSBURGH CITY 1-1,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 1 District 2 LD 8,PLATTSBURGH CITY 1-2,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 1 District 3 LD 9,PLATTSBURGH CITY 1-3,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 2 District 1 LD 8,PLATTSBURGH CITY 2-1,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 2 District 2 LD 9,PLATTSBURGH CITY 2-2,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 3 District 1 LD 9,PLATTSBURGH CITY 3-1,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 3 District 2 LD 9,PLATTSBURGH CITY 3-2,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 4 District 1 LD 10,PLATTSBURGH CITY 4-1,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 4 District 2 LD 10,PLATTSBURGH CITY 4-2,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 5 District 1 LD 10,PLATTSBURGH CITY 5-1,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 5 District 2 LD 10,PLATTSBURGH CITY 5-2,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 6 District 1 LD 9,PLATTSBURGH CITY 6-1,ny_full_typed
+NY,Clinton,City of Plattsburgh Ward 6 District 2 LD 10,PLATTSBURGH CITY 6-2,ny_full_typed
+NY,Clinton,Town of Altona 1 LD 2,ALTONA 1,ny_full
+NY,Clinton,Town of AuSable 1 LD 7,AUSABLE 1,ny_full
+NY,Clinton,Town of AuSable 2 LD 7,AUSABLE 2,ny_full
+NY,Clinton,Town of Beekmantown 1 LD 3,BEEKMANTOWN 1,ny_full
+NY,Clinton,Town of Beekmantown 2 LD 3,BEEKMANTOWN 2,ny_full
+NY,Clinton,Town of Beekmantown 3 LD 4,BEEKMANTOWN 3,ny_full
+NY,Clinton,Town of Beekmantown 4 LD 3,BEEKMANTOWN 4,ny_full
+NY,Clinton,Town of Black Brook 1 LD 6,BLACK BROOK 1,ny_full
+NY,Clinton,Town of Black Brook 2 LD 6,BLACK BROOK 2,ny_full
+NY,Clinton,Town of Champlain 1 LD 1,CHAMPLAIN 1,ny_full
+NY,Clinton,Town of Champlain 2 LD 1,CHAMPLAIN 2,ny_full
+NY,Clinton,Town of Champlain 3 LD 1,CHAMPLAIN 3,ny_full
+NY,Clinton,Town of Chazy 1 LD 3,CHAZY 1,ny_full
+NY,Clinton,Town of Chazy 2 LD 3,CHAZY 2,ny_full
+NY,Clinton,Town of Clinton 1 LD 2,CLINTON,ny_single
+NY,Clinton,Town of Dannemora 1 LD 6,DANNEMORA 1,ny_full
+NY,Clinton,Town of Dannemora 2 LD 2,DANNEMORA 2,ny_full
+NY,Clinton,Town of Dannemora 3 LD 2,DANNEMORA 3,ny_full
+NY,Clinton,Town of Ellenburg 1 LD 2,ELLENBURG 1,ny_full
+NY,Clinton,Town of Mooers 1 LD 1,MOOERS 1,ny_full
+NY,Clinton,Town of Mooers 2 LD 2,MOOERS 2,ny_full
+NY,Clinton,Town of Peru 1 LD 7,PERU 1,ny_full
+NY,Clinton,Town of Peru 2 LD 7,PERU 2,ny_full
+NY,Clinton,Town of Peru 3 LD 7,PERU 3,ny_full
+NY,Clinton,Town of Peru 4 LD 5,PERU 4,ny_full
+NY,Clinton,Town of Plattsburgh 1 LD 4,PLATTSBURGH TOWN 1,ny_full_typed
+NY,Clinton,Town of Plattsburgh 2 LD 4,PLATTSBURGH TOWN 2,ny_full_typed
+NY,Clinton,Town of Plattsburgh 3 LD 8,PLATTSBURGH TOWN 3,ny_full_typed
+NY,Clinton,Town of Plattsburgh 4 LD 6,PLATTSBURGH TOWN 4,ny_full_typed
+NY,Clinton,Town of Plattsburgh 5 LD 5,PLATTSBURGH TOWN 5,ny_full_typed
+NY,Clinton,Town of Plattsburgh 6 LD 4,PLATTSBURGH TOWN 6,ny_full_typed
+NY,Clinton,Town of Plattsburgh 7 LD 4,PLATTSBURGH TOWN 7,ny_full_typed
+NY,Clinton,Town of Saranac 1 LD 6,SARANAC 1,ny_full
+NY,Clinton,Town of Saranac 2 LD 6,SARANAC 2,ny_full
+NY,Clinton,Town of Saranac 3 LD 6,SARANAC 3,ny_full
+NY,Clinton,Town of Schuyler Falls 1 LD 5,SCHUYLER FALLS 1,ny_full
+NY,Clinton,Town of Schuyler Falls 2 LD 5,SCHUYLER FALLS 2,ny_full
+NY,Clinton,Town of Schuyler Falls 3 LD 5,SCHUYLER FALLS 3,ny_full
+NY,Dutchess,Amenia ED 1,AMENIA 1,ny_full_typed
+NY,Dutchess,Amenia ED 2,AMENIA 2,ny_full_typed
+NY,Dutchess,Beekman ED 1,BEEKMAN 01,ny_full_typed
+NY,Dutchess,Beekman ED 10,BEEKMAN 10,ny_full_typed
+NY,Dutchess,Beekman ED 2,BEEKMAN 02,ny_full_typed
+NY,Dutchess,Beekman ED 3,BEEKMAN 03,ny_full_typed
+NY,Dutchess,Beekman ED 4,BEEKMAN 04,ny_full_typed
+NY,Dutchess,Beekman ED 5,BEEKMAN 05,ny_full_typed
+NY,Dutchess,Beekman ED 6,BEEKMAN 06,ny_full_typed
+NY,Dutchess,Beekman ED 7,BEEKMAN 07,ny_full_typed
+NY,Dutchess,Beekman ED 8,BEEKMAN 08,ny_full_typed
+NY,Dutchess,Beekman ED 9,BEEKMAN 09,ny_full_typed
+NY,Dutchess,C/Beacon W 1 ED 1,BEACON CITY 1-1,ny_full_typed
+NY,Dutchess,C/Beacon W 1 ED 2,BEACON CITY 1-2,ny_full_typed
+NY,Dutchess,C/Beacon W 2 ED 1,BEACON CITY 2-1,ny_full_typed
+NY,Dutchess,C/Beacon W 2 ED 2,BEACON CITY 2-2,ny_full_typed
+NY,Dutchess,C/Beacon W 3 ED 1,BEACON CITY 3-1,ny_full_typed
+NY,Dutchess,C/Beacon W 3 ED 2,BEACON CITY 3-2,ny_full_typed
+NY,Dutchess,C/Beacon W 4 ED 1,BEACON CITY 4-1,ny_full_typed
+NY,Dutchess,C/Beacon W 4 ED 2,BEACON CITY 4-2,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 1 ED 1,POUGHKEEPSIE CITY 1-1,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 1 ED 2,POUGHKEEPSIE CITY 1-2,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 2 ED 1,POUGHKEEPSIE CITY 2-1,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 2 ED 2,POUGHKEEPSIE CITY 2-2,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 3 ED 1,POUGHKEEPSIE CITY 3-1,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 3 ED 2,POUGHKEEPSIE CITY 3-2,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 3 ED 3,POUGHKEEPSIE CITY 3-3,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 4 ED 1,POUGHKEEPSIE CITY 4-1,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 4 ED 2,POUGHKEEPSIE CITY 4-2,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 5 ED 1,POUGHKEEPSIE CITY 5-1,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 6 ED 1,POUGHKEEPSIE CITY 6-1,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 6 ED 2,POUGHKEEPSIE CITY 6-2,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 6 ED 3,POUGHKEEPSIE CITY 6-3,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 7 ED 1,POUGHKEEPSIE CITY 7-1,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 7 ED 2,POUGHKEEPSIE CITY 7-2,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 7 ED 3,POUGHKEEPSIE CITY 7-3,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 8 ED 1,POUGHKEEPSIE CITY 8-1,ny_full_typed
+NY,Dutchess,C/Poughkeepsie W 8 ED 2,POUGHKEEPSIE CITY 8-2,ny_full_typed
+NY,Dutchess,Clinton ED 1,CLINTON 1,ny_full_typed
+NY,Dutchess,Clinton ED 2,CLINTON 2,ny_full_typed
+NY,Dutchess,Dover ED 1,DOVER 1,ny_full_typed
+NY,Dutchess,Dover ED 2,DOVER 2,ny_full_typed
+NY,Dutchess,Dover ED 3,DOVER 3,ny_full_typed
+NY,Dutchess,Dover ED 4,DOVER 4,ny_full_typed
+NY,Dutchess,East Fishkill ED 1,EAST FISHKILL 01,ny_full_typed
+NY,Dutchess,East Fishkill ED 10,EAST FISHKILL 10,ny_full_typed
+NY,Dutchess,East Fishkill ED 11,EAST FISHKILL 11,ny_full_typed
+NY,Dutchess,East Fishkill ED 12,EAST FISHKILL 12,ny_full_typed
+NY,Dutchess,East Fishkill ED 13,EAST FISHKILL 13,ny_full_typed
+NY,Dutchess,East Fishkill ED 2,EAST FISHKILL 02,ny_full_typed
+NY,Dutchess,East Fishkill ED 3,EAST FISHKILL 03,ny_full_typed
+NY,Dutchess,East Fishkill ED 4,EAST FISHKILL 04,ny_full_typed
+NY,Dutchess,East Fishkill ED 5,EAST FISHKILL 05,ny_full_typed
+NY,Dutchess,East Fishkill ED 6,EAST FISHKILL 06,ny_full_typed
+NY,Dutchess,East Fishkill ED 7,EAST FISHKILL 07,ny_full_typed
+NY,Dutchess,East Fishkill ED 8,EAST FISHKILL 08,ny_full_typed
+NY,Dutchess,East Fishkill ED 9,EAST FISHKILL 09,ny_full_typed
+NY,Dutchess,Fishkill ED 1,FISHKILL 01,ny_full_typed
+NY,Dutchess,Fishkill ED 10,FISHKILL 10,ny_full_typed
+NY,Dutchess,Fishkill ED 2,FISHKILL 02,ny_full_typed
+NY,Dutchess,Fishkill ED 3,FISHKILL 03,ny_full_typed
+NY,Dutchess,Fishkill ED 4,FISHKILL 04,ny_full_typed
+NY,Dutchess,Fishkill ED 5,FISHKILL 05,ny_full_typed
+NY,Dutchess,Fishkill ED 6,FISHKILL 06,ny_full_typed
+NY,Dutchess,Fishkill ED 7,FISHKILL 07,ny_full_typed
+NY,Dutchess,Fishkill ED 8,FISHKILL 08,ny_full_typed
+NY,Dutchess,Fishkill ED 9,FISHKILL 09,ny_full_typed
+NY,Dutchess,Hyde Park W 2 ED 2,HYDE PARK 2-2,ny_full_typed
+NY,Dutchess,Hyde Park W 2 ED1,HYDE PARK 2-1,ny_full_typed
+NY,Dutchess,Hyde Park W 3 ED 1,HYDE PARK 3-1,ny_full_typed
+NY,Dutchess,Hyde Park W 3 ED 2,HYDE PARK 3-2,ny_full_typed
+NY,Dutchess,Hyde Park W 3 ED 3,HYDE PARK 3-3,ny_full_typed
+NY,Dutchess,Hyde Park W 4 ED 1,HYDE PARK 4-1,ny_full_typed
+NY,Dutchess,Hyde Park W 4 ED 2,HYDE PARK 4-2,ny_full_typed
+NY,Dutchess,Hyde Park W 4 ED 3,HYDE PARK 4-3,ny_full_typed
+NY,Dutchess,Hyde Park W1 ED 1,HYDE PARK 1-1,ny_full_typed
+NY,Dutchess,Hyde Park W1 ED 2,HYDE PARK 1-2,ny_full_typed
+NY,Dutchess,Lagrange ED 1,LAGRANGE 01,ny_full_typed
+NY,Dutchess,Lagrange ED 2,LAGRANGE 02,ny_full_typed
+NY,Dutchess,Lagrange ED 3,LAGRANGE 03,ny_full_typed
+NY,Dutchess,Lagrange ED 4,LAGRANGE 04,ny_full_typed
+NY,Dutchess,Lagrange ED 5,LAGRANGE 05,ny_full_typed
+NY,Dutchess,Lagrange ED 6,LAGRANGE 06,ny_full_typed
+NY,Dutchess,Lagrange ED 7,LAGRANGE 07,ny_full_typed
+NY,Dutchess,Milan ED 1,MILAN 1,ny_full_typed
+NY,Dutchess,North East ED 1,NORTH EAST 1,ny_full_typed
+NY,Dutchess,North East ED 2,NORTH EAST 2,ny_full_typed
+NY,Dutchess,Pawling ED 1,PAWLING 1,ny_full_typed
+NY,Dutchess,Pawling ED 2,PAWLING 2,ny_full_typed
+NY,Dutchess,Pawling ED 3,PAWLING 3,ny_full_typed
+NY,Dutchess,Pawling ED 4,PAWLING 4,ny_full_typed
+NY,Dutchess,Pine Plains ED 1,PINE PLAINS 1,ny_full_typed
+NY,Dutchess,Pleasant Valley ED 1,PLEASANT VALLEY 1,ny_full_typed
+NY,Dutchess,Pleasant Valley ED 2,PLEASANT VALLEY 2,ny_full_typed
+NY,Dutchess,Pleasant Valley ED 3,PLEASANT VALLEY 3,ny_full_typed
+NY,Dutchess,Pleasant Valley ED 4,PLEASANT VALLEY 4,ny_full_typed
+NY,Dutchess,Pleasant Valley ED 5,PLEASANT VALLEY 5,ny_full_typed
+NY,Dutchess,Pleasant Valley ED 6,PLEASANT VALLEY 6,ny_full_typed
+NY,Dutchess,Red Hook ED 1,RED HOOK 1,ny_full_typed
+NY,Dutchess,Red Hook ED 2,RED HOOK 2,ny_full_typed
+NY,Dutchess,Red Hook ED 3,RED HOOK 3,ny_full_typed
+NY,Dutchess,Red Hook ED 4,RED HOOK 4,ny_full_typed
+NY,Dutchess,Red Hook ED 5,RED HOOK 5,ny_full_typed
+NY,Dutchess,Red Hook ED 6,RED HOOK 6,ny_full_typed
+NY,Dutchess,Rhinebeck ED 1,RHINEBECK 1,ny_full_typed
+NY,Dutchess,Rhinebeck ED 2,RHINEBECK 2,ny_full_typed
+NY,Dutchess,Rhinebeck ED 3,RHINEBECK 3,ny_full_typed
+NY,Dutchess,Rhinebeck ED 4,RHINEBECK 4,ny_full_typed
+NY,Dutchess,Rhinebeck ED 5,RHINEBECK 5,ny_full_typed
+NY,Dutchess,Stanford ED 1,STANFORD 1,ny_full_typed
+NY,Dutchess,Stanford ED 2,STANFORD 2,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 1 ED 2,POUGHKEEPSIE TOWN 1-2,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 1 ED 4,POUGHKEEPSIE TOWN 1-4,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 2 ED 1,POUGHKEEPSIE TOWN 2-1,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 2 ED 3,POUGHKEEPSIE TOWN 2-3,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 2 ED 4,POUGHKEEPSIE TOWN 2-4,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 3 ED 1,POUGHKEEPSIE TOWN 3-1,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 3 ED 2,POUGHKEEPSIE TOWN 3-2,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 3 ED 3,POUGHKEEPSIE TOWN 3-3,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 3 ED 4,POUGHKEEPSIE TOWN 3-4,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 4 ED 1,POUGHKEEPSIE TOWN 4-1,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 4 ED 2,POUGHKEEPSIE TOWN 4-2,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 4 ED 3,POUGHKEEPSIE TOWN 4-3,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 4 ED 4,POUGHKEEPSIE TOWN 4-4,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 5 ED 1,POUGHKEEPSIE TOWN 5-1,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 5 ED 2,POUGHKEEPSIE TOWN 5-2,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 5 ED 3,POUGHKEEPSIE TOWN 5-3,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 6 ED 1,POUGHKEEPSIE TOWN 6-1,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 6 ED 2,POUGHKEEPSIE TOWN 6-2,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 6 ED 3,POUGHKEEPSIE TOWN 6-3,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 6 ED 4,POUGHKEEPSIE TOWN 6-4,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 6 ED 5,POUGHKEEPSIE TOWN 6-5,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W 6 ED 6,POUGHKEEPSIE TOWN 6-6,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W1 ED 1,POUGHKEEPSIE TOWN 1-1,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W1 ED 3,POUGHKEEPSIE TOWN 1-3,ny_full_typed
+NY,Dutchess,T/Poughkeepsie W2 ED 2,POUGHKEEPSIE TOWN 2-2,ny_full_typed
+NY,Dutchess,Wappinger W 1 ED 1,WAPPINGER 1-1,ny_full_typed
+NY,Dutchess,Wappinger W 1 ED 2,WAPPINGER 1-2,ny_full_typed
+NY,Dutchess,Wappinger W 1 ED 3,WAPPINGER 1-3,ny_full_typed
+NY,Dutchess,Wappinger W 1 ED 4,WAPPINGER 1-4,ny_full_typed
+NY,Dutchess,Wappinger W 2 ED 1,WAPPINGER 2-1,ny_full_typed
+NY,Dutchess,Wappinger W 2 ED 2,WAPPINGER 2-2,ny_full_typed
+NY,Dutchess,Wappinger W 2 ED 3,WAPPINGER 2-3,ny_full_typed
+NY,Dutchess,Wappinger W 3 ED 1,WAPPINGER 3-1,ny_full_typed
+NY,Dutchess,Wappinger W 3 ED 2,WAPPINGER 3-2,ny_full_typed
+NY,Dutchess,Wappinger W 3 ED 3,WAPPINGER 3-3,ny_full_typed
+NY,Dutchess,Wappinger W 3 ED 4,WAPPINGER 3-4,ny_full_typed
+NY,Dutchess,Wappinger W 3 ED 5,WAPPINGER 3-5,ny_full_typed
+NY,Dutchess,Wappinger W 3 ED 6,WAPPINGER 3-6,ny_full_typed
+NY,Dutchess,Wappinger W 4 ED 1,WAPPINGER 4-1,ny_full_typed
+NY,Dutchess,Wappinger W 4 ED 2,WAPPINGER 4-2,ny_full_typed
+NY,Dutchess,Wappinger W 4 ED 3,WAPPINGER 4-3,ny_full_typed
+NY,Dutchess,Wappinger W 4 ED 4,WAPPINGER 4-4,ny_full_typed
+NY,Dutchess,Washington ED 1,WASHINGTON 1,ny_full_typed
+NY,Dutchess,Washington ED 2,WASHINGTON 2,ny_full_typed
+NY,Dutchess,Washington ED 3,WASHINGTON 3,ny_full_typed
+NY,Madison,City of Oneida 1,ONEIDA CITY 1-1,ny_ward_only
+NY,Madison,City of Oneida 2,ONEIDA CITY 2-1,ny_ward_only
+NY,Madison,City of Oneida 3,ONEIDA CITY 3-1,ny_ward_only
+NY,Madison,City of Oneida 4,ONEIDA CITY 4-1,ny_ward_only
+NY,Madison,City of Oneida 5,ONEIDA CITY 5-1,ny_ward_only
+NY,Madison,City of Oneida 6,ONEIDA CITY 6-1,ny_ward_only
+NY,Madison,Town of Brookfield 1,BROOKFIELD 1,ny_full
+NY,Madison,Town of Brookfield 2,BROOKFIELD 2,ny_full
+NY,Madison,Town of Brookfield 3,BROOKFIELD 3,ny_full
+NY,Madison,Town of Cazenovia 1,CAZENOVIA 1,ny_full
+NY,Madison,Town of Cazenovia 2,CAZENOVIA 2,ny_full
+NY,Madison,Town of Cazenovia 3,CAZENOVIA 3,ny_full
+NY,Madison,Town of Cazenovia 4,CAZENOVIA 4,ny_full
+NY,Madison,Town of Cazenovia 5,CAZENOVIA 5,ny_full
+NY,Madison,Town of Cazenovia 6,CAZENOVIA 6,ny_full
+NY,Madison,Town of DeRuyter 1,DERUYTER,ny_single
+NY,Madison,Town of Eaton 1,EATON 1,ny_full
+NY,Madison,Town of Eaton 2,EATON 2,ny_full
+NY,Madison,Town of Fenner 1,FENNER,ny_single
+NY,Madison,Town of Georgetown 1,GEORGETOWN,ny_single
+NY,Madison,Town of Hamilton 1,HAMILTON 1,ny_full
+NY,Madison,Town of Hamilton 2,HAMILTON 2,ny_full
+NY,Madison,Town of Hamilton 3,HAMILTON 3,ny_full
+NY,Madison,Town of Hamilton 4,HAMILTON 4,ny_full
+NY,Madison,Town of Lebanon 1,LEBANON 1,ny_full
+NY,Madison,Town of Lebanon 2,LEBANON 2,ny_full
+NY,Madison,Town of Lenox 1,LENOX 1,ny_full
+NY,Madison,Town of Lenox 2,LENOX 2,ny_full
+NY,Madison,Town of Lenox 3,LENOX 3,ny_full
+NY,Madison,Town of Lenox 4,LENOX 4,ny_full
+NY,Madison,Town of Lenox 5,LENOX 5,ny_full
+NY,Madison,Town of Lenox 6,LENOX 6,ny_full
+NY,Madison,Town of Lincoln 1,LINCOLN 1,ny_full
+NY,Madison,Town of Lincoln 2,LINCOLN 2,ny_full
+NY,Madison,Town of Madison 1,MADISON 1,ny_full
+NY,Madison,Town of Madison 2,MADISON 2,ny_full
+NY,Madison,Town of Nelson 1,NELSON 1,ny_full
+NY,Madison,Town of Nelson 2,NELSON 2,ny_full
+NY,Madison,Town of Smithfield 1,SMITHFIELD,ny_single
+NY,Madison,Town of Stockbridge 1,STOCKBRIDGE 1,ny_full
+NY,Madison,Town of Stockbridge 2,STOCKBRIDGE 2,ny_full
+NY,Madison,Town of Sullivan 1,SULLIVAN 01,ny_full
+NY,Madison,Town of Sullivan 10,SULLIVAN 10,ny_full
+NY,Madison,Town of Sullivan 11,SULLIVAN 11,ny_full
+NY,Madison,Town of Sullivan 2,SULLIVAN 02,ny_full
+NY,Madison,Town of Sullivan 3,SULLIVAN 03,ny_full
+NY,Madison,Town of Sullivan 4,SULLIVAN 04,ny_full
+NY,Madison,Town of Sullivan 5,SULLIVAN 05,ny_full
+NY,Madison,Town of Sullivan 6,SULLIVAN 06,ny_full
+NY,Madison,Town of Sullivan 7,SULLIVAN 07,ny_full
+NY,Madison,Town of Sullivan 8,SULLIVAN 08,ny_full
+NY,Madison,Town of Sullivan 9,SULLIVAN 09,ny_full
+NY,Monroe,Brighton - 1,BRIGHTON 01,ny_full_typed
+NY,Monroe,Brighton - 10,BRIGHTON 10,ny_full_typed
+NY,Monroe,Brighton - 11,BRIGHTON 11,ny_full_typed
+NY,Monroe,Brighton - 12,BRIGHTON 12,ny_full_typed
+NY,Monroe,Brighton - 13,BRIGHTON 13,ny_full_typed
+NY,Monroe,Brighton - 14,BRIGHTON 14,ny_full_typed
+NY,Monroe,Brighton - 15,BRIGHTON 15,ny_full_typed
+NY,Monroe,Brighton - 16,BRIGHTON 16,ny_full_typed
+NY,Monroe,Brighton - 17,BRIGHTON 17,ny_full_typed
+NY,Monroe,Brighton - 18,BRIGHTON 18,ny_full_typed
+NY,Monroe,Brighton - 19,BRIGHTON 19,ny_full_typed
+NY,Monroe,Brighton - 2,BRIGHTON 02,ny_full_typed
+NY,Monroe,Brighton - 20,BRIGHTON 20,ny_full_typed
+NY,Monroe,Brighton - 21,BRIGHTON 21,ny_full_typed
+NY,Monroe,Brighton - 22,BRIGHTON 22,ny_full_typed
+NY,Monroe,Brighton - 23,BRIGHTON 23,ny_full_typed
+NY,Monroe,Brighton - 24,BRIGHTON 24,ny_full_typed
+NY,Monroe,Brighton - 25,BRIGHTON 25,ny_full_typed
+NY,Monroe,Brighton - 26,BRIGHTON 26,ny_full_typed
+NY,Monroe,Brighton - 27,BRIGHTON 27,ny_full_typed
+NY,Monroe,Brighton - 28,BRIGHTON 28,ny_full_typed
+NY,Monroe,Brighton - 29,BRIGHTON 29,ny_full_typed
+NY,Monroe,Brighton - 3,BRIGHTON 03,ny_full_typed
+NY,Monroe,Brighton - 30,BRIGHTON 30,ny_full_typed
+NY,Monroe,Brighton - 31,BRIGHTON 31,ny_full_typed
+NY,Monroe,Brighton - 32,BRIGHTON 32,ny_full_typed
+NY,Monroe,Brighton - 33,BRIGHTON 33,ny_full_typed
+NY,Monroe,Brighton - 34,BRIGHTON 34,ny_full_typed
+NY,Monroe,Brighton - 35,BRIGHTON 35,ny_full_typed
+NY,Monroe,Brighton - 36,BRIGHTON 36,ny_full_typed
+NY,Monroe,Brighton - 37,BRIGHTON 37,ny_full_typed
+NY,Monroe,Brighton - 38,BRIGHTON 38,ny_full_typed
+NY,Monroe,Brighton - 4,BRIGHTON 04,ny_full_typed
+NY,Monroe,Brighton - 5,BRIGHTON 05,ny_full_typed
+NY,Monroe,Brighton - 6,BRIGHTON 06,ny_full_typed
+NY,Monroe,Brighton - 7,BRIGHTON 07,ny_full_typed
+NY,Monroe,Brighton - 8,BRIGHTON 08,ny_full_typed
+NY,Monroe,Brighton - 9,BRIGHTON 09,ny_full_typed
+NY,Monroe,Chili - 1,CHILI 01,ny_full_typed
+NY,Monroe,Chili - 10,CHILI 10,ny_full_typed
+NY,Monroe,Chili - 11,CHILI 11,ny_full_typed
+NY,Monroe,Chili - 12,CHILI 12,ny_full_typed
+NY,Monroe,Chili - 13,CHILI 13,ny_full_typed
+NY,Monroe,Chili - 14,CHILI 14,ny_full_typed
+NY,Monroe,Chili - 15,CHILI 15,ny_full_typed
+NY,Monroe,Chili - 16,CHILI 16,ny_full_typed
+NY,Monroe,Chili - 17,CHILI 17,ny_full_typed
+NY,Monroe,Chili - 18,CHILI 18,ny_full_typed
+NY,Monroe,Chili - 19,CHILI 19,ny_full_typed
+NY,Monroe,Chili - 2,CHILI 02,ny_full_typed
+NY,Monroe,Chili - 20,CHILI 20,ny_full_typed
+NY,Monroe,Chili - 21,CHILI 21,ny_full_typed
+NY,Monroe,Chili - 22,CHILI 22,ny_full_typed
+NY,Monroe,Chili - 23,CHILI 23,ny_full_typed
+NY,Monroe,Chili - 24,CHILI 24,ny_full_typed
+NY,Monroe,Chili - 3,CHILI 03,ny_full_typed
+NY,Monroe,Chili - 4,CHILI 04,ny_full_typed
+NY,Monroe,Chili - 5,CHILI 05,ny_full_typed
+NY,Monroe,Chili - 6,CHILI 06,ny_full_typed
+NY,Monroe,Chili - 7,CHILI 07,ny_full_typed
+NY,Monroe,Chili - 8,CHILI 08,ny_full_typed
+NY,Monroe,Chili - 9,CHILI 09,ny_full_typed
+NY,Monroe,Clarkson - 1,CLARKSON 1,ny_full_typed
+NY,Monroe,Clarkson - 2,CLARKSON 2,ny_full_typed
+NY,Monroe,Clarkson - 3,CLARKSON 3,ny_full_typed
+NY,Monroe,Clarkson - 4,CLARKSON 4,ny_full_typed
+NY,Monroe,Clarkson - 5,CLARKSON 5,ny_full_typed
+NY,Monroe,Clarkson - 6,CLARKSON 6,ny_full_typed
+NY,Monroe,East Rochester - 1,EAST ROCHESTER 1,ny_full_typed
+NY,Monroe,East Rochester - 2,EAST ROCHESTER 2,ny_full_typed
+NY,Monroe,East Rochester - 3,EAST ROCHESTER 3,ny_full_typed
+NY,Monroe,East Rochester - 4,EAST ROCHESTER 4,ny_full_typed
+NY,Monroe,East Rochester - 5,EAST ROCHESTER 5,ny_full_typed
+NY,Monroe,Gates - 1,GATES 01,ny_full_typed
+NY,Monroe,Gates - 10,GATES 10,ny_full_typed
+NY,Monroe,Gates - 11,GATES 11,ny_full_typed
+NY,Monroe,Gates - 12,GATES 12,ny_full_typed
+NY,Monroe,Gates - 13,GATES 13,ny_full_typed
+NY,Monroe,Gates - 14,GATES 14,ny_full_typed
+NY,Monroe,Gates - 15,GATES 15,ny_full_typed
+NY,Monroe,Gates - 16,GATES 16,ny_full_typed
+NY,Monroe,Gates - 17,GATES 17,ny_full_typed
+NY,Monroe,Gates - 18,GATES 18,ny_full_typed
+NY,Monroe,Gates - 19,GATES 19,ny_full_typed
+NY,Monroe,Gates - 2,GATES 02,ny_full_typed
+NY,Monroe,Gates - 20,GATES 20,ny_full_typed
+NY,Monroe,Gates - 21,GATES 21,ny_full_typed
+NY,Monroe,Gates - 22,GATES 22,ny_full_typed
+NY,Monroe,Gates - 23,GATES 23,ny_full_typed
+NY,Monroe,Gates - 24,GATES 24,ny_full_typed
+NY,Monroe,Gates - 3,GATES 03,ny_full_typed
+NY,Monroe,Gates - 4,GATES 04,ny_full_typed
+NY,Monroe,Gates - 5,GATES 05,ny_full_typed
+NY,Monroe,Gates - 6,GATES 06,ny_full_typed
+NY,Monroe,Gates - 7,GATES 07,ny_full_typed
+NY,Monroe,Gates - 8,GATES 08,ny_full_typed
+NY,Monroe,Gates - 9,GATES 09,ny_full_typed
+NY,Monroe,Greece - 1,GREECE 001,ny_full_typed
+NY,Monroe,Greece - 10,GREECE 010,ny_full_typed
+NY,Monroe,Greece - 100,GREECE 100,ny_full_typed
+NY,Monroe,Greece - 11,GREECE 011,ny_full_typed
+NY,Monroe,Greece - 12,GREECE 012,ny_full_typed
+NY,Monroe,Greece - 13,GREECE 013,ny_full_typed
+NY,Monroe,Greece - 14,GREECE 014,ny_full_typed
+NY,Monroe,Greece - 15,GREECE 015,ny_full_typed
+NY,Monroe,Greece - 16,GREECE 016,ny_full_typed
+NY,Monroe,Greece - 17,GREECE 017,ny_full_typed
+NY,Monroe,Greece - 18,GREECE 018,ny_full_typed
+NY,Monroe,Greece - 19,GREECE 019,ny_full_typed
+NY,Monroe,Greece - 2,GREECE 002,ny_full_typed
+NY,Monroe,Greece - 20,GREECE 020,ny_full_typed
+NY,Monroe,Greece - 21,GREECE 021,ny_full_typed
+NY,Monroe,Greece - 22,GREECE 022,ny_full_typed
+NY,Monroe,Greece - 23,GREECE 023,ny_full_typed
+NY,Monroe,Greece - 24,GREECE 024,ny_full_typed
+NY,Monroe,Greece - 25,GREECE 025,ny_full_typed
+NY,Monroe,Greece - 26,GREECE 026,ny_full_typed
+NY,Monroe,Greece - 27,GREECE 027,ny_full_typed
+NY,Monroe,Greece - 28,GREECE 028,ny_full_typed
+NY,Monroe,Greece - 29,GREECE 029,ny_full_typed
+NY,Monroe,Greece - 3,GREECE 003,ny_full_typed
+NY,Monroe,Greece - 30,GREECE 030,ny_full_typed
+NY,Monroe,Greece - 31,GREECE 031,ny_full_typed
+NY,Monroe,Greece - 32,GREECE 032,ny_full_typed
+NY,Monroe,Greece - 33,GREECE 033,ny_full_typed
+NY,Monroe,Greece - 34,GREECE 034,ny_full_typed
+NY,Monroe,Greece - 35,GREECE 035,ny_full_typed
+NY,Monroe,Greece - 36,GREECE 036,ny_full_typed
+NY,Monroe,Greece - 37,GREECE 037,ny_full_typed
+NY,Monroe,Greece - 38,GREECE 038,ny_full_typed
+NY,Monroe,Greece - 39,GREECE 039,ny_full_typed
+NY,Monroe,Greece - 4,GREECE 004,ny_full_typed
+NY,Monroe,Greece - 40,GREECE 040,ny_full_typed
+NY,Monroe,Greece - 41,GREECE 041,ny_full_typed
+NY,Monroe,Greece - 42,GREECE 042,ny_full_typed
+NY,Monroe,Greece - 43,GREECE 043,ny_full_typed
+NY,Monroe,Greece - 44,GREECE 044,ny_full_typed
+NY,Monroe,Greece - 45,GREECE 045,ny_full_typed
+NY,Monroe,Greece - 46,GREECE 046,ny_full_typed
+NY,Monroe,Greece - 47,GREECE 047,ny_full_typed
+NY,Monroe,Greece - 48,GREECE 048,ny_full_typed
+NY,Monroe,Greece - 49,GREECE 049,ny_full_typed
+NY,Monroe,Greece - 5,GREECE 005,ny_full_typed
+NY,Monroe,Greece - 50,GREECE 050,ny_full_typed
+NY,Monroe,Greece - 51,GREECE 051,ny_full_typed
+NY,Monroe,Greece - 52,GREECE 052,ny_full_typed
+NY,Monroe,Greece - 53,GREECE 053,ny_full_typed
+NY,Monroe,Greece - 54,GREECE 054,ny_full_typed
+NY,Monroe,Greece - 55,GREECE 055,ny_full_typed
+NY,Monroe,Greece - 56,GREECE 056,ny_full_typed
+NY,Monroe,Greece - 57,GREECE 057,ny_full_typed
+NY,Monroe,Greece - 58,GREECE 058,ny_full_typed
+NY,Monroe,Greece - 59,GREECE 059,ny_full_typed
+NY,Monroe,Greece - 6,GREECE 006,ny_full_typed
+NY,Monroe,Greece - 60,GREECE 060,ny_full_typed
+NY,Monroe,Greece - 61,GREECE 061,ny_full_typed
+NY,Monroe,Greece - 62,GREECE 062,ny_full_typed
+NY,Monroe,Greece - 63,GREECE 063,ny_full_typed
+NY,Monroe,Greece - 64,GREECE 064,ny_full_typed
+NY,Monroe,Greece - 65,GREECE 065,ny_full_typed
+NY,Monroe,Greece - 66,GREECE 066,ny_full_typed
+NY,Monroe,Greece - 67,GREECE 067,ny_full_typed
+NY,Monroe,Greece - 68,GREECE 068,ny_full_typed
+NY,Monroe,Greece - 69,GREECE 069,ny_full_typed
+NY,Monroe,Greece - 7,GREECE 007,ny_full_typed
+NY,Monroe,Greece - 70,GREECE 070,ny_full_typed
+NY,Monroe,Greece - 71,GREECE 071,ny_full_typed
+NY,Monroe,Greece - 72,GREECE 072,ny_full_typed
+NY,Monroe,Greece - 73,GREECE 073,ny_full_typed
+NY,Monroe,Greece - 74,GREECE 074,ny_full_typed
+NY,Monroe,Greece - 75,GREECE 075,ny_full_typed
+NY,Monroe,Greece - 76,GREECE 076,ny_full_typed
+NY,Monroe,Greece - 77,GREECE 077,ny_full_typed
+NY,Monroe,Greece - 78,GREECE 078,ny_full_typed
+NY,Monroe,Greece - 79,GREECE 079,ny_full_typed
+NY,Monroe,Greece - 8,GREECE 008,ny_full_typed
+NY,Monroe,Greece - 80,GREECE 080,ny_full_typed
+NY,Monroe,Greece - 81,GREECE 081,ny_full_typed
+NY,Monroe,Greece - 82,GREECE 082,ny_full_typed
+NY,Monroe,Greece - 83,GREECE 083,ny_full_typed
+NY,Monroe,Greece - 84,GREECE 084,ny_full_typed
+NY,Monroe,Greece - 85,GREECE 085,ny_full_typed
+NY,Monroe,Greece - 86,GREECE 086,ny_full_typed
+NY,Monroe,Greece - 87,GREECE 087,ny_full_typed
+NY,Monroe,Greece - 88,GREECE 088,ny_full_typed
+NY,Monroe,Greece - 89,GREECE 089,ny_full_typed
+NY,Monroe,Greece - 9,GREECE 009,ny_full_typed
+NY,Monroe,Greece - 90,GREECE 090,ny_full_typed
+NY,Monroe,Greece - 91,GREECE 091,ny_full_typed
+NY,Monroe,Greece - 92,GREECE 092,ny_full_typed
+NY,Monroe,Greece - 93,GREECE 093,ny_full_typed
+NY,Monroe,Greece - 94,GREECE 094,ny_full_typed
+NY,Monroe,Greece - 95,GREECE 095,ny_full_typed
+NY,Monroe,Greece - 96,GREECE 096,ny_full_typed
+NY,Monroe,Greece - 97,GREECE 097,ny_full_typed
+NY,Monroe,Greece - 98,GREECE 098,ny_full_typed
+NY,Monroe,Greece - 99,GREECE 099,ny_full_typed
+NY,Monroe,Hamlin - 1,HAMLIN 01,ny_full_typed
+NY,Monroe,Hamlin - 10,HAMLIN 10,ny_full_typed
+NY,Monroe,Hamlin - 2,HAMLIN 02,ny_full_typed
+NY,Monroe,Hamlin - 3,HAMLIN 03,ny_full_typed
+NY,Monroe,Hamlin - 4,HAMLIN 04,ny_full_typed
+NY,Monroe,Hamlin - 5,HAMLIN 05,ny_full_typed
+NY,Monroe,Hamlin - 6,HAMLIN 06,ny_full_typed
+NY,Monroe,Hamlin - 7,HAMLIN 07,ny_full_typed
+NY,Monroe,Hamlin - 8,HAMLIN 08,ny_full_typed
+NY,Monroe,Hamlin - 9,HAMLIN 09,ny_full_typed
+NY,Monroe,Henrietta - 1,HENRIETTA 01,ny_full_typed
+NY,Monroe,Henrietta - 10,HENRIETTA 10,ny_full_typed
+NY,Monroe,Henrietta - 11,HENRIETTA 11,ny_full_typed
+NY,Monroe,Henrietta - 12,HENRIETTA 12,ny_full_typed
+NY,Monroe,Henrietta - 13,HENRIETTA 13,ny_full_typed
+NY,Monroe,Henrietta - 14,HENRIETTA 14,ny_full_typed
+NY,Monroe,Henrietta - 15,HENRIETTA 15,ny_full_typed
+NY,Monroe,Henrietta - 16,HENRIETTA 16,ny_full_typed
+NY,Monroe,Henrietta - 17,HENRIETTA 17,ny_full_typed
+NY,Monroe,Henrietta - 18,HENRIETTA 18,ny_full_typed
+NY,Monroe,Henrietta - 19,HENRIETTA 19,ny_full_typed
+NY,Monroe,Henrietta - 2,HENRIETTA 02,ny_full_typed
+NY,Monroe,Henrietta - 20,HENRIETTA 20,ny_full_typed
+NY,Monroe,Henrietta - 21,HENRIETTA 21,ny_full_typed
+NY,Monroe,Henrietta - 22,HENRIETTA 22,ny_full_typed
+NY,Monroe,Henrietta - 23,HENRIETTA 23,ny_full_typed
+NY,Monroe,Henrietta - 24,HENRIETTA 24,ny_full_typed
+NY,Monroe,Henrietta - 25,HENRIETTA 25,ny_full_typed
+NY,Monroe,Henrietta - 26,HENRIETTA 26,ny_full_typed
+NY,Monroe,Henrietta - 27,HENRIETTA 27,ny_full_typed
+NY,Monroe,Henrietta - 28,HENRIETTA 28,ny_full_typed
+NY,Monroe,Henrietta - 3,HENRIETTA 03,ny_full_typed
+NY,Monroe,Henrietta - 4,HENRIETTA 04,ny_full_typed
+NY,Monroe,Henrietta - 5,HENRIETTA 05,ny_full_typed
+NY,Monroe,Henrietta - 6,HENRIETTA 06,ny_full_typed
+NY,Monroe,Henrietta - 7,HENRIETTA 07,ny_full_typed
+NY,Monroe,Henrietta - 8,HENRIETTA 08,ny_full_typed
+NY,Monroe,Henrietta - 9,HENRIETTA 09,ny_full_typed
+NY,Monroe,Irondequoit - 1,IRONDEQUOIT 01,ny_full_typed
+NY,Monroe,Irondequoit - 10,IRONDEQUOIT 10,ny_full_typed
+NY,Monroe,Irondequoit - 11,IRONDEQUOIT 11,ny_full_typed
+NY,Monroe,Irondequoit - 12,IRONDEQUOIT 12,ny_full_typed
+NY,Monroe,Irondequoit - 13,IRONDEQUOIT 13,ny_full_typed
+NY,Monroe,Irondequoit - 14,IRONDEQUOIT 14,ny_full_typed
+NY,Monroe,Irondequoit - 15,IRONDEQUOIT 15,ny_full_typed
+NY,Monroe,Irondequoit - 16,IRONDEQUOIT 16,ny_full_typed
+NY,Monroe,Irondequoit - 17,IRONDEQUOIT 17,ny_full_typed
+NY,Monroe,Irondequoit - 18,IRONDEQUOIT 18,ny_full_typed
+NY,Monroe,Irondequoit - 19,IRONDEQUOIT 19,ny_full_typed
+NY,Monroe,Irondequoit - 2,IRONDEQUOIT 02,ny_full_typed
+NY,Monroe,Irondequoit - 20,IRONDEQUOIT 20,ny_full_typed
+NY,Monroe,Irondequoit - 21,IRONDEQUOIT 21,ny_full_typed
+NY,Monroe,Irondequoit - 22,IRONDEQUOIT 22,ny_full_typed
+NY,Monroe,Irondequoit - 23,IRONDEQUOIT 23,ny_full_typed
+NY,Monroe,Irondequoit - 24,IRONDEQUOIT 24,ny_full_typed
+NY,Monroe,Irondequoit - 25,IRONDEQUOIT 25,ny_full_typed
+NY,Monroe,Irondequoit - 26,IRONDEQUOIT 26,ny_full_typed
+NY,Monroe,Irondequoit - 27,IRONDEQUOIT 27,ny_full_typed
+NY,Monroe,Irondequoit - 28,IRONDEQUOIT 28,ny_full_typed
+NY,Monroe,Irondequoit - 29,IRONDEQUOIT 29,ny_full_typed
+NY,Monroe,Irondequoit - 3,IRONDEQUOIT 03,ny_full_typed
+NY,Monroe,Irondequoit - 30,IRONDEQUOIT 30,ny_full_typed
+NY,Monroe,Irondequoit - 31,IRONDEQUOIT 31,ny_full_typed
+NY,Monroe,Irondequoit - 32,IRONDEQUOIT 32,ny_full_typed
+NY,Monroe,Irondequoit - 33,IRONDEQUOIT 33,ny_full_typed
+NY,Monroe,Irondequoit - 34,IRONDEQUOIT 34,ny_full_typed
+NY,Monroe,Irondequoit - 35,IRONDEQUOIT 35,ny_full_typed
+NY,Monroe,Irondequoit - 36,IRONDEQUOIT 36,ny_full_typed
+NY,Monroe,Irondequoit - 37,IRONDEQUOIT 37,ny_full_typed
+NY,Monroe,Irondequoit - 38,IRONDEQUOIT 38,ny_full_typed
+NY,Monroe,Irondequoit - 39,IRONDEQUOIT 39,ny_full_typed
+NY,Monroe,Irondequoit - 4,IRONDEQUOIT 04,ny_full_typed
+NY,Monroe,Irondequoit - 40,IRONDEQUOIT 40,ny_full_typed
+NY,Monroe,Irondequoit - 41,IRONDEQUOIT 41,ny_full_typed
+NY,Monroe,Irondequoit - 42,IRONDEQUOIT 42,ny_full_typed
+NY,Monroe,Irondequoit - 43,IRONDEQUOIT 43,ny_full_typed
+NY,Monroe,Irondequoit - 44,IRONDEQUOIT 44,ny_full_typed
+NY,Monroe,Irondequoit - 45,IRONDEQUOIT 45,ny_full_typed
+NY,Monroe,Irondequoit - 5,IRONDEQUOIT 05,ny_full_typed
+NY,Monroe,Irondequoit - 6,IRONDEQUOIT 06,ny_full_typed
+NY,Monroe,Irondequoit - 7,IRONDEQUOIT 07,ny_full_typed
+NY,Monroe,Irondequoit - 8,IRONDEQUOIT 08,ny_full_typed
+NY,Monroe,Irondequoit - 9,IRONDEQUOIT 09,ny_full_typed
+NY,Monroe,Leg. Dist. 16 - 1,ROCHESTER 016-01,ny_full_typed
+NY,Monroe,Leg. Dist. 17 - 1,ROCHESTER 017-01,ny_full_typed
+NY,Monroe,Leg. Dist. 17 - 2,ROCHESTER 017-02,ny_full_typed
+NY,Monroe,Leg. Dist. 17 - 3,ROCHESTER 017-03,ny_full_typed
+NY,Monroe,Leg. Dist. 17 - 4,ROCHESTER 017-04,ny_full_typed
+NY,Monroe,Leg. Dist. 17 - 5,ROCHESTER 017-05,ny_full_typed
+NY,Monroe,Leg. Dist. 17 - 6,ROCHESTER 017-06,ny_full_typed
+NY,Monroe,Leg. Dist. 17 - 7,ROCHESTER 017-07,ny_full_typed
+NY,Monroe,Leg. Dist. 17 - 8,ROCHESTER 017-08,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 1,ROCHESTER 021-01,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 10,ROCHESTER 021-10,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 11,ROCHESTER 021-11,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 12,ROCHESTER 021-12,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 13,ROCHESTER 021-13,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 14,ROCHESTER 021-14,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 15,ROCHESTER 021-15,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 16,ROCHESTER 021-16,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 17,ROCHESTER 021-17,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 18,ROCHESTER 021-18,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 19,ROCHESTER 021-19,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 2,ROCHESTER 021-02,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 20,ROCHESTER 021-20,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 3,ROCHESTER 021-03,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 4,ROCHESTER 021-04,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 5,ROCHESTER 021-05,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 6,ROCHESTER 021-06,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 7,ROCHESTER 021-07,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 8,ROCHESTER 021-08,ny_full_typed
+NY,Monroe,Leg. Dist. 21 - 9,ROCHESTER 021-09,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 1,ROCHESTER 022-01,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 10,ROCHESTER 022-10,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 11,ROCHESTER 022-11,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 12,ROCHESTER 022-12,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 13,ROCHESTER 022-13,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 14,ROCHESTER 022-14,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 15,ROCHESTER 022-15,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 16,ROCHESTER 022-16,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 17,ROCHESTER 022-17,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 18,ROCHESTER 022-18,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 19,ROCHESTER 022-19,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 2,ROCHESTER 022-02,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 20,ROCHESTER 022-20,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 21,ROCHESTER 022-21,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 22,ROCHESTER 022-22,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 23,ROCHESTER 022-23,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 24,ROCHESTER 022-24,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 25,ROCHESTER 022-25,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 3,ROCHESTER 022-03,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 4,ROCHESTER 022-04,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 5,ROCHESTER 022-05,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 6,ROCHESTER 022-06,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 7,ROCHESTER 022-07,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 8,ROCHESTER 022-08,ny_full_typed
+NY,Monroe,Leg. Dist. 22 - 9,ROCHESTER 022-09,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 1,ROCHESTER 023-01,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 10,ROCHESTER 023-10,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 11,ROCHESTER 023-11,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 12,ROCHESTER 023-12,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 13,ROCHESTER 023-13,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 14,ROCHESTER 023-14,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 15,ROCHESTER 023-15,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 16,ROCHESTER 023-16,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 17,ROCHESTER 023-17,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 18,ROCHESTER 023-18,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 19,ROCHESTER 023-19,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 2,ROCHESTER 023-02,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 3,ROCHESTER 023-03,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 4,ROCHESTER 023-04,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 5,ROCHESTER 023-05,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 6,ROCHESTER 023-06,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 7,ROCHESTER 023-07,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 8,ROCHESTER 023-08,ny_full_typed
+NY,Monroe,Leg. Dist. 23 - 9,ROCHESTER 023-09,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 1,ROCHESTER 024-01,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 10,ROCHESTER 024-10,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 11,ROCHESTER 024-11,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 12,ROCHESTER 024-12,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 13,ROCHESTER 024-13,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 14,ROCHESTER 024-14,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 15,ROCHESTER 024-15,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 16,ROCHESTER 024-16,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 17,ROCHESTER 024-17,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 18,ROCHESTER 024-18,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 19,ROCHESTER 024-19,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 2,ROCHESTER 024-02,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 3,ROCHESTER 024-03,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 4,ROCHESTER 024-04,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 5,ROCHESTER 024-05,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 6,ROCHESTER 024-06,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 7,ROCHESTER 024-07,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 8,ROCHESTER 024-08,ny_full_typed
+NY,Monroe,Leg. Dist. 24 - 9,ROCHESTER 024-09,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 1,ROCHESTER 025-01,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 10,ROCHESTER 025-10,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 11,ROCHESTER 025-11,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 12,ROCHESTER 025-12,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 13,ROCHESTER 025-13,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 14,ROCHESTER 025-14,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 15,ROCHESTER 025-15,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 16,ROCHESTER 025-16,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 17,ROCHESTER 025-17,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 18,ROCHESTER 025-18,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 2,ROCHESTER 025-02,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 3,ROCHESTER 025-03,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 4,ROCHESTER 025-04,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 5,ROCHESTER 025-05,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 6,ROCHESTER 025-06,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 7,ROCHESTER 025-07,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 8,ROCHESTER 025-08,ny_full_typed
+NY,Monroe,Leg. Dist. 25 - 9,ROCHESTER 025-09,ny_full_typed
+NY,Monroe,Leg. Dist. 26 - 1,ROCHESTER 026-01,ny_full_typed
+NY,Monroe,Leg. Dist. 26 - 10,ROCHESTER 026-10,ny_full_typed
+NY,Monroe,Leg. Dist. 26 - 11,ROCHESTER 026-11,ny_full_typed
+NY,Monroe,Leg. Dist. 26 - 12,ROCHESTER 026-12,ny_full_typed
+NY,Monroe,Leg. Dist. 26 - 2,ROCHESTER 026-02,ny_full_typed
+NY,Monroe,Leg. Dist. 26 - 3,ROCHESTER 026-03,ny_full_typed
+NY,Monroe,Leg. Dist. 26 - 4,ROCHESTER 026-04,ny_full_typed
+NY,Monroe,Leg. Dist. 26 - 6,ROCHESTER 026-06,ny_full_typed
+NY,Monroe,Leg. Dist. 26 - 7,ROCHESTER 026-07,ny_full_typed
+NY,Monroe,Leg. Dist. 26 - 8,ROCHESTER 026-08,ny_full_typed
+NY,Monroe,Leg. Dist. 26 - 9,ROCHESTER 026-09,ny_full_typed
+NY,Monroe,Leg. Dist. 27 - 1,ROCHESTER 027-01,ny_full_typed
+NY,Monroe,Leg. Dist. 27 - 11,ROCHESTER 027-11,ny_full_typed
+NY,Monroe,Leg. Dist. 27 - 2,ROCHESTER 027-02,ny_full_typed
+NY,Monroe,Leg. Dist. 27 - 3,ROCHESTER 027-03,ny_full_typed
+NY,Monroe,Leg. Dist. 27 - 4,ROCHESTER 027-04,ny_full_typed
+NY,Monroe,Leg. Dist. 27 - 5,ROCHESTER 027-05,ny_full_typed
+NY,Monroe,Leg. Dist. 27 - 6,ROCHESTER 027-06,ny_full_typed
+NY,Monroe,Leg. Dist. 27 - 7,ROCHESTER 027-07,ny_full_typed
+NY,Monroe,Leg. Dist. 27 - 8,ROCHESTER 027-08,ny_full_typed
+NY,Monroe,Leg. Dist. 27 - 9,ROCHESTER 027-09,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 1,ROCHESTER 028-01,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 10,ROCHESTER 028-10,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 11,ROCHESTER 028-11,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 12,ROCHESTER 028-12,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 13,ROCHESTER 028-13,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 14,ROCHESTER 028-14,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 15,ROCHESTER 028-15,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 2,ROCHESTER 028-02,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 3,ROCHESTER 028-03,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 4,ROCHESTER 028-04,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 5,ROCHESTER 028-05,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 6,ROCHESTER 028-06,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 7,ROCHESTER 028-07,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 8,ROCHESTER 028-08,ny_full_typed
+NY,Monroe,Leg. Dist. 28 - 9,ROCHESTER 028-09,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 1,ROCHESTER 029-01,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 10,ROCHESTER 029-10,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 11,ROCHESTER 029-11,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 12,ROCHESTER 029-12,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 13,ROCHESTER 029-13,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 14,ROCHESTER 029-14,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 15,ROCHESTER 029-15,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 16,ROCHESTER 029-16,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 17,ROCHESTER 029-17,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 18,ROCHESTER 029-18,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 19,ROCHESTER 029-19,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 2,ROCHESTER 029-02,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 20,ROCHESTER 029-20,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 21,ROCHESTER 029-21,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 3,ROCHESTER 029-03,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 4,ROCHESTER 029-04,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 5,ROCHESTER 029-05,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 6,ROCHESTER 029-06,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 7,ROCHESTER 029-07,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 8,ROCHESTER 029-08,ny_full_typed
+NY,Monroe,Leg. Dist. 29 - 9,ROCHESTER 029-09,ny_full_typed
+NY,Monroe,Mendon - 1,MENDON 1,ny_full_typed
+NY,Monroe,Mendon - 2,MENDON 2,ny_full_typed
+NY,Monroe,Mendon - 3,MENDON 3,ny_full_typed
+NY,Monroe,Mendon - 4,MENDON 4,ny_full_typed
+NY,Monroe,Mendon - 5,MENDON 5,ny_full_typed
+NY,Monroe,Mendon - 6,MENDON 6,ny_full_typed
+NY,Monroe,Mendon - 7,MENDON 7,ny_full_typed
+NY,Monroe,Mendon - 8,MENDON 8,ny_full_typed
+NY,Monroe,Mendon - 9,MENDON 9,ny_full_typed
+NY,Monroe,Ogden - 1,OGDEN 01,ny_full_typed
+NY,Monroe,Ogden - 10,OGDEN 10,ny_full_typed
+NY,Monroe,Ogden - 11,OGDEN 11,ny_full_typed
+NY,Monroe,Ogden - 12,OGDEN 12,ny_full_typed
+NY,Monroe,Ogden - 13,OGDEN 13,ny_full_typed
+NY,Monroe,Ogden - 14,OGDEN 14,ny_full_typed
+NY,Monroe,Ogden - 15,OGDEN 15,ny_full_typed
+NY,Monroe,Ogden - 16,OGDEN 16,ny_full_typed
+NY,Monroe,Ogden - 17,OGDEN 17,ny_full_typed
+NY,Monroe,Ogden - 18,OGDEN 18,ny_full_typed
+NY,Monroe,Ogden - 2,OGDEN 02,ny_full_typed
+NY,Monroe,Ogden - 3,OGDEN 03,ny_full_typed
+NY,Monroe,Ogden - 4,OGDEN 04,ny_full_typed
+NY,Monroe,Ogden - 5,OGDEN 05,ny_full_typed
+NY,Monroe,Ogden - 6,OGDEN 06,ny_full_typed
+NY,Monroe,Ogden - 7,OGDEN 07,ny_full_typed
+NY,Monroe,Ogden - 8,OGDEN 08,ny_full_typed
+NY,Monroe,Ogden - 9,OGDEN 09,ny_full_typed
+NY,Monroe,Parma - 1,PARMA 01,ny_full_typed
+NY,Monroe,Parma - 10,PARMA 10,ny_full_typed
+NY,Monroe,Parma - 11,PARMA 11,ny_full_typed
+NY,Monroe,Parma - 12,PARMA 12,ny_full_typed
+NY,Monroe,Parma - 13,PARMA 13,ny_full_typed
+NY,Monroe,Parma - 2,PARMA 02,ny_full_typed
+NY,Monroe,Parma - 3,PARMA 03,ny_full_typed
+NY,Monroe,Parma - 4,PARMA 04,ny_full_typed
+NY,Monroe,Parma - 5,PARMA 05,ny_full_typed
+NY,Monroe,Parma - 6,PARMA 06,ny_full_typed
+NY,Monroe,Parma - 7,PARMA 07,ny_full_typed
+NY,Monroe,Parma - 8,PARMA 08,ny_full_typed
+NY,Monroe,Parma - 9,PARMA 09,ny_full_typed
+NY,Monroe,Penfield - 1,PENFIELD 01,ny_full_typed
+NY,Monroe,Penfield - 10,PENFIELD 10,ny_full_typed
+NY,Monroe,Penfield - 11,PENFIELD 11,ny_full_typed
+NY,Monroe,Penfield - 12,PENFIELD 12,ny_full_typed
+NY,Monroe,Penfield - 13,PENFIELD 13,ny_full_typed
+NY,Monroe,Penfield - 14,PENFIELD 14,ny_full_typed
+NY,Monroe,Penfield - 15,PENFIELD 15,ny_full_typed
+NY,Monroe,Penfield - 16,PENFIELD 16,ny_full_typed
+NY,Monroe,Penfield - 17,PENFIELD 17,ny_full_typed
+NY,Monroe,Penfield - 18,PENFIELD 18,ny_full_typed
+NY,Monroe,Penfield - 19,PENFIELD 19,ny_full_typed
+NY,Monroe,Penfield - 2,PENFIELD 02,ny_full_typed
+NY,Monroe,Penfield - 20,PENFIELD 20,ny_full_typed
+NY,Monroe,Penfield - 21,PENFIELD 21,ny_full_typed
+NY,Monroe,Penfield - 22,PENFIELD 22,ny_full_typed
+NY,Monroe,Penfield - 23,PENFIELD 23,ny_full_typed
+NY,Monroe,Penfield - 24,PENFIELD 24,ny_full_typed
+NY,Monroe,Penfield - 25,PENFIELD 25,ny_full_typed
+NY,Monroe,Penfield - 26,PENFIELD 26,ny_full_typed
+NY,Monroe,Penfield - 27,PENFIELD 27,ny_full_typed
+NY,Monroe,Penfield - 28,PENFIELD 28,ny_full_typed
+NY,Monroe,Penfield - 29,PENFIELD 29,ny_full_typed
+NY,Monroe,Penfield - 3,PENFIELD 03,ny_full_typed
+NY,Monroe,Penfield - 30,PENFIELD 30,ny_full_typed
+NY,Monroe,Penfield - 31,PENFIELD 31,ny_full_typed
+NY,Monroe,Penfield - 32,PENFIELD 32,ny_full_typed
+NY,Monroe,Penfield - 33,PENFIELD 33,ny_full_typed
+NY,Monroe,Penfield - 34,PENFIELD 34,ny_full_typed
+NY,Monroe,Penfield - 35,PENFIELD 35,ny_full_typed
+NY,Monroe,Penfield - 36,PENFIELD 36,ny_full_typed
+NY,Monroe,Penfield - 37,PENFIELD 37,ny_full_typed
+NY,Monroe,Penfield - 4,PENFIELD 04,ny_full_typed
+NY,Monroe,Penfield - 5,PENFIELD 05,ny_full_typed
+NY,Monroe,Penfield - 6,PENFIELD 06,ny_full_typed
+NY,Monroe,Penfield - 7,PENFIELD 07,ny_full_typed
+NY,Monroe,Penfield - 8,PENFIELD 08,ny_full_typed
+NY,Monroe,Penfield - 9,PENFIELD 09,ny_full_typed
+NY,Monroe,Perinton - 1,PERINTON 01,ny_full_typed
+NY,Monroe,Perinton - 10,PERINTON 10,ny_full_typed
+NY,Monroe,Perinton - 11,PERINTON 11,ny_full_typed
+NY,Monroe,Perinton - 12,PERINTON 12,ny_full_typed
+NY,Monroe,Perinton - 13,PERINTON 13,ny_full_typed
+NY,Monroe,Perinton - 14,PERINTON 14,ny_full_typed
+NY,Monroe,Perinton - 15,PERINTON 15,ny_full_typed
+NY,Monroe,Perinton - 16,PERINTON 16,ny_full_typed
+NY,Monroe,Perinton - 17,PERINTON 17,ny_full_typed
+NY,Monroe,Perinton - 18,PERINTON 18,ny_full_typed
+NY,Monroe,Perinton - 19,PERINTON 19,ny_full_typed
+NY,Monroe,Perinton - 2,PERINTON 02,ny_full_typed
+NY,Monroe,Perinton - 20,PERINTON 20,ny_full_typed
+NY,Monroe,Perinton - 21,PERINTON 21,ny_full_typed
+NY,Monroe,Perinton - 22,PERINTON 22,ny_full_typed
+NY,Monroe,Perinton - 23,PERINTON 23,ny_full_typed
+NY,Monroe,Perinton - 24,PERINTON 24,ny_full_typed
+NY,Monroe,Perinton - 25,PERINTON 25,ny_full_typed
+NY,Monroe,Perinton - 26,PERINTON 26,ny_full_typed
+NY,Monroe,Perinton - 27,PERINTON 27,ny_full_typed
+NY,Monroe,Perinton - 28,PERINTON 28,ny_full_typed
+NY,Monroe,Perinton - 29,PERINTON 29,ny_full_typed
+NY,Monroe,Perinton - 3,PERINTON 03,ny_full_typed
+NY,Monroe,Perinton - 30,PERINTON 30,ny_full_typed
+NY,Monroe,Perinton - 31,PERINTON 31,ny_full_typed
+NY,Monroe,Perinton - 32,PERINTON 32,ny_full_typed
+NY,Monroe,Perinton - 33,PERINTON 33,ny_full_typed
+NY,Monroe,Perinton - 34,PERINTON 34,ny_full_typed
+NY,Monroe,Perinton - 35,PERINTON 35,ny_full_typed
+NY,Monroe,Perinton - 36,PERINTON 36,ny_full_typed
+NY,Monroe,Perinton - 37,PERINTON 37,ny_full_typed
+NY,Monroe,Perinton - 38,PERINTON 38,ny_full_typed
+NY,Monroe,Perinton - 39,PERINTON 39,ny_full_typed
+NY,Monroe,Perinton - 4,PERINTON 04,ny_full_typed
+NY,Monroe,Perinton - 5,PERINTON 05,ny_full_typed
+NY,Monroe,Perinton - 6,PERINTON 06,ny_full_typed
+NY,Monroe,Perinton - 7,PERINTON 07,ny_full_typed
+NY,Monroe,Perinton - 8,PERINTON 08,ny_full_typed
+NY,Monroe,Perinton - 9,PERINTON 09,ny_full_typed
+NY,Monroe,Pittsford - 1,PITTSFORD 01,ny_full_typed
+NY,Monroe,Pittsford - 10,PITTSFORD 10,ny_full_typed
+NY,Monroe,Pittsford - 11,PITTSFORD 11,ny_full_typed
+NY,Monroe,Pittsford - 12,PITTSFORD 12,ny_full_typed
+NY,Monroe,Pittsford - 13,PITTSFORD 13,ny_full_typed
+NY,Monroe,Pittsford - 14,PITTSFORD 14,ny_full_typed
+NY,Monroe,Pittsford - 15,PITTSFORD 15,ny_full_typed
+NY,Monroe,Pittsford - 16,PITTSFORD 16,ny_full_typed
+NY,Monroe,Pittsford - 17,PITTSFORD 17,ny_full_typed
+NY,Monroe,Pittsford - 18,PITTSFORD 18,ny_full_typed
+NY,Monroe,Pittsford - 19,PITTSFORD 19,ny_full_typed
+NY,Monroe,Pittsford - 2,PITTSFORD 02,ny_full_typed
+NY,Monroe,Pittsford - 20,PITTSFORD 20,ny_full_typed
+NY,Monroe,Pittsford - 21,PITTSFORD 21,ny_full_typed
+NY,Monroe,Pittsford - 22,PITTSFORD 22,ny_full_typed
+NY,Monroe,Pittsford - 23,PITTSFORD 23,ny_full_typed
+NY,Monroe,Pittsford - 24,PITTSFORD 24,ny_full_typed
+NY,Monroe,Pittsford - 25,PITTSFORD 25,ny_full_typed
+NY,Monroe,Pittsford - 26,PITTSFORD 26,ny_full_typed
+NY,Monroe,Pittsford - 27,PITTSFORD 27,ny_full_typed
+NY,Monroe,Pittsford - 28,PITTSFORD 28,ny_full_typed
+NY,Monroe,Pittsford - 3,PITTSFORD 03,ny_full_typed
+NY,Monroe,Pittsford - 4,PITTSFORD 04,ny_full_typed
+NY,Monroe,Pittsford - 5,PITTSFORD 05,ny_full_typed
+NY,Monroe,Pittsford - 6,PITTSFORD 06,ny_full_typed
+NY,Monroe,Pittsford - 7,PITTSFORD 07,ny_full_typed
+NY,Monroe,Pittsford - 8,PITTSFORD 08,ny_full_typed
+NY,Monroe,Pittsford - 9,PITTSFORD 09,ny_full_typed
+NY,Monroe,Riga - 1,RIGA 1,ny_full_typed
+NY,Monroe,Riga - 2,RIGA 2,ny_full_typed
+NY,Monroe,Riga - 3,RIGA 3,ny_full_typed
+NY,Monroe,Riga - 4,RIGA 4,ny_full_typed
+NY,Monroe,Riga - 5,RIGA 5,ny_full_typed
+NY,Monroe,Riga - 6,RIGA 6,ny_full_typed
+NY,Monroe,Rush - 1,RUSH 1,ny_full_typed
+NY,Monroe,Rush - 2,RUSH 2,ny_full_typed
+NY,Monroe,Rush - 3,RUSH 3,ny_full_typed
+NY,Monroe,Rush - 4,RUSH 4,ny_full_typed
+NY,Monroe,Sweden - 1,SWEDEN 01,ny_full_typed
+NY,Monroe,Sweden - 10,SWEDEN 10,ny_full_typed
+NY,Monroe,Sweden - 11,SWEDEN 11,ny_full_typed
+NY,Monroe,Sweden - 12,SWEDEN 12,ny_full_typed
+NY,Monroe,Sweden - 2,SWEDEN 02,ny_full_typed
+NY,Monroe,Sweden - 3,SWEDEN 03,ny_full_typed
+NY,Monroe,Sweden - 4,SWEDEN 04,ny_full_typed
+NY,Monroe,Sweden - 5,SWEDEN 05,ny_full_typed
+NY,Monroe,Sweden - 6,SWEDEN 06,ny_full_typed
+NY,Monroe,Sweden - 7,SWEDEN 07,ny_full_typed
+NY,Monroe,Sweden - 8,SWEDEN 08,ny_full_typed
+NY,Monroe,Sweden - 9,SWEDEN 09,ny_full_typed
+NY,Monroe,Webster - 1,WEBSTER 01,ny_full_typed
+NY,Monroe,Webster - 10,WEBSTER 10,ny_full_typed
+NY,Monroe,Webster - 11,WEBSTER 11,ny_full_typed
+NY,Monroe,Webster - 12,WEBSTER 12,ny_full_typed
+NY,Monroe,Webster - 13,WEBSTER 13,ny_full_typed
+NY,Monroe,Webster - 14,WEBSTER 14,ny_full_typed
+NY,Monroe,Webster - 15,WEBSTER 15,ny_full_typed
+NY,Monroe,Webster - 16,WEBSTER 16,ny_full_typed
+NY,Monroe,Webster - 17,WEBSTER 17,ny_full_typed
+NY,Monroe,Webster - 18,WEBSTER 18,ny_full_typed
+NY,Monroe,Webster - 19,WEBSTER 19,ny_full_typed
+NY,Monroe,Webster - 2,WEBSTER 02,ny_full_typed
+NY,Monroe,Webster - 20,WEBSTER 20,ny_full_typed
+NY,Monroe,Webster - 21,WEBSTER 21,ny_full_typed
+NY,Monroe,Webster - 22,WEBSTER 22,ny_full_typed
+NY,Monroe,Webster - 23,WEBSTER 23,ny_full_typed
+NY,Monroe,Webster - 24,WEBSTER 24,ny_full_typed
+NY,Monroe,Webster - 25,WEBSTER 25,ny_full_typed
+NY,Monroe,Webster - 26,WEBSTER 26,ny_full_typed
+NY,Monroe,Webster - 27,WEBSTER 27,ny_full_typed
+NY,Monroe,Webster - 28,WEBSTER 28,ny_full_typed
+NY,Monroe,Webster - 29,WEBSTER 29,ny_full_typed
+NY,Monroe,Webster - 3,WEBSTER 03,ny_full_typed
+NY,Monroe,Webster - 30,WEBSTER 30,ny_full_typed
+NY,Monroe,Webster - 31,WEBSTER 31,ny_full_typed
+NY,Monroe,Webster - 32,WEBSTER 32,ny_full_typed
+NY,Monroe,Webster - 33,WEBSTER 33,ny_full_typed
+NY,Monroe,Webster - 34,WEBSTER 34,ny_full_typed
+NY,Monroe,Webster - 35,WEBSTER 35,ny_full_typed
+NY,Monroe,Webster - 36,WEBSTER 36,ny_full_typed
+NY,Monroe,Webster - 37,WEBSTER 37,ny_full_typed
+NY,Monroe,Webster - 4,WEBSTER 04,ny_full_typed
+NY,Monroe,Webster - 5,WEBSTER 05,ny_full_typed
+NY,Monroe,Webster - 6,WEBSTER 06,ny_full_typed
+NY,Monroe,Webster - 7,WEBSTER 07,ny_full_typed
+NY,Monroe,Webster - 8,WEBSTER 08,ny_full_typed
+NY,Monroe,Webster - 9,WEBSTER 09,ny_full_typed
+NY,Monroe,Wheatland - 1,WHEATLAND 1,ny_full_typed
+NY,Monroe,Wheatland - 2,WHEATLAND 2,ny_full_typed
+NY,Monroe,Wheatland - 3,WHEATLAND 3,ny_full_typed
+NY,Monroe,Wheatland - 4,WHEATLAND 4,ny_full_typed
+NY,Monroe,Wheatland - 5,WHEATLAND 5,ny_full_typed
+NY,Ontario,City of Canandaigua Ward 1 ED 1,CANANDAIGUA CITY 1-1,ny_full_typed
+NY,Ontario,City of Canandaigua Ward 1 ED 2,CANANDAIGUA CITY 1-2,ny_full_typed
+NY,Ontario,City of Canandaigua Ward 2 ED 1,CANANDAIGUA CITY 2-1,ny_full_typed
+NY,Ontario,City of Canandaigua Ward 2 ED 2,CANANDAIGUA CITY 2-2,ny_full_typed
+NY,Ontario,City of Canandaigua Ward 3 ED 1,CANANDAIGUA CITY 3-1,ny_full_typed
+NY,Ontario,City of Canandaigua Ward 3 ED 2,CANANDAIGUA CITY 3-2,ny_full_typed
+NY,Ontario,City of Canandaigua Ward 4 ED 1,CANANDAIGUA CITY 4-1,ny_full_typed
+NY,Ontario,City of Canandaigua Ward 4 ED 2,CANANDAIGUA CITY 4-2,ny_full_typed
+NY,Ontario,City of Geneva Ward 1 ED 1,GENEVA CITY 1-1,ny_full_typed
+NY,Ontario,City of Geneva Ward 1 ED 2,GENEVA CITY 1-2,ny_full_typed
+NY,Ontario,City of Geneva Ward 2 ED 1,GENEVA CITY 2-1,ny_full_typed
+NY,Ontario,City of Geneva Ward 2 ED 2,GENEVA CITY 2-2,ny_full_typed
+NY,Ontario,City of Geneva Ward 3 ED 1,GENEVA CITY 3-1,ny_full_typed
+NY,Ontario,City of Geneva Ward 3 ED 2,GENEVA CITY 3-2,ny_full_typed
+NY,Ontario,City of Geneva Ward 4 ED 1,GENEVA CITY 4-1,ny_full_typed
+NY,Ontario,City of Geneva Ward 4 ED 2,GENEVA CITY 4-2,ny_full_typed
+NY,Ontario,City of Geneva Ward 5 ED 1,GENEVA CITY 5-1,ny_full_typed
+NY,Ontario,City of Geneva Ward 5 ED 2,GENEVA CITY 5-2,ny_full_typed
+NY,Ontario,City of Geneva Ward 6 ED 1,GENEVA CITY 6-1,ny_full_typed
+NY,Ontario,City of Geneva Ward 6 ED 2,GENEVA CITY 6-2,ny_full_typed
+NY,Ontario,Town of Bristol ED 1,BRISTOL 1,ny_full
+NY,Ontario,Town of Bristol ED 2,BRISTOL 2,ny_full
+NY,Ontario,Town of Canadice ED 1,CANADICE 1,ny_full
+NY,Ontario,Town of Canadice ED 2,CANADICE 2,ny_full
+NY,Ontario,Town of Canandaigua ED 1,CANANDAIGUA TOWN 1,ny_full_typed
+NY,Ontario,Town of Canandaigua ED 2,CANANDAIGUA TOWN 2,ny_full_typed
+NY,Ontario,Town of Canandaigua ED 3,CANANDAIGUA TOWN 3,ny_full_typed
+NY,Ontario,Town of Canandaigua ED 4,CANANDAIGUA TOWN 4,ny_full_typed
+NY,Ontario,Town of Canandaigua ED 5,CANANDAIGUA TOWN 5,ny_full_typed
+NY,Ontario,Town of Canandaigua ED 6,CANANDAIGUA TOWN 6,ny_full_typed
+NY,Ontario,Town of Canandaigua ED 7,CANANDAIGUA TOWN 7,ny_full_typed
+NY,Ontario,Town of East Bloomfield ED 1,EAST BLOOMFIELD 1,ny_full
+NY,Ontario,Town of East Bloomfield ED 2,EAST BLOOMFIELD 2,ny_full
+NY,Ontario,Town of East Bloomfield ED 3,EAST BLOOMFIELD 3,ny_full
+NY,Ontario,Town of Farmington ED 1,FARMINGTON 01,ny_full
+NY,Ontario,Town of Farmington ED 10,FARMINGTON 10,ny_full
+NY,Ontario,Town of Farmington ED 2,FARMINGTON 02,ny_full
+NY,Ontario,Town of Farmington ED 3,FARMINGTON 03,ny_full
+NY,Ontario,Town of Farmington ED 4,FARMINGTON 04,ny_full
+NY,Ontario,Town of Farmington ED 5,FARMINGTON 05,ny_full
+NY,Ontario,Town of Farmington ED 6,FARMINGTON 06,ny_full
+NY,Ontario,Town of Farmington ED 7,FARMINGTON 07,ny_full
+NY,Ontario,Town of Farmington ED 8,FARMINGTON 08,ny_full
+NY,Ontario,Town of Farmington ED 9,FARMINGTON 09,ny_full
+NY,Ontario,Town of Geneva ED 1,GENEVA TOWN 1,ny_full_typed
+NY,Ontario,Town of Geneva ED 2,GENEVA TOWN 2,ny_full_typed
+NY,Ontario,Town of Geneva ED 3,GENEVA TOWN 3,ny_full_typed
+NY,Ontario,Town of Gorham ED 1,GORHAM 1,ny_full
+NY,Ontario,Town of Gorham ED 2,GORHAM 2,ny_full
+NY,Ontario,Town of Gorham ED 3,GORHAM 3,ny_full
+NY,Ontario,Town of Gorham ED 4,GORHAM 4,ny_full
+NY,Ontario,Town of Hopewell ED 1,HOPEWELL 1,ny_full
+NY,Ontario,Town of Hopewell ED 2,HOPEWELL 2,ny_full
+NY,Ontario,Town of Hopewell ED 3,HOPEWELL 3,ny_full
+NY,Ontario,Town of Manchester ED 1,MANCHESTER 1,ny_full
+NY,Ontario,Town of Manchester ED 2,MANCHESTER 2,ny_full
+NY,Ontario,Town of Manchester ED 3,MANCHESTER 3,ny_full
+NY,Ontario,Town of Manchester ED 4,MANCHESTER 4,ny_full
+NY,Ontario,Town of Manchester ED 5,MANCHESTER 5,ny_full
+NY,Ontario,Town of Manchester ED 6,MANCHESTER 6,ny_full
+NY,Ontario,Town of Manchester ED 7,MANCHESTER 7,ny_full
+NY,Ontario,Town of Manchester ED 8,MANCHESTER 8,ny_full
+NY,Ontario,Town of Naples ED 1,NAPLES 1,ny_full
+NY,Ontario,Town of Naples ED 2,NAPLES 2,ny_full
+NY,Ontario,Town of Phelps ED 1,PHELPS 1,ny_full
+NY,Ontario,Town of Phelps ED 2,PHELPS 2,ny_full
+NY,Ontario,Town of Phelps ED 3,PHELPS 3,ny_full
+NY,Ontario,Town of Phelps ED 4,PHELPS 4,ny_full
+NY,Ontario,Town of Phelps ED 5,PHELPS 5,ny_full
+NY,Ontario,Town of Phelps ED 6,PHELPS 6,ny_full
+NY,Ontario,Town of Richmond ED 1,RICHMOND 1,ny_full
+NY,Ontario,Town of Richmond ED 2,RICHMOND 2,ny_full
+NY,Ontario,Town of Richmond ED 3,RICHMOND 3,ny_full
+NY,Ontario,Town of Seneca ED 1,SENECA 1,ny_full
+NY,Ontario,Town of Seneca ED 2,SENECA 2,ny_full
+NY,Ontario,Town of Seneca ED 3,SENECA 3,ny_full
+NY,Ontario,Town of South Bristol ED 1,SOUTH BRISTOL 1,ny_full
+NY,Ontario,Town of South Bristol ED 2,SOUTH BRISTOL 2,ny_full
+NY,Ontario,Town of Victor ED 1,VICTOR 01,ny_full
+NY,Ontario,Town of Victor ED 10,VICTOR 10,ny_full
+NY,Ontario,Town of Victor ED 11,VICTOR 11,ny_full
+NY,Ontario,Town of Victor ED 12,VICTOR 12,ny_full
+NY,Ontario,Town of Victor ED 2,VICTOR 02,ny_full
+NY,Ontario,Town of Victor ED 3,VICTOR 03,ny_full
+NY,Ontario,Town of Victor ED 4,VICTOR 04,ny_full
+NY,Ontario,Town of Victor ED 5,VICTOR 05,ny_full
+NY,Ontario,Town of Victor ED 6,VICTOR 06,ny_full
+NY,Ontario,Town of Victor ED 7,VICTOR 07,ny_full
+NY,Ontario,Town of Victor ED 8,VICTOR 08,ny_full
+NY,Ontario,Town of Victor ED 9,VICTOR 09,ny_full
+NY,Ontario,Town of West Bloomfield ED 1,WEST BLOOMFIELD 1,ny_full
+NY,Ontario,Town of West Bloomfield ED 2,WEST BLOOMFIELD 2,ny_full
+NY,Orange,Blooming Grove - W001 - D001,BLOOMING GROVE 1-1,ny_full_typed
+NY,Orange,Blooming Grove - W001 - D002,BLOOMING GROVE 1-2,ny_full_typed
+NY,Orange,Blooming Grove - W001 - D003,BLOOMING GROVE 1-3,ny_full_typed
+NY,Orange,Blooming Grove - W001 - D004,BLOOMING GROVE 1-4,ny_full_typed
+NY,Orange,Blooming Grove - W002 - D001,BLOOMING GROVE 2-1,ny_full_typed
+NY,Orange,Blooming Grove - W002 - D002,BLOOMING GROVE 2-2,ny_full_typed
+NY,Orange,Blooming Grove - W002 - D003,BLOOMING GROVE 2-3,ny_full_typed
+NY,Orange,Blooming Grove - W003 - D001,BLOOMING GROVE 3-1,ny_full_typed
+NY,Orange,Blooming Grove - W003 - D002,BLOOMING GROVE 3-2,ny_full_typed
+NY,Orange,Blooming Grove - W003 - D003,BLOOMING GROVE 3-3,ny_full_typed
+NY,Orange,Blooming Grove - W004 - D001,BLOOMING GROVE 4-1,ny_full_typed
+NY,Orange,Blooming Grove - W004 - D002,BLOOMING GROVE 4-2,ny_full_typed
+NY,Orange,Blooming Grove - W005 - D001,BLOOMING GROVE 5-1,ny_full_typed
+NY,Orange,Blooming Grove - W005 - D002,BLOOMING GROVE 5-2,ny_full_typed
+NY,Orange,Blooming Grove - W005 - D003,BLOOMING GROVE 5-3,ny_full_typed
+NY,Orange,Blooming Grove - W005 - D004,BLOOMING GROVE 5-4,ny_full_typed
+NY,Orange,Blooming Grove - W005 - D005,BLOOMING GROVE 5-5,ny_full_typed
+NY,Orange,Blooming Grove - W006 - D001,BLOOMING GROVE 6-1,ny_full_typed
+NY,Orange,Blooming Grove - W006 - D002,BLOOMING GROVE 6-2,ny_full_typed
+NY,Orange,Blooming Grove - W006 - D003,BLOOMING GROVE 6-3,ny_full_typed
+NY,Orange,Chester - W001 - D001,CHESTER 1-1,ny_full_typed
+NY,Orange,Chester - W001 - D002,CHESTER 1-2,ny_full_typed
+NY,Orange,Chester - W002 - D001,CHESTER 2-1,ny_full_typed
+NY,Orange,Chester - W002 - D002,CHESTER 2-2,ny_full_typed
+NY,Orange,Chester - W002 - D003,CHESTER 2-3,ny_full_typed
+NY,Orange,Chester - W003 - D001,CHESTER 3-1,ny_full_typed
+NY,Orange,Chester - W003 - D002,CHESTER 3-2,ny_full_typed
+NY,Orange,Chester - W004 - D001,CHESTER 4-1,ny_full_typed
+NY,Orange,Chester - W004 - D002,CHESTER 4-2,ny_full_typed
+NY,Orange,City of Newburgh - W001 - D001,NEWBURGH CITY 1-1,ny_full_typed
+NY,Orange,City of Newburgh - W001 - D002,NEWBURGH CITY 1-2,ny_full_typed
+NY,Orange,City of Newburgh - W001 - D003,NEWBURGH CITY 1-3,ny_full_typed
+NY,Orange,City of Newburgh - W001 - D004,NEWBURGH CITY 1-4,ny_full_typed
+NY,Orange,City of Newburgh - W002 - D001,NEWBURGH CITY 2-1,ny_full_typed
+NY,Orange,City of Newburgh - W002 - D002,NEWBURGH CITY 2-2,ny_full_typed
+NY,Orange,City of Newburgh - W002 - D003,NEWBURGH CITY 2-3,ny_full_typed
+NY,Orange,City of Newburgh - W003 - D001,NEWBURGH CITY 3-1,ny_full_typed
+NY,Orange,City of Newburgh - W003 - D002,NEWBURGH CITY 3-2,ny_full_typed
+NY,Orange,City of Newburgh - W003 - D003,NEWBURGH CITY 3-3,ny_full_typed
+NY,Orange,City of Newburgh - W003 - D004,NEWBURGH CITY 3-4,ny_full_typed
+NY,Orange,City of Newburgh - W003 - D005,NEWBURGH CITY 3-5,ny_full_typed
+NY,Orange,City of Newburgh - W004 - D001,NEWBURGH CITY 4-1,ny_full_typed
+NY,Orange,City of Newburgh - W004 - D002,NEWBURGH CITY 4-2,ny_full_typed
+NY,Orange,City of Newburgh - W004 - D003,NEWBURGH CITY 4-3,ny_full_typed
+NY,Orange,City of Newburgh - W004 - D004,NEWBURGH CITY 4-4,ny_full_typed
+NY,Orange,Cornwall - D001,CORNWALL 01,ny_full_typed
+NY,Orange,Cornwall - D002,CORNWALL 02,ny_full_typed
+NY,Orange,Cornwall - D003,CORNWALL 03,ny_full_typed
+NY,Orange,Cornwall - D004,CORNWALL 04,ny_full_typed
+NY,Orange,Cornwall - D005,CORNWALL 05,ny_full_typed
+NY,Orange,Cornwall - D006,CORNWALL 06,ny_full_typed
+NY,Orange,Cornwall - D007,CORNWALL 07,ny_full_typed
+NY,Orange,Cornwall - D008,CORNWALL 08,ny_full_typed
+NY,Orange,Cornwall - D009,CORNWALL 09,ny_full_typed
+NY,Orange,Cornwall - D010,CORNWALL 10,ny_full_typed
+NY,Orange,Cornwall - D011,CORNWALL 11,ny_full_typed
+NY,Orange,Cornwall - D012,CORNWALL 12,ny_full_typed
+NY,Orange,Cornwall - D013,CORNWALL 13,ny_full_typed
+NY,Orange,Cornwall - D014,CORNWALL 14,ny_full_typed
+NY,Orange,Cornwall - D015,CORNWALL 15,ny_full_typed
+NY,Orange,Crawford - D001,CRAWFORD 1,ny_full_typed
+NY,Orange,Crawford - D002,CRAWFORD 2,ny_full_typed
+NY,Orange,Crawford - D003,CRAWFORD 3,ny_full_typed
+NY,Orange,Crawford - D004,CRAWFORD 4,ny_full_typed
+NY,Orange,Crawford - D005,CRAWFORD 5,ny_full_typed
+NY,Orange,Crawford - D006,CRAWFORD 6,ny_full_typed
+NY,Orange,Crawford - D007,CRAWFORD 7,ny_full_typed
+NY,Orange,Crawford - D008,CRAWFORD 8,ny_full_typed
+NY,Orange,Deerpark - D001,DEERPARK 1,ny_full_typed
+NY,Orange,Deerpark - D002,DEERPARK 2,ny_full_typed
+NY,Orange,Deerpark - D003,DEERPARK 3,ny_full_typed
+NY,Orange,Deerpark - D004,DEERPARK 4,ny_full_typed
+NY,Orange,Deerpark - D005,DEERPARK 5,ny_full_typed
+NY,Orange,Deerpark - D006,DEERPARK 6,ny_full_typed
+NY,Orange,Deerpark - D007,DEERPARK 7,ny_full_typed
+NY,Orange,Goshen - D001,GOSHEN 01,ny_full_typed
+NY,Orange,Goshen - D002,GOSHEN 02,ny_full_typed
+NY,Orange,Goshen - D003,GOSHEN 03,ny_full_typed
+NY,Orange,Goshen - D004,GOSHEN 04,ny_full_typed
+NY,Orange,Goshen - D005,GOSHEN 05,ny_full_typed
+NY,Orange,Goshen - D006,GOSHEN 06,ny_full_typed
+NY,Orange,Goshen - D007,GOSHEN 07,ny_full_typed
+NY,Orange,Goshen - D008,GOSHEN 08,ny_full_typed
+NY,Orange,Goshen - D009,GOSHEN 09,ny_full_typed
+NY,Orange,Goshen - D010,GOSHEN 10,ny_full_typed
+NY,Orange,Goshen - D011,GOSHEN 11,ny_full_typed
+NY,Orange,Goshen - D012,GOSHEN 12,ny_full_typed
+NY,Orange,Goshen - D013,GOSHEN 13,ny_full_typed
+NY,Orange,Greenville - D001,GREENVILLE 1,ny_full_typed
+NY,Orange,Greenville - D002,GREENVILLE 2,ny_full_typed
+NY,Orange,Greenville - D003,GREENVILLE 3,ny_full_typed
+NY,Orange,Greenville - D004,GREENVILLE 4,ny_full_typed
+NY,Orange,Hamptonburgh - D001,HAMPTONBURGH 1,ny_full_typed
+NY,Orange,Hamptonburgh - D002,HAMPTONBURGH 2,ny_full_typed
+NY,Orange,Hamptonburgh - D003,HAMPTONBURGH 3,ny_full_typed
+NY,Orange,Hamptonburgh - D004,HAMPTONBURGH 4,ny_full_typed
+NY,Orange,Hamptonburgh - D005,HAMPTONBURGH 5,ny_full_typed
+NY,Orange,Highlands - D001,HIGHLANDS 1,ny_full_typed
+NY,Orange,Highlands - D002,HIGHLANDS 2,ny_full_typed
+NY,Orange,Highlands - D003,HIGHLANDS 3,ny_full_typed
+NY,Orange,Highlands - D004,HIGHLANDS 4,ny_full_typed
+NY,Orange,Highlands - D005,HIGHLANDS 5,ny_full_typed
+NY,Orange,Highlands - D006,HIGHLANDS 6,ny_full_typed
+NY,Orange,Highlands - D007,HIGHLANDS 7,ny_full_typed
+NY,Orange,Middletown - W001 - D001,MIDDLETOWN CITY 1-1,ny_full
+NY,Orange,Middletown - W001 - D002,MIDDLETOWN CITY 1-2,ny_full
+NY,Orange,Middletown - W001 - D003,MIDDLETOWN CITY 1-3,ny_full
+NY,Orange,Middletown - W001 - D004,MIDDLETOWN CITY 1-4,ny_full
+NY,Orange,Middletown - W001 - D005,MIDDLETOWN CITY 1-5,ny_full
+NY,Orange,Middletown - W002 - D001,MIDDLETOWN CITY 2-1,ny_full
+NY,Orange,Middletown - W002 - D002,MIDDLETOWN CITY 2-2,ny_full
+NY,Orange,Middletown - W002 - D003,MIDDLETOWN CITY 2-3,ny_full
+NY,Orange,Middletown - W002 - D004,MIDDLETOWN CITY 2-4,ny_full
+NY,Orange,Middletown - W002 - D005,MIDDLETOWN CITY 2-5,ny_full
+NY,Orange,Middletown - W002 - D006,MIDDLETOWN CITY 2-6,ny_full
+NY,Orange,Middletown - W003 - D001,MIDDLETOWN CITY 3-1,ny_full
+NY,Orange,Middletown - W003 - D002,MIDDLETOWN CITY 3-2,ny_full
+NY,Orange,Middletown - W003 - D003,MIDDLETOWN CITY 3-3,ny_full
+NY,Orange,Middletown - W003 - D004,MIDDLETOWN CITY 3-4,ny_full
+NY,Orange,Middletown - W003 - D005,MIDDLETOWN CITY 3-5,ny_full
+NY,Orange,Middletown - W004 - D001,MIDDLETOWN CITY 4-1,ny_full
+NY,Orange,Middletown - W004 - D002,MIDDLETOWN CITY 4-2,ny_full
+NY,Orange,Middletown - W004 - D003,MIDDLETOWN CITY 4-3,ny_full
+NY,Orange,Middletown - W004 - D004,MIDDLETOWN CITY 4-4,ny_full
+NY,Orange,Middletown - W004 - D005,MIDDLETOWN CITY 4-5,ny_full
+NY,Orange,Middletown - W004 - D006,MIDDLETOWN CITY 4-6,ny_full
+NY,Orange,Middletown - W004 - D007,MIDDLETOWN CITY 4-7,ny_full
+NY,Orange,Middletown - W004 - D008,MIDDLETOWN CITY 4-8,ny_full
+NY,Orange,Minisink - D001,MINISINK 1,ny_full_typed
+NY,Orange,Minisink - D002,MINISINK 2,ny_full_typed
+NY,Orange,Minisink - D003,MINISINK 3,ny_full_typed
+NY,Orange,Minisink - D004,MINISINK 4,ny_full_typed
+NY,Orange,Minisink - D005,MINISINK 5,ny_full_typed
+NY,Orange,Monroe - D001,MONROE 01,ny_full_typed
+NY,Orange,Monroe - D002,MONROE 02,ny_full_typed
+NY,Orange,Monroe - D003,MONROE 03,ny_full_typed
+NY,Orange,Monroe - D004,MONROE 04,ny_full_typed
+NY,Orange,Monroe - D005,MONROE 05,ny_full_typed
+NY,Orange,Monroe - D006,MONROE 06,ny_full_typed
+NY,Orange,Monroe - D007,MONROE 07,ny_full_typed
+NY,Orange,Monroe - D008,MONROE 08,ny_full_typed
+NY,Orange,Monroe - D009,MONROE 09,ny_full_typed
+NY,Orange,Monroe - D010,MONROE 10,ny_full_typed
+NY,Orange,Monroe - D011,MONROE 11,ny_full_typed
+NY,Orange,Monroe - D012,MONROE 12,ny_full_typed
+NY,Orange,Monroe - D013,MONROE 13,ny_full_typed
+NY,Orange,Monroe - D014,MONROE 14,ny_full_typed
+NY,Orange,Monroe - D015,MONROE 15,ny_full_typed
+NY,Orange,Monroe - D016,MONROE 16,ny_full_typed
+NY,Orange,Monroe - D017,MONROE 17,ny_full_typed
+NY,Orange,Monroe - D018,MONROE 18,ny_full_typed
+NY,Orange,Monroe - D019,MONROE 19,ny_full_typed
+NY,Orange,Monroe - D020,MONROE 20,ny_full_typed
+NY,Orange,Monroe - D021,MONROE 21,ny_full_typed
+NY,Orange,Montgomery - D001,MONTGOMERY 01,ny_full_typed
+NY,Orange,Montgomery - D002,MONTGOMERY 02,ny_full_typed
+NY,Orange,Montgomery - D003,MONTGOMERY 03,ny_full_typed
+NY,Orange,Montgomery - D004,MONTGOMERY 04,ny_full_typed
+NY,Orange,Montgomery - D005,MONTGOMERY 05,ny_full_typed
+NY,Orange,Montgomery - D006,MONTGOMERY 06,ny_full_typed
+NY,Orange,Montgomery - D007,MONTGOMERY 07,ny_full_typed
+NY,Orange,Montgomery - D008,MONTGOMERY 08,ny_full_typed
+NY,Orange,Montgomery - D009,MONTGOMERY 09,ny_full_typed
+NY,Orange,Montgomery - D010,MONTGOMERY 10,ny_full_typed
+NY,Orange,Montgomery - D011,MONTGOMERY 11,ny_full_typed
+NY,Orange,Montgomery - D012,MONTGOMERY 12,ny_full_typed
+NY,Orange,Montgomery - D013,MONTGOMERY 13,ny_full_typed
+NY,Orange,Montgomery - D014,MONTGOMERY 14,ny_full_typed
+NY,Orange,Montgomery - D015,MONTGOMERY 15,ny_full_typed
+NY,Orange,Montgomery - D016,MONTGOMERY 16,ny_full_typed
+NY,Orange,Montgomery - D017,MONTGOMERY 17,ny_full_typed
+NY,Orange,Montgomery - D018,MONTGOMERY 18,ny_full_typed
+NY,Orange,Montgomery - D019,MONTGOMERY 19,ny_full_typed
+NY,Orange,Mount Hope - D001,MOUNT HOPE 1,ny_full_typed
+NY,Orange,Mount Hope - D002,MOUNT HOPE 2,ny_full_typed
+NY,Orange,Mount Hope - D003,MOUNT HOPE 3,ny_full_typed
+NY,Orange,Mount Hope - D004,MOUNT HOPE 4,ny_full_typed
+NY,Orange,New Windsor - D001,NEW WINDSOR 01,ny_full_typed
+NY,Orange,New Windsor - D002,NEW WINDSOR 02,ny_full_typed
+NY,Orange,New Windsor - D003,NEW WINDSOR 03,ny_full_typed
+NY,Orange,New Windsor - D004,NEW WINDSOR 04,ny_full_typed
+NY,Orange,New Windsor - D005,NEW WINDSOR 05,ny_full_typed
+NY,Orange,New Windsor - D006,NEW WINDSOR 06,ny_full_typed
+NY,Orange,New Windsor - D007,NEW WINDSOR 07,ny_full_typed
+NY,Orange,New Windsor - D008,NEW WINDSOR 08,ny_full_typed
+NY,Orange,New Windsor - D009,NEW WINDSOR 09,ny_full_typed
+NY,Orange,New Windsor - D010,NEW WINDSOR 10,ny_full_typed
+NY,Orange,New Windsor - D011,NEW WINDSOR 11,ny_full_typed
+NY,Orange,New Windsor - D012,NEW WINDSOR 12,ny_full_typed
+NY,Orange,New Windsor - D013,NEW WINDSOR 13,ny_full_typed
+NY,Orange,New Windsor - D014,NEW WINDSOR 14,ny_full_typed
+NY,Orange,New Windsor - D015,NEW WINDSOR 15,ny_full_typed
+NY,Orange,New Windsor - D016,NEW WINDSOR 16,ny_full_typed
+NY,Orange,New Windsor - D017,NEW WINDSOR 17,ny_full_typed
+NY,Orange,New Windsor - D018,NEW WINDSOR 18,ny_full_typed
+NY,Orange,New Windsor - D019,NEW WINDSOR 19,ny_full_typed
+NY,Orange,New Windsor - D020,NEW WINDSOR 20,ny_full_typed
+NY,Orange,New Windsor - D021,NEW WINDSOR 21,ny_full_typed
+NY,Orange,New Windsor - D022,NEW WINDSOR 22,ny_full_typed
+NY,Orange,New Windsor - D023,NEW WINDSOR 23,ny_full_typed
+NY,Orange,Newburgh Town - D001,NEWBURGH TOWN 01,ny_full_typed
+NY,Orange,Newburgh Town - D002,NEWBURGH TOWN 02,ny_full_typed
+NY,Orange,Newburgh Town - D003,NEWBURGH TOWN 03,ny_full_typed
+NY,Orange,Newburgh Town - D004,NEWBURGH TOWN 04,ny_full_typed
+NY,Orange,Newburgh Town - D005,NEWBURGH TOWN 05,ny_full_typed
+NY,Orange,Newburgh Town - D006,NEWBURGH TOWN 06,ny_full_typed
+NY,Orange,Newburgh Town - D007,NEWBURGH TOWN 07,ny_full_typed
+NY,Orange,Newburgh Town - D008,NEWBURGH TOWN 08,ny_full_typed
+NY,Orange,Newburgh Town - D009,NEWBURGH TOWN 09,ny_full_typed
+NY,Orange,Newburgh Town - D010,NEWBURGH TOWN 10,ny_full_typed
+NY,Orange,Newburgh Town - D011,NEWBURGH TOWN 11,ny_full_typed
+NY,Orange,Newburgh Town - D012,NEWBURGH TOWN 12,ny_full_typed
+NY,Orange,Newburgh Town - D013,NEWBURGH TOWN 13,ny_full_typed
+NY,Orange,Newburgh Town - D014,NEWBURGH TOWN 14,ny_full_typed
+NY,Orange,Newburgh Town - D015,NEWBURGH TOWN 15,ny_full_typed
+NY,Orange,Newburgh Town - D016,NEWBURGH TOWN 16,ny_full_typed
+NY,Orange,Newburgh Town - D017,NEWBURGH TOWN 17,ny_full_typed
+NY,Orange,Newburgh Town - D018,NEWBURGH TOWN 18,ny_full_typed
+NY,Orange,Newburgh Town - D019,NEWBURGH TOWN 19,ny_full_typed
+NY,Orange,Newburgh Town - D020,NEWBURGH TOWN 20,ny_full_typed
+NY,Orange,Newburgh Town - D021,NEWBURGH TOWN 21,ny_full_typed
+NY,Orange,Newburgh Town - D022,NEWBURGH TOWN 22,ny_full_typed
+NY,Orange,Newburgh Town - D023,NEWBURGH TOWN 23,ny_full_typed
+NY,Orange,Newburgh Town - D024,NEWBURGH TOWN 24,ny_full_typed
+NY,Orange,Newburgh Town - D025,NEWBURGH TOWN 25,ny_full_typed
+NY,Orange,Newburgh Town - D026,NEWBURGH TOWN 26,ny_full_typed
+NY,Orange,Newburgh Town - D027,NEWBURGH TOWN 27,ny_full_typed
+NY,Orange,Palm Tree - D001,PALM TREE 01,ny_full_typed
+NY,Orange,Palm Tree - D002,PALM TREE 02,ny_full_typed
+NY,Orange,Palm Tree - D003,PALM TREE 03,ny_full_typed
+NY,Orange,Palm Tree - D004,PALM TREE 04,ny_full_typed
+NY,Orange,Palm Tree - D005,PALM TREE 05,ny_full_typed
+NY,Orange,Palm Tree - D006,PALM TREE 06,ny_full_typed
+NY,Orange,Palm Tree - D007,PALM TREE 07,ny_full_typed
+NY,Orange,Palm Tree - D008,PALM TREE 08,ny_full_typed
+NY,Orange,Palm Tree - D009,PALM TREE 09,ny_full_typed
+NY,Orange,Palm Tree - D010,PALM TREE 10,ny_full_typed
+NY,Orange,Palm Tree - D011,PALM TREE 11,ny_full_typed
+NY,Orange,Palm Tree - D012,PALM TREE 12,ny_full_typed
+NY,Orange,Palm Tree - D013,PALM TREE 13,ny_full_typed
+NY,Orange,Palm Tree - D014,PALM TREE 14,ny_full_typed
+NY,Orange,Palm Tree - D015,PALM TREE 15,ny_full_typed
+NY,Orange,Palm Tree - D016,PALM TREE 16,ny_full_typed
+NY,Orange,Port Jervis - W001 - D001,PORT JERVIS CITY 1-1,ny_full
+NY,Orange,Port Jervis - W001 - D002,PORT JERVIS CITY 1-2,ny_full
+NY,Orange,Port Jervis - W002 - D001,PORT JERVIS CITY 2-1,ny_full
+NY,Orange,Port Jervis - W002 - D002,PORT JERVIS CITY 2-2,ny_full
+NY,Orange,Port Jervis - W003 - D001,PORT JERVIS CITY 3-1,ny_full
+NY,Orange,Port Jervis - W003 - D002,PORT JERVIS CITY 3-2,ny_full
+NY,Orange,Port Jervis - W004 - D001,PORT JERVIS CITY 4-1,ny_full
+NY,Orange,Port Jervis - W004 - D002,PORT JERVIS CITY 4-2,ny_full
+NY,Orange,Tuxedo - D001,TUXEDO 1,ny_full_typed
+NY,Orange,Tuxedo - D002,TUXEDO 2,ny_full_typed
+NY,Orange,Tuxedo - D003,TUXEDO 3,ny_full_typed
+NY,Orange,Tuxedo - D004,TUXEDO 4,ny_full_typed
+NY,Orange,Wallkill - W001 - D001,WALLKILL 1-1,ny_full_typed
+NY,Orange,Wallkill - W001 - D002,WALLKILL 1-2,ny_full_typed
+NY,Orange,Wallkill - W001 - D003,WALLKILL 1-3,ny_full_typed
+NY,Orange,Wallkill - W001 - D004,WALLKILL 1-4,ny_full_typed
+NY,Orange,Wallkill - W001 - D005,WALLKILL 1-5,ny_full_typed
+NY,Orange,Wallkill - W001 - D006,WALLKILL 1-6,ny_full_typed
+NY,Orange,Wallkill - W001 - D007,WALLKILL 1-7,ny_full_typed
+NY,Orange,Wallkill - W002 - D001,WALLKILL 2-1,ny_full_typed
+NY,Orange,Wallkill - W002 - D002,WALLKILL 2-2,ny_full_typed
+NY,Orange,Wallkill - W002 - D003,WALLKILL 2-3,ny_full_typed
+NY,Orange,Wallkill - W002 - D004,WALLKILL 2-4,ny_full_typed
+NY,Orange,Wallkill - W002 - D005,WALLKILL 2-5,ny_full_typed
+NY,Orange,Wallkill - W002 - D006,WALLKILL 2-6,ny_full_typed
+NY,Orange,Wallkill - W003 - D001,WALLKILL 3-1,ny_full_typed
+NY,Orange,Wallkill - W003 - D002,WALLKILL 3-2,ny_full_typed
+NY,Orange,Wallkill - W003 - D003,WALLKILL 3-3,ny_full_typed
+NY,Orange,Wallkill - W003 - D004,WALLKILL 3-4,ny_full_typed
+NY,Orange,Wallkill - W003 - D005,WALLKILL 3-5,ny_full_typed
+NY,Orange,Wallkill - W003 - D006,WALLKILL 3-6,ny_full_typed
+NY,Orange,Wallkill - W003 - D007,WALLKILL 3-7,ny_full_typed
+NY,Orange,Wallkill - W003 - D008,WALLKILL 3-8,ny_full_typed
+NY,Orange,Wallkill - W004 - D001,WALLKILL 4-1,ny_full_typed
+NY,Orange,Wallkill - W004 - D002,WALLKILL 4-2,ny_full_typed
+NY,Orange,Wallkill - W004 - D003,WALLKILL 4-3,ny_full_typed
+NY,Orange,Wallkill - W004 - D004,WALLKILL 4-4,ny_full_typed
+NY,Orange,Wallkill - W004 - D005,WALLKILL 4-5,ny_full_typed
+NY,Orange,Wallkill - W004 - D006,WALLKILL 4-6,ny_full_typed
+NY,Orange,Warwick - D001,WARWICK 01,ny_full_typed
+NY,Orange,Warwick - D002,WARWICK 02,ny_full_typed
+NY,Orange,Warwick - D003,WARWICK 03,ny_full_typed
+NY,Orange,Warwick - D004,WARWICK 04,ny_full_typed
+NY,Orange,Warwick - D005,WARWICK 05,ny_full_typed
+NY,Orange,Warwick - D006,WARWICK 06,ny_full_typed
+NY,Orange,Warwick - D007,WARWICK 07,ny_full_typed
+NY,Orange,Warwick - D008,WARWICK 08,ny_full_typed
+NY,Orange,Warwick - D009,WARWICK 09,ny_full_typed
+NY,Orange,Warwick - D010,WARWICK 10,ny_full_typed
+NY,Orange,Warwick - D011,WARWICK 11,ny_full_typed
+NY,Orange,Warwick - D012,WARWICK 12,ny_full_typed
+NY,Orange,Warwick - D013,WARWICK 13,ny_full_typed
+NY,Orange,Warwick - D014,WARWICK 14,ny_full_typed
+NY,Orange,Warwick - D015,WARWICK 15,ny_full_typed
+NY,Orange,Warwick - D016,WARWICK 16,ny_full_typed
+NY,Orange,Warwick - D017,WARWICK 17,ny_full_typed
+NY,Orange,Warwick - D018,WARWICK 18,ny_full_typed
+NY,Orange,Warwick - D019,WARWICK 19,ny_full_typed
+NY,Orange,Warwick - D020,WARWICK 20,ny_full_typed
+NY,Orange,Warwick - D021,WARWICK 21,ny_full_typed
+NY,Orange,Warwick - D022,WARWICK 22,ny_full_typed
+NY,Orange,Warwick - D023,WARWICK 23,ny_full_typed
+NY,Orange,Warwick - D024,WARWICK 24,ny_full_typed
+NY,Orange,Warwick - D025,WARWICK 25,ny_full_typed
+NY,Orange,Warwick - D026,WARWICK 26,ny_full_typed
+NY,Orange,Warwick - D027,WARWICK 27,ny_full_typed
+NY,Orange,Warwick - D028,WARWICK 28,ny_full_typed
+NY,Orange,Warwick - D029,WARWICK 29,ny_full_typed
+NY,Orange,Warwick - D030,WARWICK 30,ny_full_typed
+NY,Orange,Warwick - D031,WARWICK 31,ny_full_typed
+NY,Orange,Warwick - D032,WARWICK 32,ny_full_typed
+NY,Orange,Wawayanda - D001,WAWAYANDA 1,ny_full_typed
+NY,Orange,Wawayanda - D002,WAWAYANDA 2,ny_full_typed
+NY,Orange,Wawayanda - D003,WAWAYANDA 3,ny_full_typed
+NY,Orange,Wawayanda - D004,WAWAYANDA 4,ny_full_typed
+NY,Orange,Wawayanda - D005,WAWAYANDA 5,ny_full_typed
+NY,Orange,Wawayanda - D006,WAWAYANDA 6,ny_full_typed
+NY,Orange,Woodbury - D001,WOODBURY 01,ny_full_typed
+NY,Orange,Woodbury - D002,WOODBURY 02,ny_full_typed
+NY,Orange,Woodbury - D003,WOODBURY 03,ny_full_typed
+NY,Orange,Woodbury - D004,WOODBURY 04,ny_full_typed
+NY,Orange,Woodbury - D005,WOODBURY 05,ny_full_typed
+NY,Orange,Woodbury - D006,WOODBURY 06,ny_full_typed
+NY,Orange,Woodbury - D007,WOODBURY 07,ny_full_typed
+NY,Orange,Woodbury - D008,WOODBURY 08,ny_full_typed
+NY,Orange,Woodbury - D009,WOODBURY 09,ny_full_typed
+NY,Orange,Woodbury - D010,WOODBURY 10,ny_full_typed
+NY,Orange,Woodbury - D011,WOODBURY 11,ny_full_typed
+NY,Orange,Woodbury - D012,WOODBURY 12,ny_full_typed
+NY,Orange,Woodbury - D013,WOODBURY 13,ny_full_typed
+NY,Putnam,Carmel 1 LD 9,CARMEL 01,ny_full_typed
+NY,Putnam,Carmel 10 LD 7,CARMEL 10,ny_full_typed
+NY,Putnam,Carmel 11 LD 8,CARMEL 11,ny_full_typed
+NY,Putnam,Carmel 12 LD 9,CARMEL 12,ny_full_typed
+NY,Putnam,Carmel 13 LD 8,CARMEL 13,ny_full_typed
+NY,Putnam,Carmel 14 LD 5,CARMEL 14,ny_full_typed
+NY,Putnam,Carmel 15 LD 8,CARMEL 15,ny_full_typed
+NY,Putnam,Carmel 16 LD 9,CARMEL 16,ny_full_typed
+NY,Putnam,Carmel 17 LD 8,CARMEL 17,ny_full_typed
+NY,Putnam,Carmel 18 LD 8,CARMEL 18,ny_full_typed
+NY,Putnam,Carmel 19 LD 9,CARMEL 19,ny_full_typed
+NY,Putnam,Carmel 2 LD 5,CARMEL 02,ny_full_typed
+NY,Putnam,Carmel 20 LD 5,CARMEL 20,ny_full_typed
+NY,Putnam,Carmel 21 LD 9,CARMEL 21,ny_full_typed
+NY,Putnam,Carmel 22 LD 7,CARMEL 22,ny_full_typed
+NY,Putnam,Carmel 23 LD 8,CARMEL 23,ny_full_typed
+NY,Putnam,Carmel 24 LD 8,CARMEL 24,ny_full_typed
+NY,Putnam,Carmel 25 LD 9,CARMEL 25,ny_full_typed
+NY,Putnam,Carmel 26 LD 8,CARMEL 26,ny_full_typed
+NY,Putnam,Carmel 27 LD 9,CARMEL 27,ny_full_typed
+NY,Putnam,Carmel 28 LD 8,CARMEL 28,ny_full_typed
+NY,Putnam,Carmel 3 LD 9,CARMEL 03,ny_full_typed
+NY,Putnam,Carmel 4 LD 9,CARMEL 04,ny_full_typed
+NY,Putnam,Carmel 5 LD 8,CARMEL 05,ny_full_typed
+NY,Putnam,Carmel 6 LD 9,CARMEL 06,ny_full_typed
+NY,Putnam,Carmel 7 LD 7,CARMEL 07,ny_full_typed
+NY,Putnam,Carmel 8 LD 5,CARMEL 08,ny_full_typed
+NY,Putnam,Carmel 9 LD 5,CARMEL 09,ny_full_typed
+NY,Putnam,Kent 1 LD 3,KENT 01,ny_full_typed
+NY,Putnam,Kent 10 LD 3,KENT 10,ny_full_typed
+NY,Putnam,Kent 11 LD 3,KENT 11,ny_full_typed
+NY,Putnam,Kent 2 LD 3,KENT 02,ny_full_typed
+NY,Putnam,Kent 3 LD 5,KENT 03,ny_full_typed
+NY,Putnam,Kent 4 LD 3,KENT 04,ny_full_typed
+NY,Putnam,Kent 5 LD 5,KENT 05,ny_full_typed
+NY,Putnam,Kent 6 LD 3,KENT 06,ny_full_typed
+NY,Putnam,Kent 7 LD 3,KENT 07,ny_full_typed
+NY,Putnam,Kent 8 LD 3,KENT 08,ny_full_typed
+NY,Putnam,Kent 9 LD 5,KENT 09,ny_full_typed
+NY,Putnam,Patterson 1 LD 4,PATTERSON 1,ny_full_typed
+NY,Putnam,Patterson 2 LD 4,PATTERSON 2,ny_full_typed
+NY,Putnam,Patterson 3 LD 4,PATTERSON 3,ny_full_typed
+NY,Putnam,Patterson 4 LD 4,PATTERSON 4,ny_full_typed
+NY,Putnam,Patterson 5 LD 4,PATTERSON 5,ny_full_typed
+NY,Putnam,Patterson 6 LD 3,PATTERSON 6,ny_full_typed
+NY,Putnam,Patterson 7 LD 4,PATTERSON 7,ny_full_typed
+NY,Putnam,Patterson 8 LD 4,PATTERSON 8,ny_full_typed
+NY,Putnam,Philipstown 1 LD 1,PHILIPSTOWN 01,ny_full_typed
+NY,Putnam,Philipstown 10 LD 1,PHILIPSTOWN 10,ny_full_typed
+NY,Putnam,Philipstown 2 LD 1,PHILIPSTOWN 02,ny_full_typed
+NY,Putnam,Philipstown 3 LD 1,PHILIPSTOWN 03,ny_full_typed
+NY,Putnam,Philipstown 4 LD 1,PHILIPSTOWN 04,ny_full_typed
+NY,Putnam,Philipstown 5 LD 1,PHILIPSTOWN 05,ny_full_typed
+NY,Putnam,Philipstown 6 LD 1,PHILIPSTOWN 06,ny_full_typed
+NY,Putnam,Philipstown 7 LD 1,PHILIPSTOWN 07,ny_full_typed
+NY,Putnam,Philipstown 8 LD 1,PHILIPSTOWN 08,ny_full_typed
+NY,Putnam,Philipstown 9 LD 1,PHILIPSTOWN 09,ny_full_typed
+NY,Putnam,Putnam Valley 1 LD 2,PUTNAM VALLEY 01,ny_full_typed
+NY,Putnam,Putnam Valley 10 LD 2,PUTNAM VALLEY 10,ny_full_typed
+NY,Putnam,Putnam Valley 2 LD 2,PUTNAM VALLEY 02,ny_full_typed
+NY,Putnam,Putnam Valley 3 LD 2,PUTNAM VALLEY 03,ny_full_typed
+NY,Putnam,Putnam Valley 4 LD 2,PUTNAM VALLEY 04,ny_full_typed
+NY,Putnam,Putnam Valley 5 LD 2,PUTNAM VALLEY 05,ny_full_typed
+NY,Putnam,Putnam Valley 6 LD 2,PUTNAM VALLEY 06,ny_full_typed
+NY,Putnam,Putnam Valley 7 LD 2,PUTNAM VALLEY 07,ny_full_typed
+NY,Putnam,Putnam Valley 8 LD 1,PUTNAM VALLEY 08,ny_full_typed
+NY,Putnam,Putnam Valley 9 LD 2,PUTNAM VALLEY 09,ny_full_typed
+NY,Putnam,Southeast 1 LD 6,SOUTHEAST 01,ny_full_typed
+NY,Putnam,Southeast 10 LD 6,SOUTHEAST 10,ny_full_typed
+NY,Putnam,Southeast 11 LD 6,SOUTHEAST 11,ny_full_typed
+NY,Putnam,Southeast 12 LD 7,SOUTHEAST 12,ny_full_typed
+NY,Putnam,Southeast 13 LD 6,SOUTHEAST 13,ny_full_typed
+NY,Putnam,Southeast 14 LD 6,SOUTHEAST 14,ny_full_typed
+NY,Putnam,Southeast 2 LD 7,SOUTHEAST 02,ny_full_typed
+NY,Putnam,Southeast 3 LD 6,SOUTHEAST 03,ny_full_typed
+NY,Putnam,Southeast 4 LD 7,SOUTHEAST 04,ny_full_typed
+NY,Putnam,Southeast 5 LD 6,SOUTHEAST 05,ny_full_typed
+NY,Putnam,Southeast 6 LD 7,SOUTHEAST 06,ny_full_typed
+NY,Putnam,Southeast 7 LD 6,SOUTHEAST 07,ny_full_typed
+NY,Putnam,Southeast 8 LD 6,SOUTHEAST 08,ny_full_typed
+NY,Putnam,Southeast 9 LD 7,SOUTHEAST 09,ny_full_typed
+NY,Rockland,Clarkstown 1 (Ward 4),CLARKSTOWN 4-01,ny_full_typed
+NY,Rockland,Clarkstown 10 (Ward 3),CLARKSTOWN 3-10,ny_full_typed
+NY,Rockland,Clarkstown 11 (Ward 4),CLARKSTOWN 4-11,ny_full_typed
+NY,Rockland,Clarkstown 12 (Ward 3),CLARKSTOWN 3-12,ny_full_typed
+NY,Rockland,Clarkstown 13 (Ward 1),CLARKSTOWN 1-13,ny_full_typed
+NY,Rockland,Clarkstown 14 (Ward 2),CLARKSTOWN 2-14,ny_full_typed
+NY,Rockland,Clarkstown 15 (Ward 3),CLARKSTOWN 3-15,ny_full_typed
+NY,Rockland,Clarkstown 16 (Ward 1),CLARKSTOWN 1-16,ny_full_typed
+NY,Rockland,Clarkstown 17 (Ward 2),CLARKSTOWN 2-17,ny_full_typed
+NY,Rockland,Clarkstown 18 (Ward 3),CLARKSTOWN 3-18,ny_full_typed
+NY,Rockland,Clarkstown 19 (Ward 1),CLARKSTOWN 1-19,ny_full_typed
+NY,Rockland,Clarkstown 2 (Ward 2),CLARKSTOWN 2-02,ny_full_typed
+NY,Rockland,Clarkstown 20 (Ward 2),CLARKSTOWN 2-20,ny_full_typed
+NY,Rockland,Clarkstown 21 (Ward 3),CLARKSTOWN 3-21,ny_full_typed
+NY,Rockland,Clarkstown 22 (Ward 1),CLARKSTOWN 1-22,ny_full_typed
+NY,Rockland,Clarkstown 23 (Ward 2),CLARKSTOWN 2-23,ny_full_typed
+NY,Rockland,Clarkstown 24 (Ward 1),CLARKSTOWN 1-24,ny_full_typed
+NY,Rockland,Clarkstown 25 (Ward 1),CLARKSTOWN 1-25,ny_full_typed
+NY,Rockland,Clarkstown 26 (Ward 1),CLARKSTOWN 1-26,ny_full_typed
+NY,Rockland,Clarkstown 27 (Ward 4),CLARKSTOWN 4-27,ny_full_typed
+NY,Rockland,Clarkstown 28 (Ward 3),CLARKSTOWN 3-28,ny_full_typed
+NY,Rockland,Clarkstown 29 (Ward 1),CLARKSTOWN 1-29,ny_full_typed
+NY,Rockland,Clarkstown 3 (Ward 3),CLARKSTOWN 3-03,ny_full_typed
+NY,Rockland,Clarkstown 30 (Ward 1),CLARKSTOWN 1-30,ny_full_typed
+NY,Rockland,Clarkstown 31 (Ward 4),CLARKSTOWN 4-31,ny_full_typed
+NY,Rockland,Clarkstown 32 (Ward 4),CLARKSTOWN 4-32,ny_full_typed
+NY,Rockland,Clarkstown 33 (Ward 3),CLARKSTOWN 3-33,ny_full_typed
+NY,Rockland,Clarkstown 34 (Ward 3),CLARKSTOWN 3-34,ny_full_typed
+NY,Rockland,Clarkstown 35 (Ward 4),CLARKSTOWN 4-35,ny_full_typed
+NY,Rockland,Clarkstown 36 (Ward 4),CLARKSTOWN 4-36,ny_full_typed
+NY,Rockland,Clarkstown 37 (Ward 1),CLARKSTOWN 1-37,ny_full_typed
+NY,Rockland,Clarkstown 38 (Ward 2),CLARKSTOWN 2-38,ny_full_typed
+NY,Rockland,Clarkstown 39 (Ward 3),CLARKSTOWN 3-39,ny_full_typed
+NY,Rockland,Clarkstown 4 (Ward 2),CLARKSTOWN 2-04,ny_full_typed
+NY,Rockland,Clarkstown 40 (Ward 1),CLARKSTOWN 1-40,ny_full_typed
+NY,Rockland,Clarkstown 41 (Ward 3),CLARKSTOWN 3-41,ny_full_typed
+NY,Rockland,Clarkstown 42 (Ward 2),CLARKSTOWN 2-42,ny_full_typed
+NY,Rockland,Clarkstown 43 (Ward 2),CLARKSTOWN 2-43,ny_full_typed
+NY,Rockland,Clarkstown 44 (Ward 3),CLARKSTOWN 3-44,ny_full_typed
+NY,Rockland,Clarkstown 45 (Ward 4),CLARKSTOWN 4-45,ny_full_typed
+NY,Rockland,Clarkstown 46 (Ward 1),CLARKSTOWN 1-46,ny_full_typed
+NY,Rockland,Clarkstown 47 (Ward 3),CLARKSTOWN 3-47,ny_full_typed
+NY,Rockland,Clarkstown 48 (Ward 4),CLARKSTOWN 4-48,ny_full_typed
+NY,Rockland,Clarkstown 49 (Ward 3),CLARKSTOWN 3-49,ny_full_typed
+NY,Rockland,Clarkstown 5 (Ward 3),CLARKSTOWN 3-05,ny_full_typed
+NY,Rockland,Clarkstown 50 (Ward 3),CLARKSTOWN 3-50,ny_full_typed
+NY,Rockland,Clarkstown 51 (Ward 2),CLARKSTOWN 2-51,ny_full_typed
+NY,Rockland,Clarkstown 52 (Ward 4),CLARKSTOWN 4-52,ny_full_typed
+NY,Rockland,Clarkstown 53 (Ward 1),CLARKSTOWN 1-53,ny_full_typed
+NY,Rockland,Clarkstown 54 (Ward 2),CLARKSTOWN 2-54,ny_full_typed
+NY,Rockland,Clarkstown 55 (Ward 1),CLARKSTOWN 1-55,ny_full_typed
+NY,Rockland,Clarkstown 56 (Ward 4),CLARKSTOWN 4-56,ny_full_typed
+NY,Rockland,Clarkstown 57 (Ward 4),CLARKSTOWN 4-57,ny_full_typed
+NY,Rockland,Clarkstown 58 (Ward 2),CLARKSTOWN 2-58,ny_full_typed
+NY,Rockland,Clarkstown 59 (Ward 4),CLARKSTOWN 4-59,ny_full_typed
+NY,Rockland,Clarkstown 6 (Ward 3),CLARKSTOWN 3-06,ny_full_typed
+NY,Rockland,Clarkstown 60 (Ward 1),CLARKSTOWN 1-60,ny_full_typed
+NY,Rockland,Clarkstown 61 (Ward 2),CLARKSTOWN 2-61,ny_full_typed
+NY,Rockland,Clarkstown 62 (Ward 3),CLARKSTOWN 3-62,ny_full_typed
+NY,Rockland,Clarkstown 63 (Ward 2),CLARKSTOWN 2-63,ny_full_typed
+NY,Rockland,Clarkstown 64 (Ward 2),CLARKSTOWN 2-64,ny_full_typed
+NY,Rockland,Clarkstown 65 (Ward 4),CLARKSTOWN 4-65,ny_full_typed
+NY,Rockland,Clarkstown 66 (Ward 4),CLARKSTOWN 4-66,ny_full_typed
+NY,Rockland,Clarkstown 67 (Ward 4),CLARKSTOWN 4-67,ny_full_typed
+NY,Rockland,Clarkstown 68 (Ward 1),CLARKSTOWN 1-68,ny_full_typed
+NY,Rockland,Clarkstown 69 (Ward 1),CLARKSTOWN 1-69,ny_full_typed
+NY,Rockland,Clarkstown 7 (Ward 2),CLARKSTOWN 2-07,ny_full_typed
+NY,Rockland,Clarkstown 70 (Ward 3),CLARKSTOWN 3-70,ny_full_typed
+NY,Rockland,Clarkstown 71 (Ward 4),CLARKSTOWN 4-71,ny_full_typed
+NY,Rockland,Clarkstown 72 (Ward 1),CLARKSTOWN 1-72,ny_full_typed
+NY,Rockland,Clarkstown 73 (Ward 2),CLARKSTOWN 2-73,ny_full_typed
+NY,Rockland,Clarkstown 74 (Ward 1),CLARKSTOWN 1-74,ny_full_typed
+NY,Rockland,Clarkstown 75 (Ward 4),CLARKSTOWN 4-75,ny_full_typed
+NY,Rockland,Clarkstown 76 (Ward 1),CLARKSTOWN 1-76,ny_full_typed
+NY,Rockland,Clarkstown 77 (Ward 4),CLARKSTOWN 4-77,ny_full_typed
+NY,Rockland,Clarkstown 78 (Ward 2),CLARKSTOWN 2-78,ny_full_typed
+NY,Rockland,Clarkstown 79 (Ward 1),CLARKSTOWN 1-79,ny_full_typed
+NY,Rockland,Clarkstown 8 (Ward 2),CLARKSTOWN 2-08,ny_full_typed
+NY,Rockland,Clarkstown 80 (Ward 4),CLARKSTOWN 4-80,ny_full_typed
+NY,Rockland,Clarkstown 81 (Ward 3),CLARKSTOWN 3-81,ny_full_typed
+NY,Rockland,Clarkstown 82 (Ward 2),CLARKSTOWN 2-82,ny_full_typed
+NY,Rockland,Clarkstown 83 (Ward 4),CLARKSTOWN 4-83,ny_full_typed
+NY,Rockland,Clarkstown 84 (Ward 2),CLARKSTOWN 2-84,ny_full_typed
+NY,Rockland,Clarkstown 85 (Ward 4),CLARKSTOWN 4-85,ny_full_typed
+NY,Rockland,Clarkstown 86 (Ward 3),CLARKSTOWN 3-86,ny_full_typed
+NY,Rockland,Clarkstown 87 (Ward 2),CLARKSTOWN 2-87,ny_full_typed
+NY,Rockland,Clarkstown 9 (Ward 1),CLARKSTOWN 1-09,ny_full_typed
+NY,Rockland,Haverstraw 1,HAVERSTRAW 01,ny_full_typed
+NY,Rockland,Haverstraw 10,HAVERSTRAW 10,ny_full_typed
+NY,Rockland,Haverstraw 11,HAVERSTRAW 11,ny_full_typed
+NY,Rockland,Haverstraw 12,HAVERSTRAW 12,ny_full_typed
+NY,Rockland,Haverstraw 13,HAVERSTRAW 13,ny_full_typed
+NY,Rockland,Haverstraw 14,HAVERSTRAW 14,ny_full_typed
+NY,Rockland,Haverstraw 15,HAVERSTRAW 15,ny_full_typed
+NY,Rockland,Haverstraw 16,HAVERSTRAW 16,ny_full_typed
+NY,Rockland,Haverstraw 17,HAVERSTRAW 17,ny_full_typed
+NY,Rockland,Haverstraw 18,HAVERSTRAW 18,ny_full_typed
+NY,Rockland,Haverstraw 19,HAVERSTRAW 19,ny_full_typed
+NY,Rockland,Haverstraw 2,HAVERSTRAW 02,ny_full_typed
+NY,Rockland,Haverstraw 20,HAVERSTRAW 20,ny_full_typed
+NY,Rockland,Haverstraw 21,HAVERSTRAW 21,ny_full_typed
+NY,Rockland,Haverstraw 22,HAVERSTRAW 22,ny_full_typed
+NY,Rockland,Haverstraw 23,HAVERSTRAW 23,ny_full_typed
+NY,Rockland,Haverstraw 24,HAVERSTRAW 24,ny_full_typed
+NY,Rockland,Haverstraw 25,HAVERSTRAW 25,ny_full_typed
+NY,Rockland,Haverstraw 26,HAVERSTRAW 26,ny_full_typed
+NY,Rockland,Haverstraw 27,HAVERSTRAW 27,ny_full_typed
+NY,Rockland,Haverstraw 28,HAVERSTRAW 28,ny_full_typed
+NY,Rockland,Haverstraw 29,HAVERSTRAW 29,ny_full_typed
+NY,Rockland,Haverstraw 3,HAVERSTRAW 03,ny_full_typed
+NY,Rockland,Haverstraw 30,HAVERSTRAW 30,ny_full_typed
+NY,Rockland,Haverstraw 31,HAVERSTRAW 31,ny_full_typed
+NY,Rockland,Haverstraw 32,HAVERSTRAW 32,ny_full_typed
+NY,Rockland,Haverstraw 33,HAVERSTRAW 33,ny_full_typed
+NY,Rockland,Haverstraw 4,HAVERSTRAW 04,ny_full_typed
+NY,Rockland,Haverstraw 5,HAVERSTRAW 05,ny_full_typed
+NY,Rockland,Haverstraw 6,HAVERSTRAW 06,ny_full_typed
+NY,Rockland,Haverstraw 7,HAVERSTRAW 07,ny_full_typed
+NY,Rockland,Haverstraw 8,HAVERSTRAW 08,ny_full_typed
+NY,Rockland,Haverstraw 9,HAVERSTRAW 09,ny_full_typed
+NY,Rockland,Orangetown 1,ORANGETOWN 01,ny_full_typed
+NY,Rockland,Orangetown 10,ORANGETOWN 10,ny_full_typed
+NY,Rockland,Orangetown 11,ORANGETOWN 11,ny_full_typed
+NY,Rockland,Orangetown 12,ORANGETOWN 12,ny_full_typed
+NY,Rockland,Orangetown 13,ORANGETOWN 13,ny_full_typed
+NY,Rockland,Orangetown 14,ORANGETOWN 14,ny_full_typed
+NY,Rockland,Orangetown 15,ORANGETOWN 15,ny_full_typed
+NY,Rockland,Orangetown 16,ORANGETOWN 16,ny_full_typed
+NY,Rockland,Orangetown 17,ORANGETOWN 17,ny_full_typed
+NY,Rockland,Orangetown 18,ORANGETOWN 18,ny_full_typed
+NY,Rockland,Orangetown 19,ORANGETOWN 19,ny_full_typed
+NY,Rockland,Orangetown 2,ORANGETOWN 02,ny_full_typed
+NY,Rockland,Orangetown 20,ORANGETOWN 20,ny_full_typed
+NY,Rockland,Orangetown 21,ORANGETOWN 21,ny_full_typed
+NY,Rockland,Orangetown 22,ORANGETOWN 22,ny_full_typed
+NY,Rockland,Orangetown 23,ORANGETOWN 23,ny_full_typed
+NY,Rockland,Orangetown 24,ORANGETOWN 24,ny_full_typed
+NY,Rockland,Orangetown 25,ORANGETOWN 25,ny_full_typed
+NY,Rockland,Orangetown 26,ORANGETOWN 26,ny_full_typed
+NY,Rockland,Orangetown 27,ORANGETOWN 27,ny_full_typed
+NY,Rockland,Orangetown 28,ORANGETOWN 28,ny_full_typed
+NY,Rockland,Orangetown 29,ORANGETOWN 29,ny_full_typed
+NY,Rockland,Orangetown 3,ORANGETOWN 03,ny_full_typed
+NY,Rockland,Orangetown 30,ORANGETOWN 30,ny_full_typed
+NY,Rockland,Orangetown 32,ORANGETOWN 32,ny_full_typed
+NY,Rockland,Orangetown 33,ORANGETOWN 33,ny_full_typed
+NY,Rockland,Orangetown 34,ORANGETOWN 34,ny_full_typed
+NY,Rockland,Orangetown 36,ORANGETOWN 36,ny_full_typed
+NY,Rockland,Orangetown 39,ORANGETOWN 39,ny_full_typed
+NY,Rockland,Orangetown 4,ORANGETOWN 04,ny_full_typed
+NY,Rockland,Orangetown 40,ORANGETOWN 40,ny_full_typed
+NY,Rockland,Orangetown 41,ORANGETOWN 41,ny_full_typed
+NY,Rockland,Orangetown 42,ORANGETOWN 42,ny_full_typed
+NY,Rockland,Orangetown 43,ORANGETOWN 43,ny_full_typed
+NY,Rockland,Orangetown 45,ORANGETOWN 45,ny_full_typed
+NY,Rockland,Orangetown 46,ORANGETOWN 46,ny_full_typed
+NY,Rockland,Orangetown 47,ORANGETOWN 47,ny_full_typed
+NY,Rockland,Orangetown 48,ORANGETOWN 48,ny_full_typed
+NY,Rockland,Orangetown 49,ORANGETOWN 49,ny_full_typed
+NY,Rockland,Orangetown 5,ORANGETOWN 05,ny_full_typed
+NY,Rockland,Orangetown 50,ORANGETOWN 50,ny_full_typed
+NY,Rockland,Orangetown 51,ORANGETOWN 51,ny_full_typed
+NY,Rockland,Orangetown 53,ORANGETOWN 53,ny_full_typed
+NY,Rockland,Orangetown 54,ORANGETOWN 54,ny_full_typed
+NY,Rockland,Orangetown 55,ORANGETOWN 55,ny_full_typed
+NY,Rockland,Orangetown 56,ORANGETOWN 56,ny_full_typed
+NY,Rockland,Orangetown 57,ORANGETOWN 57,ny_full_typed
+NY,Rockland,Orangetown 6,ORANGETOWN 06,ny_full_typed
+NY,Rockland,Orangetown 7,ORANGETOWN 07,ny_full_typed
+NY,Rockland,Orangetown 8,ORANGETOWN 08,ny_full_typed
+NY,Rockland,Orangetown 9,ORANGETOWN 09,ny_full_typed
+NY,Rockland,Ramapo 1,RAMAPO 001,ny_full_typed
+NY,Rockland,Ramapo 10,RAMAPO 010,ny_full_typed
+NY,Rockland,Ramapo 100,RAMAPO 100,ny_full_typed
+NY,Rockland,Ramapo 101,RAMAPO 101,ny_full_typed
+NY,Rockland,Ramapo 102,RAMAPO 102,ny_full_typed
+NY,Rockland,Ramapo 103,RAMAPO 103,ny_full_typed
+NY,Rockland,Ramapo 104,RAMAPO 104,ny_full_typed
+NY,Rockland,Ramapo 105,RAMAPO 105,ny_full_typed
+NY,Rockland,Ramapo 106,RAMAPO 106,ny_full_typed
+NY,Rockland,Ramapo 107,RAMAPO 107,ny_full_typed
+NY,Rockland,Ramapo 108,RAMAPO 108,ny_full_typed
+NY,Rockland,Ramapo 109,RAMAPO 109,ny_full_typed
+NY,Rockland,Ramapo 11,RAMAPO 011,ny_full_typed
+NY,Rockland,Ramapo 110,RAMAPO 110,ny_full_typed
+NY,Rockland,Ramapo 111,RAMAPO 111,ny_full_typed
+NY,Rockland,Ramapo 112,RAMAPO 112,ny_full_typed
+NY,Rockland,Ramapo 113,RAMAPO 113,ny_full_typed
+NY,Rockland,Ramapo 114,RAMAPO 114,ny_full_typed
+NY,Rockland,Ramapo 115,RAMAPO 115,ny_full_typed
+NY,Rockland,Ramapo 116,RAMAPO 116,ny_full_typed
+NY,Rockland,Ramapo 117,RAMAPO 117,ny_full_typed
+NY,Rockland,Ramapo 118,RAMAPO 118,ny_full_typed
+NY,Rockland,Ramapo 119,RAMAPO 119,ny_full_typed
+NY,Rockland,Ramapo 12,RAMAPO 012,ny_full_typed
+NY,Rockland,Ramapo 120,RAMAPO 120,ny_full_typed
+NY,Rockland,Ramapo 121,RAMAPO 121,ny_full_typed
+NY,Rockland,Ramapo 122,RAMAPO 122,ny_full_typed
+NY,Rockland,Ramapo 13,RAMAPO 013,ny_full_typed
+NY,Rockland,Ramapo 14,RAMAPO 014,ny_full_typed
+NY,Rockland,Ramapo 15,RAMAPO 015,ny_full_typed
+NY,Rockland,Ramapo 16,RAMAPO 016,ny_full_typed
+NY,Rockland,Ramapo 17,RAMAPO 017,ny_full_typed
+NY,Rockland,Ramapo 18,RAMAPO 018,ny_full_typed
+NY,Rockland,Ramapo 19,RAMAPO 019,ny_full_typed
+NY,Rockland,Ramapo 2,RAMAPO 002,ny_full_typed
+NY,Rockland,Ramapo 20,RAMAPO 020,ny_full_typed
+NY,Rockland,Ramapo 21,RAMAPO 021,ny_full_typed
+NY,Rockland,Ramapo 22,RAMAPO 022,ny_full_typed
+NY,Rockland,Ramapo 23,RAMAPO 023,ny_full_typed
+NY,Rockland,Ramapo 24,RAMAPO 024,ny_full_typed
+NY,Rockland,Ramapo 25,RAMAPO 025,ny_full_typed
+NY,Rockland,Ramapo 26,RAMAPO 026,ny_full_typed
+NY,Rockland,Ramapo 27,RAMAPO 027,ny_full_typed
+NY,Rockland,Ramapo 28,RAMAPO 028,ny_full_typed
+NY,Rockland,Ramapo 29,RAMAPO 029,ny_full_typed
+NY,Rockland,Ramapo 3,RAMAPO 003,ny_full_typed
+NY,Rockland,Ramapo 30,RAMAPO 030,ny_full_typed
+NY,Rockland,Ramapo 31,RAMAPO 031,ny_full_typed
+NY,Rockland,Ramapo 32,RAMAPO 032,ny_full_typed
+NY,Rockland,Ramapo 33,RAMAPO 033,ny_full_typed
+NY,Rockland,Ramapo 34,RAMAPO 034,ny_full_typed
+NY,Rockland,Ramapo 35,RAMAPO 035,ny_full_typed
+NY,Rockland,Ramapo 36,RAMAPO 036,ny_full_typed
+NY,Rockland,Ramapo 37,RAMAPO 037,ny_full_typed
+NY,Rockland,Ramapo 38,RAMAPO 038,ny_full_typed
+NY,Rockland,Ramapo 39,RAMAPO 039,ny_full_typed
+NY,Rockland,Ramapo 4,RAMAPO 004,ny_full_typed
+NY,Rockland,Ramapo 40,RAMAPO 040,ny_full_typed
+NY,Rockland,Ramapo 41,RAMAPO 041,ny_full_typed
+NY,Rockland,Ramapo 42,RAMAPO 042,ny_full_typed
+NY,Rockland,Ramapo 43,RAMAPO 043,ny_full_typed
+NY,Rockland,Ramapo 44,RAMAPO 044,ny_full_typed
+NY,Rockland,Ramapo 45,RAMAPO 045,ny_full_typed
+NY,Rockland,Ramapo 46,RAMAPO 046,ny_full_typed
+NY,Rockland,Ramapo 47,RAMAPO 047,ny_full_typed
+NY,Rockland,Ramapo 48,RAMAPO 048,ny_full_typed
+NY,Rockland,Ramapo 49,RAMAPO 049,ny_full_typed
+NY,Rockland,Ramapo 5,RAMAPO 005,ny_full_typed
+NY,Rockland,Ramapo 50,RAMAPO 050,ny_full_typed
+NY,Rockland,Ramapo 51,RAMAPO 051,ny_full_typed
+NY,Rockland,Ramapo 52,RAMAPO 052,ny_full_typed
+NY,Rockland,Ramapo 53,RAMAPO 053,ny_full_typed
+NY,Rockland,Ramapo 54,RAMAPO 054,ny_full_typed
+NY,Rockland,Ramapo 55,RAMAPO 055,ny_full_typed
+NY,Rockland,Ramapo 56,RAMAPO 056,ny_full_typed
+NY,Rockland,Ramapo 57,RAMAPO 057,ny_full_typed
+NY,Rockland,Ramapo 58,RAMAPO 058,ny_full_typed
+NY,Rockland,Ramapo 59,RAMAPO 059,ny_full_typed
+NY,Rockland,Ramapo 6,RAMAPO 006,ny_full_typed
+NY,Rockland,Ramapo 60,RAMAPO 060,ny_full_typed
+NY,Rockland,Ramapo 61,RAMAPO 061,ny_full_typed
+NY,Rockland,Ramapo 62,RAMAPO 062,ny_full_typed
+NY,Rockland,Ramapo 63,RAMAPO 063,ny_full_typed
+NY,Rockland,Ramapo 64,RAMAPO 064,ny_full_typed
+NY,Rockland,Ramapo 65,RAMAPO 065,ny_full_typed
+NY,Rockland,Ramapo 66,RAMAPO 066,ny_full_typed
+NY,Rockland,Ramapo 67,RAMAPO 067,ny_full_typed
+NY,Rockland,Ramapo 68,RAMAPO 068,ny_full_typed
+NY,Rockland,Ramapo 69,RAMAPO 069,ny_full_typed
+NY,Rockland,Ramapo 7,RAMAPO 007,ny_full_typed
+NY,Rockland,Ramapo 70,RAMAPO 070,ny_full_typed
+NY,Rockland,Ramapo 71,RAMAPO 071,ny_full_typed
+NY,Rockland,Ramapo 72,RAMAPO 072,ny_full_typed
+NY,Rockland,Ramapo 73,RAMAPO 073,ny_full_typed
+NY,Rockland,Ramapo 74,RAMAPO 074,ny_full_typed
+NY,Rockland,Ramapo 75,RAMAPO 075,ny_full_typed
+NY,Rockland,Ramapo 76,RAMAPO 076,ny_full_typed
+NY,Rockland,Ramapo 77,RAMAPO 077,ny_full_typed
+NY,Rockland,Ramapo 78,RAMAPO 078,ny_full_typed
+NY,Rockland,Ramapo 79,RAMAPO 079,ny_full_typed
+NY,Rockland,Ramapo 8,RAMAPO 008,ny_full_typed
+NY,Rockland,Ramapo 80,RAMAPO 080,ny_full_typed
+NY,Rockland,Ramapo 81,RAMAPO 081,ny_full_typed
+NY,Rockland,Ramapo 82,RAMAPO 082,ny_full_typed
+NY,Rockland,Ramapo 83,RAMAPO 083,ny_full_typed
+NY,Rockland,Ramapo 84,RAMAPO 084,ny_full_typed
+NY,Rockland,Ramapo 85,RAMAPO 085,ny_full_typed
+NY,Rockland,Ramapo 86,RAMAPO 086,ny_full_typed
+NY,Rockland,Ramapo 87,RAMAPO 087,ny_full_typed
+NY,Rockland,Ramapo 88,RAMAPO 088,ny_full_typed
+NY,Rockland,Ramapo 89,RAMAPO 089,ny_full_typed
+NY,Rockland,Ramapo 9,RAMAPO 009,ny_full_typed
+NY,Rockland,Ramapo 90,RAMAPO 090,ny_full_typed
+NY,Rockland,Ramapo 91,RAMAPO 091,ny_full_typed
+NY,Rockland,Ramapo 92,RAMAPO 092,ny_full_typed
+NY,Rockland,Ramapo 93,RAMAPO 093,ny_full_typed
+NY,Rockland,Ramapo 94,RAMAPO 094,ny_full_typed
+NY,Rockland,Ramapo 95,RAMAPO 095,ny_full_typed
+NY,Rockland,Ramapo 96,RAMAPO 096,ny_full_typed
+NY,Rockland,Ramapo 97,RAMAPO 097,ny_full_typed
+NY,Rockland,Ramapo 98,RAMAPO 098,ny_full_typed
+NY,Rockland,Ramapo 99,RAMAPO 099,ny_full_typed
+NY,Rockland,Stony Point 1,STONY POINT 01,ny_full_typed
+NY,Rockland,Stony Point 10,STONY POINT 10,ny_full_typed
+NY,Rockland,Stony Point 11,STONY POINT 11,ny_full_typed
+NY,Rockland,Stony Point 12,STONY POINT 12,ny_full_typed
+NY,Rockland,Stony Point 13,STONY POINT 13,ny_full_typed
+NY,Rockland,Stony Point 14,STONY POINT 14,ny_full_typed
+NY,Rockland,Stony Point 2,STONY POINT 02,ny_full_typed
+NY,Rockland,Stony Point 3,STONY POINT 03,ny_full_typed
+NY,Rockland,Stony Point 4,STONY POINT 04,ny_full_typed
+NY,Rockland,Stony Point 5,STONY POINT 05,ny_full_typed
+NY,Rockland,Stony Point 6,STONY POINT 06,ny_full_typed
+NY,Rockland,Stony Point 7,STONY POINT 07,ny_full_typed
+NY,Rockland,Stony Point 8,STONY POINT 08,ny_full_typed
+NY,Rockland,Stony Point 9,STONY POINT 09,ny_full_typed
+NY,Steuben,Addison 1,ADDISON 1,ny_full_typed
+NY,Steuben,Avoca 1,AVOCA 1,ny_full_typed
+NY,Steuben,Bath 1,BATH 1,ny_full_typed
+NY,Steuben,Bath 2,BATH 2,ny_full_typed
+NY,Steuben,Bath 3,BATH 3,ny_full_typed
+NY,Steuben,Bath 4,BATH 4,ny_full_typed
+NY,Steuben,Bradford 1,BRADFORD,ny_single
+NY,Steuben,Cameron 1,CAMERON,ny_single
+NY,Steuben,Campbell 1,CAMPBELL 1,ny_full_typed
+NY,Steuben,Campbell 2,CAMPBELL 2,ny_full_typed
+NY,Steuben,Canisteo 1,CANISTEO 1,ny_full_typed
+NY,Steuben,Canisteo 2,CANISTEO 2,ny_full_typed
+NY,Steuben,Canisteo 3,CANISTEO 3,ny_full_typed
+NY,Steuben,Caton 1,CATON 1,ny_full_typed
+NY,Steuben,Cohocton 1,COHOCTON 1,ny_full_typed
+NY,Steuben,Corning City 1,CORNING CITY 1-1,ny_last_typed
+NY,Steuben,Corning City 2,CORNING CITY 2-2,ny_last_typed
+NY,Steuben,Corning City 3,CORNING CITY 3-3,ny_last_typed
+NY,Steuben,Corning City 4,CORNING CITY 4-4,ny_last_typed
+NY,Steuben,Corning City 5,CORNING CITY 5-5,ny_last_typed
+NY,Steuben,Corning City 6,CORNING CITY 6-6,ny_last_typed
+NY,Steuben,Corning City 7,CORNING CITY 7-7,ny_last_typed
+NY,Steuben,Corning City 8,CORNING CITY 8-8,ny_last_typed
+NY,Steuben,Corning Town 1,CORNING TOWN 1,ny_full_typed
+NY,Steuben,Corning Town 2,CORNING TOWN 2,ny_full_typed
+NY,Steuben,Corning Town 3,CORNING TOWN 3,ny_full_typed
+NY,Steuben,Dansville 1,DANSVILLE,ny_single
+NY,Steuben,Erwin 1,ERWIN 1,ny_full_typed
+NY,Steuben,Erwin 2,ERWIN 2,ny_full_typed
+NY,Steuben,Erwin 3,ERWIN 3,ny_full_typed
+NY,Steuben,Erwin 4,ERWIN 4,ny_full_typed
+NY,Steuben,Fremont 1,FREMONT,ny_single
+NY,Steuben,Greenwood 1,GREENWOOD,ny_single
+NY,Steuben,Hartsville 1,HARTSVILLE,ny_single
+NY,Steuben,Hornby 1,HORNBY,ny_single
+NY,Steuben,Hornell City 1,HORNELL CITY 01,ny_full_typed
+NY,Steuben,Hornell City 10,HORNELL CITY 10,ny_full_typed
+NY,Steuben,Hornell City 2,HORNELL CITY 02,ny_full_typed
+NY,Steuben,Hornell City 3,HORNELL CITY 03,ny_full_typed
+NY,Steuben,Hornell City 4,HORNELL CITY 04,ny_full_typed
+NY,Steuben,Hornell City 5,HORNELL CITY 05,ny_full_typed
+NY,Steuben,Hornell City 6,HORNELL CITY 06,ny_full_typed
+NY,Steuben,Hornell City 7,HORNELL CITY 07,ny_full_typed
+NY,Steuben,Hornell City 8,HORNELL CITY 08,ny_full_typed
+NY,Steuben,Hornell City 9,HORNELL CITY 09,ny_full_typed
+NY,Steuben,Hornellsville 1,HORNELLSVILLE 1,ny_full_typed
+NY,Steuben,Hornellsville 2,HORNELLSVILLE 2,ny_full_typed
+NY,Steuben,Howard 1,HOWARD,ny_single
+NY,Steuben,Jasper 1,JASPER,ny_single
+NY,Steuben,Lindley 1,LINDLEY,ny_single
+NY,Steuben,Prattsburgh 1,PRATTSBURGH 1,ny_full_typed
+NY,Steuben,Pulteney 1,PULTENEY,ny_single
+NY,Steuben,Rathbone 1,RATHBONE,ny_single
+NY,Steuben,Thurston 1,THURSTON,ny_single
+NY,Steuben,Troupsburg 1,TROUPSBURG,ny_single
+NY,Steuben,Tuscarora 1,TUSCARORA,ny_single
+NY,Steuben,Urbana 1,URBANA 1,ny_full_typed
+NY,Steuben,Wayland 1,WAYLAND 1,ny_full_typed
+NY,Steuben,Wayland 2,WAYLAND 2,ny_full_typed
+NY,Steuben,Wayne 1,WAYNE,ny_single
+NY,Steuben,West Union 1,WEST UNION,ny_single
+NY,Steuben,Wheeler 1,WHEELER,ny_single
+NY,Steuben,Woodhull 1,WOODHULL,ny_single
+NY,Suffolk,Babylon 001,BABYLON 001,ny_full_typed
+NY,Suffolk,Babylon 002,BABYLON 002,ny_full_typed
+NY,Suffolk,Babylon 003,BABYLON 003,ny_full_typed
+NY,Suffolk,Babylon 004,BABYLON 004,ny_full_typed
+NY,Suffolk,Babylon 005,BABYLON 005,ny_full_typed
+NY,Suffolk,Babylon 006,BABYLON 006,ny_full_typed
+NY,Suffolk,Babylon 007,BABYLON 007,ny_full_typed
+NY,Suffolk,Babylon 008,BABYLON 008,ny_full_typed
+NY,Suffolk,Babylon 009,BABYLON 009,ny_full_typed
+NY,Suffolk,Babylon 010,BABYLON 010,ny_full_typed
+NY,Suffolk,Babylon 011,BABYLON 011,ny_full_typed
+NY,Suffolk,Babylon 012,BABYLON 012,ny_full_typed
+NY,Suffolk,Babylon 013,BABYLON 013,ny_full_typed
+NY,Suffolk,Babylon 014,BABYLON 014,ny_full_typed
+NY,Suffolk,Babylon 015,BABYLON 015,ny_full_typed
+NY,Suffolk,Babylon 016,BABYLON 016,ny_full_typed
+NY,Suffolk,Babylon 017,BABYLON 017,ny_full_typed
+NY,Suffolk,Babylon 018,BABYLON 018,ny_full_typed
+NY,Suffolk,Babylon 019,BABYLON 019,ny_full_typed
+NY,Suffolk,Babylon 020,BABYLON 020,ny_full_typed
+NY,Suffolk,Babylon 021,BABYLON 021,ny_full_typed
+NY,Suffolk,Babylon 022,BABYLON 022,ny_full_typed
+NY,Suffolk,Babylon 023,BABYLON 023,ny_full_typed
+NY,Suffolk,Babylon 024,BABYLON 024,ny_full_typed
+NY,Suffolk,Babylon 025,BABYLON 025,ny_full_typed
+NY,Suffolk,Babylon 026,BABYLON 026,ny_full_typed
+NY,Suffolk,Babylon 027,BABYLON 027,ny_full_typed
+NY,Suffolk,Babylon 028,BABYLON 028,ny_full_typed
+NY,Suffolk,Babylon 029,BABYLON 029,ny_full_typed
+NY,Suffolk,Babylon 030,BABYLON 030,ny_full_typed
+NY,Suffolk,Babylon 031,BABYLON 031,ny_full_typed
+NY,Suffolk,Babylon 032,BABYLON 032,ny_full_typed
+NY,Suffolk,Babylon 033,BABYLON 033,ny_full_typed
+NY,Suffolk,Babylon 034,BABYLON 034,ny_full_typed
+NY,Suffolk,Babylon 035,BABYLON 035,ny_full_typed
+NY,Suffolk,Babylon 036,BABYLON 036,ny_full_typed
+NY,Suffolk,Babylon 037,BABYLON 037,ny_full_typed
+NY,Suffolk,Babylon 038,BABYLON 038,ny_full_typed
+NY,Suffolk,Babylon 039,BABYLON 039,ny_full_typed
+NY,Suffolk,Babylon 040,BABYLON 040,ny_full_typed
+NY,Suffolk,Babylon 041,BABYLON 041,ny_full_typed
+NY,Suffolk,Babylon 042,BABYLON 042,ny_full_typed
+NY,Suffolk,Babylon 043,BABYLON 043,ny_full_typed
+NY,Suffolk,Babylon 044,BABYLON 044,ny_full_typed
+NY,Suffolk,Babylon 045,BABYLON 045,ny_full_typed
+NY,Suffolk,Babylon 046,BABYLON 046,ny_full_typed
+NY,Suffolk,Babylon 047,BABYLON 047,ny_full_typed
+NY,Suffolk,Babylon 048,BABYLON 048,ny_full_typed
+NY,Suffolk,Babylon 049,BABYLON 049,ny_full_typed
+NY,Suffolk,Babylon 050,BABYLON 050,ny_full_typed
+NY,Suffolk,Babylon 051,BABYLON 051,ny_full_typed
+NY,Suffolk,Babylon 052,BABYLON 052,ny_full_typed
+NY,Suffolk,Babylon 053,BABYLON 053,ny_full_typed
+NY,Suffolk,Babylon 054,BABYLON 054,ny_full_typed
+NY,Suffolk,Babylon 055,BABYLON 055,ny_full_typed
+NY,Suffolk,Babylon 056,BABYLON 056,ny_full_typed
+NY,Suffolk,Babylon 057,BABYLON 057,ny_full_typed
+NY,Suffolk,Babylon 058,BABYLON 058,ny_full_typed
+NY,Suffolk,Babylon 059,BABYLON 059,ny_full_typed
+NY,Suffolk,Babylon 060,BABYLON 060,ny_full_typed
+NY,Suffolk,Babylon 061,BABYLON 061,ny_full_typed
+NY,Suffolk,Babylon 062,BABYLON 062,ny_full_typed
+NY,Suffolk,Babylon 063,BABYLON 063,ny_full_typed
+NY,Suffolk,Babylon 064,BABYLON 064,ny_full_typed
+NY,Suffolk,Babylon 065,BABYLON 065,ny_full_typed
+NY,Suffolk,Babylon 066,BABYLON 066,ny_full_typed
+NY,Suffolk,Babylon 067,BABYLON 067,ny_full_typed
+NY,Suffolk,Babylon 068,BABYLON 068,ny_full_typed
+NY,Suffolk,Babylon 069,BABYLON 069,ny_full_typed
+NY,Suffolk,Babylon 070,BABYLON 070,ny_full_typed
+NY,Suffolk,Babylon 071,BABYLON 071,ny_full_typed
+NY,Suffolk,Babylon 072,BABYLON 072,ny_full_typed
+NY,Suffolk,Babylon 073,BABYLON 073,ny_full_typed
+NY,Suffolk,Babylon 074,BABYLON 074,ny_full_typed
+NY,Suffolk,Babylon 075,BABYLON 075,ny_full_typed
+NY,Suffolk,Babylon 076,BABYLON 076,ny_full_typed
+NY,Suffolk,Babylon 077,BABYLON 077,ny_full_typed
+NY,Suffolk,Babylon 078,BABYLON 078,ny_full_typed
+NY,Suffolk,Babylon 079,BABYLON 079,ny_full_typed
+NY,Suffolk,Babylon 080,BABYLON 080,ny_full_typed
+NY,Suffolk,Babylon 081,BABYLON 081,ny_full_typed
+NY,Suffolk,Babylon 082,BABYLON 082,ny_full_typed
+NY,Suffolk,Babylon 083,BABYLON 083,ny_full_typed
+NY,Suffolk,Babylon 084,BABYLON 084,ny_full_typed
+NY,Suffolk,Babylon 085,BABYLON 085,ny_full_typed
+NY,Suffolk,Babylon 086,BABYLON 086,ny_full_typed
+NY,Suffolk,Babylon 087,BABYLON 087,ny_full_typed
+NY,Suffolk,Babylon 088,BABYLON 088,ny_full_typed
+NY,Suffolk,Babylon 089,BABYLON 089,ny_full_typed
+NY,Suffolk,Babylon 090,BABYLON 090,ny_full_typed
+NY,Suffolk,Babylon 091,BABYLON 091,ny_full_typed
+NY,Suffolk,Babylon 092,BABYLON 092,ny_full_typed
+NY,Suffolk,Babylon 093,BABYLON 093,ny_full_typed
+NY,Suffolk,Babylon 094,BABYLON 094,ny_full_typed
+NY,Suffolk,Babylon 095,BABYLON 095,ny_full_typed
+NY,Suffolk,Babylon 096,BABYLON 096,ny_full_typed
+NY,Suffolk,Babylon 097,BABYLON 097,ny_full_typed
+NY,Suffolk,Babylon 098,BABYLON 098,ny_full_typed
+NY,Suffolk,Babylon 099,BABYLON 099,ny_full_typed
+NY,Suffolk,Babylon 100,BABYLON 100,ny_full_typed
+NY,Suffolk,Babylon 101,BABYLON 101,ny_full_typed
+NY,Suffolk,Babylon 102,BABYLON 102,ny_full_typed
+NY,Suffolk,Babylon 103,BABYLON 103,ny_full_typed
+NY,Suffolk,Babylon 104,BABYLON 104,ny_full_typed
+NY,Suffolk,Babylon 105,BABYLON 105,ny_full_typed
+NY,Suffolk,Babylon 106,BABYLON 106,ny_full_typed
+NY,Suffolk,Babylon 107,BABYLON 107,ny_full_typed
+NY,Suffolk,Babylon 108,BABYLON 108,ny_full_typed
+NY,Suffolk,Babylon 109,BABYLON 109,ny_full_typed
+NY,Suffolk,Babylon 110,BABYLON 110,ny_full_typed
+NY,Suffolk,Babylon 111,BABYLON 111,ny_full_typed
+NY,Suffolk,Babylon 112,BABYLON 112,ny_full_typed
+NY,Suffolk,Babylon 113,BABYLON 113,ny_full_typed
+NY,Suffolk,Babylon 114,BABYLON 114,ny_full_typed
+NY,Suffolk,Babylon 115,BABYLON 115,ny_full_typed
+NY,Suffolk,Babylon 116,BABYLON 116,ny_full_typed
+NY,Suffolk,Babylon 117,BABYLON 117,ny_full_typed
+NY,Suffolk,Babylon 118,BABYLON 118,ny_full_typed
+NY,Suffolk,Babylon 119,BABYLON 119,ny_full_typed
+NY,Suffolk,Babylon 120,BABYLON 120,ny_full_typed
+NY,Suffolk,Babylon 121,BABYLON 121,ny_full_typed
+NY,Suffolk,Babylon 122,BABYLON 122,ny_full_typed
+NY,Suffolk,Babylon 123,BABYLON 123,ny_full_typed
+NY,Suffolk,Babylon 124,BABYLON 124,ny_full_typed
+NY,Suffolk,Babylon 125,BABYLON 125,ny_full_typed
+NY,Suffolk,Babylon 126,BABYLON 126,ny_full_typed
+NY,Suffolk,Babylon 127,BABYLON 127,ny_full_typed
+NY,Suffolk,Babylon 128,BABYLON 128,ny_full_typed
+NY,Suffolk,Babylon 129,BABYLON 129,ny_full_typed
+NY,Suffolk,Babylon 130,BABYLON 130,ny_full_typed
+NY,Suffolk,Babylon 131,BABYLON 131,ny_full_typed
+NY,Suffolk,Babylon 132,BABYLON 132,ny_full_typed
+NY,Suffolk,Babylon 133,BABYLON 133,ny_full_typed
+NY,Suffolk,Babylon 134,BABYLON 134,ny_full_typed
+NY,Suffolk,Babylon 135,BABYLON 135,ny_full_typed
+NY,Suffolk,Babylon 136,BABYLON 136,ny_full_typed
+NY,Suffolk,Babylon 137,BABYLON 137,ny_full_typed
+NY,Suffolk,Babylon 138,BABYLON 138,ny_full_typed
+NY,Suffolk,Babylon 139,BABYLON 139,ny_full_typed
+NY,Suffolk,Babylon 140,BABYLON 140,ny_full_typed
+NY,Suffolk,Babylon 141,BABYLON 141,ny_full_typed
+NY,Suffolk,Babylon 142,BABYLON 142,ny_full_typed
+NY,Suffolk,Babylon 143,BABYLON 143,ny_full_typed
+NY,Suffolk,Babylon 144,BABYLON 144,ny_full_typed
+NY,Suffolk,Babylon 145,BABYLON 145,ny_full_typed
+NY,Suffolk,Babylon 146,BABYLON 146,ny_full_typed
+NY,Suffolk,Babylon 147,BABYLON 147,ny_full_typed
+NY,Suffolk,Babylon 148,BABYLON 148,ny_full_typed
+NY,Suffolk,Babylon 149,BABYLON 149,ny_full_typed
+NY,Suffolk,Babylon 150,BABYLON 150,ny_full_typed
+NY,Suffolk,Babylon 151,BABYLON 151,ny_full_typed
+NY,Suffolk,Babylon 152,BABYLON 152,ny_full_typed
+NY,Suffolk,Babylon 153,BABYLON 153,ny_full_typed
+NY,Suffolk,Babylon 154,BABYLON 154,ny_full_typed
+NY,Suffolk,Brookhaven 001,BROOKHAVEN 1-001,ny_last_typed
+NY,Suffolk,Brookhaven 002,BROOKHAVEN 1-002,ny_last_typed
+NY,Suffolk,Brookhaven 003,BROOKHAVEN 1-003,ny_last_typed
+NY,Suffolk,Brookhaven 004,BROOKHAVEN 1-004,ny_last_typed
+NY,Suffolk,Brookhaven 005,BROOKHAVEN 1-005,ny_last_typed
+NY,Suffolk,Brookhaven 006,BROOKHAVEN 1-006,ny_last_typed
+NY,Suffolk,Brookhaven 007,BROOKHAVEN 1-007,ny_last_typed
+NY,Suffolk,Brookhaven 008,BROOKHAVEN 2-008,ny_last_typed
+NY,Suffolk,Brookhaven 009,BROOKHAVEN 6-009,ny_last_typed
+NY,Suffolk,Brookhaven 010,BROOKHAVEN 4-010,ny_last_typed
+NY,Suffolk,Brookhaven 011,BROOKHAVEN 5-011,ny_last_typed
+NY,Suffolk,Brookhaven 012,BROOKHAVEN 3-012,ny_last_typed
+NY,Suffolk,Brookhaven 013,BROOKHAVEN 5-013,ny_last_typed
+NY,Suffolk,Brookhaven 014,BROOKHAVEN 5-014,ny_last_typed
+NY,Suffolk,Brookhaven 015,BROOKHAVEN 5-015,ny_last_typed
+NY,Suffolk,Brookhaven 016,BROOKHAVEN 5-016,ny_last_typed
+NY,Suffolk,Brookhaven 017,BROOKHAVEN 5-017,ny_last_typed
+NY,Suffolk,Brookhaven 018,BROOKHAVEN 5-018,ny_last_typed
+NY,Suffolk,Brookhaven 019,BROOKHAVEN 5-019,ny_last_typed
+NY,Suffolk,Brookhaven 020,BROOKHAVEN 5-020,ny_last_typed
+NY,Suffolk,Brookhaven 021,BROOKHAVEN 5-021,ny_last_typed
+NY,Suffolk,Brookhaven 022,BROOKHAVEN 5-022,ny_last_typed
+NY,Suffolk,Brookhaven 023,BROOKHAVEN 5-023,ny_last_typed
+NY,Suffolk,Brookhaven 024,BROOKHAVEN 5-024,ny_last_typed
+NY,Suffolk,Brookhaven 025,BROOKHAVEN 5-025,ny_last_typed
+NY,Suffolk,Brookhaven 026,BROOKHAVEN 4-026,ny_last_typed
+NY,Suffolk,Brookhaven 027,BROOKHAVEN 4-027,ny_last_typed
+NY,Suffolk,Brookhaven 028,BROOKHAVEN 4-028,ny_last_typed
+NY,Suffolk,Brookhaven 029,BROOKHAVEN 6-029,ny_last_typed
+NY,Suffolk,Brookhaven 030,BROOKHAVEN 6-030,ny_last_typed
+NY,Suffolk,Brookhaven 031,BROOKHAVEN 6-031,ny_last_typed
+NY,Suffolk,Brookhaven 032,BROOKHAVEN 6-032,ny_last_typed
+NY,Suffolk,Brookhaven 033,BROOKHAVEN 2-033,ny_last_typed
+NY,Suffolk,Brookhaven 034,BROOKHAVEN 5-034,ny_last_typed
+NY,Suffolk,Brookhaven 035,BROOKHAVEN 2-035,ny_last_typed
+NY,Suffolk,Brookhaven 036,BROOKHAVEN 3-036,ny_last_typed
+NY,Suffolk,Brookhaven 037,BROOKHAVEN 2-037,ny_last_typed
+NY,Suffolk,Brookhaven 038,BROOKHAVEN 6-038,ny_last_typed
+NY,Suffolk,Brookhaven 039,BROOKHAVEN 6-039,ny_last_typed
+NY,Suffolk,Brookhaven 040,BROOKHAVEN 4-040,ny_last_typed
+NY,Suffolk,Brookhaven 041,BROOKHAVEN 5-041,ny_last_typed
+NY,Suffolk,Brookhaven 042,BROOKHAVEN 6-042,ny_last_typed
+NY,Suffolk,Brookhaven 043,BROOKHAVEN 3-043,ny_last_typed
+NY,Suffolk,Brookhaven 044,BROOKHAVEN 5-044,ny_last_typed
+NY,Suffolk,Brookhaven 045,BROOKHAVEN 5-045,ny_last_typed
+NY,Suffolk,Brookhaven 046,BROOKHAVEN 4-046,ny_last_typed
+NY,Suffolk,Brookhaven 047,BROOKHAVEN 2-047,ny_last_typed
+NY,Suffolk,Brookhaven 048,BROOKHAVEN 5-048,ny_last_typed
+NY,Suffolk,Brookhaven 049,BROOKHAVEN 4-049,ny_last_typed
+NY,Suffolk,Brookhaven 050,BROOKHAVEN 3-050,ny_last_typed
+NY,Suffolk,Brookhaven 051,BROOKHAVEN 5-051,ny_last_typed
+NY,Suffolk,Brookhaven 052,BROOKHAVEN 4-052,ny_last_typed
+NY,Suffolk,Brookhaven 053,BROOKHAVEN 4-053,ny_last_typed
+NY,Suffolk,Brookhaven 054,BROOKHAVEN 3-054,ny_last_typed
+NY,Suffolk,Brookhaven 055,BROOKHAVEN 3-055,ny_last_typed
+NY,Suffolk,Brookhaven 056,BROOKHAVEN 3-056,ny_last_typed
+NY,Suffolk,Brookhaven 057,BROOKHAVEN 5-057,ny_last_typed
+NY,Suffolk,Brookhaven 058,BROOKHAVEN 5-058,ny_last_typed
+NY,Suffolk,Brookhaven 059,BROOKHAVEN 3-059,ny_last_typed
+NY,Suffolk,Brookhaven 060,BROOKHAVEN 1-060,ny_last_typed
+NY,Suffolk,Brookhaven 061,BROOKHAVEN 1-061,ny_last_typed
+NY,Suffolk,Brookhaven 062,BROOKHAVEN 1-062,ny_last_typed
+NY,Suffolk,Brookhaven 063,BROOKHAVEN 2-063,ny_last_typed
+NY,Suffolk,Brookhaven 064,BROOKHAVEN 4-064,ny_last_typed
+NY,Suffolk,Brookhaven 065,BROOKHAVEN 4-065,ny_last_typed
+NY,Suffolk,Brookhaven 066,BROOKHAVEN 2-066,ny_last_typed
+NY,Suffolk,Brookhaven 067,BROOKHAVEN 4-067,ny_last_typed
+NY,Suffolk,Brookhaven 068,BROOKHAVEN 2-068,ny_last_typed
+NY,Suffolk,Brookhaven 069,BROOKHAVEN 4-069,ny_last_typed
+NY,Suffolk,Brookhaven 070,BROOKHAVEN 3-070,ny_last_typed
+NY,Suffolk,Brookhaven 071,BROOKHAVEN 3-071,ny_last_typed
+NY,Suffolk,Brookhaven 072,BROOKHAVEN 6-072,ny_last_typed
+NY,Suffolk,Brookhaven 073,BROOKHAVEN 6-073,ny_last_typed
+NY,Suffolk,Brookhaven 074,BROOKHAVEN 5-074,ny_last_typed
+NY,Suffolk,Brookhaven 075,BROOKHAVEN 3-075,ny_last_typed
+NY,Suffolk,Brookhaven 076,BROOKHAVEN 3-076,ny_last_typed
+NY,Suffolk,Brookhaven 077,BROOKHAVEN 5-077,ny_last_typed
+NY,Suffolk,Brookhaven 078,BROOKHAVEN 3-078,ny_last_typed
+NY,Suffolk,Brookhaven 079,BROOKHAVEN 6-079,ny_last_typed
+NY,Suffolk,Brookhaven 080,BROOKHAVEN 6-080,ny_last_typed
+NY,Suffolk,Brookhaven 081,BROOKHAVEN 5-081,ny_last_typed
+NY,Suffolk,Brookhaven 082,BROOKHAVEN 5-082,ny_last_typed
+NY,Suffolk,Brookhaven 083,BROOKHAVEN 3-083,ny_last_typed
+NY,Suffolk,Brookhaven 084,BROOKHAVEN 4-084,ny_last_typed
+NY,Suffolk,Brookhaven 085,BROOKHAVEN 1-085,ny_last_typed
+NY,Suffolk,Brookhaven 086,BROOKHAVEN 1-086,ny_last_typed
+NY,Suffolk,Brookhaven 087,BROOKHAVEN 1-087,ny_last_typed
+NY,Suffolk,Brookhaven 088,BROOKHAVEN 1-088,ny_last_typed
+NY,Suffolk,Brookhaven 089,BROOKHAVEN 1-089,ny_last_typed
+NY,Suffolk,Brookhaven 090,BROOKHAVEN 1-090,ny_last_typed
+NY,Suffolk,Brookhaven 091,BROOKHAVEN 1-091,ny_last_typed
+NY,Suffolk,Brookhaven 092,BROOKHAVEN 3-092,ny_last_typed
+NY,Suffolk,Brookhaven 093,BROOKHAVEN 2-093,ny_last_typed
+NY,Suffolk,Brookhaven 094,BROOKHAVEN 3-094,ny_last_typed
+NY,Suffolk,Brookhaven 095,BROOKHAVEN 1-095,ny_last_typed
+NY,Suffolk,Brookhaven 096,BROOKHAVEN 4-096,ny_last_typed
+NY,Suffolk,Brookhaven 097,BROOKHAVEN 4-097,ny_last_typed
+NY,Suffolk,Brookhaven 098,BROOKHAVEN 2-098,ny_last_typed
+NY,Suffolk,Brookhaven 099,BROOKHAVEN 3-099,ny_last_typed
+NY,Suffolk,Brookhaven 100,BROOKHAVEN 3-100,ny_last_typed
+NY,Suffolk,Brookhaven 101,BROOKHAVEN 1-101,ny_last_typed
+NY,Suffolk,Brookhaven 102,BROOKHAVEN 1-102,ny_last_typed
+NY,Suffolk,Brookhaven 103,BROOKHAVEN 5-103,ny_last_typed
+NY,Suffolk,Brookhaven 104,BROOKHAVEN 6-104,ny_last_typed
+NY,Suffolk,Brookhaven 105,BROOKHAVEN 3-105,ny_last_typed
+NY,Suffolk,Brookhaven 106,BROOKHAVEN 5-106,ny_last_typed
+NY,Suffolk,Brookhaven 107,BROOKHAVEN 5-107,ny_last_typed
+NY,Suffolk,Brookhaven 108,BROOKHAVEN 1-108,ny_last_typed
+NY,Suffolk,Brookhaven 109,BROOKHAVEN 3-109,ny_last_typed
+NY,Suffolk,Brookhaven 110,BROOKHAVEN 1-110,ny_last_typed
+NY,Suffolk,Brookhaven 111,BROOKHAVEN 1-111,ny_last_typed
+NY,Suffolk,Brookhaven 112,BROOKHAVEN 1-112,ny_last_typed
+NY,Suffolk,Brookhaven 113,BROOKHAVEN 4-113,ny_last_typed
+NY,Suffolk,Brookhaven 114,BROOKHAVEN 5-114,ny_last_typed
+NY,Suffolk,Brookhaven 115,BROOKHAVEN 5-115,ny_last_typed
+NY,Suffolk,Brookhaven 116,BROOKHAVEN 1-116,ny_last_typed
+NY,Suffolk,Brookhaven 117,BROOKHAVEN 1-117,ny_last_typed
+NY,Suffolk,Brookhaven 118,BROOKHAVEN 1-118,ny_last_typed
+NY,Suffolk,Brookhaven 119,BROOKHAVEN 5-119,ny_last_typed
+NY,Suffolk,Brookhaven 120,BROOKHAVEN 3-120,ny_last_typed
+NY,Suffolk,Brookhaven 121,BROOKHAVEN 1-121,ny_last_typed
+NY,Suffolk,Brookhaven 122,BROOKHAVEN 2-122,ny_last_typed
+NY,Suffolk,Brookhaven 123,BROOKHAVEN 4-123,ny_last_typed
+NY,Suffolk,Brookhaven 124,BROOKHAVEN 3-124,ny_last_typed
+NY,Suffolk,Brookhaven 125,BROOKHAVEN 3-125,ny_last_typed
+NY,Suffolk,Brookhaven 126,BROOKHAVEN 3-126,ny_last_typed
+NY,Suffolk,Brookhaven 127,BROOKHAVEN 3-127,ny_last_typed
+NY,Suffolk,Brookhaven 128,BROOKHAVEN 4-128,ny_last_typed
+NY,Suffolk,Brookhaven 129,BROOKHAVEN 1-129,ny_last_typed
+NY,Suffolk,Brookhaven 130,BROOKHAVEN 2-130,ny_last_typed
+NY,Suffolk,Brookhaven 131,BROOKHAVEN 4-131,ny_last_typed
+NY,Suffolk,Brookhaven 132,BROOKHAVEN 3-132,ny_last_typed
+NY,Suffolk,Brookhaven 133,BROOKHAVEN 3-133,ny_last_typed
+NY,Suffolk,Brookhaven 134,BROOKHAVEN 1-134,ny_last_typed
+NY,Suffolk,Brookhaven 135,BROOKHAVEN 2-135,ny_last_typed
+NY,Suffolk,Brookhaven 136,BROOKHAVEN 2-136,ny_last_typed
+NY,Suffolk,Brookhaven 137,BROOKHAVEN 4-137,ny_last_typed
+NY,Suffolk,Brookhaven 138,BROOKHAVEN 5-138,ny_last_typed
+NY,Suffolk,Brookhaven 139,BROOKHAVEN 6-139,ny_last_typed
+NY,Suffolk,Brookhaven 140,BROOKHAVEN 2-140,ny_last_typed
+NY,Suffolk,Brookhaven 141,BROOKHAVEN 4-141,ny_last_typed
+NY,Suffolk,Brookhaven 142,BROOKHAVEN 3-142,ny_last_typed
+NY,Suffolk,Brookhaven 143,BROOKHAVEN 1-143,ny_last_typed
+NY,Suffolk,Brookhaven 144,BROOKHAVEN 4-144,ny_last_typed
+NY,Suffolk,Brookhaven 145,BROOKHAVEN 5-145,ny_last_typed
+NY,Suffolk,Brookhaven 146,BROOKHAVEN 1-146,ny_last_typed
+NY,Suffolk,Brookhaven 147,BROOKHAVEN 2-147,ny_last_typed
+NY,Suffolk,Brookhaven 148,BROOKHAVEN 1-148,ny_last_typed
+NY,Suffolk,Brookhaven 149,BROOKHAVEN 5-149,ny_last_typed
+NY,Suffolk,Brookhaven 150,BROOKHAVEN 4-150,ny_last_typed
+NY,Suffolk,Brookhaven 151,BROOKHAVEN 6-151,ny_last_typed
+NY,Suffolk,Brookhaven 152,BROOKHAVEN 3-152,ny_last_typed
+NY,Suffolk,Brookhaven 153,BROOKHAVEN 2-153,ny_last_typed
+NY,Suffolk,Brookhaven 154,BROOKHAVEN 6-154,ny_last_typed
+NY,Suffolk,Brookhaven 155,BROOKHAVEN 5-155,ny_last_typed
+NY,Suffolk,Brookhaven 156,BROOKHAVEN 6-156,ny_last_typed
+NY,Suffolk,Brookhaven 157,BROOKHAVEN 3-157,ny_last_typed
+NY,Suffolk,Brookhaven 158,BROOKHAVEN 3-158,ny_last_typed
+NY,Suffolk,Brookhaven 159,BROOKHAVEN 2-159,ny_last_typed
+NY,Suffolk,Brookhaven 160,BROOKHAVEN 6-160,ny_last_typed
+NY,Suffolk,Brookhaven 161,BROOKHAVEN 1-161,ny_last_typed
+NY,Suffolk,Brookhaven 162,BROOKHAVEN 3-162,ny_last_typed
+NY,Suffolk,Brookhaven 163,BROOKHAVEN 1-163,ny_last_typed
+NY,Suffolk,Brookhaven 164,BROOKHAVEN 5-164,ny_last_typed
+NY,Suffolk,Brookhaven 165,BROOKHAVEN 1-165,ny_last_typed
+NY,Suffolk,Brookhaven 166,BROOKHAVEN 1-166,ny_last_typed
+NY,Suffolk,Brookhaven 167,BROOKHAVEN 2-167,ny_last_typed
+NY,Suffolk,Brookhaven 168,BROOKHAVEN 2-168,ny_last_typed
+NY,Suffolk,Brookhaven 169,BROOKHAVEN 2-169,ny_last_typed
+NY,Suffolk,Brookhaven 170,BROOKHAVEN 1-170,ny_last_typed
+NY,Suffolk,Brookhaven 171,BROOKHAVEN 5-171,ny_last_typed
+NY,Suffolk,Brookhaven 172,BROOKHAVEN 3-172,ny_last_typed
+NY,Suffolk,Brookhaven 173,BROOKHAVEN 4-173,ny_last_typed
+NY,Suffolk,Brookhaven 174,BROOKHAVEN 5-174,ny_last_typed
+NY,Suffolk,Brookhaven 175,BROOKHAVEN 3-175,ny_last_typed
+NY,Suffolk,Brookhaven 176,BROOKHAVEN 3-176,ny_last_typed
+NY,Suffolk,Brookhaven 177,BROOKHAVEN 1-177,ny_last_typed
+NY,Suffolk,Brookhaven 178,BROOKHAVEN 1-178,ny_last_typed
+NY,Suffolk,Brookhaven 179,BROOKHAVEN 3-179,ny_last_typed
+NY,Suffolk,Brookhaven 180,BROOKHAVEN 3-180,ny_last_typed
+NY,Suffolk,Brookhaven 181,BROOKHAVEN 2-181,ny_last_typed
+NY,Suffolk,Brookhaven 182,BROOKHAVEN 1-182,ny_last_typed
+NY,Suffolk,Brookhaven 183,BROOKHAVEN 5-183,ny_last_typed
+NY,Suffolk,Brookhaven 184,BROOKHAVEN 6-184,ny_last_typed
+NY,Suffolk,Brookhaven 185,BROOKHAVEN 2-185,ny_last_typed
+NY,Suffolk,Brookhaven 186,BROOKHAVEN 5-186,ny_last_typed
+NY,Suffolk,Brookhaven 187,BROOKHAVEN 2-187,ny_last_typed
+NY,Suffolk,Brookhaven 188,BROOKHAVEN 2-188,ny_last_typed
+NY,Suffolk,Brookhaven 189,BROOKHAVEN 2-189,ny_last_typed
+NY,Suffolk,Brookhaven 190,BROOKHAVEN 2-190,ny_last_typed
+NY,Suffolk,Brookhaven 191,BROOKHAVEN 1-191,ny_last_typed
+NY,Suffolk,Brookhaven 192,BROOKHAVEN 4-192,ny_last_typed
+NY,Suffolk,Brookhaven 193,BROOKHAVEN 2-193,ny_last_typed
+NY,Suffolk,Brookhaven 194,BROOKHAVEN 4-194,ny_last_typed
+NY,Suffolk,Brookhaven 195,BROOKHAVEN 2-195,ny_last_typed
+NY,Suffolk,Brookhaven 196,BROOKHAVEN 5-196,ny_last_typed
+NY,Suffolk,Brookhaven 197,BROOKHAVEN 2-197,ny_last_typed
+NY,Suffolk,Brookhaven 198,BROOKHAVEN 4-198,ny_last_typed
+NY,Suffolk,Brookhaven 199,BROOKHAVEN 4-199,ny_last_typed
+NY,Suffolk,Brookhaven 200,BROOKHAVEN 4-200,ny_last_typed
+NY,Suffolk,Brookhaven 201,BROOKHAVEN 2-201,ny_last_typed
+NY,Suffolk,Brookhaven 202,BROOKHAVEN 2-202,ny_last_typed
+NY,Suffolk,Brookhaven 203,BROOKHAVEN 6-203,ny_last_typed
+NY,Suffolk,Brookhaven 204,BROOKHAVEN 6-204,ny_last_typed
+NY,Suffolk,Brookhaven 205,BROOKHAVEN 1-205,ny_last_typed
+NY,Suffolk,Brookhaven 206,BROOKHAVEN 3-206,ny_last_typed
+NY,Suffolk,Brookhaven 207,BROOKHAVEN 6-207,ny_last_typed
+NY,Suffolk,Brookhaven 208,BROOKHAVEN 6-208,ny_last_typed
+NY,Suffolk,Brookhaven 209,BROOKHAVEN 1-209,ny_last_typed
+NY,Suffolk,Brookhaven 210,BROOKHAVEN 4-210,ny_last_typed
+NY,Suffolk,Brookhaven 211,BROOKHAVEN 5-211,ny_last_typed
+NY,Suffolk,Brookhaven 212,BROOKHAVEN 1-212,ny_last_typed
+NY,Suffolk,Brookhaven 213,BROOKHAVEN 4-213,ny_last_typed
+NY,Suffolk,Brookhaven 214,BROOKHAVEN 5-214,ny_last_typed
+NY,Suffolk,Brookhaven 215,BROOKHAVEN 6-215,ny_last_typed
+NY,Suffolk,Brookhaven 216,BROOKHAVEN 2-216,ny_last_typed
+NY,Suffolk,Brookhaven 217,BROOKHAVEN 4-217,ny_last_typed
+NY,Suffolk,Brookhaven 218,BROOKHAVEN 4-218,ny_last_typed
+NY,Suffolk,Brookhaven 219,BROOKHAVEN 3-219,ny_last_typed
+NY,Suffolk,Brookhaven 220,BROOKHAVEN 2-220,ny_last_typed
+NY,Suffolk,Brookhaven 221,BROOKHAVEN 3-221,ny_last_typed
+NY,Suffolk,Brookhaven 222,BROOKHAVEN 3-222,ny_last_typed
+NY,Suffolk,Brookhaven 223,BROOKHAVEN 1-223,ny_last_typed
+NY,Suffolk,Brookhaven 224,BROOKHAVEN 1-224,ny_last_typed
+NY,Suffolk,Brookhaven 225,BROOKHAVEN 1-225,ny_last_typed
+NY,Suffolk,Brookhaven 226,BROOKHAVEN 1-226,ny_last_typed
+NY,Suffolk,Brookhaven 227,BROOKHAVEN 6-227,ny_last_typed
+NY,Suffolk,Brookhaven 228,BROOKHAVEN 4-228,ny_last_typed
+NY,Suffolk,Brookhaven 229,BROOKHAVEN 6-229,ny_last_typed
+NY,Suffolk,Brookhaven 230,BROOKHAVEN 3-230,ny_last_typed
+NY,Suffolk,Brookhaven 231,BROOKHAVEN 5-231,ny_last_typed
+NY,Suffolk,Brookhaven 232,BROOKHAVEN 2-232,ny_last_typed
+NY,Suffolk,Brookhaven 233,BROOKHAVEN 1-233,ny_last_typed
+NY,Suffolk,Brookhaven 234,BROOKHAVEN 4-234,ny_last_typed
+NY,Suffolk,Brookhaven 235,BROOKHAVEN 5-235,ny_last_typed
+NY,Suffolk,Brookhaven 236,BROOKHAVEN 2-236,ny_last_typed
+NY,Suffolk,Brookhaven 237,BROOKHAVEN 3-237,ny_last_typed
+NY,Suffolk,Brookhaven 238,BROOKHAVEN 5-238,ny_last_typed
+NY,Suffolk,Brookhaven 239,BROOKHAVEN 1-239,ny_last_typed
+NY,Suffolk,Brookhaven 240,BROOKHAVEN 5-240,ny_last_typed
+NY,Suffolk,Brookhaven 241,BROOKHAVEN 3-241,ny_last_typed
+NY,Suffolk,Brookhaven 242,BROOKHAVEN 3-242,ny_last_typed
+NY,Suffolk,Brookhaven 243,BROOKHAVEN 2-243,ny_last_typed
+NY,Suffolk,Brookhaven 244,BROOKHAVEN 3-244,ny_last_typed
+NY,Suffolk,Brookhaven 245,BROOKHAVEN 2-245,ny_last_typed
+NY,Suffolk,Brookhaven 246,BROOKHAVEN 5-246,ny_last_typed
+NY,Suffolk,Brookhaven 247,BROOKHAVEN 5-247,ny_last_typed
+NY,Suffolk,Brookhaven 248,BROOKHAVEN 2-248,ny_last_typed
+NY,Suffolk,Brookhaven 249,BROOKHAVEN 4-249,ny_last_typed
+NY,Suffolk,Brookhaven 250,BROOKHAVEN 3-250,ny_last_typed
+NY,Suffolk,Brookhaven 251,BROOKHAVEN 1-251,ny_last_typed
+NY,Suffolk,Brookhaven 252,BROOKHAVEN 2-252,ny_last_typed
+NY,Suffolk,Brookhaven 253,BROOKHAVEN 4-253,ny_last_typed
+NY,Suffolk,Brookhaven 254,BROOKHAVEN 5-254,ny_last_typed
+NY,Suffolk,Brookhaven 255,BROOKHAVEN 4-255,ny_last_typed
+NY,Suffolk,Brookhaven 256,BROOKHAVEN 4-256,ny_last_typed
+NY,Suffolk,Brookhaven 257,BROOKHAVEN 2-257,ny_last_typed
+NY,Suffolk,Brookhaven 258,BROOKHAVEN 2-258,ny_last_typed
+NY,Suffolk,Brookhaven 259,BROOKHAVEN 4-259,ny_last_typed
+NY,Suffolk,Brookhaven 260,BROOKHAVEN 2-260,ny_last_typed
+NY,Suffolk,Brookhaven 261,BROOKHAVEN 4-261,ny_last_typed
+NY,Suffolk,Brookhaven 262,BROOKHAVEN 3-262,ny_last_typed
+NY,Suffolk,Brookhaven 263,BROOKHAVEN 2-263,ny_last_typed
+NY,Suffolk,Brookhaven 264,BROOKHAVEN 6-264,ny_last_typed
+NY,Suffolk,Brookhaven 265,BROOKHAVEN 6-265,ny_last_typed
+NY,Suffolk,Brookhaven 266,BROOKHAVEN 5-266,ny_last_typed
+NY,Suffolk,Brookhaven 267,BROOKHAVEN 2-267,ny_last_typed
+NY,Suffolk,Brookhaven 268,BROOKHAVEN 5-268,ny_last_typed
+NY,Suffolk,Brookhaven 269,BROOKHAVEN 4-269,ny_last_typed
+NY,Suffolk,Brookhaven 270,BROOKHAVEN 2-270,ny_last_typed
+NY,Suffolk,Brookhaven 271,BROOKHAVEN 5-271,ny_last_typed
+NY,Suffolk,Brookhaven 272,BROOKHAVEN 6-272,ny_last_typed
+NY,Suffolk,Brookhaven 273,BROOKHAVEN 6-273,ny_last_typed
+NY,Suffolk,Brookhaven 274,BROOKHAVEN 6-274,ny_last_typed
+NY,Suffolk,Brookhaven 275,BROOKHAVEN 4-275,ny_last_typed
+NY,Suffolk,Brookhaven 276,BROOKHAVEN 2-276,ny_last_typed
+NY,Suffolk,Brookhaven 277,BROOKHAVEN 6-277,ny_last_typed
+NY,Suffolk,Brookhaven 278,BROOKHAVEN 4-278,ny_last_typed
+NY,Suffolk,Brookhaven 279,BROOKHAVEN 6-279,ny_last_typed
+NY,Suffolk,Brookhaven 280,BROOKHAVEN 3-280,ny_last_typed
+NY,Suffolk,Brookhaven 281,BROOKHAVEN 4-281,ny_last_typed
+NY,Suffolk,Brookhaven 282,BROOKHAVEN 3-282,ny_last_typed
+NY,Suffolk,Brookhaven 283,BROOKHAVEN 4-283,ny_last_typed
+NY,Suffolk,Brookhaven 284,BROOKHAVEN 4-284,ny_last_typed
+NY,Suffolk,Brookhaven 285,BROOKHAVEN 6-285,ny_last_typed
+NY,Suffolk,Brookhaven 286,BROOKHAVEN 2-286,ny_last_typed
+NY,Suffolk,Brookhaven 287,BROOKHAVEN 6-287,ny_last_typed
+NY,Suffolk,Brookhaven 288,BROOKHAVEN 1-288,ny_last_typed
+NY,Suffolk,Brookhaven 289,BROOKHAVEN 4-289,ny_last_typed
+NY,Suffolk,Brookhaven 290,BROOKHAVEN 6-290,ny_last_typed
+NY,Suffolk,Brookhaven 291,BROOKHAVEN 6-291,ny_last_typed
+NY,Suffolk,Brookhaven 292,BROOKHAVEN 1-292,ny_last_typed
+NY,Suffolk,Brookhaven 293,BROOKHAVEN 2-293,ny_last_typed
+NY,Suffolk,Brookhaven 294,BROOKHAVEN 5-294,ny_last_typed
+NY,Suffolk,Brookhaven 295,BROOKHAVEN 4-295,ny_last_typed
+NY,Suffolk,Brookhaven 296,BROOKHAVEN 4-296,ny_last_typed
+NY,Suffolk,Brookhaven 297,BROOKHAVEN 1-297,ny_last_typed
+NY,Suffolk,Brookhaven 298,BROOKHAVEN 4-298,ny_last_typed
+NY,Suffolk,Brookhaven 299,BROOKHAVEN 1-299,ny_last_typed
+NY,Suffolk,Brookhaven 300,BROOKHAVEN 1-300,ny_last_typed
+NY,Suffolk,Brookhaven 301,BROOKHAVEN 4-301,ny_last_typed
+NY,Suffolk,Brookhaven 302,BROOKHAVEN 4-302,ny_last_typed
+NY,Suffolk,Brookhaven 303,BROOKHAVEN 5-303,ny_last_typed
+NY,Suffolk,Brookhaven 304,BROOKHAVEN 4-304,ny_last_typed
+NY,Suffolk,Brookhaven 305,BROOKHAVEN 4-305,ny_last_typed
+NY,Suffolk,Brookhaven 306,BROOKHAVEN 5-306,ny_last_typed
+NY,Suffolk,Brookhaven 307,BROOKHAVEN 6-307,ny_last_typed
+NY,Suffolk,Brookhaven 308,BROOKHAVEN 4-308,ny_last_typed
+NY,Suffolk,East Hampton 001,EAST HAMPTON 01,ny_full_typed
+NY,Suffolk,East Hampton 002,EAST HAMPTON 02,ny_full_typed
+NY,Suffolk,East Hampton 003,EAST HAMPTON 03,ny_full_typed
+NY,Suffolk,East Hampton 004,EAST HAMPTON 04,ny_full_typed
+NY,Suffolk,East Hampton 005,EAST HAMPTON 05,ny_full_typed
+NY,Suffolk,East Hampton 006,EAST HAMPTON 06,ny_full_typed
+NY,Suffolk,East Hampton 007,EAST HAMPTON 07,ny_full_typed
+NY,Suffolk,East Hampton 008,EAST HAMPTON 08,ny_full_typed
+NY,Suffolk,East Hampton 009,EAST HAMPTON 09,ny_full_typed
+NY,Suffolk,East Hampton 010,EAST HAMPTON 10,ny_full_typed
+NY,Suffolk,East Hampton 011,EAST HAMPTON 11,ny_full_typed
+NY,Suffolk,East Hampton 012,EAST HAMPTON 12,ny_full_typed
+NY,Suffolk,East Hampton 013,EAST HAMPTON 13,ny_full_typed
+NY,Suffolk,East Hampton 014,EAST HAMPTON 14,ny_full_typed
+NY,Suffolk,East Hampton 015,EAST HAMPTON 15,ny_full_typed
+NY,Suffolk,East Hampton 016,EAST HAMPTON 16,ny_full_typed
+NY,Suffolk,East Hampton 017,EAST HAMPTON 17,ny_full_typed
+NY,Suffolk,East Hampton 018,EAST HAMPTON 18,ny_full_typed
+NY,Suffolk,East Hampton 019,EAST HAMPTON 19,ny_full_typed
+NY,Suffolk,Huntington 001,HUNTINGTON 001,ny_full_typed
+NY,Suffolk,Huntington 002,HUNTINGTON 002,ny_full_typed
+NY,Suffolk,Huntington 003,HUNTINGTON 003,ny_full_typed
+NY,Suffolk,Huntington 004,HUNTINGTON 004,ny_full_typed
+NY,Suffolk,Huntington 005,HUNTINGTON 005,ny_full_typed
+NY,Suffolk,Huntington 006,HUNTINGTON 006,ny_full_typed
+NY,Suffolk,Huntington 007,HUNTINGTON 007,ny_full_typed
+NY,Suffolk,Huntington 008,HUNTINGTON 008,ny_full_typed
+NY,Suffolk,Huntington 009,HUNTINGTON 009,ny_full_typed
+NY,Suffolk,Huntington 010,HUNTINGTON 010,ny_full_typed
+NY,Suffolk,Huntington 011,HUNTINGTON 011,ny_full_typed
+NY,Suffolk,Huntington 012,HUNTINGTON 012,ny_full_typed
+NY,Suffolk,Huntington 013,HUNTINGTON 013,ny_full_typed
+NY,Suffolk,Huntington 014,HUNTINGTON 014,ny_full_typed
+NY,Suffolk,Huntington 015,HUNTINGTON 015,ny_full_typed
+NY,Suffolk,Huntington 016,HUNTINGTON 016,ny_full_typed
+NY,Suffolk,Huntington 017,HUNTINGTON 017,ny_full_typed
+NY,Suffolk,Huntington 018,HUNTINGTON 018,ny_full_typed
+NY,Suffolk,Huntington 019,HUNTINGTON 019,ny_full_typed
+NY,Suffolk,Huntington 020,HUNTINGTON 020,ny_full_typed
+NY,Suffolk,Huntington 021,HUNTINGTON 021,ny_full_typed
+NY,Suffolk,Huntington 022,HUNTINGTON 022,ny_full_typed
+NY,Suffolk,Huntington 023,HUNTINGTON 023,ny_full_typed
+NY,Suffolk,Huntington 024,HUNTINGTON 024,ny_full_typed
+NY,Suffolk,Huntington 025,HUNTINGTON 025,ny_full_typed
+NY,Suffolk,Huntington 026,HUNTINGTON 026,ny_full_typed
+NY,Suffolk,Huntington 027,HUNTINGTON 027,ny_full_typed
+NY,Suffolk,Huntington 028,HUNTINGTON 028,ny_full_typed
+NY,Suffolk,Huntington 029,HUNTINGTON 029,ny_full_typed
+NY,Suffolk,Huntington 030,HUNTINGTON 030,ny_full_typed
+NY,Suffolk,Huntington 031,HUNTINGTON 031,ny_full_typed
+NY,Suffolk,Huntington 032,HUNTINGTON 032,ny_full_typed
+NY,Suffolk,Huntington 033,HUNTINGTON 033,ny_full_typed
+NY,Suffolk,Huntington 034,HUNTINGTON 034,ny_full_typed
+NY,Suffolk,Huntington 035,HUNTINGTON 035,ny_full_typed
+NY,Suffolk,Huntington 036,HUNTINGTON 036,ny_full_typed
+NY,Suffolk,Huntington 037,HUNTINGTON 037,ny_full_typed
+NY,Suffolk,Huntington 038,HUNTINGTON 038,ny_full_typed
+NY,Suffolk,Huntington 039,HUNTINGTON 039,ny_full_typed
+NY,Suffolk,Huntington 040,HUNTINGTON 040,ny_full_typed
+NY,Suffolk,Huntington 041,HUNTINGTON 041,ny_full_typed
+NY,Suffolk,Huntington 042,HUNTINGTON 042,ny_full_typed
+NY,Suffolk,Huntington 043,HUNTINGTON 043,ny_full_typed
+NY,Suffolk,Huntington 044,HUNTINGTON 044,ny_full_typed
+NY,Suffolk,Huntington 045,HUNTINGTON 045,ny_full_typed
+NY,Suffolk,Huntington 046,HUNTINGTON 046,ny_full_typed
+NY,Suffolk,Huntington 047,HUNTINGTON 047,ny_full_typed
+NY,Suffolk,Huntington 048,HUNTINGTON 048,ny_full_typed
+NY,Suffolk,Huntington 049,HUNTINGTON 049,ny_full_typed
+NY,Suffolk,Huntington 050,HUNTINGTON 050,ny_full_typed
+NY,Suffolk,Huntington 051,HUNTINGTON 051,ny_full_typed
+NY,Suffolk,Huntington 052,HUNTINGTON 052,ny_full_typed
+NY,Suffolk,Huntington 053,HUNTINGTON 053,ny_full_typed
+NY,Suffolk,Huntington 054,HUNTINGTON 054,ny_full_typed
+NY,Suffolk,Huntington 055,HUNTINGTON 055,ny_full_typed
+NY,Suffolk,Huntington 056,HUNTINGTON 056,ny_full_typed
+NY,Suffolk,Huntington 057,HUNTINGTON 057,ny_full_typed
+NY,Suffolk,Huntington 058,HUNTINGTON 058,ny_full_typed
+NY,Suffolk,Huntington 059,HUNTINGTON 059,ny_full_typed
+NY,Suffolk,Huntington 060,HUNTINGTON 060,ny_full_typed
+NY,Suffolk,Huntington 061,HUNTINGTON 061,ny_full_typed
+NY,Suffolk,Huntington 062,HUNTINGTON 062,ny_full_typed
+NY,Suffolk,Huntington 063,HUNTINGTON 063,ny_full_typed
+NY,Suffolk,Huntington 064,HUNTINGTON 064,ny_full_typed
+NY,Suffolk,Huntington 065,HUNTINGTON 065,ny_full_typed
+NY,Suffolk,Huntington 066,HUNTINGTON 066,ny_full_typed
+NY,Suffolk,Huntington 067,HUNTINGTON 067,ny_full_typed
+NY,Suffolk,Huntington 068,HUNTINGTON 068,ny_full_typed
+NY,Suffolk,Huntington 069,HUNTINGTON 069,ny_full_typed
+NY,Suffolk,Huntington 070,HUNTINGTON 070,ny_full_typed
+NY,Suffolk,Huntington 071,HUNTINGTON 071,ny_full_typed
+NY,Suffolk,Huntington 072,HUNTINGTON 072,ny_full_typed
+NY,Suffolk,Huntington 073,HUNTINGTON 073,ny_full_typed
+NY,Suffolk,Huntington 074,HUNTINGTON 074,ny_full_typed
+NY,Suffolk,Huntington 075,HUNTINGTON 075,ny_full_typed
+NY,Suffolk,Huntington 076,HUNTINGTON 076,ny_full_typed
+NY,Suffolk,Huntington 077,HUNTINGTON 077,ny_full_typed
+NY,Suffolk,Huntington 078,HUNTINGTON 078,ny_full_typed
+NY,Suffolk,Huntington 079,HUNTINGTON 079,ny_full_typed
+NY,Suffolk,Huntington 080,HUNTINGTON 080,ny_full_typed
+NY,Suffolk,Huntington 081,HUNTINGTON 081,ny_full_typed
+NY,Suffolk,Huntington 082,HUNTINGTON 082,ny_full_typed
+NY,Suffolk,Huntington 083,HUNTINGTON 083,ny_full_typed
+NY,Suffolk,Huntington 084,HUNTINGTON 084,ny_full_typed
+NY,Suffolk,Huntington 085,HUNTINGTON 085,ny_full_typed
+NY,Suffolk,Huntington 086,HUNTINGTON 086,ny_full_typed
+NY,Suffolk,Huntington 087,HUNTINGTON 087,ny_full_typed
+NY,Suffolk,Huntington 088,HUNTINGTON 088,ny_full_typed
+NY,Suffolk,Huntington 089,HUNTINGTON 089,ny_full_typed
+NY,Suffolk,Huntington 090,HUNTINGTON 090,ny_full_typed
+NY,Suffolk,Huntington 091,HUNTINGTON 091,ny_full_typed
+NY,Suffolk,Huntington 092,HUNTINGTON 092,ny_full_typed
+NY,Suffolk,Huntington 093,HUNTINGTON 093,ny_full_typed
+NY,Suffolk,Huntington 094,HUNTINGTON 094,ny_full_typed
+NY,Suffolk,Huntington 095,HUNTINGTON 095,ny_full_typed
+NY,Suffolk,Huntington 096,HUNTINGTON 096,ny_full_typed
+NY,Suffolk,Huntington 097,HUNTINGTON 097,ny_full_typed
+NY,Suffolk,Huntington 098,HUNTINGTON 098,ny_full_typed
+NY,Suffolk,Huntington 099,HUNTINGTON 099,ny_full_typed
+NY,Suffolk,Huntington 100,HUNTINGTON 100,ny_full_typed
+NY,Suffolk,Huntington 101,HUNTINGTON 101,ny_full_typed
+NY,Suffolk,Huntington 102,HUNTINGTON 102,ny_full_typed
+NY,Suffolk,Huntington 103,HUNTINGTON 103,ny_full_typed
+NY,Suffolk,Huntington 104,HUNTINGTON 104,ny_full_typed
+NY,Suffolk,Huntington 105,HUNTINGTON 105,ny_full_typed
+NY,Suffolk,Huntington 106,HUNTINGTON 106,ny_full_typed
+NY,Suffolk,Huntington 107,HUNTINGTON 107,ny_full_typed
+NY,Suffolk,Huntington 108,HUNTINGTON 108,ny_full_typed
+NY,Suffolk,Huntington 109,HUNTINGTON 109,ny_full_typed
+NY,Suffolk,Huntington 110,HUNTINGTON 110,ny_full_typed
+NY,Suffolk,Huntington 111,HUNTINGTON 111,ny_full_typed
+NY,Suffolk,Huntington 112,HUNTINGTON 112,ny_full_typed
+NY,Suffolk,Huntington 113,HUNTINGTON 113,ny_full_typed
+NY,Suffolk,Huntington 114,HUNTINGTON 114,ny_full_typed
+NY,Suffolk,Huntington 115,HUNTINGTON 115,ny_full_typed
+NY,Suffolk,Huntington 116,HUNTINGTON 116,ny_full_typed
+NY,Suffolk,Huntington 117,HUNTINGTON 117,ny_full_typed
+NY,Suffolk,Huntington 118,HUNTINGTON 118,ny_full_typed
+NY,Suffolk,Huntington 119,HUNTINGTON 119,ny_full_typed
+NY,Suffolk,Huntington 120,HUNTINGTON 120,ny_full_typed
+NY,Suffolk,Huntington 121,HUNTINGTON 121,ny_full_typed
+NY,Suffolk,Huntington 122,HUNTINGTON 122,ny_full_typed
+NY,Suffolk,Huntington 123,HUNTINGTON 123,ny_full_typed
+NY,Suffolk,Huntington 124,HUNTINGTON 124,ny_full_typed
+NY,Suffolk,Huntington 125,HUNTINGTON 125,ny_full_typed
+NY,Suffolk,Huntington 126,HUNTINGTON 126,ny_full_typed
+NY,Suffolk,Huntington 127,HUNTINGTON 127,ny_full_typed
+NY,Suffolk,Huntington 128,HUNTINGTON 128,ny_full_typed
+NY,Suffolk,Huntington 129,HUNTINGTON 129,ny_full_typed
+NY,Suffolk,Huntington 130,HUNTINGTON 130,ny_full_typed
+NY,Suffolk,Huntington 131,HUNTINGTON 131,ny_full_typed
+NY,Suffolk,Huntington 132,HUNTINGTON 132,ny_full_typed
+NY,Suffolk,Huntington 133,HUNTINGTON 133,ny_full_typed
+NY,Suffolk,Huntington 134,HUNTINGTON 134,ny_full_typed
+NY,Suffolk,Huntington 135,HUNTINGTON 135,ny_full_typed
+NY,Suffolk,Huntington 136,HUNTINGTON 136,ny_full_typed
+NY,Suffolk,Huntington 137,HUNTINGTON 137,ny_full_typed
+NY,Suffolk,Huntington 138,HUNTINGTON 138,ny_full_typed
+NY,Suffolk,Huntington 139,HUNTINGTON 139,ny_full_typed
+NY,Suffolk,Huntington 140,HUNTINGTON 140,ny_full_typed
+NY,Suffolk,Huntington 141,HUNTINGTON 141,ny_full_typed
+NY,Suffolk,Huntington 142,HUNTINGTON 142,ny_full_typed
+NY,Suffolk,Huntington 143,HUNTINGTON 143,ny_full_typed
+NY,Suffolk,Huntington 144,HUNTINGTON 144,ny_full_typed
+NY,Suffolk,Huntington 145,HUNTINGTON 145,ny_full_typed
+NY,Suffolk,Huntington 146,HUNTINGTON 146,ny_full_typed
+NY,Suffolk,Huntington 147,HUNTINGTON 147,ny_full_typed
+NY,Suffolk,Huntington 148,HUNTINGTON 148,ny_full_typed
+NY,Suffolk,Huntington 149,HUNTINGTON 149,ny_full_typed
+NY,Suffolk,Huntington 150,HUNTINGTON 150,ny_full_typed
+NY,Suffolk,Huntington 151,HUNTINGTON 151,ny_full_typed
+NY,Suffolk,Huntington 152,HUNTINGTON 152,ny_full_typed
+NY,Suffolk,Huntington 153,HUNTINGTON 153,ny_full_typed
+NY,Suffolk,Huntington 154,HUNTINGTON 154,ny_full_typed
+NY,Suffolk,Huntington 155,HUNTINGTON 155,ny_full_typed
+NY,Suffolk,Huntington 156,HUNTINGTON 156,ny_full_typed
+NY,Suffolk,Huntington 157,HUNTINGTON 157,ny_full_typed
+NY,Suffolk,Huntington 158,HUNTINGTON 158,ny_full_typed
+NY,Suffolk,Huntington 159,HUNTINGTON 159,ny_full_typed
+NY,Suffolk,Huntington 160,HUNTINGTON 160,ny_full_typed
+NY,Suffolk,Huntington 161,HUNTINGTON 161,ny_full_typed
+NY,Suffolk,Huntington 162,HUNTINGTON 162,ny_full_typed
+NY,Suffolk,Huntington 163,HUNTINGTON 163,ny_full_typed
+NY,Suffolk,Huntington 164,HUNTINGTON 164,ny_full_typed
+NY,Suffolk,Huntington 165,HUNTINGTON 165,ny_full_typed
+NY,Suffolk,Huntington 166,HUNTINGTON 166,ny_full_typed
+NY,Suffolk,Huntington 167,HUNTINGTON 167,ny_full_typed
+NY,Suffolk,Huntington 168,HUNTINGTON 168,ny_full_typed
+NY,Suffolk,Huntington 169,HUNTINGTON 169,ny_full_typed
+NY,Suffolk,Huntington 170,HUNTINGTON 170,ny_full_typed
+NY,Suffolk,Huntington 171,HUNTINGTON 171,ny_full_typed
+NY,Suffolk,Huntington 172,HUNTINGTON 172,ny_full_typed
+NY,Suffolk,Huntington 173,HUNTINGTON 173,ny_full_typed
+NY,Suffolk,Huntington 174,HUNTINGTON 174,ny_full_typed
+NY,Suffolk,Huntington 175,HUNTINGTON 175,ny_full_typed
+NY,Suffolk,Huntington 176,HUNTINGTON 176,ny_full_typed
+NY,Suffolk,Huntington 177,HUNTINGTON 177,ny_full_typed
+NY,Suffolk,Huntington 178,HUNTINGTON 178,ny_full_typed
+NY,Suffolk,Huntington 179,HUNTINGTON 179,ny_full_typed
+NY,Suffolk,Huntington 180,HUNTINGTON 180,ny_full_typed
+NY,Suffolk,Huntington 181,HUNTINGTON 181,ny_full_typed
+NY,Suffolk,Huntington 182,HUNTINGTON 182,ny_full_typed
+NY,Suffolk,Huntington 183,HUNTINGTON 183,ny_full_typed
+NY,Suffolk,Huntington 184,HUNTINGTON 184,ny_full_typed
+NY,Suffolk,Huntington 185,HUNTINGTON 185,ny_full_typed
+NY,Suffolk,Islip 001,ISLIP 3-001,ny_last_typed
+NY,Suffolk,Islip 002,ISLIP 3-002,ny_last_typed
+NY,Suffolk,Islip 003,ISLIP 3-003,ny_last_typed
+NY,Suffolk,Islip 004,ISLIP 3-004,ny_last_typed
+NY,Suffolk,Islip 005,ISLIP 3-005,ny_last_typed
+NY,Suffolk,Islip 006,ISLIP 3-006,ny_last_typed
+NY,Suffolk,Islip 007,ISLIP 3-007,ny_last_typed
+NY,Suffolk,Islip 008,ISLIP 3-008,ny_last_typed
+NY,Suffolk,Islip 009,ISLIP 1-009,ny_last_typed
+NY,Suffolk,Islip 010,ISLIP 3-010,ny_last_typed
+NY,Suffolk,Islip 011,ISLIP 3-011,ny_last_typed
+NY,Suffolk,Islip 012,ISLIP 3-012,ny_last_typed
+NY,Suffolk,Islip 013,ISLIP 2-013,ny_last_typed
+NY,Suffolk,Islip 014,ISLIP 2-014,ny_last_typed
+NY,Suffolk,Islip 015,ISLIP 2-015,ny_last_typed
+NY,Suffolk,Islip 016,ISLIP 2-016,ny_last_typed
+NY,Suffolk,Islip 017,ISLIP 2-017,ny_last_typed
+NY,Suffolk,Islip 018,ISLIP 2-018,ny_last_typed
+NY,Suffolk,Islip 019,ISLIP 4-019,ny_last_typed
+NY,Suffolk,Islip 020,ISLIP 4-020,ny_last_typed
+NY,Suffolk,Islip 021,ISLIP 4-021,ny_last_typed
+NY,Suffolk,Islip 022,ISLIP 2-022,ny_last_typed
+NY,Suffolk,Islip 023,ISLIP 4-023,ny_last_typed
+NY,Suffolk,Islip 024,ISLIP 4-024,ny_last_typed
+NY,Suffolk,Islip 025,ISLIP 4-025,ny_last_typed
+NY,Suffolk,Islip 026,ISLIP 3-026,ny_last_typed
+NY,Suffolk,Islip 027,ISLIP 3-027,ny_last_typed
+NY,Suffolk,Islip 028,ISLIP 3-028,ny_last_typed
+NY,Suffolk,Islip 029,ISLIP 1-029,ny_last_typed
+NY,Suffolk,Islip 030,ISLIP 4-030,ny_last_typed
+NY,Suffolk,Islip 031,ISLIP 3-031,ny_last_typed
+NY,Suffolk,Islip 032,ISLIP 3-032,ny_last_typed
+NY,Suffolk,Islip 033,ISLIP 1-033,ny_last_typed
+NY,Suffolk,Islip 034,ISLIP 3-034,ny_last_typed
+NY,Suffolk,Islip 035,ISLIP 2-035,ny_last_typed
+NY,Suffolk,Islip 036,ISLIP 2-036,ny_last_typed
+NY,Suffolk,Islip 037,ISLIP 2-037,ny_last_typed
+NY,Suffolk,Islip 038,ISLIP 4-038,ny_last_typed
+NY,Suffolk,Islip 039,ISLIP 4-039,ny_last_typed
+NY,Suffolk,Islip 040,ISLIP 2-040,ny_last_typed
+NY,Suffolk,Islip 041,ISLIP 3-041,ny_last_typed
+NY,Suffolk,Islip 042,ISLIP 3-042,ny_last_typed
+NY,Suffolk,Islip 043,ISLIP 3-043,ny_last_typed
+NY,Suffolk,Islip 044,ISLIP 3-044,ny_last_typed
+NY,Suffolk,Islip 045,ISLIP 4-045,ny_last_typed
+NY,Suffolk,Islip 046,ISLIP 2-046,ny_last_typed
+NY,Suffolk,Islip 047,ISLIP 3-047,ny_last_typed
+NY,Suffolk,Islip 048,ISLIP 3-048,ny_last_typed
+NY,Suffolk,Islip 049,ISLIP 2-049,ny_last_typed
+NY,Suffolk,Islip 050,ISLIP 2-050,ny_last_typed
+NY,Suffolk,Islip 051,ISLIP 2-051,ny_last_typed
+NY,Suffolk,Islip 052,ISLIP 4-052,ny_last_typed
+NY,Suffolk,Islip 053,ISLIP 4-053,ny_last_typed
+NY,Suffolk,Islip 054,ISLIP 4-054,ny_last_typed
+NY,Suffolk,Islip 055,ISLIP 1-055,ny_last_typed
+NY,Suffolk,Islip 056,ISLIP 3-056,ny_last_typed
+NY,Suffolk,Islip 057,ISLIP 3-057,ny_last_typed
+NY,Suffolk,Islip 058,ISLIP 3-058,ny_last_typed
+NY,Suffolk,Islip 059,ISLIP 1-059,ny_last_typed
+NY,Suffolk,Islip 060,ISLIP 1-060,ny_last_typed
+NY,Suffolk,Islip 061,ISLIP 2-061,ny_last_typed
+NY,Suffolk,Islip 062,ISLIP 3-062,ny_last_typed
+NY,Suffolk,Islip 063,ISLIP 1-063,ny_last_typed
+NY,Suffolk,Islip 064,ISLIP 3-064,ny_last_typed
+NY,Suffolk,Islip 065,ISLIP 2-065,ny_last_typed
+NY,Suffolk,Islip 066,ISLIP 3-066,ny_last_typed
+NY,Suffolk,Islip 067,ISLIP 3-067,ny_last_typed
+NY,Suffolk,Islip 068,ISLIP 1-068,ny_last_typed
+NY,Suffolk,Islip 069,ISLIP 3-069,ny_last_typed
+NY,Suffolk,Islip 070,ISLIP 2-070,ny_last_typed
+NY,Suffolk,Islip 071,ISLIP 4-071,ny_last_typed
+NY,Suffolk,Islip 072,ISLIP 3-072,ny_last_typed
+NY,Suffolk,Islip 073,ISLIP 1-073,ny_last_typed
+NY,Suffolk,Islip 074,ISLIP 3-074,ny_last_typed
+NY,Suffolk,Islip 075,ISLIP 1-075,ny_last_typed
+NY,Suffolk,Islip 076,ISLIP 2-076,ny_last_typed
+NY,Suffolk,Islip 077,ISLIP 4-077,ny_last_typed
+NY,Suffolk,Islip 078,ISLIP 2-078,ny_last_typed
+NY,Suffolk,Islip 079,ISLIP 4-079,ny_last_typed
+NY,Suffolk,Islip 080,ISLIP 3-080,ny_last_typed
+NY,Suffolk,Islip 081,ISLIP 4-081,ny_last_typed
+NY,Suffolk,Islip 082,ISLIP 3-082,ny_last_typed
+NY,Suffolk,Islip 083,ISLIP 1-083,ny_last_typed
+NY,Suffolk,Islip 084,ISLIP 1-084,ny_last_typed
+NY,Suffolk,Islip 085,ISLIP 1-085,ny_last_typed
+NY,Suffolk,Islip 086,ISLIP 4-086,ny_last_typed
+NY,Suffolk,Islip 087,ISLIP 2-087,ny_last_typed
+NY,Suffolk,Islip 088,ISLIP 4-088,ny_last_typed
+NY,Suffolk,Islip 089,ISLIP 2-089,ny_last_typed
+NY,Suffolk,Islip 090,ISLIP 3-090,ny_last_typed
+NY,Suffolk,Islip 091,ISLIP 2-091,ny_last_typed
+NY,Suffolk,Islip 092,ISLIP 1-092,ny_last_typed
+NY,Suffolk,Islip 093,ISLIP 1-093,ny_last_typed
+NY,Suffolk,Islip 094,ISLIP 1-094,ny_last_typed
+NY,Suffolk,Islip 095,ISLIP 1-095,ny_last_typed
+NY,Suffolk,Islip 096,ISLIP 1-096,ny_last_typed
+NY,Suffolk,Islip 097,ISLIP 3-097,ny_last_typed
+NY,Suffolk,Islip 098,ISLIP 2-098,ny_last_typed
+NY,Suffolk,Islip 099,ISLIP 2-099,ny_last_typed
+NY,Suffolk,Islip 100,ISLIP 2-100,ny_last_typed
+NY,Suffolk,Islip 101,ISLIP 2-101,ny_last_typed
+NY,Suffolk,Islip 102,ISLIP 2-102,ny_last_typed
+NY,Suffolk,Islip 103,ISLIP 3-103,ny_last_typed
+NY,Suffolk,Islip 104,ISLIP 1-104,ny_last_typed
+NY,Suffolk,Islip 105,ISLIP 2-105,ny_last_typed
+NY,Suffolk,Islip 106,ISLIP 4-106,ny_last_typed
+NY,Suffolk,Islip 107,ISLIP 3-107,ny_last_typed
+NY,Suffolk,Islip 108,ISLIP 2-108,ny_last_typed
+NY,Suffolk,Islip 109,ISLIP 3-109,ny_last_typed
+NY,Suffolk,Islip 110,ISLIP 4-110,ny_last_typed
+NY,Suffolk,Islip 111,ISLIP 1-111,ny_last_typed
+NY,Suffolk,Islip 112,ISLIP 2-112,ny_last_typed
+NY,Suffolk,Islip 113,ISLIP 1-113,ny_last_typed
+NY,Suffolk,Islip 114,ISLIP 4-114,ny_last_typed
+NY,Suffolk,Islip 115,ISLIP 1-115,ny_last_typed
+NY,Suffolk,Islip 116,ISLIP 4-116,ny_last_typed
+NY,Suffolk,Islip 117,ISLIP 1-117,ny_last_typed
+NY,Suffolk,Islip 118,ISLIP 4-118,ny_last_typed
+NY,Suffolk,Islip 119,ISLIP 1-119,ny_last_typed
+NY,Suffolk,Islip 120,ISLIP 2-120,ny_last_typed
+NY,Suffolk,Islip 121,ISLIP 3-121,ny_last_typed
+NY,Suffolk,Islip 122,ISLIP 2-122,ny_last_typed
+NY,Suffolk,Islip 123,ISLIP 3-123,ny_last_typed
+NY,Suffolk,Islip 124,ISLIP 1-124,ny_last_typed
+NY,Suffolk,Islip 125,ISLIP 1-125,ny_last_typed
+NY,Suffolk,Islip 126,ISLIP 4-126,ny_last_typed
+NY,Suffolk,Islip 127,ISLIP 3-127,ny_last_typed
+NY,Suffolk,Islip 128,ISLIP 3-128,ny_last_typed
+NY,Suffolk,Islip 129,ISLIP 2-129,ny_last_typed
+NY,Suffolk,Islip 130,ISLIP 4-130,ny_last_typed
+NY,Suffolk,Islip 131,ISLIP 4-131,ny_last_typed
+NY,Suffolk,Islip 132,ISLIP 4-132,ny_last_typed
+NY,Suffolk,Islip 133,ISLIP 3-133,ny_last_typed
+NY,Suffolk,Islip 134,ISLIP 2-134,ny_last_typed
+NY,Suffolk,Islip 135,ISLIP 4-135,ny_last_typed
+NY,Suffolk,Islip 136,ISLIP 3-136,ny_last_typed
+NY,Suffolk,Islip 137,ISLIP 2-137,ny_last_typed
+NY,Suffolk,Islip 138,ISLIP 2-138,ny_last_typed
+NY,Suffolk,Islip 139,ISLIP 4-139,ny_last_typed
+NY,Suffolk,Islip 140,ISLIP 4-140,ny_last_typed
+NY,Suffolk,Islip 141,ISLIP 4-141,ny_last_typed
+NY,Suffolk,Islip 142,ISLIP 4-142,ny_last_typed
+NY,Suffolk,Islip 143,ISLIP 3-143,ny_last_typed
+NY,Suffolk,Islip 144,ISLIP 2-144,ny_last_typed
+NY,Suffolk,Islip 145,ISLIP 4-145,ny_last_typed
+NY,Suffolk,Islip 146,ISLIP 3-146,ny_last_typed
+NY,Suffolk,Islip 147,ISLIP 3-147,ny_last_typed
+NY,Suffolk,Islip 148,ISLIP 3-148,ny_last_typed
+NY,Suffolk,Islip 149,ISLIP 2-149,ny_last_typed
+NY,Suffolk,Islip 150,ISLIP 2-150,ny_last_typed
+NY,Suffolk,Islip 151,ISLIP 2-151,ny_last_typed
+NY,Suffolk,Islip 152,ISLIP 4-152,ny_last_typed
+NY,Suffolk,Islip 153,ISLIP 4-153,ny_last_typed
+NY,Suffolk,Islip 154,ISLIP 4-154,ny_last_typed
+NY,Suffolk,Islip 155,ISLIP 4-155,ny_last_typed
+NY,Suffolk,Islip 156,ISLIP 1-156,ny_last_typed
+NY,Suffolk,Islip 157,ISLIP 2-157,ny_last_typed
+NY,Suffolk,Islip 158,ISLIP 2-158,ny_last_typed
+NY,Suffolk,Islip 159,ISLIP 4-159,ny_last_typed
+NY,Suffolk,Islip 160,ISLIP 1-160,ny_last_typed
+NY,Suffolk,Islip 161,ISLIP 4-161,ny_last_typed
+NY,Suffolk,Islip 162,ISLIP 4-162,ny_last_typed
+NY,Suffolk,Islip 163,ISLIP 3-163,ny_last_typed
+NY,Suffolk,Islip 164,ISLIP 2-164,ny_last_typed
+NY,Suffolk,Islip 165,ISLIP 2-165,ny_last_typed
+NY,Suffolk,Islip 166,ISLIP 4-166,ny_last_typed
+NY,Suffolk,Islip 167,ISLIP 3-167,ny_last_typed
+NY,Suffolk,Islip 168,ISLIP 4-168,ny_last_typed
+NY,Suffolk,Islip 169,ISLIP 3-169,ny_last_typed
+NY,Suffolk,Islip 170,ISLIP 3-170,ny_last_typed
+NY,Suffolk,Islip 171,ISLIP 3-171,ny_last_typed
+NY,Suffolk,Islip 172,ISLIP 4-172,ny_last_typed
+NY,Suffolk,Islip 173,ISLIP 4-173,ny_last_typed
+NY,Suffolk,Islip 174,ISLIP 1-174,ny_last_typed
+NY,Suffolk,Islip 175,ISLIP 1-175,ny_last_typed
+NY,Suffolk,Islip 176,ISLIP 2-176,ny_last_typed
+NY,Suffolk,Islip 177,ISLIP 2-177,ny_last_typed
+NY,Suffolk,Islip 178,ISLIP 4-178,ny_last_typed
+NY,Suffolk,Islip 179,ISLIP 4-179,ny_last_typed
+NY,Suffolk,Islip 180,ISLIP 4-180,ny_last_typed
+NY,Suffolk,Islip 181,ISLIP 2-181,ny_last_typed
+NY,Suffolk,Islip 182,ISLIP 3-182,ny_last_typed
+NY,Suffolk,Islip 183,ISLIP 3-183,ny_last_typed
+NY,Suffolk,Islip 184,ISLIP 3-184,ny_last_typed
+NY,Suffolk,Islip 186,ISLIP 3-186,ny_last_typed
+NY,Suffolk,Islip 187,ISLIP 4-187,ny_last_typed
+NY,Suffolk,Islip 188,ISLIP 4-188,ny_last_typed
+NY,Suffolk,Islip 189,ISLIP 2-189,ny_last_typed
+NY,Suffolk,Islip 190,ISLIP 1-190,ny_last_typed
+NY,Suffolk,Islip 191,ISLIP 2-191,ny_last_typed
+NY,Suffolk,Islip 192,ISLIP 2-192,ny_last_typed
+NY,Suffolk,Islip 193,ISLIP 3-193,ny_last_typed
+NY,Suffolk,Islip 194,ISLIP 1-194,ny_last_typed
+NY,Suffolk,Islip 195,ISLIP 3-195,ny_last_typed
+NY,Suffolk,Islip 196,ISLIP 3-196,ny_last_typed
+NY,Suffolk,Islip 197,ISLIP 2-197,ny_last_typed
+NY,Suffolk,Islip 198,ISLIP 2-198,ny_last_typed
+NY,Suffolk,Islip 199,ISLIP 1-199,ny_last_typed
+NY,Suffolk,Islip 200,ISLIP 1-200,ny_last_typed
+NY,Suffolk,Islip 201,ISLIP 4-201,ny_last_typed
+NY,Suffolk,Islip 202,ISLIP 4-202,ny_last_typed
+NY,Suffolk,Islip 203,ISLIP 2-203,ny_last_typed
+NY,Suffolk,Islip 204,ISLIP 1-204,ny_last_typed
+NY,Suffolk,Islip 205,ISLIP 1-205,ny_last_typed
+NY,Suffolk,Islip 206,ISLIP 1-206,ny_last_typed
+NY,Suffolk,Islip 207,ISLIP 1-207,ny_last_typed
+NY,Suffolk,Islip 208,ISLIP 3-208,ny_last_typed
+NY,Suffolk,Islip 209,ISLIP 4-209,ny_last_typed
+NY,Suffolk,Islip 210,ISLIP 3-210,ny_last_typed
+NY,Suffolk,Islip 211,ISLIP 3-211,ny_last_typed
+NY,Suffolk,Islip 212,ISLIP 3-212,ny_last_typed
+NY,Suffolk,Islip 213,ISLIP 2-213,ny_last_typed
+NY,Suffolk,Islip 214,ISLIP 2-214,ny_last_typed
+NY,Suffolk,Islip 215,ISLIP 2-215,ny_last_typed
+NY,Suffolk,Islip 216,ISLIP 4-216,ny_last_typed
+NY,Suffolk,Islip 217,ISLIP 2-217,ny_last_typed
+NY,Suffolk,Islip 218,ISLIP 4-218,ny_last_typed
+NY,Suffolk,Islip 219,ISLIP 3-219,ny_last_typed
+NY,Suffolk,Islip 220,ISLIP 4-220,ny_last_typed
+NY,Suffolk,Islip 221,ISLIP 2-221,ny_last_typed
+NY,Suffolk,Islip 222,ISLIP 4-222,ny_last_typed
+NY,Suffolk,Islip 223,ISLIP 4-223,ny_last_typed
+NY,Suffolk,Islip 224,ISLIP 4-224,ny_last_typed
+NY,Suffolk,Riverhead 001,RIVERHEAD 01,ny_full_typed
+NY,Suffolk,Riverhead 002,RIVERHEAD 02,ny_full_typed
+NY,Suffolk,Riverhead 003,RIVERHEAD 03,ny_full_typed
+NY,Suffolk,Riverhead 004,RIVERHEAD 04,ny_full_typed
+NY,Suffolk,Riverhead 005,RIVERHEAD 05,ny_full_typed
+NY,Suffolk,Riverhead 006,RIVERHEAD 06,ny_full_typed
+NY,Suffolk,Riverhead 007,RIVERHEAD 07,ny_full_typed
+NY,Suffolk,Riverhead 008,RIVERHEAD 08,ny_full_typed
+NY,Suffolk,Riverhead 009,RIVERHEAD 09,ny_full_typed
+NY,Suffolk,Riverhead 010,RIVERHEAD 10,ny_full_typed
+NY,Suffolk,Riverhead 011,RIVERHEAD 11,ny_full_typed
+NY,Suffolk,Riverhead 012,RIVERHEAD 12,ny_full_typed
+NY,Suffolk,Riverhead 013,RIVERHEAD 13,ny_full_typed
+NY,Suffolk,Riverhead 014,RIVERHEAD 14,ny_full_typed
+NY,Suffolk,Riverhead 015,RIVERHEAD 15,ny_full_typed
+NY,Suffolk,Riverhead 016,RIVERHEAD 16,ny_full_typed
+NY,Suffolk,Riverhead 017,RIVERHEAD 17,ny_full_typed
+NY,Suffolk,Riverhead 018,RIVERHEAD 18,ny_full_typed
+NY,Suffolk,Riverhead 019,RIVERHEAD 19,ny_full_typed
+NY,Suffolk,Riverhead 020,RIVERHEAD 20,ny_full_typed
+NY,Suffolk,Riverhead 021,RIVERHEAD 21,ny_full_typed
+NY,Suffolk,Riverhead 022,RIVERHEAD 22,ny_full_typed
+NY,Suffolk,Shelter Island 001,SHELTER ISLAND 1,ny_full_typed
+NY,Suffolk,Shelter Island 002,SHELTER ISLAND 2,ny_full_typed
+NY,Suffolk,Shelter Island 003,SHELTER ISLAND 3,ny_full_typed
+NY,Suffolk,Shelter Island 004,SHELTER ISLAND 4,ny_full_typed
+NY,Suffolk,Smithtown 001,SMITHTOWN 01,ny_full_typed
+NY,Suffolk,Smithtown 002,SMITHTOWN 02,ny_full_typed
+NY,Suffolk,Smithtown 003,SMITHTOWN 03,ny_full_typed
+NY,Suffolk,Smithtown 004,SMITHTOWN 04,ny_full_typed
+NY,Suffolk,Smithtown 005,SMITHTOWN 05,ny_full_typed
+NY,Suffolk,Smithtown 006,SMITHTOWN 06,ny_full_typed
+NY,Suffolk,Smithtown 007,SMITHTOWN 07,ny_full_typed
+NY,Suffolk,Smithtown 008,SMITHTOWN 08,ny_full_typed
+NY,Suffolk,Smithtown 009,SMITHTOWN 09,ny_full_typed
+NY,Suffolk,Smithtown 010,SMITHTOWN 10,ny_full_typed
+NY,Suffolk,Smithtown 011,SMITHTOWN 11,ny_full_typed
+NY,Suffolk,Smithtown 012,SMITHTOWN 12,ny_full_typed
+NY,Suffolk,Smithtown 013,SMITHTOWN 13,ny_full_typed
+NY,Suffolk,Smithtown 014,SMITHTOWN 14,ny_full_typed
+NY,Suffolk,Smithtown 015,SMITHTOWN 15,ny_full_typed
+NY,Suffolk,Smithtown 016,SMITHTOWN 16,ny_full_typed
+NY,Suffolk,Smithtown 017,SMITHTOWN 17,ny_full_typed
+NY,Suffolk,Smithtown 018,SMITHTOWN 18,ny_full_typed
+NY,Suffolk,Smithtown 019,SMITHTOWN 19,ny_full_typed
+NY,Suffolk,Smithtown 020,SMITHTOWN 20,ny_full_typed
+NY,Suffolk,Smithtown 021,SMITHTOWN 21,ny_full_typed
+NY,Suffolk,Smithtown 022,SMITHTOWN 22,ny_full_typed
+NY,Suffolk,Smithtown 023,SMITHTOWN 23,ny_full_typed
+NY,Suffolk,Smithtown 024,SMITHTOWN 24,ny_full_typed
+NY,Suffolk,Smithtown 025,SMITHTOWN 25,ny_full_typed
+NY,Suffolk,Smithtown 026,SMITHTOWN 26,ny_full_typed
+NY,Suffolk,Smithtown 027,SMITHTOWN 27,ny_full_typed
+NY,Suffolk,Smithtown 028,SMITHTOWN 28,ny_full_typed
+NY,Suffolk,Smithtown 029,SMITHTOWN 29,ny_full_typed
+NY,Suffolk,Smithtown 030,SMITHTOWN 30,ny_full_typed
+NY,Suffolk,Smithtown 031,SMITHTOWN 31,ny_full_typed
+NY,Suffolk,Smithtown 032,SMITHTOWN 32,ny_full_typed
+NY,Suffolk,Smithtown 033,SMITHTOWN 33,ny_full_typed
+NY,Suffolk,Smithtown 034,SMITHTOWN 34,ny_full_typed
+NY,Suffolk,Smithtown 035,SMITHTOWN 35,ny_full_typed
+NY,Suffolk,Smithtown 036,SMITHTOWN 36,ny_full_typed
+NY,Suffolk,Smithtown 037,SMITHTOWN 37,ny_full_typed
+NY,Suffolk,Smithtown 038,SMITHTOWN 38,ny_full_typed
+NY,Suffolk,Smithtown 039,SMITHTOWN 39,ny_full_typed
+NY,Suffolk,Smithtown 040,SMITHTOWN 40,ny_full_typed
+NY,Suffolk,Smithtown 041,SMITHTOWN 41,ny_full_typed
+NY,Suffolk,Smithtown 042,SMITHTOWN 42,ny_full_typed
+NY,Suffolk,Smithtown 043,SMITHTOWN 43,ny_full_typed
+NY,Suffolk,Smithtown 044,SMITHTOWN 44,ny_full_typed
+NY,Suffolk,Smithtown 045,SMITHTOWN 45,ny_full_typed
+NY,Suffolk,Smithtown 046,SMITHTOWN 46,ny_full_typed
+NY,Suffolk,Smithtown 047,SMITHTOWN 47,ny_full_typed
+NY,Suffolk,Smithtown 048,SMITHTOWN 48,ny_full_typed
+NY,Suffolk,Smithtown 049,SMITHTOWN 49,ny_full_typed
+NY,Suffolk,Smithtown 050,SMITHTOWN 50,ny_full_typed
+NY,Suffolk,Smithtown 051,SMITHTOWN 51,ny_full_typed
+NY,Suffolk,Smithtown 052,SMITHTOWN 52,ny_full_typed
+NY,Suffolk,Smithtown 053,SMITHTOWN 53,ny_full_typed
+NY,Suffolk,Smithtown 054,SMITHTOWN 54,ny_full_typed
+NY,Suffolk,Smithtown 055,SMITHTOWN 55,ny_full_typed
+NY,Suffolk,Smithtown 056,SMITHTOWN 56,ny_full_typed
+NY,Suffolk,Smithtown 057,SMITHTOWN 57,ny_full_typed
+NY,Suffolk,Smithtown 058,SMITHTOWN 58,ny_full_typed
+NY,Suffolk,Smithtown 059,SMITHTOWN 59,ny_full_typed
+NY,Suffolk,Smithtown 060,SMITHTOWN 60,ny_full_typed
+NY,Suffolk,Smithtown 061,SMITHTOWN 61,ny_full_typed
+NY,Suffolk,Smithtown 062,SMITHTOWN 62,ny_full_typed
+NY,Suffolk,Smithtown 063,SMITHTOWN 63,ny_full_typed
+NY,Suffolk,Smithtown 064,SMITHTOWN 64,ny_full_typed
+NY,Suffolk,Smithtown 065,SMITHTOWN 65,ny_full_typed
+NY,Suffolk,Smithtown 066,SMITHTOWN 66,ny_full_typed
+NY,Suffolk,Smithtown 067,SMITHTOWN 67,ny_full_typed
+NY,Suffolk,Smithtown 068,SMITHTOWN 68,ny_full_typed
+NY,Suffolk,Smithtown 069,SMITHTOWN 69,ny_full_typed
+NY,Suffolk,Smithtown 070,SMITHTOWN 70,ny_full_typed
+NY,Suffolk,Smithtown 071,SMITHTOWN 71,ny_full_typed
+NY,Suffolk,Smithtown 072,SMITHTOWN 72,ny_full_typed
+NY,Suffolk,Smithtown 073,SMITHTOWN 73,ny_full_typed
+NY,Suffolk,Smithtown 074,SMITHTOWN 74,ny_full_typed
+NY,Suffolk,Smithtown 075,SMITHTOWN 75,ny_full_typed
+NY,Suffolk,Smithtown 076,SMITHTOWN 76,ny_full_typed
+NY,Suffolk,Smithtown 077,SMITHTOWN 77,ny_full_typed
+NY,Suffolk,Smithtown 078,SMITHTOWN 78,ny_full_typed
+NY,Suffolk,Smithtown 079,SMITHTOWN 79,ny_full_typed
+NY,Suffolk,Smithtown 080,SMITHTOWN 80,ny_full_typed
+NY,Suffolk,Smithtown 081,SMITHTOWN 81,ny_full_typed
+NY,Suffolk,Smithtown 082,SMITHTOWN 82,ny_full_typed
+NY,Suffolk,Smithtown 083,SMITHTOWN 83,ny_full_typed
+NY,Suffolk,Smithtown 084,SMITHTOWN 84,ny_full_typed
+NY,Suffolk,Smithtown 085,SMITHTOWN 85,ny_full_typed
+NY,Suffolk,Smithtown 086,SMITHTOWN 86,ny_full_typed
+NY,Suffolk,Smithtown 087,SMITHTOWN 87,ny_full_typed
+NY,Suffolk,Smithtown 088,SMITHTOWN 88,ny_full_typed
+NY,Suffolk,Smithtown 089,SMITHTOWN 89,ny_full_typed
+NY,Suffolk,Smithtown 090,SMITHTOWN 90,ny_full_typed
+NY,Suffolk,Smithtown 091,SMITHTOWN 91,ny_full_typed
+NY,Suffolk,Smithtown 092,SMITHTOWN 92,ny_full_typed
+NY,Suffolk,Southampton 001,SOUTHAMPTON 01,ny_full_typed
+NY,Suffolk,Southampton 002,SOUTHAMPTON 02,ny_full_typed
+NY,Suffolk,Southampton 003,SOUTHAMPTON 03,ny_full_typed
+NY,Suffolk,Southampton 004,SOUTHAMPTON 04,ny_full_typed
+NY,Suffolk,Southampton 005,SOUTHAMPTON 05,ny_full_typed
+NY,Suffolk,Southampton 006,SOUTHAMPTON 06,ny_full_typed
+NY,Suffolk,Southampton 007,SOUTHAMPTON 07,ny_full_typed
+NY,Suffolk,Southampton 008,SOUTHAMPTON 08,ny_full_typed
+NY,Suffolk,Southampton 009,SOUTHAMPTON 09,ny_full_typed
+NY,Suffolk,Southampton 010,SOUTHAMPTON 10,ny_full_typed
+NY,Suffolk,Southampton 011,SOUTHAMPTON 11,ny_full_typed
+NY,Suffolk,Southampton 012,SOUTHAMPTON 12,ny_full_typed
+NY,Suffolk,Southampton 013,SOUTHAMPTON 13,ny_full_typed
+NY,Suffolk,Southampton 014,SOUTHAMPTON 14,ny_full_typed
+NY,Suffolk,Southampton 015,SOUTHAMPTON 15,ny_full_typed
+NY,Suffolk,Southampton 016,SOUTHAMPTON 16,ny_full_typed
+NY,Suffolk,Southampton 017,SOUTHAMPTON 17,ny_full_typed
+NY,Suffolk,Southampton 018,SOUTHAMPTON 18,ny_full_typed
+NY,Suffolk,Southampton 019,SOUTHAMPTON 19,ny_full_typed
+NY,Suffolk,Southampton 020,SOUTHAMPTON 20,ny_full_typed
+NY,Suffolk,Southampton 021,SOUTHAMPTON 21,ny_full_typed
+NY,Suffolk,Southampton 022,SOUTHAMPTON 22,ny_full_typed
+NY,Suffolk,Southampton 023,SOUTHAMPTON 23,ny_full_typed
+NY,Suffolk,Southampton 024,SOUTHAMPTON 24,ny_full_typed
+NY,Suffolk,Southampton 025,SOUTHAMPTON 25,ny_full_typed
+NY,Suffolk,Southampton 026,SOUTHAMPTON 26,ny_full_typed
+NY,Suffolk,Southampton 027,SOUTHAMPTON 27,ny_full_typed
+NY,Suffolk,Southampton 028,SOUTHAMPTON 28,ny_full_typed
+NY,Suffolk,Southampton 029,SOUTHAMPTON 29,ny_full_typed
+NY,Suffolk,Southampton 030,SOUTHAMPTON 30,ny_full_typed
+NY,Suffolk,Southampton 031,SOUTHAMPTON 31,ny_full_typed
+NY,Suffolk,Southampton 032,SOUTHAMPTON 32,ny_full_typed
+NY,Suffolk,Southampton 033,SOUTHAMPTON 33,ny_full_typed
+NY,Suffolk,Southampton 034,SOUTHAMPTON 34,ny_full_typed
+NY,Suffolk,Southampton 035,SOUTHAMPTON 35,ny_full_typed
+NY,Suffolk,Southampton 036,SOUTHAMPTON 36,ny_full_typed
+NY,Suffolk,Southampton 037,SOUTHAMPTON 37,ny_full_typed
+NY,Suffolk,Southampton 038,SOUTHAMPTON 38,ny_full_typed
+NY,Suffolk,Southampton 039,SOUTHAMPTON 39,ny_full_typed
+NY,Suffolk,Southampton 040,SOUTHAMPTON 40,ny_full_typed
+NY,Suffolk,Southampton 041,SOUTHAMPTON 41,ny_full_typed
+NY,Suffolk,Southampton 042,SOUTHAMPTON 42,ny_full_typed
+NY,Suffolk,Southold 001,SOUTHOLD 01,ny_full_typed
+NY,Suffolk,Southold 002,SOUTHOLD 02,ny_full_typed
+NY,Suffolk,Southold 003,SOUTHOLD 03,ny_full_typed
+NY,Suffolk,Southold 004,SOUTHOLD 04,ny_full_typed
+NY,Suffolk,Southold 005,SOUTHOLD 05,ny_full_typed
+NY,Suffolk,Southold 006,SOUTHOLD 06,ny_full_typed
+NY,Suffolk,Southold 007,SOUTHOLD 07,ny_full_typed
+NY,Suffolk,Southold 008,SOUTHOLD 08,ny_full_typed
+NY,Suffolk,Southold 009,SOUTHOLD 09,ny_full_typed
+NY,Suffolk,Southold 010,SOUTHOLD 10,ny_full_typed
+NY,Suffolk,Southold 011,SOUTHOLD 11,ny_full_typed
+NY,Suffolk,Southold 012,SOUTHOLD 12,ny_full_typed
+NY,Suffolk,Southold 013,SOUTHOLD 13,ny_full_typed
+NY,Suffolk,Southold 014,SOUTHOLD 14,ny_full_typed
+NY,Suffolk,Southold 015,SOUTHOLD 15,ny_full_typed
+NY,Suffolk,Southold 016,SOUTHOLD 16,ny_full_typed
+NY,Suffolk,Southold 017,SOUTHOLD 17,ny_full_typed
+NY,Suffolk,Southold 018,SOUTHOLD 18,ny_full_typed
+NY,Suffolk,Southold 019,SOUTHOLD 19,ny_full_typed
+NY,Sullivan,Town of Bethel 1,BETHEL 1,ny_full
+NY,Sullivan,Town of Bethel 2,BETHEL 2,ny_full
+NY,Sullivan,Town of Bethel 3,BETHEL 3,ny_full
+NY,Sullivan,Town of Bethel 4,BETHEL 4,ny_full
+NY,Sullivan,Town of Bethel 5,BETHEL 5,ny_full
+NY,Sullivan,Town of Callicoon 1,CALLICOON 1,ny_full
+NY,Sullivan,Town of Callicoon 2,CALLICOON 2,ny_full
+NY,Sullivan,Town of Callicoon 3,CALLICOON 3,ny_full
+NY,Sullivan,Town of Callicoon 4,CALLICOON 4,ny_full
+NY,Sullivan,Town of Callicoon 5,CALLICOON 5,ny_full
+NY,Sullivan,Town of Cochecton 1,COCHECTON,ny_single
+NY,Sullivan,Town of Delaware 1,DELAWARE 1,ny_full
+NY,Sullivan,Town of Delaware 2,DELAWARE 2,ny_full
+NY,Sullivan,Town of Fallsburg 1,FALLSBURG 01,ny_full
+NY,Sullivan,Town of Fallsburg 10,FALLSBURG 10,ny_full
+NY,Sullivan,Town of Fallsburg 11,FALLSBURG 11,ny_full
+NY,Sullivan,Town of Fallsburg 12,FALLSBURG 12,ny_full
+NY,Sullivan,Town of Fallsburg 13,FALLSBURG 13,ny_full
+NY,Sullivan,Town of Fallsburg 2,FALLSBURG 02,ny_full
+NY,Sullivan,Town of Fallsburg 3,FALLSBURG 03,ny_full
+NY,Sullivan,Town of Fallsburg 4,FALLSBURG 04,ny_full
+NY,Sullivan,Town of Fallsburg 5,FALLSBURG 05,ny_full
+NY,Sullivan,Town of Fallsburg 6,FALLSBURG 06,ny_full
+NY,Sullivan,Town of Fallsburg 7,FALLSBURG 07,ny_full
+NY,Sullivan,Town of Fallsburg 8,FALLSBURG 08,ny_full
+NY,Sullivan,Town of Fallsburg 9,FALLSBURG 09,ny_full
+NY,Sullivan,Town of Forestburgh 1,FORESTBURGH,ny_single
+NY,Sullivan,Town of Fremont 1,FREMONT 1,ny_full
+NY,Sullivan,Town of Fremont 2,FREMONT 2,ny_full
+NY,Sullivan,Town of Highland 1,HIGHLAND 1,ny_full
+NY,Sullivan,Town of Highland 2,HIGHLAND 2,ny_full
+NY,Sullivan,Town of Liberty 1,LIBERTY 01,ny_full
+NY,Sullivan,Town of Liberty 10,LIBERTY 10,ny_full
+NY,Sullivan,Town of Liberty 2,LIBERTY 02,ny_full
+NY,Sullivan,Town of Liberty 3,LIBERTY 03,ny_full
+NY,Sullivan,Town of Liberty 4,LIBERTY 04,ny_full
+NY,Sullivan,Town of Liberty 5,LIBERTY 05,ny_full
+NY,Sullivan,Town of Liberty 6,LIBERTY 06,ny_full
+NY,Sullivan,Town of Liberty 7,LIBERTY 07,ny_full
+NY,Sullivan,Town of Liberty 8,LIBERTY 08,ny_full
+NY,Sullivan,Town of Liberty 9,LIBERTY 09,ny_full
+NY,Sullivan,Town of Lumberland 1,LUMBERLAND 1,ny_full
+NY,Sullivan,Town of Lumberland 2,LUMBERLAND 2,ny_full
+NY,Sullivan,Town of Mamakating 1,MAMAKATING 1-01,ny_last
+NY,Sullivan,Town of Mamakating 10,MAMAKATING 5-10,ny_last
+NY,Sullivan,Town of Mamakating 11,MAMAKATING 6-11,ny_last
+NY,Sullivan,Town of Mamakating 12,MAMAKATING 6-12,ny_last
+NY,Sullivan,Town of Mamakating 14,MAMAKATING 3-14,ny_last
+NY,Sullivan,Town of Mamakating 15,MAMAKATING 3-15,ny_last
+NY,Sullivan,Town of Mamakating 16,MAMAKATING 4-16,ny_last
+NY,Sullivan,Town of Mamakating 17,MAMAKATING 4-17,ny_last
+NY,Sullivan,Town of Mamakating 18,MAMAKATING 5-18,ny_last
+NY,Sullivan,Town of Mamakating 19,MAMAKATING 4-19,ny_last
+NY,Sullivan,Town of Mamakating 2,MAMAKATING 1-02,ny_last
+NY,Sullivan,Town of Mamakating 21,MAMAKATING 4-21,ny_last
+NY,Sullivan,Town of Mamakating 23,MAMAKATING 1-23,ny_last
+NY,Sullivan,Town of Mamakating 24,MAMAKATING 1-24,ny_last
+NY,Sullivan,Town of Mamakating 26,MAMAKATING 5-26,ny_last
+NY,Sullivan,Town of Mamakating 27,MAMAKATING 6-27,ny_last
+NY,Sullivan,Town of Mamakating 28,MAMAKATING 6-28,ny_last
+NY,Sullivan,Town of Mamakating 29,MAMAKATING 6-29,ny_last
+NY,Sullivan,Town of Mamakating 3,MAMAKATING 2-03,ny_last
+NY,Sullivan,Town of Mamakating 4,MAMAKATING 2-04,ny_last
+NY,Sullivan,Town of Mamakating 5,MAMAKATING 3-05,ny_last
+NY,Sullivan,Town of Mamakating 6,MAMAKATING 3-06,ny_last
+NY,Sullivan,Town of Mamakating 7,MAMAKATING 4-07,ny_last
+NY,Sullivan,Town of Mamakating 8,MAMAKATING 4-08,ny_last
+NY,Sullivan,Town of Mamakating 9,MAMAKATING 5-09,ny_last
+NY,Sullivan,Town of Neversink 1,NEVERSINK 1,ny_full
+NY,Sullivan,Town of Neversink 2,NEVERSINK 2,ny_full
+NY,Sullivan,Town of Neversink 3,NEVERSINK 3,ny_full
+NY,Sullivan,Town of Neversink 4,NEVERSINK 4,ny_full
+NY,Sullivan,Town of Rockland 1,ROCKLAND 1,ny_full
+NY,Sullivan,Town of Rockland 2,ROCKLAND 2,ny_full
+NY,Sullivan,Town of Rockland 3,ROCKLAND 3,ny_full
+NY,Sullivan,Town of Rockland 4,ROCKLAND 4,ny_full
+NY,Sullivan,Town of Rockland 5,ROCKLAND 5,ny_full
+NY,Sullivan,Town of Rockland 6,ROCKLAND 6,ny_full
+NY,Sullivan,Town of Thompson 1,THOMPSON 01,ny_full
+NY,Sullivan,Town of Thompson 10,THOMPSON 10,ny_full
+NY,Sullivan,Town of Thompson 11,THOMPSON 11,ny_full
+NY,Sullivan,Town of Thompson 12,THOMPSON 12,ny_full
+NY,Sullivan,Town of Thompson 13,THOMPSON 13,ny_full
+NY,Sullivan,Town of Thompson 2,THOMPSON 02,ny_full
+NY,Sullivan,Town of Thompson 3,THOMPSON 03,ny_full
+NY,Sullivan,Town of Thompson 4,THOMPSON 04,ny_full
+NY,Sullivan,Town of Thompson 5,THOMPSON 05,ny_full
+NY,Sullivan,Town of Thompson 6,THOMPSON 06,ny_full
+NY,Sullivan,Town of Thompson 7,THOMPSON 07,ny_full
+NY,Sullivan,Town of Thompson 8,THOMPSON 08,ny_full
+NY,Sullivan,Town of Thompson 9,THOMPSON 09,ny_full
+NY,Sullivan,Town of Tusten 1,TUSTEN,ny_single
+NY,Ulster,City of Kingston W1D1,KINGSTON CITY 1-1,ny_full_typed
+NY,Ulster,City of Kingston W1D2,KINGSTON CITY 1-2,ny_full_typed
+NY,Ulster,City of Kingston W1D3,KINGSTON CITY 1-3,ny_full_typed
+NY,Ulster,City of Kingston W2D1,KINGSTON CITY 2-1,ny_full_typed
+NY,Ulster,City of Kingston W2D2,KINGSTON CITY 2-2,ny_full_typed
+NY,Ulster,City of Kingston W2D3,KINGSTON CITY 2-3,ny_full_typed
+NY,Ulster,City of Kingston W2D4,KINGSTON CITY 2-4,ny_full_typed
+NY,Ulster,City of Kingston W3D1,KINGSTON CITY 3-1,ny_full_typed
+NY,Ulster,City of Kingston W3D2,KINGSTON CITY 3-2,ny_full_typed
+NY,Ulster,City of Kingston W3D3,KINGSTON CITY 3-3,ny_full_typed
+NY,Ulster,City of Kingston W4D1,KINGSTON CITY 4-1,ny_full_typed
+NY,Ulster,City of Kingston W4D2,KINGSTON CITY 4-2,ny_full_typed
+NY,Ulster,City of Kingston W5D1,KINGSTON CITY 5-1,ny_full_typed
+NY,Ulster,City of Kingston W5D2,KINGSTON CITY 5-2,ny_full_typed
+NY,Ulster,City of Kingston W5D3,KINGSTON CITY 5-3,ny_full_typed
+NY,Ulster,City of Kingston W6D1,KINGSTON CITY 6-1,ny_full_typed
+NY,Ulster,City of Kingston W6D2,KINGSTON CITY 6-2,ny_full_typed
+NY,Ulster,City of Kingston W6D3,KINGSTON CITY 6-3,ny_full_typed
+NY,Ulster,City of Kingston W7D1,KINGSTON CITY 7-1,ny_full_typed
+NY,Ulster,City of Kingston W7D2,KINGSTON CITY 7-2,ny_full_typed
+NY,Ulster,City of Kingston W7D3,KINGSTON CITY 7-3,ny_full_typed
+NY,Ulster,City of Kingston W8D1,KINGSTON CITY 8-1,ny_full_typed
+NY,Ulster,City of Kingston W8D2,KINGSTON CITY 8-2,ny_full_typed
+NY,Ulster,City of Kingston W8D3,KINGSTON CITY 8-3,ny_full_typed
+NY,Ulster,City of Kingston W9D1,KINGSTON CITY 9-1,ny_full_typed
+NY,Ulster,City of Kingston W9D2,KINGSTON CITY 9-2,ny_full_typed
+NY,Ulster,City of Kingston W9D3,KINGSTON CITY 9-3,ny_full_typed
+NY,Ulster,Denning D1,DENNING 1,ny_full_typed
+NY,Ulster,Denning D2,DENNING 2,ny_full_typed
+NY,Ulster,Esopus D1,ESOPUS 1,ny_full_typed
+NY,Ulster,Esopus D2,ESOPUS 2,ny_full_typed
+NY,Ulster,Esopus D3,ESOPUS 3,ny_full_typed
+NY,Ulster,Esopus D4,ESOPUS 4,ny_full_typed
+NY,Ulster,Esopus D5,ESOPUS 5,ny_full_typed
+NY,Ulster,Esopus D6,ESOPUS 6,ny_full_typed
+NY,Ulster,Esopus D7,ESOPUS 7,ny_full_typed
+NY,Ulster,Gardiner D1,GARDINER 1,ny_full_typed
+NY,Ulster,Gardiner D2,GARDINER 2,ny_full_typed
+NY,Ulster,Gardiner D3,GARDINER 3,ny_full_typed
+NY,Ulster,Gardiner D4,GARDINER 4,ny_full_typed
+NY,Ulster,Hardenburgh D1,HARDENBURGH 1,ny_full_typed
+NY,Ulster,Hardenburgh D2,HARDENBURGH 2,ny_full_typed
+NY,Ulster,Hurley D1,HURLEY 1,ny_full_typed
+NY,Ulster,Hurley D2,HURLEY 2,ny_full_typed
+NY,Ulster,Hurley D3,HURLEY 3,ny_full_typed
+NY,Ulster,Hurley D4,HURLEY 4,ny_full_typed
+NY,Ulster,Hurley D5,HURLEY 5,ny_full_typed
+NY,Ulster,Hurley D6,HURLEY 6,ny_full_typed
+NY,Ulster,Hurley D7,HURLEY 7,ny_full_typed
+NY,Ulster,Hurley D8,HURLEY 8,ny_full_typed
+NY,Ulster,Lloyd D1,LLOYD 1,ny_full_typed
+NY,Ulster,Lloyd D2,LLOYD 2,ny_full_typed
+NY,Ulster,Lloyd D3,LLOYD 3,ny_full_typed
+NY,Ulster,Lloyd D4,LLOYD 4,ny_full_typed
+NY,Ulster,Lloyd D5,LLOYD 5,ny_full_typed
+NY,Ulster,Lloyd D6,LLOYD 6,ny_full_typed
+NY,Ulster,Lloyd D7,LLOYD 7,ny_full_typed
+NY,Ulster,Marbletown D1,MARBLETOWN 1,ny_full_typed
+NY,Ulster,Marbletown D2,MARBLETOWN 2,ny_full_typed
+NY,Ulster,Marbletown D3,MARBLETOWN 3,ny_full_typed
+NY,Ulster,Marbletown D4,MARBLETOWN 4,ny_full_typed
+NY,Ulster,Marbletown D5,MARBLETOWN 5,ny_full_typed
+NY,Ulster,Marbletown D6,MARBLETOWN 6,ny_full_typed
+NY,Ulster,Marbletown D7,MARBLETOWN 7,ny_full_typed
+NY,Ulster,Marlborough D1,MARLBOROUGH 1,ny_full_typed
+NY,Ulster,Marlborough D2,MARLBOROUGH 2,ny_full_typed
+NY,Ulster,Marlborough D3,MARLBOROUGH 3,ny_full_typed
+NY,Ulster,Marlborough D4,MARLBOROUGH 4,ny_full_typed
+NY,Ulster,Marlborough D5,MARLBOROUGH 5,ny_full_typed
+NY,Ulster,Marlborough D6,MARLBOROUGH 6,ny_full_typed
+NY,Ulster,New Paltz D1,NEW PALTZ 01,ny_full_typed
+NY,Ulster,New Paltz D10,NEW PALTZ 10,ny_full_typed
+NY,Ulster,New Paltz D11,NEW PALTZ 11,ny_full_typed
+NY,Ulster,New Paltz D2,NEW PALTZ 02,ny_full_typed
+NY,Ulster,New Paltz D3,NEW PALTZ 03,ny_full_typed
+NY,Ulster,New Paltz D4,NEW PALTZ 04,ny_full_typed
+NY,Ulster,New Paltz D5,NEW PALTZ 05,ny_full_typed
+NY,Ulster,New Paltz D6,NEW PALTZ 06,ny_full_typed
+NY,Ulster,New Paltz D7,NEW PALTZ 07,ny_full_typed
+NY,Ulster,New Paltz D8,NEW PALTZ 08,ny_full_typed
+NY,Ulster,New Paltz D9,NEW PALTZ 09,ny_full_typed
+NY,Ulster,Olive D1,OLIVE 1,ny_full_typed
+NY,Ulster,Olive D2,OLIVE 2,ny_full_typed
+NY,Ulster,Olive D3,OLIVE 3,ny_full_typed
+NY,Ulster,Olive D4,OLIVE 4,ny_full_typed
+NY,Ulster,Olive D5,OLIVE 5,ny_full_typed
+NY,Ulster,Plattekill D1,PLATTEKILL 1,ny_full_typed
+NY,Ulster,Plattekill D2,PLATTEKILL 2,ny_full_typed
+NY,Ulster,Plattekill D3,PLATTEKILL 3,ny_full_typed
+NY,Ulster,Plattekill D4,PLATTEKILL 4,ny_full_typed
+NY,Ulster,Plattekill D5,PLATTEKILL 5,ny_full_typed
+NY,Ulster,Plattekill D6,PLATTEKILL 6,ny_full_typed
+NY,Ulster,Rochester D1,ROCHESTER 1,ny_full_typed
+NY,Ulster,Rochester D2,ROCHESTER 2,ny_full_typed
+NY,Ulster,Rochester D3,ROCHESTER 3,ny_full_typed
+NY,Ulster,Rochester D4,ROCHESTER 4,ny_full_typed
+NY,Ulster,Rochester D5,ROCHESTER 5,ny_full_typed
+NY,Ulster,Rosendale D1,ROSENDALE 1,ny_full_typed
+NY,Ulster,Rosendale D2,ROSENDALE 2,ny_full_typed
+NY,Ulster,Rosendale D3,ROSENDALE 3,ny_full_typed
+NY,Ulster,Rosendale D4,ROSENDALE 4,ny_full_typed
+NY,Ulster,Rosendale D5,ROSENDALE 5,ny_full_typed
+NY,Ulster,Saugerties D1,SAUGERTIES 01,ny_full_typed
+NY,Ulster,Saugerties D10,SAUGERTIES 10,ny_full_typed
+NY,Ulster,Saugerties D11,SAUGERTIES 11,ny_full_typed
+NY,Ulster,Saugerties D12,SAUGERTIES 12,ny_full_typed
+NY,Ulster,Saugerties D13,SAUGERTIES 13,ny_full_typed
+NY,Ulster,Saugerties D14,SAUGERTIES 14,ny_full_typed
+NY,Ulster,Saugerties D15,SAUGERTIES 15,ny_full_typed
+NY,Ulster,Saugerties D2,SAUGERTIES 02,ny_full_typed
+NY,Ulster,Saugerties D3,SAUGERTIES 03,ny_full_typed
+NY,Ulster,Saugerties D4,SAUGERTIES 04,ny_full_typed
+NY,Ulster,Saugerties D5,SAUGERTIES 05,ny_full_typed
+NY,Ulster,Saugerties D6,SAUGERTIES 06,ny_full_typed
+NY,Ulster,Saugerties D7,SAUGERTIES 07,ny_full_typed
+NY,Ulster,Saugerties D8,SAUGERTIES 08,ny_full_typed
+NY,Ulster,Saugerties D9,SAUGERTIES 09,ny_full_typed
+NY,Ulster,Shandaken D1,SHANDAKEN 1,ny_full_typed
+NY,Ulster,Shandaken D2,SHANDAKEN 2,ny_full_typed
+NY,Ulster,Shandaken D3,SHANDAKEN 3,ny_full_typed
+NY,Ulster,Shandaken D4,SHANDAKEN 4,ny_full_typed
+NY,Ulster,Shawangunk D1,SHAWANGUNK 1,ny_full_typed
+NY,Ulster,Shawangunk D2,SHAWANGUNK 2,ny_full_typed
+NY,Ulster,Shawangunk D3,SHAWANGUNK 3,ny_full_typed
+NY,Ulster,Shawangunk D4,SHAWANGUNK 4,ny_full_typed
+NY,Ulster,Shawangunk D5,SHAWANGUNK 5,ny_full_typed
+NY,Ulster,Shawangunk D6,SHAWANGUNK 6,ny_full_typed
+NY,Ulster,Shawangunk D7,SHAWANGUNK 7,ny_full_typed
+NY,Ulster,Town of Kingston D1,KINGSTON TOWN,ny_single
+NY,Ulster,Ulster D1,ULSTER 01,ny_full_typed
+NY,Ulster,Ulster D10,ULSTER 10,ny_full_typed
+NY,Ulster,Ulster D11,ULSTER 11,ny_full_typed
+NY,Ulster,Ulster D12,ULSTER 12,ny_full_typed
+NY,Ulster,Ulster D13,ULSTER 13,ny_full_typed
+NY,Ulster,Ulster D14,ULSTER 14,ny_full_typed
+NY,Ulster,Ulster D2,ULSTER 02,ny_full_typed
+NY,Ulster,Ulster D3,ULSTER 03,ny_full_typed
+NY,Ulster,Ulster D4,ULSTER 04,ny_full_typed
+NY,Ulster,Ulster D5,ULSTER 05,ny_full_typed
+NY,Ulster,Ulster D6,ULSTER 06,ny_full_typed
+NY,Ulster,Ulster D7,ULSTER 07,ny_full_typed
+NY,Ulster,Ulster D8,ULSTER 08,ny_full_typed
+NY,Ulster,Ulster D9,ULSTER 09,ny_full_typed
+NY,Ulster,Wawarsing D1,WAWARSING 01,ny_full_typed
+NY,Ulster,Wawarsing D10,WAWARSING 10,ny_full_typed
+NY,Ulster,Wawarsing D11,WAWARSING 11,ny_full_typed
+NY,Ulster,Wawarsing D12,WAWARSING 12,ny_full_typed
+NY,Ulster,Wawarsing D13,WAWARSING 13,ny_full_typed
+NY,Ulster,Wawarsing D2,WAWARSING 02,ny_full_typed
+NY,Ulster,Wawarsing D3,WAWARSING 03,ny_full_typed
+NY,Ulster,Wawarsing D4,WAWARSING 04,ny_full_typed
+NY,Ulster,Wawarsing D5,WAWARSING 05,ny_full_typed
+NY,Ulster,Wawarsing D6,WAWARSING 06,ny_full_typed
+NY,Ulster,Wawarsing D7,WAWARSING 07,ny_full_typed
+NY,Ulster,Wawarsing D8,WAWARSING 08,ny_full_typed
+NY,Ulster,Wawarsing D9,WAWARSING 09,ny_full_typed
+NY,Ulster,Woodstock D1,WOODSTOCK 1,ny_full_typed
+NY,Ulster,Woodstock D2,WOODSTOCK 2,ny_full_typed
+NY,Ulster,Woodstock D3,WOODSTOCK 3,ny_full_typed
+NY,Ulster,Woodstock D4,WOODSTOCK 4,ny_full_typed
+NY,Ulster,Woodstock D5,WOODSTOCK 5,ny_full_typed
+NY,Ulster,Woodstock D6,WOODSTOCK 6,ny_full_typed
+NY,Ulster,Woodstock D7,WOODSTOCK 7,ny_full_typed
+NY,Ulster,Woodstock D8,WOODSTOCK 8,ny_full_typed
+NY,Ulster,Woodstock D9,WOODSTOCK 9,ny_full_typed

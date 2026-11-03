@@ -12,7 +12,7 @@
 ##     districts. Run this first: it also writes the county x district weights that (b) uses.
 ##   Votes: VoteHub's 2024 presidential results on its 2026 precincts
 ##     (26_general/input_data/votehub-shapefiles/estimated_past_results.csv, pres24_*), with
-##     the precinct polygons ({NC26G,FL26P,TX26P,OH26G}/*.shp). Every precinct in the state.
+##     the precinct polygons ({NC26G,TX26P}/*.shp, FL26G.zip, OH26G.zip). Every precinct in the state.
 ##     CA: VoteHub has no CA results, so CA uses the Statewide Database's 2024 general
 ##     precincts (SRPRECs) and their statement of vote, from
 ##     https://statewidedatabase.org/d20/g24.html, saved to --ca-dir (default
@@ -134,7 +134,7 @@ sf_use_s2(FALSE)
 COL_D = "#005599"
 COL_R = "#ce0008"
 LEAN_COLS = c("Safe D" = COL_D, "Lean D" = "#7fa9cc", "Competitive" = "#d9d9d9", "Lean R" = "#e67f84", "Safe R" = COL_R)
-VH_DIR = c(NC = "NC26G", FL = "FL26P", TX = "TX26P", OH = "OH26G", CA = NA) # CA: Statewide Database
+VH_DIR = c(NC = "NC26G", FL = "FL26G.zip", TX = "TX26P", OH = "OH26G.zip", CA = NA) # CA: Statewide Database; FL/OH: Nov 2 layers
 
 args = commandArgs(trailingOnly = TRUE)
 opt = function(k, d = NA) {
@@ -481,7 +481,8 @@ baseline_state = function(st, res) {
   if (st == "CA") {
     prec = ca_precincts() |> clean_geom()
   } else {
-    shp = list.files(file.path(vh_dir, VH_DIR[[st]]), "\\.shp$", full.names = TRUE)[1]
+    shp = if (grepl("\\.zip$", VH_DIR[[st]])) paste0("/vsizip/", file.path(vh_dir, VH_DIR[[st]])) else
+      list.files(file.path(vh_dir, VH_DIR[[st]]), "\\.shp$", full.names = TRUE)[1]
     prec = read_sf(shp)
     if (!"UNIQUE_ID" %in% names(prec)) stop(basename(shp), " has no UNIQUE_ID column (VoteHub precinct id)")
     # a precinct drawn as several features with the same id (TX, FL) is one precinct: merge

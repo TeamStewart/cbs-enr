@@ -306,6 +306,22 @@ vh_manual = bind_rows(
     "Eastpoint" = "001", "Alligator Point" = "002", "Holy Family Center" = "003", "Historic Holy Family" = "004",
     "Carrabelle" = "005", "Lanark Village" = "006", "St. George Island" = "007", "American Legion" = "008"))
 )
+# FL26G / NE26G / OH26G (Nov 2) replaced the gpkg layers: same polygons, but OH and part of NE/FL
+# renamed their codes, and the new names match the ENR ids less often. These pairs carry the
+# 10-31 matches over, through polygon overlap (input_data/votehub-shapefiles/
+# unit_id_remap_20261102.csv: old -> new unit_id where IoU > 0.95), for every ENR precinct the
+# new layer alone matched differently or not at all. They replace vh_manual pairs for the same
+# precinct.
+# Every scripts/util/crosswalks/votehub_manual_*.csv is read (state, county, precinct_enr,
+# vh_code): the 11-02 carry-over above, and hand-matched batches (votehub_manual_hand_20261103.csv:
+# IA polling-place labels, GA Chatham, NE, OH Pickaway, from the 11-03 hand-matching worksheet).
+vh_carry = fs::dir_ls("scripts/util/crosswalks", regexp = "votehub_manual_[^/]*\\.csv$") |>
+  map(\(f) read_csv(f, col_types = cols(.default = "c"))) |>
+  list_rbind() |>
+  select(state, county, precinct_enr, vh_code) |>
+  mutate(county = map2_chr(state, county, county_key)) |>
+  distinct(state, county, precinct_enr, .keep_all = TRUE)
+vh_manual = bind_rows(anti_join(vh_manual, vh_carry, join_by(state, county, precinct_enr)), vh_carry)
 
 # A county with one ENR and one VoteHub precinct, both unmatched (NE Hooker, Loup)
 match_single = function(enr_keys, vh_keys, matched) {

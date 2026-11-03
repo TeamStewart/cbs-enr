@@ -210,6 +210,38 @@
 // models page maps: zoom reset button, top right of the map
 .quarto-dashboard figure:has(> svg.dash-map), .quarto-dashboard figure.dash-map { position: relative; }
 
+.card-body[data-title="Shift Map"], .card-body[data-title="Remaining Vote Map"], .card-body[data-title="Predicted Turnout"] {
+  position: relative;
+}
+// Predicted Turnout's Vote Mode picker (turnout_mode in index.qmd): top right, over the plot's corner
+.map-base.turnout-mode {
+  top: 0.25rem;
+  left: auto;
+  right: 0.5rem;
+}
+// map basemap picker (basePicker in index.qmd): placed by script under the map's legend, its key below
+.map-base {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: auto;
+  max-width: 240px;
+  margin: 0;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center;
+  gap: 0.3rem;
+  --label-width: auto;
+  --input-width: auto;
+  font-size: 0.75rem !important;
+  label { width: auto !important; margin: 0; padding: 0; font-size: 0.75rem !important; }
+  select { width: auto !important; font-size: 0.75rem !important; padding: 0.05rem 1.9rem 0.05rem 0.4rem !important; min-height: 0; }
+  .map-base-key { flex: 0 0 100%; width: 100%; }
+  .map-base-key svg { background: transparent !important; display: block; }
+  .map-base-key:empty { display: none; }
+}
+
 .map-reset {
   position: absolute;
   top: 0;

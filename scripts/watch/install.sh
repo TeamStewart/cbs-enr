@@ -40,6 +40,8 @@ cat > "$plist" <<EOF
   <array><string>/bin/bash</string><string>$repo/scripts/watch/tick.sh</string></array>
   <key>StartInterval</key><integer>60</integer>
   <key>RunAtLoad</key><true/>
+  <!-- tick.R starts l2.sh detached; without this launchd kills it when the tick exits -->
+  <key>AbandonProcessGroup</key><true/>
   <key>StandardErrorPath</key><string>$HOME/.cache/cbs-enr-watch/launchd.err</string>
 </dict>
 </plist>
