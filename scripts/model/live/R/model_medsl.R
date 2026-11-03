@@ -833,7 +833,11 @@ fit_medsl_sur <- function(
     # puts 2026 into those weights, and it does so ONLY under CBS_LEVEL_SCOPE="both" --
     # model_hybrid's recentre_prior() reads
     #   prior_tau = (if (CBS_LEVEL_SCOPE == "both") tgt_tot_adj else est_tot_adj) * mode_turn_share
-    # so scope="theta" leaves prior_tau on the 2022 level even with the level arm on.
+    # so the OTHER scope, "total", leaves prior_tau on the 2022 level even with the level
+    # arm on. ("total" and "both" are the only values -- model_turnout.R:540 aborts on
+    # anything else. It is named "total" because it reaches only theta, the precinct TOTAL
+    # prior on the k_ref slot; do not write "theta", which is what that scope DOES, not what
+    # it is called.)
     #
     # Without it the swing is still DELIVERED (the solve hits its target), but it is placed
     # using 2022 county weights, and CBS's growth is not uniform: TX asks 1.3644 over its 25
