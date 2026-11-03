@@ -116,20 +116,20 @@ list(
   map_single,
   map_networks,
   tar_combine(net_report, map_networks[["net_data"]], command = dplyr::bind_rows(!!!.x)),
-  # MEDSL's live plots (hdurham/enr_scripts, cloned to ENR_SCRIPTS_DIR): one pass after this
-  # cycle's summaries and network results, in its own R process so ggplot2 stays out of this
-  # pipeline. A pass that fails or runs past 5 minutes is this target's error, and
-  # error = "null" keeps the rest of the cycle going. Returns when the plots last drew.
+  # MEDSL's live plots (hdurham/enr_scripts, cloned to ENR_SCRIPTS_DIR): pulls its latest main,
+  # then one pass after this cycle's summaries and network results, in its own R process so
+  # ggplot2 stays out of this pipeline. A failed pull is a warning and the pass runs the last
+  # copy; a pass that fails or runs past 5 minutes is this target's error, and error = "null"
+  # keeps the rest of the cycle going. Returns when the plots last drew.
   tar_combine(
     live_plots,
     map_single[["summary"]], map_networks[["net_data"]],
     command = {
       list(!!!.x) # wait for every summary and network result
-      callr::rscript(
-        "live/run_live.R", cmdargs = "--once",
-        wd = path.expand(Sys.getenv("ENR_SCRIPTS_DIR", "~/enr_scripts")),
-        timeout = 300, show = FALSE
-      )
+      dir = path.expand(Sys.getenv("ENR_SCRIPTS_DIR", "~/enr_scripts"))
+      pulled = system2("git", c("-C", dir, "pull", "--ff-only", "--quiet"), timeout = 60)
+      if (pulled != 0) warning("git pull in ", dir, " failed (exit ", pulled, "); ran the last copy")
+      callr::rscript("live/run_live.R", cmdargs = "--once", wd = dir, timeout = 300, show = FALSE)
       Sys.time()
     },
     cue = tar_cue(mode = "always")
