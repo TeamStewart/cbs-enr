@@ -121,6 +121,79 @@ CBS_EXTRA_UNITS = tibble::tribble(
   "AK",   "02099",      "099",       "Overseas Absentee"
 )
 
+# States whose own scrape covers every county (AK: all 40 House districts, with each
+# district's absentee / early / question pools as virtual units). When CBS sends one of these
+# races as a single statewide unit, cbs_for_races() stands in cbs_district_frame() for the
+# CBS snapshot, so the statewide rows still get made: the scraped districts come from our
+# own returns as always, and a district with no returns yet is projected from expectation.
+# Not for states we scrape only in part: there a frame with nothing counted would throw away
+# CBS's counts for every county we don't scrape.
+CBS_DISTRICT_FALLBACK = c("AK")
+
+#' A stand-in county snapshot with nothing counted, for a race CBS sends as one unit
+#'
+#' One row per county of the state (`{ST}_counties.csv` plus CBS_EXTRA_UNITS) in the
+#' snapshot's columns, with no votes counted: `county_pct_exp_vote` 0 for the counties,
+#' so in the statewide step (`rest_of_state()`, counties.R) a county without our returns is
+#' all expectation (its baseline at tonight's turnout and swing), exactly as an uncounted CBS
+#' county would be. The CBS-only units (AK overseas absentee, 02099) are given 100 and no
+#' votes: they have no baseline, so they add nothing either way, and one value above 1.5
+#' keeps medsl_sur's scale check (`county_targets()`, medsl/model_hybrid.R) from reading an
+#' all-zero column as a 0-1 fraction. Precinct counts are NA, so medsl_sur's county
+#' constraints never fire on it. Marked `source = "no CBS districts"`. Never saved.
+#'
+#' @param state,contest,district The race.
+#' @param env Feed, recorded in `env`.
+#' @param dir_26 Path to 26_general.
+#' @return Tibble in pull_cbs_race()'s columns, or NULL without `{ST}_counties.csv`.
+cbs_district_frame = function(state, contest, district = NA, env = "live", dir_26 = find_26_general()) {
+  p_cty = file.path(dir_26, "input_data", "model_inputs", paste0(state, "_counties.csv"))
+  if (!file.exists(p_cty)) {
+    return(NULL)
+  }
+  m = readr::read_csv(p_cty, col_types = readr::cols(.default = "c")) |>
+    select(county_fips, county_cbs)
+  extra = CBS_EXTRA_UNITS[CBS_EXTRA_UNITS$state == state & !CBS_EXTRA_UNITS$county_fips %in% m$county_fips, ]
+  known = enightmodels::cbs_counties |>
+    filter(state == !!state) |>
+    transmute(county_cbs = stringr::str_pad(county_cbs, 3, pad = "0"), county_name = county)
+  m |>
+    mutate(county_cbs = stringr::str_pad(county_cbs, 3, pad = "0")) |>
+    left_join(known, by = "county_cbs") |>
+    mutate(cbs_only = FALSE) |>
+    bind_rows(mutate(select(extra, county_fips, county_cbs, county_name), cbs_only = TRUE)) |>
+    transmute(
+      state = !!state,
+      contest = !!contest,
+      district = as.integer(!!district),
+      county_fips,
+      county_cbs,
+      county_name,
+      cbs_unit_id = NA_character_,
+      method = "all",
+      candidate = NA_character_,
+      party = "dem",
+      party_cbs = NA_character_,
+      votes = 0,
+      rep_method = NA_real_,
+      exp_method = NA_real_,
+      county_total_vote = 0,
+      county_pct_exp_vote = if_else(cbs_only, 100, 0),
+      county_precincts_in = NA_real_,
+      county_precincts_of = NA_real_,
+      county_ts = as.POSIXct(NA),
+      race_last_updated = as.POSIXct(NA),
+      race_pct_in = NA_real_,
+      county_pct_rep = NA_real_,
+      race_call = NA,
+      env = !!env,
+      observed_at = lubridate::now(tzone = "UTC"),
+      schema_version = 2L,
+      method_shortfall = NA_real_,
+      source = "no CBS districts"
+    )
+}
+
 #' FIPS -> CBS county number
 #'
 #' CBS numbers a state's counties alphabetically by its own names
@@ -402,7 +475,7 @@ pull_cbs_race = function(
       "CBS returned {tag} as ONE unit ({.val {unique(raw$fips)}}, geo {.val {unique(as.character(raw$geo))}}) \\
        holding the statewide vote -- no county breakdown is published. Nothing saved.",
       "i" = "Seen for AK on the test feed 2026-11-02. The race-level expected vote was still saved."
-    ))
+    ), class = "cbs_statewide_only")
   }
 
   # NEVER SUM AGGREGATES WITH PER-METHOD ROWS. `all` is every method; `adv` is early+mail
@@ -643,9 +716,8 @@ if (sys.nframe() == 0L) {
     bind_cols(select(r, race_id), res)
   }) |>
     bind_rows()
-  if (nrow(races) > 1) {
-    cli::cli_h1("Summary ({env} feed)")
-    print(as.data.frame(out), right = FALSE, row.names = FALSE)
-  }
+  # always: with one race a failure was otherwise silent (exit status 1, no message)
+  cli::cli_h1("Summary ({env} feed)")
+  print(as.data.frame(out), right = FALSE, row.names = FALSE)
   if (any(out$result != "ok")) quit(status = 1)
 }
