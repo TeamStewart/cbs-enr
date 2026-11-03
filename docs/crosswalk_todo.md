@@ -90,6 +90,7 @@ state where `precinct26_id` repeats within county x cd.
 | NM | 33 (all) | 2,204 | nm_20260914 | 2,203 (99.95%) | 99.95% | done 10-31 |
 | OH | 15 | 5,052 | oh_20260929 | 4,626 (91.6%) | 99.96% | partial 10-30 (no ENR: Lake, Warren) |
 | PA | 20 | 6,492 | pa_20260911 | 4,930 (75.9%) | 99.9% | partial 10-31 (ENR: Allegheny, Chester, Dauphin, Delaware, Erie, Lancaster, Montgomery, Philadelphia, Washington, York) |
+| SC | 46 (all) | 2,332 | sc_20261014 | 2,331 (99.96%) | 100% | done 11-03 |
 | TX | 72 | 10,851 | tx_20261011 | 6,712 (61.9%) | 94.8% | partial 11-01 (23 ENR counties; Collin added on its Enhanced Voting switch; Tarrant via consolidated sub-units) |
 | VA | 133 (all) | 2,538 | va_20261006 | 2,526 (99.5%) | 99.5% | done 10-31 |
 | WA | 4 | 167 | wa_20260917 | - | - | waiting |
@@ -176,6 +177,16 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
   Allegheny BRADFORDWOOD, MCDONALD 00 05, ROSSLYN FARM, SEWICKLEY HT,
   PENNSBURY VLG 00 02; Washington 8th ward; Lehigh 011905S. Ambiguous, NA:
   Lancaster 4906. Dauphin and Erie carry test votes before election day.
+- **SC**: ENR (Clarity) has names only, matched to frame names; a `votehub`
+  tier uses the county code inside the VoteHub unit_id (`45003-:-007`) for
+  feed typos (`ORNAGEBURG WD 7`) and renames the frame label missed (Aiken 007
+  Bath, 012 Clearwater; L2 agrees). L2 rules: Aiken `NAME code`, Spartanburg
+  `(code)`, Richland `COLUMBIA nn` = WARD nn = 1nn, Dorchester trailing ` 1`,
+  13 manual one-offs. NA by design: Kershaw ENR `Camden No. 2 & 3` (merge; frame
+  108 keeps L2 only). Provisional/Failsafe ENR buckets never match. Check:
+  L2 ratios Orangeburg 04 (1.64), Richland COLUMBIA 02/08 (1.33), Beaufort
+  BURTON 1D (0.70). L2 vote mode: blank BallotType = eday (`BLANK_EDAY`);
+  "Early but Method Unknown" stays unknown (no mail/early split).
 - **TX**: sub-unit reporters (Wood `11 - Joint COQ`, Hood `101 - GCTY_GISD`,
   multi-split Dallas `1063-01`) are sums, NA. Tarrant reports every precinct as
   `1005` + `1005 - F99`/`L01`; since 10-31 `scrape_tx()` sums the units

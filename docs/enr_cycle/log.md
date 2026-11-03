@@ -18,3 +18,4 @@ in git history.
 - 2026-11-01 07:10 AR: scraper pushed to enightdata main (de82cec); sheet AR path/type=custom/updated=TRUE applied
 - 2026-11-01 12:55 probe all : 62 rows, 0 found, 1 unchanged
 - 2026-11-01 12:58 discovery 11-01: probe 61 rows all not_posted (no WAF 405s); verified the 4 stale Clarity EIDs in updated=FALSE paths are all non-general (AL Madison 127283=9/22, CO 126592=6/30, PA Susquehanna 123829=5/20/2025, SC 127179=8/25) and FL Pinellas 127357 confirmed 11/3/2026 but already updated=TRUE. BLOCKER: cycle.R sync fails because 26_general/input_data/create_frame.R hardcodes ../CBS-MIT Election Data paths (Mason layout), so the tracker is stale: FL pinellas shows not_posted though live, AZ greenlee/yuma rows obsolete since AZ went statewide. Hand-check queue not worked pending sync.
+- 2026-11-03 18:07 xwalk-done SC: 0 rows ()
