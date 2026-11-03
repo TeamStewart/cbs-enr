@@ -315,3 +315,110 @@ mode_fold_tag = function(state, fold = read_mode_fold()) {
   f = dplyr::arrange(f, county_cbs, from_method)
   paste0("|fold", paste0(f$county_cbs, f$from_method, ">", f$to_method, collapse = ","))
 }
+
+# ---- imposing a county composition target on a precinct pattern ------------------------
+#' Rescale a precinct x method pattern to county method shares
+#'
+#' Keeps WHICH precincts vote by which method (the pattern) and replaces HOW MUCH of each
+#' county does (the level). Each county's resulting method share equals `target`'s, and the
+#' county's total is unchanged -- only the split across methods moves.
+#'
+#' This is the shape `prep/make_mode_results.R` already uses to put a 2024 precinct pattern
+#' at a 2022 county split (`v * ts * cv / cmv`), lifted out so the target can come from
+#' anywhere. The three cases are its three cases:
+#'   county absent from the target   keep the pattern untouched
+#'   method present in the pattern   rescale it to the target share
+#'   method absent from the pattern  spread the target share by precinct size
+#'
+#' Blending rather than imposing would not work. `cells_from_inputs()` already shrinks a
+#' precinct toward its county share with `share = (v + k * cs) / (n_p + k)`, k = 40, which
+#' gives `cs` about 7% weight on a precinct with a few hundred history votes -- roughly
+#' 0.35pp of movement against a measured 4-8pp gap. The target has to be imposed.
+#'
+#' `pattern` and `target` must already speak the same vocabulary: fold BOTH through
+#' `fold_methods()` first, or a county whose feed cannot report a method will be handed a
+#' share for it.
+#'
+#' @param pattern One row per precinct x method: geo, method, voters, plus any columns to
+#'   carry (e.g. election), which are taken from the precinct's first row.
+#' @param target One row per county x method: county_cbs, method, share. NULL or empty
+#'   returns `pattern` unchanged.
+#' @return `pattern`'s columns, with `voters` rescaled.
+rescale_modes = function(pattern, target) {
+  if (is.null(target) || !nrow(target)) {
+    return(pattern)
+  }
+  stopifnot(
+    "pattern needs geo, method, voters" = all(c("geo", "method", "voters") %in% names(pattern)),
+    "target needs county_cbs, method, share" =
+      all(c("county_cbs", "method", "share") %in% names(target))
+  )
+  cols = names(pattern)
+  carry = setdiff(cols, c("geo", "method", "voters"))
+
+  # defensive: a target that does not sum to 1 within county would move the county's total
+  tg = target |>
+    dplyr::mutate(county_cbs = stringr::str_pad(as.character(county_cbs), 3, pad = "0")) |>
+    dplyr::filter(!is.na(county_cbs), !is.na(method), is.finite(share), share >= 0) |>
+    dplyr::mutate(share = share / sum(share), .by = county_cbs) |>
+    dplyr::filter(is.finite(share))
+
+  p = dplyr::mutate(
+    pattern,
+    county_cbs = geo_county(geo),
+    voters = as.numeric(voters)
+  )
+  hit = intersect(unique(p$county_cbs), unique(tg$county_cbs))
+  if (!length(hit)) {
+    return(pattern)
+  }
+  keep = dplyr::filter(p, !county_cbs %in% hit)
+  work = dplyr::filter(p, county_cbs %in% hit)
+
+  # a method the target names but the pattern has no row for still needs a row to land on,
+  # so complete the grid over the TARGET's methods for each precinct. The target is folded,
+  # so this cannot invent a method the county's feed does not report.
+  spine = work |>
+    dplyr::distinct(dplyr::pick(dplyr::all_of(c("geo", "county_cbs", carry)))) |>
+    dplyr::slice_head(n = 1, by = geo)
+  grid = spine |>
+    dplyr::inner_join(
+      dplyr::distinct(tg, county_cbs, method),
+      by = "county_cbs",
+      relationship = "many-to-many"
+    )
+  work = grid |>
+    dplyr::left_join(
+      dplyr::select(work, geo, method, voters),
+      by = c("geo", "method")
+    ) |>
+    dplyr::mutate(voters = dplyr::coalesce(voters, 0))
+
+  out = work |>
+    dplyr::left_join(
+      dplyr::select(tg, county_cbs, method, .ts = share),
+      by = c("county_cbs", "method")
+    ) |>
+    dplyr::mutate(
+      .pt = sum(voters), # the precinct's own total, for the no-pattern case
+      .by = geo
+    ) |>
+    dplyr::mutate(
+      .cv = sum(voters), # county total: preserved
+      .by = county_cbs
+    ) |>
+    dplyr::mutate(
+      .cmv = sum(voters), # county total for this method
+      .by = c(county_cbs, method)
+    ) |>
+    dplyr::mutate(
+      voters = dplyr::case_when(
+        is.na(.ts) ~ voters, # target silent on this method: leave it
+        .cmv > 0 ~ voters * .ts * .cv / .cmv, # the pattern, at the target's share
+        TRUE ~ .ts * .pt # method absent from the pattern: by precinct size
+      )
+    ) |>
+    dplyr::select(dplyr::all_of(cols))
+
+  dplyr::bind_rows(dplyr::select(keep, dplyr::all_of(cols)), out)
+}

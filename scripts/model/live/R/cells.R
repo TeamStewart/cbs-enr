@@ -117,7 +117,10 @@ fold_cells = function(cells, state, fold = read_mode_fold()) {
 #' `{ST}_precinct_mode_history.parquet` (prep/prep_model_inputs.R, from L2).
 #'
 #' Either source is then folded onto the methods each county's feed actually reports
-#' (`fold_mode_history()`), so the prior never puts weight on a mode a county never files.
+#' (`fold_mode_history()`), so the prior never puts weight on a mode a county never files,
+#' and -- unless `mode_election` asks for a specific past election -- put at CBS's county
+#' composition (`apply_mode_target()`), which supplies the LEVEL while the history keeps
+#' supplying the precinct pattern.
 #'
 #' @param state Two-letter state code.
 #' @param dir_26 Path to 26_general.
@@ -132,7 +135,126 @@ mode_history = function(state, dir_26 = find_26_general(), mode_election = NULL)
     read_pq(file.path(dir_in, paste0(state, "_precinct_mode_history.parquet"))) |>
       dplyr::filter(election == if (is.null(mode_election)) "2022_general" else mode_election)
   }
-  fold_mode_history(mh, state)
+  mh = fold_mode_history(mh, state)
+  # An explicit `mode_election` is a request for a PAST election's composition (the sims'
+  # mode_shift arms, a backtest year). A current-cycle forecast must not overwrite it.
+  if (!is.null(mode_election)) {
+    return(mh)
+  }
+  apply_mode_target(mh, state, dir_26)
+}
+
+# The composition prior's LEVEL comes from CBS's county expected vote, frozen for the night.
+# The precinct PATTERN still comes from the mode history; only how much of each county votes
+# each way is replaced. See cbs_mode_target() for why, and rescale_modes() for how.
+#
+# FROZEN AT THE FIRST NON-EMPTY READ, which is the important word. A target that moved
+# between refreshes would move every precinct's prior with no new votes behind it, so
+# turnout would jump for a reason nobody could see in the returns. Freezing an EMPTY target
+# would be the opposite mistake -- CBS's live feed publishes nothing until polls close, so
+# caching that absence would mean the target never arrives at all. Only a non-empty read is
+# cached; while CBS is silent we keep asking and run on the mode history unchanged.
+.mode_target_env = new.env(parent = emptyenv())
+
+#' The state's frozen CBS composition target
+#'
+#' @param state Two-letter state code.
+#' @param dir_26 Path to 26_general.
+#' @param env CBS feed environment; defaults to the pipeline's `MODEL_CBS_ENV`.
+#' @param refresh Drop the frozen value and read again.
+#' @return The target (`cbs_mode_target()`), or NULL while CBS has published none.
+mode_target_for = function(
+  state,
+  dir_26 = find_26_general(),
+  env = if (exists("MODEL_CBS_ENV")) MODEL_CBS_ENV else "live",
+  refresh = FALSE
+) {
+  if (Sys.getenv("CBS_MODE_TARGET", unset = "1") == "0") {
+    return(NULL)
+  }
+  key = paste(state, env, sep = "|")
+  if (refresh) {
+    rm(list = key, envir = .mode_target_env, inherits = FALSE)
+  }
+  if (!is.null(.mode_target_env[[key]])) {
+    return(.mode_target_env[[key]])
+  }
+  tg = tryCatch(cbs_mode_target(state, env = env, dir_26 = dir_26), error = function(e) {
+    cli::cli_alert_warning("{state}: CBS composition target unavailable ({conditionMessage(e)})")
+    NULL
+  })
+  if (!is.null(tg) && nrow(tg)) {
+    .mode_target_env[[key]] = tg # only a non-empty target is frozen
+    return(tg)
+  }
+  NULL
+}
+
+#' Cache tag for a state's frozen composition target
+#'
+#' Empty when CBS has published nothing, so a state with no target keeps the `medsl_key()`
+#' it has always had. Otherwise the target's `observed_at`, so a fit built under one
+#' composition can never be served from the cache under another -- the cache must not be
+#' able to hide which prior produced a number.
+#'
+#' @param state Two-letter state code.
+#' @param dir_26 Path to 26_general.
+#' @return "" or "|cbs<YYYYmmddHHMMSS>".
+mode_target_tag = function(state, dir_26 = find_26_general()) {
+  tg = tryCatch(mode_target_for(state, dir_26), error = function(e) NULL)
+  if (is.null(tg) || !nrow(tg)) {
+    return("")
+  }
+  paste0("|cbs", format(as.POSIXct(tg$observed_at[1], tz = "UTC"), "%Y%m%d%H%M%S"))
+}
+
+#' Put a mode history at CBS's county composition
+#'
+#' Reports what it did, once per state per session: the composition prior is on by default,
+#' so the log has to say which composition an estimate used and by how much it moved.
+#'
+#' @param mh A folded mode history.
+#' @param state Two-letter state code.
+#' @param dir_26 Path to 26_general.
+#' @return `mh`, rescaled where CBS has a target.
+apply_mode_target = function(mh, state, dir_26 = find_26_general()) {
+  tg = mode_target_for(state, dir_26)
+  if (is.null(tg) || !nrow(tg)) {
+    return(mh)
+  }
+  # the target speaks CBS's method names; the history speaks the county's feed vocabulary,
+  # so the target is folded too before the two are compared
+  tg = fold_methods(tg, state, values = "share")
+  # A mode the state's history has NO votes for anywhere is one this prior cannot speak
+  # about: there is no precinct pattern to put at any level, and inventing one by precinct
+  # size is the guess build_cells() explicitly refuses to make. It is also the signal
+  # build_cells() reads to model a state WITHOUT vote method at all -- MI has had no
+  # in-person early vote in any L2 year (lookups/mode_scope.csv), and letting CBS's early
+  # expectation manufacture one flipped MI from mode-free to by-method, which is a far
+  # larger change than setting a level and is not this function's business.
+  have = unique(mh$method[as.numeric(mh$voters) > 0])
+  tg = dplyr::filter(tg, method %in% have)
+  if (!nrow(tg)) {
+    return(mh)
+  }
+  tg = dplyr::mutate(tg, share = share / sum(share), .by = county_cbs)
+  out = rescale_modes(mh, tg)
+  key = paste("said", state, sep = "|")
+  if (is.null(.mode_target_env[[key]])) {
+    .mode_target_env[[key]] = TRUE
+    eday_share = function(x) {
+      v = dplyr::summarize(x, v = sum(as.numeric(voters)), .by = method)
+      s = sum(v$v)
+      if (!is.finite(s) || s <= 0) NA_real_ else sum(v$v[v$method == "eday"]) / s
+    }
+    cli::cli_inform(c(
+      "i" = "{state}: composition prior set from CBS county expected vote
+             ({n_distinct(tg$county_cbs)} counties, {tg$src[1]}).",
+      " " = "eday share {sprintf('%.1f%%', 100 * eday_share(mh))} ->
+             {sprintf('%.1f%%', 100 * eday_share(out))}; CBS_MODE_TARGET=0 to disable."
+    ))
+  }
+  out
 }
 
 #' Fold a mode history onto the methods each county's feed reports

@@ -201,9 +201,11 @@ medsl_key = function(state, counties, demo = "medsl_cov", by_method = TRUE) {
     if (is.null(counties)) state else paste(state, paste(sort(unique(counties)), collapse = "|")),
     if (demo != "medsl_cov") paste0("|", demo),
     if (!by_method) "|nomode",
-    # the composition prior depends on lookups/mode_fold.csv, so an edit to it must not be
-    # served a fit cached from the old table
-    mode_fold_tag(state)
+    # the composition prior depends on lookups/mode_fold.csv and on CBS's county expected
+    # vote, so neither an edit to the table nor a different frozen target may be served a
+    # fit cached under the old one
+    mode_fold_tag(state),
+    mode_target_tag(state)
   )
 }
 
@@ -315,6 +317,21 @@ medsl_setup = function(
   if (nzchar(inp$note)) {
     env$.settings = paste0(env$.settings, "; ", inp$note)
   }
+  # which composition the estimate used, recorded on every fit: the CBS target is on by
+  # default, so section 15.2's `settings` has to say whether a number came from CBS's county
+  # expected vote or from the L2 mode history, without anyone having to reconstruct it
+  env$.settings = paste0(
+    env$.settings,
+    "; composition ",
+    local({
+      tg = tryCatch(mode_target_for(state, dir_26), error = function(e) NULL)
+      if (is.null(tg) || !nrow(tg)) {
+        "mode history (no CBS county expected vote)"
+      } else {
+        sprintf("CBS county expected vote (%s)", tg$src[1])
+      }
+    })
+  )
   .medsl_env[[key]] = env
   env
 }

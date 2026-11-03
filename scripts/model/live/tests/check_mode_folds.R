@@ -24,8 +24,17 @@
 ##   3. PRIORS  (--priors) the two defects the fold exists to prevent, measured on the real
 ##              prior: share on a mode the feed never reports, and a reported mode whose
 ##              prior is ~0. A county can agree with the table and still fail these -- OH
-##              Cuyahoga reports all three methods, so the fold rightly leaves it alone,
-##              and its 0.33% `early` prior is a LEVEL problem needing a better source.
+##              Cuyahoga reports all three methods at PRECINCT level, so the fold rightly
+##              leaves it alone, and its 0.33% `early` prior was a LEVEL problem.
+##
+##              Modes reported at county/site level are EXCLUDED from the near-zero test.
+##              feed_methods() reads the vocabulary from every geo including buckets, so a
+##              mode a county reports only on a county-level pile looks "in the feed" while
+##              its PRECINCT prior is correctly ~0 -- those votes reach the model through
+##              bucket_counts()/virtual.R, never through the precinct cell. Without this,
+##              AK 001 `early` (32 expected votes) and NC 089 `mail` (4) are flagged as
+##              defects when they are the design working. lookups/reporting_levels.csv is
+##              the authority; note its county_cbs is NOT zero-padded.
 # ========================================
 suppressPackageStartupMessages({
   library(nanoparquet)
@@ -162,11 +171,29 @@ if (DO_PRIORS) {
       full_join(mutate(vocab, in_feed = TRUE), by = c(cc = "county_cbs", method = "method")) |>
       mutate(p = coalesce(p, 0), e = coalesce(e, 0), in_feed = coalesce(in_feed, FALSE)) |>
       filter(cc %in% unique(pri$cc), cc %in% unique(vocab$county_cbs))
+    # a mode reported at county/site level has no precinct-level prior to get wrong
+    lv = tryCatch(
+      readr::read_csv(
+        "scripts/model/lookups/reporting_levels.csv",
+        col_types = readr::cols(.default = "c")
+      ) |>
+        filter(state == st, level == "county_site") |>
+        transmute(cc = stringr::str_pad(county_cbs, 3, pad = "0"), method, bucket = TRUE),
+      error = function(e) tibble(cc = character(), method = character(), bucket = logical())
+    )
+    j = j |>
+      left_join(lv, by = c("cc", "method")) |>
+      mutate(bucket = coalesce(bucket, FALSE))
     A = filter(j, !in_feed, p >= THRESH)
-    B = filter(j, in_feed, p < 0.01)
+    B = filter(j, in_feed, !bucket, p < 0.01)
     cat(sprintf(
-      "\n%s  prior-on-unreported-mode: %d   reported-mode-with-~0-prior: %d\n",
-      st, nrow(A), nrow(B)
+      "\n%s  prior-on-unreported-mode: %d   precinct-reported-mode-with-~0-prior: %d%s\n",
+      st, nrow(A), nrow(B),
+      if (sum(j$bucket & j$in_feed & j$p < 0.01)) {
+        sprintf("   (%d county-site mode(s) excluded)", sum(j$bucket & j$in_feed & j$p < 0.01))
+      } else {
+        ""
+      }
     ))
     if (nrow(A)) {
       cat(sprintf("   A %s %-5s %5.1f%% of prior, %s expected votes\n",
