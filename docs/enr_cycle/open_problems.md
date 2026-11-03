@@ -94,6 +94,33 @@ while production falls back to a normalized match, so it understates (NE 46.7%
 exact vs 99.9% production; MI 0.5% vs 94.2%). CA has no races in
 `input_data/priors.csv` yet.
 
+### 7. `votehub.R` picks per-state shapefile FOLDERS by the folder's own date (11-03, urgent)
+
+`read_vh()` uses a per-state layer (`votehub-shapefiles/{ST}26G` folder or `.zip`) instead of
+`26_pct_bdrys.gpkg` when `fs::file_info()` says it is newer than the gpkg, and a folder beats its
+own zip. For a folder that date is the folder's, which changes whenever it is unzipped or
+touched by Dropbox, not its files'. On 11-02/03 the `AK26G` and `GA26G` folders (files dated
+Sept 21/24, older than the gpkg) counted as newer, and their unit_ids differ from the gpkg's
+(AK `02001-:-600 Ketchikan No. 1` vs `02001-:-01-600`): a rebuild took AK VoteHub to 0/522 and
+GA to 83.7%. Both were restored by hand from the 10-29 files (`crosswalks/votehub/{ak,ga}.csv`
+and the `precinct_votehub` column of `crosswalks/{ak,ga}.csv`).
+
+Until fixed: never run `votehub.R` with no states named, or on AK or GA.
+
+Proposed fix, in `read_vh()`: judge a folder by its newest file.
+
+```r
+mtime = \(f) if (fs::is_dir(f)) max(fs::file_info(fs::dir_ls(f))$modification_time) else fs::file_info(f)$modification_time
+newer = map_vec(files, mtime) > fs::file_info(gpkg)$modification_time
+```
+
+Not applied on 11-03 because it also changes OH: the `OH26G` folder is currently winning over
+`OH26G.zip` (Nov 2), which is the layer `votehub_manual_20261102.csv` was built for (its 326
+Cuyahoga pairs print "not found" on every OH run, a sign the wrong layer is in use). With the fix,
+OH (and NE, FL) would switch to their Nov 2 zips as intended. To apply: make the change, run
+`Rscript scripts/util/crosswalks/votehub.R AK GA OH NE FL`, check that each state's "was ..."
+rate does not drop and the Cuyahoga warning is gone, then `match_rates_county.R`.
+
 ## Model reference tables
 
 ### 6. `model_precincts.csv` / `model_counties.csv` are stale against the model inputs (11-01)
