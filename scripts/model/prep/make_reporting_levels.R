@@ -34,7 +34,11 @@ source("scripts/model/live/R/paths.R")
 # every state with a 2026 zero file we model by vote method. GA was blocked by the
 # virtual_precinct type above; OH and MN have no 2024 clean files, so they get zero_2026
 # provenance only, which is what the table is for.
-STATES = c("AK", "CA", "FL", "GA", "MI", "MN", "NC", "OH", "TX")
+# SC added 2026-11-03: SC_sen entered priors.csv with full model inputs, and without a row
+# here its county FAILSAFE / PROVISIONAL buckets (139 feed geos that match no frame
+# precinct) would surface through returns_dropped() on the night as a discovery rather
+# than a known deviation.
+STATES = c("AK", "CA", "FL", "GA", "MI", "MN", "NC", "OH", "SC", "TX")
 YEAR = 2026
 OUT = "scripts/model/lookups/reporting_levels.csv"
 
