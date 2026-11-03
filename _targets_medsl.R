@@ -121,6 +121,10 @@ list(
   # ggplot2 stays out of this pipeline. A failed pull is a warning and the pass runs the last
   # copy; a pass that fails or runs past 5 minutes is this target's error, and error = "null"
   # keeps the rest of the cycle going. Returns when the plots last drew.
+  #
+  # The pass runs under ENR_SCRIPTS_RSCRIPT (the system R 4.5), not this pipeline's R 4.6: the
+  # renv library here has no ggplot2 or ggmedsl. env -i drops R_HOME, R_LIBS_* and RENV_*, which
+  # would point that R at this library; it reads its paths from the user's ~/.Renviron instead.
   tar_combine(
     live_plots,
     map_single[["summary"]], map_networks[["net_data"]],
@@ -129,7 +133,11 @@ list(
       dir = path.expand(Sys.getenv("ENR_SCRIPTS_DIR", "~/enr_scripts"))
       pulled = system2("git", c("-C", dir, "pull", "--ff-only", "--quiet"), timeout = 60)
       if (pulled != 0) warning("git pull in ", dir, " failed (exit ", pulled, "); ran the last copy")
-      callr::rscript("live/run_live.R", cmdargs = "--once", wd = dir, timeout = 300, show = FALSE)
+      rscript = Sys.getenv("ENR_SCRIPTS_RSCRIPT", "/usr/bin/Rscript")
+      env = c(paste0("HOME=", Sys.getenv("HOME")), paste0("USER=", Sys.getenv("USER")),
+              "PATH=/usr/local/bin:/usr/bin:/bin", "LANG=en_US.UTF-8")
+      processx::run("/usr/bin/env", c("-i", env, rscript, "live/run_live.R", "--once"),
+                    wd = dir, timeout = 300)
       Sys.time()
     },
     cue = tar_cue(mode = "always")
