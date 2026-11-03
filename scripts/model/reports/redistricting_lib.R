@@ -86,6 +86,19 @@ redist_live_state = function(st, d26 = find_26_general(), env = "live", pull = T
   } else {
     tibble::tibble(county_fips = character(), s_top = numeric())
   }
+  # the top-of-ticket race's votes by county, for an unopposed race with no House votes
+  top_v = if (top_ok) {
+    top |>
+      dplyr::summarize(td = sum(votes[party == "dem"]), tr = sum(votes[party == "rep"]),
+                       pct_exp = dplyr::first(pct_exp), .by = county_fips)
+  } else {
+    tibble::tibble(county_fips = character(), td = numeric(), tr = numeric(), pct_exp = numeric())
+  }
+  # each county's share of its 2024 voters in each new district
+  c_share = w |>
+    dplyr::summarize(v = sum(votes), .by = c(county_fips, cd_new)) |>
+    dplyr::mutate(fc = v / sum(v), .by = county_fips) |>
+    dplyr::select(county_fips, cd_new, fc)
   # 2024 presidential Dem two-party share in each county x new district (last-resort fill)
   s24 = w |> dplyr::summarize(s24 = sum(dem24) / sum(votes), .by = c(county_fips, cd_new))
   as_of = list()
@@ -106,7 +119,16 @@ redist_live_state = function(st, d26 = find_26_general(), env = "live", pull = T
       dplyr::summarize(hd = sum(votes[party == "dem"]), hr = sum(votes[party == "rep"]), ht = sum(votes),
                        pct_exp = dplyr::first(pct_exp), .by = county_fips) |>
       dplyr::mutate(cd_new = cd)
-    if (!all(c("dem", "rep") %in% x$party)) {
+    if (!all(c("dem", "rep") %in% x$party) && sum(p$ht) == 0 && top_ok) {
+      # unopposed and so not on the ballot, no House votes will ever be counted (Florida
+      # leaves unopposed races off: FL-10 2026, Frost): the top-of-ticket race's votes in
+      # the district instead, each county's votes x its share of 2024 voters in the district
+      p = c_share |>
+        dplyr::filter(cd_new == cd) |>
+        dplyr::inner_join(top_v, by = "county_fips") |>
+        dplyr::transmute(county_fips, hd = td * fc, hr = tr * fc, ht = (td + tr) * fc, pct_exp, cd_new)
+      fill[[cd]] <<- "top_votes"
+    } else if (!all(c("dem", "rep") %in% x$party)) {
       # uncontested in two-party terms: split the House votes by the top-of-ticket share,
       # else by 2024 president (redistricting_compare.R header)
       p = p |>
