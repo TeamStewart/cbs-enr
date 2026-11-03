@@ -301,7 +301,7 @@ noData = pc.length === 0
 // precincts exist but every count is still zero (pre-election / zero files)
 noVotes = reported.length === 0
 noVotesMsg = () => empty(noData ? "No data yet for this contest." : "No votes reported yet for this contest.")
-noPres = () => empty(`No 2024 presidential match for ${cur.label} (VoteHub estimated_past_results.csv through the ENR-to-VoteHub crosswalk).`)
+noPres = () => empty(`No 2024 presidential match for ${cur.label}.`)
 
 // precinct + county points for the history scatter
 scatterRows = {
@@ -409,6 +409,7 @@ EXPORT_THEME = { return {
   ink: "#000000", subtitle: "#444444", muted: "#666666", grid: "#D0D0D0", background: "#ffffff", pad: 24,
   margin: { top: 30, right: 24, bottom: 48, left: 64 },   // minimum plot margins at the larger font (maps get none)
   source: "MIT Election Data + Science Lab", basemap: "VoteHub",
+  noVotehub: new Set(["SC", "MN"]),   // states whose map exports credit only MEDSL (no VoteHub basemap credit or logo)
   dem: "#3791FF", rep: "#F6573E",   // ggmedsl party_colors in place of DEM/REP; null keeps the dashboard's
   logoW: 0.12, logoPad: 0.01        // add_logo() defaults, as fractions of the width
 } }
@@ -417,9 +418,10 @@ EXPORTS = new Map()
 // entries { mark: "rect" | "band" | "line" | "dot" | "ring" | "arrow", label, color, opacity, width, dash, r, dir }
 // opt (pages not keyed on the contest, e.g. Redistricting): scope (the key the export button asks for,
 // else the contest), sub (subtitle), file (file name prefix), time, basemap (map credit; no VoteHub logo),
+// state (for the noVotehub check; defaults to cur.state at registration),
 // height (px at the theme's width, in place of its fixed height), format (in place of the theme's),
 // multi: [{ s, title, suffix }] to save several images from one button
-exportable = (name, s, title, legend = {}, opt = {}) => (EXPORTS.set(`${opt.scope ?? cur.key}|${name}`, { s, title: title ?? name, legend, ...opt }), s)
+exportable = (name, s, title, legend = {}, opt = {}) => (EXPORTS.set(`${opt.scope ?? cur.key}|${name}`, { s, title: title ?? name, legend, state: cur?.state, ...opt }), s)
 
 // Styrene B for the canvas text; the rasterized SVG carries its own @font-face (an <img> can't see page fonts)
 exportFont = {
@@ -523,10 +525,13 @@ exportChart = {
     };
     return g;
   };
-  const render = async ({ s, title, legend: lg, sub, basemap, height, format = T.format }) => {
+  const render = async ({ s, title, legend: lg, sub, basemap, height, state, format = T.format }) => {
     const [medslLogo, votehubLogo] = await logos;
     const B = T.base, W = T.width, innerW = W - 2 * T.pad;
     const isMap = s.projection != null;
+    // noVotehub states: no VoteHub logo, and no default (VoteHub) basemap credit
+    const noVh = T.noVotehub.has(state);
+    const credit = basemap ?? (noVh ? null : T.basemap);
     // a Plot caption would wrap the svg in a <figure>; it goes in the caption block instead
     // (exportCaption, when given, replaces the live one). keys: legend entries a spec builder
     // (modelSpec) carries for its own marks
@@ -562,7 +567,7 @@ exportChart = {
 
     // caption, left-aligned: the chart's own note, then the source line
     const capLines = [...(note ? wrap(note, 0.75) : []),
-      ...wrap(`Source: ${T.source}${isMap ? `. Basemap: ${basemap ?? T.basemap}` : ""}`, 0.75)];
+      ...wrap(`Source: ${T.source}${isMap && credit ? `. Basemap: ${credit}` : ""}`, 0.75)];
 
     // legend at the bottom, centred rows: the color scale, then one key per remaining mark
     const kh = 0.85 * B;
@@ -635,7 +640,7 @@ exportChart = {
     text(subLines, 1, T.subtitle, W / 2, T.pad + titleLines.length * lineH(1.4) + 0.75 * B, "center");
     const stripTop = H - stripH;
     g.drawImage(medslLogo, W - lp - logoW, stripTop + lp, logoW, logoH);
-    if (isMap && !basemap) {
+    if (isMap && !basemap && !noVh) {
       const vw = logoH * votehubLogo.naturalWidth / votehubLogo.naturalHeight;
       g.drawImage(votehubLogo, W - lp - logoW - 2 * B - vw, stripTop + lp, vw, logoH);
     }
@@ -1364,7 +1369,7 @@ mapZoom = {
   scan();
   return init;
 }
-noMap = g => empty(g === null ? `No VoteHub precinct map for ${cur.state} (expected ${geo_url}/${cur.state.toLowerCase()}.json).` : "Loading map…")
+noMap = g => empty(g === null ? `No precinct map for ${cur.state} (expected ${geo_url}/${cur.state.toLowerCase()}.json).` : "Loading map…")
 ```
 
 ## {.toolbar}
@@ -1582,7 +1587,7 @@ html`<div class="asof-slot"></div>`
       return { ...d, cx: p.cx, cy: p.cy, m26, m24, shift: m26 - m24 };
     })
     .sort((a, b) => Math.abs(a.shift) - Math.abs(b.shift));
-  if (res.length === 0) return empty(mresc.length ? "No reporting precincts with a 2024 presidential result (VoteHub estimated_past_results.csv)." : "No precincts reporting yet.");
+  if (res.length === 0) return empty(mresc.length ? "No reporting precincts with a 2024 presidential result." : "No precincts reporting yet.");
   // the same units' totals, 2026 counted vs 2024
   const marg = (d, r) => (d - r) / (d + r);
   const all26 = marg(d3.sum(res, d => d.dem), d3.sum(res, d => d.rep)), all24 = marg(d3.sum(res, d => d.dem24), d3.sum(res, d => d.rep24));
@@ -1722,7 +1727,7 @@ swingKeys = [
   { mark: "line", label: "Precinct average shift", color: INK, width: 1.5, dash: "4,4" },
   { mark: "line", label: "No shift", color: "#999", width: 1 }
 ]
-swingCaption = what => `Counted votes as of ${fmtTime(cur.time)} ET vs. 2024 president (VoteHub) · ${what}`
+swingCaption = what => `Counted votes as of ${fmtTime(cur.time)} ET vs. 2024 president · ${what}`
 
 // ---- race EI: each L2 race group's turnout and Dem two-party share, counted votes vs 2024 L2 voters by party label, same precincts ----
 EI_GROUPS = { return { white: "White", black: "Black", hispanic: "Hispanic", asian: "Asian" } }
@@ -2205,8 +2210,8 @@ html`<div class="asof-slot" data-note="This page shows the latest data"></div>`
     projection: g.projection,
     color: marginColor,
     marks: [...old.fill, ...neu.fill, ...fill, ...rdOutlines(g), ...old.top, ...neu.top]
-  }, `${rst} Congressional Districts`, {}, { ...rdExportOpt, format: "svg",
-    basemap: view === "precinct" ? "VoteHub precincts and U.S. Census Bureau district lines" : "U.S. Census Bureau district lines",
+  }, `${rst} Congressional Districts`, {}, { ...rdExportOpt, format: "svg", state: rst,
+    basemap: view === "precinct" && !EXPORT_THEME.noVotehub.has(rst) ? "VoteHub precincts and U.S. Census Bureau district lines" : "U.S. Census Bureau district lines",
     multi: [{ s: one(old, view), title: `${rst} Congressional Districts, 2024 Map`, suffix: "2024-map" },
             { s: one(neu, view), title: `${rst} Congressional Districts, 2026 Map`, suffix: "2026-map" }] });
   const s = register(rdViewMemo.v);

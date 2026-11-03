@@ -64,7 +64,7 @@ local({
 # - district: integer district for district-level contests, NA for statewide
 # - label: dropdown text; NA -> "{state} {contest}[-{district}]"
 # - hist_contest: contest to compare against in {STATE}_history.parquet; NA -> same contest
-# The races in 26_general/input_data/priors.csv, less IA (no zero file yet).
+# The races in 26_general/input_data/priors.csv, less IA (no zero file yet), plus SC Senate.
 DASHBOARD_CONTESTS = tibble::tribble(
   ~state, ~contest, ~district, ~label, ~hist_contest,
   "AK", "sen", NA_integer_, "AK Senate", NA_character_,
@@ -75,6 +75,7 @@ DASHBOARD_CONTESTS = tibble::tribble(
   "MN", "sen", NA_integer_, "MN Senate", NA_character_,
   "NC", "sen", NA_integer_, "NC Senate", NA_character_,
   "OH", "sen", NA_integer_, "OH Senate", NA_character_,
+  "SC", "sen", NA_integer_, "SC Senate", NA_character_,
   "TX", "sen", NA_integer_, "TX Senate", NA_character_,
   "TX", "gov", NA_integer_, "TX Governor", NA_character_,
 )
