@@ -1730,6 +1730,8 @@ fit_stage = function(
 
   # --- 4d. invert, substitute observed, aggregate WITHIN each draw ---
   num_d = num_r = num_o = den = numeric(draws)
+  # turnout by mode within each draw (draws x M); sums to `den` across modes
+  turn_mode = matrix(0, draws, M, dimnames = list(NULL, MODES))
   cell_s_hat = matrix(NA_real_, N_PREC, M, dimnames = list(NULL, MODES))
   # per cell (precinct x mode), means over draws: final votes by party (fin_*) and the
   # model's fitted share of all votes by party (fit_*, before any counted votes are mixed
@@ -2235,6 +2237,7 @@ fit_stage = function(
     num_r = num_r + rowSums(v_rep)
     num_o = num_o + rowSums(v_oth)
     den = den + rowSums(v_dem + v_rep + v_oth)
+    turn_mode[, mi] = rowSums(v_dem + v_rep + v_oth)
     pnum_d = pnum_d + v_dem
     pnum_r = pnum_r + v_rep
     pden = pden + v_dem + v_rep + v_oth
@@ -2294,6 +2297,7 @@ fit_stage = function(
     # two-party share, which is what decides the race
     S_2p = num_d / pmax(num_d + num_r, 1e-9),
     turn = den,
+    turn_mode = turn_mode,
     Sigma = Sigma,
     resid = resid_mat,
     n_obs_cells = n_obs_cells,

@@ -202,18 +202,21 @@ read_model_results <- function(dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "mo
   }
 
   # race totals with their interval (CONTRACT.md section 15.4); runs from before the table
-  # existed have none, and the dashboard falls back to summing the vote rows
+  # existed have none, and the dashboard falls back to summing the vote rows. `method`:
+  # "total", or a vote method (turnout by method); files from before it are all "total"
   turnout = read_runs("turnout")
   if (!is.null(turnout)) {
+    if (!"method" %in% names(turnout)) turnout$method = NA_character_
     turnout = turnout |>
       mutate(
         time = lubridate::ymd_hms(time, quiet = TRUE),
+        method = coalesce(method, "total"),
         across(c(pct_rep, rep, pred, pred_min, pred_max), as.numeric)
       ) |>
       filter(!is.na(time)) |>
       arrange(desc(file)) |>
-      distinct(race_id, model, geo, time, .keep_all = TRUE) |>
-      select(race_id, model, geo, time, pred, pred_min, pred_max) |>
+      distinct(race_id, model, geo, method, time, .keep_all = TRUE) |>
+      select(race_id, model, geo, method, time, pct_rep, rep, pred, pred_min, pred_max) |>
       arrange(time)
   }
 
@@ -360,6 +363,25 @@ read_cbs_expected <- function(state, contest, district = NA, scraped_cbs = chara
   if (length(fs) == 0) return(empty)
   x = map(fs, nanoparquet::read_parquet) |> bind_rows() |> rename(time = observed_at)
   cty = filter(x, level == "county")
+  # early in-person: CBS's field is 0 outside a few states, but its advance total (adv) is
+  # early + mail, so early = adv - mail where the county has a mail expectation. A county
+  # with adv and neither mail nor early can't be split: its adv goes in method "adv_unsplit"
+  # (the Predicted Turnout caption says its votes are missing from the early and mail lines)
+  if (nrow(cty)) {
+    ex = cty |>
+      summarise(
+        adv = sum(expected[method == "adv"], na.rm = TRUE),
+        mail = sum(expected[method == "mail"], na.rm = TRUE),
+        early = sum(expected[method == "early"], na.rm = TRUE),
+        .by = c(county_fips, time)
+      )
+    early = ex |>
+      transmute(county_fips, time, method = "early",
+                expected = if_else(early > 0 | mail <= 0, early, pmax(adv - mail, 0)))
+    unsplit = ex |>
+      transmute(county_fips, time, method = "adv_unsplit", expected = if_else(adv > 0 & mail <= 0 & early <= 0, adv, 0))
+    cty = bind_rows(filter(cty, method != "early"), early, unsplit) |> mutate(level = "county")
+  }
   race_t = x$time[x$level == "race"]
   all = bind_rows(
     filter(x, level == "race", method == "total"),
@@ -688,9 +710,11 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
                     spec_default = logical(), interval_default = logical())
   mp_all = bind_rows(mp_empty, models$pred)
   ms_all = bind_rows(ms_empty, models$status)
-  mt_all = bind_rows(tibble(race_id = character(), model = character(), geo = character(), time = as.POSIXct(character()),
+  mt_all = bind_rows(tibble(race_id = character(), model = character(), geo = character(), method = character(),
+                            time = as.POSIXct(character()), pct_rep = numeric(), rep = numeric(), pred = numeric(),
                             pred_min = numeric(), pred_max = numeric()),
-                     select(models$turnout, any_of(c("race_id", "model", "geo", "time", "pred_min", "pred_max"))))
+                     select(models$turnout, any_of(c("race_id", "model", "geo", "method", "time", "pct_rep", "rep", "pred",
+                                                     "pred_min", "pred_max"))))
 
   out = pmap(contests, \(state, contest, district, key, label, hist_contest, ...) {
     p = filter(prec_all, .env$state == .data$state, .env$contest == .data$contest)
@@ -816,8 +840,10 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     race_ids = unique(c(mp$race_id, paste(state, contest, sep = "_"),
                         if (!is.na(district)) paste(state, contest, district, sep = "_")))
     ms = filter(ms_all, race_id %in% race_ids)
-    # race turnout intervals (the pred line itself is the vote rows summed, client-side)
-    mt = filter(mt_all, race_id %in% unique(mp$race_id), !is.na(pred_min) | !is.na(pred_max)) |>
+    # race turnout: the total's interval (its pred line is the vote rows summed, client-side)
+    # and every row by vote method (Predicted Turnout's Vote Mode picker)
+    mt = filter(mt_all, race_id %in% unique(mp$race_id),
+                method != "total" | !is.na(pred_min) | !is.na(pred_max)) |>
       select(-race_id)
 
     # Models page: share of counted votes in precincts the model inputs know (history);

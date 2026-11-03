@@ -1077,27 +1077,34 @@ total's interval (a sum of quantiles is not the quantile of the sum). So the tot
 its own table, `turnout_<stamp>.csv` + `turnout_latest.csv`, written by
 `write_predictions()` beside the other two.
 
-Grain: one row per `race_id` x `model` x `geo` x `time`, for exactly the race x model x geo
-combinations that have §15.1 rows. The columns are named as in §15.1 so a consumer can treat
-a turnout row as a prediction row.
+Grain: one row per `race_id` x `model` x `geo` x `method` x `time`, for exactly the race x
+model x geo combinations that have §15.1 rows. The columns are named as in §15.1 so a
+consumer can treat a turnout row as a prediction row.
 
 | column | meaning |
 |---|---|
 | `race_id`, `model`, `time`, `geo`, `model_conf`, `pct_rep` | as §15.1 |
-| `rep` | votes counted so far, all candidates |
-| `pred` | predicted final votes: the race's §15.1 `"vote"` rows summed, so it matches them exactly |
-| `pred_min`, `pred_max` | the total's interval ends, at §15.1's level; NA when the model gives none |
+| `method` | `"total"` (the race total), or a vote method (turnout by method, added 2026-11-03): `early`, `eday`, `mail`, the models' own methods (`METHOD_MAP`, `live/R/run.R`: `abs` counted as mail, `prov` as Election Day). Files written before the column existed hold only totals; readers fill it with `"total"` |
+| `rep` | votes counted so far, all candidates (by method: the race's returns for that method; statewide adds CBS's per-method counts for the other counties, scaled to each county's counted total) |
+| `pred` | predicted final votes: for `"total"`, the race's §15.1 `"vote"` rows summed, so it matches them exactly; for a method, the fit's precinct x method cells summed (plus NC's virtual units for that method, and statewide each other county's projected total x its method share, `state_mode_turnout()` in `live/R/counties.R`) |
+| `pred_min`, `pred_max` | the interval ends, at §15.1's level; NA when the model gives none |
+
+Method rows exist only when the fit is by method: a race whose returns or history lack a
+method split (MN, any county with precinct totals only) has `"total"` rows only, except
+`medsl_sur`, which is fit on the counties that do split (`predict_one()`), so its method rows
+cover those counties. The methods' `pred` sum to the total's.
 
 Where the interval comes from:
 
 | model / interval | `geo = "scraped"` | `geo = "all"` |
 |---|---|---|
-| bootstrap, credible (draws) | quantiles of the draws of the total | quantiles of scraped + rest-of-state draws |
-| `conf_seq` | `conf_seq()` on the log total | scraped bounds + the rest projected at the turnout-ratio ends, plus the rest's noise quantiles (`rest_turnout_bounds()`, `counties.R`) |
+| bootstrap, credible (draws) | quantiles of the draws of the total (by method: of each method's draws) | quantiles of scraped + rest-of-state draws (by method: the same, the rest's draws split at each county's method share) |
+| `conf_seq` | `conf_seq()` on the log total (by method: on each method's log total for `pois_bayes`, whose prior draws are cell-level; a point for `lm_bayes` and `medsl_sur`, whose prior draws are race totals) | scraped bounds + the rest projected at the turnout-ratio ends, plus the rest's noise quantiles (`rest_turnout_bounds()`, `counties.R`); by method: a point |
 | `conformal`, `none` | NA: conformal shifts shares only, so turnout is a point | NA |
 
-*Acceptance:* every race x model x geo in `predictions_latest.csv` has exactly one row here;
-`pred` equals the sum of its `"vote"` rows; `pred_min <= pred_max` where both are non-NA.
+*Acceptance:* every race x model x geo in `predictions_latest.csv` has exactly one `"total"`
+row here; its `pred` equals the sum of its `"vote"` rows; the method rows' `pred` sum to it;
+`pred_min <= pred_max` where both are non-NA.
 
 ### 15.5 Delivery order
 
