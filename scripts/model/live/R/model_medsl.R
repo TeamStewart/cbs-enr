@@ -213,6 +213,202 @@ medsl_key = function(state, counties, demo = "medsl_cov", by_method = TRUE) {
   )
 }
 
+# THE SHARE PRIOR'S STATEWIDE LEVEL, FROM priors.csv (CBS_SHARE_PRIOR=0 = off, the default).
+#
+# `dem2` is a 2024 PRESIDENTIAL two-party baseline (prep_model_inputs.R section 4: 2024
+# precinct returns where the voter file has them, else the YouGov pr_harris/pr_trump model),
+# so prior_s's LEVEL is 2024 presidential. priors.csv's prior_dem / prior_rep are a 2026
+# forecast for THIS race, and they are the only 2026 partisan information in the inputs --
+# CBS publishes no partisan expectation at any geography (all seven `expected*` fields are
+# turnout, constant across candidates within a county; per-candidate `pct` is the share
+# COUNTED SO FAR). So this is the share-side twin of est_turnout being 2022 turnout, except
+# that the turnout side could reach for CBS and this side cannot.
+#
+# STATEWIDE TO STATEWIDE, AND THAT IS THE WHOLE SUBTLETY. The shift is
+#
+#     shift = logit(T_state) - logit(P_state)
+#
+# with T_state the 2026 target and P_state the STATEWIDE 2024 presidential two-party Dem
+# share, applied as a COMMON logit shift to every precinct's prior_s.
+#
+# It is tempting to compare T_state against the FRAME's own dem2 instead, and that is wrong
+# in exactly the way STATE_TURNOUT was wrong (see SCRAPED_TURNOUT in model_turnout.R). The
+# frame is a county subset -- OH 15 of 88 counties, TX 72 of 254 -- and the subsets are
+# partisan-skewed: OH's 15 are the metros, at pres24 0.5392 against a statewide 0.4432, a
+# +0.385 logit skew. Measured 2026-11-03, OH_sen would take -0.078 logit (R-ward) on the
+# naive comparison where +0.307 (D-ward) is right: a ~9.5pp error, silent, because every
+# per-precinct bound still holds.
+#
+# But UNLIKE the turnout case this needs no rescoping, because dem2 already IS each
+# precinct's 2024 presidential share -- the frame's geography is already in the prior and a
+# common shift preserves it. The frame term is a residual, logit(P_frame) - logit(dem2_frame),
+# measured at -0.020 to +0.021 logit across all 11 races against swings of 0.048 to 0.352. It
+# cancels. So: one statewide number per state, no county join, no coverage gate. Keeping the
+# two scopes separate is the fix; correcting for their mixture was the wrong instinct.
+#
+# WHAT IT ASSUMES: that the 2024->2026 swing is roughly uniform across counties. Evidence,
+# from the MEDSL 2022 official archive -- the frame-vs-state partisan skew is stable between
+# presidential and midterm electorates (OH frame: 2022 Sen +0.3549, 2022 Gov +0.3456, pres24
+# +0.3853; TX frame: 2022 Gov +0.1438, pres24 +0.1260), and the sign of the pres24 discrepancy
+# is not even consistent across the two states, so it is not a correctable bias. ~0.02-0.04
+# logit of county-composition drift is unaccounted for, well inside the swing sd below.
+#
+# HOW BIG A CLAIM THIS IS. calibrate_swing.R measured the statewide two-party Dem SD of
+# movement between a prior contest and its target at 0.22-0.26 logit over 9 states x 37
+# contest pairs (model_core.R: "ACTUAL statewide swing sd" is the authoritative wording -- it
+# is a DISPERSION, and anywhere it reads as a typical movement that is a magnitude and wrong).
+# The shifts priors.csv implies run 0.028 to 0.354, median ~0.25. So the quantity imposed is
+# the same magnitude as its own uncertainty: a real improvement in expectation, not a precise
+# correction. Clamped at SHARE_PRIOR_MAX_SHIFT (0.6, ~2.4x that sd) and deliberately NOT at
+# SH_MAX_SHIFT -- see "the bound, and why it is NOT SH_MAX_SHIFT" at the use site: 0.25 bounds
+# model_hybrid's data-driven RESIDUAL, whereas this is the EXPECTED move, and bounding an
+# expected move at one sd of itself withholds the forecast in the ordinary case. A binding
+# clamp is SIGNAL that priors.csv is asking for a swing past 2.4 sd, and it is logged as such
+# rather than silently applied.
+#
+# WHY A LOCATION SHIFT AND NOT A PRIOR SD. SD_SYS_LEVEL (model_turnout.R) already used the
+# same 0.22 to LOOSEN the statewide level prior, and is off by default: coverage unchanged
+# (15/15 either way), point error WORSE (max |err| 1.40 -> 2.23pp on TX 2024), because the
+# early-night data a looser prior lets through is BIASED (+8.9pp Dem in the first batches),
+# not merely noisy. Its own conclusion is that location and width are separate jobs and width
+# belongs on the PREDICTIVE draw, SD_UNREP's shape. This moves the location only.
+#
+# OFF BY DEFAULT. Built 2026-11-03, election day, with no outcome test behind it: no sim can
+# validate it (make_sim.R builds its share truth FROM priors.csv, so the sim would agree by
+# construction) and 2026 truth does not exist yet. CBS_SHARE_PRIOR=1 turns it on.
+
+#' The share prior's statewide level shift, from priors.csv
+#'
+#' `logit(T_state) - logit(P_state)`: the 2026 two-party target for this race against the
+#' statewide 2024 presidential baseline that `dem2` is built from. A common logit shift on
+#' `prior_s`, applied by `fit_medsl_sur()` BEFORE `fit_stage_hybrid()` so model_hybrid's
+#' share arm measures its residual against the corrected prior.
+#'
+#' Takes no `geos`, and that is deliberate: unlike `scraped_turnout_var()` this is NOT
+#' frame-scoped, because `dem2` already carries the frame's geography (see the comment above).
+#' Reading the frame here would reintroduce the scope mixture the design exists to avoid.
+#'
+#' @param state Two-letter state code.
+#' @param race_id The race (`returns$race_id`), since priors.csv differs BETWEEN races in a
+#'   state -- TX_gov 0.4912 vs TX_sen 0.5182 -- while the model environment is cached per
+#'   state.
+#' @param dir_26 Path to 26_general.
+#' `P_state` comes from `county_baseline()` by default; a `pres24_dem2` column in priors.csv
+#' overrides it where one is filled (provenance, not arithmetic -- see the use site).
+#'
+#' @return List (`shift`, `t_state`, `p_state`, `src`), or NULL when the arm is off, this
+#'   race is not in priors.csv, or no statewide 2024 baseline can be had. Every NULL under
+#'   `CBS_SHARE_PRIOR=1` warns -- a silently inert arm that was explicitly asked for is the
+#'   failure mode this guards.
+share_prior_shift = function(state, race_id, dir_26 = find_26_general()) {
+  if (Sys.getenv("CBS_SHARE_PRIOR", unset = "0") != "1") {
+    return(NULL)
+  }
+  # an explicit shift wins, so a sweep or a backtest can set it directly
+  ex = Sys.getenv("SHARE_PRIOR_SHIFT", unset = "")
+  if (nzchar(ex)) {
+    v = suppressWarnings(as.numeric(ex))
+    if (!is.finite(v)) {
+      cli::cli_abort("SHARE_PRIOR_SHIFT is set to {.val {ex}}, which is not a number.")
+    }
+    return(list(shift = v, t_state = NA_real_, p_state = NA_real_, src = "SHARE_PRIOR_SHIFT"))
+  }
+  f = file.path(dir_26, "input_data", "priors.csv")
+  if (!file.exists(f)) {
+    return(NULL)
+  }
+  pr = readr::read_csv(f, col_types = readr::cols(.default = "c"), progress = FALSE)
+  if (!"pres24_dem2" %in% names(pr)) {
+    pr$pres24_dem2 = NA_character_ # optional override; county_baseline() supplies it below
+  }
+  st = dplyr::filter(pr, state == !!state)
+  # The live path's race_id is "MN_sen" (races_from_priors()), but the SIM path's is the bare
+  # contest "sen" (returns_from_sim() filters sim$truth$contest). Resolve both, or every
+  # sim-based test of this arm no-ops while looking like it ran -- which is exactly what
+  # happened the first time it was wired, and the SHARE_PRIOR_SHIFT override masked it
+  # because that path never reaches this lookup.
+  row = dplyr::filter(st, race_id == !!race_id)
+  if (!nrow(row)) {
+    row = dplyr::filter(st, race_id == paste0(!!state, "_", !!race_id))
+  }
+  if (nrow(row) != 1) {
+    # CBS_SHARE_PRIOR=1 is an explicit request for this arm, so failing to find the race is
+    # worth saying out loud. Returning NULL quietly would leave the fit on its 2024 level
+    # with nothing in the log or the settings to show the arm was asked for and did nothing.
+    cli::cli_alert_warning(c(
+      "CBS_SHARE_PRIOR=1 but {.path priors.csv} has no row for {state} {.val {race_id}} \\
+       ({nrow(row)} match{?es}), so the share prior keeps its 2024 level."
+    ))
+    return(NULL)
+  }
+  num = function(x) suppressWarnings(as.numeric(x))
+  d = num(row$prior_dem)
+  r = num(row$prior_rep)
+  if (!all(is.finite(c(d, r))) || d <= 0 || r <= 0) {
+    cli::cli_alert_warning(
+      "CBS_SHARE_PRIOR=1 but {state} {.val {race_id}} has no prior_dem/prior_rep in \\
+       {.path priors.csv}, so the share prior keeps its 2024 level."
+    )
+    return(NULL)
+  }
+  # ---- P_state: the statewide 2024 presidential two-party Dem share -------------------
+  # DERIVED BY DEFAULT, overridable by a column. county_baseline() (counties.R) carries
+  # pres24_dem / pres24_rep for EVERY county in the state, so summing them gives this
+  # directly and the arm needs no new data entry to work.
+  #
+  # The optional `pres24_dem2` column exists for PROVENANCE, not for arithmetic. For OH and
+  # TX -- the two states whose frames are county subsets, so the two that matter most --
+  # county_baseline() falls through to votehub's `estimated_past_results.csv`, whose partisan
+  # columns are not validated against official returns. Only the statewide AGGREGATE has an
+  # official check, and only for TX: the county sum is 0.43061 against sim_state_params.csv's
+  # 0.430629 (42.46 / (42.46 + 56.14)), agreeing to 5 decimals, with the other eight states
+  # consistent with published 2024 results to ~1e-3. That is one official check plus eight
+  # plausibility checks, which is why a hand-entered audited number is allowed to WIN --
+  # but it is an improvement on this path, not a precondition for it.
+  p_state = NA_real_
+  src = NA_character_
+  pp = unique(num(st$pres24_dem2[nzchar(trimws(dplyr::coalesce(st$pres24_dem2, "")))]))
+  if (length(pp) > 1) {
+    # a per-STATE value living in a per-RACE file (as `state`, `election` and `jurisdiction`
+    # already do), so one state's rows must agree. Not something to average: two 2024
+    # baselines for one state would give two different swings for the same election.
+    cli::cli_abort(c(
+      "{.path {f}} gives {state} more than one {.field pres24_dem2}: {.val {pp}}.",
+      "i" = "It is the statewide 2024 presidential two-party Dem share -- one value per \\
+             state, repeated on that state's race rows."
+    ))
+  }
+  if (length(pp) == 1 && is.finite(pp) && pp > 0 && pp < 1) {
+    p_state = pp
+    src = "priors.csv pres24_dem2"
+  } else {
+    b = tryCatch(county_baseline(state, dir_26), error = function(e) NULL)
+    if (!is.null(b) && nrow(b)) {
+      tot = sum(b$pres24_dem, na.rm = TRUE) + sum(b$pres24_rep, na.rm = TRUE)
+      if (is.finite(tot) && tot > 0) {
+        p_state = sum(b$pres24_dem, na.rm = TRUE) / tot
+        src = "county_baseline()"
+      }
+    }
+  }
+  if (!is.finite(p_state) || p_state <= 0 || p_state >= 1) {
+    cli::cli_alert_warning(
+      "CBS_SHARE_PRIOR=1 but no statewide 2024 baseline for {state} -- neither a \\
+       {.field pres24_dem2} in {.path priors.csv} nor a usable {.fn county_baseline}. \\
+       The share prior keeps its 2024 level."
+    )
+    return(NULL)
+  }
+  t_state = d / (d + r)
+  lg = function(p) qlogis(pmin(pmax(p, 1e-6), 1 - 1e-6))
+  list(
+    shift = lg(t_state) - lg(p_state),
+    t_state = t_state,
+    p_state = p_state,
+    src = paste0("priors.csv / ", src)
+  )
+}
+
 #' CBS's expected vote over a fit's own precincts, as a SCRAPED_TURNOUT setting
 #'
 #' Returns a named character vector for `Sys.setenv()`, or `character()` when there is
@@ -549,6 +745,149 @@ fit_medsl_sur <- function(
   if (!is.null(seed)) {
     set.seed(seed)
   }
+  # ---- the share prior's 2026 level, from priors.csv (see share_prior_shift) ----------
+  # Applied to a COPY of env$cells, never the cached environment: one env serves every race
+  # in the state and this shift is per-race.
+  # BEFORE fit_stage_hybrid, not as an off$share contributor. estimate_share() computes
+  # lr = logit(s_obs) - logit(prior_s), so shifting the prior first makes the data-driven arm
+  # measure its residual against the CORRECTED prior -- it absorbs what is left after the
+  # forecast, which is what a hierarchy should do. Adding to off$share instead would have both
+  # arms measuring from the uncorrected 2024 prior and then summing, double-counting the one
+  # level move between them.
+  cells_fit <- env$cells
+  sp <- share_prior_shift(state, unique(returns$race_id)[1], dir_26)
+  if (!is.null(sp)) {
+    # prior_s is in (0, 1) for every cell -- mode_forbid zeroes mode_turn_share, not the
+    # share -- but the guard keeps the shift from inventing a share for a degenerate cell.
+    ok <- cells_fit$prior_s > 0 & cells_fit$prior_s < 1
+    # ---- the swing is an AGGREGATE movement, so solve for the per-cell shift ----------
+    # share_prior_shift() returns logit(T_state) - logit(P_state): a movement of the
+    # STATEWIDE SHARE on the logit scale, which is also what calibrate_swing.R measured
+    # ("the statewide two-party Dem share MOVES 0.22-0.26 logit between a prior contest and
+    # its target"). Adding it to every cell's logit does NOT move the aggregate by that
+    # amount -- logit(weighted.mean(p)) != weighted.mean(logit(p)), and the dispersion of
+    # prior_s across cells attenuates it. Measured on MN: asking +0.0559 per cell moves the
+    # tau-weighted aggregate +0.0480, 86% of it. So a naive common shift quietly
+    # under-delivers the published swing by the Jensen gap.
+    # Solve instead for the delta whose AGGREGATE effect is the swing. Same shape as
+    # SCRAPED_TURNOUT's uniroot over a common logit shift, and as enightmodels::logit_shift.
+    #
+    # NOTE what is deliberately NOT done: forcing the frame's prior share TO T_state. The
+    # frame is a county subset and its share SHOULD differ from the state's -- OH's 15
+    # counties sit 9.5pp more Dem than Ohio. Moving the frame's own aggregate BY the
+    # statewide swing is scope-correct; pinning it to the statewide LEVEL is the error this
+    # whole design exists to avoid.
+    w <- cells_fit$prior_tau[ok]
+    s0 <- cells_fit$prior_s[ok]
+    agg <- function(d) stats::weighted.mean(plogis(qlogis(s0) + d), w)
+    lg <- function(p) qlogis(pmin(pmax(p, 1e-6), 1 - 1e-6))
+    want <- lg(agg(0)) + sp$shift
+    delta <- tryCatch(
+      stats::uniroot(function(d) lg(agg(d)) - want, c(-10, 10), tol = 1e-10)$root,
+      error = function(e) NA_real_
+    )
+    if (!is.finite(delta)) {
+      # unreachable aggregate: fall back to the common shift rather than dropping the arm,
+      # and say so -- this should not happen for any swing inside +/-10 logit
+      cli::cli_alert_warning(
+        "share prior: could not solve for the aggregate swing; using the common shift."
+      )
+      delta <- sp$shift
+    }
+    raw <- delta
+    # ---- the bound, and why it is NOT SH_MAX_SHIFT ------------------------------------
+    # SH_MAX_SHIFT (0.25) bounds model_hybrid's DATA-DRIVEN share offset, and its stated
+    # justification is that "0.25 logit is ~6pp at 50-50, which is already a very large
+    # statewide share SURPRISE". That is a bound on a RESIDUAL -- how far tonight's returns
+    # may drag the prior. priors.csv's swing is not a surprise, it is the EXPECTED movement,
+    # and calibrate_swing.R puts the sd of exactly that movement at 0.22-0.26 logit. Bounding
+    # an expected move at one sd of itself withholds the forecast in the ordinary case:
+    # measured 2026-11-03, the solved delta binds at 0.25 in NC, GA, AK, OH and TX -- 5 of 6
+    # states -- delivering 0.19-0.23 of an asked 0.27-0.35.
+    # So this arm gets its own bound, as the bucket arm does (BK_MAX_SHIFT, wider because a
+    # bucket is counted votes). 0.6 is ~2.4x the measured swing sd and ~14pp at 50-50: it
+    # cannot bind on an ordinary swing, and a forecast past it is a data error worth seeing.
+    lim <- as.numeric(Sys.getenv("SHARE_PRIOR_MAX_SHIFT", unset = "0.6"))
+    delta <- max(min(raw, lim), -lim)
+    cells_fit$prior_s[ok] <- plogis(qlogis(s0) + delta)
+    cells_fit$y_s_prior[ok] <- qlogis(cells_fit$prior_s[ok])
+    got <- lg(stats::weighted.mean(cells_fit$prior_s[ok], w)) - lg(agg(0))
+    sp$shift_applied <- delta
+    sp$agg_moved <- got
+    # the override path has no target or baseline to name, so it says only the swing
+    from_txt <- if (is.finite(sp$t_state)) {
+      sprintf("target %.4f vs 2024 baseline %.4f = ", sp$t_state, sp$p_state)
+    } else {
+      ""
+    }
+    cli::cli_alert_info(paste0(
+      "share prior from {sp$src}: {from_txt}{sprintf('%+.4f', sp$shift)} logit swing; ",
+      "applied {sprintf('%+.4f', delta)} per cell, aggregate moved ",
+      "{sprintf('%+.4f', got)} ({sum(ok)} of {nrow(cells_fit)} cells, ",
+      "prior share {sprintf('%.4f', agg(0))} -> ",
+      "{sprintf('%.4f', stats::weighted.mean(cells_fit$prior_s[ok], w))})"
+    ))
+    # ---- the turnout level this swing was solved against ------------------------------
+    # `w` above is prior_tau, so the delta is the root of a TAU-WEIGHTED aggregate: the
+    # weights are each cell's expected turnout. CBS_LEVEL_PRIOR (model_turnout.R) is what
+    # puts 2026 into those weights, and it does so ONLY under CBS_LEVEL_SCOPE="both" --
+    # model_hybrid's recentre_prior() reads
+    #   prior_tau = (if (CBS_LEVEL_SCOPE == "both") tgt_tot_adj else est_tot_adj) * mode_turn_share
+    # so scope="theta" leaves prior_tau on the 2022 level even with the level arm on.
+    #
+    # Without it the swing is still DELIVERED (the solve hits its target), but it is placed
+    # using 2022 county weights, and CBS's growth is not uniform: TX asks 1.3644 over its 25
+    # fitted counties and 1.079-1.662 BY COUNTY. County turnout growth is normally
+    # partisan-correlated, so the misweighting is a bias, not noise.
+    #
+    # This is a WARNING, not a dependency: the two arms stay independently runnable, so each
+    # can still be ablated, and the share arm remains the right fallback when the CBS feed is
+    # short a county (cbs_level_prior_var() degrades to "level prior stays on 2022" exactly
+    # then). What it buys is that the confound cannot be entered silently -- read a
+    # CBS_SHARE_PRIOR verdict off `both` vs `level-only`, never off `share-only` vs nothing.
+    # See quality_reports/switch_taxonomy.md, "I. Wrong-year prior levels".
+    lvl_on <- Sys.getenv("CBS_LEVEL_PRIOR", unset = "0") == "1" ||
+      nzchar(Sys.getenv("CBS_COUNTY_EXPECTED"))
+    lvl_scope <- Sys.getenv("CBS_LEVEL_SCOPE", unset = "both")
+    if (!lvl_on || lvl_scope != "both") {
+      why <- if (!lvl_on) {
+        "CBS_LEVEL_PRIOR is off"
+      } else {
+        sprintf('CBS_LEVEL_SCOPE is "%s", not "both", so prior_tau keeps the 2022 level', lvl_scope)
+      }
+      cli::cli_alert_warning(paste0(
+        "share prior solved against 2022 turnout weights ({why}). The swing is delivered ",
+        "but distributed on stale county weights; CBS growth is 1.079-1.662 by county in TX. ",
+        "Judge this arm against a CBS_LEVEL_PRIOR=1 baseline, not against an all-off one."
+      ))
+    }
+    if (abs(raw - delta) > 1e-9) {
+      # a clamp here is not housekeeping: SHARE_PRIOR_MAX_SHIFT is ~2.4x the measured
+      # statewide swing sd, so binding means priors.csv is asking for a swing far past
+      # anything calibrate_swing.R saw and the model is NOT delivering the stated one
+      cli::cli_alert_warning(paste0(
+        "share prior clamped: {sprintf('%+.4f', raw)} -> {sprintf('%+.4f', delta)} logit ",
+        "(SHARE_PRIOR_MAX_SHIFT {lim}, ~2.4x the measured swing sd). The swing is NOT ",
+        "delivered -- at this size suspect priors.csv or the 2024 baseline, not the clamp."
+      ))
+    }
+    settings <- paste0(
+      settings,
+      sprintf(
+        "; share prior %+.4f logit swing from %s (%s), applied %+.4f per cell, aggregate %+.4f%s",
+        sp$shift,
+        sp$src,
+        if (is.finite(sp$t_state)) {
+          sprintf("target %.4f, 2024 baseline %.4f", sp$t_state, sp$p_state)
+        } else {
+          "explicit override"
+        },
+        delta,
+        sp$agg_moved,
+        if (abs(raw - delta) > 1e-9) sprintf(", clamped from %+.4f", raw) else ""
+      )
+    )
+  }
   # ---- county x mode observations for the votes that land on NO precinct ------------
   # cell_counts() joins FROM `cells`, so AK's house-district mail/early/provisional piles
   # and NC's county mail and one-stop-site piles -- 31% of each state's vote -- are dropped
@@ -565,7 +904,7 @@ fit_medsl_sur <- function(
   report_buckets(cty_obs, cells = known_cells, label = unique(returns$race_id)[1])
   f <- suppressMessages(
     env$fit_stage_hybrid(
-      env$cells,
+      cells_fit,
       ret_m,
       draws = draws,
       cross_mode = env$USE_CROSS_MODE,
@@ -680,9 +1019,14 @@ fit_medsl_sur <- function(
       mutate(pred = fin_dem + fin_rep + fin_oth)
   })
   fc <- if (interval == "conformal") cell_pred
-  # conf_seq: prior predictive draws of the race totals, nothing counted (env$cells holds
-  # the model's own priors; fit_stage_hybrid() re-centres a copy)
-  prior <- if (interval == "conf_seq") env$prior_totals(env$cells, draws = draws)
+  # conf_seq: prior predictive draws of the race totals, nothing counted (cells_fit holds
+  # the model's own priors; fit_stage_hybrid() re-centres a copy).
+  # cells_fit, not env$cells: priors.csv's level is EXOGENOUS -- known before a vote is
+  # counted -- so it is part of the model's own prior, not a re-centring on tonight's
+  # returns. A reference measure that has seen the data is not a reference measure; one that
+  # has seen a published forecast still is. (model_hybrid's arms, which DO read the returns,
+  # are applied inside fit_stage_hybrid and correctly never reach here.)
+  prior <- if (interval == "conf_seq") env$prior_totals(cells_fit, draws = draws)
   res <- draws_result(
     name,
     interval,
