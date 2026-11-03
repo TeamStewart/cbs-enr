@@ -237,25 +237,68 @@ if (!file.exists(f_turn)) {
   cli::cli_alert_warning("no turnout_latest.csv -- 15.4 skipped")
 } else {
   tu = readr::read_csv(f_turn, show_col_types = FALSE, progress = FALSE)
-  cli::cli_h2("15.4 turnout ({nrow(tu)} rows)")
+  # TURNOUT BY METHOD (added 2026-11-03). The grain is race x model x geo x METHOD: one
+  # "total" row plus one per vote method. These checks asserted the old one-row-per-geo grain
+  # until 2026-11-03 and so failed against a correctly written file -- the contract's prose
+  # had moved and its acceptance tests had not.
+  #
+  # Files written before the column existed hold only totals and readers fill it with
+  # "total" (15.4), so do the same here rather than skipping the grain checks on an old file.
+  if (!"method" %in% names(tu)) {
+    tu$method = "total"
+  }
+  tu = mutate(tu, method = coalesce(as.character(method), "total"))
+  n_tot = sum(tu$method == "total")
+  n_mth = nrow(tu) - n_tot
+  cli::cli_h2("15.4 turnout ({nrow(tu)} rows: {n_tot} total, {n_mth} by method)")
+
+  tot = filter(tu, method == "total")
   pv = pred |>
     filter(pred_type == "vote") |>
     summarize(tot = sum(pred), .by = c(race_id, model, geo))
-  j = full_join(pv, tu, by = c("race_id", "model", "geo"))
+  j = full_join(pv, tot, by = c("race_id", "model", "geo"))
   ck(
-    !anyNA(j$tot) && !anyNA(j$pred),
-    "one turnout row for every race x model x geo with predictions, and no others"
+    !anyNA(j$tot) && !anyNA(j$pred) && !anyDuplicated(select(tot, race_id, model, geo)),
+    "exactly one total row for every race x model x geo with predictions, and no others"
   )
+  # 15.4: the "total" row's pred IS the 15.1 vote rows summed, so it matches exactly. A
+  # method row's pred is that method's own cells summed, hence total-only here.
   ck(
     isTRUE(all.equal(j$tot, j$pred, tolerance = 1e-6)),
-    "turnout pred equals the race's vote rows summed"
+    "total turnout pred equals the race's vote rows summed"
   )
   iv = filter(tu, !is.na(pred_min), !is.na(pred_max))
   ck(all(iv$pred_min <= iv$pred_max), paste0("pred_min <= pred_max on the ", nrow(iv), " rows with intervals"))
   ck(
-    !anyDuplicated(select(tu, race_id, model, geo)),
-    "exactly one row per race x model x geo"
+    !anyDuplicated(select(tu, race_id, model, geo, method)),
+    "exactly one row per race x model x geo x method"
   )
+  # 15.4 acceptance: "the method rows' pred sum to it". Per race x model x geo that HAS
+  # method rows -- a fit whose returns or history lack a method split carries totals only,
+  # so an absent split is not a violation.
+  if (n_mth > 0) {
+    ms = tu |>
+      filter(method != "total") |>
+      summarize(m_sum = sum(pred), .by = c(race_id, model, geo)) |>
+      inner_join(select(tot, race_id, model, geo, pred), by = c("race_id", "model", "geo")) |>
+      mutate(rel = abs(m_sum - pred) / pmax(abs(pred), 1))
+    bad = filter(ms, rel > 1e-6)
+    ck(
+      nrow(bad) == 0,
+      paste0(
+        "the method rows' pred sum to the total's, on the ", nrow(ms),
+        " race x model x geo with method rows"
+      )
+    )
+    if (nrow(bad)) {
+      w = which.max(bad$rel)
+      cli::cli_alert_info(
+        "worst: {bad$race_id[w]} {bad$model[w]} {bad$geo[w]} -- methods \
+         {format(round(bad$m_sum[w]), big.mark = ',')} vs total \
+         {format(round(bad$pred[w]), big.mark = ',')} ({nrow(bad)} of {nrow(ms)} off)"
+      )
+    }
+  }
 }
 
 # ---- verdict ----------------------------------------------------------------------
