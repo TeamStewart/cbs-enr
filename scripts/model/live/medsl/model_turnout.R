@@ -2029,8 +2029,15 @@ fit_stage = function(
   # model's fitted share of all votes by party (fit_*, before any counted votes are mixed
   # in). Returned as `cell_votes` for the live wrapper's conformal interval; nothing here
   # reads them.
+  # tot_lo / tot_hi: a PER-MODE interval on the cell's final vote total. The draws for this
+  # already exist -- v_dem/v_rep/v_oth below are draws x N_PREC per mode -- and were being
+  # collapsed with colMeans and discarded, so cell_pred was the only per-precinct x mode
+  # output the model exposes and it carried no uncertainty at all. Quantiles of the SUM of
+  # the draws, not the sum of the quantiles, which is why it is computed in the loop rather
+  # than assembled from fin_dem/fin_rep/fin_oth afterwards.
   cell_votes = lapply(
-    setNames(nm = c("fin_dem", "fin_rep", "fin_oth", "fit_dem", "fit_rep", "fit_oth")),
+    setNames(nm = c("fin_dem", "fin_rep", "fin_oth", "fit_dem", "fit_rep", "fit_oth",
+                    "tot_lo", "tot_hi")),
     \(x) matrix(NA_real_, N_PREC, M, dimnames = list(NULL, MODES))
   )
   # PER-PRECINCT accumulators (draws x N_PREC), for precinct-level output.
@@ -2522,6 +2529,11 @@ fit_stage = function(
     v_rep = cr + rem_two * (1 - s)
     v_oth = co + rem * tp
     cell_s_hat[, mi] = colMeans(v_dem / pmax(v_dem + v_rep, 1e-9))
+    v_tot = v_dem + v_rep + v_oth
+    # `level` is the function's own argument; qlo/qhi are not defined until the precinct
+    # block further down, so derive them here rather than relying on evaluation order
+    cell_votes$tot_lo[, mi] = apply(v_tot, 2, quantile, 0.5 * (1 - level))
+    cell_votes$tot_hi[, mi] = apply(v_tot, 2, quantile, 0.5 * (1 + level))
     cell_votes$fin_dem[, mi] = colMeans(v_dem)
     cell_votes$fin_rep[, mi] = colMeans(v_rep)
     cell_votes$fin_oth[, mi] = colMeans(v_oth)
