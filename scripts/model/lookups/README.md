@@ -676,7 +676,8 @@ is a reallocation and not a bias correction that could be done with a scalar.
 The case it was built for: OH Cuyahoga reports all four of its modes at **precinct** level
 and carries ~18% of Ohio's scraped vote, yet its L2 `early` prior was **0.33%**. The
 completeness gate fires at `COMPLETE_FRAC * prior/true`, so that cell pinned almost
-immediately. CBS puts it at ~10%, and the prior lands at 9.17%.
+immediately. CBS puts it at 10.11%, and the prior lands at 9.17% — see **How much of the
+target actually arrives** below for why those two numbers differ.
 
 ## How
 
@@ -726,6 +727,40 @@ One line per state per night naming the snapshot and the shift it caused
 composition produced each estimate; the target's `observed_at` in `medsl_key()` so a fit built
 under one composition is never served from cache under another; and `CBS_MODE_TARGET=0` to
 restore the mode-history level exactly.
+
+## How much of the target actually arrives
+
+The rescale is exact, but the number you can read off the prior is not the target, and the
+difference is a change of **weighting** rather than a loss of precision. Cuyahoga's `early`,
+step by step:
+
+| step | share |
+|---|---|
+| CBS target | 10.1101% |
+| after the fold (018 has no row, so identity) | 10.1101% |
+| mode history, rescaled | **10.1101%** — exact |
+| cells, `exp_votes` | **9.1727%** |
+
+The target is imposed in *history-voters* space; the prior is then read in
+*expected-2026-votes* space, and `est_turnout` is not proportional to 2022 voters precinct by
+precinct (the ratio spans 0.85–1.23 across Cuyahoga). The same precinct pattern weighted by
+history voters gives 10.1101% and weighted by `est_turnout` gives 8.9705%; shrinkage toward
+the county share (`k = 40`, about 8.5% weight) then pulls it back up to 9.1727%.
+
+Worth knowing because CBS's target is a statement about 2026 expected votes, so in principle
+it should be imposed in that space. Measured, the loss is small — the share of an intended
+correction (> 1pp) that reaches the prior:
+
+| | OH | TX | NC | GA | FL | AK |
+|---|---|---|---|---|---|---|
+| median delivered | 96% | 99% | 100% | 98% | 99% | 99% |
+| 10th percentile | 84% | 96% | 96% | 89% | 97% | 86% |
+
+**A county absent from the mode history cannot get its own target at all.** There is no
+precinct pattern to rescale, so `cells_from_inputs()`'s documented fallback applies and the
+county takes the *state* split — which is now CBS-consistent at state level, but not
+county-specific. This is TX Gregg (092) and nothing else: 1 of 72 frame counties, 0.47% of
+the state's expected vote. CA has four such counties but no CBS race, so no target either.
 
 ## What is NOT established
 
