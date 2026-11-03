@@ -527,6 +527,15 @@ COMP_MIN_PREC = as.integer(Sys.getenv("COMP_MIN_PREC", unset = "50")) # min prec
 # with returns does not need a prior to tell it its level; one with none has nothing else.
 # Set 0 to apply CBS to every precinct (the behaviour measured above).
 CBS_LEVEL_UNSEEN = Sys.getenv("CBS_LEVEL_UNSEEN", unset = "1") == "1"
+# CBS_LEVEL_UNSEEN=1 (default): apply the CBS level ONLY to precincts whose TOTAL has no
+# information of its own. Measured 2026-11-03 on tx_cbs_noshift at 20:15, per precinct:
+# ungated, the 979 precincts that HAD reported went from 0.072 to 0.303 median abs rel error
+# and their interval coverage collapsed from 88.5% to 24.8%, because a 36%-higher level prior
+# overrides returns that are better evidence than any prior. Gated, they stay at 0.077/88.3%
+# while the 3,862 unseen precincts keep the whole gain (0.252/38.6% -> 0.082/92.5%).
+# Statewide the 20:15 estimate goes 0.7966 (2022) / 1.0659 (ungated) / 0.9957 (gated), and
+# per-precinct coverage 48.6% -> 91.7% against a nominal 95%. Set 0 for the ungated behaviour.
+CBS_LEVEL_UNSEEN = Sys.getenv("CBS_LEVEL_UNSEEN", unset = "1") == "1"
 CBS_LEVEL_SCOPE = Sys.getenv("CBS_LEVEL_SCOPE", unset = "both")
 stopifnot("CBS_LEVEL_SCOPE must be total or both" = CBS_LEVEL_SCOPE %in% c("total", "both"))
 # NOTE the read below is UNCONDITIONAL: setting CBS_COUNTY_EXPECTED activates the level prior
@@ -1626,6 +1635,30 @@ fit_stage = function(
         )
       ) |>
       select(-.seen)
+  }
+
+  # CBS level ONLY where the precinct's total has no information of its own.
+  # The right mask is fit_tau, not obs: :1493 uses `ob = if (out == "tau") dm$fit_tau else
+  # dm$obs`, so obs measures SHARE-observability and says nothing about whether theta has
+  # data. And the gate has to push the SEEN precincts BACK to the 2022 level, because
+  # model_hybrid.R has already applied the CBS level to every precinct by this point --
+  # only adding it where missing is a no-op (measured: 48 of ~3,982 rows changed).
+  # est_tot_adj is not a column here, but it is recoverable: the hybrid set
+  # y_tau_prior = logit(tgt_tot_adj / cap), so tgt_tot_adj = cap * invlogit(y_tau_prior)
+  # and est_tot_adj = tgt_tot_adj * est_tot / tgt_tot (the hybrid's offset exp(m) cancels).
+  if (!is.null(CBS_LVL_MULT) && CBS_LEVEL_UNSEEN) {
+    d = d |>
+      mutate(.tot_seen = any(fit_tau), .by = geo) |>
+      mutate(
+        .tgt_adj = cap * invlogit(y_tau_prior),
+        .est_adj = .tgt_adj * est_tot / tgt_tot,
+        .newpri = if_else(
+          .tot_seen & mode == REF_MODE,
+          logit(pmin(pmax(.est_adj / cap, 1e-4), 1 - 1e-4)),
+          y_tau_prior
+        )
+      )
+    d = d |> mutate(y_tau_prior = .newpri) |> select(-.tot_seen, -.tgt_adj, -.est_adj, -.newpri)
   }
 
   for (m in MODES) {
