@@ -45,7 +45,8 @@ HYBRID_SRC = "scripts/model/live/medsl/model_hybrid.R"
 #' @param cols Extra precinct columns a demographic spec needs (`demo_covs()`; "dem2_sq" is
 #'   dem2 squared), joined on under their own names.
 #' @return List: covs_long, mode_hist (geo, method, party, votes: the turnout split is real,
-#'   the party split just follows dem2), note (what was filled, or "").
+#'   the party split just follows dem2), mode_forbid (geo x method cells the county's feed
+#'   cannot report), note (what was filled, or "").
 medsl_inputs = function(
   state,
   dir_26 = find_26_general(),
@@ -118,9 +119,22 @@ medsl_inputs = function(
     mutate(geo = as.character(geo)) |>
     inner_join(select(covs_wide, geo, dem2), by = "geo") |>
     reframe(party = c("dem", "rep"), votes = voters * c(dem2, 1 - dem2), .by = c(geo, method))
+  # Cells a county's feed cannot report (lookups/mode_fold.csv), resolved to this state's
+  # precincts. model_turnout.R gives these a prior share of EXACTLY 0 rather than letting
+  # them fall through to the MODE_TURN_SHARE fallback; the reason it matters is q_share, and
+  # it is spelled out at the use site.
+  fold = read_mode_fold() |> filter(state == !!state)
+  mode_forbid = if (!nrow(fold)) {
+    tibble(geo = character(), method = character())
+  } else {
+    tibble(geo = covs_wide$geo, county_cbs = geo_county(covs_wide$geo)) |>
+      inner_join(select(fold, county_cbs, method = from_method), by = "county_cbs") |>
+      select(geo, method)
+  }
   list(
     covs_long = covs_long,
     mode_hist = mode_hist,
+    mode_forbid = mode_forbid,
     note = if (length(filled)) {
       paste0("filled with county means: ", paste(filled, collapse = "; "))
     } else {
@@ -228,6 +242,7 @@ medsl_setup = function(
   if (!is.null(counties)) {
     inp$covs_long = filter(inp$covs_long, county %in% counties)
     inp$mode_hist = filter(inp$mode_hist, geo %in% inp$covs_long$geo)
+    inp$mode_forbid = filter(inp$mode_forbid, geo %in% inp$covs_long$geo)
     if (!nrow(inp$covs_long)) stop("none of the counties given are in ", state, "_precinct.parquet")
   }
 
@@ -259,6 +274,7 @@ medsl_setup = function(
   env$STATE = state
   env$covs_long = inp$covs_long
   env$mode_hist = inp$mode_hist
+  env$mode_forbid = inp$mode_forbid
   suppressMessages(sys.source(MEDSL_SRC, envir = env))
   suppressMessages(sys.source(HYBRID_SRC, envir = env))
 
