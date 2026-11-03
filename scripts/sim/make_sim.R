@@ -15,6 +15,23 @@
 ## (sim_zero_counties()); the default keeps every county in the model frame.
 ## Checks: Rscript scripts/sim/check_sim.R [scenario]
 ##
+## SCORING A TURNOUT_LEVEL ARM: DISABLE THE MODEL'S OWN CBS TURNOUT CONSTRAINT.
+## `TURNOUT_LEVEL="cbs:{env}"` levels the simulated TRUTH with cbs_county_total(). The model
+## reads the SAME function for SCRAPED_TURNOUT -- scraped_turnout_var() in
+## scripts/model/live/R/model_medsl.R, and CBS_SCRAPED_TURNOUT defaults to "1". Score such an
+## arm with the defaults and the model is handed, as a turnout constraint at
+## SCRAPED_TURNOUT_SD=0.05, the very number the truth was built from, differing only by the
+## cap-and-noise gap the manifest records. The arm then scores near-perfectly for a reason
+## that has nothing to do with the model, which is the same trap the TURNOUT_RATIO note below
+## describes ("a model that passively echoes est_turnout scores near-perfectly"), one level up.
+##   Rscript scripts/model/live/tests/sim_night.R tx_cbs_noshift   # WRONG: self-fulfilling
+##   CBS_SCRAPED_TURNOUT=0 Rscript scripts/model/live/tests/sim_night.R tx_cbs_noshift   # right
+## It is LATENT, not firing, as of 2026-11-03: scraped_turnout_var() reads MODEL_CBS_ENV,
+## which defaults to "live", and the live feed still has no county rows, so it returns early.
+## It fires the moment the live feed publishes, or if CBS_MODEL_CBS_ENV=test is set. Compare
+## `cbs_snapshots` in the manifest against the model's env: the same src on both sides is the
+## tell. An explicit SCRAPED_TURNOUT= also wins over the CBS read, so sweeps are unaffected.
+##
 ## Per state (see sim_config.R):
 ##   inputs        {ST}_precinct.parquet, {ST}_race_prior.csv,
 ##                 {ST}_precinct_mode_history.parquet, from prep_model_inputs.R
@@ -122,6 +139,32 @@ P = list(
   # under-predicted early and over-predicted late, which a correct-by-construction prior
   # can never reproduce. Set it away from 1 to make the night a real test.
   turnout_ratio     = as.numeric(Sys.getenv("TURNOUT_RATIO", unset = "1")),
+  # TURNOUT_LEVEL="cbs:{env}" replaces that single scalar with a PER-COUNTY target from
+  # cbs_county_total(STATE, env): the county's multiplier is CBS's expected total vote over
+  # sum(est_turnout) for the precincts in scope. This is the one arm the grid was missing.
+  # est_turnout is each county's 2022 turnout (prep_model_inputs.R), so at TURNOUT_RATIO=1
+  # the truth IS the model's prior; the _base sims sit at 0.97-1.06 of it and the most
+  # extreme arm ever run, tx_turnout_high, reaches only 1.207. Measured 2026-11-03 on TX's
+  # 25 zero-file counties, CBS asks 1.3644 statewide and 1.079-1.662 BY COUNTY -- the
+  # per-county spread is exactly what a scalar cannot produce.
+  # The feed env is part of the value rather than a default on purpose: on 2026-11-03 the
+  # live TX feed still held 1 race row with expected 0 while test carried all 254 counties,
+  # and a silent fallback between the two would bake stale numbers into a truth file with
+  # nothing in the manifest to say so. Composes with TURNOUT_RATIO, still a scalar on top.
+  turnout_level     = {
+    spec = Sys.getenv("TURNOUT_LEVEL", unset = "")
+    if (!nzchar(spec)) NULL else {
+      p2 = strsplit(spec, ":", fixed = TRUE)[[1]]
+      if (length(p2) != 2 || p2[1] != "cbs" || !nzchar(p2[2]))
+        stop('bad TURNOUT_LEVEL: ', spec, ' -- expected "cbs:live" or "cbs:test"')
+      # named, not just non-empty: an unknown env would otherwise reach cbs_county_total(),
+      # come back NULL, and abort with "CBS has published no county totals" -- which sends
+      # the reader to the feed instead of to their typo.
+      if (!trimws(p2[2]) %in% c("live", "test"))
+        stop('bad TURNOUT_LEVEL env: ', p2[2], ' -- expected live or test')
+      list(source = p2[1], env = trimws(p2[2]))
+    }
+  },
   # TURNOUT_DEMO makes the turnout error STRUCTURED rather than uniform: turnout is
   # multiplied by exp(sum_k coef_k * (x_k - weighted mean)), then rescaled so the
   # statewide total is preserved. So est_turnout stays right ON AVERAGE and is wrong
@@ -209,7 +252,12 @@ set.seed(SEED)
 
 # named-vector lookup with a default for missing names (and for a NULL vector)
 lookup = function(x, key, default) {
-  v = if (is.null(x)) rep(NA, length(key)) else unname(x[key])
+  # as.character() because a FACTOR key would index x by its integer level codes -- silently
+  # returning the wrong county's value, with no error and nothing downstream to catch it.
+  # Not reachable while read_pq() returns character, but nanoparquet does restore factors from
+  # its own metadata, and this is the choke point for CBS_RATIO, speed_override and rolloff.
+  key = as.character(key)
+  v = if (is.null(x)) rep(NA_real_, length(key)) else unname(x[key])
   if_else(is.na(v), default, v)
 }
 
@@ -234,6 +282,71 @@ if (any(bad))
   cli_abort(c("{sum(bad)} precinct{?s} in {STATE}_precinct.parquet have NA n/est_turnout or a \
                dem2/oth_base outside (0, 1).",
               "i" = "First few: {.val {head(prec$geo[bad], 5)}}. Fix the prep, not the sim."))
+
+# TURNOUT_LEVEL="cbs:{env}": the per-county turnout target (see P$turnout_level). Built here
+# because it needs `prec` AFTER --counties=zero, so the denominator is the precincts actually
+# simulated -- TX's 25 zero-file counties ask 1.3644 where the whole 72-county frame asks
+# 1.3457 (measured 2026-11-03), and taking the wrong scope mis-levels every arm by that gap.
+CBS_RATIO = NULL
+if (!is.null(P$turnout_level)) {
+  # own environment, as make_sim.R:86-90 and prep_model_inputs.R:795 already do: sourcing
+  # at top level would publish nine names (cty_*, est, ...) into a script that reuses short
+  # globals. cbs_county_pull.R runs nothing at load time (see its header).
+  e_cbs = new.env()
+  source("scripts/model/live/R/cbs_county_pull.R", local = e_cbs)
+  tgt = e_cbs$cbs_county_total(STATE, env = P$turnout_level$env, dir_26 = DIR_26)
+  # which snapshot the level came from. cbs_county_total() takes the NEWEST expected file
+  # per race tag and does not report which, and the feed is append-only, so without this the
+  # arm cannot be reconstructed later -- and an identical src on both sides is the tell for
+  # the scoring collision described in the header.
+  # newest per race tag, matching what cbs_county_total() actually reads -- globbing every
+  # snapshot would name files the level did NOT come from, which is worse than naming none.
+  CBS_SRC = sort(unlist(lapply(
+    Sys.glob(file.path(DIR_26, "cbs_api", P$turnout_level$env, paste0(STATE, "_*"), "expected")),
+    function(d) { f = sort(Sys.glob(file.path(d, "*.parquet"))); if (length(f)) basename(f[length(f)]) }
+  )))
+  if (is.null(tgt) || !nrow(tgt))
+    cli_abort(c("CBS has published no county totals for {STATE} in the {.val {P$turnout_level$env}} feed.",
+                "i" = "cbs_county_total() returns NULL when the expected snapshots carry no \
+                       county x total rows -- which is what the live feed held on 2026-11-03.",
+                "x" = "Refusing to invent a turnout level."))
+  est = summarize(prec, est = sum(est_turnout), .by = county_cbs)
+  if (length(miss_c <- setdiff(est$county_cbs, tgt$county_cbs)))
+    cli_abort(c("{length(miss_c)} simulated count{?y/ies} {?has/have} no CBS expected total: \
+                 {.val {head(miss_c, 5)}}.",
+                "i" = "Every county in scope needs one. Falling back to est_turnout for the rest \
+                       would make the arm a mixture of a 2026 and a 2022 turnout level, and \
+                       nothing downstream could tell which precincts came from which.",
+                "x" = "Refusing to guess."))
+  rat = left_join(est, tgt, by = "county_cbs")
+  CBS_RATIO = setNames(rat$expected / rat$est, rat$county_cbs)
+  # est == 0 is unreachable on EST_TURNOUT_SOURCE=reg22 (prep floors est_turnout at 0.5) but
+  # not on =vendor, where turnoutPred * n is 0 for an n == 0 precinct. Unguarded that is
+  # 0 * Inf = NaN votes written into the truth parquet, and the NA check above only rejects NA.
+  if (!all(is.finite(CBS_RATIO)))
+    cli_abort(c("CBS turnout ratio is not finite for {sum(!is.finite(CBS_RATIO))} count{?y/ies}: \
+                 {.val {head(names(CBS_RATIO)[!is.finite(CBS_RATIO)], 5)}}.",
+                "i" = "sum(est_turnout) is 0 there, so there is no 2022 level to scale from.",
+                "x" = "Refusing to write NaN votes."))
+  # A plausibility band, because `expected > 0` is the only check cbs_county_total() makes and
+  # every silent mis-level left runs through a positive-but-wrong expectation: a placeholder in
+  # one race's newest snapshot (the two tags are averaged), or a county whose reporting units
+  # are only partly published so its units sum short. Measured 2026-11-03, TX_gov and TX_sen
+  # agree to 0.03% and every county lands in 1.079-1.662, so this is a tripwire, not a filter.
+  BAND = as.numeric(strsplit(Sys.getenv("TURNOUT_LEVEL_BAND", unset = "0.6,2.5"), ",")[[1]])
+  if (any(oob <- CBS_RATIO < BAND[[1]] | CBS_RATIO > BAND[[2]]))
+    cli_abort(c("{sum(oob)} count{?y/ies} ask a turnout ratio outside {BAND[[1]]}-{BAND[[2]]}: \
+                 {.val {paste0(names(CBS_RATIO)[oob], '=', round(CBS_RATIO[oob], 2))}}.",
+                "i" = "Either CBS published a partial or placeholder expected vote, or prep's \
+                       k_c fallback means sum(est_turnout) is not that county's 2022 turnout \
+                       (TX_prep_report.txt reports 72 of 72 from their own 2022 total).",
+                "x" = "Refusing to bake an unexplained level into a truth file. \
+                       TURNOUT_LEVEL_BAND widens it deliberately."))
+  cli_inform(c("*" = "TURNOUT_LEVEL cbs:{P$turnout_level$env}: per-county target over \
+                      {nrow(rat)} count{?y/ies}; ratio to est_turnout \
+                      {round(min(CBS_RATIO), 3)}-{round(max(CBS_RATIO), 3)}, \
+                      statewide {round(sum(rat$expected) / sum(rat$est), 4)}"))
+}
 
 # the contests drawn are the ones sim_candidates.csv lists; each needs a filled prior
 prior = read.csv(in_file("_race_prior.csv")) |>
@@ -299,9 +412,18 @@ geos = prec |>
                P$turnout_demo[["col"]] * centre(p_col,       est_turnout) +
                P$turnout_demo[["age"]] * centre(p_age_65_up, est_turnout),
     demo_m   = exp(demo_lp) / weighted.mean(exp(demo_lp), est_turnout),   # preserves the total
-    ballots  = pmin(est_turnout * P$turnout_ratio * demo_m *
-                      exp(turn + rnorm(n(), 0, P$precinct_turnout_sd)),
-                    P$turnout_cap * n),
+    # lookup(CBS_RATIO, ...) is the per-county CBS level when TURNOUT_LEVEL is set and
+    # exactly 1 otherwise, so an unset switch leaves this line bit-identical. demo_m stays
+    # normalised on est_turnout weights, not on the target: at TURNOUT_DEMO=0 (every CBS
+    # arm so far) it is identically 1, and reweighting it would move the existing demo arms.
+    # split out so the cap's cost is measurable, not just counted. The cap bites hardest in
+    # the HIGHEST-ratio counties (CBS asks up to 1.662 against a 1.25*n ceiling), so the
+    # shortfall is correlated with the treatment and would otherwise read as a model failure
+    # in exactly the counties the arm exists to test. The rnorm call keeps its position in
+    # the RNG stream and the products keep their order, so this stays bit-identical.
+    ballots_raw = est_turnout * P$turnout_ratio * lookup(CBS_RATIO, county_cbs, 1) * demo_m *
+                    exp(turn + rnorm(n(), 0, P$precinct_turnout_sd)),
+    ballots  = pmin(ballots_raw, P$turnout_cap * n),
     censored = runif(n()) < censor_rate
   )
 
@@ -459,6 +581,35 @@ manifest = list(
   counties_scope = COUNTIES,
   mode_shift = as.list(P$mode_shift),
   turnout_demo = as.list(P$turnout_demo),
+  # provenance for TURNOUT_LEVEL, plus what the generator actually DELIVERED: the target
+  # is applied before lognormal precinct noise and the KAPPA-style pmin, so realized sits a
+  # little off asked: tx_cbs_noshift (2026-11-03) asked 1.3644 and delivered 1.3482, with 20
+  # of 4911 precincts at the cap. The gap is the sampling noise of 25 county `turn` draws
+  # (N(0,0.08): 5-95% of mean exp(turn) is 0.978-1.030), not a defect. Recording both means a
+  # later reader can check the arm instead of trusting it.
+  turnout_level = if (is.null(P$turnout_level)) NULL else list(
+    source = P$turnout_level$source,
+    feed_env = P$turnout_level$env,
+    cbs_snapshots = CBS_SRC,
+    counties = length(CBS_RATIO),
+    # asked INCLUDES turnout_ratio, so it is comparable with realized below. Without it a
+    # run with both set reports e.g. asked 1.364 / realized 1.160 and the 15% gap reads as
+    # cap-and-noise. Taken from `rat` rather than through lookup(), so an audit field can
+    # never silently fall back to 1.
+    turnout_ratio = P$turnout_ratio,
+    ratio_asked_statewide = P$turnout_ratio * sum(rat$expected) / sum(rat$est),
+    ratio_asked_min = min(CBS_RATIO),
+    ratio_asked_max = max(CBS_RATIO),
+    ratio_realized_statewide = sum(geos$ballots) / sum(prec$est_turnout),
+    ratio_realized_uncapped = sum(geos$ballots_raw) / sum(prec$est_turnout),
+    votes_lost_to_cap = sum(geos$ballots_raw - geos$ballots),
+    precincts_at_cap = sum(geos$ballots < geos$ballots_raw - 1e-9),
+    est_in_scope = sum(rat$est),
+    expected_total = sum(rat$expected),
+    # per county, because the per-county spread IS the point of the arm and no later reader
+    # can recheck a single county without it
+    ratios = as.list(round(CBS_RATIO, 5))
+  ),
   seed      = SEED,
   created   = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
   git       = system("git rev-parse --short HEAD", intern = TRUE),
