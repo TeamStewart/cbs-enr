@@ -203,9 +203,13 @@ ST_MAX_COMP = as.numeric(Sys.getenv("ST_MAX_COMP", unset = "1.0"))
 SH_MIN_CELLS = as.integer(Sys.getenv("SH_MIN_CELLS", unset = "200"))
 SH_MIN_GRP = as.integer(Sys.getenv("SH_MIN_GRP", unset = "5"))
 SH_MIN_CM = as.integer(Sys.getenv("SH_MIN_CM", unset = "10"))
-# Clamp in LOGIT points on the two-party share prior. 0.25 logit is ~6pp at 50-50, which
-# is already a very large statewide share surprise (calibrate_swing.R: 9 states x 37
-# contest pairs move 0.22-0.26 logit between a prior contest and its target).
+# Clamp in LOGIT points on the two-party share prior. 0.25 logit is ~6pp at 50-50, which is
+# already a very large statewide share surprise: calibrate_swing.R (9 states x 37 contest
+# pairs) puts the SD of movement between a prior contest and its target at 0.22-0.26 logit,
+# so this clamps at about one sd, not at a typical move. Said "contest pairs move 0.22-0.26
+# logit" until 2026-11-03 -- that reads as a typical magnitude and would make this clamp look
+# routinely binding rather than reserved for outliers. See model_core.R:123 for the
+# authoritative wording ("ACTUAL statewide swing sd").
 SH_MAX_SHIFT = as.numeric(Sys.getenv("SH_MAX_SHIFT", unset = "0.25"))
 
 # BUCKET SHARE ARM (HY_BUCKET=0 to ablate). Votes that land on NO precinct -- AK reports
@@ -1017,7 +1021,16 @@ recentre_prior = function(cells, off) {
   out = cells |>
     dplyr::left_join(dplyr::rename(off$comp, .coff = off), by = c("county", "mode")) |>
     dplyr::mutate(
+      # tgt_tot, not est_tot: this line is where a CBS level prior was being LOST. The
+      # hybrid recomputes y_tau_prior and prior_tau below from est_tot_adj, overwriting
+      # whatever model_turnout.R put there -- so substituting CBS into model_turnout.R's
+      # y_tau_prior alone was a silent no-op, and the fit faithfully used the 2022 level.
+      # tgt_tot IS est_tot unless CBS_LEVEL_PRIOR is set, so this is inert by default.
       est_tot_adj = est_tot * exp(m),
+      # the CBS level, carried separately so CBS_LEVEL_SCOPE means the same thing here as it
+      # does in model_turnout.R. tgt_tot IS est_tot unless CBS_LEVEL_PRIOR is set, so both
+      # columns are identical by default and this block is inert.
+      tgt_tot_adj = tgt_tot * exp(m),
       # composition: offset, then RENORMALISE per precinct. The renormalisation is what
       # makes the level and the composition compose exactly -- sum_m mode_turn_share is
       # 1 whatever the offsets are, so a composition offset cannot move the total.
@@ -1027,13 +1040,18 @@ recentre_prior = function(cells, off) {
     dplyr::mutate(mode_turn_share = mode_turn_share / sum(mode_turn_share), .by = geo) |>
     dplyr::mutate(ref_share = mode_turn_share[match(REF_MODE, mode)], .by = geo) |>
     dplyr::mutate(
-      prior_tau = est_tot_adj * mode_turn_share,
+      # scope "both" puts the CBS level behind prior_tau as well. prior_tau is what the
+      # completeness machinery grades counted votes against, so a CBS level here ALSO
+      # rescales the gross-up for precincts that have reported -- measured 2026-11-03 as a
+      # 28% overshoot on those precincts, which is why the two are separable.
+      prior_tau = (if (CBS_LEVEL_SCOPE == "both") tgt_tot_adj else est_tot_adj) * mode_turn_share,
       y_tau_prior = if (!USE_COMPOSE) {
         log(prior_tau + 0.1)
       } else {
         dplyr::if_else(
           mode == REF_MODE,
-          logit(pmin(pmax(est_tot_adj / cap, 1e-4), 1 - 1e-4)),
+          # theta: ALWAYS the CBS level when supplied -- this is the slot Change 1 targets
+          logit(pmin(pmax(tgt_tot_adj / cap, 1e-4), 1 - 1e-4)),
           log(pmax(mode_turn_share, 1e-6) / pmax(ref_share, 1e-6))
         )
       }

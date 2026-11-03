@@ -267,6 +267,40 @@ scraped_turnout_var = function(state, geos, dir_26 = find_26_general()) {
   c(SCRAPED_TURNOUT = format(target, scientific = FALSE))
 }
 
+#' CBS's expected vote PER COUNTY, for the level prior (`CBS_LEVEL_PRIOR=1`)
+#'
+#' Sibling of `scraped_turnout_var()`: that one collapses CBS to ONE statewide number and
+#' applies it as a post-hoc constraint on the fitted total; this passes the counties through
+#' individually so the level can enter each precinct's PRIOR instead -- including the
+#' completeness gate, which grades counted votes against `prior_tau`.
+#' Per-county because the growth is not uniform: TX asks 1.3644 over its 25 zero-file
+#' counties but 1.079-1.662 BY COUNTY (measured 2026-11-03).
+#' Returns county TOTALS, not ratios: the denominator is est_tot over the fit's own
+#' precincts, which only the medsl env knows after its `counties` filter.
+cbs_level_prior_var = function(state, geos, dir_26 = find_26_general()) {
+  if (Sys.getenv("CBS_LEVEL_PRIOR", unset = "0") != "1") return(character())
+  if (nzchar(Sys.getenv("CBS_COUNTY_EXPECTED"))) return(character())
+  env = if (exists("MODEL_CBS_ENV")) MODEL_CBS_ENV else "live"
+  key = paste("tot", state, env, sep = "|")
+  tot = .mode_target_env[[key]]
+  if (is.null(tot)) {
+    tot = tryCatch(cbs_county_total(state, env = env, dir_26 = dir_26), error = function(e) NULL)
+    if (is.null(tot) || !nrow(tot)) {
+      cli::cli_warn("{state}: CBS_LEVEL_PRIOR=1 but no CBS county totals in the {.val {env}} feed -- level prior stays on 2022.")
+      return(character())
+    }
+    .mode_target_env[[key]] = tot
+  }
+  cc = unique(geo_county(geos))
+  hit = filter(tot, county_cbs %in% cc)
+  if (!nrow(hit) || length(miss <- setdiff(cc, hit$county_cbs))) {
+    cli::cli_warn("{state}: CBS_LEVEL_PRIOR=1 but {length(miss)} of {length(cc)} fitted counties have no CBS total -- level prior stays on 2022.")
+    return(character())
+  }
+  cli::cli_inform("{state}: level prior from CBS expected vote over {nrow(hit)} fitted counties, {format(round(sum(hit$expected)), big.mark = ',')} total")
+  c(CBS_COUNTY_EXPECTED = paste0(hit$county_cbs, "=", format(hit$expected, scientific = FALSE), collapse = ","))
+}
+
 #' Build (or fetch) the model environment for a state
 #'
 #' Cached for the session. Puts STATE, covs_long and mode_hist into a fresh environment and
@@ -324,7 +358,8 @@ medsl_setup = function(
     # over the same counties runs 5-35% higher. The constraint is scoped to exactly this
     # frame (see SCRAPED_TURNOUT in model_turnout.R), which is why it is computed here,
     # after the `counties` filter, rather than once per state.
-    scraped_turnout_var(state, inp$covs_long$geo, dir_26)
+    scraped_turnout_var(state, inp$covs_long$geo, dir_26),
+    cbs_level_prior_var(state, inp$covs_long$geo, dir_26)
   )
   old = Sys.getenv(names(vars), unset = NA, names = TRUE)
   on.exit(
