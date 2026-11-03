@@ -610,9 +610,17 @@ fit_medsl_sur <- function(
       ))
     }
   }
-  # conformal: one row per precinct x mode of the model's frame, with what is counted
-  fc <- if (interval == "conformal") {
+  # One row per precinct x mode of the model's frame, with what is counted. Built for every
+  # arm, not just conformal: fit_stage() already computes it (`cell_votes`, filled in the
+  # prediction loop), and it is the ONLY per-precinct x mode prediction the model exposes --
+  # `cells` is collapsed to precinct grain (4032bc19) so its `turn_est` is the precinct
+  # total repeated and its `method` is NA. Needed to judge whether a precinct's mode
+  # composition is reasonable, which is the standard the composition prior has to meet.
+  cell_pred <- local({
     cv <- f$cell_votes
+    if (is.null(cv) || is.null(cv$fin_dem)) {
+      return(NULL)
+    }
     tibble(
       geo = rep(as.character(env$prec$geo), ncol(cv$fin_dem)),
       method = rep(colnames(cv$fin_dem), each = nrow(cv$fin_dem)),
@@ -633,8 +641,10 @@ fit_medsl_sur <- function(
       mutate(
         across(c(c_dem, c_rep, c_oth, c_tot), \(x) coalesce(x, 0)),
         across(starts_with("fin_") | starts_with("fit_"), \(x) coalesce(x, 0))
-      )
-  }
+      ) |>
+      mutate(pred = fin_dem + fin_rep + fin_oth)
+  })
+  fc <- if (interval == "conformal") cell_pred
   # conf_seq: prior predictive draws of the race totals, nothing counted (env$cells holds
   # the model's own priors; fit_stage_hybrid() re-centres a copy)
   prior <- if (interval == "conf_seq") env$prior_totals(env$cells, draws = draws)
@@ -654,5 +664,9 @@ fit_medsl_sur <- function(
   # the structured ledger as well as the status string, so a consumer can test
   # `fit$prior_only$all_prior` rather than parse prose
   res$prior_only <- po
+  # per-precinct x mode predictions, for the precinct-level sanity check
+  # (tests/check_precinct_sanity.R). Attached here rather than threaded through
+  # draws_result() so no other model's result shape changes.
+  res$cell_pred <- cell_pred
   res
 }
