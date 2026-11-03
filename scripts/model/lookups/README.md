@@ -519,8 +519,14 @@ and TX. Today the table is three rows, all Ohio.
 | column | meaning |
 |---|---|
 | `state`, `county_cbs`, `county_name` | `county_cbs` zero-padded to 3, the `geo` prefix |
-| `cbs_method` | the method the prior names and the county does **not** report |
-| `method` | the method it folds onto — one the county **does** report |
+| `from_method` | the method the prior names and the county does **not** report |
+| `to_method` | the method it folds onto — one the county **does** report |
+
+The columns are named for their direction, not for a source, on purpose. The fold is a
+property of the **county's feed**, not of whoever supplied the prior: it is applied to the
+L2 mode history today and will be applied to CBS's county expected vote when that lands,
+with the same rows. An earlier `cbs_method` read as though the table compared L2 against
+CBS, which it never did.
 | `why` | the zero-file evidence, so the row can be judged without re-deriving it |
 
 ## Why it exists
@@ -556,8 +562,8 @@ inference, and no renormalizing over whichever methods happen to appear in this 
 ## What consumes it
 
 `live/R/vote_modes.R` holds `read_mode_fold()` (which rejects duplicate rows and rows whose
-`cbs_method` equals `method`, since a fold that does nothing means someone mistyped it),
-`fold_cbs_methods()` (remap, then sum, so the folded method collapses onto its target), and
+`from_method` equals `to_method`, since a fold that does nothing means someone mistyped it),
+`fold_methods()` (remap, then sum, so the folded method collapses onto its target), and
 `mode_fold_tag()` (spelled into `medsl_key()` so a fit cached under an older table is never
 served).
 

@@ -96,7 +96,7 @@ fold_cells = function(cells, state, fold = read_mode_fold()) {
   if (!nrow(f)) {
     return(cells)
   }
-  drop = dplyr::distinct(dplyr::transmute(f, county_cbs, method = cbs_method))
+  drop = dplyr::distinct(dplyr::transmute(f, county_cbs, method = from_method))
   cols = names(cells)
   cells |>
     dplyr::mutate(county_cbs = geo_county(geo)) |>
@@ -161,7 +161,7 @@ fold_mode_history = function(mh, state, fold = read_mode_fold()) {
   cols = names(mh)
   mh |>
     dplyr::mutate(county_cbs = geo_county(geo), voters = as.numeric(voters)) |>
-    fold_cbs_methods(state, values = "voters", fold = fold) |>
+    fold_methods(state, values = "voters", fold = fold) |>
     dplyr::select(dplyr::all_of(cols))
 }
 

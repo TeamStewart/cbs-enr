@@ -97,10 +97,16 @@ geo_label = function(geo) stringr::str_replace(as.character(geo), "^[a-z]{2}_[0-
 #     (Hamilton early 0.26% of prior, Cuyahoga early 0.33%)
 #
 # The fold is a HARD-CODED table, lookups/mode_fold.csv -- not an eday/non-eday aggregation
-# worked out at run time. Which CBS method lands on which model method is a per-county
-# determination, so it belongs in a file a person reads and git diffs, exactly like
-# reporting_levels.csv. At run time this is a plain join: no inference, no renormalizing
-# over whatever happens to be present in this cycle's feed.
+# worked out at run time. Which method lands on which is a per-county determination, so it
+# belongs in a file a person reads and git diffs, exactly like reporting_levels.csv. At run
+# time this is a plain join: no inference, no renormalizing over whatever happens to be
+# present in this cycle's feed.
+#
+# The columns are `from_method` -> `to_method`, deliberately NOT named for a source. The
+# fold is a property of the COUNTY's feed, not of whoever supplied the prior: it is applied
+# to the L2 mode history today and will be applied to CBS's county expected vote when that
+# lands, with the same rows. An earlier name of `cbs_method` read as though the table
+# compared L2 against CBS, which it never did.
 #
 # Anything absent from the table is the IDENTITY (eday -> eday, early -> early, ...), which
 # is every county in TX, GA, FL and NC. check_mode_fold() re-derives each county's
@@ -108,68 +114,70 @@ geo_label = function(geo) stringr::str_replace(as.character(geo), "^[a-z]{2}_[0-
 # new exception cannot land silently.
 P_MODE_FOLD = "scripts/model/lookups/mode_fold.csv"
 
-#' The hard-coded CBS-method -> model-method fold
+#' The hard-coded prior-method -> feed-method fold
 #'
-#' One row per county whose feed vocabulary differs from CBS's. Absent = identity.
+#' One row per county whose feed vocabulary cannot carry the method the prior names.
+#' Absent = identity. Source-agnostic: `from_method` is whatever the prior calls it.
 #'
 #' @param path Path to `lookups/mode_fold.csv`.
-#' @return Tibble: state, county_cbs (3-digit, zero-padded), cbs_method, method.
+#' @return Tibble: state, county_cbs (3-digit, zero-padded), from_method, to_method.
 read_mode_fold = function(path = P_MODE_FOLD) {
   if (!file.exists(path)) {
     stop("mode fold table not found: ", path)
   }
   f = readr::read_csv(path, col_types = readr::cols(.default = "c")) |>
     dplyr::mutate(county_cbs = stringr::str_pad(county_cbs, 3, pad = "0"))
-  need = c("state", "county_cbs", "cbs_method", "method")
+  need = c("state", "county_cbs", "from_method", "to_method")
   miss = setdiff(need, names(f))
   if (length(miss)) {
     stop(basename(path), " is missing: ", paste(miss, collapse = ", "))
   }
-  dup = f |> dplyr::count(state, county_cbs, cbs_method) |> dplyr::filter(n > 1)
+  dup = f |> dplyr::count(state, county_cbs, from_method) |> dplyr::filter(n > 1)
   if (nrow(dup)) {
     stop(
       basename(path),
-      " maps the same CBS method twice: ",
-      paste(dup$state, dup$county_cbs, dup$cbs_method, collapse = "; ")
+      " maps the same method twice: ",
+      paste(dup$state, dup$county_cbs, dup$from_method, collapse = "; ")
     )
   }
   # a row that changes nothing is a mistake, not a no-op: it means someone meant to fold
   # and wrote the same value on both sides
-  same = dplyr::filter(f, cbs_method == method)
+  same = dplyr::filter(f, from_method == to_method)
   if (nrow(same)) {
     stop(
       basename(path),
-      " has rows whose cbs_method equals method (fold does nothing): ",
-      paste(same$state, same$county_cbs, same$cbs_method, collapse = "; ")
+      " has rows whose from_method equals to_method (fold does nothing): ",
+      paste(same$state, same$county_cbs, same$from_method, collapse = "; ")
     )
   }
-  dplyr::select(f, state, county_cbs, cbs_method, method)
+  dplyr::select(f, state, county_cbs, from_method, to_method)
 }
 
 #' Apply the fold to a county x method table
 #'
 #' Remaps `method` per `lookups/mode_fold.csv` and sums `values` within the result, so a
 #' folded method collapses onto the method it lands on (Hamilton's mail onto its early).
-#' Rows whose county x method is not in the table are untouched.
+#' Rows whose county x method is not in the table are untouched. `x$method` is whatever
+#' vocabulary the caller's prior uses -- the L2 history, or CBS once it is wired in.
 #'
-#' @param x Tibble with `county_cbs` and `method` (CBS's vocabulary) plus `values`.
+#' @param x Tibble with `county_cbs` and `method` plus `values`.
 #' @param state Two-letter state code.
 #' @param values Numeric columns to sum after the remap.
 #' @param fold The fold table.
 #' @return `x` with `method` folded and `values` summed; one row per county x method.
-fold_cbs_methods = function(x, state, values, fold = read_mode_fold()) {
+fold_methods = function(x, state, values, fold = read_mode_fold()) {
   need = c("county_cbs", "method", values)
   miss = setdiff(need, names(x))
   if (length(miss)) {
-    stop("fold_cbs_methods(): input is missing ", paste(miss, collapse = ", "))
+    stop("fold_methods(): input is missing ", paste(miss, collapse = ", "))
   }
   keys = setdiff(names(x), values)
   f = dplyr::filter(fold, state == !!state)
   x |>
     dplyr::mutate(county_cbs = stringr::str_pad(as.character(county_cbs), 3, pad = "0")) |>
     dplyr::left_join(
-      dplyr::select(f, county_cbs, cbs_method, .to = method),
-      by = c("county_cbs", method = "cbs_method")
+      dplyr::select(f, county_cbs, from_method, .to = to_method),
+      by = c("county_cbs", method = "from_method")
     ) |>
     dplyr::mutate(method = dplyr::coalesce(.to, method), .to = NULL) |>
     dplyr::summarize(
@@ -213,21 +221,21 @@ feed_methods = function(state, dir_26 = find_26_general()) {
 
 #' Check the fold table against the feed vocabularies
 #'
-#' For every county that reports a mode split, each of `cbs_methods` must either be a method
+#' For every county that reports a mode split, each of `prior_methods` must either be a method
 #' that county reports or have a row in `lookups/mode_fold.csv` pointing it at one that it
 #' does. This is what stops a new exception county from landing silently: the table is
 #' hard-coded, so something has to notice when the world no longer matches it.
 #'
 #' @param state Two-letter state code.
 #' @param dir_26 Path to 26_general.
-#' @param cbs_methods The CBS expectation's methods, i.e. what has to land somewhere.
+#' @param prior_methods The methods the prior names, i.e. what has to land somewhere.
 #' @param fold The fold table.
 #' @param abort Stop on a problem; FALSE returns the rows instead.
-#' @return Tibble of problems (invisibly when empty): county_cbs, cbs_method, issue.
+#' @return Tibble of problems (invisibly when empty): county_cbs, from_method, issue.
 check_mode_fold = function(
   state,
   dir_26 = find_26_general(),
-  cbs_methods = c("early", "eday", "mail"),
+  prior_methods = c("early", "eday", "mail"),
   fold = read_mode_fold(),
   abort = TRUE
 ) {
@@ -237,15 +245,15 @@ check_mode_fold = function(
   bad = list()
   for (cc in names(have)) {
     vocab = have[[cc]]
-    for (m in cbs_methods) {
+    for (m in prior_methods) {
       if (m %in% vocab) {
         next # CBS's method is one this county reports: identity, nothing to do
       }
-      to = f$method[f$county_cbs == cc & f$cbs_method == m]
+      to = f$to_method[f$county_cbs == cc & f$from_method == m]
       if (!length(to)) {
         bad[[length(bad) + 1]] = dplyr::tibble(
           county_cbs = cc,
-          cbs_method = m,
+          from_method = m,
           issue = paste0(
             "county reports ",
             paste(sort(vocab), collapse = "+"),
@@ -255,7 +263,7 @@ check_mode_fold = function(
       } else if (!to %in% vocab) {
         bad[[length(bad) + 1]] = dplyr::tibble(
           county_cbs = cc,
-          cbs_method = m,
+          from_method = m,
           issue = paste0(
             "mode_fold.csv folds ", m, " -> ", to,
             ", but the county reports only ", paste(sort(vocab), collapse = "+")
@@ -267,14 +275,14 @@ check_mode_fold = function(
   # a fold row for a county that no longer needs one is stale, and says the table and the
   # feed have drifted apart even though nothing is currently mis-allocated
   stale = dplyr::inner_join(
-    dplyr::select(f, county_cbs, cbs_method),
+    dplyr::select(f, county_cbs, from_method),
     dplyr::distinct(fm, county_cbs, method),
-    by = c("county_cbs", cbs_method = "method")
+    by = c("county_cbs", from_method = "method")
   )
   if (nrow(stale)) {
     bad[[length(bad) + 1]] = dplyr::tibble(
       county_cbs = stale$county_cbs,
-      cbs_method = stale$cbs_method,
+      from_method = stale$from_method,
       issue = "stale fold row: the county now reports this method itself"
     )
   }
@@ -283,7 +291,7 @@ check_mode_fold = function(
     stop(
       state,
       ": mode_fold.csv does not match the feed vocabulary\n",
-      paste0("  ", out$county_cbs, " ", out$cbs_method, ": ", out$issue, collapse = "\n")
+      paste0("  ", out$county_cbs, " ", out$from_method, ": ", out$issue, collapse = "\n")
     )
   }
   if (nrow(out)) out else invisible(out)
@@ -304,6 +312,6 @@ mode_fold_tag = function(state, fold = read_mode_fold()) {
   if (!nrow(f)) {
     return("")
   }
-  f = dplyr::arrange(f, county_cbs, cbs_method)
-  paste0("|fold", paste0(f$county_cbs, f$cbs_method, ">", f$method, collapse = ","))
+  f = dplyr::arrange(f, county_cbs, from_method)
+  paste0("|fold", paste0(f$county_cbs, f$from_method, ">", f$to_method, collapse = ","))
 }
