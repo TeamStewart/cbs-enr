@@ -119,7 +119,7 @@ Scraper laptop (the Mac mini, user `stewart`):
    `automation.R` refuses to start otherwise.
 3. Start it before the 18:00 ET cutover in `dashboard_mode.txt`. Publishing to Pages and
    CloudFront starts on its own at the cutover:
-   `caffeinate -i Rscript scripts/automation.R >> logs/console.log 2>&1`
+   `caffeinate -i Rscript scripts/automation.R`
 4. Keep `~/.cache/cbs-enr-commands.done`, so commands already run never run again.
 
 Watcher laptop (Mason's):

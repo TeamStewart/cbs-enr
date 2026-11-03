@@ -55,6 +55,16 @@ ENIGHTDATA_REPO = Sys.getenv("CBS_ENIGHTDATA_REPO", "git@github.com:TeamStewart/
 ENIGHTDATA_BRANCH = Sys.getenv("CBS_ENIGHTDATA_BRANCH", "main")
 ENIGHTDATA_DIR = path.expand(Sys.getenv("CBS_ENIGHTDATA_DIR", "~/.cache/cbs-enr-enightdata"))
 ENIGHTDATA_STAMP = paste0(ENIGHTDATA_DIR, ".installed") # sha of the installed commit
+# Logs go beside the data, so anyone with the election folder can see what failed.
+# globals.R is read into its own env: sourcing it here adds ~20 unrelated globals.
+LOGDIR = local({
+  if (nzchar(Sys.getenv("CBS_LOGDIR"))) return(path.expand(Sys.getenv("CBS_LOGDIR")))
+  e = new.env()
+  sys.source("scripts/util/globals.R", e)
+  # globals.R warns rather than aborts for an unknown user, leaving PATH_DROPBOX empty
+  if (!nzchar(e$PATH_DROPBOX)) return("logs")
+  path.expand(file.path(e$PATH_DROPBOX, e$ELECTION_FOLDER, "logs"))
+})
 # dashboard_is_live(): before dashboard_mode.txt's cutover, the data is still pushed to
 # DASH_BRANCH (the watcher reads it) but neither GitHub Pages nor mit.html publishes it
 source("scripts/util/dashboard_mode.R")
@@ -183,9 +193,8 @@ upload_dashboard_geo <- function(dir = "data/dashboard/geo") {
   }
 }
 
-# STATE_BRANCH: targets metadata, the last STATE_LOGS cycle logs, logs/console.log (when
-# automation.R is started with `>> logs/console.log 2>&1`), the installed enightdata sha and
-# this cycle's step results (cycle.json)
+# STATE_BRANCH: targets metadata, the last STATE_LOGS cycle logs, console.log (only if stdout was
+# redirected into LOGDIR), the installed enightdata sha and this cycle's step results (cycle.json)
 # Approved watcher commands (scripts/watch/apply.R): branch CMD_BRANCH holds commands.json, a
 # list of {id, action = "invalidate", targets}. Each id runs once on this laptop, between
 # tar_make() runs, and only for jurisdiction targets. Returns the ids run this cycle.
@@ -215,8 +224,8 @@ run_watch_commands <- function() {
 
 push_pipeline_state <- function(run_time, steps) {
   meta = file.path("_targets", "meta", c("meta", "progress", "process"))
-  logs = tail(sort(list.files("logs", "^automation_.*\\.log$", full.names = TRUE)), STATE_LOGS)
-  extra = c("logs/console.log", ENIGHTDATA_STAMP)
+  logs = tail(sort(list.files(LOGDIR, "^automation_.*\\.log$", full.names = TRUE)), STATE_LOGS)
+  logs = c(logs, fs::path(LOGDIR, "console.log"))
   cycle = tempfile(fileext = ".json")
   # free space on the volume holding the repo, for the watcher's disk check
   df = suppressWarnings(system2("df", c("-k", "."), stdout = TRUE))
@@ -224,8 +233,13 @@ push_pipeline_state <- function(run_time, steps) {
   jsonlite::write_json(c(list(run_time = run_time, finished = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
                               disk_free_gb = free_gb, commands_done = as.list(COMMANDS_DONE)), steps),
                        cycle, auto_unbox = TRUE)
-  files = c(meta, logs, extra)
-  files = setNames(files, replace(files, files == ENIGHTDATA_STAMP, "enightdata_sha"))
+  # Branch paths are named explicitly because LOGDIR is outside the repo; the watcher reads
+  # pipeline-state/logs/automation_*.log.
+  files = c(
+    setNames(meta, meta),
+    setNames(logs, file.path("logs", basename(logs))),
+    enightdata_sha = ENIGHTDATA_STAMP
+  )
   files = files[file.exists(files)]
   push_files(c(files, cycle.json = cycle), STATE_BRANCH, glue::glue("pipeline state {run_time}"))
 }
@@ -243,14 +257,14 @@ while (TRUE) {
   run_time <- format(Sys.time(), format = "%Y-%m-%d %H:%M:%S") |>
     stringr::str_replace_all("-|:| ", "_")
 
-  fs::dir_create("logs/")
+  fs::dir_create(LOGDIR)
 
   # each step: TRUE, or FALSE after logging why; nothing here may stop the loop
   step <- function(what, expr) {
     tryCatch({ force(expr); TRUE }, error = function(e) { message(what, " failed: ", conditionMessage(e)); FALSE })
   }
 
-  con <- file(glue::glue("logs/automation_{run_time}.log"))
+  con <- file(fs::path(LOGDIR, glue::glue("automation_{run_time}.log")))
   sink(con, append = TRUE)
   sink(con, append = TRUE, type = "message")
 
