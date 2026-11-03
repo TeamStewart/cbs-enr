@@ -148,7 +148,7 @@ read_history <- function(state) {
 # filled in. Names not in it are split on "/", and missing parts are "default".
 dash_model_parts <- function(models, config = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_config.csv")) {
   intervals = c("bootstrap", "credible", "conf_seq", "conformal", "none")
-  parsed = tibble(model = unique(models)) |>
+  parsed = tibble(model = unique(as.character(models))) |> # as.character: NULL when no model files yet
     mutate(
       parts = str_split(model, "/"),
       model_base = map_chr(parts, 1),
@@ -920,7 +920,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     )
   })
 
-  list(
+  trim_before_first_votes(list(
     meta = map(out, "meta") |> bind_rows(),
     ts = map(out, "ts") |> bind_rows(),
     prec = map(out, "prec") |> bind_rows(),
@@ -939,7 +939,31 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     geo_url = DASHBOARD_GEO_URL,
     title = DASHBOARD_TITLE,
     top_model = DASHBOARD_MODEL
-  )
+  ))
+}
+
+# Drop every time-series point from before a race's first votes, so the figures start at
+# the first count instead of a run of zeros. A race's first time is the earliest of: a
+# scraped summary (ts) or All places row (ts_all) with total > 0, or a model point with
+# reported votes (rep > 0). Before that, the race has no ts, ts_all, models,
+# model_turnout or cbs_exp rows at all.
+trim_before_first_votes <- function(dd) {
+  firsts = bind_rows(
+    filter(dd$ts, total > 0) |> select(key, time),
+    filter(dd$ts_all, total > 0) |> select(key, time),
+    filter(dd$models, rep > 0) |> select(key, time),
+    filter(dd$model_turnout, rep > 0) |> select(key, time)
+  ) |>
+    summarise(first = sort(time)[1], .by = key)
+  keep = \(d) {
+    if (is.null(d) || !nrow(d)) return(d)
+    d |>
+      left_join(firsts, by = "key") |>
+      filter(!is.na(first), time >= first) |>
+      select(-first)
+  }
+  for (n in c("ts", "ts_all", "models", "model_turnout", "cbs_exp")) dd[[n]] = keep(dd[[n]])
+  dd
 }
 
 parse_ca_datetime <- function(x, year = 2026L) {
