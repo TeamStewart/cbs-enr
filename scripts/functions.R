@@ -112,7 +112,7 @@ last_summary <- function(key, state, county) {
   d = tryCatch(nanoparquet::read_parquet(f), error = function(e) NULL)
   if (is.null(d) || nrow(d) == 0) return(NULL)
   message("summary ", key, ": no new data this cycle; rebuilt the last valid summary from ", basename(f))
-  make_summary(d, state, county)
+  build_summary(d, state, key)
 }
 
 # Per-run summary for one jurisdiction. Writes the candidate x method totals for
@@ -126,7 +126,12 @@ make_summary <- function(data, state, county) {
   # data target reruns next cycle (targets reruns errored targets), and the first good
   # download replaces this.
   if (is.null(data) || nrow(data) == 0) return(last_summary(key, state, county))
+  build_summary(data, state, key)
+}
 
+# The summary itself, for make_summary() and last_summary(). Kept apart so neither calls
+# the other: targets refuses a function dependency cycle (is_dag fails, nothing runs).
+build_summary <- function(data, state, key) {
   d = as_tibble(data) |>
     mutate(
       across(c(jurisdiction, contest, candidate, party, method, geo), as.character),
