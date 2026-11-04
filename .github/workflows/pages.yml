@@ -35,9 +35,12 @@ permissions:
   pages: write
   id-token: write
 
+# Let a running build finish: renders now take longer than the 5-minute cycle (122 MB page,
+# 2026-11-04), so cancel-in-progress cancelled every build and Pages stopped updating after
+# 9:56 AM. Without it, GitHub keeps only the newest pending run behind the running one.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
