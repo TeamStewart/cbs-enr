@@ -36,12 +36,82 @@ slack_call = function(method, body = list(), http = "POST") {
   out
 }
 
+# chat.postMessage allows about 1 post per second per channel; bursts get 429s
+SLACK_GAP = 1.1
+SLACK_CHUNK = 3500 # characters per combined message
+SLACK_OUT = new.env()
+SLACK_OUT$last = 0
+
 slack_post = function(text, thread_ts = NULL, broadcast = FALSE) {
+  if (!SLACK_DRY) {
+    wait = SLACK_OUT$last + SLACK_GAP - as.numeric(Sys.time())
+    if (wait > 0) Sys.sleep(wait)
+    on.exit(SLACK_OUT$last <- as.numeric(Sys.time()))
+  }
   body = list(channel = SLACK_CHANNEL, text = text, unfurl_links = FALSE, unfurl_media = FALSE)
   if (!is.null(thread_ts)) body$thread_ts = thread_ts
   if (broadcast) body$reply_broadcast = TRUE
   r = slack_call("chat.postMessage", body)
   if (isTRUE(r$ok)) r$ts else NULL
+}
+
+# ---- per-tick outbox: tick.R queues, then slack_flush() sends combined messages ----
+# roots: new incident posts, keyed by incident id (all of a tick's roots go in one message,
+# so those incidents share one thread; verbs name the incident, so replies still route).
+# msgs: list(text, thread), thread = NULL (top level), an incident id, or a Slack ts.
+slack_reset = function() {
+  SLACK_OUT$roots = list()
+  SLACK_OUT$msgs = list()
+}
+slack_reset()
+
+slack_queue_root = function(inc) SLACK_OUT$roots[[inc$id]] = incident_text(inc)
+slack_queue = function(text, thread = NULL) SLACK_OUT$msgs[[length(SLACK_OUT$msgs) + 1]] = list(text = text, thread = thread)
+
+# join texts with blank lines into chunks of at most SLACK_CHUNK characters
+slack_chunks = function(texts) {
+  out = list()
+  cur = integer()
+  for (i in seq_along(texts)) {
+    if (length(cur) && sum(nchar(texts[c(cur, i)]) + 2) > SLACK_CHUNK) {
+      out[[length(out) + 1]] = cur
+      cur = integer()
+    }
+    cur = c(cur, i)
+  }
+  if (length(cur)) out[[length(out) + 1]] = cur
+  out
+}
+
+# send everything queued this tick; returns db with slack_ts set on newly posted incidents
+slack_flush = function(db) {
+  roots = SLACK_OUT$roots
+  roots = roots[vapply(names(roots), function(id) !is.null(db$incidents[[id]]) && is.null(db$incidents[[id]]$slack_ts), TRUE)]
+  if (length(roots)) {
+    txt = unlist(roots)
+    for (ch in slack_chunks(txt)) {
+      head = if (length(roots) > 1) sprintf("*%d new incidents* (reply `approve/deny/ignore I-n` in this thread)\n\n", length(roots)) else ""
+      ts = slack_post(paste0(head, paste(txt[ch], collapse = "\n\n")))
+      if (!is.null(ts)) for (id in names(roots)[ch]) db$incidents[[id]]$slack_ts = ts
+    }
+  }
+  # resolve threads to a ts, then group by thread, keeping first-seen order
+  where = vapply(SLACK_OUT$msgs, function(m) {
+    t = m$thread
+    if (is.null(t)) return("")
+    if (!is.null(db$incidents[[t]])) return(db$incidents[[t]]$slack_ts %||% NA_character_)
+    t
+  }, "")
+  keep = !is.na(where)
+  if (any(!keep)) message("slack: dropped ", sum(!keep), " replies to incidents with no thread")
+  msgs = vapply(SLACK_OUT$msgs, `[[`, "", "text")[keep]
+  where = where[keep]
+  for (w in unique(where)) {
+    txt = msgs[where == w]
+    for (ch in slack_chunks(txt)) slack_post(paste(txt[ch], collapse = "\n\n"), thread_ts = if (nzchar(w)) w else NULL)
+  }
+  slack_reset()
+  db
 }
 
 slack_update = function(ts, text) isTRUE(slack_call("chat.update", list(channel = SLACK_CHANNEL, ts = ts, text = text))$ok)

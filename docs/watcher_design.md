@@ -29,6 +29,7 @@ state needs no locking of its own. Each step:
    - Pidfile: `state/l2/running.pid`.
 7. **slack out**
    - Posts new or escalated incidents and the digest.
+   - Every post in steps 4-7 is queued, then `slack_flush()` sends it combined: all new incidents of a tick go in one root message (they share its thread; verbs name the incident), and all replies to one thread go in one message. Messages split at 3500 characters; posts are spaced 1.1 s apart (Slack allows about 1 per second per channel). An open P0/P1 whose root post failed is retried next tick.
    - Updates the pinned status message.
 
 L2 is `claude -p` on Mason's subscription (`ANTHROPIC_API_KEY` unset), with a 600 s timeout.
@@ -97,7 +98,7 @@ Each check returns zero or more findings:
     - `tar_make` failed.
     - Errors jumped after an enightdata change.
     - The dashboard is stale or its data is NULL.
-  - `P1`: posted in its own thread.
+  - `P1`: posted with a thread (shared with other incidents opened in the same tick).
     - A model status isn't ok, or a race vanished.
     - After poll close: a scraper's rows drop to 0, its votes decrease, or its timestamp freezes.
     - Match rate drops.

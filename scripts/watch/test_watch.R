@@ -65,5 +65,25 @@ ok(effective_mode(now = now_et() + 7200) == "deterministic", "deterministic afte
 ok(SLACK_DRY && !is.null(slack_post("hello")), "dry-run post returns a ts")
 ok(file.exists(state_path("slack_outbox.log")), "dry-run writes the outbox")
 
+# ---- outbox: one tick's posts are combined ----
+ob = state_path("slack_outbox.log")
+n0 = length(readLines(ob))
+fdb = list(incidents = list(
+  `I-1` = list(id = "I-1", severity = "P1", message = "a", key = "k1"),
+  `I-2` = list(id = "I-2", severity = "P0", message = "b", key = "k2"),
+  `I-3` = list(id = "I-3", severity = "P1", message = "c", key = "k3", slack_ts = "111.000001")))
+for (i in fdb$incidents[1:2]) slack_queue_root(i)
+slack_queue("diag 1", thread = "I-1")
+slack_queue("diag 2", thread = "I-2")
+slack_queue("resolved 3", thread = "I-3")
+slack_queue("verb reply", thread = "111.000001")
+slack_queue("digest")
+fdb = slack_flush(fdb)
+posts = utils::tail(readLines(ob), -n0)
+ok(length(posts) == 4, "5 replies + 2 roots -> 4 posts (roots, shared thread, I-3 thread, top level)")
+ok(!is.null(fdb$incidents$`I-1`$slack_ts) && identical(fdb$incidents$`I-1`$slack_ts, fdb$incidents$`I-2`$slack_ts), "roots share one ts")
+ok(!length(SLACK_OUT$msgs) && !length(SLACK_OUT$roots), "flush empties the queue")
+ok(length(slack_chunks(strrep("x", c(2000, 2000, 2000)))) == 3 && length(slack_chunks(c("a", "b"))) == 1, "chunking")
+
 cat(if (n_fail) sprintf("\n%d FAILED\n", n_fail) else "\nall passed\n")
 quit(status = as.integer(n_fail > 0))
