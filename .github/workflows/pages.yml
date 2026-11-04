@@ -49,6 +49,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # The self-contained page passed ~100 MB on election night (2026-11-04) and the render
+      # was killed partway (Render "The operation was canceled", no error) from 1:41 AM ET on,
+      # consistent with the runner running out of memory. A 12 GB swap file lets it finish.
+      - name: Add swap
+        run: |
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile
+          sudo fallocate -l 12G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile >/dev/null
+          sudo swapon /mnt/swapfile
+          free -h
+
       # Ubuntu's r-base-core instead of r-lib/actions/setup-r: setup-r also apt-installs
       # devscripts/qpdf/ghostscript (~170 packages, for R CMD check), which the render doesn't need.
       # index.qmd only needs base R + knitr/rmarkdown/jsonlite (binaries from Posit Package Manager).
@@ -94,6 +107,7 @@ jobs:
           CBS_DASH_SOURCE: ${{ steps.data.outputs.src }}
         run: |
           quarto render index.qmd
+          free -h; ls -l index.html
           mkdir -p _site/data/dashboard && cp index.html _site/ && cp -r data/dashboard/geo _site/data/dashboard/ && touch _site/.nojekyll
 
       - name: Awaiting results page
