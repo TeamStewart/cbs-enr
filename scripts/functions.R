@@ -511,9 +511,13 @@ all_places_ts <- function(ts, cbs_ts, scraped_cbs) {
 read_summaries <- function(state, keys) {
   files = fs::dir_ls(fs::path(PATH_DROPBOX, ELECTION_FOLDER, state, "summaries"), regexp = "summary_.*\\.parquet$", fail = FALSE)
   if (length(files) == 0) return(NULL)
+  # summaries/ also holds pre-election runs (FL_seminole 2026-08-24, AK 08-31: primary
+  # results). Keeping them stretched the time series back months and squashed election
+  # night against the right edge of every results chart.
+  since = as.POSIXct(ELECTION_DATE, tz = "America/New_York")
   map(files, nanoparquet::read_parquet) |>
     bind_rows() |>
-    filter(key %in% keys) |>
+    filter(key %in% keys, time >= since) |>
     distinct()
 }
 
@@ -861,15 +865,22 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
             total = sum(votes),
             .by = c(key, time, method)
           )
-        # carry each jurisdiction's latest run forward to every timestamp
-        ts = by_key |>
-          complete(key, method, time = sort(unique(by_key$time))) |>
+        # carry each jurisdiction's latest run forward to every timestamp, as a whole run:
+        # a county whose methods change between runs (FL 2026-11-03: "all" in early runs,
+        # early/eday/mail after the recodes) must not keep its old method rows alive next
+        # to the new ones, or it is counted twice
+        times = sort(unique(by_key$time))
+        runs = distinct(by_key, key, run = time)
+        ts = tidyr::expand_grid(key = unique(runs$key), time = times) |>
+          left_join(mutate(runs, time = run), by = c("key", "time")) |>
           arrange(time) |>
-          group_by(key, method) |>
-          fill(dem, rep, total) |>
+          group_by(key) |>
+          fill(run) |>
           ungroup() |>
-          mutate(across(c(dem, rep, total), \(x) coalesce(x, 0))) |>
-          summarise(across(c(dem, rep, total), sum), .by = c(time, method))
+          filter(!is.na(run)) |>
+          inner_join(by_key, by = c("key", run = "time"), relationship = "many-to-many") |>
+          summarise(across(c(dem, rep, total), sum), .by = c(time, method)) |>
+          complete(method, time = times, fill = list(dem = 0, rep = 0, total = 0))
       }
     }
 
