@@ -81,7 +81,7 @@ state where `precinct26_id` repeats within county x cd.
 | AK | 30 (all) | 402 | ak_20261008 | 402 (100%) | 99.0% | done 10-15 |
 | AZ | 9 | 1,545 | az_20260901 | 1,545 (100%) | 100% | done 11-01 (statewide ENR, all 9 frame counties; was 1,172 / 5 counties) |
 | CA | 17 | 29,961 | ca_20260901 | 4,288 (14.3%) | 88.9% (10-30 measure; L2 rows 23,726 -> 25,353 on 10-31 with San Bernardino) | partial 10-31 (ENR: Sacramento, San Bernardino, San Francisco, Sonoma singletons, Ventura; SD, Solano, Riverside, Nevada via consolidated builds) |
-| FL | 63 | 5,339 | fl_20261011 | 4,314 (80.8%) | 99.9% | partial 11-03 (51 ENR counties; live-file recodes for Baker, Calhoun, Charlotte, Gilchrist, Holmes, Jefferson, Lafayette, Seminole; no clean file yet: Bay, Hamilton, Highlands, Manatee, Okaloosa, Orange, Pasco, Putnam, St Lucie, Suwannee, Taylor, Volusia) |
+| FL | 65 | 6,252 | fl_20261011 | 3,376 (54.0%) | 99.9% | partial 10-31 (41 ENR counties; Pinellas, St Johns added; L2 St Johns/St Lucie fixed) |
 | GA | 159 (all) | 2,616 | ga_20261006 | 2,600 (99.4%) | 99.4% | done 10-31 |
 | IA | 99 (all) | 1,658 | ia_20261002 | 1,632 (98.4%) | 100% | done 10-31 (frame codes have no names: matched by voter profile + code/township evidence, see `ia.R`) |
 | MI | 73 | 3,722 (keyed on `precinct26_code`) | mi_20260929 | 2,549 (68.5%) | 99.4% | partial 10-31 (28 ENR counties; Leelanau added; L2 St Clair/St Joseph fixed) |
@@ -90,8 +90,7 @@ state where `precinct26_id` repeats within county x cd.
 | NM | 33 (all) | 2,204 | nm_20260914 | 2,203 (99.95%) | 99.95% | done 10-31 |
 | OH | 15 | 5,052 | oh_20260929 | 4,626 (91.6%) | 99.96% | partial 10-30 (no ENR: Lake, Warren) |
 | PA | 20 | 6,492 | pa_20260911 | 4,930 (75.9%) | 99.9% | partial 10-31 (ENR: Allegheny, Chester, Dauphin, Delaware, Erie, Lancaster, Montgomery, Philadelphia, Washington, York) |
-| SC | 46 (all) | 2,332 | sc_20261014 | 2,331 (99.96%) | 100% | done 11-03 |
-| TX | 72 | 10,851 | tx_20261011 | 6,712 (61.9%) | 94.8% | partial 11-01 (23 ENR counties; Collin added on its Enhanced Voting switch; Tarrant via consolidated sub-units) |
+| TX | 71 | 10,809 | tx_20261011 | 8,045 (74.4%) | 94.8% | partial 11-03 (31 ENR counties; Angelina dropped from metadata so out of the frame; Nueces single-split labels now 1:1 via `pad4(base)`, its 33 multi-split bases stay NA; Collin added on its Enhanced Voting switch; Tarrant via consolidated sub-units) |
 | VA | 133 (all) | 2,538 | va_20261006 | 2,526 (99.5%) | 99.5% | done 10-31 |
 | WA | 4 | 167 | wa_20260917 | - | - | waiting |
 
@@ -136,12 +135,7 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
   ENR order: confirm with the SOE. Union: only 3C, 4B, 5B are single-precinct
   places; the rest are sums (NA). Miami-Dade multi-part precincts NA (100, 116,
   281, 283, 285, 462, 489, 708, 710, 730, 745, 765). Washington ENR `0010 Ebro`
-  has no frame row. Holmes (L2 labels) and Lafayette (voterfocus FL-LAF) are
-  also in `place_codes`. Calhoun live ENR folds 101C/201C/401C/501C into the base
-  precinct, so 101, 201, 401, 501 and the C rows are NA. Charlotte base + `.1`
-  part pairs (201, 204, 403, 404, 501, 505) are NA; 201.1 and 204.1 are tiny
-  (23 and 7 votes at 20:30 on 11-03), so pairing the base alone is an option.
-  See the Gadsden/Levy follow-up.
+  has no frame row. See the Gadsden/Levy follow-up.
 - **GA**: needs the uncommitted `scrape_ga()` change (geo keyed on EV id).
   ENR ids also match frame names through their EV labels (`label` tier:
   Quitman G = GEORGETOWN, Dodge PONDT = RHINE; Morgan 46026 by hand = REC).
@@ -182,16 +176,6 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
   Allegheny BRADFORDWOOD, MCDONALD 00 05, ROSSLYN FARM, SEWICKLEY HT,
   PENNSBURY VLG 00 02; Washington 8th ward; Lehigh 011905S. Ambiguous, NA:
   Lancaster 4906. Dauphin and Erie carry test votes before election day.
-- **SC**: ENR (Clarity) has names only, matched to frame names; a `votehub`
-  tier uses the county code inside the VoteHub unit_id (`45003-:-007`) for
-  feed typos (`ORNAGEBURG WD 7`) and renames the frame label missed (Aiken 007
-  Bath, 012 Clearwater; L2 agrees). L2 rules: Aiken `NAME code`, Spartanburg
-  `(code)`, Richland `COLUMBIA nn` = WARD nn = 1nn, Dorchester trailing ` 1`,
-  13 manual one-offs. NA by design: Kershaw ENR `Camden No. 2 & 3` (merge; frame
-  108 keeps L2 only). Provisional/Failsafe ENR buckets never match. Check:
-  L2 ratios Orangeburg 04 (1.64), Richland COLUMBIA 02/08 (1.33), Beaufort
-  BURTON 1D (0.70). L2 vote mode: blank BallotType = eday (`BLANK_EDAY`);
-  "Early but Method Unknown" stays unknown (no mail/early split).
 - **TX**: sub-unit reporters (Wood `11 - Joint COQ`, Hood `101 - GCTY_GISD`,
   multi-split Dallas `1063-01`) are sums, NA. Tarrant reports every precinct as
   `1005` + `1005 - F99`/`L01`; since 10-31 `scrape_tx()` sums the units
@@ -216,6 +200,10 @@ in each `{st}.R`; dated rerun history is in git (`git log -p docs/crosswalk_todo
   the leftovers on the precinct number, accept a prefix match only at the cap,
   and require it to be unique within the county. Worth promoting to
   `helpers.R` if a second state needs it.
+- **Recheck on 2026-11-02 and 2026-11-03: FL Gadsden and Levy polling
+  places.** If a county moved a polling place, that precinct silently drops to
+  NA. Compare ENR names with the county lists above, rerun `fl.R`, and confirm
+  both are still 100% ENR.
 - Helper candidates (defined locally for now): `pad_code`/`std_code` (TX, CA,
   FL), `drop_ratio_outliers` (TX, CA), an ENR sub-unit detector (TX Wood, FL
   Miami-Dade), `frame_names(st, by_cd = TRUE)`, a county-spelling check in

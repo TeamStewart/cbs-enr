@@ -50,6 +50,8 @@ IA, OH Carroll, FL Franklin) and GA L2 except Burke; 11-01 fixed CA Ventura. Lef
 | GA | l2 | Burke | 12 | renumbered for 2026; L2 (10-06) has the old numbers. Needs a newer Burke L2 pull. |
 | NY | l2 (direct) | Chemung, Clinton, Madison, Ontario, Orange, Putnam, Sullivan, Ulster | 967 | not yet inspected |
 | WI | l2 (direct) | Barron, Dane, Oneida | 340 | not yet inspected |
+| MI | l2 | Grand Traverse | 36 | NEW 11-03: its 36 ENR labels (`Acme Twp Pct 1`) parse but key-match 0 frame rows; unexplained. |
+| TX | — | Nueces, Comal, Dallas, Gregg | ~500 | NEW 11-03: NOT id-rule fixable. Nueces (33 of 130 bases), Comal (all 41) and Dallas report split/ballot-style sub-units with no base row, so the frame precinct is their SUM -- needs `scrape_tx()` `consolidate_units()` as Tarrant got on 10-31. Gregg files 22 units against 96 VTDs: `reporting_levels.csv`, not a crosswalk. |
 
 Also NA by choice in VoteHub: NE Howard (Boelus, Cushing, Farwell vs Loup
 Fork, Posen, Spring Creek) and NE Webster's two Red Cloud precincts. The
