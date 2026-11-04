@@ -92,14 +92,46 @@ upload_html <- function(path, state) {
 ## DASHBOARD
 # ========================================
 
+# The jurisdiction's last valid summary, for a cycle whose data failed: this summary
+# target's stored value from its last run (read by the running target's own name; the
+# stored object is only replaced when this run finishes), else one rebuilt from the last
+# good {state}/clean/{key}_latest.parquet (a failed download never overwrites it). The
+# rebuild rewrites the same summaries/ file (named by feed time), so the time series gets
+# no new point. NULL if neither exists.
+last_summary <- function(key, state, county) {
+  name = tryCatch(targets::tar_name(), error = function(e) NA_character_)
+  prev = if (is.na(name)) NULL else tryCatch(targets::tar_read_raw(name), error = function(e) NULL)
+  if (!is.null(prev)) {
+    message("summary ", key, ": no new data this cycle; keeping the last valid summary")
+    return(prev)
+  }
+  dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, state, "clean")
+  f = list.files(dir, full.names = TRUE)
+  f = f[tolower(basename(f)) == tolower(paste0(key, "_latest.parquet"))]
+  if (length(f) != 1) return(NULL)
+  d = tryCatch(nanoparquet::read_parquet(f), error = function(e) NULL)
+  if (is.null(d) || nrow(d) == 0) return(NULL)
+  message("summary ", key, ": no new data this cycle; rebuilt the last valid summary from ", basename(f))
+  build_summary(d, state, key)
+}
+
 # Per-run summary for one jurisdiction. Writes the candidate x method totals for
 # every contest to {state}/summaries/ (these accumulate into the dashboard time
 # series) and returns the precinct-level table for the latest run.
 make_summary <- function(data, state, county) {
   key = if (is.na(county)) state else glue("{state}_{county}")
-  # upstream scrape errored (NULL via error = "null") or site posted nothing yet
-  if (is.null(data) || nrow(data) == 0) return(NULL)
+  # upstream scrape errored (NULL via error = "null") or site posted nothing this time:
+  # keep this jurisdiction's last valid summary, so the dashboard and the models hold its
+  # last numbers (e.g. Clarity 502s on 2026-11-03) instead of dropping it. The errored
+  # data target reruns next cycle (targets reruns errored targets), and the first good
+  # download replaces this.
+  if (is.null(data) || nrow(data) == 0) return(last_summary(key, state, county))
+  build_summary(data, state, key)
+}
 
+# The summary itself, for make_summary() and last_summary(). Kept apart so neither calls
+# the other: targets refuses a function dependency cycle (is_dag fails, nothing runs).
+build_summary <- function(data, state, key) {
   d = as_tibble(data) |>
     mutate(
       across(c(jurisdiction, contest, candidate, party, method, geo), as.character),

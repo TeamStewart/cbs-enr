@@ -177,9 +177,9 @@ state_keys = function(st, enr) {
     clark_seq = as.integer(str_extract(enr$precinct_enr, "^\\d+"))
     clark_grp = if_else(clark, str_remove(enr$precinct_enr, "^\\d+ "), NA_character_)
     clark_rank = ave(coalesce(clark_seq, 0L), coalesce(clark_grp, ""), FUN = rank)
-    # Carroll "augusta 001" = "AUGUSTA" (trailing ENR sequence number)
+    # Carroll "augusta 001" = "AUGUSTA", Warren "carlisle city a 136" (trailing ENR sequence number)
     enr = mutate(enr, enr_name = case_when(
-      county == county_key("OH", "Carroll") ~ str_remove(precinct_enr, "\\s+\\d{3}$"),
+      county %in% county_key("OH", c("Carroll", "Warren")) ~ str_remove(precinct_enr, "\\s+\\d{3}$"),
       county == county_key("OH", "Lucas") ~ str_replace_all(precinct_enr, "(?<=\\d)(?=[a-z])", " "),
       county == county_key("OH", "Montgomery") ~ str_replace_all(std_name(precinct_enr), oh_montgomery),
       clark & clark_grp %in% c("mr", "t") ~ paste(clark_grp, clark_rank),
