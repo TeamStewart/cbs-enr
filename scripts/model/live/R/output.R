@@ -335,6 +335,10 @@ predict_one = function(cells, ret, race, model, time, cbs = NULL, base = NULL, l
   r = race$race_id[1]
   m = model
   t0 = proc.time()[["elapsed"]]
+  # Counties whose `all` rows are a fragment beside a real split lose their by-method fit
+  # for having them (method_counties()'s all(ok) veto). Drop those rows from the RETURNS,
+  # before both the returns_by_method() test and the fit -- see ALL_FRAGMENT in run.R.
+  ret = drop_fragment_all(ret, race$state[1])
   # a by-method model on a race where only some counties' results are split by method:
   # fit it on those counties; the rest count as unscraped and come from CBS (run.R)
   note = NULL
