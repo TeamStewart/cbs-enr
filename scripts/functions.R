@@ -861,15 +861,22 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
             total = sum(votes),
             .by = c(key, time, method)
           )
-        # carry each jurisdiction's latest run forward to every timestamp
-        ts = by_key |>
-          complete(key, method, time = sort(unique(by_key$time))) |>
+        # carry each jurisdiction's latest run forward to every timestamp, as a whole run:
+        # a county whose methods change between runs (FL 2026-11-03: "all" in early runs,
+        # early/eday/mail after the recodes) must not keep its old method rows alive next
+        # to the new ones, or it is counted twice
+        times = sort(unique(by_key$time))
+        runs = distinct(by_key, key, run = time)
+        ts = tidyr::expand_grid(key = unique(runs$key), time = times) |>
+          left_join(mutate(runs, time = run), by = c("key", "time")) |>
           arrange(time) |>
-          group_by(key, method) |>
-          fill(dem, rep, total) |>
+          group_by(key) |>
+          fill(run) |>
           ungroup() |>
-          mutate(across(c(dem, rep, total), \(x) coalesce(x, 0))) |>
-          summarise(across(c(dem, rep, total), sum), .by = c(time, method))
+          filter(!is.na(run)) |>
+          inner_join(by_key, by = c("key", run = "time"), relationship = "many-to-many") |>
+          summarise(across(c(dem, rep, total), sum), .by = c(time, method)) |>
+          complete(method, time = times, fill = list(dem = 0, rep = 0, total = 0))
       }
     }
 
