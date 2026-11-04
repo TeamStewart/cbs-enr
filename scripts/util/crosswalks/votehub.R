@@ -304,7 +304,28 @@ vh_manual = bind_rows(
   # ENR polling places; VoteHub "Precinct 1 Eastpoint" (code 001) etc.
   vh_pairs("FL", "Franklin", c(
     "Eastpoint" = "001", "Alligator Point" = "002", "Holy Family Center" = "003", "Historic Holy Family" = "004",
-    "Carrabelle" = "005", "Lanark Village" = "006", "St. George Island" = "007", "American Legion" = "008"))
+    "Carrabelle" = "005", "Lanark Village" = "006", "St. George Island" = "007", "American Legion" = "008")),
+  # 11-03 live ENR labels (the CBS test feed had bare codes). Baker "Sanderson 1A" = VoteHub
+  # "Sanderson"; Calhoun "Neal Civic Center - 101" = "101" (VoteHub, like live ENR, has no
+  # 101C/201C/401C/501C units); Holmes and Lafayette polling places = codes as in fl.R place_codes.
+  vh_pairs("FL", "Baker", c(
+    "Sanderson 1A" = "Sanderson", "South Macclenny 2A" = "South Macclenny", "North Macclenny 3A" = "North Macclenny",
+    "Baxter 4A" = "Baxter", "Taylor 4B" = "Taylor", "Macedonia 4C" = "Macedonia", "Cuyler 4D" = "Cuyler",
+    "Glen St Mary 5A" = "Glen St. Mary", "Olustee 6A" = "Olustee")),
+  vh_pairs("FL", "Calhoun", c(
+    "Neal Civic Center - 101" = "101", "Westside VFD - 102" = "102", "Altha Old Gym - 201" = "201",
+    "Neal Civic Center - 202" = "202", "Shelton Park Library - 301" = "301", "Carr-Clarksville VFD - 302" = "302",
+    "Scout House - 401" = "401", "Neal Civic Center - 501" = "501", "Carr-Clarksville VFD - 502" = "502",
+    "Kinard Public Library - 503" = "503")),
+  vh_pairs("FL", "Holmes", c(
+    "Ponce de Leon" = "001.0", "Pine Log" = "002.0", "New Hope" = "003.0", "Bethlehem" = "004.0",
+    "Gritney" = "005.0", "Noma" = "006.0", "West Bonifay" = "007.0", "East Bonifay" = "008.0")),
+  vh_pairs("FL", "Lafayette", c(
+    "Day Community Center" = "001.0", "Mayo Community Center - D2" = "002.0", "Airline Community Center" = "003.0",
+    "4th District Community Center" = "004.0", "Mayo Community Center - D5" = "005.0")),
+  # DeSoto 05A/15A = 05/15 (no B parts; see fl.R)
+  vh_pairs("FL", "DeSoto", c(
+    "05A The House of God Church" = "00005", "15A First Baptist Church Christ. Life Ctr" = "00015"))
 )
 # FL26G / NE26G / OH26G (Nov 2) replaced the gpkg layers: same polygons, but OH and part of NE/FL
 # renamed their codes, and the new names match the ENR ids less often. These pairs carry the
