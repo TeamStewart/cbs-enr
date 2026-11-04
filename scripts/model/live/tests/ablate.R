@@ -131,7 +131,9 @@ run_arm <- function(row) {
   # --sim ignores --out, so snapshot before the next arm overwrites it
   dest <- file.path(OUT, row$arm)
   dir.create(dest, showWarnings = FALSE, recursive = TRUE)
-  for (f in c("precincts_latest.parquet", "turnout_latest.csv", "status_latest.csv")) {
+  # predictions_* too: it is what read_model_results() / the dashboard's Models page stack,
+  # so leaving it out makes the snapshot useless for anything but this script's own table.
+  for (f in c("precincts_latest.parquet", "predictions_latest.csv", "turnout_latest.csv", "status_latest.csv")) {
     src <- file.path(SIM_DIR, f)
     if (file.exists(src)) file.copy(src, file.path(dest, f), overwrite = TRUE)
   }
