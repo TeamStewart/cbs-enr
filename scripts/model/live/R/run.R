@@ -247,7 +247,8 @@ ALL_FRAGMENT = tibble::tribble(
   "GA", "017", "GA", "029", "GA", "035", "GA", "036",
   "GA", "038", "GA", "048", "GA", "053", "GA", "060",
   "GA", "071", "GA", "097", "GA", "120", "GA", "146",
-  "GA", "155"
+  "GA", "155", "GA", "032", "GA", "118", "GA", "128",
+  "GA", "132"
 )
 
 #' Drop `all` rows for counties where `all` is a fragment beside a real split
