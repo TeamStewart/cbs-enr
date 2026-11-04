@@ -139,6 +139,7 @@ snapshot for any race whose pull fails.
 | `tests/time_models.R` | how long each model takes per race on this computer, one at a time and all at once in parallel (as `run_night.R` runs them) |
 | `tests/sim_statewide.R` | a simulated night at state level: Ethan's sim for the scraped counties + a simulated CBS feed for the rest, scored against the statewide truth |
 | `tests/compare_runs.R` | checks a refactor changes no estimates: `save` before and after, then `compare` |
+| `tests/check_mode_folds.R` | does `lookups/mode_fold.csv` still match what the feeds will report? The table is hand-written and nothing generates it, so nothing else notices when a county changes which vote methods it files. Exits 1 on a mismatch, so it can gate a refresh; `--priors` also measures the two defects the fold exists to prevent |
 | `tests/check_outputs.R`, `tests/time_refresh.R`, `tests/coverage_summary.R` | output checks, refresh timing, and the interval coverage report (`tests/coverage_report.md`) |
 
 ## Model names, demographic specs and intervals

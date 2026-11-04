@@ -172,7 +172,9 @@ clean_files_at = function(state, at, d26 = find_26_general(), exclude = NA) {
     stamp = as.POSIXct(stringr::str_extract(arch, "\\d{4}(_\\d{2}){5}(?=\\.parquet$)"), format = "%Y_%m_%d_%H_%M_%S", tz = TZ)
   )
   bind_rows(lapply(sub("_latest\\.parquet$", "", latest), function(p) {
-    x = filter(a, prefix == p, stamp <= at)
+    # case-insensitive: on macOS a county's _latest file keeps the case of its first write
+    # (FL_Polk_latest) while later archives are named as scraped (FL_polk_2026_11_03_...)
+    x = filter(a, tolower(prefix) == tolower(p), stamp <= at)
     if (nrow(x)) return(mutate(slice_max(x, stamp, n = 1, with_ties = FALSE), source = "archive"))
     f = file.path(dir, paste0(p, "_latest.parquet"))
     t = if (file.size(f) > 0) tryCatch(max(read_pq(f)$time, na.rm = TRUE), error = \(e) NA) else NA

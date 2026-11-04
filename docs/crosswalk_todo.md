@@ -90,7 +90,7 @@ state where `precinct26_id` repeats within county x cd.
 | NM | 33 (all) | 2,204 | nm_20260914 | 2,203 (99.95%) | 99.95% | done 10-31 |
 | OH | 15 | 5,052 | oh_20260929 | 4,626 (91.6%) | 99.96% | partial 10-30 (no ENR: Lake, Warren) |
 | PA | 20 | 6,492 | pa_20260911 | 4,930 (75.9%) | 99.9% | partial 10-31 (ENR: Allegheny, Chester, Dauphin, Delaware, Erie, Lancaster, Montgomery, Philadelphia, Washington, York) |
-| TX | 72 | 10,851 | tx_20261011 | 6,712 (61.9%) | 94.8% | partial 11-01 (23 ENR counties; Collin added on its Enhanced Voting switch; Tarrant via consolidated sub-units) |
+| TX | 71 | 10,809 | tx_20261011 | 8,045 (74.4%) | 94.8% | partial 11-03 (31 ENR counties; Angelina dropped from metadata so out of the frame; Nueces single-split labels now 1:1 via `pad4(base)`, its 33 multi-split bases stay NA; Collin added on its Enhanced Voting switch; Tarrant via consolidated sub-units) |
 | VA | 133 (all) | 2,538 | va_20261006 | 2,526 (99.5%) | 99.5% | done 10-31 |
 | WA | 4 | 167 | wa_20260917 | - | - | waiting |
 

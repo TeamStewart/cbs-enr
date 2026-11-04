@@ -101,7 +101,7 @@ check_cycle_steps = function(ctx) {
     v = cyc[[s]]
     if (!is.null(v) && identical(as.logical(v), FALSE)) {
       out[[length(out) + 1]] = finding(
-        "cycle_step", s, paste0("Cycle ", cyc$run_time, ": step ", s, " failed (see that cycle's log/console.log)."),
+        "cycle_step", s, paste0("Cycle ", cyc$run_time, ": step ", s, " failed (see 26_general/logs/automation_", cyc$run_time, ".log)."),
         severity = if (s == "tar_make") "P0" else "P1", evidence = list(run_time = cyc$run_time)
       )
     }

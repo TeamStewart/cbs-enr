@@ -45,15 +45,23 @@ jobs:
     # another ref a no-op, so the medsl pipeline can never render.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
+    env:
+      # .Rprofile sources renv/activate.R; skip it so renv doesn't bootstrap on every run
+      RENV_ACTIVATE_PROJECT: "FALSE"
+      R_LIBS_USER: ${{ github.workspace }}/../Rlib
     steps:
       - uses: actions/checkout@v7
 
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
-
-      - name: Install R packages
-        run: Rscript -e 'install.packages(c("knitr", "rmarkdown", "jsonlite"))'
+      # Ubuntu's r-base-core instead of r-lib/actions/setup-r: setup-r also apt-installs
+      # devscripts/qpdf/ghostscript (~170 packages, for R CMD check), which the render doesn't need.
+      # index.qmd only needs base R + knitr/rmarkdown/jsonlite (binaries from Posit Package Manager).
+      - name: Install R and packages
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends r-base-core
+          mkdir -p "$R_LIBS_USER"
+          Rscript -e 'options(HTTPUserAgent = sprintf("R/%s R (%s)", getRversion(), paste(getRversion(), R.version$platform, R.version$arch, R.version$os))); install.packages(c("knitr", "rmarkdown", "jsonlite"), lib = Sys.getenv("R_LIBS_USER"), repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+          Rscript -e 'R.version.string; packageVersion("knitr"); packageVersion("rmarkdown")'
 
       - uses: quarto-dev/quarto-actions/setup@v2
         with:

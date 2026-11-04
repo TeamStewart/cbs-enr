@@ -216,7 +216,80 @@ METHOD_ONLY_MODELS = "medsl_sur"
 #'
 #' @param returns Returns.
 #' @return Character vector of 3-digit county codes (from the geo).
+# COUNTIES WHOSE `all` ROWS ARE A FRAGMENT, NOT A TOTAL (ALL_FRAGMENT_DROP=0 to disable).
+#
+# `all` is nominally an aggregate, but what a county actually puts in it is a per-county
+# convention that the ZERO FILE DOES NOT PREDICT -- the split a county advertises before
+# polls close is not the one it releases, so this cannot be calibrated pre-election and is
+# maintained by hand from the live feed.
+#
+# Two distinct shapes, measured 2026-11-03 on the live feed, as all/split by county:
+#
+#   FRAGMENT   GA: 0.009-0.170 across 13 counties (060 668,307 split vs 6,013 all). The
+#              split IS the county; `all` is a sliver from a few geos. Dropping those rows
+#              lets the county keep its by-method fit, which is what this list does.
+#   THE TOTAL  FL: 14.9x to 481,118x (053: 0 split, 481,118 all). The split is stale
+#              zero-file scaffolding and `all` carries the whole county. Those counties are
+#              NOT listed: method_counties()'s existing all(ok) veto correctly evicts them
+#              to the CBS county path, and admitting them would hand the by-method equations
+#              three empty modes.
+#   AMBIGUOUS  GA 085 (0.52), 140 (0.94), 133 (4.50) are not listed either -- neither shape
+#              fits, so the conservative eviction stands until someone looks at them.
+#
+# Why the rows must leave the RETURNS and not just the county test: filtering them only
+# inside method_counties() admits the county WITH its `all` rows still in `ret`, and that
+# collapsed the live GA_gov estimate 4,247,346 -> 2,940,805 (-31%). The fold table cannot do
+# this job either -- every fold site (cells.R, fold_mode_history) is on the PRIOR side, and
+# model_medsl.R reads `from_method` as a mode the county CANNOT report, pinning it to a prior
+# share of 0, which is the opposite of true here.
+ALL_FRAGMENT = tibble::tribble(
+  ~state, ~county_cbs,
+  "GA", "017", "GA", "029", "GA", "035", "GA", "036",
+  "GA", "038", "GA", "048", "GA", "053", "GA", "060",
+  "GA", "071", "GA", "097", "GA", "120", "GA", "146",
+  "GA", "155", "GA", "032", "GA", "118", "GA", "128",
+  "GA", "132"
+)
+
+#' Drop `all` rows for counties where `all` is a fragment beside a real split
+#'
+#' @param returns One race's standard returns.
+#' @param state Two-letter state code.
+#' @return `returns`, minus the `all` rows of this state's `ALL_FRAGMENT` counties.
+drop_fragment_all = function(returns, state) {
+  if (Sys.getenv("ALL_FRAGMENT_DROP", unset = "1") == "0" || !nrow(returns)) {
+    return(returns)
+  }
+  ctys = ALL_FRAGMENT$county_cbs[ALL_FRAGMENT$state == state]
+  if (!length(ctys)) {
+    return(returns)
+  }
+  dplyr::filter(returns, !(as.character(method) == "all" & geo_county(geo) %in% ctys))
+}
+
 method_counties = function(returns) {
+  # METHOD_IGNORE_ALL=1 (off by default) drops `all` rows before the per-county test below.
+  #
+  # Why it is worth a switch. The test is `all(ok)` PER COUNTY: one row whose method is not
+  # in METHOD_MAP vetoes the whole county, and `all` is not in METHOD_MAP. So a county that
+  # reports the complete mail/early/eday split AND a redundant `all` total is treated as not
+  # splitting, and predict_one() drops it from `cells` -- losing its precinct-level fit
+  # entirely. But `all` is an AGGREGATE that must never be summed beside the others: it is
+  # surplus information, not missing information.
+  #
+  # The timing is what makes it bite. A county's zero file carries only the split, so
+  # all(ok) is TRUE and it is in the fit; the moment it posts results the feed gains `all`
+  # rows, all(ok) flips FALSE, and the county is evicted exactly when its data becomes
+  # useful. Measured 2026-11-03 at 20:20: FL 3 counties / 36.1% of its counted vote and GA
+  # 13 counties / 21.9%, all of them counties that DO report the split. The votes are not
+  # lost (they fall through to CBS county results, as the comment in predict_one says) but
+  # geo = "scraped" becomes a changing-composition series that sags as counties report, and
+  # reads as turnout falling when turnout is not falling.
+  #
+  # Off by default because it changes which counties get a precinct-level fit on the night.
+  if (Sys.getenv("METHOD_IGNORE_ALL", unset = "0") == "1") {
+    returns <- dplyr::filter(returns, as.character(method) != "all")
+  }
   returns |>
     mutate(
       cty = geo_county(geo),

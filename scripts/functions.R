@@ -92,14 +92,46 @@ upload_html <- function(path, state) {
 ## DASHBOARD
 # ========================================
 
+# The jurisdiction's last valid summary, for a cycle whose data failed: this summary
+# target's stored value from its last run (read by the running target's own name; the
+# stored object is only replaced when this run finishes), else one rebuilt from the last
+# good {state}/clean/{key}_latest.parquet (a failed download never overwrites it). The
+# rebuild rewrites the same summaries/ file (named by feed time), so the time series gets
+# no new point. NULL if neither exists.
+last_summary <- function(key, state, county) {
+  name = tryCatch(targets::tar_name(), error = function(e) NA_character_)
+  prev = if (is.na(name)) NULL else tryCatch(targets::tar_read_raw(name), error = function(e) NULL)
+  if (!is.null(prev)) {
+    message("summary ", key, ": no new data this cycle; keeping the last valid summary")
+    return(prev)
+  }
+  dir = fs::path(PATH_DROPBOX, ELECTION_FOLDER, state, "clean")
+  f = list.files(dir, full.names = TRUE)
+  f = f[tolower(basename(f)) == tolower(paste0(key, "_latest.parquet"))]
+  if (length(f) != 1) return(NULL)
+  d = tryCatch(nanoparquet::read_parquet(f), error = function(e) NULL)
+  if (is.null(d) || nrow(d) == 0) return(NULL)
+  message("summary ", key, ": no new data this cycle; rebuilt the last valid summary from ", basename(f))
+  build_summary(d, state, key)
+}
+
 # Per-run summary for one jurisdiction. Writes the candidate x method totals for
 # every contest to {state}/summaries/ (these accumulate into the dashboard time
 # series) and returns the precinct-level table for the latest run.
 make_summary <- function(data, state, county) {
   key = if (is.na(county)) state else glue("{state}_{county}")
-  # upstream scrape errored (NULL via error = "null") or site posted nothing yet
-  if (is.null(data) || nrow(data) == 0) return(NULL)
+  # upstream scrape errored (NULL via error = "null") or site posted nothing this time:
+  # keep this jurisdiction's last valid summary, so the dashboard and the models hold its
+  # last numbers (e.g. Clarity 502s on 2026-11-03) instead of dropping it. The errored
+  # data target reruns next cycle (targets reruns errored targets), and the first good
+  # download replaces this.
+  if (is.null(data) || nrow(data) == 0) return(last_summary(key, state, county))
+  build_summary(data, state, key)
+}
 
+# The summary itself, for make_summary() and last_summary(). Kept apart so neither calls
+# the other: targets refuses a function dependency cycle (is_dag fails, nothing runs).
+build_summary <- function(data, state, key) {
   d = as_tibble(data) |>
     mutate(
       across(c(jurisdiction, contest, candidate, party, method, geo), as.character),
@@ -148,7 +180,7 @@ read_history <- function(state) {
 # filled in. Names not in it are split on "/", and missing parts are "default".
 dash_model_parts <- function(models, config = fs::path(PATH_DROPBOX, ELECTION_FOLDER, "model_config.csv")) {
   intervals = c("bootstrap", "credible", "conf_seq", "conformal", "none")
-  parsed = tibble(model = unique(models)) |>
+  parsed = tibble(model = unique(as.character(models))) |> # as.character: NULL when no model files yet
     mutate(
       parts = str_split(model, "/"),
       model_base = map_chr(parts, 1),
@@ -658,8 +690,11 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     mutate(
       key = if_else(is.na(district), paste0(state, "-", contest), paste0(state, "-", contest, "-", district)),
       label = coalesce(label, if_else(is.na(district), paste(state, contest), paste0(state, " ", contest, "-", district))),
-      hist_contest = coalesce(hist_contest, contest)
+      hist_contest = coalesce(hist_contest, contest),
+      dem_party = coalesce(if ("dem_party" %in% names(contests)) dem_party else NA_character_, "dem")
     )
+  # dem_party (e.g. NE Senate's independent) takes the "dem" side; real Democrats then count as other
+  as_dem = \(x, dp) if (is.null(x) || dp == "dem") x else mutate(x, party = case_when(party == dp ~ "dem", party == "dem" ~ "oth", .default = party))
 
   # drop jurisdictions whose scrape/summary failed; show whatever is left
   dash = purrr::compact(dash)
@@ -716,15 +751,19 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
                      select(models$turnout, any_of(c("race_id", "model", "geo", "method", "time", "pct_rep", "rep", "pred",
                                                      "pred_min", "pred_max"))))
 
-  out = pmap(contests, \(state, contest, district, key, label, hist_contest, ...) {
-    p = filter(prec_all, .env$state == .data$state, .env$contest == .data$contest)
+  out = pmap(contests, \(state, contest, district, key, label, hist_contest, dem_party, ...) {
+    p = filter(prec_all, .env$state == .data$state, .env$contest == .data$contest) |> as_dem(dem_party)
     # statewide rows sometimes carry a dummy district (e.g. NC sen = 1): accept it if it's the only one
     dist = if (is.na(district) && !anyNA(p$district) && n_distinct(p$district) == 1) unique(p$district) else district
     p = filter(p, .data$district %in% dist)
     h = histories[[state]]
     if (!is.null(h)) {
       h = filter(h, contest == hist_contest, district %in% c(district, dist))
+      # district race against a statewide history contest (IN House-5 vs 2024 pres): keep only
+      # the district's precincts so the meta totals are the district's
+      if (!is.na(district) && all(is.na(h$district))) h = filter(h, geo %in% p$geo)
       if (nrow(h) == 0) h = NULL else h = filter(h, year == max(year))
+      h = as_dem(h, dem_party)
     }
 
     lead = p |>
@@ -813,7 +852,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     s = summaries[[state]]
     ts = tibble(time = as.POSIXct(character()), method = character(), total = numeric(), dem = numeric(), rep = numeric())
     if (!is.null(s)) {
-      s = filter(s, .env$contest == .data$contest, .data$district %in% dist)
+      s = filter(s, .env$contest == .data$contest, .data$district %in% dist) |> as_dem(dem_party)
       if (nrow(s) > 0) {
         by_key = s |>
           summarise(
@@ -920,7 +959,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     )
   })
 
-  list(
+  trim_before_first_votes(list(
     meta = map(out, "meta") |> bind_rows(),
     ts = map(out, "ts") |> bind_rows(),
     prec = map(out, "prec") |> bind_rows(),
@@ -939,7 +978,31 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     geo_url = DASHBOARD_GEO_URL,
     title = DASHBOARD_TITLE,
     top_model = DASHBOARD_MODEL
-  )
+  ))
+}
+
+# Drop every time-series point from before a race's first votes, so the figures start at
+# the first count instead of a run of zeros. A race's first time is the earliest of: a
+# scraped summary (ts) or All places row (ts_all) with total > 0, or a model point with
+# reported votes (rep > 0). Before that, the race has no ts, ts_all, models,
+# model_turnout or cbs_exp rows at all.
+trim_before_first_votes <- function(dd) {
+  firsts = bind_rows(
+    filter(dd$ts, total > 0) |> select(key, time),
+    filter(dd$ts_all, total > 0) |> select(key, time),
+    filter(dd$models, rep > 0) |> select(key, time),
+    filter(dd$model_turnout, rep > 0) |> select(key, time)
+  ) |>
+    summarise(first = sort(time)[1], .by = key)
+  keep = \(d) {
+    if (is.null(d) || !nrow(d)) return(d)
+    d |>
+      left_join(firsts, by = "key") |>
+      filter(!is.na(first), time >= first) |>
+      select(-first)
+  }
+  for (n in c("ts", "ts_all", "models", "model_turnout", "cbs_exp")) dd[[n]] = keep(dd[[n]])
+  dd
 }
 
 parse_ca_datetime <- function(x, year = 2026L) {

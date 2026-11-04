@@ -776,14 +776,21 @@ county_targets = function(cells, snap = NULL) {
   # county_pct_exp_vote is 0-100 in schema_version 2 (CBS files an integer percent). If
   # that ever becomes a 0-1 fraction, `pct >= 99` stops firing and this arm goes SILENTLY
   # inert, which is the worst failure mode available -- so check the scale, don't assume.
-  if (
-    any(is.finite(snap$county_pct_exp_vote)) &&
-      max(snap$county_pct_exp_vote, na.rm = TRUE) <= 1.5
-  ) {
+  #
+  # `mx > 0` is REQUIRED, not tidying. At poll close CBS publishes the county frame with
+  # every county at 0% expected vote in (cbs_county_pull.R's zero snapshot writes exactly
+  # that whenever no county is cbs_only), so mx is 0 -- and 0 <= 1.5 read as "someone
+  # switched to a 0-1 fraction" and aborted the WHOLE fit, since this cli_abort() leaves
+  # hybrid_county_inputs() and predict_one() records the model as errored. An all-zero
+  # column is not a fraction, it is "nothing has reported yet", and the gate below is
+  # already inert for it (pct >= 99 is FALSE). On 2026-11-03 this cost OH_sen all three
+  # medsl_sur variants at the 19:36 refresh, 6 minutes after Ohio's polls closed. A real
+  # fraction scale still has to put something above 0 to be distinguishable from it.
+  mx = suppressWarnings(max(snap$county_pct_exp_vote, na.rm = TRUE))
+  if (is.finite(mx) && mx > 0 && mx <= 1.5) {
     cli_abort(c(
-      "county_pct_exp_vote tops out at \
-                 {max(snap$county_pct_exp_vote, na.rm = TRUE)}, which looks like a 0-1 \
-                 fraction, not the 0-100 percent CTY_MIN_PCT={CTY_MIN_PCT} expects.",
+      "county_pct_exp_vote tops out at {mx}, which looks like a 0-1 fraction, not the \
+                 0-100 percent CTY_MIN_PCT={CTY_MIN_PCT} expects.",
       "x" = "Fix the scale here (and in cbs_county_pull.R) rather than letting \
                        the completeness gate never fire."
     ))

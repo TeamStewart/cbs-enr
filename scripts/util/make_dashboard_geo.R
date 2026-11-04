@@ -39,7 +39,18 @@ model_units = readr::read_csv("scripts/model/lookups/model_precincts.csv", col_t
 
 # the source layer per state, shared with redistricting_compare.R so both use the same unit ids
 source("scripts/util/votehub_layer.R")
-read_layer = function(st) votehub_layer(st, VH_DIR)
+read_layer = function(st) {
+  # SC: VoteHub's own SC26G layer, keyed on its UNIQUE_ID code ids (45001-:-001, Bluffton
+  # 4A / 4F as 45013-:-310A / 310F), as crosswalks/votehub/sc.csv is. votehub_layer() would
+  # take the newer gpkg, whose SC unit_ids are name ids (45001-:-Abbeville No. 1);
+  # estimated_past_results.csv's SC rows are recoded to the code ids through SC26G
+  # (votehub-shapefiles/unit_id_remap_sc_20261103.csv).
+  sc = fs::path(VH_DIR, "SC26G", "SC26G.shp")
+  if (st == "SC" && fs::file_exists(sc)) {
+    return(sf::st_read(sc, query = "SELECT UNIQUE_ID AS unit_id FROM SC26G", quiet = TRUE))
+  }
+  votehub_layer(st, VH_DIR)
+}
 
 # valid, polygon parts only: make_valid and union leave slivers as lines / points in collections
 polys = function(x) suppressWarnings(st_collection_extract(st_make_valid(x), "POLYGON"))

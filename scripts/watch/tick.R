@@ -80,14 +80,14 @@ if (is.null(sl$last_auth) || difftime(now_et(), parse_time(sl$last_auth), units 
 
 # ---- 4. Slack in: verbs from approvers, other approver text as context for L2 ----
 human = list()
-reply = function(inc_or_ts, text) {
-  ts = if (is.list(inc_or_ts)) inc_or_ts$slack_ts else inc_or_ts
-  slack_post(text, thread_ts = ts)
-}
+# posts are queued and sent combined by slack_flush() at the end of the tick
+reply = function(inc_or_ts, text) slack_queue(text, thread = if (is.list(inc_or_ts)) inc_or_ts$id else inc_or_ts)
 threads = Filter(function(i) !is.null(i$slack_ts) && i$status %in% c("open", "awaiting", "approved", "ignored"), db$incidents)
 inbox = lapply(slack_read(sl$last_read), function(m) c(m, incident = list(NULL)))
-for (i in utils::tail(threads, 25)) {
-  inbox = c(inbox, lapply(slack_read(sl$last_read, i$slack_ts), function(m) c(m, incident = i$id)))
+# incidents posted in the same tick share a thread: read each thread once
+for (ts in utils::tail(unique(vapply(threads, `[[`, "", "slack_ts")), 25)) {
+  ids = names(Filter(function(i) identical(i$slack_ts, ts), threads))
+  inbox = c(inbox, lapply(slack_read(sl$last_read, ts), function(m) c(m, incident = list(ids))))
 }
 inbox = inbox[order(vapply(inbox, function(m) as.numeric(m$ts), 0))]
 for (m in inbox) {
@@ -99,11 +99,11 @@ for (m in inbox) {
   }
   v = parse_verb(m$text %||% "")
   if (is.null(v)) {
-    if (!is.null(m$incident)) human[[length(human) + 1]] = list(user = m$user, incident = m$incident, text = m$text)
+    for (id in m$incident) human[[length(human) + 1]] = list(user = m$user, incident = id, text = m$text)
     next
   }
   if (!is.null(v$incident) && is.null(db$incidents[[v$incident]])) {
-    slack_post(paste("No incident", v$incident), thread_ts = where)
+    reply(where, paste("No incident", v$incident))
     next
   }
   inc = if (!is.null(v$incident)) db$incidents[[v$incident]] else NULL
@@ -160,7 +160,7 @@ for (m in inbox) {
   )
   if (!is.null(inc)) db$incidents[[inc$id]] = inc
   note(m$user, ": ", m$text, " -> ", msg)
-  slack_post(msg, thread_ts = where)
+  reply(where, msg)
 }
 
 # ---- 5. L2 results ----
@@ -193,7 +193,7 @@ for (run in l2_collect()) {
     inc = hist_add(inc, "L2:", substr(d$diagnosis, 1, 200))
     # quiet unless it matters: expected problems and P2s only reach the status message
     if (ask || (!isTRUE(d$expected) && inc$severity %in% c("P0", "P1"))) {
-      if (is.null(inc$slack_ts)) inc$slack_ts = slack_post(incident_text(inc))
+      if (is.null(inc$slack_ts)) slack_queue_root(inc)
       txt = paste0("*Diagnosis* (", d$confidence, "): ", d$diagnosis)
       if (ask) txt = paste0(txt, "\n*Proposal* (", p$action, "): ", p$text,
                             if (length(p$targets)) paste0("\nThen rerun: ", paste(unlist(p$targets), collapse = ", ")) else "",
@@ -230,7 +230,9 @@ if (!is.null(why) && !stopped() && !l2_running() && Sys.getenv("CBS_WATCH_NO_L2"
 
 # ---- 7. Slack out ----
 digest = sl$digest %||% list()
-for (id in changed) {
+# plus open P0/P1s whose root post failed earlier (e.g. rate limited)
+unposted = names(Filter(function(i) i$status %in% c("open", "awaiting") && i$severity %in% c("P0", "P1") && is.null(i$slack_ts), db$incidents))
+for (id in unique(c(changed, unposted))) {
   inc = db$incidents[[id]]
   if (inc$status == "resolved") {
     if (!is.null(inc$slack_ts)) reply(inc, paste(inc$id, "resolved: not seen for 2 cycles."))
@@ -239,7 +241,7 @@ for (id in changed) {
   if (stopped() && inc$severity != "P0") next
   if (inc$severity %in% c("P0", "P1")) {
     if (is.null(inc$slack_ts)) {
-      inc$slack_ts = slack_post(incident_text(inc))
+      slack_queue_root(inc)
     } else if (!identical(inc$posted_severity, inc$severity)) {
       reply(inc, paste0("Escalated to ", inc$severity, ": ", inc$message))
     }
@@ -251,12 +253,14 @@ for (id in changed) {
 }
 if (length(digest) && (is.null(sl$last_digest) || difftime(now_et(), parse_time(sl$last_digest), units = "mins") >= DIGEST_EVERY_MIN)) {
   shown = utils::head(unlist(digest), 25)
-  slack_post(paste0("*New P2s* (", length(digest), "):\n", paste("•", shown, collapse = "\n"),
+  slack_queue(paste0("*New P2s* (", length(digest), "):\n", paste("•", shown, collapse = "\n"),
                     if (length(digest) > 25) sprintf("\n…and %d more", length(digest) - 25) else ""))
   digest = list()
   sl$last_digest = fmt_time()
 }
 sl$digest = if (length(digest)) digest else NULL
+
+db = slack_flush(db)
 
 status = status_text(db, cycle_json, cycle, sl, mode)
 if (is.null(sl$status_ts)) {

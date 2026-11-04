@@ -1,0 +1,82 @@
+state,county,precinct_enr,vh_code
+MI,BERRIEN,"City of Benton Harbor, Ward 2, Precinct 2",Benton Harbor 2-1
+MI,BERRIEN,"City of Benton Harbor, Ward 3, Precinct 3",Benton Harbor 3-1
+MI,BERRIEN,"City of Benton Harbor, Ward 4, Precinct 4",Benton Harbor 4-1
+MI,BRANCH,"City of Coldwater, Precinct 1",Coldwater 1-1
+MI,BRANCH,"City of Coldwater, Precinct 2",Coldwater 2-1
+MI,BRANCH,"City of Coldwater, Precinct 3",Coldwater 3-1
+MI,BRANCH,"City of Coldwater, Precinct 4",Coldwater 4-1
+MI,CASS,"City of Dowagiac, Ward 1, Precinct 1",Dowagiac 1
+MI,CASS,"City of Dowagiac, Ward 2, Precinct 2",Dowagiac 2
+MI,CASS,"City of Dowagiac, Ward 3, Precinct 3",Dowagiac 3
+MI,GENESEE,"City of Flint, Precinct 1",Flint 1-1
+MI,GENESEE,"City of Flint, Precinct 10",Flint 3-10
+MI,GENESEE,"City of Flint, Precinct 11",Flint 4-11
+MI,GENESEE,"City of Flint, Precinct 12",Flint 4-12
+MI,GENESEE,"City of Flint, Precinct 13",Flint 5-13
+MI,GENESEE,"City of Flint, Precinct 14",Flint 5-14
+MI,GENESEE,"City of Flint, Precinct 15",Flint 5-15
+MI,GENESEE,"City of Flint, Precinct 16",Flint 6-16
+MI,GENESEE,"City of Flint, Precinct 17",Flint 6-17
+MI,GENESEE,"City of Flint, Precinct 18",Flint 6-18
+MI,GENESEE,"City of Flint, Precinct 19",Flint 7-19
+MI,GENESEE,"City of Flint, Precinct 2",Flint 1-2
+MI,GENESEE,"City of Flint, Precinct 20",Flint 7-20
+MI,GENESEE,"City of Flint, Precinct 21",Flint 7-21
+MI,GENESEE,"City of Flint, Precinct 22",Flint 8-22
+MI,GENESEE,"City of Flint, Precinct 23",Flint 8-23
+MI,GENESEE,"City of Flint, Precinct 24",Flint 8-24
+MI,GENESEE,"City of Flint, Precinct 25",Flint 9-25
+MI,GENESEE,"City of Flint, Precinct 26",Flint 9-26
+MI,GENESEE,"City of Flint, Precinct 27",Flint 9-27
+MI,GENESEE,"City of Flint, Precinct 28",Flint 9-28
+MI,GENESEE,"City of Flint, Precinct 29",Flint 9-29
+MI,GENESEE,"City of Flint, Precinct 3",Flint 1-3
+MI,GENESEE,"City of Flint, Precinct 4",Flint 2-4
+MI,GENESEE,"City of Flint, Precinct 5",Flint 2-5
+MI,GENESEE,"City of Flint, Precinct 6",Flint 2-6
+MI,GENESEE,"City of Flint, Precinct 7",Flint 2-7
+MI,GENESEE,"City of Flint, Precinct 8",Flint 3-8
+MI,GENESEE,"City of Flint, Precinct 9",Flint 3-9
+MI,MACOMB,"Macomb Twp, Pct 23",Macomb Twp 23
+MI,OAKLAND,"Clarkston, Precinct 1",Clarkston 1
+MI,OAKLAND,"Orchard Lake, Precinct 1",Orchard Lake Village 1
+MI,OAKLAND,"Pontiac, Precinct 1",Pontiac 1-1
+MI,OAKLAND,"Pontiac, Precinct 10",Pontiac 4-10
+MI,OAKLAND,"Pontiac, Precinct 11",Pontiac 5-11
+MI,OAKLAND,"Pontiac, Precinct 12",Pontiac 5-12
+MI,OAKLAND,"Pontiac, Precinct 13",Pontiac 6-13
+MI,OAKLAND,"Pontiac, Precinct 14",Pontiac 6-14
+MI,OAKLAND,"Pontiac, Precinct 2",Pontiac 1-2
+MI,OAKLAND,"Pontiac, Precinct 3",Pontiac 1-3
+MI,OAKLAND,"Pontiac, Precinct 4",Pontiac 2-4
+MI,OAKLAND,"Pontiac, Precinct 5",Pontiac 2-5
+MI,OAKLAND,"Pontiac, Precinct 6",Pontiac 2-6
+MI,OAKLAND,"Pontiac, Precinct 7",Pontiac 3-7
+MI,OAKLAND,"Pontiac, Precinct 8",Pontiac 3-8
+MI,OAKLAND,"Pontiac, Precinct 9",Pontiac 4-9
+MI,OAKLAND,"Rochester Hills, Precinct 1",Rochester Hills 1-1
+MI,OAKLAND,"Rochester Hills, Precinct 10",Rochester Hills 2-10
+MI,OAKLAND,"Rochester Hills, Precinct 11",Rochester Hills 2-11
+MI,OAKLAND,"Rochester Hills, Precinct 12",Rochester Hills 3-12
+MI,OAKLAND,"Rochester Hills, Precinct 13",Rochester Hills 3-13
+MI,OAKLAND,"Rochester Hills, Precinct 14",Rochester Hills 3-14
+MI,OAKLAND,"Rochester Hills, Precinct 15",Rochester Hills 3-15
+MI,OAKLAND,"Rochester Hills, Precinct 16",Rochester Hills 3-16
+MI,OAKLAND,"Rochester Hills, Precinct 17",Rochester Hills 4-17
+MI,OAKLAND,"Rochester Hills, Precinct 18",Rochester Hills 4-18
+MI,OAKLAND,"Rochester Hills, Precinct 19",Rochester Hills 4-19
+MI,OAKLAND,"Rochester Hills, Precinct 2",Rochester Hills 1-2
+MI,OAKLAND,"Rochester Hills, Precinct 20",Rochester Hills 4-20
+MI,OAKLAND,"Rochester Hills, Precinct 21",Rochester Hills 4-21
+MI,OAKLAND,"Rochester Hills, Precinct 3",Rochester Hills 1-3
+MI,OAKLAND,"Rochester Hills, Precinct 4",Rochester Hills 1-4
+MI,OAKLAND,"Rochester Hills, Precinct 5",Rochester Hills 1-5
+MI,OAKLAND,"Rochester Hills, Precinct 6",Rochester Hills 1-6
+MI,OAKLAND,"Rochester Hills, Precinct 7",Rochester Hills 2-7
+MI,OAKLAND,"Rochester Hills, Precinct 8",Rochester Hills 2-8
+MI,OAKLAND,"Rochester Hills, Precinct 9",Rochester Hills 2-9
+MI,ST CLAIR,"St. Clair City, Ward 1, Precinct 1",St Clair 1
+MI,ST CLAIR,"St. Clair City, Ward 2, Precinct 2",St Clair 2
+MI,ST CLAIR,"St. Clair City, Ward 3, Precinct 3",St Clair 3
+MI,WAYNE,"The Village of Grosse Pointe Shores, a Michigan City, Precinct 1",Grosse Pte Shores 1

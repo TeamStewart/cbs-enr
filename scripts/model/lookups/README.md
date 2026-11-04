@@ -508,3 +508,142 @@ change in MEDSL's official returns for 34 states, the largest counties standing 
 scraped ones (`prep/make_rest_turnout_common.R`, which has the method and sources). `mean_c`
 is the average gap (the rest's turnout grew 2–5% more than the big counties'); the term is
 centred on 0, so that gap counts toward the width.
+
+# `mode_fold.csv`
+
+Which vote method a county's **composition prior** should use when the county's feed has no
+geo for the method the prior names. One row per non-identity mapping; anything absent is the
+identity (`eday` → `eday`, and so on), which is every county in AK, CA, FL, GA, MI, MN, NC
+and TX. Today the table is three rows, all Ohio.
+
+| column | meaning |
+|---|---|
+| `state`, `county_cbs`, `county_name` | `county_cbs` zero-padded to 3, the `geo` prefix |
+| `from_method` | the method the prior names and the county does **not** report |
+| `to_method` | the method it folds onto — one the county **does** report |
+
+The columns are named for their direction, not for a source, on purpose. The fold is a
+property of the **county's feed**, not of whoever supplied the prior: it is applied to the
+L2 mode history today and will be applied to CBS's county expected vote when that lands,
+with the same rows. An earlier `cbs_method` read as though the table compared L2 against
+CBS, which it never did.
+| `why` | the zero-file evidence, so the row can be judged without re-deriving it |
+
+## Why it exists
+
+A prior that puts weight on a mode a county never files is two defects at once, pulling in
+opposite directions:
+
+- the cell can never be counted out, so it stands as pure gross-up for the whole night;
+- the mode the county *does* report is left with a near-zero prior, and the completeness
+  gate fires at `COMPLETE_FRAC * prior/true`, so that cell pins almost immediately.
+
+Ohio's 2026 zero files, measured over all 14 files:
+
+| feed vocabulary | counties |
+|---|---|
+| `all` only (precinct totals) | 009 Butler, 010 Carroll, 012 Clark, 048 Lucas, 076 Stark |
+| `early+eday+mail` | 018 Cuyahoga, 029 Greene, 037 Hocking, 057 Montgomery, 065 Pickaway, 077 Summit |
+| `eday+mail`, no early geo | 025 Franklin, 026 Fulton |
+| `early+eday`, no mail geo | 031 Hamilton |
+
+The `all`-only counties need no row: `method_counties()` (`live/R/run.R`) already keeps them
+out of the by-method fit. That leaves the three exceptions. Before the fold, Hamilton carried
+**30.3% of its prior — 92,149 votes — in `mail`**, a mode with no geo anywhere in its feed,
+while its `early` prior sat at 0.26%.
+
+## Hard-coded on purpose
+
+This is a table, not an `eday`-vs-non-`eday` aggregation computed at run time. Which method
+lands where is a per-county determination, so it belongs somewhere a person reads and git
+diffs — the same reasoning as `reporting_levels.csv`. At run time it is a plain join: no
+inference, and no renormalizing over whichever methods happen to appear in this cycle's feed.
+
+## What consumes it
+
+`live/R/vote_modes.R` holds `read_mode_fold()` (which rejects duplicate rows and rows whose
+`from_method` equals `to_method`, since a fold that does nothing means someone mistyped it),
+`fold_methods()` (remap, then sum, so the folded method collapses onto its target), and
+`mode_fold_tag()` (spelled into `medsl_key()` so a fit cached under an older table is never
+served).
+
+It is applied in **three** places, and all three are needed:
+
+1. `mode_history()` → `fold_mode_history()` (`live/R/cells.R`), per precinct, so every source
+   — the L2 history and `{ST}_precinct_mode_results.parquet` alike — is folded once and all
+   three models see the same split.
+2. `build_cells()` → `fold_cells()`. On its own, step 1 is **not enough**:
+   `cells_from_inputs()` builds a cell for every method in `methods` and fills a
+   (county, method) with no history from the **state** split, which puts back the mode the
+   fold just removed. The mask drops those cells and **rescales the precinct's remaining
+   cells to its original total**, so turnout is unchanged and only the attribution moves.
+
+3. `medsl_sur`, via `mode_forbid` (`medsl_inputs()` → the model env → `model_turnout.R`).
+   This one is separate because `medsl_sur` does **not** use the cells frame at all: it
+   expands its own `prec × MODES` grid and takes `est_tot` from the precinct covariates. Its
+   composition prior comes from the mode history, and a folded county simply has no history
+   row for the mode — which lands on `coalesce(mode_turn_share, MODE_TURN_SHARE[mode])` and
+   refills the cell with a statewide **constant** (OH: `early` 0.638), the worst available
+   value. So forbidden cells are set to share **exactly 0** before renormalisation.
+
+Dropping absent-mode cells without that rescale is the mistake that cost 31% of NC's
+turnout — those cells are the gross-up mechanism.
+
+## Why `medsl_sur` needs exactly 0, not merely a small share
+
+`q_share` sums `p_tilt` over the modes flagged counted-out, and a cell the county never
+reports can never be flagged. So **any** share above 0 is a permanent deduction from
+`q_share`, and the precinct never reaches `all_done` or `MIN_MODE_SHARE` — it sits at its
+prior all night. Measured on `oh_base` at the final checkpoint, precincts reaching
+`q_share = 1`:
+
+| county | fold in history only | share exactly 0 |
+|---|---|---|
+| 025 Franklin | **0** of 889 (capped at 0.61) | **754** of 889 |
+| 031 Hamilton | **0** of 563 (capped at 0.87) | **493** of 563 |
+
+`MODES` is per **state** (`mode_scope.csv`), and `M = length(MODES)` flows into Sigma, eps,
+the conditional-MVN grouping and the softmax — so a per-county mode set is not expressible,
+and zeroing the share is how a county opts out of a mode.
+
+`FORBID_ETA` (default −8) is the prior log-ratio for those cells, set explicitly rather than
+by letting them fall through the `1e-6` floor in `y_tau_prior`, which would give about −13.6.
+That floor also guards legitimately tiny shares — NC's `early = 0` is the case the `REF_MODE`
+note in `model_turnout.R` is about, and ~13 there was diagnosed as a pathology, not tolerated.
+`exp(-8) = 3.4e-4` is 0.03% of the reference mode's share, and sits inside OH's natural `eta`
+range of `[-9.09, 1.39]`. An **uninformative** prior would be wrong rather than merely wide:
+under `USE_COMPOSE` the modes are a composition (`sum_m tau_im = T_i`), a forbidden cell never
+receives an observation, so its posterior stays at its prior, and any mass a vague prior puts
+there is subtracted from the modes that do report. `model_turnout.R` aborts if the fold would
+zero `REF_MODE`, whose share carries the precinct total. This table is therefore only valid where
+the folded mode's votes genuinely arrive under the method they fold onto (Hamilton files its
+absentee votes in its `early` rows). It is **not** a way to handle a mode that reports at
+county or site level rather than precinct level: that is `reporting_levels.csv` and
+`live/R/virtual.R`'s job, and NC is the cautionary case.
+
+## It cannot drift silently
+
+Hard-coding is only safe if something notices the world moving, so `check_mode_fold()`
+re-derives each county's vocabulary from the zero files (`feed_methods()` — the zero file,
+not live returns, which early in the night have simply not shown every mode yet) and fails
+when a county needs a fold the table lacks, when a row points at a method the county also
+does not report, or when a row has gone **stale** because the county now reports that method
+itself.
+
+## Measured effect (2026-11-02)
+
+| | flag A: prior on a never-reported mode | flag B: feed mode with ~0 prior |
+|---|---|---|
+| before | 2 — Hamilton `mail` 30.3% / 92,149 votes; Fulton `early` 10.9% | 2 — Hamilton `early` 0.26%; Cuyahoga `early` 0.33% |
+| after | **0** | **1** — Cuyahoga only |
+
+OH drops 1,481 cells with **every precinct's expected vote preserved to 1e-9** and the state
+total unchanged. AK, CA, FL, GA, MI, MN, NC and TX are **bit-identical** (`fold_mode_history()`
+and `fold_cells()` both return their input unchanged when a state has no rows), and
+`bt_run.R ARMS=0.6` on TX reproduces its known answer — turnout 131.3 at 21:30 and 104.6 at
+05:00 — with a byte-identical output CSV.
+
+The one flag left standing is the useful part: Cuyahoga reports all three methods, so the
+fold correctly leaves it alone. Its near-zero `early` prior is a **level** problem, not a
+vocabulary one, and needs a better prior source (CBS county expected vote) rather than a
+re-labelling.

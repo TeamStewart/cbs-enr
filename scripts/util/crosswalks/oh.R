@@ -4,7 +4,8 @@ source("scripts/util/crosswalks/helpers.R")
 # Process and general rules: docs/precinct_crosswalks.md. Reference: nc.R.
 #
 # OH is partial: 26_general ENR exists only for some of the 15 frame counties
-# (13 as of 2026-10-30; Lake and Warren have none). L2 matching covers all frame counties.
+# (14 as of 2026-11-03; Lake has none). L2 matching covers all frame counties.
+# Pickaway has ENR but is not a frame county, so its precincts stay unmatched here.
 # Rerun when new `OH/clean/OH_*_latest.parquet` files land; they are picked up
 # by the glob, but each new county's ENR id format must be checked (see ENR).
 #
@@ -89,7 +90,9 @@ fr_keys = oh_frame_names |>
 #   LAKE A). `stark_pfx` spells out the prefix; the per-prefix precinct counts
 #   and suffixes are identical to the frame's.
 # Summit (Enhanced Voting): sequence number + name ("001 akron 1-a").
-# Carroll (LiveVoterTurnout): name + sequence number ("brown a 004").
+# Carroll (LiveVoterTurnout) and Warren (SOS LiveVoterTurnout, 2026-11-03): name +
+#   sequence number ("brown a 004", "carlisle city a 136"). Warren: 185 ENR = 185 frame
+#   precincts, names unique without the number.
 # Hamilton (Clarity): code + short municipality + precinct ("3206 fr pk f" =
 #   FOREST PARK F); `hamilton_pfx` spells out the municipality. "harr" is
 #   Harrison city for codes 34xx and Harrison Township for 76xx.
@@ -116,7 +119,8 @@ stopifnot(length(enr_files) > 0)
 oh = read_enr(enr_files)
 stopifnot(all(oh$county %in% c(
   "FRANKLIN", "STARK", "SUMMIT", "CARROLL", "HAMILTON",
-  "BUTLER", "CLARK", "CUYAHOGA", "FULTON", "GREENE", "HOCKING", "LUCAS", "MONTGOMERY"
+  "BUTLER", "CLARK", "CUYAHOGA", "FULTON", "GREENE", "HOCKING", "LUCAS", "MONTGOMERY",
+  "WARREN", "PICKAWAY"
 )))
 
 # ENR-only expansions (L2 spells these out), applied to std_name() output.
@@ -194,7 +198,7 @@ enr_keys = oh |>
     name = case_when(
       county == "STARK" ~ stark_name(precinct),
       county == "SUMMIT" ~ str_remove(precinct, "^\\d+ "),
-      county == "CARROLL" ~ str_remove(precinct, " \\d+$"),
+      county %in% c("CARROLL", "WARREN") ~ str_remove(precinct, " \\d+$"),
       county == "HAMILTON" ~ hamilton_name(precinct),
       county %in% c("HOCKING", "GREENE") ~ str_remove(precinct, "^\\d+ "),
       county == "CLARK" ~ clark_name(precinct),

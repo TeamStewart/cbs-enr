@@ -68,7 +68,15 @@ place_codes = c(
   # and stay NA (strict 1:1): Lake Butler CC 1 = 1A+1B, Raiford CC 2A & = 2A+2B,
   # Worthington Springs = 3A+3B, SREC 4A & 4C, Lake Butler CC 5 = 5A+5C.
   "UNION|SREC Building 3C" = "3C", "UNION|Providence Community Center 4B" = "4B",
-  "UNION|Palestine Fire Station 5B" = "5B"
+  "UNION|Palestine Fire Station 5B" = "5B",
+  # Holmes: L2 labels "1-PONCE DE LEON", ..., "8-EAST BONIFAY".
+  "HOLMES|Ponce de Leon" = "1", "HOLMES|Pine Log" = "2", "HOLMES|New Hope" = "3",
+  "HOLMES|Bethlehem" = "4", "HOLMES|Gritney" = "5", "HOLMES|Noma" = "6",
+  "HOLMES|West Bonifay" = "7", "HOLMES|East Bonifay" = "8",
+  # Lafayette: voterfocus.com/PrecinctFinder/precinctDirectory?county=FL-LAF
+  "LAFAYETTE|Day Community Center" = "1", "LAFAYETTE|Mayo Community Center - D2" = "2",
+  "LAFAYETTE|Airline Community Center" = "3", "LAFAYETTE|4th District Community Center" = "4",
+  "LAFAYETTE|Mayo Community Center - D5" = "5"
 )
 
 enr_files = Sys.glob(election_path("FL/clean/*_latest.parquet")) |> fs::path_rel(election_path())
@@ -108,10 +116,30 @@ fl = read_enr(enr_files) |>
       county %in% c("NASSAU", "SANTA ROSA", "SUMTER", "WAKULLA") ~ str_extract(precinct, "^[0-9]+"),
       county == "WASHINGTON" ~ as.character(as.integer(str_extract(precinct, "^[0-9]+"))),
       county == "ST JOHNS" ~ str_remove(precinct, "^PCT "),
-      county %in% c("GADSDEN", "LEVY", "FRANKLIN", "GULF", "JACKSON", "LIBERTY", "UNION") ~ unname(place_codes[paste(county, precinct, sep = "|")]),
+      county %in% c("GADSDEN", "LEVY", "FRANKLIN", "GULF", "JACKSON", "LIBERTY", "UNION", "HOLMES", "LAFAYETTE") ~ unname(place_codes[paste(county, precinct, sep = "|")]),
+      # 2026-11-03 live files (the CBS test feed had bare codes): Baker "Sanderson 1A",
+      # Gilchrist "1A Trenton Center", Seminole "001 Seminole Community Church",
+      # Jefferson "1" (frame "01"), Charlotte "403.1 - Centennial Park ...".
+      county == "BAKER" ~ str_extract(precinct, "[0-9]+[A-Z]$"),
+      county == "GILCHRIST" ~ str_extract(precinct, "^[0-9]+[A-Z]"),
+      county == "SEMINOLE" ~ str_extract(precinct, "^[0-9]{3}"),
+      county == "JEFFERSON" ~ str_pad(precinct, 2, pad = "0"),
+      county == "CHARLOTTE" ~ str_extract(precinct, "^[0-9]+(\\.[0-9]+)?"),
+      # Calhoun "Neal Civic Center - 101": ENR reports frame/L2 101C, 201C, 401C and
+      # 501C inside their base precinct (no C units; 101 had 541 votes by 20:30 vs
+      # 474 L2 voters in 101), so the four merged bases stay NA.
+      county == "CALHOUN" ~ if_else(
+        str_extract(precinct, "[0-9]+$") %in% c("101", "201", "401", "501"), NA,
+        str_extract(precinct, "[0-9]+$")
+      ),
       .default = precinct
     )
-  )
+  ) |>
+  # Charlotte "403" + "403.1" (201, 204, 403, 404, 501, 505): the frame has only the
+  # base code, so base and part both stay NA, as for Miami-Dade.
+  mutate(ch_base = if_else(county == "CHARLOTTE", str_remove(precinct, "\\.\\d+$"), NA)) |>
+  mutate(precinct = if_else(county == "CHARLOTTE" & n() > 1, NA, precinct), .by = c(county, ch_base)) |>
+  select(-ch_base)
 stopifnot(
   !anyDuplicated(filter(fl, !is.na(precinct))[c("county", "precinct")]),
   !anyDuplicated(fl[c("county", "precinct_enr")])
