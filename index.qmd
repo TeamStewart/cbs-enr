@@ -61,7 +61,7 @@ ojs_define(
   ei = if (is.null(dd$ei)) data.frame(key = character(), year = character(), group = character()) else dd$ei,
   truth = if (is.null(dd$truth)) data.frame(key = character(), dem = numeric(), rep = numeric(), total = numeric()) else dd$truth,
   # Redistricting page (build_redist_data() in scripts/redistricting_targets.R)
-  rd_dist = if (is.null(dd$redist)) data.frame(state = character(), src = character(), plan = character(), cd = character(), dem = numeric(), rep = numeric(), cov = numeric()) else dd$redist$dist,
+  rd_dist = if (is.null(dd$redist)) data.frame(state = character(), src = character(), plan = character(), cd = character(), dem = numeric(), rep = numeric(), cov = numeric(), sole = character()) else dd$redist$dist,
   rd_src = if (is.null(dd$redist)) data.frame(state = character(), src = character(), time = numeric()) else transform(dd$redist$src, time = to_ms(time)),
   rd_desc = if (is.null(dd$redist$desc)) data.frame(cd = character(), desc = character()) else dd$redist$desc,
   rd_unit = if (is.null(dd$redist$unit)) data.frame(state = character(), src = character(), unit_id = character(), dem = numeric(), rep = numeric()) else dd$redist$unit,
@@ -1977,6 +1977,12 @@ RD_TOSS = 0.03
 RD_LEANS = ["Safe D", "Lean D", "Competitive", "Lean R", "Safe R"]
 rdLean = m => m <= -RD_SAFE ? "Safe D" : m <= -RD_TOSS ? "Lean D" : m < RD_TOSS ? "Competitive" : m < RD_SAFE ? "Lean R" : "Safe R"
 RD_LEAN_COLORS = { const r = marginRange(DEM, REP); return [r[7], r[5], "#d9d9d9", r[2], r[0]]; }
+// seats by winner: the party ahead (an uncontested House race's only major party, `sole`, on the 2026
+// map), lighter where the margin is under RD_TOSS
+RD_SEATS = ["Dem", "Dem, under 3 pts", "Rep, under 3 pts", "Rep"]
+RD_SEAT_COLORS = { const r = marginRange(DEM, REP); return [r[7], r[5], r[2], r[0]]; }
+rdSeat = s => { const w = s.sole ? s.sole : s.m > 0 ? "rep" : "dem", close = !s.sole && Math.abs(s.m) < RD_TOSS;
+  return w === "dem" ? (close ? "Dem, under 3 pts" : "Dem") : (close ? "Rep, under 3 pts" : "Rep"); }
 // model estimates cover only the precincts the models project; districts under half covered are left out
 RD_COV_MIN = 0.5
 // R - D margin as "R+8" / "D+3" / "Even"
@@ -2005,7 +2011,7 @@ rdCty = new Map(transpose(rd_cty).filter(d => d.state === rst && d.src === rctl)
 rdRows = {
   const rows = RD.filter(d => d.state === rst && d.src === rctl);
   const side = d => d && d.dem + d.rep > 0
-    ? { m: (d.rep - d.dem) / (d.dem + d.rep), dem: d.dem, rep: d.rep, ok: !(Number.isFinite(d.cov) && d.cov < RD_COV_MIN) }
+    ? { m: (d.rep - d.dem) / (d.dem + d.rep), dem: d.dem, rep: d.rep, sole: d.sole || null, ok: !(Number.isFinite(d.cov) && d.cov < RD_COV_MIN) }
     : null;
   return d3.groups(rows, d => d.cd).map(([cd, v]) => {
     const o = side(v.find(d => d.plan === "old")), n = side(v.find(d => d.plan === "new"));
@@ -2126,10 +2132,11 @@ rdOutlines = g => [
 ## {.toolbar}
 
 ```{ojs redist-controls}
-// value = the vote source id: "count:sen" / "count:gov" / "count:house" (each race's counted vote),
+// value = the vote source id: "count:house" / "count:sen" / "count:gov" (each race's counted vote; the
+// House first, the statewide races where a state has no House count),
 // "pres24" or "model:{race}:{model}"
 viewof rctl = {
-  const order = d => ({ "count:sen": 0, "count:gov": 1, "count:house": 2, pres24: 3 })[d.src] ?? 4;
+  const order = d => ({ "count:house": 0, "count:sen": 1, "count:gov": 2, pres24: 3 })[d.src] ?? 4;
   const opts = RSRC.filter(d => d.state === rst).sort((a, b) => order(a) - order(b));
   const form = html`<form class="model-ctl"><label>Votes <select name="model" class="form-select form-select-sm"></select></label></form>`;
   const { model } = form.elements;
@@ -2143,7 +2150,7 @@ viewof rctl = {
     ...races.map(r => group(`${r} projection`, opts.filter(d => d.race === r).sort((a, b) => d3.ascending(a.model, b.model))))
   );
   const isTop = d => d.model === top_model || `${d.model_base}/${d.model_spec}/${d.model_interval}` === top_model;
-  // the last pick (or the same kind / model in this state), else a counted race (Senate, governor, House), 2024
+  // the last pick (or the same kind / model in this state), else a counted race (House, then Senate, governor), 2024
   const pick = [opts.find(d => d.src === rctlMemo.src), opts.find(d => rctlMemo.model && d.model === rctlMemo.model),
     opts.find(d => !rctlMemo.model && d.kind === rctlMemo.kind),
     opts.find(d => d.kind === "count"), opts.find(d => d.kind === "pres24"), opts.find(d => d.kind === "model" && isTop(d)), opts[0]].find(Boolean);
@@ -2204,23 +2211,23 @@ html`<div class="asof-slot" data-note="This page shows the latest data"></div>`
 {
   if (rdOk.length === 0) return rdEmpty();
   const plans = [["old", "2024 map"], ["new", "2026 map"]];
-  const cats = rdLeftOut ? [...RD_LEANS, "No estimate"] : RD_LEANS;
+  const cats = rdLeftOut ? [...RD_SEATS, "No estimate"] : RD_SEATS;
   const data = plans.flatMap(([p, label]) => cats.map(c => ({ plan: label, lean: c,
-    n: c === "No estimate" ? rdLeftOut : rdOk.filter(d => rdLean(d[p].m) === c).length })));
+    n: c === "No estimate" ? rdLeftOut : rdOk.filter(d => rdSeat(d[p]) === c).length })));
   // each block's count at its middle (stacked in cats order, as the bars), dark on the light blocks
   const lab = plans.flatMap(([, label]) => {
     let y = 0;
     return cats.map(c => { const n = data.find(d => d.plan === label && d.lean === c).n; y += n; return { plan: label, lean: c, n, mid: y - n / 2 }; });
   }).filter(d => d.n > 0);
-  const light = d => ["Competitive", "No estimate"].includes(d.lean);
+  const light = d => ["Dem, under 3 pts", "Rep, under 3 pts", "No estimate"].includes(d.lean);
   const text = (rows, fill) => Plot.text(rows, { x: "plan", y: "mid", text: "n", fill, fontSize: 13, fontWeight: 600 });
   const s = exportable("Seats", {
     marginBottom: 30,
-    caption: `Safe: margin 10+ pts · Lean: 3 to 10 · Competitive: under 3 · ${rdHead(rsrc)}${rdLeftNote}`,
-    exportCaption: `Safe: two-party margin of 10 points or more · Lean: 3 to 10 · Competitive: under 3. ${rdHead(rsrc)}${rdLeftNote}.`,
+    caption: `Seats by the party ahead · lighter: margin under 3 pts · uncontested races to their only major party · ${rdHead(rsrc)}${rdLeftNote}`,
+    exportCaption: `Seats by the party ahead; lighter: two-party margin under 3 points; uncontested races go to their only major-party candidate. ${rdHead(rsrc)}${rdLeftNote}.`,
     x: { domain: plans.map(d => d[1]), label: null, padding: 0.3 },
     y: { label: "Seats", grid: true },
-    color: { type: "categorical", domain: cats, range: [...RD_LEAN_COLORS, MAP_BLANK], legend: true },
+    color: { type: "categorical", domain: cats, range: [...RD_SEAT_COLORS, MAP_BLANK], legend: true },
     marks: [
       Plot.barY(data, { x: "plan", y: "n", fill: "lean", order: cats, stroke: "white", strokeWidth: 1,
         title: d => `${d.plan}: ${d.n} ${d.lean}` }),
@@ -2228,7 +2235,7 @@ html`<div class="asof-slot" data-note="This page shows the latest data"></div>`
       text(lab.filter(light), INK),
       Plot.ruleY([0])
     ]
-  }, "Seats by Lean, 2024 vs. 2026 Map", {}, rdExportOpt);
+  }, "Seats by Winner, 2024 vs. 2026 Map", {}, rdExportOpt);
   return Plot.plot({ marginBottom: s.marginBottom, caption: s.caption, x: s.x, y: s.y, color: s.color, marks: s.marks });
 }
 ```

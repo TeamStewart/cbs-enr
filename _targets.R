@@ -199,6 +199,8 @@ list(
   tar_combine(redist_top, map_redist[["redist_cbs"]], command = list(!!!.x)),
   tar_target(dashboard_core, build_dashboard_data(dash_inputs, DASHBOARD_CONTESTS, model_results)),
   tar_target(redist_data, build_redist_data(redist_inputs, dplyr::bind_rows(redist_top), model_results, redist_enr(dash_inputs))),
+  # the same districts as a CSV in Dropbox, for charts and tables made off this machine
+  tar_target(redist_export_csv, redist_export(redist_data), format = "file"),
   tar_target(dashboard_data, c(dashboard_core, list(redist = redist_data))),
   # data/dashboard/live/dashboard_data.rds, which automation.R pushes for the published page
   tar_target(dashboard_export, export_dashboard_data(dashboard_data), format = "file"),

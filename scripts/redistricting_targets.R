@@ -298,10 +298,15 @@ build_redist_data <- function(files, cbs = NULL, models = NULL, enr = NULL, cont
       if (nrow(k)) k = filter(k, !county_cbs %in% scraped)
       rname = REDIST_RACE_NAME[[ct]]
       unc = integer()
+      # uncontested House races: the party of the only major-party candidate, which wins the seat on
+      # the 2026 map whatever the split below (sole = "dem" / "rep"; NA if neither party ran)
+      sole = tibble(cd = character(), sole = character())
       if (ct == "house") {
         both = bind_rows(if (nrow(e)) select(e, district, dem, rep), if (nrow(k)) select(k, district, dem, rep)) |>
-          summarise(ok = sum(dem) > 0 & sum(rep) > 0, .by = district)
+          summarise(ok = sum(dem) > 0 & sum(rep) > 0, d0 = sum(dem) > 0, r0 = sum(rep) > 0, .by = district)
         unc = both$district[!both$ok]
+        sole = both |> filter(!ok, d0 | r0) |>
+          transmute(cd = sprintf("%s-%02d", st, as.integer(district)), sole = if_else(d0, "dem", "rep"))
         if (length(unc)) {
           if (nrow(e)) e = e |> left_join(s_g, by = "g") |> left_join(s_k, by = "county_cbs") |>
             mutate(s = coalesce(s, sk, 0.5), u = district %in% unc,
@@ -341,7 +346,8 @@ build_redist_data <- function(files, cbs = NULL, models = NULL, enr = NULL, cont
       pct_cbs = if (nrow(k)) with(filter(k, pct_exp > 0), sum(total) / sum(total / (pct_exp / 100))) else NA_real_
       sid = paste0("count:", ct)
       add(
-        mutate(d, state = st, src = sid) |> select(state, src, plan, cd, dem, rep),
+        mutate(d, state = st, src = sid) |> left_join(mutate(sole, plan = "new"), by = c("plan", "cd")) |>
+          select(state, src, plan, cd, dem, rep, sole),
         tibble(state = st, src = sid, kind = "count", label = rname, race_id = if (ct == "house") NA_character_ else paste(st, ct, sep = "_"),
                race = paste(st, rname),
                time = if (any(!is.na(t_all))) max(t_all, na.rm = TRUE) else as.POSIXct(NA),
@@ -413,7 +419,7 @@ build_redist_data <- function(files, cbs = NULL, models = NULL, enr = NULL, cont
   }
   list(
     dist = bind_rows(tibble(state = character(), src = character(), plan = character(), cd = character(), dem = numeric(), rep = numeric(),
-                            cov = numeric()), dist) |>
+                            cov = numeric(), sole = character()), dist) |>
       mutate(across(c(dem, rep), round)),
     src = bind_rows(tibble(state = character(), src = character(), kind = character(), label = character(), time = as.POSIXct(character()),
                            note = character(), p_prec = numeric()), lapply(src, \(x) mutate(x, note = as.character(note)))),
@@ -426,4 +432,23 @@ build_redist_data <- function(files, cbs = NULL, models = NULL, enr = NULL, cont
       mutate(across(c(dem, rep), round), reported = coalesce(reported, FALSE)) |> filter(dem + rep > 0),
     desc = desc
   )
+}
+
+# The tab's counted-vote districts as a CSV in Dropbox, so scripts off this machine (charts,
+# tables) use the dashboard's own numbers: model_results/redistricting/
+# redistricting_districts_dashboard_latest.csv, one row per state x race (src: count:house,
+# count:sen, count:gov) x plan (old = 2024 map, new = 2026 map) x district, with dem, rep,
+# sole (the only major party in an uncontested House race: it wins the 2026-map seat) and as_of
+# (the source's latest count, ET). Rewritten every build.
+redist_export <- function(redist) {
+  out = file.path(find_26_general(), "model_results", "redistricting", "redistricting_districts_dashboard_latest.csv")
+  dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
+  times = redist$src |> dplyr::filter(kind == "count") |>
+    dplyr::transmute(state, src, as_of = format(time, "%Y-%m-%d %H:%M", tz = "America/New_York"))
+  redist$dist |>
+    dplyr::filter(startsWith(src, "count:")) |>
+    dplyr::select(state, src, plan, cd, dem, rep, sole) |>
+    dplyr::left_join(times, by = c("state", "src")) |>
+    readr::write_csv(out)
+  out
 }
