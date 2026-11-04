@@ -511,9 +511,13 @@ all_places_ts <- function(ts, cbs_ts, scraped_cbs) {
 read_summaries <- function(state, keys) {
   files = fs::dir_ls(fs::path(PATH_DROPBOX, ELECTION_FOLDER, state, "summaries"), regexp = "summary_.*\\.parquet$", fail = FALSE)
   if (length(files) == 0) return(NULL)
+  # summaries/ also holds pre-election runs (FL_seminole 2026-08-24, AK 08-31: primary
+  # results). Keeping them stretched the time series back months and squashed election
+  # night against the right edge of every results chart.
+  since = as.POSIXct(ELECTION_DATE, tz = "America/New_York")
   map(files, nanoparquet::read_parquet) |>
     bind_rows() |>
-    filter(key %in% keys) |>
+    filter(key %in% keys, time >= since) |>
     distinct()
 }
 
