@@ -64,23 +64,27 @@ local({
 # - district: integer district for district-level contests, NA for statewide
 # - label: dropdown text; NA -> "{state} {contest}[-{district}]"
 # - hist_contest: contest to compare against in {STATE}_history.parquet; NA -> same contest
-# The races in 26_general/input_data/priors.csv, less IA (no zero file yet), plus SC Senate
-# and FL Governor.
+# - dem_party: party shown on the Dem side of the dem-vs-rep toplines; NA -> "dem". NE Senate
+#   has no Democrat, so its independent (Osborn) takes that side.
+# The races in 26_general/input_data/priors.csv, less IA (no zero file yet), plus SC Senate,
+# FL Governor, and IA and NE Senate (results only: no models).
 DASHBOARD_CONTESTS = tibble::tribble(
-  ~state, ~contest, ~district, ~label, ~hist_contest,
-  "AK", "sen", NA_integer_, "AK Senate", NA_character_,
-  "FL", "sen", NA_integer_, "FL Senate", NA_character_,
-  "FL", "gov", NA_integer_, "FL Governor", "pres",
-  "GA", "sen", NA_integer_, "GA Senate", NA_character_,
-  "GA", "gov", NA_integer_, "GA Governor", NA_character_,
-  "IN", "house", 5L, "IN House-5", "pres",
-  "MI", "sen", NA_integer_, "MI Senate", NA_character_,
-  "MN", "sen", NA_integer_, "MN Senate", NA_character_,
-  "NC", "sen", NA_integer_, "NC Senate", NA_character_,
-  "OH", "sen", NA_integer_, "OH Senate", NA_character_,
-  "SC", "sen", NA_integer_, "SC Senate", NA_character_,
-  "TX", "sen", NA_integer_, "TX Senate", NA_character_,
-  "TX", "gov", NA_integer_, "TX Governor", NA_character_,
+  ~state, ~contest, ~district, ~label, ~hist_contest, ~dem_party,
+  "AK", "sen", NA_integer_, "AK Senate", NA_character_, NA_character_,
+  "FL", "sen", NA_integer_, "FL Senate", NA_character_, NA_character_,
+  "FL", "gov", NA_integer_, "FL Governor", "pres", NA_character_,
+  "GA", "sen", NA_integer_, "GA Senate", NA_character_, NA_character_,
+  "GA", "gov", NA_integer_, "GA Governor", NA_character_, NA_character_,
+  "IA", "sen", NA_integer_, "IA Senate", NA_character_, NA_character_,
+  "IN", "house", 5L, "IN House-5", "pres", NA_character_,
+  "MI", "sen", NA_integer_, "MI Senate", NA_character_, NA_character_,
+  "MN", "sen", NA_integer_, "MN Senate", NA_character_, NA_character_,
+  "NC", "sen", NA_integer_, "NC Senate", NA_character_, NA_character_,
+  "NE", "sen", NA_integer_, "NE Senate", NA_character_, "ind",
+  "OH", "sen", NA_integer_, "OH Senate", NA_character_, NA_character_,
+  "SC", "sen", NA_integer_, "SC Senate", NA_character_, NA_character_,
+  "TX", "sen", NA_integer_, "TX Senate", NA_character_, NA_character_,
+  "TX", "gov", NA_integer_, "TX Governor", NA_character_, NA_character_,
 )
 
 # Model whose latest projection shows under the Dem/Rep toplines on the Results page, as

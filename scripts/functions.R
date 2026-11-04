@@ -690,8 +690,11 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     mutate(
       key = if_else(is.na(district), paste0(state, "-", contest), paste0(state, "-", contest, "-", district)),
       label = coalesce(label, if_else(is.na(district), paste(state, contest), paste0(state, " ", contest, "-", district))),
-      hist_contest = coalesce(hist_contest, contest)
+      hist_contest = coalesce(hist_contest, contest),
+      dem_party = coalesce(if ("dem_party" %in% names(contests)) dem_party else NA_character_, "dem")
     )
+  # dem_party (e.g. NE Senate's independent) takes the "dem" side; real Democrats then count as other
+  as_dem = \(x, dp) if (is.null(x) || dp == "dem") x else mutate(x, party = case_when(party == dp ~ "dem", party == "dem" ~ "oth", .default = party))
 
   # drop jurisdictions whose scrape/summary failed; show whatever is left
   dash = purrr::compact(dash)
@@ -748,8 +751,8 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
                      select(models$turnout, any_of(c("race_id", "model", "geo", "method", "time", "pct_rep", "rep", "pred",
                                                      "pred_min", "pred_max"))))
 
-  out = pmap(contests, \(state, contest, district, key, label, hist_contest, ...) {
-    p = filter(prec_all, .env$state == .data$state, .env$contest == .data$contest)
+  out = pmap(contests, \(state, contest, district, key, label, hist_contest, dem_party, ...) {
+    p = filter(prec_all, .env$state == .data$state, .env$contest == .data$contest) |> as_dem(dem_party)
     # statewide rows sometimes carry a dummy district (e.g. NC sen = 1): accept it if it's the only one
     dist = if (is.na(district) && !anyNA(p$district) && n_distinct(p$district) == 1) unique(p$district) else district
     p = filter(p, .data$district %in% dist)
@@ -760,6 +763,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
       # the district's precincts so the meta totals are the district's
       if (!is.na(district) && all(is.na(h$district))) h = filter(h, geo %in% p$geo)
       if (nrow(h) == 0) h = NULL else h = filter(h, year == max(year))
+      h = as_dem(h, dem_party)
     }
 
     lead = p |>
@@ -848,7 +852,7 @@ build_dashboard_data <- function(dash, contests = DASHBOARD_CONTESTS, models = N
     s = summaries[[state]]
     ts = tibble(time = as.POSIXct(character()), method = character(), total = numeric(), dem = numeric(), rep = numeric())
     if (!is.null(s)) {
-      s = filter(s, .env$contest == .data$contest, .data$district %in% dist)
+      s = filter(s, .env$contest == .data$contest, .data$district %in% dist) |> as_dem(dem_party)
       if (nrow(s) > 0) {
         by_key = s |>
           summarise(
