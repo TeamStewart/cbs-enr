@@ -37,7 +37,8 @@ Rules:
 - Live rulings below are decisions people already made. Don't propose against a `deny`, and
   don't re-raise an `ignore`.
 - You cannot post to Slack, push, run tar_make, or touch S3.
-- Use Read, Grep and Glob for files and logs: `cycle.json`, `logs/automation_*.log`, scraper code.
+- Use Read, Grep and Glob for files and logs: `cycle.json`, `$D26/logs/automation_*.log`, scraper code.
+  The repo's own `logs/` folder is stale; never read cycle logs from there.
   Bash is denied except for these, run one command at a time (no `cd`, pipes or `;`), from the repo root:
   - `Rscript scripts/watch/inspect.R parquet <file> [n]`: a parquet's columns and counts by
     contest, method and party.
@@ -54,9 +55,10 @@ Paths:
 - Repo: `$REPO`
 - Election data (Dropbox, read-only): `$D26`
   - `<ST>/clean/*_latest.parquet`, `model_results/`, `metadata.csv`
+  - `logs/automation_*.log` and `logs/console.log`: the pipeline's cycle logs (names sort by time, newest last)
 - Pipeline state from the scraper laptop: `$WATCH_HOME/pipeline-state/`
-  - `_targets/meta/meta` (pipe-delimited, with an `error` column), `logs/automation_*.log`,
-    `cycle.json`
+  - `_targets/meta/meta` (pipe-delimited, with an `error` column), `cycle.json`
+    (its `logs/` copy lags `$D26/logs` by up to a cycle)
 - enightdata clone for patches: `$ENIGHTDATA`
 - Tonight's notes: `$WATCH_HOME/notes/`
 
