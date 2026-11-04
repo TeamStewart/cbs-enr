@@ -222,7 +222,7 @@ Counties whose ENR labels are polling places, initials or reordered town lists
 `votehub.R`'s keys and tiers. It covers ENR ids that the frame crosswalk
 (ENR -> frame -> L2) leaves without an L2 id, using L2 precincts the frame
 crosswalk does not already pair with an ENR id. It also covers states that have
-an L2 file but no frame crosswalk (NJ, NY, WI, IA). Output:
+an L2 file but no frame crosswalk (NJ, NY, WI, IA, IN). IN pairs come from `in_l2.R` (`l2_manual_in.csv`); see its header for the build order. Output:
 `input_data/crosswalks/l2_direct/{st}.csv`, matched rows only. `full_join.R`
 uses these rows with `l2_match = "direct"`, and `match_rates.R` counts them
 under `l2`. The model inputs do not use them, because they stay on the frame.

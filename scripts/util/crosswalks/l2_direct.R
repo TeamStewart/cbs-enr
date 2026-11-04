@@ -2,7 +2,7 @@ source("scripts/util/crosswalks/votehub.R") # helpers, base_keys(), state_keys()
 
 # Direct ENR -> L2 precinct crosswalk: the fallback for ENR precincts the frame
 # crosswalk (input_data/crosswalks/{st}.csv, ENR -> frame -> L2) leaves without an
-# L2 id, and for states with no frame crosswalk (NJ, NY, WI, IA).
+# L2 id, and for states with no frame crosswalk (NJ, NY, WI, IA, IN; IN also needs in_l2.R first).
 # Writes input_data/crosswalks/l2_direct/{st}.csv: one row per matched ENR precinct
 # (state, county, precinct_enr, precinct_l2, l2_rule, n_l2). Only ENR ids without
 # an L2 id in {st}.csv are matched, and only to L2 precincts that {st}.csv does not
