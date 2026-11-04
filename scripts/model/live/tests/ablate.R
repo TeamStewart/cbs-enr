@@ -33,6 +33,14 @@
 ##   Rscript scripts/model/live/tests/ablate.R --models=medsl_sur --cores=4 --cbs=test
 ##   Rscript scripts/model/live/tests/ablate.R --arms=all_off,pair1      # a subset
 ##   Rscript scripts/model/live/tests/ablate.R --state=TX --out=/tmp/ablate
+##   Rscript scripts/model/live/tests/ablate.R --live --state=FL --cbs=live   # tonight's returns
+##
+## --live runs on the REAL scraped returns instead of a sim. It always passes --out (so the
+## run can never reach 26_general/model_results/ and the dashboard) and --no-redistricting.
+## Note which switches can bite: the CBS-fed ones need county-level expected vote in the
+## feed, and CBS files that per RACE -- at 19:17 on election night GA_sen had county rows
+## and FL_sen had only a race-level total, so on FL they degrade to the 2022 level and the
+## `inert_warn` column says so.
 ##
 ## The switches only exist on the branch that defines them, so to compare against a tree
 ## that lacks them, run the script on each tree and diff the CSVs -- it records `head` for
@@ -54,6 +62,9 @@ opt <- function(k, d = NA_character_) {
   if (length(v)) sub(paste0("^--", k, "="), "", v[1]) else d
 }
 
+flag <- function(k) any(commandArgs(trailingOnly = TRUE) == paste0("--", k))
+
+LIVE     <- flag("live")
 SCENARIO <- opt("scenario", "tx_base")
 AT       <- opt("at", "2026-11-03 22:00")
 MODELS   <- opt("models", "medsl_sur")
@@ -87,13 +98,13 @@ if (!is.na(want)) {
 }
 
 D26 <- find_26_general()
-SIM_DIR <- file.path(D26, "model_tests", "run_night_sim", SCENARIO)
+SIM_DIR <- file.path(D26, "model_tests", "run_night_sim", SCENARIO)  # sim mode only
 FRAME <- file.path(D26, "input_data", "model_inputs", paste0(STATE, "_precinct.parquet"))
 stopifnot("no such frame" = file.exists(FRAME))
 dir.create(OUT, showWarnings = FALSE, recursive = TRUE)
 HEAD <- tryCatch(system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE), error = function(e) NA_character_)
 
-cli::cli_h1("ablate: {nrow(ARMS)} arm(s) on {SCENARIO} @ {AT}")
+cli::cli_h1("ablate: {nrow(ARMS)} arm(s) on {if (LIVE) 'the LIVE feed' else paste(SCENARIO, '@', AT)}")
 cli::cli_alert_info("tree {HEAD} | models {MODELS} | state {STATE} | cores {CORES} | cbs {CBS_ENV}")
 
 # ---- run each arm, in its own process ------------------------------------------------
@@ -113,12 +124,19 @@ run_arm <- function(row) {
   ))), env = env, stdout = TRUE, stderr = FALSE)
   seen <- tail(seen[nzchar(seen)], 1)
 
+  dest <- file.path(OUT, row$arm)
+  dir.create(dest, showWarnings = FALSE, recursive = TRUE)
+  # LIVE: --out IS honoured off the sim path, so the run writes straight into the arm's own
+  # directory and can never reach 26_general/model_results/ or the dashboard.
+  args <- if (LIVE) {
+    c(paste0("--out=", dest), paste0("--cbs=", CBS_ENV))
+  } else {
+    c(paste0("--sim=", SCENARIO), paste0("--at=", shQuote(AT)))
+  }
   system2(
     "Rscript",
     c(
-      "scripts/model/live/run_night.R",
-      paste0("--sim=", SCENARIO),
-      paste0("--at=", shQuote(AT)),
+      "scripts/model/live/run_night.R", args,
       paste0("--models=", MODELS),
       paste0("--states=", STATE),
       paste0("--cores=", CORES),
@@ -128,14 +146,15 @@ run_arm <- function(row) {
   )
 
   txt <- paste(readLines(log, warn = FALSE), collapse = "\n")
-  # --sim ignores --out, so snapshot before the next arm overwrites it
-  dest <- file.path(OUT, row$arm)
-  dir.create(dest, showWarnings = FALSE, recursive = TRUE)
-  # predictions_* too: it is what read_model_results() / the dashboard's Models page stack,
-  # so leaving it out makes the snapshot useless for anything but this script's own table.
-  for (f in c("precincts_latest.parquet", "predictions_latest.csv", "turnout_latest.csv", "status_latest.csv")) {
-    src <- file.path(SIM_DIR, f)
-    if (file.exists(src)) file.copy(src, file.path(dest, f), overwrite = TRUE)
+  # --sim IGNORES --out and always writes to model_tests/run_night_sim/<scenario>, so a sim
+  # arm must be snapshotted before the next one overwrites it. A live arm wrote to `dest`.
+  # predictions_* is included because that is what read_model_results() and the dashboard's
+  # Models page stack; without it the snapshot serves only this script's own table.
+  if (!LIVE) {
+    for (f in c("precincts_latest.parquet", "predictions_latest.csv", "turnout_latest.csv", "status_latest.csv")) {
+      src <- file.path(SIM_DIR, f)
+      if (file.exists(src)) file.copy(src, file.path(dest, f), overwrite = TRUE)
+    }
   }
 
   tibble(
@@ -187,8 +206,11 @@ metrics <- function(arm) {
 
 res <- lapply(ARMS$arm, metrics) |> bind_rows() |> left_join(fired, by = "arm")
 res$head <- HEAD
-res$scenario <- SCENARIO
-res$at <- AT
+res$scenario <- if (LIVE) "live" else SCENARIO
+res$cbs <- CBS_ENV            # provenance: the report must not have to guess the feed
+res$state <- STATE
+res$models <- MODELS
+res$at <- if (LIVE) format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z") else AT
 
 cli::cli_h2("arms")
 print(as.data.frame(select(res, arm, env_seen, bit_turnout, bit_level, bit_share, inert_warn)), row.names = FALSE)
@@ -222,18 +244,35 @@ ck(!any(res$inert_warn), "no arm degraded to the 2022 level for want of CBS data
 # KAPPA is a construction bound, so a breach means the metric is wrong, not the model
 ck(all(res$over_kappa == 0), "no arm breaches the KAPPA cap (a breach means the wrong base column)")
 
-# IDENTICAL ARMS ARE A BROKEN HARNESS
-dup <- res |> summarize(arms = paste(arm, collapse = " == "), k = n(), .by = pred_md5) |> filter(k > 1)
-# `default` is pair1 by construction, so that one collision is expected
-expected_dup <- c("pair1 == default", "default == pair1")
-unexpected <- filter(dup, !arms %in% expected_dup)
-ck(nrow(unexpected) == 0,
-   if (nrow(unexpected)) paste0("DISTINCT ARMS PRODUCED IDENTICAL PREDICTIONS: ",
-                                paste(unexpected$arms, collapse = "; "),
-                                " -- probe the lever before reading any number as a finding")
-   else "every distinct arm produced distinct predictions")
+# IDENTICAL ARMS ARE A BROKEN HARNESS -- unless the levers that distinguish them never
+# fired, in which case identical output is the CORRECT result and saying otherwise would
+# make this check cry wolf on every race where CBS has not filed county expected vote.
+# Measured 2026-11-03: on live FL, CBS had only a race-level total, so all_off == pair1 and
+# pair2 == all_on were both expected; on live GA, where the county rows existed, all four
+# arms separated.
+fired_key <- function(a) paste(res$bit_turnout[res$arm == a], res$bit_level[res$arm == a], res$bit_share[res$arm == a])
+dup <- res |> summarize(arms = list(arm), k = n(), .by = pred_md5) |> filter(k > 1)
+explained <- character()
+unexplained <- character()
+for (grp in dup$arms) {
+  lbl <- paste(grp, collapse = " == ")
+  # `default` IS pair1's configuration, so that pair collides by construction
+  same_cfg <- all(sort(grp) %in% c("pair1", "default"))
+  same_levers <- length(unique(vapply(grp, fired_key, ""))) == 1
+  if (same_cfg || same_levers) explained <- c(explained, lbl) else unexplained <- c(unexplained, lbl)
+}
+if (length(explained)) {
+  cli::cli_alert_info("identical, and explained (same config, or the distinguishing lever never fired): {paste(explained, collapse = '; ')}")
+}
+ck(length(unexplained) == 0,
+   if (length(unexplained)) paste0("DISTINCT ARMS WITH FIRING LEVERS PRODUCED IDENTICAL PREDICTIONS: ",
+                                   paste(unexplained, collapse = "; "),
+                                   " -- probe the lever before reading any number as a finding")
+   else "no two arms collide except where the lever never fired")
 
-f <- file.path(OUT, sprintf("ablate_%s_%s.csv", SCENARIO, format(Sys.time(), "%Y%m%d_%H%M%S")))
+# name it for the run's actual source: a live run is not "tx_base"
+f <- file.path(OUT, sprintf("ablate_%s_%s.csv", if (LIVE) paste0("live_", tolower(STATE)) else SCENARIO,
+                            format(Sys.time(), "%Y%m%d_%H%M%S")))
 write_csv(res, f)
 cli::cli_alert_info("wrote {.path {f}}")
 

@@ -28,42 +28,31 @@ tr:last-child td{border-bottom:0}
 .i{text-align:right;color:var(--mut);font-size:12px;white-space:nowrap}
 .baserow td{background:color-mix(in srgb,var(--fg) 4%,transparent)}
 .up{color:var(--up)}.dn{color:var(--dn)}
-.spark{width:100px;height:70px;display:block}
+.spark{width:100px;height:56px;display:block}
 .spark .b0{fill:var(--b0)}.spark .b1{fill:var(--b1)}
 @media(max-width:700px){.wrap{flex-direction:column}.barwrap{display:none}th,td{padding:6px 5px;font-size:13px}}
 </style></head><body><div class="page">
 <header>
 <h1>Switch arms &mdash; side by side</h1>
-<div class="prov">tree c5661cb6 &middot; tx_base @ 2026-11-03 22:00:00 &middot; cbs=test</div>
+<div class="prov">tree bb72929e &middot; live @ 2026-11-03 19:51:10 EST &middot; cbs=live</div>
 <p class="note"><code>all_off</code> is the baseline: all four switches off, which is byte-identical to main.
 &Delta; columns are measured against it. Intervals on Dem two-party share combine each
 party&rsquo;s own ends, so treat them as indicative rather than a joint interval.</p>
 </header>
-<section><h2>TX_gov <span class='sub'>geo = all</span></h2>
+<section><h2>FL_sen <span class='sub'>geo = scraped</span></h2>
      <div class='wrap'><table>
       <thead><tr><th>arm</th><th>turnout</th><th>interval</th><th>Dem two-party</th><th>interval</th><th>&Delta; turnout</th><th>&Delta; share</th></tr></thead>
-      <tbody><tr class='baserow'><td class='arm'>all_off</td><td class='n'>6,238,906</td><td class='i'>6,184,704 &ndash; 6,300,629</td><td class='n'>47.39%</td><td class='i'>46.84% &ndash; 47.92%</td><td class='n'>&mdash;</td><td class='n'>&mdash;</td></tr>
-<tr><td class='arm'>pair1</td><td class='n'>7,233,497</td><td class='i'>6,804,562 &ndash; 7,670,256</td><td class='n'>47.76%</td><td class='i'>47.10% &ndash; 48.39%</td><td class='n'><span class='up'>+15.9%</span></td><td class='n'><span class='up'>+0.37%</span></td></tr>
-<tr><td class='arm'>pair2</td><td class='n'>6,250,412</td><td class='i'>6,191,097 &ndash; 6,315,192</td><td class='n'>47.39%</td><td class='i'>46.82% &ndash; 47.94%</td><td class='n'><span class='up'>+0.2%</span></td><td class='n'>&mdash;</td></tr>
-<tr><td class='arm'>default</td><td class='n'>7,233,497</td><td class='i'>6,804,562 &ndash; 7,670,256</td><td class='n'>47.76%</td><td class='i'>47.10% &ndash; 48.39%</td><td class='n'><span class='up'>+15.9%</span></td><td class='n'><span class='up'>+0.37%</span></td></tr>
-<tr><td class='arm'>all_on</td><td class='n'>7,228,809</td><td class='i'>6,819,364 &ndash; 7,646,201</td><td class='n'>47.78%</td><td class='i'>47.03% &ndash; 48.50%</td><td class='n'><span class='up'>+15.9%</span></td><td class='n'><span class='up'>+0.39%</span></td></tr></tbody></table>
-      <div class='barwrap'><svg viewBox="0 0 100 70" class="spark" preserveAspectRatio="none"><rect x="0" y="0" width="86.2502" height="9" class="b0"></rect><rect x="0" y="14" width="100" height="9" class="b1"></rect><rect x="0" y="28" width="86.4093" height="9" class="b1"></rect><rect x="0" y="42" width="100" height="9" class="b1"></rect><rect x="0" y="56" width="99.9352" height="9" class="b1"></rect></svg></div></div></section>
-<section><h2>TX_sen <span class='sub'>geo = all</span></h2>
-     <div class='wrap'><table>
-      <thead><tr><th>arm</th><th>turnout</th><th>interval</th><th>Dem two-party</th><th>interval</th><th>&Delta; turnout</th><th>&Delta; share</th></tr></thead>
-      <tbody><tr class='baserow'><td class='arm'>all_off</td><td class='n'>3,039,194</td><td class='i'>3,004,513 &ndash; 3,075,521</td><td class='n'>51.82%</td><td class='i'>50.90% &ndash; 52.74%</td><td class='n'>&mdash;</td><td class='n'>&mdash;</td></tr>
-<tr><td class='arm'>pair1</td><td class='n'>3,988,351</td><td class='i'>3,622,652 &ndash; 4,356,677</td><td class='n'>53.10%</td><td class='i'>52.08% &ndash; 54.08%</td><td class='n'><span class='up'>+31.2%</span></td><td class='n'><span class='up'>+1.27%</span></td></tr>
-<tr><td class='arm'>pair2</td><td class='n'>3,049,748</td><td class='i'>3,013,662 &ndash; 3,087,379</td><td class='n'>51.85%</td><td class='i'>50.89% &ndash; 52.81%</td><td class='n'><span class='up'>+0.3%</span></td><td class='n'><span class='up'>+0.03%</span></td></tr>
-<tr><td class='arm'>default</td><td class='n'>3,988,351</td><td class='i'>3,622,652 &ndash; 4,356,677</td><td class='n'>53.10%</td><td class='i'>52.08% &ndash; 54.08%</td><td class='n'><span class='up'>+31.2%</span></td><td class='n'><span class='up'>+1.27%</span></td></tr>
-<tr><td class='arm'>all_on</td><td class='n'>3,993,856</td><td class='i'>3,608,996 &ndash; 4,381,314</td><td class='n'>53.20%</td><td class='i'>52.16% &ndash; 54.22%</td><td class='n'><span class='up'>+31.4%</span></td><td class='n'><span class='up'>+1.38%</span></td></tr></tbody></table>
-      <div class='barwrap'><svg viewBox="0 0 100 70" class="spark" preserveAspectRatio="none"><rect x="0" y="0" width="76.0967" height="9" class="b0"></rect><rect x="0" y="14" width="99.8621" height="9" class="b1"></rect><rect x="0" y="28" width="76.361" height="9" class="b1"></rect><rect x="0" y="42" width="99.8621" height="9" class="b1"></rect><rect x="0" y="56" width="100" height="9" class="b1"></rect></svg></div></div></section>
+      <tbody><tr class='baserow'><td class='arm'>all_off</td><td class='n'>2,446,308</td><td class='i'>2,318,281 &ndash; 2,574,335</td><td class='n'>43.59%</td><td class='i'>40.07% &ndash; 47.11%</td><td class='n'>&mdash;</td><td class='n'>&mdash;</td></tr>
+<tr><td class='arm'>pair1</td><td class='n'>2,446,308</td><td class='i'>2,318,281 &ndash; 2,574,335</td><td class='n'>43.59%</td><td class='i'>40.07% &ndash; 47.11%</td><td class='n'>&mdash;</td><td class='n'>&mdash;</td></tr>
+<tr><td class='arm'>pair2</td><td class='n'>2,446,303</td><td class='i'>2,318,276 &ndash; 2,574,330</td><td class='n'>45.94%</td><td class='i'>42.36% &ndash; 49.53%</td><td class='n'>&mdash;</td><td class='n'><span class='up'>+2.35%</span></td></tr>
+<tr><td class='arm'>all_on</td><td class='n'>2,446,303</td><td class='i'>2,318,276 &ndash; 2,574,330</td><td class='n'>45.94%</td><td class='i'>42.36% &ndash; 49.53%</td><td class='n'>&mdash;</td><td class='n'><span class='up'>+2.35%</span></td></tr></tbody></table>
+      <div class='barwrap'><svg viewBox="0 0 100 56" class="spark" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="9" class="b0"></rect><rect x="0" y="14" width="100" height="9" class="b1"></rect><rect x="0" y="28" width="99.9998" height="9" class="b1"></rect><rect x="0" y="42" width="99.9998" height="9" class="b1"></rect></svg></div></div></section>
 <section><h2>Did each lever actually fire? <span class="sub">from each arm&rsquo;s own log</span></h2>
 <table><thead><tr><th>arm</th><th>env seen</th><th>turnout</th><th>level</th><th>share</th><th>CBS data</th><th>above n</th><th>&gt;KAPPA</th><th>max ratio</th></tr></thead>
-<tbody><tr><td class='arm'>all_off</td><td class='c'>0|0|0|0|test</td><td class='c'>&mdash;</td><td class='c'>&mdash;</td><td class='c'>&mdash;</td><td class='c'>ok</td><td class='n'> 2</td><td class='n'>0</td><td class='n'>1.056</td></tr>
-<tr><td class='arm'>pair1</td><td class='c'>1|1|0|0|test</td><td class='c'>fired</td><td class='c'>&mdash;</td><td class='c'>&mdash;</td><td class='c'>ok</td><td class='n'>47</td><td class='n'>0</td><td class='n'>1.132</td></tr>
-<tr><td class='arm'>pair2</td><td class='c'>0|0|1|1|test</td><td class='c'>&mdash;</td><td class='c'>fired</td><td class='c'>fired</td><td class='c'>ok</td><td class='n'> 2</td><td class='n'>0</td><td class='n'>1.056</td></tr>
-<tr><td class='arm'>default</td><td class='c'>1|1|0|0|test</td><td class='c'>fired</td><td class='c'>&mdash;</td><td class='c'>&mdash;</td><td class='c'>ok</td><td class='n'>47</td><td class='n'>0</td><td class='n'>1.132</td></tr>
-<tr><td class='arm'>all_on</td><td class='c'>1|1|1|1|test</td><td class='c'>fired</td><td class='c'>fired</td><td class='c'>fired</td><td class='c'>ok</td><td class='n'>46</td><td class='n'>0</td><td class='n'>1.128</td></tr></tbody></table>
+<tbody><tr><td class='arm'>all_off</td><td class='c'>0|0|0|0|live</td><td class='c'>&mdash;</td><td class='c'>&mdash;</td><td class='c'>&mdash;</td><td class='c'>ok</td><td class='n'>0</td><td class='n'>0</td><td class='n'>0.982</td></tr>
+<tr><td class='arm'>pair1</td><td class='c'>1|1|0|0|live</td><td class='c'>&mdash;</td><td class='c'>&mdash;</td><td class='c'>&mdash;</td><td class='c'>ok</td><td class='n'>0</td><td class='n'>0</td><td class='n'>0.982</td></tr>
+<tr><td class='arm'>pair2</td><td class='c'>0|0|1|1|live</td><td class='c'>&mdash;</td><td class='c'>&mdash;</td><td class='c'>fired</td><td class='c'><span class='dn'>degraded</span></td><td class='n'>0</td><td class='n'>0</td><td class='n'>0.982</td></tr>
+<tr><td class='arm'>all_on</td><td class='c'>1|1|1|1|live</td><td class='c'>&mdash;</td><td class='c'>&mdash;</td><td class='c'>fired</td><td class='c'><span class='dn'>degraded</span></td><td class='n'>0</td><td class='n'>0</td><td class='n'>0.982</td></tr></tbody></table>
 <p class="note">&ldquo;env seen&rdquo; is what the child process reported, not what the caller believed it set.
 A lever that did not fire means the arm never ran that code &mdash; not that the switch had no effect.
 &gt;KAPPA must be 0: the cap is enforced by construction, so a breach means the metric used the wrong base column.</p>

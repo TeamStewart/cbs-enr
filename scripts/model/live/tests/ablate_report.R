@@ -102,7 +102,11 @@ bars <- function(df, col) {
 }
 
 race_block <- function(rid) {
-  d <- filter(dat, race_id == rid, geo == "all") |> arrange(match(arm, ARMS))
+  # geo == "all" is scraped counties + CBS's for the rest, so it only exists once CBS has
+  # filed county RESULTS for the race. Early in the night (or for a race CBS has not filed)
+  # there are only "scraped" rows, and showing nothing would be worse than showing those.
+  g <- if (any(dat$race_id == rid & dat$geo == "all")) "all" else "scraped"
+  d <- filter(dat, race_id == rid, geo == g) |> arrange(match(arm, ARMS))
   rows <- paste0(apply(d, 1, function(r) {
     sprintf(
       "<tr%s><td class='arm'>%s</td><td class='n'>%s</td><td class='i'>%s &ndash; %s</td><td class='n'>%s</td><td class='i'>%s &ndash; %s</td><td class='n'>%s</td><td class='n'>%s</td></tr>",
@@ -115,12 +119,12 @@ race_block <- function(rid) {
     )
   }), collapse = "\n")
   sprintf(
-    "<section><h2>%s <span class='sub'>geo = all</span></h2>
+    "<section><h2>%s <span class='sub'>geo = %s</span></h2>
      <div class='wrap'><table>
       <thead><tr><th>arm</th><th>turnout</th><th>interval</th><th>Dem two-party</th><th>interval</th><th>&Delta; turnout</th><th>&Delta; share</th></tr></thead>
       <tbody>%s</tbody></table>
       <div class='barwrap'>%s</div></div></section>",
-    esc(rid), rows, bars(d, "turnout")
+    esc(rid), esc(g), rows, bars(d, "turnout")
   )
 }
 
@@ -189,7 +193,7 @@ A lever that did not fire means the arm never ran that code &mdash; not that the
 </div></body></html>',
   14 * length(ARMS),
   esc(paste("tree", meta$head[1])), esc(meta$scenario[1]), esc(meta$at[1]),
-  esc(opt("cbs", "test")),
+  esc(if ("cbs" %in% names(meta)) meta$cbs[1] else "unrecorded"),
   "<code>all_off</code>",
   paste0(lapply(sort(unique(dat$race_id)), race_block), collapse = "\n"),
   chk_rows
