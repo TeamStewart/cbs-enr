@@ -119,6 +119,23 @@ METHOD_ORDER = ["eday", "early", "adv", "mail", "abs", "prov", "all"]
 fmt = v => d3.format(",")(Math.abs(v) >= 1 ? Math.round(v) : v)
 pct = d3.format(".1%")
 fmtTime = t => t == null ? "—" : new Date(t).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).replace(",", "")
+// time axes in Eastern time whatever the viewer's zone: Plot's default ticks and labels use local time.
+// etTicks: about n ticks on round ET wall-clock steps over the rows' time extent; etTickFormat: "7 PM", date on day change
+etTicks = (rows, n) => {
+  const [lo, hi] = d3.extent(rows, d => +d.time);
+  if (lo == null) return undefined;
+  const M = 60e3, H = 60 * M, span = Math.max(hi - lo, M);
+  const step = [5 * M, 10 * M, 15 * M, 30 * M, H, 2 * H, 3 * H, 6 * H, 12 * H, 24 * H].find(s => span / s <= n) ?? Math.ceil(span / (24 * H * n)) * 24 * H;
+  const out = [];
+  for (let w = Math.ceil((lo + etOffset(lo)) / step) * step; w <= hi + etOffset(hi); w += step) out.push(new Date(w - etOffset(w - etOffset(w))));
+  return out.length ? out : [new Date(lo)];
+}
+etTickFormat = (d, i, ticks) => {
+  const f = (t, o) => new Date(t).toLocaleString("en-US", { timeZone: "America/New_York", ...o });
+  const time = f(d, { hour: "numeric", minute: "2-digit" }).replace(":00", ""), day = f(d, { month: "short", day: "numeric" });
+  if (i > 0 && day === f(ticks[i - 1], { month: "short", day: "numeric" })) return time;
+  return time === "12 AM" ? day : `${time}\n${day}`;
+}
 
 // URL param keeps the selection shareable: index.html?c=GA-sen
 sel = {
@@ -355,6 +372,12 @@ explorerRows = reported.filter(d => d.facet === prec_mode && d[prec_x] != null &
 explorerType = k => d3.max(explorerRows, d => d[k]) > 2 ? "sqrt" : "linear"
 // shares/proportions (all values in [0, 1]) always get a fixed 0-1 axis
 explorerDomain = k => { const [lo, hi] = d3.extent(explorerRows, d => d[k]); return lo >= 0 && hi <= 1 ? [0, 1] : undefined; }
+// tip values: columns within [-1, 1] are shares/changes (signed when any is negative), others counts
+explorerFmt = k => {
+  const [lo, hi] = d3.extent(explorerRows, d => d[k]);
+  const f = lo >= -1 && hi <= 1 ? (lo < 0 ? d3.format("+.1%") : pct) : fmt;
+  return v => v == null || Number.isNaN(v) ? "—" : f(v);
+}
 explorerLo = Math.max(d3.min(explorerRows, d => d[prec_x]), d3.min(explorerRows, d => d[prec_y]))
 explorerHi = Math.min(d3.max(explorerRows, d => d[prec_x]), d3.max(explorerRows, d => d[prec_y]))
 // dashed blue zero line on an axis only when its values fall on both sides of 0
@@ -366,7 +389,7 @@ ZERO_LINE = "#3c78d8"
 timeSpec = (rows, y, opts) => ({
   marginBottom: 30,
   fx: { domain: facets, label: null },
-  x: { label: null, ticks: 3 },
+  x: { label: null, ticks: etTicks(rows, 3), tickFormat: etTickFormat },
   y: { grid: true, label: opts.label, tickFormat: opts.tickFormat, domain: opts.domain },
   color: opts.color,
   marks: [
@@ -916,7 +939,10 @@ viewof prec_mode = {
   x: { label: `${explorerLabel.get(prec_x)} →`, grid: true, type: explorerType(prec_x), domain: explorerDomain(prec_x) },
   y: { label: `↑ ${explorerLabel.get(prec_y)}`, grid: true, type: explorerType(prec_y), domain: explorerDomain(prec_y) },
   marks: [
-    Plot.dot(explorerRows, { x: prec_x, y: prec_y, r: 2, fill: INK, fillOpacity: 0.45, channels: { geo: "geo", county: "county", total: "total" }, tip: true }),
+    // tip as a title (wraps), like histSpec: channel tips lead with the long axis labels
+    Plot.dot(explorerRows, { x: prec_x, y: prec_y, r: 2, fill: INK, fillOpacity: 0.45, tip: true,
+      title: d => `${d.geo}${d.county ? ` · ${d.county}` : ""}\n${explorerLabel.get(prec_y)}: ${explorerFmt(prec_y)(d[prec_y])}\n` +
+        `${explorerLabel.get(prec_x)}: ${explorerFmt(prec_x)(d[prec_x])}\n${fmt(d.total)} votes` }),
     Plot.linearRegressionY(explorerRows, { x: prec_x, y: prec_y, stroke: "black" }),
     line45.length > 0 && explorerLo < explorerHi ? Plot.link([0], { x1: explorerLo, y1: explorerLo, x2: explorerHi, y2: explorerHi, stroke: "#999", strokeDasharray: "4,4" }) : null,
     explorerCrosses(prec_x) ? Plot.ruleX([0], { stroke: ZERO_LINE, strokeDasharray: "4,4" }) : null,
@@ -1132,7 +1158,7 @@ modelSpec = (rows, opts) => {
       opts.rule != null && { mark: "line", label: opts.fmt(opts.rule), color: "#999", width: 1, dash: "4,4" },
       ...(opts.extraKeys ?? [])
     ],
-    x: { label: null, ticks: 5 },
+    x: { label: null, ticks: etTicks(rows, 5), tickFormat: etTickFormat },
     y: { grid: true, label: opts.label, tickFormat: opts.tickFormat },
     color: opts.color,
     marks
