@@ -80,6 +80,10 @@ redist_contest <- function(st) {
 }
 REDIST_RACE_NAME = c(gov = "Governor", sen = "Senate", house = "House")
 REDIST_RACES = c("sen", "gov", "house")
+# A county's scraped precincts are used for a race (House: for a county x district) only when
+# they hold at least this share of CBS's votes there (or CBS has nothing there); otherwise CBS's
+# county result, so a scrape that stopped early or never filled in does not undercount
+REDIST_ENR_MIN = 0.85
 
 # CBS county results for the tab's races (redist_cbs_county(), saved to
 # 26_general/cbs_api/{env}/redistricting/): Senate and governor pulled here, each House
@@ -94,6 +98,7 @@ redist_cbs_votes <- function(state, env = MODEL_CBS_ENV, sim = MODEL_SIM, enable
     if (is.null(x) || !nrow(x)) return(NULL)
     x |>
       summarise(dem = sum(votes[party == "dem"]), rep = sum(votes[party == "rep"]), total = sum(votes),
+                has_dem = any(party == "dem"), has_rep = any(party == "rep"), # on the ballot, even with 0 votes
                 pct_exp = first(pct_exp), .by = county_fips) |>
       mutate(state = state, contest = contest, district = as.integer(district), as_of = attr(x, "as_of"), .before = 1)
   }
@@ -105,7 +110,8 @@ redist_cbs_votes <- function(state, env = MODEL_CBS_ENV, sim = MODEL_SIM, enable
 }
 
 # ENR precinct votes for the tab's races from make_summary() outputs (dash_inputs): state,
-# contest, district (NA for statewide), geo, dem, rep, total, time (the jurisdiction's scrape)
+# contest, district (NA for statewide), geo, dem, rep, total, time (the jurisdiction's scrape),
+# has_dem / has_rep (a Democrat / Republican on the ballot there, even with no votes yet)
 redist_enr <- function(dash_inputs, states = REDIST_STATES) {
   p = purrr::compact(dash_inputs) |>
     keep(\(x) x$state %in% states) |>
@@ -117,6 +123,7 @@ redist_enr <- function(dash_inputs, states = REDIST_STATES) {
     filter(contest %in% REDIST_RACES) |>
     mutate(district = if_else(contest == "house", as.integer(district), NA_integer_)) |>
     summarise(dem = sum(votes[party == "dem"]), rep = sum(votes[party == "rep"]), total = sum(votes), time = max(time),
+              has_dem = any(party == "dem"), has_rep = any(party == "rep"),
               .by = c(state, contest, district, geo))
 }
 
@@ -280,11 +287,17 @@ build_redist_data <- function(files, cbs = NULL, models = NULL, enr = NULL, cont
     c_st = if (is.null(cbs) || !nrow(cbs)) tibble() else filter(cbs, state == st) |> inner_join(cmap, by = "county_fips")
     # the top-of-ticket race's Dem two-party share by precinct and by county: splits the votes
     # of House races without both a Democrat and a Republican
-    s_g = if (nrow(e_st)) e_st |> filter(contest == .env$contest) |> summarise(s = sum(dem) / sum(dem + rep), .by = g) |> filter(is.finite(s)) else tibble(g = character(), s = numeric())
-    s_k = bind_rows(if (nrow(e_st)) e_st |> filter(contest == .env$contest) |> transmute(county_cbs, d = dem, r = rep),
-                    if (nrow(c_st)) c_st |> filter(contest == .env$contest) |> transmute(county_cbs, d = dem, r = rep)) |>
-      bind_rows(tibble(county_cbs = integer(), d = numeric(), r = numeric())) |>
-      summarise(sk = sum(d) / sum(d + r), .by = county_cbs) |> filter(is.finite(sk))
+    s_g = if (nrow(e_st)) e_st |> filter(contest == .env$contest) |> summarise(s = sum(dem) / sum(dem + rep), tg = sum(total), .by = g) |> filter(is.finite(s)) else tibble(g = character(), s = numeric(), tg = numeric())
+    # (by county: the scrape's precincts if they hold REDIST_ENR_MIN of CBS's votes, else CBS's county result)
+    s_k = bind_rows(if (nrow(e_st)) e_st |> filter(contest == .env$contest) |> transmute(county_cbs, d = dem, r = rep, src = 1L),
+                    if (nrow(c_st)) c_st |> filter(contest == .env$contest) |> transmute(county_cbs, d = dem, r = rep, src = 2L)) |>
+      bind_rows(tibble(county_cbs = integer(), d = numeric(), r = numeric(), src = integer())) |>
+      summarise(d = sum(d), r = sum(r), .by = c(county_cbs, src)) |>
+      filter(d + r > 0) |>
+      mutate(use = if (any(src == 2L)) src == 2L | (d + r) >= REDIST_ENR_MIN * sum((d + r)[src == 2L]) else TRUE, .by = county_cbs) |>
+      filter(use) |>
+      filter(src == min(src), .by = county_cbs) |>
+      summarise(sk = sum(d) / sum(d + r), tk = sum(d + r), .by = county_cbs) |> filter(is.finite(sk))
 
     # each race's votes counted so far: ENR precincts in the counties we scrape for it, CBS's
     # county results in the rest. House: the new districts are the races themselves; the old
@@ -294,19 +307,51 @@ build_redist_data <- function(files, cbs = NULL, models = NULL, enr = NULL, cont
       e = if (nrow(e_st)) filter(e_st, contest == ct) else tibble()
       k = if (nrow(c_st)) filter(c_st, contest == ct) else tibble()
       if (!nrow(e) && !nrow(k)) next
+      # inputs from before has_dem / has_rep: a party with votes was on the ballot
+      if (nrow(e) && !"has_dem" %in% names(e)) e = mutate(e, has_dem = dem > 0, has_rep = rep > 0)
+      if (nrow(k) && !"has_dem" %in% names(k)) k = mutate(k, has_dem = dem > 0, has_rep = rep > 0)
+      # precincts where the scrape holds at least REDIST_ENR_MIN of CBS's votes for this race, by
+      # county (House: county x district, so a district the county's scrape leaves out, or is
+      # behind on, comes from CBS); CBS's county results everywhere else
+      if (nrow(e)) {
+        kt = if (nrow(k)) summarise(k, kt = sum(total), .by = c(county_cbs, district)) else
+          tibble(county_cbs = integer(), district = integer(), kt = numeric())
+        has = e |> summarise(t = sum(total), .by = c(county_cbs, district)) |>
+          left_join(kt, by = c("county_cbs", "district")) |>
+          filter(t > 0, is.na(kt) | t >= REDIST_ENR_MIN * kt) |>
+          select(county_cbs, district)
+        e = semi_join(e, has, by = c("county_cbs", "district"))
+        if (nrow(k)) k = anti_join(k, has, by = c("county_cbs", "district"))
+      }
       scraped = unique(e$county_cbs)
-      if (nrow(k)) k = filter(k, !county_cbs %in% scraped)
       rname = REDIST_RACE_NAME[[ct]]
       unc = integer()
       # uncontested House races: the party of the only major-party candidate, which wins the seat on
       # the 2026 map whatever the split below (sole = "dem" / "rep"; NA if neither party ran)
       sole = tibble(cd = character(), sole = character())
       if (ct == "house") {
-        both = bind_rows(if (nrow(e)) select(e, district, dem, rep), if (nrow(k)) select(k, district, dem, rep)) |>
-          summarise(ok = sum(dem) > 0 & sum(rep) > 0, d0 = sum(dem) > 0, r0 = sum(rep) > 0, .by = district)
+        both = bind_rows(if (nrow(e)) select(e, district, dem, rep, total, has_dem, has_rep),
+                         if (nrow(k)) select(k, district, dem, rep, total, has_dem, has_rep)) |>
+          summarise(ok = sum(dem) > 0 & sum(rep) > 0, d0 = any(has_dem), r0 = any(has_rep), tot = sum(total), .by = district)
         unc = both$district[!both$ok]
-        sole = both |> filter(!ok, d0 | r0) |>
+        # a race with only one major party on the ballot (only Democrats / only Republicans):
+        # that party's seat on the 2026 map
+        sole = both |> filter(!ok, xor(d0, r0)) |>
           transmute(cd = sprintf("%s-%02d", st, as.integer(district)), sole = if_else(d0, "dem", "rep"))
+        # a race with no votes reported at all (an unopposed candidate whose votes the state does
+        # not count, e.g. FL-10): its voters from the top-of-ticket race, each county's total
+        # times the county's share in the district (precincts: their own total), then split
+        # below like any uncontested race
+        zero = both$district[both$tot == 0]
+        if (length(zero)) {
+          cdf0 = \(x) sprintf("%s-%02d", st, as.integer(x))
+          cn = filter(cw, plan == "new") |> select(county_cbs, cd, share)
+          if (nrow(k)) k = k |> mutate(cd = cdf0(district)) |> left_join(s_k |> select(county_cbs, tk), by = "county_cbs") |>
+            left_join(cn, by = c("county_cbs", "cd")) |>
+            mutate(total = if_else(district %in% zero, coalesce(tk * share, 0), total)) |> select(-cd, -tk, -share)
+          if (nrow(e)) e = e |> left_join(s_g |> select(g, tg), by = "g") |>
+            mutate(total = if_else(district %in% zero, coalesce(tg, 0), total)) |> select(-tg)
+        }
         if (length(unc)) {
           if (nrow(e)) e = e |> left_join(s_g, by = "g") |> left_join(s_k, by = "county_cbs") |>
             mutate(s = coalesce(s, sk, 0.5), u = district %in% unc,
