@@ -314,7 +314,9 @@ vh_manual = bind_rows(
 # precinct.
 # Every scripts/util/crosswalks/votehub_manual_*.csv is read (state, county, precinct_enr,
 # vh_code): the 11-02 carry-over above, and hand-matched batches (votehub_manual_hand_20261103.csv:
-# IA polling-place labels, GA Chatham, NE, OH Pickaway, from the 11-03 hand-matching worksheet).
+# IA polling-place labels, GA Chatham, NE, OH Pickaway, from the 11-03 hand-matching worksheet;
+# votehub_manual_hand_mi_20261103.csv: MI cities numbering precincts straight through where
+# VoteHub numbers them within a ward).
 vh_carry = fs::dir_ls("scripts/util/crosswalks", regexp = "votehub_manual_[^/]*\\.csv$") |>
   map(\(f) read_csv(f, col_types = cols(.default = "c"))) |>
   list_rbind() |>
