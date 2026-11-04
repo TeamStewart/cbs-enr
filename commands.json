@@ -1,0 +1,4 @@
+[
+  {"id": "manual-broward-lvt-193251", "action": "invalidate", "targets": ["data_FL_broward"], "by": "claude (scraper laptop, for teamstewartenr)", "at": "2026-11-03T19:32:51-0500"},
+  {"id": "manual-pr26-193346", "action": "invalidate", "targets": ["data_GA_NA", "data_FL_hillsborough", "data_FL_polk", "data_FL_collier", "data_FL_indian.river", "data_FL_okeechobee", "data_FL_hendry"], "by": "claude (scraper laptop, for teamstewartenr)", "at": "2026-11-03T19:33:46-0500"}
+]
