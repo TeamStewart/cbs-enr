@@ -377,18 +377,32 @@ timeSpec = (rows, y, opts) => ({
   ]
 })
 
-histSpec = (rows, x, label, xticks = 2) => ({
-  marginBottom: 40,
-  fx: { domain: facets.filter(f => rows.some(d => d.facet === f)), label: null },
-  x: { label, tickFormat: "+.0%", ticks: xticks },
-  y: { grid: true, label: "Precincts" },
-  marks: [
-    Plot.rectY(rows, Plot.binX({ y: "count" }, { fx: "facet", x, fill: INK, fillOpacity: 0.7, inset: 1, tip: true })),
-    Plot.ruleX([0], { stroke: "#999", strokeDasharray: "4,4" }),
-    Plot.ruleX(rows, Plot.groupZ({ x: "median" }, { fx: "facet", x, stroke: "black", strokeWidth: 2 })),
-    Plot.ruleY([0])
-  ]
-})
+// Bins are built here rather than by Plot.binX: its automatic width goes under 2px with thousands
+// of precincts, which leaves nothing after the inset. About 60 bins over the range stays readable
+// in the narrowest facet. The tip is a title because binX's tip leads with the long axis label.
+histSpec = (rows, x, label, xticks = 2) => {
+  const [lo, hi] = d3.extent(rows, d => d[x]);
+  const step = d3.tickStep(lo, hi, 60) || 0.01;
+  const last = Math.ceil(hi / step) - 1;   // a value on the top edge joins the last bin
+  const bins = d3.flatRollup(rows, v => v.length, d => d.facet, d => Math.min(Math.floor(d[x] / step), last))
+    .map(([facet, i, n]) => ({ facet, x1: i * step, x2: (i + 1) * step, n }));
+  const edge = d3.format(step < 0.01 ? "+.1%" : "+.0%");
+  return {
+    marginBottom: 40,
+    fx: { domain: facets.filter(f => rows.some(d => d.facet === f)), label: null },
+    x: { label, tickFormat: "+.0%", ticks: xticks },
+    y: { grid: true, label: "Precincts" },
+    marks: [
+      Plot.rectY(bins, {
+        fx: "facet", x1: "x1", x2: "x2", y: "n", fill: INK, fillOpacity: 0.7, inset: 0.5,
+        title: d => `${edge(d.x1)} to ${edge(d.x2)}\n${fmt(d.n)} precincts · ${d.facet}`, tip: true
+      }),
+      Plot.ruleX([0], { stroke: "#999", strokeDasharray: "4,4" }),
+      Plot.ruleX(rows, Plot.groupZ({ x: "median" }, { fx: "facet", x, stroke: "black", strokeWidth: 2 })),
+      Plot.ruleY([0])
+    ]
+  };
+}
 // export legend for histSpec's marks
 histKeys = zero => [
   { mark: "rect", label: "Precincts per bin", opacity: 0.7 },
