@@ -176,7 +176,10 @@ map_redist = tar_map(
   tar_target(redist_cbs, redist_cbs_votes(ST), cue = tar_cue(mode = "always"))
 )
 
-list(
+# CBS_DATA_ONLY=1 (automation.R after the election): only data collection and cleaning, i.e.
+# each jurisdiction's timestamp, data (clean files) and tbl_cbs (S3/Drive uploads). The other
+# targets stay in the store and come back with the full list when CBS_DATA_ONLY is unset.
+if (Sys.getenv("CBS_DATA_ONLY") == "1") list(map_single[c("timestamp", "data", "tbl_cbs")]) else list(
   map_single,
   map_full,
   map_models,

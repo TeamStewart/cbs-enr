@@ -5,7 +5,13 @@
 ## Author: Joseph R. Loffredo and Mason Reece
 ##################################################
 
-INTERVAL = 5 # minutes
+INTERVAL = 60 # minutes (5 on election night; hourly from 2026-11-05)
+
+# Post-election: only data collection and cleaning (timestamp, data and tbl_cbs targets, so
+# the clean files and their S3/Drive uploads), no summaries, models, redistricting or dashboard,
+# and none of the dashboard pushes below. _targets.R reads CBS_DATA_ONLY. FALSE restores the
+# full election-night pipeline.
+DATA_ONLY = TRUE
 
 # Production settings. A rehearsal leftover (e.g. CBS_MODEL_SIM) would put test numbers on the
 # live dashboard, so refuse to start unless CBS_AUTOMATION_TEST=1.
@@ -23,7 +29,7 @@ local({
 # tar_make() (and _targets.R, which reads these) runs in a callr process that inherits them:
 # skip the in-pipeline dashboard render (mit.html is rendered below) and the local-checkout
 # enightdata install (update_enightdata() installs from GitHub instead)
-Sys.setenv(CBS_DASH_RENDER = "FALSE", CBS_AUTOMATION = "1")
+Sys.setenv(CBS_DASH_RENDER = "FALSE", CBS_AUTOMATION = "1", CBS_DATA_ONLY = if (DATA_ONLY) "1" else "")
 
 # One Google token for both: Drive's scope covers Sheets. A non-interactive Rscript can't open
 # the browser, so cache it once first:
@@ -244,7 +250,7 @@ push_pipeline_state <- function(run_time, steps) {
   push_files(c(files, cycle.json = cycle), STATE_BRANCH, glue::glue("pipeline state {run_time}"))
 }
 
-tryCatch(upload_dashboard_geo(), error = function(e) message("Dashboard geo upload failed: ", conditionMessage(e)))
+if (!DATA_ONLY) tryCatch(upload_dashboard_geo(), error = function(e) message("Dashboard geo upload failed: ", conditionMessage(e)))
 
 # Main loop to schedule and execute the script every INTERVAL minutes
 while (TRUE) {
@@ -280,9 +286,10 @@ while (TRUE) {
   sink(type = "message")
   close(con)
 
-  steps$dashboard_push = step("Dashboard push", push_dashboard_data(run_time))
-  # before the cutover: NA, so the watcher does not count it as a failure
-  steps$dashboard_s3 = if (dashboard_is_live()) step("Dashboard S3 upload", upload_dashboard_s3()) else NA
+  # data-only (post-election) and before the cutover: NA, so the watcher does not count them
+  # as failures. Data-only builds no dashboard, so there is nothing new to push or render.
+  steps$dashboard_push = if (!DATA_ONLY) step("Dashboard push", push_dashboard_data(run_time)) else NA
+  steps$dashboard_s3 = if (!DATA_ONLY && dashboard_is_live()) step("Dashboard S3 upload", upload_dashboard_s3()) else NA
 
   # read here, used by the next cycle's tar_make(); a failed read keeps the last metadata.csv
   steps$sheet = step("Google Sheet read (kept the last metadata.csv)", {
