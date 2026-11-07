@@ -1,0 +1,424 @@
+2026-11-07 11:24:08: Running tar_make
++ timestamp_FL_lake dispatched
++ timestamp_TX_gregg dispatched
++ timestamp_FL_taylor dispatched
++ timestamp_NC_NA dispatched
++ timestamp_MI_wayne dispatched
++ timestamp_MI_kent dispatched
++ timestamp_FL_hernando dispatched
++ timestamp_TX_travis dispatched
++ timestamp_TX_nueces dispatched
++ timestamp_FL_madison dispatched
++ timestamp_AK_NA dispatched
++ timestamp_KS_anderson dispatched
+✔ timestamp_TX_gregg completed [953ms, 72 B]
++ timestamp_TX_ellis dispatched
+✔ timestamp_NC_NA completed [1s, 71 B]
++ timestamp_FL_lee dispatched
+✔ timestamp_FL_lake completed [2.8s, 71 B]
++ timestamp_KS_butler dispatched
+✔ timestamp_FL_taylor completed [2.3s, 72 B]
++ timestamp_MI_oakland dispatched
+✔ timestamp_FL_hernando completed [101ms, 69 B]
++ timestamp_MI_iosco dispatched
+✔ timestamp_TX_travis completed [105ms, 70 B]
++ timestamp_FL_duval dispatched
+✔ timestamp_TX_nueces completed [68ms, 71 B]
++ timestamp_FL_sarasota dispatched
+✔ timestamp_FL_madison completed [74ms, 72 B]
++ timestamp_MI_emmet dispatched
+✔ timestamp_AK_NA completed [239ms, 72 B]
++ timestamp_MI_delta dispatched
+✔ timestamp_KS_anderson completed [226ms, 72 B]
++ timestamp_FL_wakulla dispatched
+✔ timestamp_FL_lee completed [40ms, 71 B]
++ timestamp_FL_desoto dispatched
+✔ timestamp_KS_butler completed [93ms, 71 B]
++ timestamp_FL_polk dispatched
+✔ timestamp_TX_ellis completed [221ms, 72 B]
++ timestamp_KS_leavenworth dispatched
+✔ timestamp_MI_oakland completed [55ms, 69 B]
++ timestamp_NY_westchester dispatched
+✔ timestamp_FL_duval completed [70ms, 71 B]
++ timestamp_OH_clark dispatched
+✔ timestamp_FL_sarasota completed [69ms, 71 B]
++ timestamp_MI_clare dispatched
+✔ timestamp_MI_emmet completed [127ms, 72 B]
++ timestamp_FL_st..johns dispatched
+✔ timestamp_MI_iosco completed [502ms, 72 B]
++ timestamp_FL_okeechobee dispatched
+✔ timestamp_MI_kent completed [2.2s, 71 B]
++ timestamp_PA_york dispatched
+✔ timestamp_FL_wakulla completed [80ms, 69 B]
++ timestamp_MI_livingston dispatched
+✔ timestamp_FL_desoto completed [107ms, 67 B]
++ timestamp_OH_hocking dispatched
+✔ timestamp_MI_wayne completed [2.9s, 72 B]
++ timestamp_WA_wahkiakum dispatched
+✔ timestamp_FL_polk completed [73ms, 72 B]
++ timestamp_MI_alcona dispatched
+✔ timestamp_MI_delta completed [419ms, 72 B]
++ timestamp_FL_holmes dispatched
+✔ timestamp_KS_leavenworth completed [193ms, 71 B]
++ timestamp_OH_lucas dispatched
+✔ timestamp_FL_st..johns completed [41ms, 69 B]
++ timestamp_OH_montgomery dispatched
+✔ timestamp_FL_okeechobee completed [69ms, 72 B]
++ timestamp_FL_collier dispatched
+✔ timestamp_PA_york completed [76ms, 71 B]
++ timestamp_MI_eaton dispatched
+✔ timestamp_MI_clare completed [525ms, 71 B]
++ timestamp_OH_summit dispatched
+✔ timestamp_MI_livingston completed [324ms, 70 B]
++ timestamp_MI_macomb dispatched
+✔ timestamp_OH_hocking completed [879ms, 72 B]
++ timestamp_FL_jackson dispatched
+✔ timestamp_MI_alcona completed [294ms, 72 B]
++ timestamp_TX_montague dispatched
+✔ timestamp_FL_holmes completed [71ms, 72 B]
++ timestamp_FL_miami.dade dispatched
+✔ timestamp_NY_westchester completed [3.7s, 72 B]
++ timestamp_FL_broward dispatched
+✔ timestamp_OH_montgomery completed [2.5s, 72 B]
++ timestamp_TX_parker dispatched
+✔ timestamp_FL_collier completed [192ms, 71 B]
++ timestamp_FL_manatee dispatched
+✔ timestamp_MI_eaton completed [63ms, 71 B]
++ timestamp_TX_jefferson dispatched
+✔ timestamp_MI_macomb completed [1.1s, 71 B]
++ timestamp_OH_carroll dispatched
+✔ timestamp_TX_jefferson completed [100ms, 72 B]
++ timestamp_FL_charlotte dispatched
+✔ timestamp_FL_jackson completed [1s, 69 B]
++ timestamp_FL_martin dispatched
+✔ timestamp_FL_charlotte completed [228ms, 69 B]
++ timestamp_FL_alachua dispatched
+✔ timestamp_FL_alachua completed [71ms, 70 B]
++ timestamp_OH_butler dispatched
+✔ timestamp_TX_montague completed [1.2s, 72 B]
++ timestamp_NY_rockland dispatched
+✔ timestamp_FL_miami.dade completed [1s, 70 B]
++ timestamp_FL_hamilton dispatched
+✖ timestamp_FL_hamilton errored
++ data_FL_hamilton dispatched
+✖ data_FL_hamilton errored
++ timestamp_GA_NA dispatched
+✔ timestamp_TX_parker completed [1.1s, 72 B]
++ timestamp_FL_gilchrist dispatched
+✔ timestamp_FL_gilchrist completed [334ms, 72 B]
++ timestamp_TX_bexar dispatched
+✖ timestamp_FL_manatee errored
++ data_FL_manatee dispatched
+✔ timestamp_TX_bexar completed [174ms, 72 B]
++ timestamp_FL_dixie dispatched
+✖ data_FL_manatee errored
++ timestamp_FL_seminole dispatched
+✔ timestamp_FL_martin completed [1.4s, 71 B]
++ timestamp_MI_tuscola dispatched
+✔ timestamp_FL_dixie completed [129ms, 71 B]
++ timestamp_PA_luzerne dispatched
+✔ timestamp_FL_broward completed [2.2s, 69 B]
++ timestamp_FL_citrus dispatched
+✔ timestamp_PA_luzerne completed [233ms, 70 B]
++ timestamp_MI_cass dispatched
+✔ timestamp_FL_seminole completed [337ms, 71 B]
++ timestamp_TX_comal dispatched
+✔ timestamp_MI_cass completed [60ms, 71 B]
++ timestamp_OH_hamilton dispatched
+✔ timestamp_FL_citrus completed [107ms, 71 B]
++ timestamp_FL_santa.rosa dispatched
+✔ timestamp_OH_hamilton completed [52ms, 72 B]
++ timestamp_FL_hendry dispatched
+✔ timestamp_OH_summit completed [3.8s, 72 B]
++ timestamp_FL_gadsden dispatched
+✔ timestamp_FL_santa.rosa completed [72ms, 72 B]
+✔ timestamp_FL_hendry completed [51ms, 72 B]
++ timestamp_FL_baker dispatched
++ timestamp_MI_lake dispatched
+✔ timestamp_FL_gadsden completed [56ms, 71 B]
++ timestamp_FL_leon dispatched
+✔ timestamp_FL_baker completed [58ms, 72 B]
++ timestamp_MI_monroe dispatched
+✔ timestamp_FL_leon completed [61ms, 71 B]
++ timestamp_PA_bucks dispatched
+✔ timestamp_MI_tuscola completed [774ms, 72 B]
++ timestamp_FL_lafayette dispatched
+✔ timestamp_FL_lafayette completed [177ms, 72 B]
++ timestamp_FL_nassau dispatched
+✔ timestamp_FL_nassau completed [92ms, 71 B]
++ timestamp_NJ_somerset dispatched
+✔ timestamp_NJ_somerset completed [78ms, 72 B]
++ data_NJ_somerset dispatched
+✔ timestamp_PA_bucks completed [566ms, 71 B]
++ timestamp_FL_escambia dispatched
+✔ timestamp_FL_escambia completed [109ms, 71 B]
++ timestamp_FL_highlands dispatched
+✔ timestamp_TX_comal completed [1.1s, 71 B]
++ timestamp_TX_kendall dispatched
+✖ timestamp_FL_highlands errored
++ data_FL_highlands dispatched
+✔ timestamp_TX_kendall completed [183ms, 72 B]
++ timestamp_TX_tarrant dispatched
+✖ data_FL_highlands errored
++ timestamp_NY_oneida dispatched
+✔ timestamp_TX_tarrant completed [92ms, 72 B]
++ timestamp_WA_skamania dispatched
+✔ timestamp_MI_lake completed [1.7s, 72 B]
++ timestamp_TX_rusk dispatched
+✔ timestamp_TX_rusk completed [183ms, 72 B]
++ timestamp_FL_pasco dispatched
+✖ timestamp_FL_pasco errored
++ data_FL_pasco dispatched
+✔ timestamp_NY_rockland completed [3.8s, 72 B]
++ timestamp_OH_greene dispatched
+✖ data_FL_pasco errored
++ timestamp_IN_NA dispatched
+✔ timestamp_NY_oneida completed [1.4s, 70 B]
++ timestamp_NY_clinton dispatched
+✔ timestamp_MI_monroe completed [2.6s, 70 B]
++ timestamp_OH_warren dispatched
+✔ timestamp_WA_wahkiakum completed [12.6s, 70 B]
++ timestamp_MI_isabella dispatched
+✔ timestamp_OH_greene completed [1.1s, 72 B]
++ timestamp_FL_jefferson dispatched
+✔ timestamp_NY_clinton completed [641ms, 72 B]
++ timestamp_TX_robertson dispatched
+✔ timestamp_FL_jefferson completed [170ms, 72 B]
+✔ timestamp_IN_NA completed [1.2s, 69 B]
+✔ timestamp_TX_robertson completed [165ms, 72 B]
++ data_IN_NA dispatched
++ timestamp_MI_roscommon dispatched
++ timestamp_TX_galveston dispatched
+✔ timestamp_TX_galveston completed [94ms, 71 B]
+✔ timestamp_MI_roscommon completed [102ms, 71 B]
++ timestamp_AZ_NA dispatched
++ timestamp_FL_monroe dispatched
+✔ timestamp_FL_monroe completed [112ms, 71 B]
++ timestamp_MN_NA dispatched
+✔ timestamp_MI_isabella completed [967ms, 71 B]
++ timestamp_OH_pickaway dispatched
+✔ timestamp_MN_NA completed [455ms, 72 B]
++ timestamp_FL_indian.river dispatched
+✔ timestamp_FL_indian.river completed [96ms, 70 B]
++ timestamp_PA_montgomery dispatched
+✖ data_NJ_somerset errored
++ timestamp_TX_wood dispatched
+✔ timestamp_TX_wood completed [121ms, 72 B]
++ timestamp_NY_jefferson dispatched
+✔ timestamp_PA_montgomery completed [418ms, 71 B]
++ timestamp_KS_harvey dispatched
+✔ timestamp_KS_harvey completed [87ms, 70 B]
++ timestamp_TX_hidalgo dispatched
+✔ timestamp_TX_hidalgo completed [271ms, 72 B]
++ timestamp_FL_franklin dispatched
+✔ timestamp_FL_franklin completed [141ms, 72 B]
++ timestamp_TX_reeves dispatched
+✔ timestamp_OH_pickaway completed [1.9s, 72 B]
++ timestamp_KS_miami dispatched
+✔ timestamp_KS_miami completed [262ms, 72 B]
++ timestamp_WA_cowlitz dispatched
+✔ timestamp_NY_jefferson completed [1.5s, 71 B]
++ timestamp_TX_dallas dispatched
+✔ timestamp_TX_reeves completed [1.1s, 72 B]
+✔ timestamp_TX_dallas completed [178ms, 72 B]
++ timestamp_FL_gulf dispatched
++ timestamp_FL_calhoun dispatched
+✔ timestamp_FL_calhoun completed [206ms, 72 B]
++ timestamp_MI_shiawassee dispatched
+✔ timestamp_FL_gulf completed [233ms, 72 B]
++ timestamp_FL_liberty dispatched
+✔ timestamp_FL_liberty completed [80ms, 72 B]
++ timestamp_SC_NA dispatched
+✔ timestamp_SC_NA completed [105ms, 71 B]
++ timestamp_PA_lehigh dispatched
+✔ timestamp_PA_lehigh completed [635ms, 72 B]
++ timestamp_FL_glades dispatched
+✔ timestamp_FL_glades completed [222ms, 71 B]
++ timestamp_TX_williamson dispatched
+✔ timestamp_TX_williamson completed [199ms, 72 B]
++ timestamp_MI_ottawa dispatched
+✔ timestamp_MI_ottawa completed [328ms, 72 B]
++ timestamp_NY_dutchess dispatched
+✔ timestamp_NY_dutchess completed [2s, 72 B]
++ timestamp_FL_marion dispatched
+✔ timestamp_FL_marion completed [91ms, 72 B]
++ timestamp_OH_franklin dispatched
+✔ timestamp_OH_franklin completed [1ms, 70 B]
++ data_OH_franklin dispatched
+✔ timestamp_MI_shiawassee completed [4s, 70 B]
++ timestamp_WV_NA dispatched
+✔ timestamp_WV_NA completed [223ms, 71 B]
++ timestamp_FL_volusia dispatched
+✔ timestamp_FL_volusia completed [523ms, 72 B]
++ data_FL_volusia dispatched
+✖ data_FL_volusia errored
++ timestamp_FL_bradford dispatched
+✔ timestamp_FL_bradford completed [105ms, 70 B]
++ timestamp_WI_milwaukee dispatched
+✔ timestamp_GA_NA completed [15.6s, 72 B]
++ timestamp_FL_hardee dispatched
+✔ timestamp_FL_hardee completed [108ms, 71 B]
++ timestamp_TX_fort.bend dispatched
+✔ timestamp_TX_fort.bend completed [196ms, 72 B]
++ timestamp_MI_leelanau dispatched
+✔ timestamp_MI_leelanau completed [2.2s, 71 B]
++ timestamp_OH_stark dispatched
+✔ data_IN_NA completed [14.7s, 62.45 kB]
++ tbl_cbs_IN_NA dispatched
+✔ data_OH_franklin completed [9.7s, 49.21 kB]
++ tbl_cbs_OH_franklin dispatched
+✖ timestamp_OH_clark errored
++ data_OH_clark dispatched
+✔ timestamp_WA_skamania completed [20.8s, 70 B]
++ timestamp_MI_osceola dispatched
+✔ tbl_cbs_IN_NA completed [4.2s, 44 B]
++ timestamp_TX_kaufman dispatched
+✔ timestamp_TX_kaufman completed [227ms, 72 B]
++ timestamp_MI_saginaw dispatched
+✖ timestamp_OH_lucas errored
++ data_OH_lucas dispatched
+✔ timestamp_MI_osceola completed [932ms, 70 B]
++ timestamp_NJ_union dispatched
+✔ timestamp_WI_milwaukee completed [10.9s, 72 B]
++ timestamp_MI_kalamazoo dispatched
+✔ timestamp_NJ_union completed [101ms, 71 B]
++ timestamp_TX_lamar dispatched
+✔ timestamp_TX_lamar completed [102ms, 72 B]
++ timestamp_TX_hunt dispatched
+✔ timestamp_TX_hunt completed [205ms, 71 B]
++ timestamp_WI_rock dispatched
+✔ tbl_cbs_OH_franklin completed [4s, 44 B]
++ timestamp_MI_midland dispatched
+✔ timestamp_MI_saginaw completed [2.3s, 72 B]
++ timestamp_MI_genesee dispatched
+✔ timestamp_MI_genesee completed [115ms, 72 B]
++ timestamp_OH_fulton dispatched
+✔ timestamp_OH_fulton completed [166ms, 72 B]
++ timestamp_KS_douglas dispatched
+✔ timestamp_MI_midland completed [1.3s, 72 B]
++ timestamp_FL_sumter dispatched
+✔ timestamp_FL_sumter completed [91ms, 72 B]
++ timestamp_MI_gratiot dispatched
+✔ timestamp_WI_rock completed [2.3s, 72 B]
++ timestamp_FL_okaloosa dispatched
+✔ timestamp_KS_douglas completed [483ms, 71 B]
++ timestamp_NE_NA dispatched
+✖ timestamp_FL_okaloosa errored
++ data_FL_okaloosa dispatched
+✖ data_FL_okaloosa errored
++ timestamp_PA_dauphin dispatched
+✔ timestamp_NE_NA completed [401ms, 71 B]
++ timestamp_PA_pike dispatched
+✔ timestamp_PA_pike completed [99ms, 71 B]
++ timestamp_WA_pacific dispatched
+✔ timestamp_PA_dauphin completed [621ms, 71 B]
++ timestamp_MI_berrien dispatched
+✔ timestamp_MI_gratiot completed [1.2s, 72 B]
++ timestamp_FL_hillsborough dispatched
+✔ timestamp_FL_hillsborough completed [180ms, 69 B]
++ timestamp_MI_washtenaw dispatched
+✔ timestamp_MI_washtenaw completed [1.4s, 72 B]
++ timestamp_TX_bell dispatched
+✔ timestamp_TX_bell completed [226ms, 72 B]
++ timestamp_MI_branch dispatched
+✔ timestamp_MI_berrien completed [1.9s, 72 B]
++ timestamp_FL_union dispatched
+✖ data_OH_clark errored
++ timestamp_MI_st.clair dispatched
+✔ timestamp_FL_union completed [123ms, 72 B]
++ timestamp_TX_bastrop dispatched
+✔ timestamp_MI_kalamazoo completed [5.9s, 70 B]
++ timestamp_FL_bay dispatched
+✔ timestamp_TX_bastrop completed [134ms, 72 B]
++ timestamp_MI_van.buren dispatched
+✖ timestamp_FL_bay errored
++ data_FL_bay dispatched
+✖ data_FL_bay errored
++ timestamp_PA_northampton dispatched
+✔ timestamp_PA_northampton completed [487ms, 72 B]
++ timestamp_TX_collin dispatched
+✔ timestamp_MI_branch completed [1.3s, 72 B]
++ timestamp_FL_orange dispatched
+✖ data_OH_lucas errored
++ tbl_cbs_OH_lucas dispatched
+✔ tbl_cbs_OH_lucas completed [0ms, 44 B]
++ timestamp_FL_putnam dispatched
+✖ timestamp_OH_carroll errored
++ data_OH_carroll dispatched
+✖ timestamp_OH_butler errored
++ data_OH_butler dispatched
+✔ timestamp_FL_putnam completed [134ms, 68 B]
+✔ timestamp_FL_orange completed [221ms, 71 B]
++ timestamp_MI_ingham dispatched
++ timestamp_NJ_morris dispatched
+✔ timestamp_NJ_morris completed [147ms, 72 B]
++ data_NJ_morris dispatched
+✔ timestamp_MI_st.clair completed [2.3s, 72 B]
++ timestamp_WI_pierce dispatched
+✖ timestamp_WI_pierce errored
++ data_WI_pierce dispatched
+✔ timestamp_AZ_NA completed [29.4s, 72 B]
++ timestamp_TX_el.paso dispatched
+✔ timestamp_TX_el.paso completed [215ms, 68 B]
++ timestamp_TX_denton dispatched
+✔ timestamp_TX_denton completed [217ms, 72 B]
++ timestamp_MI_newaygo dispatched
+✖ data_WI_pierce errored
++ timestamp_FL_levy dispatched
+✔ timestamp_FL_levy completed [183ms, 72 B]
++ timestamp_TX_victoria dispatched
+✔ timestamp_MI_van.buren completed [5s, 72 B]
++ timestamp_TX_hood dispatched
+✔ timestamp_TX_victoria completed [132ms, 72 B]
++ timestamp_FL_suwannee dispatched
+✔ timestamp_TX_hood completed [116ms, 72 B]
++ timestamp_TX_midland dispatched
+✔ timestamp_FL_suwannee completed [133ms, 72 B]
++ timestamp_TX_hardin dispatched
+✔ timestamp_TX_midland completed [270ms, 72 B]
++ timestamp_PA_monroe dispatched
+✔ timestamp_PA_monroe completed [2ms, 70 B]
++ data_PA_monroe dispatched
+✖ timestamp_OH_warren errored
++ data_OH_warren dispatched
+✖ data_NJ_morris errored
++ timestamp_IA_NA dispatched
+✔ timestamp_IA_NA completed [193ms, 72 B]
++ timestamp_MI_grand.traverse dispatched
+✔ timestamp_MI_grand.traverse completed [107ms, 68 B]
++ timestamp_MI_st.joseph dispatched
+✔ timestamp_MI_ingham completed [6.5s, 70 B]
++ timestamp_FL_columbia dispatched
+✔ timestamp_MI_st.joseph completed [1.5s, 70 B]
++ timestamp_FL_washington dispatched
+✔ timestamp_MI_newaygo completed [3.4s, 72 B]
++ timestamp_OH_cuyahoga dispatched
+✔ timestamp_FL_washington completed [88ms, 72 B]
+✔ timestamp_FL_columbia completed [113ms, 72 B]
++ timestamp_TX_harris dispatched
++ timestamp_WI_wood dispatched
+✖ data_OH_carroll errored
+✖ data_OH_butler errored
+✔ timestamp_TX_hardin completed [2.6s, 71 B]
++ timestamp_TX_rockwall dispatched
++ timestamp_FL_walton dispatched
++ timestamp_FL_pinellas dispatched
+✔ data_PA_monroe completed [2.5s, 2.56 kB]
++ tbl_cbs_PA_monroe dispatched
+✔ timestamp_TX_rockwall completed [93ms, 72 B]
+✔ timestamp_FL_pinellas completed [80ms, 66 B]
+✔ timestamp_FL_walton completed [102ms, 71 B]
+✔ timestamp_WI_wood completed [273ms, 72 B]
+✔ timestamp_TX_harris completed [336ms, 72 B]
+✔ timestamp_WA_cowlitz completed [31.6s, 70 B]
+✔ timestamp_WA_pacific completed [12.3s, 70 B]
+✔ tbl_cbs_PA_monroe completed [2.2s, 44 B]
+✖ data_OH_warren errored
+✔ timestamp_OH_cuyahoga completed [6.1s, 70 B]
+✔ timestamp_TX_collin completed [13.3s, 72 B]
+✖ timestamp_OH_stark errored
++ data_OH_stark dispatched
+✖ data_OH_stark errored
+✖ errored pipeline [1m 16.9s, 181 completed, 351 skipped]
+Warning message:
+29 targets produced errors. Run targets::tar_meta(fields = error, complete_only = TRUE) for the messages. 
